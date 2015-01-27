@@ -1,0 +1,10 @@
+cython
+nose
+numpydoc
+sphinx
+tox
+flake8
+ipython[all]
+runipy
+psutil
+memory-profiler
