@@ -1,4 +1,4 @@
-:mod:`allel.gt` - discrete genotype arrays
+Discrete genotype arrays (:mod:`allel.gt`)
 ==========================================
 
 .. automodule:: allel.gt

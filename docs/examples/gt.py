@@ -25,3 +25,38 @@ g[0, 1]
 g[1, 1]
 # genotype call at the third variants, second sample is missing
 g[2, 1]
+
+
+# is_called()
+#############
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 1], [1, 1]],
+              [[0, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_called(g)
+
+
+# is_missing()
+##############
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 1], [1, 1]],
+              [[0, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_missing(g)
+
+
+# is_hom()
+##########
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 1], [1, 1]],
+              [[0, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_hom(g)
+
+

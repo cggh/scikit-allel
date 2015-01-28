@@ -1,5 +1,4 @@
 cython
-nose
 numpydoc
 sphinx
 tox
