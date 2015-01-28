@@ -168,3 +168,18 @@ def test_is_hom_alt():
                        [0, 0]], dtype='b1')
     actual = allel.gt.is_hom_alt(g_triploid)
     assert np.array_equal(expect, actual), (expect, actual)
+
+
+def test_count_called():
+
+    expect = 7
+    actual = allel.gt.count_called(g_diploid)
+    assert expect == actual, (expect, actual)
+
+    expect = np.array([4, 3])
+    actual = allel.gt.count_called(g_diploid, axis='variants')
+    assert np.array_equal(expect, actual), (expect, actual)
+
+    expect = np.array([2, 2, 2, 1])
+    actual = allel.gt.count_called(g_diploid, axis='samples')
+    assert np.array_equal(expect, actual), (expect, actual)

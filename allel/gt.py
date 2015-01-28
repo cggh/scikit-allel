@@ -498,6 +498,19 @@ def is_hom_alt(g):
     return out
 
 
+def _check_axis(axis):
+    if axis is None:
+        return None
+    elif axis == 'variants':
+        return DIM_VARIANTS
+    elif axis == 'samples':
+        return DIM_SAMPLES
+    elif axis in {0, 1}:
+        return axis
+    else:
+        raise ArgumentError('unexpected axis: %r' % axis)
+
+
 def count_called(g, axis=None):
     """TODO
 
