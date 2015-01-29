@@ -1,26 +1,28 @@
-Discrete genotype arrays (:mod:`allel.gt`)
-==========================================
+Discrete genotype calls (:mod:`allel.gt`)
+=========================================
 
 .. automodule:: allel.gt
 
 Finding and counting calls
 --------------------------
 
-.. autofunction:: is_called
 .. autofunction:: is_missing
+.. autofunction:: is_called
 .. autofunction:: is_hom
-.. autofunction:: is_het
 .. autofunction:: is_hom_ref
 .. autofunction:: is_hom_alt
-.. autofunction:: count_called
+.. autofunction:: is_het
+.. autofunction:: is_call
 .. autofunction:: count_missing
+.. autofunction:: count_called
 .. autofunction:: count_hom
-.. autofunction:: count_het
 .. autofunction:: count_hom_ref
 .. autofunction:: count_hom_alt
+.. autofunction:: count_het
+.. autofunction:: count_call
 
-Genotype transformations
-------------------------
+Genotype array transformations
+------------------------------
 
 .. autofunction:: as_haplotypes
 .. autofunction:: as_n_alt
@@ -29,8 +31,8 @@ Genotype transformations
 .. autofunction:: pack_diploid
 .. autofunction:: unpack_diploid
 
-Allele frequencies
-------------------
+Allele frequency calculations
+-----------------------------
 
 .. autofunction:: max_allele
 .. autofunction:: allelism

@@ -11,7 +11,8 @@ samples at a set of variants is canonically represented as a
 3-dimensional numpy array of integers.  The first dimension
 corresponds to the variants genotyped (i.e., the length of the first
 dimension is equal to the number of variants), the second dimension
-corresponds to the samples genotyped, and the third dimension
+corresponds to the samples genotyped (i.e., the length of the second
+dimension equals the number of samples), and the third dimension
 corresponds to the ploidy of the samples.
 
 For example, the array `g` below is a discrete genotype array storing
@@ -37,16 +38,14 @@ diploid)::
 An array of genotype calls for a single variant at all samples can be
 obtained by indexing the first dimension, e.g.::
 
-    >>> # view genotype calls at the second variant in all samples
-    ... g[1]
+    >>> g[1]
     array([[0, 1],
            [1, 1]], dtype=int8)
 
 An array of genotype calls for a single sample at all variants can be
 obtained by indexing the second dimension, e.g.::
 
-    >>> # view genotype calls at all variants in the second sample
-    ... g[:, 1]
+    >>> g[:, 1]
     array([[ 0,  1],
            [ 1,  1],
            [-1, -1]], dtype=int8)
@@ -54,19 +53,13 @@ obtained by indexing the second dimension, e.g.::
 A genotype call for a specific sample at a specific variant can be obtained
 by indexing the first and second dimensions, e.g.::
 
-    >>> # genotype call at the first variant, first sample is homozygous
-    ... # reference
-    ... g[0, 0]
+    >>> g[0, 0]
     array([0, 0], dtype=int8)
-    >>> # genotype call at the first variant, second sample is heterozygous
-    ... g[0, 1]
+    >>> g[0, 1]
     array([0, 1], dtype=int8)
-    >>> # genotype call at the second variant, second sample is homozygous for
-    ... # the first alternate allele
-    ... g[1, 1]
+    >>> g[1, 1]
     array([1, 1], dtype=int8)
-    >>> # genotype call at the third variants, second sample is missing
-    ... g[2, 1]
+    >>> g[2, 1]
     array([-1, -1], dtype=int8)
 
 Allelism
@@ -81,8 +74,8 @@ genome of an organism are stored in separate arrays, discussed
 elsewhere.
 
 A single byte integer dtype (int8) can represent up to 127 distinct
-alleles, which is usually sufficient for most applications. Larger
-integer dtypes can be used if more alleles are required.
+alleles, which is usually sufficient for most applications. A larger
+integer dtype can be used if more alleles are required.
 
 In many applications the number of distinct alleles for each variant
 is small, e.g., less than 10, or even 2 (all variants are
@@ -176,57 +169,6 @@ def _check_genotype_array(g):
     return g, ploidy
 
 
-def is_called(g):
-    """Find non-missing genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-
-    Returns
-    -------
-
-    out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is non-missing.
-
-    Examples
-    --------
-
-    >>> import allel
-    >>> import numpy as np
-    >>> g = np.array([[[0, 0], [0, 1]],
-    ...               [[0, 1], [1, 1]],
-    ...               [[0, 2], [-1, -1]]], dtype='i1')
-    >>> allel.gt.is_called(g)
-    array([[ True,  True],
-           [ True,  True],
-           [ True, False]], dtype=bool)
-
-    """
-
-    # check input array
-    g, ploidy = _check_genotype_array(g)
-
-    # special case haploid
-    if ploidy == HAPLOID:
-        out = g >= 0
-
-    # special case diploid
-    elif ploidy == DIPLOID:
-        allele1 = g[..., 0]  # noqa
-        allele2 = g[..., 1]  # noqa
-        ex = '(allele1 >= 0) & (allele2 >= 0)'
-        out = ne.evaluate(ex)
-
-    # general ploidy case
-    else:
-        out = np.all(g >= 0, axis=DIM_PLOIDY)
-
-    return out
-
-
 def is_missing(g):
     """Find missing genotype calls.
 
@@ -280,7 +222,58 @@ def is_missing(g):
     return out
 
 
-def is_hom(g):
+def is_called(g):
+    """Find non-missing genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants, n_samples)
+        Array where elements are True if the genotype call is non-missing.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 1], [1, 1]],
+    ...               [[0, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_called(g)
+    array([[ True,  True],
+           [ True,  True],
+           [ True, False]], dtype=bool)
+
+    """
+
+    # check input array
+    g, ploidy = _check_genotype_array(g)
+
+    # special case haploid
+    if ploidy == HAPLOID:
+        out = g >= 0
+
+    # special case diploid
+    elif ploidy == DIPLOID:
+        allele1 = g[..., 0]  # noqa
+        allele2 = g[..., 1]  # noqa
+        ex = '(allele1 >= 0) & (allele2 >= 0)'
+        out = ne.evaluate(ex)
+
+    # general ploidy case
+    else:
+        out = np.all(g >= 0, axis=DIM_PLOIDY)
+
+    return out
+
+
+def is_hom(g, allele=None):
     """Find genotype calls that are homozygous.
 
     Parameters
@@ -288,6 +281,8 @@ def is_hom(g):
 
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
+    allele : int, optional
+        If not None, find calls that are homozygous for the given allele.
 
     Returns
     -------
@@ -302,9 +297,13 @@ def is_hom(g):
     >>> import numpy as np
     >>> g = np.array([[[0, 0], [0, 1]],
     ...               [[0, 1], [1, 1]],
-    ...               [[0, 2], [-1, -1]]], dtype='i1')
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
     >>> allel.gt.is_hom(g)
     array([[ True, False],
+           [False,  True],
+           [ True, False]], dtype=bool)
+    >>> allel.gt.is_hom(g, allele=1)
+    array([[False, False],
            [False,  True],
            [False, False]], dtype=bool)
 
@@ -315,21 +314,120 @@ def is_hom(g):
 
     # special case haploid
     if ploidy == HAPLOID:
-        # trivially true
-        out = np.ones(g.shape[:2], dtype=np.bool)
+        if allele is None:
+            # trivially true
+            out = np.ones(g.shape, dtype=np.bool)
+        else:
+            out = g == allele
 
     # special case diploid
     elif ploidy == DIPLOID:
         allele1 = g[..., 0]  # noqa
         allele2 = g[..., 1]  # noqa
-        ex = '(allele1 >= 0) & (allele1  == allele2)'
+        if allele is None:
+            ex = '(allele1 >= 0) & (allele1  == allele2)'
+        else:
+            ex = '(allele1 == {0}) & (allele2 == {0})'.format(allele)
+        out = ne.evaluate(ex)
+
+    # general ploidy case
+    else:
+        if allele is None:
+            allele1 = g[..., 0, None]  # noqa
+            other_alleles = g[..., 1:]  # noqa
+            ex = '(allele1 >= 0) & (allele1 == other_alleles)'
+            out = np.all(ne.evaluate(ex), axis=DIM_PLOIDY)
+        else:
+            out = np.all(g == allele, axis=DIM_PLOIDY)
+
+    return out
+
+
+def is_hom_ref(g):
+    """Find genotype calls that are homozygous for the reference allele.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants, n_samples)
+        Array where elements are True if the genotype call is homozygous for
+        the reference allele.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 1], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_hom_ref(g)
+    array([[ True, False],
+           [False, False],
+           [False, False]], dtype=bool)
+
+    """
+
+    return is_hom(g, allele=0)
+
+
+def is_hom_alt(g):
+    """Find genotype calls that are homozygous for any alternate (i.e.,
+    non-reference) allele.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants, n_samples)
+        Array where elements are True if the genotype call is homozygous for
+        an alternate allele.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 1], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_hom_alt(g)
+    array([[False, False],
+           [False,  True],
+           [ True, False]], dtype=bool)
+
+    """
+
+    # check input array
+    g, ploidy = _check_genotype_array(g)
+
+    # special case haploid
+    if ploidy == HAPLOID:
+        out = g > 0
+
+    # special case diploid
+    elif ploidy == DIPLOID:
+        allele1 = g[..., 0]  # noqa
+        allele2 = g[..., 1]  # noqa
+        ex = '(allele1 > 0) & (allele1  == allele2)'
         out = ne.evaluate(ex)
 
     # general ploidy case
     else:
         allele1 = g[..., 0, None]  # noqa
         other_alleles = g[..., 1:]  # noqa
-        ex = '(allele1 >= 0) & (allele1 == other_alleles)'
+        ex = '(allele1 > 0) & (allele1 == other_alleles)'
         out = np.all(ne.evaluate(ex), axis=DIM_PLOIDY)
 
     return out
@@ -390,21 +488,22 @@ def is_het(g):
     return out
 
 
-def is_hom_ref(g):
-    """Find genotype calls that are homozygous for the reference allele.
+def is_call(g, call):
+    """Find genotypes with a given call.
 
     Parameters
     ----------
 
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
+    call : int (haploid) or array_like, int, shape (ploidy,)
+        The genotype call to find.
 
     Returns
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is homozygous for
-        the reference allele.
+        Array where elements are True if the genotype is `call`.
 
     Examples
     --------
@@ -413,63 +512,10 @@ def is_hom_ref(g):
     >>> import numpy as np
     >>> g = np.array([[[0, 0], [0, 1]],
     ...               [[0, 1], [1, 1]],
-    ...               [[2, 2], [-1, -1]]], dtype='i1')
-    >>> allel.gt.is_hom_ref(g)
-    array([[ True, False],
-           [False, False],
-           [False, False]], dtype=bool)
-
-    """
-
-    # check input array
-    g, ploidy = _check_genotype_array(g)
-
-    # special case haploid
-    if ploidy == HAPLOID:
-        out = g == 0
-
-    # special case diploid
-    elif ploidy == DIPLOID:
-        allele1 = g[..., 0]  # noqa
-        allele2 = g[..., 1]  # noqa
-        ex = '(allele1 == 0) & (allele2  == 0)'
-        out = ne.evaluate(ex)
-
-    # general ploidy case
-    else:
-        out = np.all(g == 0, axis=DIM_PLOIDY)
-
-    return out
-
-
-def is_hom_alt(g):
-    """Find genotype calls that are homozygous for any alternate (i.e.,
-    non-reference) allele.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-
-    Returns
-    -------
-
-    out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is homozygous for
-        an alternate allele.
-
-    Examples
-    --------
-
-    >>> import allel
-    >>> import numpy as np
-    >>> g = np.array([[[0, 0], [0, 1]],
-    ...               [[0, 1], [1, 1]],
-    ...               [[2, 2], [-1, -1]]], dtype='i1')
-    >>> allel.gt.is_hom_alt(g)
+    ...               [[0, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_call(g, (0, 2))
     array([[False, False],
-           [False,  True],
+           [False, False],
            [ True, False]], dtype=bool)
 
     """
@@ -479,21 +525,25 @@ def is_hom_alt(g):
 
     # special case haploid
     if ploidy == HAPLOID:
-        out = g > 0
+        if not isinstance(call, int):
+            raise ArgumentError('invalid call: %r' % call)
+        out = g == call
 
     # special case diploid
     elif ploidy == DIPLOID:
+        if not len(call) == DIPLOID:
+            raise ArgumentError('invalid call: %r', call)
         allele1 = g[..., 0]  # noqa
         allele2 = g[..., 1]  # noqa
-        ex = '(allele1 > 0) & (allele1  == allele2)'
+        ex = '(allele1 == {0}) & (allele2  == {1})'.format(*call)
         out = ne.evaluate(ex)
 
     # general ploidy case
     else:
-        allele1 = g[..., 0, None]  # noqa
-        other_alleles = g[..., 1:]  # noqa
-        ex = '(allele1 > 0) & (allele1 == other_alleles)'
-        out = np.all(ne.evaluate(ex), axis=DIM_PLOIDY)
+        if not len(call) == ploidy:
+            raise ArgumentError('invalid call: %r', call)
+        call = np.asarray(call)[None, None, :]
+        out = np.all(g == call, axis=DIM_PLOIDY)
 
     return out
 
@@ -511,46 +561,167 @@ def _check_axis(axis):
         raise ArgumentError('unexpected axis: %r' % axis)
 
 
-def count_called(g, axis=None):
-    """TODO
-
-    """
-    pass
+def _count_true(a, axis):
+    axis = _check_axis(axis)
+    return np.sum(a, axis=axis)
 
 
 def count_missing(g, axis=None):
-    """TODO
+    """Count missing genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
 
     """
-    pass
+
+    return _count_true(is_missing(g), axis)
 
 
-def count_hom(g, axis=None):
-    """TODO
+def count_called(g, axis=None):
+    """Count non-missing genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
 
     """
-    pass
+
+    return _count_true(is_called(g), axis)
 
 
-def count_het(g, axis=None):
-    """TODO
+def count_hom(g, allele=None, axis=None):
+    """Count homozygous genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        If not None, find calls that are homozygous for the given allele.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
 
     """
-    pass
+
+    return _count_true(is_hom(g, allele=allele), axis)
 
 
 def count_hom_ref(g, axis=None):
-    """TODO
+    """Count homozygous reference genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
 
     """
-    pass
+
+    return _count_true(is_hom_ref(g), axis)
 
 
 def count_hom_alt(g, axis=None):
-    """TODO
+    """Count homozygous alternate genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
 
     """
-    pass
+
+    return _count_true(is_hom_alt(g), axis)
+
+
+def count_het(g, axis=None):
+    """Count heterozygous genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
+
+    """
+
+    return _count_true(is_het(g), axis)
+
+
+def count_call(g, call, axis=None):
+    """Count genotype calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    call : int (haploid) or array_like, int, shape (ploidy,)
+        The genotype call to find.
+    axis : int, optional
+        If not None, sum over the given axis (0=variants, 1=samples).
+
+    Returns
+    -------
+
+    count : int or ndarray
+        Number of matching genotype calls.
+
+    """
+
+    return _count_true(is_call(g, call), axis)
 
 
 def as_haplotypes(g):
