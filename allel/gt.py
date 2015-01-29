@@ -782,10 +782,58 @@ def as_haplotypes(g):
 
 
 def as_n_alt(g):
-    """TODO
+    """Transform each genotype call into the number of non-reference alleles.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, int, shape (n_variants, n_samples)
+        Array of non-ref alleles per genotype call.
+
+    Notes
+    -----
+
+    This function simply counts the number of non-reference alleles,
+    it makes no distinction between different alternate alleles.
+
+    This function returns 0 for missing genotype calls **and** for
+    homozygous reference genotype calls, because in both cases the number of
+    non-reference alleles is zero.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 2], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.as_n_alt(g)
+    array([[0, 1],
+           [1, 2],
+           [2, 0]], dtype=uint8)
 
     """
-    pass
+
+    # check input array
+    g, ploidy = _check_genotype_array(g)
+
+    # special case haploid
+    if ploidy == HAPLOID:
+        out = (g > 0).astype('u1')
+
+    else:
+        # count number of alternate alleles
+        out = np.empty(g.shape[:-1], dtype='u1')
+        np.sum(g > 0, axis=DIM_PLOIDY, out=out)
+
+    return out
 
 
 def as_012(g):

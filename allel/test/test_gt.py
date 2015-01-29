@@ -408,7 +408,32 @@ def test_as_haplotypes():
     aeq(expect, actual)
 
 
-# TODO def test_as_n_alt():
+def test_as_n_alt():
+    f = allel.gt.as_n_alt
+
+    # haploid
+    expect = np.array([[0, 1],
+                       [1, 1],
+                       [1, 0]], dtype='i1')
+    actual = f(g_haploid)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([[0, 1],
+                       [1, 2],
+                       [1, 2],
+                       [2, 0]], dtype='i1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+
+    # polyploid
+    expect = np.array([[0, 1],
+                       [2, 3],
+                       [2, 0]], dtype='i1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+
+
 # TODO def test_as_012():
 # TODO def test_as_allele_counts():
 # TODO def test_pack_diploid():

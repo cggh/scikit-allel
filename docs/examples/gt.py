@@ -69,3 +69,14 @@ g = np.array([[[0, 0], [0, 1]],
               [[0, 1], [1, 1]],
               [[0, 2], [-1, -1]]], dtype='i1')
 allel.gt.as_haplotypes(g)
+
+
+# as_n_alt()
+#################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.as_n_alt(g)
