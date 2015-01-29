@@ -724,6 +724,11 @@ def count_call(g, call, axis=None):
     return _count_true(is_call(g, call), axis)
 
 
+################################
+# Genotype array transformations
+################################
+
+
 def as_haplotypes(g):
     """TODO
 
@@ -764,6 +769,11 @@ def unpack_diploid(g):
 
     """
     pass
+
+
+###############################
+# Allele frequency calculations
+###############################
 
 
 def max_allele(g, axis=None):

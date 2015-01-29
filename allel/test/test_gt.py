@@ -377,3 +377,42 @@ def test_count_call():
     aeq(expect, actual)
     actual = f(g_diploid, call=(2, 1), axis='samples')
     aeq(expect, actual)
+
+
+################################
+# Genotype array transformations
+################################
+
+
+# TODO def test_as_haplotypes():
+# TODO def test_as_n_alt():
+# TODO def test_as_012():
+# TODO def test_as_allele_counts():
+# TODO def test_pack_diploid():
+# TODO def test_unpack_diploid
+
+
+###############################
+# Allele frequency calculations
+###############################
+
+
+# TODO def test_max_allele()
+# TODO def test_allelism()
+# TODO def test_allele_number()
+# TODO def test_allele_count()
+# TODO def test_allele_frequency()
+# TODO def test_allele_counts()
+# TODO def test_allele_frequencies()
+# TODO def test_is_variant()
+# TODO def test_is_non_variant()
+# TODO def test_is_segregating()
+# TODO def test_is_non_segregating()
+# TODO def test_is_singleton()
+# TODO def test_is_doubleton()
+# TODO def test_count_variant()
+# TODO def test_count_non_variant()
+# TODO def test_count_segregating()
+# TODO def test_count_non_segregating()
+# TODO def test_count_singleton()
+# TODO def test_count_doubleton()
