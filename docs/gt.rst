@@ -1,5 +1,5 @@
-Discrete genotype calls (:mod:`allel.gt`)
-=========================================
+Genotype arrays (:mod:`allel.gt`)
+=================================
 
 .. automodule:: allel.gt
 
@@ -21,8 +21,8 @@ Finding and counting calls
 .. autofunction:: count_het
 .. autofunction:: count_call
 
-Genotype array transformations
-------------------------------
+Genotype transformations
+------------------------
 
 .. autofunction:: as_haplotypes
 .. autofunction:: as_n_alt

@@ -384,7 +384,30 @@ def test_count_call():
 ################################
 
 
-# TODO def test_as_haplotypes():
+def test_as_haplotypes():
+    f = allel.gt.as_haplotypes
+
+    # haploid
+    expect = g_haploid
+    actual = f(g_haploid)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([[0, 0, 0, 1],
+                       [0, 2, 1, 1],
+                       [1, 0, 2, 1],
+                       [2, 2, -1, -1]], dtype='i1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+
+    # polyploidy
+    expect = np.array([[0, 0, 0, 0, 0, 1],
+                       [0, 1, 1, 1, 1, 1],
+                       [0, 1, 2, -1, -1, -1]], dtype='i1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+
+
 # TODO def test_as_n_alt():
 # TODO def test_as_012():
 # TODO def test_as_allele_counts():

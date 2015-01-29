@@ -730,10 +730,55 @@ def count_call(g, call, axis=None):
 
 
 def as_haplotypes(g):
-    """TODO
+    """Reshape a genotype array to view it as haplotypes by dropping the
+    ploidy dimension.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    h : ndarray, int, shape (n_variants, n_samples * ploidy)
+        Haplotype array.
+
+    Notes
+    -----
+
+    If genotype calls are unphased, the haplotypes returned by this function
+    will bear no resemblance to the true haplotypes.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 1], [1, 1]],
+    ...               [[0, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.as_haplotypes(g)
+    array([[ 0,  0,  0,  1],
+           [ 0,  1,  1,  1],
+           [ 0,  2, -1, -1]], dtype=int8)
 
     """
-    pass
+
+    # check input array
+    g, ploidy = _check_genotype_array(g)
+
+    # special case haploid
+    if ploidy == HAPLOID:
+        h = g
+
+    else:
+        # reshape, preserving size of variants dimension
+        newshape = (g.shape[DIM_VARIANTS], -1)
+        h = np.reshape(g, newshape)
+
+    return h
 
 
 def as_n_alt(g):
