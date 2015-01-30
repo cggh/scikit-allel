@@ -7,3 +7,4 @@ ipython[all]
 runipy
 psutil
 memory-profiler
+humanize
