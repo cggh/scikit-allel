@@ -3,7 +3,7 @@ python:
   - "2.7"
   - "3.4"
 before_install:
-  - "sudo apt-get install -qq libhdf5-serial-dev"
+  - "sudo apt-get install -qq libhdf5-serial-dev python-numpy python-scipy cython"
 install:
   - "pip install -r requirements_travis.txt"
 script:
