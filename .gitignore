@@ -55,5 +55,5 @@ target/
 
 # custom
 .idea/
-
 .ipynb_checkpoints
+*.html

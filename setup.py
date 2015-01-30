@@ -54,6 +54,7 @@ def get_version(source='allel/__init__.py'):
 VERSION = get_version()
 
 
+# noinspection PyUnresolvedReferences
 def setup_package():
 
     metadata = dict(
@@ -77,6 +78,34 @@ def setup_package():
 
     except ImportError:
         from distutils.core import setup
+
+    try:
+        # only build extensions if numpy is available
+        import numpy as np
+    except ImportError:
+        # numpy not available
+        pass
+    else:
+
+        from distutils.extension import Extension
+
+        # check for cython
+        try:
+            # build with cython
+            from Cython.Build import cythonize
+            ext_modules = cythonize([
+                Extension('allel.opt.gt',
+                          sources=['allel/opt/gt.pyx'],
+                          include_dirs=[np.get_include()])
+            ])
+        except ImportError:
+            # build previously cythonized C
+            ext_modules = [
+                Extension('allel.opt.gt',
+                          sources=['allel/opt/gt.c'],
+                          include_dirs=[np.get_include()])
+            ]
+        metadata['ext_modules'] = ext_modules
 
     setup(**metadata)
 

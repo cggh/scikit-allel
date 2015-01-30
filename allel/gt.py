@@ -919,7 +919,7 @@ def as_allele_counts(g, alleles=None):
     return out
 
 
-def pack_diploid(g):
+def pack_diploid(g, boundscheck=True):
     """Pack diploid genotypes into a single byte for each genotype,
     using the left-most 4 bits for the first allele and the right-most 4 bits
     for the second allele. Allows single byte encoding of diploid genotypes
@@ -930,6 +930,9 @@ def pack_diploid(g):
 
     g : array_like, int, shape (n_variants, n_samples, 2)
         Genotype array.
+    boundscheck : bool, optional
+        If False, do not check that minimum and maximum alleles are
+        compatible with bit-packing.
 
     Returns
     -------
@@ -952,42 +955,21 @@ def pack_diploid(g):
 
     """
 
-    # TODO Cython implementation
-    # This function is a good candidate for Cython implementation to
-    # minimise memory usage, as currently it involves creation of a number of
-    # intermediate arrays of similar size to the input genotype array,
-    # which slightly defeats the purpose of minimising overall memory usage.
-
     # check inputs
     g, ploidy = _check_genotype_array(g)
     if ploidy != 2:
         raise ArgumentError('unexpected ploidy: %s' % ploidy)
-    amx = np.amax(g)
-    if amx > 14:
-        raise ArgumentError('max allele for packing is 14, found %s' % amx)
-    amn = np.amin(g)
-    if amn < -1:
-        raise ArgumentError('min allele for packing is -1, found %s' % amn)
 
-    # copy genotype array so we don't modify in place
-    g = g.copy().astype('u1')
+    if boundscheck:
+        amx = np.amax(g)
+        if amx > 14:
+            raise ArgumentError('max allele for packing is 14, found %s' % amx)
+        amn = np.amin(g)
+        if amn < -1:
+            raise ArgumentError('min allele for packing is -1, found %s' % amn)
 
-    # add 1 to handle missing alleles coded as -1
-    g += 1
-
-    # left shift first allele by 4 bits
-    a1 = np.left_shift(g[..., 0], 4)
-
-    # mask left-most 4 bits to ensure second allele doesn't clash with first
-    # allele
-    a2 = np.bitwise_and(g[..., 1], 15)
-
-    # pack them
-    packed = np.bitwise_or(a1, a2)
-
-    # rotate round so that hom ref calls are encoded as 0, better for sparse
-    # matrices
-    packed -= 17
+    from allel.opt.gt import pack_diploid as _pack_diploid
+    packed = _pack_diploid(g.astype('i1'))
 
     return packed
 
@@ -1025,37 +1007,13 @@ def unpack_diploid(packed):
 
     """
 
-    # TODO Cython implementation
-    # This function is a good candidate for Cython implementation to
-    # minimise memory usage, as currently it involves creation of a number of
-    # intermediate arrays of similar size to the input genotype array,
-    # which slightly defeats the purpose of minimising overall memory usage.
-
     # check inputs
     packed = np.asarray(packed)
     if packed.ndim != 2:
         raise ArgumentError('expected 2 dimensions, found: %s' % packed.ndim)
 
-    # copy so we don't modify in-place
-    packed = packed.copy().astype('u1')
-
-    # rotate back round so missing calls are encoded as 0
-    packed += 17
-
-    # set up output array
-    g = np.empty(packed.shape + (2,), dtype='u1')
-    a1 = g[..., 0]
-    a2 = g[..., 1]
-
-    # right shift 4 bits to extract first allele
-    np.right_shift(packed, 4, out=a1)
-
-    # mask left-most 4 bits to extract second allele
-    np.bitwise_and(packed, 15, out=a2)
-
-    # subtract 1 to restore coding of missing alleles as -1
-    g -= 1
-    g = g.astype('i1')
+    from allel.opt.gt import unpack_diploid as _unpack_diploid
+    g = _unpack_diploid(packed.astype('u1'))
 
     return g
 
