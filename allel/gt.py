@@ -139,6 +139,7 @@ import numpy as np
 import numexpr as ne
 
 
+from allel.compat import range
 from allel.errors import ArgumentError
 
 
@@ -147,6 +148,12 @@ DIPLOID = 2
 DIM_VARIANTS = 0
 DIM_SAMPLES = 1
 DIM_PLOIDY = 2
+# packed representation of some common diploid genotypes
+B00 = 0
+B01 = 1
+B10 = 16
+B11 = 17
+BMISSING = 239
 
 
 def _check_genotype_array(g):
@@ -789,6 +796,8 @@ def as_n_alt(g, fill=0):
 
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
+    fill : int, optional
+        Use this value to represent missing calls.
 
     Returns
     -------
@@ -830,7 +839,7 @@ def as_n_alt(g, fill=0):
 
     # special case haploid
     if ploidy == HAPLOID:
-        out = (g > 0).astype('i1')
+        out = np.asarray(g > 0).astype('i1')
 
     else:
         # count number of alternate alleles
@@ -844,25 +853,211 @@ def as_n_alt(g, fill=0):
     return out
 
 
-def as_allele_counts(g):
-    """TODO
+def as_allele_counts(g, alleles=None):
+    """Transform genotype calls into allele counts per call.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    alleles : sequence of ints, optional
+        If not None, count only the given alleles. (By default, count all
+        possible alleles.)
+
+    Returns
+    -------
+
+    out : ndarray, uint8, shape (n_variants, n_samples, len(alleles))
+        Array of allele counts per call.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 2], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.as_allele_counts(g)
+    array([[[2, 0, 0],
+            [1, 1, 0]],
+           [[1, 0, 1],
+            [0, 2, 0]],
+           [[0, 0, 2],
+            [0, 0, 0]]], dtype=uint8)
+    >>> allel.gt.as_allele_counts(g, alleles=(0, 1))
+    array([[[2, 0],
+            [1, 1]],
+           [[1, 0],
+            [0, 2]],
+           [[0, 0],
+            [0, 0]]], dtype=uint8)
 
     """
-    pass
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    if alleles is None:
+        m = np.amax(g)
+        alleles = list(range(m+1))
+
+    # set up output array
+    outshape = g.shape[:2] + (len(alleles),)
+    out = np.zeros(outshape, dtype='u1')
+
+    # special case haploid
+    if ploidy == HAPLOID:
+        for i, allele in enumerate(alleles):
+            out[..., i] = g == allele
+
+    else:
+        for i, allele in enumerate(alleles):
+            # count alleles along ploidy dimension
+            np.sum(g == allele, axis=DIM_PLOIDY, out=out[..., i])
+
+    return out
 
 
 def pack_diploid(g):
-    """TODO
+    """Pack diploid genotypes into a single byte for each genotype,
+    using the left-most 4 bits for the first allele and the right-most 4 bits
+    for the second allele. Allows single byte encoding of diploid genotypes
+    for variants with up to 15 alleles.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, 2)
+        Genotype array.
+
+    Returns
+    -------
+
+    packed : ndarray, uint8, shape (n_variants, n_samples)
+        Bit-packed genotype array.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 2], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.pack_diploid(g)
+    array([[  0,   1],
+           [  2,  17],
+           [ 34, 239]], dtype=uint8)
 
     """
-    pass
+
+    # TODO Cython implementation
+    # This function is a good candidate for Cython implementation to
+    # minimise memory usage, as currently it involves creation of a number of
+    # intermediate arrays of similar size to the input genotype array,
+    # which slightly defeats the purpose of minimising overall memory usage.
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    if ploidy != 2:
+        raise ArgumentError('unexpected ploidy: %s' % ploidy)
+    amx = np.amax(g)
+    if amx > 14:
+        raise ArgumentError('max allele for packing is 14, found %s' % amx)
+    amn = np.amin(g)
+    if amn < -1:
+        raise ArgumentError('min allele for packing is -1, found %s' % amn)
+
+    # copy genotype array so we don't modify in place
+    g = g.copy().astype('u1')
+
+    # add 1 to handle missing alleles coded as -1
+    g += 1
+
+    # left shift first allele by 4 bits
+    a1 = np.left_shift(g[..., 0], 4)
+
+    # mask left-most 4 bits to ensure second allele doesn't clash with first
+    # allele
+    a2 = np.bitwise_and(g[..., 1], 15)
+
+    # pack them
+    packed = np.bitwise_or(a1, a2)
+
+    # rotate round so that hom ref calls are encoded as 0, better for sparse
+    # matrices
+    packed -= 17
+
+    return packed
 
 
-def unpack_diploid(g):
-    """TODO
+def unpack_diploid(packed):
+    """Unpack diploid genotypes that have been bit-packed into single bytes.
+
+    Parameters
+    ----------
+
+    packed : ndarray, uint8, shape (n_variants, n_samples)
+        Bit-packed diploid genotype array.
+
+    Returns
+    -------
+
+    g : array_like, int, shape (n_variants, n_samples, 2)
+        Genotype array.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> packed = np.array([[0, 1],
+    ...                    [2, 17],
+    ...                    [34, 239]], dtype='u1')
+    >>> allel.gt.unpack_diploid(packed)
+    array([[[ 0,  0],
+            [ 0,  1]],
+           [[ 0,  2],
+            [ 1,  1]],
+           [[ 2,  2],
+            [-1, -1]]], dtype=int8)
 
     """
-    pass
+
+    # TODO Cython implementation
+    # This function is a good candidate for Cython implementation to
+    # minimise memory usage, as currently it involves creation of a number of
+    # intermediate arrays of similar size to the input genotype array,
+    # which slightly defeats the purpose of minimising overall memory usage.
+
+    # check inputs
+    packed = np.asarray(packed)
+    if packed.ndim != 2:
+        raise ArgumentError('expected 2 dimensions, found: %s' % packed.ndim)
+
+    # copy so we don't modify in-place
+    packed = packed.copy().astype('u1')
+
+    # rotate back round so missing calls are encoded as 0
+    packed += 17
+
+    # set up output array
+    g = np.empty(packed.shape + (2,), dtype='u1')
+    a1 = g[..., 0]
+    a2 = g[..., 1]
+
+    # right shift 4 bits to extract first allele
+    np.right_shift(packed, 4, out=a1)
+
+    # mask left-most 4 bits to extract second allele
+    np.bitwise_and(packed, 15, out=a2)
+
+    # subtract 1 to restore coding of missing alleles as -1
+    g -= 1
+    g = g.astype('i1')
+
+    return g
 
 
 ###############################

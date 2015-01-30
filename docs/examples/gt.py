@@ -80,3 +80,37 @@ g = np.array([[[0, 0], [0, 1]],
               [[0, 2], [1, 1]],
               [[2, 2], [-1, -1]]], dtype='i1')
 allel.gt.as_n_alt(g)
+
+
+# as_allele_counts()
+####################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.as_allele_counts(g)
+allel.gt.as_allele_counts(g, alleles=(0, 1))
+
+
+# pack_diploid()
+################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.pack_diploid(g)
+
+
+# unpack_diploid()
+##################
+
+import allel
+import numpy as np
+packed = np.array([[0, 1],
+                   [2, 17],
+                   [34, 239]], dtype='u1')
+allel.gt.unpack_diploid(packed)

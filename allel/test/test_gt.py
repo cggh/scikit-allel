@@ -460,9 +460,51 @@ def test_as_n_alt_fill():
     aeq(expect, actual)
 
 
-# TODO def test_as_allele_counts():
-# TODO def test_pack_diploid():
-# TODO def test_unpack_diploid
+def test_as_allele_counts():
+    f = allel.gt.as_allele_counts
+
+    # haploid
+    expect = np.array([[[1, 0, 0], [0, 1, 0]],
+                       [[0, 1, 0], [0, 1, 0]],
+                       [[0, 0, 1], [0, 0, 0]]], dtype='i1')
+    actual = f(g_haploid)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([[[2, 0, 0], [1, 1, 0]],
+                       [[1, 0, 1], [0, 2, 0]],
+                       [[1, 1, 0], [0, 1, 1]],
+                       [[0, 0, 2], [0, 0, 0]]], dtype='i1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+
+    # triploid
+    expect = np.array([[[3, 0, 0], [2, 1, 0]],
+                       [[1, 2, 0], [0, 3, 0]],
+                       [[1, 1, 1], [0, 0, 0]]], dtype='i1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+
+
+def test_pack_diploid():
+
+    expect = np.array([[0, 1],
+                       [2, 17],
+                       [16, 33],
+                       [34, 239]], dtype='u1')
+    actual = allel.gt.pack_diploid(g_diploid)
+    aeq(expect, actual)
+
+
+def test_unpack_diploid():
+
+    g_diploid_packed = np.array([[0, 1],
+                                 [2, 17],
+                                 [16, 33],
+                                 [34, 239]], dtype='u1')
+    expect = g_diploid
+    actual = allel.gt.unpack_diploid(g_diploid_packed)
+    aeq(expect, actual)
 
 
 ###############################
