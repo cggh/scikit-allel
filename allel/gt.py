@@ -322,8 +322,8 @@ def is_hom(g, allele=None):
     # special case haploid
     if ploidy == HAPLOID:
         if allele is None:
-            # trivially true
-            out = np.ones(g.shape, dtype=np.bool)
+            # trivially true if non-missing
+            out = g >= 0
         else:
             out = g == allele
 
