@@ -562,8 +562,12 @@ def _check_axis(axis):
         return DIM_VARIANTS
     elif axis == 'samples':
         return DIM_SAMPLES
-    elif axis in {0, 1}:
+    elif axis == 'ploidy':
+        return DIM_PLOIDY
+    elif axis in {0, 1, 2}:
         return axis
+    elif isinstance(axis, (list, tuple)):
+        return tuple(_check_axis(a) for a in axis)
     else:
         raise ArgumentError('unexpected axis: %r' % axis)
 
@@ -1024,10 +1028,42 @@ def unpack_diploid(packed):
 
 
 def max_allele(g, axis=None):
-    """TODO
+    """Return the highest allele index.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : int or ndarray, int
+        The highest allele index.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 1]],
+    ...               [[0, 2], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.max_allele(g)
+    2
+    >>> allel.gt.max_allele(g, axis=(0, 2))
+    array([2, 1], dtype=int8)
+    >>> allel.gt.max_allele(g, axis=(1, 2))
+    array([1, 2, 2], dtype=int8)
 
     """
-    pass
+
+    # check inputs
+    g, _ = _check_genotype_array(g)
+    axis = _check_axis(axis)
+
+    return np.amax(g, axis=axis)
 
 
 def allelism(g):
@@ -1041,21 +1077,47 @@ def allele_number(g):
     """TODO
 
     """
-    pass
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+
+    # transform
+    h = as_haplotypes(g)
+
+    # count non-missing calls over samples
+    return np.sum(h >= 0, axis=1)
 
 
 def allele_count(g, allele=1):
     """TODO
 
     """
-    pass
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+
+    # transform
+    h = as_haplotypes(g)
+
+    # count non-missing calls over samples
+    return np.sum(h == allele, axis=1)
 
 
-def allele_frequency(g, allele=1):
+def allele_frequency(g, allele=1, fill=0):
     """TODO
 
     """
-    pass
+
+    # intermediate variables
+    an = allele_number(g)
+    ac = allele_count(g, allele=allele)
+
+    # calculate allele frequency, accounting for variants with no allele calls
+    err = np.seterr(invalid='ignore')
+    af = np.where(an > 0, ac / an, fill)
+    np.seterr(**err)
+
+    return af, an, ac
 
 
 def allele_counts(g, alleles=None):

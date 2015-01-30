@@ -512,11 +512,120 @@ def test_unpack_diploid():
 ###############################
 
 
-# TODO def test_max_allele()
-# TODO def test_allelism()
-# TODO def test_allele_number()
-# TODO def test_allele_count()
-# TODO def test_allele_frequency()
+def test_max_allele():
+    f = allel.gt.max_allele
+
+    # haploid
+    expect = 2
+    actual = f(g_haploid)
+    eq(expect, actual)
+    expect = np.array([2, 1])
+    actual = f(g_haploid, axis=0)
+    aeq(expect, actual)
+    expect = np.array([1, 1, 2])
+    actual = f(g_haploid, axis=1)
+    aeq(expect, actual)
+
+    # diploid
+    expect = 2
+    actual = f(g_diploid)
+    eq(expect, actual)
+    expect = np.array([2, 2])
+    actual = f(g_diploid, axis=(0, 2))
+    aeq(expect, actual)
+    expect = np.array([1, 2, 2, 2])
+    actual = f(g_diploid, axis=(1, 2))
+    aeq(expect, actual)
+
+
+def test_allelism():
+    f = allel.gt.allelism
+
+    # haploid
+    # TODO
+
+    # diploid
+    # TODO
+
+    # triploid
+    # TODO
+
+
+def test_allele_number():
+    f = allel.gt.allele_number
+
+    # haploid
+    expect = np.array([2, 2, 1])
+    actual = f(g_haploid)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([4, 4, 4, 2])
+    actual = f(g_diploid)
+    aeq(expect, actual)
+
+    # triploid
+    expect = np.array([6, 6, 3])
+    actual = f(g_triploid)
+    aeq(expect, actual)
+
+
+def test_allele_count():
+    f = allel.gt.allele_count
+
+    # haploid
+    expect = np.array([1, 2, 0])
+    actual = f(g_haploid, allele=1)
+    aeq(expect, actual)
+    expect = np.array([0, 0, 1])
+    actual = f(g_haploid, allele=2)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([1, 2, 2, 0])
+    actual = f(g_diploid, allele=1)
+    aeq(expect, actual)
+    expect = np.array([0, 1, 1, 2])
+    actual = f(g_diploid, allele=2)
+    aeq(expect, actual)
+
+    # triploid
+    expect = np.array([1, 5, 1])
+    actual = f(g_triploid, allele=1)
+    aeq(expect, actual)
+    expect = np.array([0, 0, 1])
+    actual = f(g_triploid, allele=2)
+    aeq(expect, actual)
+
+
+def test_allele_frequency():
+    f = allel.gt.allele_frequency
+
+    # haploid
+    expect = np.array([1/2, 2/2, 0/1])
+    actual, _, _ = f(g_haploid, allele=1)
+    aeq(expect, actual)
+    expect = np.array([0/2, 0/2, 1/1])
+    actual, _, _ = f(g_haploid, allele=2)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([1/4, 2/4, 2/4, 0/2])
+    actual, _, _ = f(g_diploid, allele=1)
+    aeq(expect, actual)
+    expect = np.array([0/4, 1/4, 1/4, 2/2])
+    actual, _, _ = f(g_diploid, allele=2)
+    aeq(expect, actual)
+
+    # triploid
+    expect = np.array([1/6, 5/6, 1/3])
+    actual, _, _ = f(g_triploid, allele=1)
+    aeq(expect, actual)
+    expect = np.array([0/6, 0/6, 1/3])
+    actual, _, _ = f(g_triploid, allele=2)
+    aeq(expect, actual)
+
+
 # TODO def test_allele_counts()
 # TODO def test_allele_frequencies()
 # TODO def test_is_variant()

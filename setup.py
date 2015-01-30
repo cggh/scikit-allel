@@ -55,30 +55,7 @@ VERSION = get_version()
 
 
 # noinspection PyUnresolvedReferences
-def setup_package():
-
-    metadata = dict(
-        name=DISTNAME,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        license=LICENSE,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        version=VERSION,
-        package_dir={'': '.'},
-        packages=['allele', 'allele.test'],
-        classifiers=CLASSIFIERS,
-    )
-
-    try:
-        from setuptools import setup
-        metadata['install_requires'] = INSTALL_REQUIRES
-
-    except ImportError:
-        from distutils.core import setup
-
+def setup_extensions(metadata):
     try:
         # only build extensions if numpy is available
         import numpy as np
@@ -106,6 +83,32 @@ def setup_package():
                           include_dirs=[np.get_include()])
             ]
         metadata['ext_modules'] = ext_modules
+
+
+def setup_package():
+
+    metadata = dict(
+        name=DISTNAME,
+        maintainer=MAINTAINER,
+        maintainer_email=MAINTAINER_EMAIL,
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        license=LICENSE,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        version=VERSION,
+        package_dir={'': '.'},
+        packages=['allele', 'allele.test'],
+        classifiers=CLASSIFIERS,
+    )
+    setup_extensions(metadata)
+
+    try:
+        from setuptools import setup
+        metadata['install_requires'] = INSTALL_REQUIRES
+
+    except ImportError:
+        from distutils.core import setup
 
     setup(**metadata)
 

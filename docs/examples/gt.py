@@ -114,3 +114,16 @@ packed = np.array([[0, 1],
                    [2, 17],
                    [34, 239]], dtype='u1')
 allel.gt.unpack_diploid(packed)
+
+
+# max_allele()
+##############
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.max_allele(g)
+allel.gt.max_allele(g, axis=(0, 2))
+allel.gt.max_allele(g, axis=(1, 2))
