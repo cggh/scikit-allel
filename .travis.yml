@@ -3,9 +3,9 @@ python:
   - "2.7"
   - "3.4"
 before_install:
-  - "sudo apt-get install -qq libhdf5-serial-dev libatlas-base-dev cython"
+  - "sudo apt-get install -qq libhdf5-serial-dev libatlas-base-dev gcc gfortran python-dev cython"
 install:
-  - "pip install -r requirements_travis.txt"
+  - "pip install -q -r requirements_travis.txt"
 script:
   - "flake8 allel"
   - "nosetests -v --with-doctest allel"
