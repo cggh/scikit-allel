@@ -202,11 +202,35 @@ def _check_axis(axis):
     elif isinstance(axis, (list, tuple)):
         return tuple(_check_axis(a) for a in axis)
     else:
-        raise ArgumentError('unexpected axis: %r' % axis)
+        raise ArgumentError('invalid axis: %r' % axis)
+
+
+def _check_allele(allele):
+    if allele is None:
+        return None
+    elif allele in {'ref', 'reference'}:
+        return 0
+    elif allele in {'alt', 'alternate'}:
+        return 1
+    elif isinstance(allele, int):
+        return allele
+    else:
+        raise ArgumentError('invalid allele: %r' % allele)
+
+
+def _check_alleles(alleles):
+    if alleles is None:
+        return None
+    elif isinstance(alleles, (tuple, list)):
+        return tuple(_check_allele(a) for a in alleles)
+    else:
+        raise ArgumentError('invalid alleles: %r' % alleles)
 
 
 def _check_ploidy(ploidy):
-    if ploidy == 'haploid':
+    if ploidy is None:
+        return None
+    elif ploidy == 'haploid':
         return HAPLOID
     elif ploidy == 'diploid':
         return DIPLOID
@@ -329,7 +353,7 @@ def is_hom(g, allele=None):
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
     allele : int, optional
-        If not None, find calls that are homozygous for the given allele.
+        Allele index.
 
     Returns
     -------
@@ -356,8 +380,9 @@ def is_hom(g, allele=None):
 
     """
 
-    # check input array
+    # check inputs
     g, ploidy = _check_genotype_array(g)
+    allele = _check_allele(allele)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -816,7 +841,38 @@ def to_haplotypes(g):
 
 
 def from_haplotypes(h, ploidy):
-    """TODO
+    """Reshape a haplotype array to view it as genotypes by restoring the
+    ploidy dimension.
+
+    Parameters
+    ----------
+
+    h : ndarray, int, shape (n_variants, n_samples * ploidy)
+        Haplotype array.
+    ploidy : int
+        The sample ploidy.
+
+    Returns
+    -------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> h = np.array([[0, 0, 0, 1],
+    ...               [0, 1, 1, 1],
+    ...               [0, 2, -1, -1]], dtype='i1')
+    >>> allel.gt.from_haplotypes(h, ploidy=2)
+    array([[[ 0,  0],
+            [ 0,  1]],
+           [[ 0,  1],
+            [ 1,  1]],
+           [[ 0,  2],
+            [-1, -1]]], dtype=int8)
 
     """
 
@@ -832,7 +888,6 @@ def from_haplotypes(h, ploidy):
     else:
         # reshape
         newshape = (h.shape[0], -1, ploidy)
-        print(newshape)
         g = h.reshape(newshape)
 
     return g
@@ -1195,7 +1250,7 @@ def allele_count(g, allele=1):
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
     allele : int, optional
-        The allele to count.
+        Allele index.
 
     Returns
     -------
@@ -1218,6 +1273,10 @@ def allele_count(g, allele=1):
 
     """
 
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    allele = _check_allele(allele)
+
     # transform
     h = to_haplotypes(g)
 
@@ -1234,7 +1293,7 @@ def allele_frequency(g, allele=1, fill=0):
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
     allele : int, optional
-        The allele to calculate frequency of.
+        Allele index.
     fill : int, optional
         The value to use where all genotype calls are missing for a variant.
 
@@ -1264,6 +1323,10 @@ def allele_frequency(g, allele=1, fill=0):
     array([ 0.  ,  0.25,  1.  ])
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    allele = _check_allele(allele)
 
     # intermediate variables
     an = allele_number(g)
@@ -1312,6 +1375,10 @@ def allele_counts(g, alleles=None):
            [0, 2]], dtype=int32)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    alleles = _check_alleles(alleles)
 
     # transform
     h = to_haplotypes(g)
@@ -1379,6 +1446,10 @@ def allele_frequencies(g, alleles=None, fill=0):
 
     """
 
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    alleles = _check_alleles(alleles)
+
     # intermediate variables
     an = allele_number(g)[:, None]
     ac = allele_counts(g, alleles=alleles)
@@ -1392,9 +1463,36 @@ def allele_frequencies(g, alleles=None, fill=0):
 
 
 def is_variant(g):
-    """TODO
+    """Find variants with at least one non-reference allele call.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants,)
+        Boolean array where elements are True if variant matches the condition.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [0, 1]],
+    ...               [[0, 2], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_variant(g)
+    array([False,  True,  True,  True], dtype=bool)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
 
     # transform
     h = to_haplotypes(g)
@@ -1406,9 +1504,36 @@ def is_variant(g):
 
 
 def is_non_variant(g):
-    """TODO
+    """Find variants with no non-reference allele calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants,)
+        Boolean array where elements are True if variant matches the condition.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [0, 1]],
+    ...               [[0, 2], [1, 1]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_non_variant(g)
+    array([ True, False, False, False], dtype=bool)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
 
     # transform
     h = to_haplotypes(g)
@@ -1420,9 +1545,36 @@ def is_non_variant(g):
 
 
 def is_segregating(g):
-    """TODO
+    """Find segregating variants (where more than one allele is observed).
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants,)
+        Boolean array where elements are True if variant matches the condition.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [0, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_segregating(g)
+    array([False,  True,  True, False], dtype=bool)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
 
     # count distinct alleles
     n_alleles = allelism(g)
@@ -1434,9 +1586,39 @@ def is_segregating(g):
 
 
 def is_non_segregating(g, allele=None):
-    """TODO
+    """Find non-segregating variants (where at most one allele is observed).
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        Allele index.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants,)
+        Boolean array where elements are True if variant matches the condition.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [0, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_non_segregating(g)
+    array([ True, False, False,  True], dtype=bool)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    allele = _check_allele(allele)
 
     if allele is None:
 
@@ -1458,9 +1640,41 @@ def is_non_segregating(g, allele=None):
 
 
 def is_singleton(g, allele=1):
-    """TODO
+    """Find variants with a single call for the given allele.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        Allele index.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants,)
+        Boolean array where elements are True if variant matches the condition.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [0, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_singleton(g, allele=1)
+    array([False,  True, False, False], dtype=bool)
+    >>> allel.gt.is_singleton(g, allele=2)
+    array([False, False,  True, False], dtype=bool)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    allele = _check_allele(allele)
 
     # count allele
     ac = allele_count(g, allele=allele)
@@ -1472,9 +1686,41 @@ def is_singleton(g, allele=1):
 
 
 def is_doubleton(g, allele=1):
-    """TODO
+    """Find variants with exactly two calls for the given allele.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        Allele index.
+
+    Returns
+    -------
+
+    out : ndarray, bool, shape (n_variants,)
+        Boolean array where elements are True if variant matches the condition.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [1, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> allel.gt.is_doubleton(g, allele=1)
+    array([False,  True, False, False], dtype=bool)
+    >>> allel.gt.is_doubleton(g, allele=2)
+    array([False, False, False,  True], dtype=bool)
 
     """
+
+    # check inputs
+    g, ploidy = _check_genotype_array(g)
+    allele = _check_allele(allele)
 
     # count allele
     ac = allele_count(g, allele=allele)
@@ -1486,7 +1732,19 @@ def is_doubleton(g, allele=1):
 
 
 def count_variant(g):
-    """TODO
+    """Count variants with at least one non-reference allele call.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    n : int
+        The number of variants matching the condition.
 
     """
 
@@ -1494,7 +1752,19 @@ def count_variant(g):
 
 
 def count_non_variant(g):
-    """TODO
+    """Count variants with no non-reference allele calls.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    n : int
+        The number of variants matching the condition.
 
     """
 
@@ -1502,7 +1772,19 @@ def count_non_variant(g):
 
 
 def count_segregating(g):
-    """TODO
+    """Count segregating variants (where more than one allele is observed).
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Returns
+    -------
+
+    n : int
+        The number of variants matching the condition.
 
     """
 
@@ -1510,7 +1792,21 @@ def count_segregating(g):
 
 
 def count_non_segregating(g, allele=None):
-    """TODO
+    """Count non-segregating variants (where at most one allele is observed).
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        Allele index.
+
+    Returns
+    -------
+
+    n : int
+        The number of variants matching the condition.
 
     """
 
@@ -1518,7 +1814,21 @@ def count_non_segregating(g, allele=None):
 
 
 def count_singleton(g, allele=1):
-    """TODO
+    """Count variants with a single call for the given allele.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        Allele index.
+
+    Returns
+    -------
+
+    n : int
+        The number of variants matching the condition.
 
     """
 
@@ -1526,7 +1836,21 @@ def count_singleton(g, allele=1):
 
 
 def count_doubleton(g, allele=1):
-    """TODO
+    """Count variants with exactly two calls for the given allele.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    allele : int, optional
+        Allele index.
+
+    Returns
+    -------
+
+    n : int
+        The number of variants matching the condition.
 
     """
 

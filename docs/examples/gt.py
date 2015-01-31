@@ -60,7 +60,7 @@ g = np.array([[[0, 0], [0, 1]],
 allel.gt.is_hom(g)
 
 
-# as_haplotypes()
+# to_haplotypes()
 #################
 
 import allel
@@ -71,8 +71,19 @@ g = np.array([[[0, 0], [0, 1]],
 allel.gt.to_haplotypes(g)
 
 
-# as_n_alt()
-#################
+# from_haplotypes()
+###################
+
+import allel
+import numpy as np
+h = np.array([[0, 0, 0, 1],
+              [0, 1, 1, 1],
+              [0, 2, -1, -1]], dtype='i1')
+allel.gt.from_haplotypes(h, ploidy=2)
+
+
+# to_n_alt()
+############
 
 import allel
 import numpy as np
@@ -82,7 +93,7 @@ g = np.array([[[0, 0], [0, 1]],
 allel.gt.to_n_alt(g)
 
 
-# as_allele_counts()
+# to_allele_counts()
 ####################
 
 import allel
@@ -94,8 +105,8 @@ allel.gt.to_allele_counts(g)
 allel.gt.to_allele_counts(g, alleles=(0, 1))
 
 
-# pack_diploid()
-################
+# to_packed()
+#############
 
 import allel
 import numpy as np
@@ -105,8 +116,8 @@ g = np.array([[[0, 0], [0, 1]],
 allel.gt.to_packed(g)
 
 
-# unpack_diploid()
-##################
+# from_packed()
+###############
 
 import allel
 import numpy as np
@@ -202,4 +213,77 @@ af
 af, ac, an = allel.gt.allele_frequencies(g, alleles=(1, 2))
 af
 
+
+# is_variant()
+##############
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_variant(g)
+
+
+# is_non_variant()
+##################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_non_variant(g)
+
+
+# is_segregating()
+##################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [0, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_segregating(g)
+
+
+# is_non_segregating()
+######################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [0, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_non_segregating(g)
+
+
+# is_singleton()
+################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [0, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_singleton(g, allele=1)
+allel.gt.is_singleton(g, allele=2)
+
+
+# is_doubleton()
+################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [1, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.is_doubleton(g, allele=1)
+allel.gt.is_doubleton(g, allele=2)
 
