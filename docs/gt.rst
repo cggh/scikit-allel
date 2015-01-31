@@ -24,11 +24,12 @@ Finding and counting calls
 Genotype transformations
 ------------------------
 
-.. autofunction:: as_haplotypes
-.. autofunction:: as_n_alt
-.. autofunction:: as_allele_counts
-.. autofunction:: pack_diploid
-.. autofunction:: unpack_diploid
+.. autofunction:: to_haplotypes
+.. autofunction:: from_haplotypes
+.. autofunction:: to_n_alt
+.. autofunction:: to_allele_counts
+.. autofunction:: to_packed
+.. autofunction:: from_packed
 
 Allele frequency calculations
 -----------------------------
