@@ -68,7 +68,7 @@ import numpy as np
 g = np.array([[[0, 0], [0, 1]],
               [[0, 1], [1, 1]],
               [[0, 2], [-1, -1]]], dtype='i1')
-allel.gt.as_haplotypes(g)
+allel.gt.to_haplotypes(g)
 
 
 # as_n_alt()
@@ -79,7 +79,7 @@ import numpy as np
 g = np.array([[[0, 0], [0, 1]],
               [[0, 2], [1, 1]],
               [[2, 2], [-1, -1]]], dtype='i1')
-allel.gt.as_n_alt(g)
+allel.gt.to_n_alt(g)
 
 
 # as_allele_counts()
@@ -90,8 +90,8 @@ import numpy as np
 g = np.array([[[0, 0], [0, 1]],
               [[0, 2], [1, 1]],
               [[2, 2], [-1, -1]]], dtype='i1')
-allel.gt.as_allele_counts(g)
-allel.gt.as_allele_counts(g, alleles=(0, 1))
+allel.gt.to_allele_counts(g)
+allel.gt.to_allele_counts(g, alleles=(0, 1))
 
 
 # pack_diploid()
@@ -102,7 +102,7 @@ import numpy as np
 g = np.array([[[0, 0], [0, 1]],
               [[0, 2], [1, 1]],
               [[2, 2], [-1, -1]]], dtype='i1')
-allel.gt.pack_diploid(g)
+allel.gt.to_packed(g)
 
 
 # unpack_diploid()
@@ -113,7 +113,7 @@ import numpy as np
 packed = np.array([[0, 1],
                    [2, 17],
                    [34, 239]], dtype='u1')
-allel.gt.unpack_diploid(packed)
+allel.gt.from_packed(packed)
 
 
 # max_allele()
@@ -127,3 +127,79 @@ g = np.array([[[0, 0], [0, 1]],
 allel.gt.max_allele(g)
 allel.gt.max_allele(g, axis=(0, 2))
 allel.gt.max_allele(g, axis=(1, 2))
+
+
+# allelism()
+############
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.allelism(g)
+
+
+# allele_number()
+#################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.allele_number(g)
+
+
+# allele_count()
+################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.allele_count(g, allele=1)
+allel.gt.allele_count(g, allele=2)
+
+
+# allele_frequency()
+####################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+af, ac, an = allel.gt.allele_frequency(g, allele=1)
+af
+af, ac, an = allel.gt.allele_frequency(g, allele=2)
+af
+
+
+# allele_counts()
+#################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+allel.gt.allele_counts(g)
+allel.gt.allele_counts(g, alleles=(1, 2))
+
+
+# allele_frequencies()
+######################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 1]],
+              [[0, 2], [1, 1]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+af, ac, an = allel.gt.allele_frequencies(g)
+af
+af, ac, an = allel.gt.allele_frequencies(g, alleles=(1, 2))
+af
+
+

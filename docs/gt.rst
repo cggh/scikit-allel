@@ -26,7 +26,6 @@ Genotype transformations
 
 .. autofunction:: as_haplotypes
 .. autofunction:: as_n_alt
-.. autofunction:: as_012
 .. autofunction:: as_allele_counts
 .. autofunction:: pack_diploid
 .. autofunction:: unpack_diploid

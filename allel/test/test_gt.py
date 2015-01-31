@@ -411,8 +411,8 @@ def test_count_call():
 ################################
 
 
-def test_as_haplotypes():
-    f = allel.gt.as_haplotypes
+def test_to_haplotypes():
+    f = allel.gt.to_haplotypes
 
     # haploid
     expect = g_haploid
@@ -437,8 +437,36 @@ def test_as_haplotypes():
     aeq(expect, actual)
 
 
-def test_as_n_alt():
-    f = allel.gt.as_n_alt
+def test_from_haplotypes():
+    f = allel.gt.from_haplotypes
+
+    # haploid
+    expect = g_haploid
+    actual = f(g_haploid, ploidy=1)
+    aeq(expect, actual)
+
+    # diploid
+    h_diploid = np.array([[0, 0, 0, 1, -1, -1],
+                          [0, 2, 1, 1, -1, -1],
+                          [1, 0, 2, 1, -1, -1],
+                          [2, 2, -1, -1, -1, -1],
+                          [-1, -1, -1, -1, -1, -1]], dtype='i1')
+    expect = g_diploid
+    actual = f(h_diploid, ploidy=2)
+    aeq(expect, actual)
+
+    # polyploidy
+    h_triploid = np.array([[0, 0, 0, 0, 0, 1, -1, -1, -1],
+                           [0, 1, 1, 1, 1, 1, -1, -1, -1],
+                           [0, 1, 2, -1, -1, -1, -1, -1, -1],
+                           [-1, -1, -1, -1, -1, -1, -1, -1, -1]], dtype='i1')
+    expect = g_triploid
+    actual = f(h_triploid, ploidy=3)
+    aeq(expect, actual)
+
+
+def test_to_n_alt():
+    f = allel.gt.to_n_alt
 
     # haploid
     expect = np.array([[0, 1, 0],
@@ -466,8 +494,8 @@ def test_as_n_alt():
     aeq(expect, actual)
 
 
-def test_as_n_alt_fill():
-    f = allel.gt.as_n_alt
+def test_to_n_alt_fill():
+    f = allel.gt.to_n_alt
 
     # haploid
     expect = np.array([[0, 1, -1],
@@ -495,8 +523,8 @@ def test_as_n_alt_fill():
     aeq(expect, actual)
 
 
-def test_as_allele_counts():
-    f = allel.gt.as_allele_counts
+def test_to_allele_counts():
+    f = allel.gt.to_allele_counts
 
     # haploid
     expect = np.array([[[1, 0, 0], [0, 1, 0], [0, 0, 0]],
@@ -524,18 +552,18 @@ def test_as_allele_counts():
     aeq(expect, actual)
 
 
-def test_pack_diploid():
+def test_to_packed():
 
     expect = np.array([[0, 1, 239],
                        [2, 17, 239],
                        [16, 33, 239],
                        [34, 239, 239],
                        [239, 239, 239]], dtype='u1')
-    actual = allel.gt.pack_diploid(g_diploid)
+    actual = allel.gt.to_packed(g_diploid)
     aeq(expect, actual)
 
 
-def test_unpack_diploid():
+def test_from_packed():
 
     g_diploid_packed = np.array([[0, 1, 239],
                                  [2, 17, 239],
@@ -543,7 +571,7 @@ def test_unpack_diploid():
                                  [34, 239, 239],
                                  [239, 239, 239]], dtype='u1')
     expect = g_diploid
-    actual = allel.gt.unpack_diploid(g_diploid_packed)
+    actual = allel.gt.from_packed(g_diploid_packed)
     aeq(expect, actual)
 
 
@@ -582,13 +610,19 @@ def test_allelism():
     f = allel.gt.allelism
 
     # haploid
-    # TODO
+    expect = np.array([2, 1, 1, 0])
+    actual = f(g_haploid)
+    aeq(expect, actual)
 
     # diploid
-    # TODO
+    expect = np.array([2, 3, 3, 1, 0])
+    actual = f(g_diploid)
+    aeq(expect, actual)
 
     # triploid
-    # TODO
+    expect = np.array([2, 2, 3, 0])
+    actual = f(g_triploid)
+    aeq(expect, actual)
 
 
 def test_allele_number():
@@ -666,17 +700,233 @@ def test_allele_frequency():
     aeq(expect, actual)
 
 
-# TODO def test_allele_counts()
-# TODO def test_allele_frequencies()
-# TODO def test_is_variant()
-# TODO def test_is_non_variant()
-# TODO def test_is_segregating()
-# TODO def test_is_non_segregating()
-# TODO def test_is_singleton()
-# TODO def test_is_doubleton()
-# TODO def test_count_variant()
-# TODO def test_count_non_variant()
-# TODO def test_count_segregating()
-# TODO def test_count_non_segregating()
-# TODO def test_count_singleton()
-# TODO def test_count_doubleton()
+def test_allele_counts():
+    f = allel.gt.allele_counts
+
+    # haploid
+    expect = np.array([[1, 1, 0],
+                       [0, 2, 0],
+                       [0, 0, 1],
+                       [0, 0, 0]])
+    actual = f(g_haploid)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([[3, 1, 0],
+                       [1, 2, 1],
+                       [1, 2, 1],
+                       [0, 0, 2],
+                       [0, 0, 0]])
+    actual = f(g_diploid)
+    aeq(expect, actual)
+
+    # triploid
+    expect = np.array([[5, 1, 0],
+                       [1, 5, 0],
+                       [1, 1, 1],
+                       [0, 0, 0]])
+    actual = f(g_triploid)
+    aeq(expect, actual)
+
+
+def test_allele_frequencies():
+    f = allel.gt.allele_frequencies
+
+    # haploid
+    expect = np.array([[1/2, 1/2, 0/2],
+                       [0/2, 2/2, 0/2],
+                       [0/1, 0/1, 1/1],
+                       [0, 0, 0]])
+    actual, _, _ = f(g_haploid)
+    aeq(expect, actual)
+
+    # diploid
+    expect = np.array([[3/4, 1/4, 0/4],
+                       [1/4, 2/4, 1/4],
+                       [1/4, 2/4, 1/4],
+                       [0/2, 0/2, 2/2],
+                       [0, 0, 0]])
+    actual, _, _ = f(g_diploid)
+    aeq(expect, actual)
+
+    # triploid
+    expect = np.array([[5/6, 1/6, 0/6],
+                       [1/6, 5/6, 0/6],
+                       [1/3, 1/3, 1/3],
+                       [0, 0, 0]])
+    actual, _, _ = f(g_triploid)
+    aeq(expect, actual)
+
+
+def test_is_count_variant():
+    f = allel.gt.is_variant
+    c = allel.gt.count_variant
+
+    # haploid
+    expect = np.array([1, 1, 1, 0], dtype='b1')
+    actual = f(g_haploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid))
+
+    # diploid
+    expect = np.array([1, 1, 1, 1, 0], dtype='b1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid))
+
+    # triploid
+    expect = np.array([1, 1, 1, 0], dtype='b1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid))
+
+
+def test_is_count_non_variant():
+    f = allel.gt.is_non_variant
+    c = allel.gt.count_non_variant
+
+    # haploid
+    expect = np.array([0, 0, 0, 1], dtype='b1')
+    actual = f(g_haploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid))
+
+    # diploid
+    expect = np.array([0, 0, 0, 0, 1], dtype='b1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid))
+
+    # triploid
+    expect = np.array([0, 0, 0, 1], dtype='b1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid))
+
+
+def test_is_count_segregating():
+    f = allel.gt.is_segregating
+    c = allel.gt.count_segregating
+
+    # haploid
+    expect = np.array([1, 0, 0, 0], dtype='b1')
+    actual = f(g_haploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid))
+
+    # diploid
+    expect = np.array([1, 1, 1, 0, 0], dtype='b1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid))
+
+    # triploid
+    expect = np.array([1, 1, 1, 0], dtype='b1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid))
+
+
+def test_is_count_non_segregating():
+    f = allel.gt.is_non_segregating
+    c = allel.gt.count_non_segregating
+
+    # haploid
+    expect = np.array([0, 1, 1, 1], dtype='b1')
+    actual = f(g_haploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid))
+    expect = np.array([0, 0, 1, 1], dtype='b1')
+    actual = f(g_haploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid, allele=2))
+
+    # diploid
+    expect = np.array([0, 0, 0, 1, 1], dtype='b1')
+    actual = f(g_diploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid))
+    expect = np.array([0, 0, 0, 1, 1], dtype='b1')
+    actual = f(g_diploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid, allele=2))
+
+    # triploid
+    expect = np.array([0, 0, 0, 1], dtype='b1')
+    actual = f(g_triploid)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid))
+    expect = np.array([0, 0, 0, 1], dtype='b1')
+    actual = f(g_triploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid, allele=2))
+
+
+def test_is_count_singleton():
+    f = allel.gt.is_singleton
+    c = allel.gt.count_singleton
+
+    # haploid
+    expect = np.array([1, 0, 0, 0], dtype='b1')
+    actual = f(g_haploid, allele=1)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid, allele=1))
+    expect = np.array([0, 0, 1, 0], dtype='b1')
+    actual = f(g_haploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid, allele=2))
+
+    # diploid
+    expect = np.array([1, 0, 0, 0, 0], dtype='b1')
+    actual = f(g_diploid, allele=1)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid, allele=1))
+    expect = np.array([0, 1, 1, 0, 0], dtype='b1')
+    actual = f(g_diploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid, allele=2))
+
+    # triploid
+    expect = np.array([1, 0, 1, 0], dtype='b1')
+    actual = f(g_triploid, allele=1)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid, allele=1))
+    expect = np.array([0, 0, 1, 0], dtype='b1')
+    actual = f(g_triploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid, allele=2))
+
+
+def test_is_count_doubleton():
+    f = allel.gt.is_doubleton
+    c = allel.gt.count_doubleton
+
+    # haploid
+    expect = np.array([0, 1, 0, 0], dtype='b1')
+    actual = f(g_haploid, allele=1)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid, allele=1))
+    expect = np.array([0, 0, 0, 0], dtype='b1')
+    actual = f(g_haploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_haploid, allele=2))
+
+    # diploid
+    expect = np.array([0, 1, 1, 0, 0], dtype='b1')
+    actual = f(g_diploid, allele=1)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid, allele=1))
+    expect = np.array([0, 0, 0, 1, 0], dtype='b1')
+    actual = f(g_diploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_diploid, allele=2))
+
+    # triploid
+    expect = np.array([0, 0, 0, 0], dtype='b1')
+    actual = f(g_triploid, allele=1)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid, allele=1))
+    expect = np.array([0, 0, 0, 0], dtype='b1')
+    actual = f(g_triploid, allele=2)
+    aeq(expect, actual)
+    eq(np.sum(expect), c(g_triploid, allele=2))

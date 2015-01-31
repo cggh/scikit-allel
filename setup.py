@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 from ast import literal_eval
+from setuptools import setup, Extension
 
 
 DISTNAME = 'scikit-allel'
@@ -64,8 +65,6 @@ def setup_extensions(metadata):
         pass
     else:
 
-        from distutils.extension import Extension
-
         # check for cython
         try:
             # build with cython
@@ -98,18 +97,11 @@ def setup_package():
         download_url=DOWNLOAD_URL,
         version=VERSION,
         package_dir={'': '.'},
-        packages=['allele', 'allele.test'],
+        packages=['allel', 'allel.opt', 'allel.test'],
         classifiers=CLASSIFIERS,
+        install_requires=INSTALL_REQUIRES,
     )
     setup_extensions(metadata)
-
-    try:
-        from setuptools import setup
-        metadata['install_requires'] = INSTALL_REQUIRES
-
-    except ImportError:
-        from distutils.core import setup
-
     setup(**metadata)
 
 
