@@ -57,9 +57,8 @@ Allele frequency calculations
 Windowed genotype calculations
 ------------------------------
 
-.. autofunction:: windowed_genotype_counts
-.. autofunction:: windowed_genotype_density
-.. autofunction:: windowed_genotype_rate
+.. autofunction:: windowed_call_counts
+.. autofunction:: windowed_call_density
 
 Plotting functions
 ------------------
@@ -70,6 +69,6 @@ Plotting functions
 .. autofunction:: plot_genotype_counts_by_sample
 .. autofunction:: plot_genotype_counts_by_variant
 .. autofunction:: plot_continuous_calldata_by_sample
-.. autofunction:: plot_windowed_genotype_counts
-.. autofunction:: plot_windowed_genotype_density
-.. autofunction:: plot_windowed_genotype_rate
+.. autofunction:: plot_windowed_call_counts
+.. autofunction:: plot_windowed_call_density
+.. autofunction:: plot_windowed_call_rate

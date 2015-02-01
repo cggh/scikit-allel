@@ -930,3 +930,7 @@ def test_is_count_doubleton():
     actual = f(g_triploid, allele=2)
     aeq(expect, actual)
     eq(np.sum(expect), c(g_triploid, allele=2))
+
+
+# TODO test_windowed_call_count
+# TODO test_windowed_call_density

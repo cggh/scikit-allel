@@ -568,7 +568,7 @@ def is_call(g, call):
 
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
-    call : int (haploid) or array_like, int, shape (ploidy,)
+    call : int or array_like, int, shape (ploidy,)
         The genotype call to find.
 
     Returns
@@ -639,7 +639,7 @@ def count_missing(g, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -661,7 +661,7 @@ def count_called(g, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -685,7 +685,7 @@ def count_hom(g, allele=None, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -707,7 +707,7 @@ def count_hom_ref(g, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -729,7 +729,7 @@ def count_hom_alt(g, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -751,7 +751,7 @@ def count_het(g, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -775,7 +775,7 @@ def count_call(g, call, axis=None):
     Returns
     -------
 
-    count : int or ndarray
+    count : int or ndarray, int
         Number of matching genotype calls.
 
     """
@@ -847,7 +847,7 @@ def from_haplotypes(h, ploidy):
     Parameters
     ----------
 
-    h : ndarray, int, shape (n_variants, n_samples * ploidy)
+    h : array_like, int, shape (n_variants, n_samples * ploidy)
         Haplotype array.
     ploidy : int
         The sample ploidy.
@@ -855,7 +855,7 @@ def from_haplotypes(h, ploidy):
     Returns
     -------
 
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
+    g : ndarray, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
 
     Examples
