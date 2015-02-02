@@ -355,3 +355,34 @@ densities, counts, bin_edges = allel.gt.windowed_density(
 bin_edges
 counts
 densities
+
+
+# to_sparse()
+#############
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 1], [0, 1]],
+              [[1, 1], [0, 0]],
+              [[0, 0], [-1, -1]]], dtype='i1')
+m = allel.gt.to_sparse(g, format='csr')
+m
+m.data
+m.indices
+m.indptr
+
+
+# from_sparse()
+###############
+
+import allel
+import numpy as np
+import scipy.sparse
+data = np.array([ 1,  1,  1,  1, -1, -1], dtype=np.int8)
+indices = np.array([1, 3, 0, 1, 2, 3], dtype=np.int32)
+indptr = np.array([0, 0, 2, 4, 6], dtype=np.int32)
+m = scipy.sparse.csr_matrix((data, indices, indptr))
+g = allel.gt.from_sparse(m, ploidy=2)
+g
+

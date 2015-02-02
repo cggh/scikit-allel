@@ -23,6 +23,8 @@ Genotype transformations
 .. autofunction:: to_allele_counts
 .. autofunction:: to_packed
 .. autofunction:: from_packed
+.. autofunction:: to_sparse
+.. autofunction:: from_sparse
 
 Allele frequency calculations
 -----------------------------

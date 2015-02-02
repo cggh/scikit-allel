@@ -972,7 +972,7 @@ def from_packed(packed):
     Returns
     -------
 
-    g : array_like, int, shape (n_variants, n_samples, 2)
+    g : ndarray, int, shape (n_variants, n_samples, 2)
         Genotype array.
 
     Examples
@@ -1004,10 +1004,135 @@ def from_packed(packed):
     return g
 
 
-# TODO to_csr
-# TODO from_csr
-# TODO to_csc
-# TODO from_csc
+def to_sparse(g, format='csr', **kwargs):
+    """Convenience function to convert a genotype array into a sparse matrix.
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    format : {'coo', 'csc', 'csr', 'dia', 'dok', 'lil'}
+        Sparse matrix format.
+    kwargs : keyword arguments
+        Passed through to sparse matrix constructor.
+
+    Returns
+    -------
+
+    m : scipy.sparse.spmatrix
+        Sparse matrix
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 1], [0, 1]],
+    ...               [[1, 1], [0, 0]],
+    ...               [[0, 0], [-1, -1]]], dtype='i1')
+    >>> m = allel.gt.to_sparse(g, format='csr')
+    >>> m
+    <4x4 sparse matrix of type '<class 'numpy.int8'>'
+        with 6 stored elements in Compressed Sparse Row format>
+    >>> m.data
+    array([ 1,  1,  1,  1, -1, -1], dtype=int8)
+    >>> m.indices
+    array([1, 3, 0, 1, 2, 3], dtype=int32)
+    >>> m.indptr
+    array([0, 0, 2, 4, 6], dtype=int32)
+
+    """
+
+    import scipy.sparse
+
+    # check inputs
+    g, _ = _check_genotype_array(g)
+    f = {
+        'bsr': scipy.sparse.bsr_matrix,
+        'coo': scipy.sparse.coo_matrix,
+        'csc': scipy.sparse.csc_matrix,
+        'csr': scipy.sparse.csr_matrix,
+        'dia': scipy.sparse.dia_matrix,
+        'dok': scipy.sparse.dok_matrix,
+        'lil': scipy.sparse.lil_matrix
+    }
+    if format not in f:
+        raise ArgumentError('invalid format: %r' % format)
+
+    # convert to haplotypes to obtain dense 2D matrix
+    h = to_haplotypes(g)
+
+    # create sparse matrix
+    m = f[format](h, **kwargs)
+
+    return m
+
+
+def from_sparse(m, ploidy=None, order=None, out=None):
+    """Construct a genotype array from a sparse matrix.
+
+    Parameters
+    ----------
+
+    m : scipy.sparse.spmatrix
+        Sparse matrix
+    ploidy : int, optional
+        The sample ploidy.
+    order : {'C', 'F'}, optional
+        Whether to store data in C (row-major) or Fortran (column-major)
+        order in memory.
+    out : ndarray, shape (n_variants, n_samples), optional
+        Use this array as the output buffer.
+
+    Returns
+    -------
+
+    g : ndarray, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> import scipy.sparse
+    >>> data = np.array([ 1,  1,  1,  1, -1, -1], dtype=np.int8)
+    >>> indices = np.array([1, 3, 0, 1, 2, 3], dtype=np.int32)
+    >>> indptr = np.array([0, 0, 2, 4, 6], dtype=np.int32)
+    >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
+    >>> g = allel.gt.from_sparse(m, ploidy=2)
+    >>> g
+    array([[[ 0,  0],
+            [ 0,  0]],
+           [[ 0,  1],
+            [ 0,  1]],
+           [[ 1,  1],
+            [ 0,  0]],
+           [[ 0,  0],
+            [-1, -1]]], dtype=int8)
+
+    """
+
+    import scipy.sparse
+
+    # check inputs
+    ploidy = _check_ploidy(ploidy)
+    if not scipy.sparse.isspmatrix(m):
+        raise ArgumentError('not a sparse matrix: %r' % m)
+
+    # convert to dense array
+    h = m.toarray(order=order, out=out)
+
+    # restore ploidy dimension
+    if ploidy is not None:
+        g = from_haplotypes(h, ploidy)
+    else:
+        # return as-is
+        g = h
+
+    return g
 
 
 ###############################
