@@ -1,4 +1,4 @@
-Genotype arrays (:mod:`allel.gt`)
+Genotype arrays - :mod:`allel.gt`
 =================================
 
 .. automodule:: allel.gt
