@@ -1,6 +1,0 @@
-numpy
-scipy
-numexpr
-h5py
-nose
-flake8
