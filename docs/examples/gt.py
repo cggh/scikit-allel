@@ -287,3 +287,71 @@ g = np.array([[[0, 0], [0, 0]],
 allel.gt.is_doubleton(g, allele=1)
 allel.gt.is_doubleton(g, allele=2)
 
+
+# count()
+#########
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 0], [1, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+b = allel.gt.is_called(g)
+allel.gt.count(b)
+allel.gt.count(b, axis='variants')
+allel.gt.count(b, axis='samples')
+b = allel.gt.is_variant(g)
+allel.gt.count(b)
+
+
+# windowed_count()
+##################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 1], [0, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+pos = np.array([2, 14, 15, 27])
+b = allel.gt.is_variant(g)
+counts, bin_edges = allel.gt.windowed_count(pos, b, window=10)
+bin_edges
+counts
+counts, bin_edges = allel.gt.windowed_count(pos, b, window=10,
+                                            start=1,
+                                            stop=27)
+bin_edges
+counts
+b = allel.gt.is_het(g)
+counts, bin_edges = allel.gt.windowed_count(pos, b, window=10)
+bin_edges
+counts
+
+
+# windowed_density()
+####################
+
+import allel
+import numpy as np
+g = np.array([[[0, 0], [0, 0]],
+              [[0, 1], [0, 1]],
+              [[1, 1], [1, 2]],
+              [[2, 2], [-1, -1]]], dtype='i1')
+pos = np.array([1, 14, 15, 27])
+b = allel.gt.is_variant(g)
+densities, counts, bin_edges = allel.gt.windowed_density(pos, b,
+                                                         window=10)
+bin_edges
+counts
+densities
+is_accessible = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=bool)
+densities, counts, bin_edges = allel.gt.windowed_density(
+    pos, b, window=10, is_accessible=is_accessible, fill=np.nan
+)
+bin_edges
+counts
+densities

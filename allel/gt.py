@@ -129,6 +129,17 @@ two dimensions then it contains haploid calls.
 Note that genotype arrays are not capable of storing calls for samples with
 differing or variable ploidy.
 
+Variant positions
+~~~~~~~~~~~~~~~~~
+
+Some functions in this module require a positions array to be provided. A
+positions array is an array of integers corresponding to the genomic positions
+of variants within a single chromosome or contig. All values in a
+positions array must be given in increasing order, i.e., it is assumed that
+variants are ordered according to their genomic position.
+
+**N.B., it is assumed that all positions are given using 1-based coordinates.**
+
 """
 
 
@@ -186,6 +197,34 @@ def _check_haplotype_array(h):
         raise ArgumentError('expected 2 dimensions, found %s' % h.ndim)
 
     return h
+
+
+def _check_boolean_array(b):
+
+    # ensure we have a numpy boolean array
+    b = np.asarray(b).view(dtype='b1')
+
+    # check dimensionality
+    if b.ndim not in {1, 2}:
+        raise ArgumentError('expected 1 or 2 dimensions, found %s' % b.ndim)
+
+    return b
+
+
+def _check_pos_array(pos):
+
+    # ensure we have a numpy array
+    pos = np.asarray(pos)
+
+    # check dimensionality
+    if pos.ndim != 1:
+        raise ArgumentError('expected one dimension, found %s' % pos.ndim)
+
+    # check positions are sorted
+    if np.any(np.diff(pos) < 0):
+        raise ArgumentError('array is not sorted')
+
+    return pos
 
 
 def _check_axis(axis):
@@ -620,169 +659,6 @@ def is_call(g, call):
     return out
 
 
-def _count_true(a, axis):
-    axis = _check_axis(axis)
-    return np.sum(a, axis=axis)
-
-
-def count_missing(g, axis=None):
-    """Count missing genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_missing(g), axis)
-
-
-def count_called(g, axis=None):
-    """Count non-missing genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_called(g), axis)
-
-
-def count_hom(g, allele=None, axis=None):
-    """Count homozygous genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    allele : int, optional
-        If not None, find calls that are homozygous for the given allele.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_hom(g, allele=allele), axis)
-
-
-def count_hom_ref(g, axis=None):
-    """Count homozygous reference genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_hom_ref(g), axis)
-
-
-def count_hom_alt(g, axis=None):
-    """Count homozygous alternate genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_hom_alt(g), axis)
-
-
-def count_het(g, axis=None):
-    """Count heterozygous genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_het(g), axis)
-
-
-def count_call(g, call, axis=None):
-    """Count genotype calls.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    call : int (haploid) or array_like, int, shape (ploidy,)
-        The genotype call to find.
-    axis : int, optional
-        If not None, sum over the given axis (0=variants, 1=samples).
-
-    Returns
-    -------
-
-    count : int or ndarray, int
-        Number of matching genotype calls.
-
-    """
-
-    return _count_true(is_call(g, call), axis)
-
-
 ################################
 # Genotype array transformations
 ################################
@@ -944,7 +820,7 @@ def to_n_alt(g, fill=0):
 
     # special case haploid
     if ploidy == HAPLOID:
-        out = np.asarray(g > 0).astype('i1')
+        out = np.asarray(g > 0).view(dtype='i1')
 
     else:
         # count number of alternate alleles
@@ -1073,8 +949,8 @@ def to_packed(g, boundscheck=True):
         if amn < -1:
             raise ArgumentError('min allele for packing is -1, found %s' % amn)
 
-    from allel.opt.gt import pack_diploid as _pack_diploid
-    packed = _pack_diploid(g.astype('i1'))
+    from allel.opt.gt import pack_diploid
+    packed = pack_diploid(g.view(dtype='i1'))
 
     return packed
 
@@ -1117,8 +993,8 @@ def from_packed(packed):
     if packed.ndim != 2:
         raise ArgumentError('expected 2 dimensions, found: %s' % packed.ndim)
 
-    from allel.opt.gt import unpack_diploid as _unpack_diploid
-    g = _unpack_diploid(packed.astype('u1'))
+    from allel.opt.gt import unpack_diploid
+    g = unpack_diploid(packed.view(dtype='u1'))
 
     return g
 
@@ -1731,151 +1607,254 @@ def is_doubleton(g, allele=1):
     return out
 
 
-def count_variant(g):
-    """Count variants with at least one non-reference allele call.
+####################
+# Counting functions
+####################
+
+
+def count(b, axis=None):
+    """Count nonzero (i.e., True) elements, optionally along the given axis.
 
     Parameters
     ----------
 
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
+    b : array_like, bool, shape (n_variants, n_samples) or (n_variants,)
+        Boolean array.
+    axis : int, optional
+        If not None, count along the given axis (0=variants, 1=samples).
 
     Returns
     -------
 
-    n : int
-        The number of variants matching the condition.
+    count : int or ndarray, int
+        Number of nonzero elements.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 0], [1, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> b = allel.gt.is_called(g)
+    >>> allel.gt.count(b)
+    7
+    >>> allel.gt.count(b, axis='variants')
+    array([4, 3])
+    >>> allel.gt.count(b, axis='samples')
+    array([2, 2, 2, 1])
+    >>> b = allel.gt.is_variant(g)
+    >>> allel.gt.count(b)
+    3
 
     """
 
-    return np.sum(is_variant(g))
+    # check inputs
+    b = _check_boolean_array(b)
+    axis = _check_axis(axis)
+
+    return np.sum(b, axis=axis)
 
 
-def count_non_variant(g):
-    """Count variants with no non-reference allele calls.
+def windowed_count(pos, b, window, start=None, stop=None):
+    """Count nonzero (i.e., True) elements in non-overlapping windows over a
+    single chromosome or contig.
 
     Parameters
     ----------
 
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
+    pos : array_like, int, shape (n_variants,)
+        Positions array.
+    b : array_like, bool, shape (n_variants,) or (n_variants, n_samples)
+        Boolean array.
+    window : int
+        Window size.
+    start : int, optional
+        Start position.
+    stop : int, optional
+        Stop position.
 
     Returns
     -------
 
-    n : int
-        The number of variants matching the condition.
+    counts : ndarray, int, shape (n_bins,) or (n_bins, n_samples)
+        Counts array.
+    bin_edges : ndarray, int, shape (n_bins,)
+        Bin edges used for counting.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 1], [0, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> pos = np.array([2, 14, 15, 27])
+    >>> b = allel.gt.is_variant(g)
+    >>> counts, bin_edges = allel.gt.windowed_count(pos, b, window=10)
+    >>> bin_edges
+    array([ 2, 12, 22, 32])
+    >>> counts
+    array([0, 2, 1])
+    >>> counts, bin_edges = allel.gt.windowed_count(pos, b, window=10,
+    ...                                             start=1,
+    ...                                             stop=27)
+    >>> bin_edges
+    array([ 1, 11, 21, 27])
+    >>> counts
+    array([0, 2, 1])
+    >>> b = allel.gt.is_het(g)
+    >>> counts, bin_edges = allel.gt.windowed_count(pos, b, window=10)
+    >>> bin_edges
+    array([ 2, 12, 22, 32])
+    >>> counts
+    array([[0, 0],
+           [1, 2],
+           [0, 0]])
 
     """
 
-    return np.sum(is_non_variant(g))
+    # check inputs
+    pos = _check_pos_array(pos)
+    b = _check_boolean_array(b)
+    if pos.shape[0] != b.shape[0]:
+        raise ArgumentError('arrays do not have matching length for first '
+                            'dimension: pos %s, b %s' % (pos.shape[0],
+                                                         b.shape[0]))
+
+    # determine bin edges
+    bin_start = np.amin(pos) if start is None else start
+    bin_stop = np.amax(pos) if stop is None else stop
+    bin_edges = np.arange(bin_start, bin_stop, window)
+    if stop is None and bin_edges[-1] < bin_stop:
+        # add one more window to ensure stop is included
+        bin_edges = np.append(bin_edges, bin_edges[-1] + window)
+    elif stop is not None and bin_edges[-1] < bin_stop:
+        # add one more window to ensure explicit stop is final edge
+        bin_edges = np.append(bin_edges, stop)
+
+    if b.ndim == 1:
+        pos_incl = np.compress(b, pos)
+        counts, _ = np.histogram(pos_incl, bins=bin_edges)
+
+    else:
+        # assume 2D
+        n_bins = len(bin_edges) - 1
+        n_samples = b.shape[1]
+        counts = np.empty((n_bins, n_samples), dtype=int)
+        for i in range(n_samples):
+            pos_incl = np.compress(b[:, i], pos)
+            h, _ = np.histogram(pos_incl, bins=bin_edges)
+            counts[:, i] = h
+
+    return counts, bin_edges
 
 
-def count_segregating(g):
-    """Count segregating variants (where more than one allele is observed).
+def windowed_density(pos, b, window, start=None, stop=None,
+                     is_accessible=None, fill=0):
+    """Calculate the per-base-pair density of nonzero (i.e., True) elements in
+    non-overlapping windows over a single chromosome or contig.
 
     Parameters
     ----------
 
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
+    pos : array_like, int, shape (n_variants,)
+        Positions array.
+    b : array_like, bool, shape (n_variants,) or (n_variants, n_samples)
+        Boolean array.
+    window : int
+        Window size.
+    start : int, optional
+        Start position.
+    stop : int, optional
+        Stop position.
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Accessibility mask. If provided, the size of each window will be
+        calculated as the number of accessible positions, rather than the
+        window size.
 
     Returns
     -------
 
-    n : int
-        The number of variants matching the condition.
+    densities : ndarray, int, shape (n_bins,) or (n_bins, n_samples)
+        Densities array.
+    counts : ndarray, int, shape (n_bins,) or (n_bins, n_samples)
+        Counts array.
+    bin_edges : ndarray, int, shape (n_bins,)
+        Bin edges used for counting.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = np.array([[[0, 0], [0, 0]],
+    ...               [[0, 1], [0, 1]],
+    ...               [[1, 1], [1, 2]],
+    ...               [[2, 2], [-1, -1]]], dtype='i1')
+    >>> pos = np.array([1, 14, 15, 27])
+    >>> b = allel.gt.is_variant(g)
+    >>> densities, counts, bin_edges = allel.gt.windowed_density(pos, b,
+    ...                                                          window=10)
+    >>> bin_edges
+    array([ 1, 11, 21, 31])
+    >>> counts
+    array([0, 2, 1])
+    >>> densities
+    array([ 0.        ,  0.2       ,  0.09090909])
+    >>> # Density calculations can take into account the number of accessible
+    ... # positions within each window, e.g.:
+    ... is_accessible = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ...                           1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+    ...                           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=bool)
+    >>> densities, counts, bin_edges = allel.gt.windowed_density(
+    ...     pos, b, window=10, is_accessible=is_accessible, fill=np.nan
+    ... )
+    >>> bin_edges
+    array([ 1, 11, 21, 31])
+    >>> counts
+    array([0, 2, 1])
+    >>> densities
+    array([        nan,  0.33333333,  0.09090909])
 
     """
 
-    return np.sum(is_segregating(g))
+    counts, bin_edges = windowed_count(pos, b, window, start=start, stop=stop)
+
+    # determine window sizes (i.e., bin widths)
+    if is_accessible is None:
+        # assume all genome positions are accessible
+        bin_widths = np.diff(bin_edges)
+        # final bin includes right edge
+        bin_widths[-1] += 1
+    else:
+        is_accessible = np.asarray(is_accessible)
+        if is_accessible.ndim != 1:
+            raise ArgumentError('expected 1 dimension, found %s' %
+                                is_accessible.ndim)
+        pos_accessible, = np.nonzero(is_accessible)
+        # convert to 1-based coordinates
+        pos_accessible += 1
+        bin_widths, _ = np.histogram(pos_accessible, bins=bin_edges)
+
+    if counts.ndim > 1:
+        bin_widths = bin_widths[:, None]
+
+    # calculate densities
+    err = np.seterr(invalid='ignore')
+    densities = np.where(bin_widths > 0, counts / bin_widths, fill)
+    np.seterr(**err)
+
+    return densities, counts, bin_edges
 
 
-def count_non_segregating(g, allele=None):
-    """Count non-segregating variants (where at most one allele is observed).
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    allele : int, optional
-        Allele index.
-
-    Returns
-    -------
-
-    n : int
-        The number of variants matching the condition.
-
-    """
-
-    return np.sum(is_non_segregating(g, allele=allele))
-
-
-def count_singleton(g, allele=1):
-    """Count variants with a single call for the given allele.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    allele : int, optional
-        Allele index.
-
-    Returns
-    -------
-
-    n : int
-        The number of variants matching the condition.
-
-    """
-
-    return np.sum(is_singleton(g, allele=allele))
-
-
-def count_doubleton(g, allele=1):
-    """Count variants with exactly two calls for the given allele.
-
-    Parameters
-    ----------
-
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    allele : int, optional
-        Allele index.
-
-    Returns
-    -------
-
-    n : int
-        The number of variants matching the condition.
-
-    """
-
-    return np.sum(is_doubleton(g, allele=allele))
-
-
-def windowed_genotype_counts():
-    """TODO
-
-    """
-    pass
-
-
-def windowed_genotype_density():
-    """TODO
-
-    """
-    pass
-
-
-def windowed_genotype_rate():
-    """TODO
-
-    """
-    pass
+####################
+# Plotting functions
+####################
 
 
 def plot_discrete_calldata():
@@ -1920,21 +1899,14 @@ def plot_continuous_calldata_by_sample():
     pass
 
 
-def plot_windowed_genotype_counts():
+def plot_windowed_call_count():
     """TODO
 
     """
     pass
 
 
-def plot_windowed_genotype_density():
-    """TODO
-
-    """
-    pass
-
-
-def plot_windowed_genotype_rate():
+def plot_windowed_call_density():
     """TODO
 
     """

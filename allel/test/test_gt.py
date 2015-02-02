@@ -262,7 +262,8 @@ def test_is_call():
 
 
 def test_count_missing():
-    f = allel.gt.count_missing
+    f = lambda g, axis=None: \
+        allel.gt.count(allel.gt.is_missing(g), axis=axis)
 
     expect = 8
     actual = f(g_diploid)
@@ -282,7 +283,8 @@ def test_count_missing():
 
 
 def test_count_called():
-    f = allel.gt.count_called
+    f = lambda g, axis=None: \
+        allel.gt.count(allel.gt.is_called(g), axis=axis)
 
     expect = 7
     actual = f(g_diploid)
@@ -302,7 +304,8 @@ def test_count_called():
 
 
 def test_count_hom():
-    f = allel.gt.count_hom
+    f = lambda g, axis=None: \
+        allel.gt.count(allel.gt.is_hom(g), axis=axis)
 
     expect = 3
     actual = f(g_diploid)
@@ -322,32 +325,29 @@ def test_count_hom():
 
 
 def test_count_hom_ref():
+    f = lambda g, axis=None: \
+        allel.gt.count(allel.gt.is_hom_ref(g), axis=axis)
 
     expect = 1
-    actual = allel.gt.count_hom_ref(g_diploid)
-    eq(expect, actual)
-    actual = allel.gt.count_hom(g_diploid, allele=0)
+    actual = f(g_diploid)
     eq(expect, actual)
 
     expect = np.array([1, 0, 0])
-    actual = allel.gt.count_hom_ref(g_diploid, axis=0)
+    actual = f(g_diploid, axis=0)
     aeq(expect, actual)
-    actual = allel.gt.count_hom_ref(g_diploid, axis='variants')
-    aeq(expect, actual)
-    actual = allel.gt.count_hom(g_diploid, axis=0, allele=0)
+    actual = f(g_diploid, axis='variants')
     aeq(expect, actual)
 
     expect = np.array([1, 0, 0, 0, 0])
-    actual = allel.gt.count_hom_ref(g_diploid, axis=1)
+    actual = f(g_diploid, axis=1)
     aeq(expect, actual)
-    actual = allel.gt.count_hom_ref(g_diploid, axis='samples')
-    aeq(expect, actual)
-    actual = allel.gt.count_hom(g_diploid, axis=1, allele=0)
+    actual = f(g_diploid, axis='samples')
     aeq(expect, actual)
 
 
 def test_count_hom_alt():
-    f = allel.gt.count_hom_alt
+    f = lambda g, axis=None: \
+        allel.gt.count(allel.gt.is_hom_alt(g), axis=axis)
 
     expect = 2
     actual = f(g_diploid)
@@ -367,7 +367,8 @@ def test_count_hom_alt():
 
 
 def test_count_het():
-    f = allel.gt.count_het
+    f = lambda g, axis=None: \
+        allel.gt.count(allel.gt.is_het(g), axis=axis)
 
     expect = 4
     actual = f(g_diploid)
@@ -387,7 +388,8 @@ def test_count_het():
 
 
 def test_count_call():
-    f = allel.gt.count_call
+    f = lambda g, call, axis=None: \
+        allel.gt.count(allel.gt.is_call(g, call), axis=axis)
 
     expect = 1
     actual = f(g_diploid, call=(2, 1))
@@ -760,7 +762,7 @@ def test_allele_frequencies():
 
 def test_is_count_variant():
     f = allel.gt.is_variant
-    c = allel.gt.count_variant
+    c = lambda g: allel.gt.count(f(g))
 
     # haploid
     expect = np.array([1, 1, 1, 0], dtype='b1')
@@ -783,7 +785,7 @@ def test_is_count_variant():
 
 def test_is_count_non_variant():
     f = allel.gt.is_non_variant
-    c = allel.gt.count_non_variant
+    c = lambda g: allel.gt.count(f(g))
 
     # haploid
     expect = np.array([0, 0, 0, 1], dtype='b1')
@@ -806,7 +808,7 @@ def test_is_count_non_variant():
 
 def test_is_count_segregating():
     f = allel.gt.is_segregating
-    c = allel.gt.count_segregating
+    c = lambda g: allel.gt.count(f(g))
 
     # haploid
     expect = np.array([1, 0, 0, 0], dtype='b1')
@@ -829,7 +831,7 @@ def test_is_count_segregating():
 
 def test_is_count_non_segregating():
     f = allel.gt.is_non_segregating
-    c = allel.gt.count_non_segregating
+    c = lambda g, allele=None: allel.gt.count(f(g, allele=allele))
 
     # haploid
     expect = np.array([0, 1, 1, 1], dtype='b1')
@@ -864,7 +866,7 @@ def test_is_count_non_segregating():
 
 def test_is_count_singleton():
     f = allel.gt.is_singleton
-    c = allel.gt.count_singleton
+    c = lambda g, allele: allel.gt.count(f(g, allele=allele))
 
     # haploid
     expect = np.array([1, 0, 0, 0], dtype='b1')
@@ -899,7 +901,7 @@ def test_is_count_singleton():
 
 def test_is_count_doubleton():
     f = allel.gt.is_doubleton
-    c = allel.gt.count_doubleton
+    c = lambda g, allele: allel.gt.count(f(g, allele=allele))
 
     # haploid
     expect = np.array([0, 1, 0, 0], dtype='b1')
@@ -932,5 +934,124 @@ def test_is_count_doubleton():
     eq(np.sum(expect), c(g_triploid, allele=2))
 
 
-# TODO test_windowed_call_count
-# TODO test_windowed_call_density
+def test_windowed_count():
+    f = allel.gt.windowed_count
+    pos = [1, 12, 15, 27]
+
+    # boolean array, all true
+    b = [True, True, True, True]
+    expected_counts = [1, 2, 1]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_counts, actual_bin_edges = \
+        f(pos, b, window=10)
+    aeq(expected_counts, actual_counts)
+    aeq(expected_bin_edges, actual_bin_edges)
+
+    # boolean array, not all true
+    b = [False, True, False, True]
+    expected_counts = [0, 1, 1]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_counts, actual_bin_edges = \
+        f(pos, b, window=10)
+    aeq(expected_bin_edges, actual_bin_edges)
+    aeq(expected_counts, actual_counts)
+
+    # explicit start and stop
+    b = [False, True, False, True]
+    expected_counts = [1, 0, 1]
+    expected_bin_edges = [5, 15, 25, 27]
+    actual_counts, actual_bin_edges = \
+        f(pos, b, window=10, start=5, stop=27)
+    aeq(expected_bin_edges, actual_bin_edges)
+    aeq(expected_counts, actual_counts)
+
+    # boolean array, bad length
+    b = [False, True, False]
+    try:
+        f(pos, b, window=10)
+    except allel.errors.ArgumentError:
+        pass
+    else:
+        assert False, 'exception not raised'
+
+    # 2D, 4 variants, 2 samples
+    b = [[True, False],
+         [True, True],
+         [True, False],
+         [True, True]]
+    expected_counts = [[1, 0],
+                       [2, 1],
+                       [1, 1]]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_counts, actual_bin_edges = \
+        f(pos, b, window=10)
+    aeq(expected_counts, actual_counts)
+    aeq(expected_bin_edges, actual_bin_edges)
+
+
+def test_windowed_density():
+    f = allel.gt.windowed_density
+    pos = [1, 12, 15, 27]
+
+    # boolean array, all true
+    b = [True, True, True, True]
+    # N.B., final bin includes right edge
+    expected_densities = [1/10, 2/10, 1/11]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_densities, _, actual_bin_edges = \
+        f(pos, b, window=10)
+    aeq(expected_densities, actual_densities)
+    aeq(expected_bin_edges, actual_bin_edges)
+
+    # boolean array, not all true
+    b = [False, True, False, True]
+    expected_densities = [0/10, 1/10, 1/11]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_densities, _, actual_bin_edges = \
+        f(pos, b, window=10)
+    aeq(expected_bin_edges, actual_bin_edges)
+    aeq(expected_densities, actual_densities)
+
+    # explicit start and stop
+    b = [False, True, False, True]
+    expected_densities = [1/10, 0/10, 1/3]
+    expected_bin_edges = [5, 15, 25, 27]
+    actual_densities, _, actual_bin_edges = \
+        f(pos, b, window=10, start=5, stop=27)
+    aeq(expected_bin_edges, actual_bin_edges)
+    aeq(expected_densities, actual_densities)
+
+    # boolean array, bad length
+    b = [False, True, False]
+    try:
+        f(pos, b, window=10)
+    except allel.errors.ArgumentError:
+        pass
+    else:
+        assert False, 'exception not raised'
+
+    # 2D, 4 variants, 2 samples
+    b = [[True, False],
+         [True, True],
+         [True, False],
+         [True, True]]
+    expected_densities = [[1/10, 0/10],
+                          [2/10, 1/10],
+                          [1/11, 1/11]]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_densities, _, actual_bin_edges = \
+        f(pos, b, window=10)
+    aeq(expected_densities, actual_densities)
+    aeq(expected_bin_edges, actual_bin_edges)
+
+    # include is_accessible array option
+    is_accessible = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                              1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=bool)
+    b = [False, True, False, True]
+    expected_densities = [0, 1/6, 1/11]
+    expected_bin_edges = [1, 11, 21, 31]
+    actual_densities, _, actual_bin_edges = \
+        f(pos, b, window=10, is_accessible=is_accessible)
+    aeq(expected_bin_edges, actual_bin_edges)
+    aeq(expected_densities, actual_densities)
