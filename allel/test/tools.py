@@ -11,3 +11,10 @@ def aeq(expect, actual):
     actual = np.asarray(actual)
     assert np.array_equal(expect, actual), \
         '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)
+
+
+def assert_array_equal(expect, actual):
+    expect = np.asarray(expect)
+    actual = np.asarray(actual)
+    assert np.array_equal(expect, actual), \
+        '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)

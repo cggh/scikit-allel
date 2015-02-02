@@ -152,132 +152,15 @@ import numexpr as ne
 
 
 from allel.compat import range
-from allel.errors import ArgumentError
+from allel import arg as _arg
 
 
-HAPLOID = 1
-DIPLOID = 2
-DIM_VARIANTS = 0
-DIM_SAMPLES = 1
-DIM_PLOIDY = 2
 # packed representation of some common diploid genotypes
 B00 = 0
 B01 = 1
 B10 = 16
 B11 = 17
 BMISSING = 239
-
-
-def _check_genotype_array(g):
-
-    # ensure we have a numpy array
-    g = np.asarray(g)
-
-    # check dimensionality
-    if g.ndim == 2:
-        # assume haploid
-        ploidy = HAPLOID
-    elif g.ndim == 3:
-        ploidy = g.shape[2]
-        if ploidy == HAPLOID:
-            # drop empty ploidy dimension
-            g = g[:, :, 0]
-    else:
-        raise ArgumentError('expected 2 or 3 dimensions, found %s' % g.ndim)
-
-    return g, ploidy
-
-
-def _check_haplotype_array(h):
-
-    # ensure we have a numpy array
-    h = np.asarray(h)
-
-    # check dimensionality
-    if h.ndim != 2:
-        raise ArgumentError('expected 2 dimensions, found %s' % h.ndim)
-
-    return h
-
-
-def _check_boolean_array(b):
-
-    # ensure we have a numpy boolean array
-    b = np.asarray(b).view(dtype='b1')
-
-    # check dimensionality
-    if b.ndim not in {1, 2}:
-        raise ArgumentError('expected 1 or 2 dimensions, found %s' % b.ndim)
-
-    return b
-
-
-def _check_pos_array(pos):
-
-    # ensure we have a numpy array
-    pos = np.asarray(pos)
-
-    # check dimensionality
-    if pos.ndim != 1:
-        raise ArgumentError('expected one dimension, found %s' % pos.ndim)
-
-    # check positions are sorted
-    if np.any(np.diff(pos) < 0):
-        raise ArgumentError('array is not sorted')
-
-    return pos
-
-
-def _check_axis(axis):
-    if axis is None:
-        return None
-    elif axis == 'variants':
-        return DIM_VARIANTS
-    elif axis == 'samples':
-        return DIM_SAMPLES
-    elif axis == 'ploidy':
-        return DIM_PLOIDY
-    elif axis in {0, 1, 2}:
-        return axis
-    elif isinstance(axis, (list, tuple)):
-        return tuple(_check_axis(a) for a in axis)
-    else:
-        raise ArgumentError('invalid axis: %r' % axis)
-
-
-def _check_allele(allele):
-    if allele is None:
-        return None
-    elif allele in {'ref', 'reference'}:
-        return 0
-    elif allele in {'alt', 'alternate'}:
-        return 1
-    elif isinstance(allele, int):
-        return allele
-    else:
-        raise ArgumentError('invalid allele: %r' % allele)
-
-
-def _check_alleles(alleles):
-    if alleles is None:
-        return None
-    elif isinstance(alleles, (tuple, list)):
-        return tuple(_check_allele(a) for a in alleles)
-    else:
-        raise ArgumentError('invalid alleles: %r' % alleles)
-
-
-def _check_ploidy(ploidy):
-    if ploidy is None:
-        return None
-    elif ploidy == 'haploid':
-        return HAPLOID
-    elif ploidy == 'diploid':
-        return DIPLOID
-    elif isinstance(ploidy, int) and ploidy > 0:
-        return ploidy
-    else:
-        raise ArgumentError('invalid ploidy: %r' % ploidy)
 
 
 def is_missing(g):
@@ -311,8 +194,8 @@ def is_missing(g):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -365,8 +248,8 @@ def is_called(g):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -423,9 +306,9 @@ def is_hom(g, allele=None):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    allele = _check_allele(allele)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    allele = _arg.check_allele(allele, allow_none=True)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -524,8 +407,8 @@ def is_hom_alt(g):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -579,8 +462,8 @@ def is_het(g):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -636,19 +519,19 @@ def is_call(g, call):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
         if not isinstance(call, int):
-            raise ArgumentError('invalid call: %r' % call)
+            raise _arg.ArgumentError('invalid call: %r' % call)
         out = g == call
 
     # special case diploid
     elif ploidy == DIPLOID:
         if not len(call) == DIPLOID:
-            raise ArgumentError('invalid call: %r', call)
+            raise _arg.ArgumentError('invalid call: %r', call)
         allele1 = g[..., 0]  # noqa
         allele2 = g[..., 1]  # noqa
         ex = '(allele1 == {0}) & (allele2  == {1})'.format(*call)
@@ -657,7 +540,7 @@ def is_call(g, call):
     # general ploidy case
     else:
         if not len(call) == ploidy:
-            raise ArgumentError('invalid call: %r', call)
+            raise _arg.ArgumentError('invalid call: %r', call)
         call = np.asarray(call)[None, None, :]
         out = np.all(g == call, axis=DIM_PLOIDY)
 
@@ -706,8 +589,8 @@ def to_haplotypes(g):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -757,9 +640,9 @@ def from_haplotypes(h, ploidy):
 
     """
 
-    # check inputs
-    h = _check_haplotype_array(h)
-    ploidy = _check_ploidy(ploidy)
+    # check arguments
+    h = _arg.check_haplotype_array(h)
+    ploidy = _arg.check_ploidy(ploidy)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -820,8 +703,8 @@ def to_n_alt(g, fill=0):
 
     """
 
-    # check input array
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # special case haploid
     if ploidy == HAPLOID:
@@ -882,8 +765,11 @@ def to_allele_counts(g, alleles=None):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    alleles = _arg.check_alleles(alleles, allow_none=True)
+
+    # determine alleles to count
     if alleles is None:
         m = np.amax(g)
         alleles = list(range(m+1))
@@ -941,18 +827,18 @@ def to_packed(g, boundscheck=True):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
     if ploidy != 2:
-        raise ArgumentError('unexpected ploidy: %s' % ploidy)
+        raise _arg.ArgumentError('unexpected ploidy: %s' % ploidy)
 
     if boundscheck:
         amx = np.amax(g)
         if amx > 14:
-            raise ArgumentError('max allele for packing is 14, found %s' % amx)
+            raise _arg.ArgumentError('max allele for packing is 14, found %s' % amx)
         amn = np.amin(g)
         if amn < -1:
-            raise ArgumentError('min allele for packing is -1, found %s' % amn)
+            raise _arg.ArgumentError('min allele for packing is -1, found %s' % amn)
 
     from allel.opt.gt import pack_diploid
     packed = pack_diploid(g.view(dtype='i1'))
@@ -993,10 +879,10 @@ def from_packed(packed):
 
     """
 
-    # check inputs
+    # check arguments
     packed = np.asarray(packed)
     if packed.ndim != 2:
-        raise ArgumentError('expected 2 dimensions, found: %s' % packed.ndim)
+        raise _arg.ArgumentError('expected 2 dimensions, found: %s' % packed.ndim)
 
     from allel.opt.gt import unpack_diploid
     g = unpack_diploid(packed.view(dtype='u1'))
@@ -1047,8 +933,8 @@ def to_sparse(g, format='csr', **kwargs):
 
     import scipy.sparse
 
-    # check inputs
-    g, _ = _check_genotype_array(g)
+    # check arguments
+    g, _ = _arg.check_genotype_array(g)
     f = {
         'bsr': scipy.sparse.bsr_matrix,
         'coo': scipy.sparse.coo_matrix,
@@ -1059,7 +945,7 @@ def to_sparse(g, format='csr', **kwargs):
         'lil': scipy.sparse.lil_matrix
     }
     if format not in f:
-        raise ArgumentError('invalid format: %r' % format)
+        raise _arg.ArgumentError('invalid format: %r' % format)
 
     # convert to haplotypes to obtain dense 2D matrix
     h = to_haplotypes(g)
@@ -1117,10 +1003,10 @@ def from_sparse(m, ploidy=None, order=None, out=None):
 
     import scipy.sparse
 
-    # check inputs
-    ploidy = _check_ploidy(ploidy)
+    # check arguments
+    ploidy = _arg.check_ploidy(ploidy)
     if not scipy.sparse.isspmatrix(m):
-        raise ArgumentError('not a sparse matrix: %r' % m)
+        raise _arg.ArgumentError('not a sparse matrix: %r' % m)
 
     # convert to dense array
     h = m.toarray(order=order, out=out)
@@ -1148,6 +1034,8 @@ def max_allele(g, axis=None):
 
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
+    axis : int, optional
+        Axis index.
 
     Returns
     -------
@@ -1172,9 +1060,9 @@ def max_allele(g, axis=None):
 
     """
 
-    # check inputs
-    g, _ = _check_genotype_array(g)
-    axis = _check_axis(axis)
+    # check arguments
+    g, _ = _arg.check_genotype_array(g)
+    axis = _arg.check_axis(axis, allow_none=True)
 
     return np.amax(g, axis=axis)
 
@@ -1285,9 +1173,9 @@ def allele_count(g, allele=1):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    allele = _check_allele(allele)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    allele = _arg.check_allele(allele)
 
     # transform
     h = to_haplotypes(g)
@@ -1336,9 +1224,9 @@ def allele_frequency(g, allele=1, fill=0):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    allele = _check_allele(allele)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    allele = _arg.check_allele(allele)
 
     # intermediate variables
     an = allele_number(g)
@@ -1388,9 +1276,9 @@ def allele_counts(g, alleles=None):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    alleles = _check_alleles(alleles)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    alleles = _arg.check_alleles(alleles, allow_none=True)
 
     # transform
     h = to_haplotypes(g)
@@ -1458,9 +1346,9 @@ def allele_frequencies(g, alleles=None, fill=0):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    alleles = _check_alleles(alleles)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    alleles = _arg.check_alleles(alleles, allow_none=True)
 
     # intermediate variables
     an = allele_number(g)[:, None]
@@ -1503,8 +1391,8 @@ def is_variant(g):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # transform
     h = to_haplotypes(g)
@@ -1544,8 +1432,8 @@ def is_non_variant(g):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # transform
     h = to_haplotypes(g)
@@ -1585,8 +1473,8 @@ def is_segregating(g):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
 
     # count distinct alleles
     n_alleles = allelism(g)
@@ -1628,9 +1516,9 @@ def is_non_segregating(g, allele=None):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    allele = _check_allele(allele)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    allele = _arg.check_allele(allele, allow_none=True)
 
     if allele is None:
 
@@ -1684,9 +1572,9 @@ def is_singleton(g, allele=1):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    allele = _check_allele(allele)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    allele = _arg.check_allele(allele)
 
     # count allele
     ac = allele_count(g, allele=allele)
@@ -1730,9 +1618,9 @@ def is_doubleton(g, allele=1):
 
     """
 
-    # check inputs
-    g, ploidy = _check_genotype_array(g)
-    allele = _check_allele(allele)
+    # check arguments
+    g, ploidy = _arg.check_genotype_array(g)
+    allele = _arg.check_allele(allele)
 
     # count allele
     ac = allele_count(g, allele=allele)
@@ -1787,9 +1675,9 @@ def count(b, axis=None):
 
     """
 
-    # check inputs
-    b = _check_boolean_array(b)
-    axis = _check_axis(axis)
+    # check arguments
+    b = _arg.check_boolean_array(b)
+    axis = _arg.check_axis(axis, allow_none=True)
 
     return np.sum(b, axis=axis)
 
@@ -1854,13 +1742,15 @@ def windowed_count(pos, b, window, start=None, stop=None):
 
     """
 
-    # check inputs
-    pos = _check_pos_array(pos)
-    b = _check_boolean_array(b)
+    # check arguments
+    pos = _arg.check_pos_array(pos)
+    b = _arg.check_boolean_array(b)
     if pos.shape[0] != b.shape[0]:
-        raise ArgumentError('arrays do not have matching length for first '
-                            'dimension: pos %s, b %s' % (pos.shape[0],
-                                                         b.shape[0]))
+        raise _arg._arg.ArgumentError(
+            'arrays do not have matching length for first '
+            'dimension: pos %s, b %s' 
+            % (pos.shape[0], b.shape[0])
+        )
 
     # determine bin edges
     bin_start = np.amin(pos) if start is None else start
@@ -1970,7 +1860,7 @@ def windowed_density(pos, b, window, start=None, stop=None,
     else:
         is_accessible = np.asarray(is_accessible)
         if is_accessible.ndim != 1:
-            raise ArgumentError('expected 1 dimension, found %s' %
+            raise _arg.ArgumentError('expected 1 dimension, found %s' %
                                 is_accessible.ndim)
         pos_accessible, = np.nonzero(is_accessible)
         # convert to 1-based coordinates
