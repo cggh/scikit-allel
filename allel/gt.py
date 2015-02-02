@@ -6,18 +6,17 @@ calls.
 Conventions
 -----------
 
-By convention, an array of discrete genotype calls for a set of
-samples at a set of variants is canonically represented as a
-3-dimensional numpy array of integers.  The first dimension
-corresponds to the variants genotyped (i.e., the length of the first
-dimension is equal to the number of variants), the second dimension
-corresponds to the samples genotyped (i.e., the length of the second
-dimension equals the number of samples), and the third dimension
-corresponds to the ploidy of the samples.
+By convention, a *genotype array* is an array of discrete genotype
+calls for a set of samples at a set of variants, represented as a
+3-dimensional numpy array of integers. The first dimension corresponds
+to the variants genotyped (i.e., the length of the first dimension is
+equal to the number of variants), the second dimension corresponds to
+the samples genotyped (i.e., the length of the second dimension equals
+the number of samples), and the third dimension corresponds to the
+ploidy of the samples.
 
-For example, the array `g` below is a discrete genotype array storing
-genotype calls for 3 variants in 2 samples with ploidy 2 (i.e.,
-diploid)::
+For example, the array `g` below is a genotype array storing genotype
+calls for 3 variants in 2 samples with ploidy 2 (i.e., diploid)::
 
     >>> import numpy as np
     >>> g = np.array([[[0, 0], [0, 1]],
@@ -65,8 +64,8 @@ by indexing the first and second dimensions, e.g.::
 Allelism
 ~~~~~~~~
 
-Each integer within the array corresponds to an allele call, where 0
-is the reference allele, 1 is the first alternate allele, 2 is the
+Each integer within the array corresponds to an *allele index*, where
+0 is the reference allele, 1 is the first alternate allele, 2 is the
 second alternate allele, ... and -1 (or any other negative integer) is
 a missing call. The actual alleles (i.e., the alternate nucleotide
 sequences) and the physical positions of the variants within the
@@ -108,9 +107,9 @@ heterozygous call could be stored as (0, 1) or equivalently as (1, 0).
 Ploidy
 ~~~~~~
 
-The canonical genotype array can store genotype calls with any ploidy. For
-example, the array `g_triploid` below has triploid calls for 2 samples at
-3 variants::
+A genotype array can store genotype calls with any ploidy. For
+example, the array `g_triploid` below has triploid calls for 2 samples
+at 3 variants::
 
     >>> g_triploid = np.array([[[0, 0, 0], [0, 0, 1]],
     ...                        [[0, 1, 1], [1, 1, 1]],
@@ -132,13 +131,15 @@ differing or variable ploidy.
 Variant positions
 ~~~~~~~~~~~~~~~~~
 
-Some functions in this module require a positions array to be provided. A
-positions array is an array of integers corresponding to the genomic positions
-of variants within a single chromosome or contig. All values in a
-positions array must be given in increasing order, i.e., it is assumed that
-variants are ordered according to their genomic position.
+Some functions in this module require a *positions array* to be
+provided. A positions array is an array of integers corresponding to
+the genomic positions of variants within a single chromosome or
+contig. All values in a positions array must be given in increasing
+order, i.e., it is assumed that variants are ordered according to
+their genomic position.
 
-**N.B., it is assumed that all positions are given using 1-based coordinates.**
+**N.B., it is assumed that all positions are given using 1-based
+coordinates.**
 
 """
 
@@ -292,7 +293,8 @@ def is_missing(g):
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is missing.
+        Array where elements are True if the genotype call matches the
+        condition.
 
     Examples
     --------
@@ -345,7 +347,8 @@ def is_called(g):
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is non-missing.
+        Array where elements are True if the genotype call matches the
+        condition.
 
     Examples
     --------
@@ -398,7 +401,8 @@ def is_hom(g, allele=None):
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is homozygous.
+        Array where elements are True if the genotype call matches the
+        condition.
 
     Examples
     --------
@@ -467,8 +471,8 @@ def is_hom_ref(g):
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is homozygous for
-        the reference allele.
+        Array where elements are True if the genotype call matches the
+        condition.
 
     Examples
     --------
@@ -502,8 +506,8 @@ def is_hom_alt(g):
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is homozygous for
-        an alternate allele.
+        Array where elements are True if the genotype call matches the
+        condition.
 
     Examples
     --------
@@ -557,7 +561,8 @@ def is_het(g):
     -------
 
     out : ndarray, bool, shape (n_variants, n_samples)
-        Array where elements are True if the genotype call is heterozygous.
+        Array where elements are True if the genotype call matches the
+        condition.
 
     Examples
     --------
@@ -997,6 +1002,12 @@ def from_packed(packed):
     g = unpack_diploid(packed.view(dtype='u1'))
 
     return g
+
+
+# TODO to_csr
+# TODO from_csr
+# TODO to_csc
+# TODO from_csc
 
 
 ###############################
