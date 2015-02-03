@@ -12,21 +12,21 @@ from allel.test.tools import assert_array_equal as aeq
 from allel.gt_new import GenotypeArray
 
 
-haploid_data = [[0, 1, -1],
-                [1, 1, -1],
-                [2, -1, -1],
-                [-1, -1, -1]]
+haploid_genotype_data = [[0, 1, -1],
+                         [1, 1, -1],
+                         [2, -1, -1],
+                         [-1, -1, -1]]
 
-diploid_data = [[[0, 0], [0, 1], [-1, -1]],
-                [[0, 2], [1, 1], [-1, -1]],
-                [[1, 0], [2, 1], [-1, -1]],
-                [[2, 2], [-1, -1], [-1, -1]],
-                [[-1, -1], [-1, -1], [-1, -1]]]
+diploid_genotype_data = [[[0, 0], [0, 1], [-1, -1]],
+                         [[0, 2], [1, 1], [-1, -1]],
+                         [[1, 0], [2, 1], [-1, -1]],
+                         [[2, 2], [-1, -1], [-1, -1]],
+                         [[-1, -1], [-1, -1], [-1, -1]]]
 
-triploid_data = [[[0, 0, 0], [0, 0, 1], [-1, -1, -1]],
-                 [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
-                 [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
-                 [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
+triploid_genotype_data = [[[0, 0, 0], [0, 0, 1], [-1, -1, -1]],
+                          [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
+                          [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
+                          [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
 
 
 class TestGenotypeArray(unittest.TestCase):
@@ -54,13 +54,13 @@ class TestGenotypeArray(unittest.TestCase):
             GenotypeArray(data)
 
         # data has wrong dimensions
-        data = haploid_data  # use HaplotypeArray instead
+        data = haploid_genotype_data  # use HaplotypeArray instead
         with self.assertRaises(TypeError):
             GenotypeArray(data)
 
         # diploid data
-        g = GenotypeArray(diploid_data)
-        aeq(diploid_data, g)
+        g = GenotypeArray(diploid_genotype_data)
+        aeq(diploid_genotype_data, g)
         eq(np.int, g.dtype)
         eq(3, g.ndim)
         eq(5, g.n_variants)
@@ -68,13 +68,13 @@ class TestGenotypeArray(unittest.TestCase):
         eq(2, g.ploidy)
 
         # diploid data (typed)
-        g = GenotypeArray(np.array(diploid_data, dtype='i1'))
-        aeq(diploid_data, g)
+        g = GenotypeArray(np.array(diploid_genotype_data, dtype='i1'))
+        aeq(diploid_genotype_data, g)
         eq(np.int8, g.dtype)
 
         # triploid data
-        g = GenotypeArray(triploid_data)
-        aeq(triploid_data, g)
+        g = GenotypeArray(triploid_genotype_data)
+        aeq(triploid_genotype_data, g)
         eq(np.int, g.dtype)
         eq(3, g.ndim)
         eq(4, g.n_variants)
@@ -82,20 +82,20 @@ class TestGenotypeArray(unittest.TestCase):
         eq(3, g.ploidy)
 
         # triploid data (typed)
-        g = GenotypeArray(np.array(triploid_data, dtype='i1'))
-        aeq(triploid_data, g)
+        g = GenotypeArray(np.array(triploid_genotype_data, dtype='i1'))
+        aeq(triploid_genotype_data, g)
         eq(np.int8, g.dtype)
 
     def test_slice(self):
         eq = self.assertEqual
 
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         eq(2, g.ploidy)
 
         # row slice
         s = g[1:]
         self.assertIsInstance(s, GenotypeArray)
-        aeq(diploid_data[1:], s)
+        aeq(diploid_genotype_data[1:], s)
         eq(4, s.n_variants)
         eq(3, s.n_samples)
         eq(2, s.ploidy)
@@ -103,7 +103,7 @@ class TestGenotypeArray(unittest.TestCase):
         # col slice
         s = g[:, 1:]
         self.assertIsInstance(s, GenotypeArray)
-        aeq(np.array(diploid_data)[:, 1:], s)
+        aeq(np.array(diploid_genotype_data)[:, 1:], s)
         eq(5, s.n_variants)
         eq(2, s.n_samples)
         eq(2, s.ploidy)
@@ -112,19 +112,19 @@ class TestGenotypeArray(unittest.TestCase):
         s = g[0]
         self.assertIsInstance(s, np.ndarray)
         self.assertNotIsInstance(s, GenotypeArray)
-        aeq(diploid_data[0], s)
+        aeq(diploid_genotype_data[0], s)
 
         # col index
         s = g[:, 0]
         self.assertIsInstance(s, np.ndarray)
         self.assertNotIsInstance(s, GenotypeArray)
-        aeq(np.array(diploid_data)[:, 0], s)
+        aeq(np.array(diploid_genotype_data)[:, 0], s)
 
         # ploidy index
         s = g[:, :, 0]
         self.assertIsInstance(s, np.ndarray)
         self.assertNotIsInstance(s, GenotypeArray)
-        aeq(np.array(diploid_data)[:, :, 0], s)
+        aeq(np.array(diploid_genotype_data)[:, :, 0], s)
 
     def test_view(self):
         eq = self.assertEqual
@@ -145,13 +145,13 @@ class TestGenotypeArray(unittest.TestCase):
             np.array(data).view(GenotypeArray)
 
         # data has wrong dimensions
-        data = haploid_data  # use HaplotypeArray instead
+        data = haploid_genotype_data  # use HaplotypeArray instead
         with self.assertRaises(TypeError):
             np.array(data).view(GenotypeArray)
 
         # diploid data
-        g = np.array(diploid_data).view(GenotypeArray)
-        aeq(diploid_data, g)
+        g = np.array(diploid_genotype_data).view(GenotypeArray)
+        aeq(diploid_genotype_data, g)
         eq(np.int, g.dtype)
         eq(3, g.ndim)
         eq(5, g.n_variants)
@@ -159,8 +159,8 @@ class TestGenotypeArray(unittest.TestCase):
         eq(2, g.ploidy)
 
         # triploid data
-        g = np.array(triploid_data).view(GenotypeArray)
-        aeq(triploid_data, g)
+        g = np.array(triploid_genotype_data).view(GenotypeArray)
+        aeq(triploid_genotype_data, g)
         eq(np.int, g.dtype)
         eq(3, g.ndim)
         eq(4, g.n_variants)
@@ -175,7 +175,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [1, 1, 0],
                            [1, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_called()
+        actual = GenotypeArray(diploid_genotype_data).is_called()
         aeq(expect, actual)
 
         # polyploid
@@ -183,7 +183,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [1, 1, 0],
                            [1, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_called()
+        actual = GenotypeArray(triploid_genotype_data).is_called()
         aeq(expect, actual)
 
     def test_is_missing(self):
@@ -194,7 +194,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 1],
                            [0, 1, 1],
                            [1, 1, 1]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_missing()
+        actual = GenotypeArray(diploid_genotype_data).is_missing()
         aeq(expect, actual)
 
         # polyploid
@@ -202,7 +202,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 1],
                            [0, 1, 1],
                            [1, 1, 1]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_missing()
+        actual = GenotypeArray(triploid_genotype_data).is_missing()
         aeq(expect, actual)
 
     def test_is_hom(self):
@@ -213,7 +213,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [1, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_hom()
+        actual = GenotypeArray(diploid_genotype_data).is_hom()
         aeq(expect, actual)
 
         # polyploid
@@ -221,7 +221,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 1, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_hom()
+        actual = GenotypeArray(triploid_genotype_data).is_hom()
         aeq(expect, actual)
 
     def test_is_hom_ref(self):
@@ -232,9 +232,9 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_hom(allele=0)
+        actual = GenotypeArray(diploid_genotype_data).is_hom(allele=0)
         aeq(expect, actual)
-        actual = GenotypeArray(diploid_data).is_hom_ref()
+        actual = GenotypeArray(diploid_genotype_data).is_hom_ref()
         aeq(expect, actual)
 
         # polyploid
@@ -242,9 +242,9 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_hom(allele=0)
+        actual = GenotypeArray(triploid_genotype_data).is_hom(allele=0)
         aeq(expect, actual)
-        actual = GenotypeArray(triploid_data).is_hom_ref()
+        actual = GenotypeArray(triploid_genotype_data).is_hom_ref()
         aeq(expect, actual)
 
     def test_is_hom_alt(self):
@@ -255,7 +255,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [1, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_hom_alt()
+        actual = GenotypeArray(diploid_genotype_data).is_hom_alt()
         aeq(expect, actual)
 
         # polyploid
@@ -263,7 +263,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 1, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_hom_alt()
+        actual = GenotypeArray(triploid_genotype_data).is_hom_alt()
         aeq(expect, actual)
 
     def test_is_hom_1(self):
@@ -274,7 +274,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_hom(allele=1)
+        actual = GenotypeArray(diploid_genotype_data).is_hom(allele=1)
         aeq(expect, actual)
 
         # polyploid
@@ -282,7 +282,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 1, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_hom(allele=1)
+        actual = GenotypeArray(triploid_genotype_data).is_hom(allele=1)
         aeq(expect, actual)
 
     def test_is_het(self):
@@ -293,7 +293,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [1, 1, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_het()
+        actual = GenotypeArray(diploid_genotype_data).is_het()
         aeq(expect, actual)
 
         # polyploid
@@ -301,7 +301,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [1, 0, 0],
                            [1, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_het()
+        actual = GenotypeArray(triploid_genotype_data).is_het()
         aeq(expect, actual)
 
     def test_is_call(self):
@@ -312,7 +312,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [0, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(diploid_data).is_call(call=(0, 2))
+        actual = GenotypeArray(diploid_genotype_data).is_call(call=(0, 2))
         aeq(expect, actual)
 
         # polyploid
@@ -320,12 +320,12 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0],
                            [1, 0, 0],
                            [0, 0, 0]], dtype='b1')
-        actual = GenotypeArray(triploid_data).is_call(call=(0, 1, 2))
+        actual = GenotypeArray(triploid_genotype_data).is_call(call=(0, 1, 2))
         aeq(expect, actual)
 
     def test_count_called(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_called
 
         expect = 7
@@ -342,7 +342,7 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_count_missing(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_missing
 
         expect = 8
@@ -359,7 +359,7 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_count_hom(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_hom
 
         expect = 3
@@ -376,7 +376,7 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_count_hom_ref(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_hom_ref
 
         expect = 1
@@ -393,7 +393,7 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_count_hom_alt(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_hom_alt
 
         expect = 2
@@ -410,7 +410,7 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_count_het(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_het
 
         expect = 4
@@ -427,7 +427,7 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_count_call(self):
         eq = self.assertEqual
-        g = GenotypeArray(diploid_data)
+        g = GenotypeArray(diploid_genotype_data)
         f = g.count_call
 
         expect = 1
@@ -443,6 +443,7 @@ class TestGenotypeArray(unittest.TestCase):
         aeq(expect, actual)
 
     def test_to_haplotypes(self):
+        eq = self.assertEqual
 
         # diploid
         expect = np.array([[0, 0, 0, 1, -1, -1],
@@ -450,16 +451,60 @@ class TestGenotypeArray(unittest.TestCase):
                            [1, 0, 2, 1, -1, -1],
                            [2, 2, -1, -1, -1, -1],
                            [-1, -1, -1, -1, -1, -1]], dtype='i1')
-        actual = GenotypeArray(diploid_data).to_haplotypes()
+        actual = GenotypeArray(diploid_genotype_data).to_haplotypes()
         aeq(expect, actual)
+        eq(2, actual.ploidy)
 
         # polyploid
         expect = np.array([[0, 0, 0, 0, 0, 1, -1, -1, -1],
                            [0, 1, 1, 1, 1, 1, -1, -1, -1],
                            [0, 1, 2, -1, -1, -1, -1, -1, -1],
                            [-1, -1, -1, -1, -1, -1, -1, -1, -1]], dtype='i1')
-        actual = GenotypeArray(triploid_data).to_haplotypes()
+        actual = GenotypeArray(triploid_genotype_data).to_haplotypes()
+        aeq(expect, actual)
+        eq(3, actual.ploidy)
+
+    def test_from_haplotypes(self):
+        eq = self.assertEqual
+
+        # diploid
+        h_diploid = np.array([[0, 0, 0, 1, -1, -1],
+                              [0, 2, 1, 1, -1, -1],
+                              [1, 0, 2, 1, -1, -1],
+                              [2, 2, -1, -1, -1, -1],
+                              [-1, -1, -1, -1, -1, -1]], dtype='i1')
+        expect = diploid_genotype_data
+        actual = GenotypeArray.from_haplotypes(h_diploid, ploidy=2)
+        self.assertIsInstance(actual, GenotypeArray)
+        aeq(expect, actual)
+        eq(2, actual.ploidy)
+
+        # polyploidy
+        h_triploid = np.array([[0, 0, 0, 0, 0, 1, -1, -1, -1],
+                               [0, 1, 1, 1, 1, 1, -1, -1, -1],
+                               [0, 1, 2, -1, -1, -1, -1, -1, -1],
+                               [-1, -1, -1, -1, -1, -1, -1, -1, -1]], dtype='i1')
+        expect = triploid_genotype_data
+        actual = GenotypeArray.from_haplotypes(h_triploid, ploidy=3)
+        self.assertIsInstance(actual, GenotypeArray)
+        aeq(expect, actual)
+        eq(3, actual.ploidy)
+
+    def test_to_n_alt(self):
+
+        # diploid
+        expect = np.array([[0, 1, 0],
+                           [1, 2, 0],
+                           [1, 2, 0],
+                           [2, 0, 0],
+                           [0, 0, 0]], dtype='i1')
+        actual = GenotypeArray(diploid_genotype_data).to_n_alt()
         aeq(expect, actual)
 
-
-
+        # polyploid
+        expect = np.array([[0, 1, 0],
+                           [2, 3, 0],
+                           [2, 0, 0],
+                           [0, 0, 0]], dtype='i1')
+        actual = GenotypeArray(triploid_genotype_data).to_n_alt()
+        aeq(expect, actual)

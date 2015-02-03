@@ -80,7 +80,7 @@ class GenotypeArray(np.ndarray):
     def __repr__(self):
         s = super(GenotypeArray, self).__repr__()
         return s[:-1] + ', n_variants=%s, n_samples=%s, ploidy=%s)' % \
-                        self.shape
+                        (self.n_variants, self.n_samples, self.ploidy)
 
     def is_called(self):
         """TODO
@@ -274,3 +274,129 @@ class GenotypeArray(np.ndarray):
 
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
+
+    def to_haplotypes(self):
+        """TODO
+
+        """
+
+        # reshape, preserving size of variants dimension
+        newshape = (self.shape[DIM_VARIANTS], -1)
+        data = np.reshape(self, newshape)
+        h = HaplotypeArray(data, ploidy=self.ploidy)
+        return h
+
+    @staticmethod
+    def from_haplotypes(h, ploidy):
+        """TODO
+
+        """
+
+        h = HaplotypeArray(h, ploidy=ploidy)
+        return h.to_genotypes()
+
+    def to_n_alt(self, fill=0):
+        """TODO
+
+
+        """
+
+        # count number of alternate alleles
+        out = np.empty(self.shape[:-1], dtype='i1')
+        np.sum(self > 0, axis=DIM_PLOIDY, out=out)
+
+        # fill missing calls
+        if fill != 0:
+            m = self.is_missing()
+            out[m] = fill
+
+        return out
+
+
+def _check_haplotype_array_data(obj):
+    obj = np.asarray(obj)
+
+    # check dtype
+    if obj.dtype.kind not in 'ui':
+        raise TypeError('integer dtype required')
+
+    # check dimensionality
+    if obj.ndim != 2:
+        raise TypeError('array with 2 dimensions required')
+
+    return obj
+
+
+class HaplotypeArray(np.ndarray):
+    """TODO
+
+    """
+
+    def __new__(cls, data, ploidy=None):
+        obj = _check_haplotype_array_data(data)
+        obj = obj.view(cls)
+        obj.ploidy = ploidy
+        return obj
+
+    def __array_finalize__(self, obj):
+
+        # called after constructor
+        if obj is None:
+            return
+
+        # called after slice (new-from-template)
+        if isinstance(obj, HaplotypeArray):
+            self.ploidy = obj.ploidy
+            return
+
+        # called after view
+        _check_haplotype_array_data(obj)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim == 2:
+            return s
+        else:
+            # slice with reduced dimensionality returns plain ndarray
+            return np.asarray(s)
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim == 2:
+            return s
+        else:
+            # slice with reduced dimensionality returns plain ndarray
+            return np.asarray(s)
+
+    @property
+    def n_variants(self):
+        """TODO"""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """TODO"""
+        return self.shape[1]
+
+    def __repr__(self):
+        s = super(HaplotypeArray, self).__repr__()
+        return s[:-1] + ', n_variants=%s, n_samples=%s, ploidy=%s)' % \
+                        (self.n_variants, self.n_samples, self.ploidy)
+
+    def to_genotypes(self):
+        """TODO
+
+        """
+
+        if self.ploidy is None:
+            raise ValueError('ploidy is required')
+
+        # reshape
+        newshape = (self.shape[0], -1, self.ploidy)
+        data = self.reshape(newshape)
+
+        # wrap
+        g = GenotypeArray(data)
+
+        return g
+
