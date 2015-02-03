@@ -218,3 +218,59 @@ class GenotypeArray(np.ndarray):
             out = np.all(self == call, axis=DIM_PLOIDY)
 
         return out
+
+    def count_called(self, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_called()
+        return np.sum(b, axis=axis)
+
+    def count_missing(self, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_missing()
+        return np.sum(b, axis=axis)
+
+    def count_hom(self, allele=None, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_hom(allele=allele)
+        return np.sum(b, axis=axis)
+
+    def count_hom_ref(self, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_hom_ref()
+        return np.sum(b, axis=axis)
+
+    def count_hom_alt(self, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_hom_alt()
+        return np.sum(b, axis=axis)
+
+    def count_het(self, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_het()
+        return np.sum(b, axis=axis)
+
+    def count_call(self, call, axis=None):
+        """TODO
+
+        """
+
+        b = self.is_call(call=call)
+        return np.sum(b, axis=axis)

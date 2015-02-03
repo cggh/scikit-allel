@@ -322,3 +322,144 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 0, 0]], dtype='b1')
         actual = GenotypeArray(triploid_data).is_call(call=(0, 1, 2))
         aeq(expect, actual)
+
+    def test_count_called(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_called
+
+        expect = 7
+        actual = f()
+        eq(expect, actual)
+
+        expect = np.array([4, 3, 0])
+        actual = f(axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([2, 2, 2, 1, 0])
+        actual = f(axis=1)
+        aeq(expect, actual)
+
+    def test_count_missing(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_missing
+
+        expect = 8
+        actual = f()
+        eq(expect, actual)
+
+        expect = np.array([1, 2, 5])
+        actual = f(axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([1, 1, 1, 2, 3])
+        actual = f(axis=1)
+        aeq(expect, actual)
+
+    def test_count_hom(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_hom
+
+        expect = 3
+        actual = f()
+        eq(expect, actual)
+
+        expect = np.array([2, 1, 0])
+        actual = f(axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([1, 1, 0, 1, 0])
+        actual = f(axis=1)
+        aeq(expect, actual)
+
+    def test_count_hom_ref(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_hom_ref
+
+        expect = 1
+        actual = f()
+        eq(expect, actual)
+
+        expect = np.array([1, 0, 0])
+        actual = f(axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([1, 0, 0, 0, 0])
+        actual = f(axis=1)
+        aeq(expect, actual)
+
+    def test_count_hom_alt(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_hom_alt
+
+        expect = 2
+        actual = f()
+        eq(expect, actual)
+
+        expect = np.array([1, 1, 0])
+        actual = f(axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([0, 1, 0, 1, 0])
+        actual = f(axis=1)
+        aeq(expect, actual)
+
+    def test_count_het(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_het
+
+        expect = 4
+        actual = f()
+        eq(expect, actual)
+
+        expect = np.array([2, 2, 0])
+        actual = f(axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([1, 1, 2, 0, 0])
+        actual = f(axis=1)
+        aeq(expect, actual)
+
+    def test_count_call(self):
+        eq = self.assertEqual
+        g = GenotypeArray(diploid_data)
+        f = g.count_call
+
+        expect = 1
+        actual = f(call=(2, 1))
+        eq(expect, actual)
+
+        expect = np.array([0, 1, 0])
+        actual = f(call=(2, 1), axis=0)
+        aeq(expect, actual)
+
+        expect = np.array([0, 0, 1, 0, 0])
+        actual = f(call=(2, 1), axis=1)
+        aeq(expect, actual)
+
+    def test_to_haplotypes(self):
+
+        # diploid
+        expect = np.array([[0, 0, 0, 1, -1, -1],
+                           [0, 2, 1, 1, -1, -1],
+                           [1, 0, 2, 1, -1, -1],
+                           [2, 2, -1, -1, -1, -1],
+                           [-1, -1, -1, -1, -1, -1]], dtype='i1')
+        actual = GenotypeArray(diploid_data).to_haplotypes()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[0, 0, 0, 0, 0, 1, -1, -1, -1],
+                           [0, 1, 1, 1, 1, 1, -1, -1, -1],
+                           [0, 1, 2, -1, -1, -1, -1, -1, -1],
+                           [-1, -1, -1, -1, -1, -1, -1, -1, -1]], dtype='i1')
+        actual = GenotypeArray(triploid_data).to_haplotypes()
+        aeq(expect, actual)
+
+
+
