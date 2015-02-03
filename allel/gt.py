@@ -155,14 +155,6 @@ from allel.compat import range
 from allel import arg as _arg
 
 
-# packed representation of some common diploid genotypes
-B00 = 0
-B01 = 1
-B10 = 16
-B11 = 17
-BMISSING = 239
-
-
 def is_missing(g):
     """Find missing genotype calls.
 

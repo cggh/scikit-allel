@@ -5,13 +5,6 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-HAPLOID = 1
-DIPLOID = 2
-DIM_VARIANTS = 0
-DIM_SAMPLES = 1
-DIM_PLOIDY = 2
-
-
 class ArgumentError(Exception):
     pass
 

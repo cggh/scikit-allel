@@ -166,3 +166,159 @@ class TestGenotypeArray(unittest.TestCase):
         eq(4, g.n_variants)
         eq(3, g.n_samples)
         eq(3, g.ploidy)
+
+    def test_is_called(self):
+
+        # diploid
+        expect = np.array([[1, 1, 0],
+                           [1, 1, 0],
+                           [1, 1, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_called()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[1, 1, 0],
+                           [1, 1, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_called()
+        aeq(expect, actual)
+
+    def test_is_missing(self):
+
+        # diploid
+        expect = np.array([[0, 0, 1],
+                           [0, 0, 1],
+                           [0, 0, 1],
+                           [0, 1, 1],
+                           [1, 1, 1]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_missing()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[0, 0, 1],
+                           [0, 0, 1],
+                           [0, 1, 1],
+                           [1, 1, 1]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_missing()
+        aeq(expect, actual)
+
+    def test_is_hom(self):
+
+        # diploid
+        expect = np.array([[1, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_hom()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[1, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_hom()
+        aeq(expect, actual)
+
+    def test_is_hom_ref(self):
+
+        # diploid
+        expect = np.array([[1, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_hom(allele=0)
+        aeq(expect, actual)
+        actual = GenotypeArray(diploid_data).is_hom_ref()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[1, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_hom(allele=0)
+        aeq(expect, actual)
+        actual = GenotypeArray(triploid_data).is_hom_ref()
+        aeq(expect, actual)
+
+    def test_is_hom_alt(self):
+
+        # diploid
+        expect = np.array([[0, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_hom_alt()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[0, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_hom_alt()
+        aeq(expect, actual)
+
+    def test_is_hom_1(self):
+
+        # diploid
+        expect = np.array([[0, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_hom(allele=1)
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[0, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_hom(allele=1)
+        aeq(expect, actual)
+
+    def test_is_het(self):
+
+        # diploid
+        expect = np.array([[0, 1, 0],
+                           [1, 0, 0],
+                           [1, 1, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_het()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[0, 1, 0],
+                           [1, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_het()
+        aeq(expect, actual)
+
+    def test_is_call(self):
+
+        # diploid
+        expect = np.array([[0, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(diploid_data).is_call(call=(0, 2))
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[0, 0, 0],
+                           [0, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        actual = GenotypeArray(triploid_data).is_call(call=(0, 1, 2))
+        aeq(expect, actual)

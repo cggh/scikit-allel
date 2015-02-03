@@ -53,35 +53,6 @@ def test_is_called():
     aeq(expect, actual)
 
 
-def test_is_missing():
-    f = allel.gt.is_missing
-
-    # haploid
-    expect = np.array([[0, 0, 1],
-                       [0, 0, 1],
-                       [0, 1, 1],
-                       [1, 1, 1]], dtype='b1')
-    actual = f(g_haploid)
-    aeq(expect, actual)
-
-    # diploid
-    expect = np.array([[0, 0, 1],
-                       [0, 0, 1],
-                       [0, 0, 1],
-                       [0, 1, 1],
-                       [1, 1, 1]], dtype='b1')
-    actual = f(g_diploid)
-    aeq(expect, actual)
-
-    # polyploid
-    expect = np.array([[0, 0, 1],
-                       [0, 0, 1],
-                       [0, 1, 1],
-                       [1, 1, 1]], dtype='b1')
-    actual = f(g_triploid)
-    aeq(expect, actual)
-
-
 def test_is_hom():
     f = allel.gt.is_hom
 
