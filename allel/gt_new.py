@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-def _normalise_genotype_data(obj):
+def _check_genotype_array_data(obj):
     obj = np.asarray(obj)
 
     # check dtype
@@ -13,31 +13,65 @@ def _normalise_genotype_data(obj):
         raise TypeError('integer dtype required')
 
     # check dimensionality
-    if obj.ndim not in {2, 3}:
-        raise ValueError('array with 2 or 3 dimensions required')
+    if obj.ndim != 3:
+        raise TypeError('array with 3 dimensions required')
 
-    # determine ploidy
-    if obj.ndim == 2:
-        ploidy = 1
-    elif obj.ndim == 3:
-        ploidy = obj.shape[2]
-        if ploidy == 1:
-            # drop extra ploidy dimension
-            obj = obj[:, :, 0]
-
-    return obj, ploidy
+    return obj
 
 
 class GenotypeArray(np.ndarray):
+    """TODO
+
+    """
 
     def __new__(cls, data):
-        obj, ploidy = _normalise_genotype_data(data)
+        obj = _check_genotype_array_data(data)
         obj = obj.view(cls)
-        obj.ploidy = ploidy
         return obj
 
+    # noinspection PyMethodMayBeStatic
     def __array_finalize__(self, obj):
+
+        # called after constructor
         if obj is None:
             return
-        obj, ploidy = _normalise_genotype_data(obj)
-        self.ploidy = ploidy
+
+        # called after slice (new-from-template)
+        if isinstance(obj, GenotypeArray):
+            return
+
+        # called after view
+        _check_genotype_array_data(obj)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        if s.ndim == 3:
+            return s
+        else:
+            # slice with reduced dimensionality returns plain ndarray
+            return s.view(np.ndarray)
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        if s.ndim == 3:
+            return s
+        else:
+            # slice with reduced dimensionality returns plain ndarray
+            return s.view(np.ndarray)
+
+    @property
+    def n_variants(self):
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        return self.shape[1]
+
+    @property
+    def ploidy(self):
+        return self.shape[2]
+
+    def __repr__(self):
+        s = super(GenotypeArray, self).__repr__()
+        return s[:-1] + ', n_variants=%s, n_samples=%s, ploidy=%s)' % \
+                        self.shape

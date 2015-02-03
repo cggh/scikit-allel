@@ -2,9 +2,11 @@
 from __future__ import absolute_import, print_function, division
 
 
-from nose.tools import assert_raises, assert_equal as eq
-from allel.test.tools import assert_array_equal as aeq
+import unittest
+
+
 import numpy as np
+from allel.test.tools import assert_array_equal as aeq
 
 
 from allel.gt_new import GenotypeArray
@@ -27,102 +29,140 @@ triploid_data = [[[0, 0, 0], [0, 0, 1], [-1, -1, -1]],
                  [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
 
 
-def test_constructor():
+class TestGenotypeArray(unittest.TestCase):
 
-    # need to instantiate with data arg
-    with assert_raises(TypeError):
-        GenotypeArray()
+    def test_constructor(self):
+        eq = self.assertEqual
 
-    # data has wrong type
-    data = 'foo bar'
-    with assert_raises(TypeError):
-        GenotypeArray(data)
+        # missing data arg
+        with self.assertRaises(TypeError):
+            GenotypeArray()
 
-    # data has wrong type
-    data = [4., 5., 3.7]
-    with assert_raises(TypeError):
-        GenotypeArray(data)
+        # data has wrong dtype
+        data = 'foo bar'
+        with self.assertRaises(TypeError):
+            GenotypeArray(data)
 
-    # data has wrong dimensions
-    data = [1, 2, 3]
-    with assert_raises(ValueError):
-        GenotypeArray(data)
+        # data has wrong dtype
+        data = [4., 5., 3.7]
+        with self.assertRaises(TypeError):
+            GenotypeArray(data)
 
-    # haploid data
-    g = GenotypeArray(haploid_data)
-    aeq(haploid_data, g)
-    eq(np.int, g.dtype)
-    eq(2, g.ndim)
-    eq(1, g.ploidy)
+        # data has wrong dimensions
+        data = [1, 2, 3]
+        with self.assertRaises(TypeError):
+            GenotypeArray(data)
 
-    # haploid data (typed)
-    g = GenotypeArray(np.array(haploid_data, dtype='i1'))
-    aeq(haploid_data, g)
-    eq(np.int8, g.dtype)
+        # data has wrong dimensions
+        data = haploid_data  # use HaplotypeArray instead
+        with self.assertRaises(TypeError):
+            GenotypeArray(data)
 
-    # diploid data
-    g = GenotypeArray(diploid_data)
-    aeq(diploid_data, g)
-    eq(np.int, g.dtype)
-    eq(3, g.ndim)
-    eq(2, g.ploidy)
+        # diploid data
+        g = GenotypeArray(diploid_data)
+        aeq(diploid_data, g)
+        eq(np.int, g.dtype)
+        eq(3, g.ndim)
+        eq(5, g.n_variants)
+        eq(3, g.n_samples)
+        eq(2, g.ploidy)
 
-    # diploid data (typed)
-    g = GenotypeArray(np.array(diploid_data, dtype='i1'))
-    aeq(diploid_data, g)
-    eq(np.int8, g.dtype)
+        # diploid data (typed)
+        g = GenotypeArray(np.array(diploid_data, dtype='i1'))
+        aeq(diploid_data, g)
+        eq(np.int8, g.dtype)
 
-    # triploid data
-    g = GenotypeArray(triploid_data)
-    aeq(triploid_data, g)
-    eq(np.int, g.dtype)
-    eq(3, g.ndim)
-    eq(3, g.ploidy)
+        # triploid data
+        g = GenotypeArray(triploid_data)
+        aeq(triploid_data, g)
+        eq(np.int, g.dtype)
+        eq(3, g.ndim)
+        eq(4, g.n_variants)
+        eq(3, g.n_samples)
+        eq(3, g.ploidy)
 
-    # triploid data (typed)
-    g = GenotypeArray(np.array(triploid_data, dtype='i1'))
-    aeq(triploid_data, g)
-    eq(np.int8, g.dtype)
+        # triploid data (typed)
+        g = GenotypeArray(np.array(triploid_data, dtype='i1'))
+        aeq(triploid_data, g)
+        eq(np.int8, g.dtype)
 
+    def test_slice(self):
+        eq = self.assertEqual
 
-def test_slice():
+        g = GenotypeArray(diploid_data)
+        eq(2, g.ploidy)
 
-    g = GenotypeArray(haploid_data)
-    eq(1, g.ploidy)
-    gs = g[:2]
-    aeq(haploid_data[:2], gs)
-    eq(1, gs.ploidy)
+        # row slice
+        s = g[1:]
+        self.assertIsInstance(s, GenotypeArray)
+        aeq(diploid_data[1:], s)
+        eq(4, s.n_variants)
+        eq(3, s.n_samples)
+        eq(2, s.ploidy)
 
-    g = GenotypeArray(diploid_data)
-    eq(2, g.ploidy)
-    gs = g[:2]
-    aeq(diploid_data[:2], gs)
-    eq(2, gs.ploidy)
+        # col slice
+        s = g[:, 1:]
+        self.assertIsInstance(s, GenotypeArray)
+        aeq(np.array(diploid_data)[:, 1:], s)
+        eq(5, s.n_variants)
+        eq(2, s.n_samples)
+        eq(2, s.ploidy)
 
-    g = GenotypeArray(triploid_data)
-    eq(3, g.ploidy)
-    gs = g[:2]
-    aeq(triploid_data[:2], gs)
-    eq(3, gs.ploidy)
+        # row index
+        s = g[0]
+        self.assertIsInstance(s, np.ndarray)
+        self.assertNotIsInstance(s, GenotypeArray)
+        aeq(diploid_data[0], s)
 
+        # col index
+        s = g[:, 0]
+        self.assertIsInstance(s, np.ndarray)
+        self.assertNotIsInstance(s, GenotypeArray)
+        aeq(np.array(diploid_data)[:, 0], s)
 
-def test_view():
+        # ploidy index
+        s = g[:, :, 0]
+        self.assertIsInstance(s, np.ndarray)
+        self.assertNotIsInstance(s, GenotypeArray)
+        aeq(np.array(diploid_data)[:, :, 0], s)
 
-    g = np.array(haploid_data).view(GenotypeArray)
-    eq(1, g.ploidy)
-    aeq(haploid_data, g)
+    def test_view(self):
+        eq = self.assertEqual
 
-    # data has wrong type
-    data = 'foo bar'
-    with assert_raises(TypeError):
-        np.array(data).view(GenotypeArray)
+        # data has wrong dtype
+        data = 'foo bar'
+        with self.assertRaises(TypeError):
+            np.array(data).view(GenotypeArray)
 
-    # data has wrong type
-    data = [4., 5., 3.7]
-    with assert_raises(TypeError):
-        np.array(data).view(GenotypeArray)
+        # data has wrong dtype
+        data = [4., 5., 3.7]
+        with self.assertRaises(TypeError):
+            np.array(data).view(GenotypeArray)
 
-    # data has wrong dimensions
-    data = [1, 2, 3]
-    with assert_raises(ValueError):
-        np.array(data).view(GenotypeArray)
+        # data has wrong dimensions
+        data = [1, 2, 3]
+        with self.assertRaises(TypeError):
+            np.array(data).view(GenotypeArray)
+
+        # data has wrong dimensions
+        data = haploid_data  # use HaplotypeArray instead
+        with self.assertRaises(TypeError):
+            np.array(data).view(GenotypeArray)
+
+        # diploid data
+        g = np.array(diploid_data).view(GenotypeArray)
+        aeq(diploid_data, g)
+        eq(np.int, g.dtype)
+        eq(3, g.ndim)
+        eq(5, g.n_variants)
+        eq(3, g.n_samples)
+        eq(2, g.ploidy)
+
+        # triploid data
+        g = np.array(triploid_data).view(GenotypeArray)
+        aeq(triploid_data, g)
+        eq(np.int, g.dtype)
+        eq(3, g.ndim)
+        eq(4, g.n_variants)
+        eq(3, g.n_samples)
+        eq(3, g.ploidy)
