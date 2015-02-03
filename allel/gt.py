@@ -896,7 +896,8 @@ def to_sparse(g, format='csr', **kwargs):
         Passed through to sparse matrix constructor.
 
     Returns
-    -------
+    -------        actual, _, _ = g.allele_frequencies()
+
 
     m : scipy.sparse.spmatrix
         Sparse matrix
