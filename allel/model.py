@@ -9,27 +9,27 @@ import numexpr as ne
 from allel.constants import *
 
 
-def _check_genotype_array_data(obj):
-    obj = np.asarray(obj)
-
-    # check dtype
-    if obj.dtype.kind not in 'ui':
-        raise TypeError('integer dtype required')
-
-    # check dimensionality
-    if obj.ndim != 3:
-        raise TypeError('array with 3 dimensions required')
-
-    return obj
-
-
 class GenotypeArray(np.ndarray):
     """TODO
 
     """
 
+    @staticmethod
+    def _check_input_data(obj):
+        obj = np.asarray(obj)
+
+        # check dtype
+        if obj.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+        # check dimensionality
+        if obj.ndim != 3:
+            raise TypeError('array with 3 dimensions required')
+
+        return obj
+
     def __new__(cls, data):
-        obj = _check_genotype_array_data(data)
+        obj = cls._check_input_data(data)
         obj = obj.view(cls)
         return obj
 
@@ -44,7 +44,7 @@ class GenotypeArray(np.ndarray):
             return
 
         # called after view
-        _check_genotype_array_data(obj)
+        GenotypeArray._check_input_data(obj)
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
@@ -84,6 +84,7 @@ class GenotypeArray(np.ndarray):
         return s[:-1] + ', n_variants=%s, n_samples=%s, ploidy=%s)' % \
                         (self.n_variants, self.n_samples, self.ploidy)
 
+    # noinspection PyUnusedLocal
     def is_called(self):
         """TODO
 
@@ -102,6 +103,7 @@ class GenotypeArray(np.ndarray):
 
         return out
 
+    # noinspection PyUnusedLocal
     def is_missing(self):
         """TODO
 
@@ -122,6 +124,7 @@ class GenotypeArray(np.ndarray):
 
         return out
 
+    # noinspection PyUnusedLocal
     def is_hom(self, allele=None):
         """TODO
 
@@ -156,6 +159,7 @@ class GenotypeArray(np.ndarray):
 
         return self.is_hom(allele=0)
 
+    # noinspection PyUnusedLocal
     def is_hom_alt(self):
         """TODO
 
@@ -177,6 +181,7 @@ class GenotypeArray(np.ndarray):
 
         return out
 
+    # noinspection PyUnusedLocal
     def is_het(self):
         """TODO
 
@@ -198,6 +203,7 @@ class GenotypeArray(np.ndarray):
 
         return out
 
+    # noinspection PyUnusedLocal
     def is_call(self, call):
         """TODO
 
@@ -477,27 +483,27 @@ class GenotypeArray(np.ndarray):
         return np.sum(self.is_doubleton(allele=allele))
 
 
-def _check_haplotype_array_data(obj):
-    obj = np.asarray(obj)
-
-    # check dtype
-    if obj.dtype.kind not in 'ui':
-        raise TypeError('integer dtype required')
-
-    # check dimensionality
-    if obj.ndim != 2:
-        raise TypeError('array with 2 dimensions required')
-
-    return obj
-
-
 class HaplotypeArray(np.ndarray):
     """TODO
 
     """
 
+    @staticmethod
+    def _check_input_data(obj):
+        obj = np.asarray(obj)
+
+        # check dtype
+        if obj.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+        # check dimensionality
+        if obj.ndim != 2:
+            raise TypeError('array with 2 dimensions required')
+
+        return obj
+
     def __new__(cls, data):
-        obj = _check_haplotype_array_data(data)
+        obj = cls._check_input_data(data)
         obj = obj.view(cls)
         return obj
 
@@ -512,7 +518,7 @@ class HaplotypeArray(np.ndarray):
             return
 
         # called after view
-        _check_haplotype_array_data(obj)
+        HaplotypeArray._check_input_data(obj)
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
@@ -796,33 +802,33 @@ class HaplotypeArray(np.ndarray):
         return np.sum(self.is_doubleton(allele=allele))
 
 
-def _check_pos_array_data(obj):
-    obj = np.asarray(obj)
-
-    # check dtype
-    if obj.dtype.kind not in 'ui':
-        raise TypeError('integer dtype required')
-
-    # check dimensionality
-    print(repr(obj))
-    print(obj.ndim)
-    if obj.ndim != 1:
-        raise TypeError('array with 1 dimension required')
-
-    # check sorted ascending
-    if np.any(np.diff(obj) < 0):
-        raise ValueError('array is not sorted')
-
-    return obj
-
-
 class PosArray(np.ndarray):
     """TODO
 
     """
 
+    @staticmethod
+    def _check_input_data(obj):
+        obj = np.asarray(obj)
+
+        # check dtype
+        if obj.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+        # check dimensionality
+        print(repr(obj))
+        print(obj.ndim)
+        if obj.ndim != 1:
+            raise TypeError('array with 1 dimension required')
+
+        # check sorted ascending
+        if np.any(np.diff(obj) < 0):
+            raise ValueError('array is not sorted')
+
+        return obj
+
     def __new__(cls, data):
-        obj = _check_pos_array_data(data)
+        obj = cls._check_input_data(data)
         obj = obj.view(cls)
         return obj
 
@@ -837,7 +843,7 @@ class PosArray(np.ndarray):
             return
 
         # called after view
-        _check_pos_array_data(obj)
+        PosArray._check_input_data(obj)
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)

@@ -972,9 +972,109 @@ class TestHaplotypeArray(unittest.TestCase):
         actual = HaplotypeArray(haplotype_data) == 2
         aeq(expect, actual)
 
-    # TODO test allele frequency calculations
-    # TODO test is_variant, count_variant etc.
+    def test_allelism(self):
+        expect = np.array([2, 1, 1, 0])
+        actual = HaplotypeArray(haplotype_data).allelism()
+        aeq(expect, actual)
+    
+    def test_allele_number(self):
+        expect = np.array([2, 2, 1, 0])
+        actual = HaplotypeArray(haplotype_data).allele_number()
+        aeq(expect, actual)
+    
+    def test_allele_count(self):
+        expect = np.array([1, 2, 0, 0])
+        actual = HaplotypeArray(haplotype_data).allele_count(allele=1)
+        aeq(expect, actual)
+        expect = np.array([0, 0, 1, 0])
+        actual = HaplotypeArray(haplotype_data).allele_count(allele=2)
+        aeq(expect, actual)
+    
+    def test_allele_frequency(self):
+        expect = np.array([1/2, 2/2, 0/1, 0])
+        h = HaplotypeArray(haplotype_data)
+        actual, _, _ = h.allele_frequency(allele=1)
+        aeq(expect, actual)
+        expect = np.array([0/2, 0/2, 1/1, 0])
+        actual, _, _ = h.allele_frequency(allele=2)
+        aeq(expect, actual)
+    
+    def test_allele_counts(self):
+        expect = np.array([[1, 1, 0],
+                           [0, 2, 0],
+                           [0, 0, 1],
+                           [0, 0, 0]])
+        actual = HaplotypeArray(haplotype_data).allele_counts()
+        aeq(expect, actual)
+    
+    def test_allele_frequencies(self):
+        expect = np.array([[1/2, 1/2, 0/2],
+                           [0/2, 2/2, 0/2],
+                           [0/1, 0/1, 1/1],
+                           [0, 0, 0]])
+        actual, _, _ = HaplotypeArray(haplotype_data).allele_frequencies()
+        aeq(expect, actual)
+    
+    def test_is_count_variant(self):
+        expect = np.array([1, 1, 1, 0], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_variant()
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_variant())
+    
+    def test_is_count_non_variant(self):
+        expect = np.array([0, 0, 0, 1], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_non_variant()
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_non_variant())
+    
+    def test_is_count_segregating(self):
+        expect = np.array([1, 0, 0, 0], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_segregating()
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_segregating())
+    
+    def test_is_count_non_segregating(self):
+        expect = np.array([0, 1, 1, 1], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_non_segregating()
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_non_segregating())
 
+        expect = np.array([0, 0, 1, 1], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_non_segregating(allele=2)
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_non_segregating(allele=2))
+        
+    def test_is_count_singleton(self):
+        expect = np.array([1, 0, 0, 0], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_singleton(allele=1)
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_singleton(allele=1))
+
+        expect = np.array([0, 0, 1, 0], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_singleton(allele=2)
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_singleton(allele=2))
+    
+    def test_is_count_doubleton(self):
+        expect = np.array([0, 1, 0, 0], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_doubleton(allele=1)
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_doubleton(allele=1))
+
+        expect = np.array([0, 0, 0, 0], dtype='b1')
+        h = HaplotypeArray(haplotype_data)
+        actual = h.is_doubleton(allele=2)
+        aeq(expect, actual)
+        self.assertEqual(np.sum(expect), h.count_doubleton(allele=2))
+    
 
 class TestPosArray(unittest.TestCase):
     
