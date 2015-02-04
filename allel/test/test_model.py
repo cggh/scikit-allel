@@ -9,7 +9,7 @@ import numpy as np
 from allel.test.tools import assert_array_equal as aeq
 
 
-from allel.model import GenotypeArray, HaplotypeArray, PosArray
+from allel.model import GenotypeArray, HaplotypeArray, PositionIndex
 
 
 haplotype_data = [[0, 1, -1],
@@ -69,7 +69,7 @@ class TestGenotypeArray(unittest.TestCase):
         eq(2, g.ploidy)
 
         # diploid data (typed)
-        g = GenotypeArray(np.array(diploid_genotype_data, dtype='i1'))
+        g = GenotypeArray(diploid_genotype_data, dtype='i1')
         aeq(diploid_genotype_data, g)
         eq(np.int8, g.dtype)
 
@@ -83,14 +83,14 @@ class TestGenotypeArray(unittest.TestCase):
         eq(3, g.ploidy)
 
         # polyploid data (typed)
-        g = GenotypeArray(np.array(triploid_genotype_data, dtype='i1'))
+        g = GenotypeArray(triploid_genotype_data, dtype='i1')
         aeq(triploid_genotype_data, g)
         eq(np.int8, g.dtype)
 
     def test_slice(self):
         eq = self.assertEqual
 
-        g = GenotypeArray(np.array(diploid_genotype_data, dtype='i1'))
+        g = GenotypeArray(diploid_genotype_data, dtype='i1')
         eq(2, g.ploidy)
 
         # row slice
@@ -860,14 +860,14 @@ class TestHaplotypeArray(unittest.TestCase):
         eq(3, h.n_haplotypes)
 
         # haploid data (typed)
-        h = HaplotypeArray(np.array(haplotype_data, dtype='i1'))
+        h = HaplotypeArray(haplotype_data, dtype='i1')
         aeq(haplotype_data, h)
         eq(np.int8, h.dtype)
 
     def test_slice(self):
         eq = self.assertEqual
 
-        h = HaplotypeArray(np.array(haplotype_data, dtype='i1'))
+        h = HaplotypeArray(haplotype_data, dtype='i1')
 
         # row slice
         s = h[1:]
@@ -1076,7 +1076,7 @@ class TestHaplotypeArray(unittest.TestCase):
         self.assertEqual(np.sum(expect), h.count_doubleton(allele=2))
     
 
-class TestPosArray(unittest.TestCase):
+class TestPositionIndex(unittest.TestCase):
     
     def test_constructor(self):
         eq = self.assertEqual
@@ -1084,58 +1084,76 @@ class TestPosArray(unittest.TestCase):
         # missing data arg
         with self.assertRaises(TypeError):
             # noinspection PyArgumentList
-            PosArray()
+            PositionIndex()
 
         # data has wrong dtype
         data = 'foo bar'
         with self.assertRaises(TypeError):
-            PosArray(data)
+            PositionIndex(data)
 
         # data has wrong dtype
         data = [4., 5., 3.7]
         with self.assertRaises(TypeError):
-            PosArray(data)
+            PositionIndex(data)
 
         # data has wrong dimensions
         data = [[1, 2], [3, 4]]
         with self.assertRaises(TypeError):
-            PosArray(data)
+            PositionIndex(data)
 
         # positions are not sorted
         data = [2, 1, 3, 5]
         with self.assertRaises(ValueError):
-            PosArray(data)
+            PositionIndex(data)
         
-        # valid data
+        # valid data (unique)
+        data = [1, 4, 5, 7, 12]
+        pos = PositionIndex(data)
+        aeq(data, pos)
+        eq(np.int, pos.dtype)
+        eq(1, pos.ndim)
+        eq(5, pos.n_variants)
+        assert pos.is_unique
+
+        # valid data (non-unique)
         data = [1, 4, 5, 5, 7, 12]
-        pos = PosArray(data)
+        pos = PositionIndex(data)
         aeq(data, pos)
         eq(np.int, pos.dtype)
         eq(1, pos.ndim)
         eq(6, pos.n_variants)
+        assert not pos.is_unique
 
         # valid data (typed)
-        data = np.array([1, 4, 5, 5, 7, 12], dtype='u4')
-        pos = PosArray(data)
+        data = [1, 4, 5, 5, 7, 12]
+        pos = PositionIndex(data, dtype='u4')
         aeq(data, pos)
         eq(np.uint32, pos.dtype)
 
     def test_slice(self):
         eq = self.assertEqual
 
-        data = np.array([1, 4, 5, 5, 7, 12], dtype=np.int32)
-        pos = PosArray(data)
+        data = [1, 4, 5, 5, 7, 12]
+        pos = PositionIndex(data, dtype='u4')
 
         # row slice
         s = pos[1:]
-        self.assertIsInstance(s, PosArray)
+        self.assertIsInstance(s, PositionIndex)
         aeq(data[1:], s)
         eq(5, s.n_variants)
+        assert not s.is_unique
+
+        # row slice
+        s = pos[3:]
+        self.assertIsInstance(s, PositionIndex)
+        aeq(data[3:], s)
+        eq(3, s.n_variants)
+        assert s.is_unique
 
         # index
         s = pos[0]
-        self.assertIsInstance(s, np.int32)
-        self.assertNotIsInstance(s, PosArray)
+        self.assertIsInstance(s, np.uint32)
+        self.assertNotIsInstance(s, PositionIndex)
         eq(data[0], s)
 
     def test_view(self):
@@ -1144,87 +1162,109 @@ class TestPosArray(unittest.TestCase):
         # data has wrong dtype
         data = 'foo bar'
         with self.assertRaises(TypeError):
-            np.asarray(data).view(PosArray)
+            np.asarray(data).view(PositionIndex)
 
         # data has wrong dtype
         data = [4., 5., 3.7]
         with self.assertRaises(TypeError):
-            np.asarray(data).view(PosArray)
+            np.asarray(data).view(PositionIndex)
 
         # data has wrong dimensions
         data = [[1, 2], [3, 4]]
         with self.assertRaises(TypeError):
-            np.asarray(data).view(PosArray)
+            np.asarray(data).view(PositionIndex)
 
         # positions are not sorted
         data = [2, 1, 3, 5]
         with self.assertRaises(ValueError):
-            np.asarray(data).view(PosArray)
+            np.asarray(data).view(PositionIndex)
         
-        # valid data
+        # valid data (unique)
+        data = [1, 4, 5, 7, 12]
+        pos = np.asarray(data).view(PositionIndex)
+        aeq(data, pos)
+        eq(np.int, pos.dtype)
+        eq(1, pos.ndim)
+        eq(5, pos.n_variants)
+        assert pos.is_unique
+
+        # valid data (non-unique)
         data = [1, 4, 5, 5, 7, 12]
-        pos = np.asarray(data).view(PosArray)
+        pos = np.asarray(data).view(PositionIndex)
         aeq(data, pos)
         eq(np.int, pos.dtype)
         eq(1, pos.ndim)
         eq(6, pos.n_variants)
+        assert not pos.is_unique
 
         # valid data (typed)
         data = np.array([1, 4, 5, 5, 7, 12], dtype='u4')
-        pos = np.asarray(data).view(PosArray)
+        pos = np.asarray(data).view(PositionIndex)
         aeq(data, pos)
         eq(np.uint32, pos.dtype)
 
     def test_locate_position(self):
         eq = self.assertEqual
-        pos = PosArray([3, 6, 11])
+        pos = PositionIndex([3, 6, 6, 11])
         f = pos.locate_position
         eq(0, f(3))
-        eq(1, f(6))
-        eq(2, f(11))
-        self.assertIsNone(f(1))
-        self.assertIsNone(f(7))
-        self.assertIsNone(f(12))
-
-    def test_locate_positions(self):
-        pos1 = PosArray([3, 6, 11, 20, 35])
-        pos2 = PosArray([4, 6, 20, 39])
-        expect_cond1 = np.array([False, True, False, True, False])
-        expect_cond2 = np.array([False, True, True, False])
-        cond1, cond2 = pos1.locate_positions(pos2)
-        aeq(expect_cond1, cond1)
-        aeq(expect_cond2, cond2)
-
-    def test_intersect(self):
-        pos1 = PosArray([3, 6, 11, 20, 35])
-        pos2 = PosArray([4, 6, 20, 39])
-        expect = PosArray([6, 20])
-        actual = pos1.intersect(pos2)
-        aeq(expect, actual)
-        
+        eq(3, f(11))
+        eq(slice(1, 3), f(6))
+        with self.assertRaises(KeyError):
+            f(2)
+            
     def test_locate_interval(self):
         eq = self.assertEqual
-        pos = PosArray([3, 6, 11, 20, 35])
+        pos = PositionIndex([3, 6, 11, 20, 35])
         eq(slice(0, 5), pos.locate_interval(2, 37))
+        eq(slice(0, 5), pos.locate_interval(3, 35))
         eq(slice(1, 5), pos.locate_interval(4, 37))
+        eq(slice(1, 5), pos.locate_interval(start=4))
         eq(slice(0, 4), pos.locate_interval(2, 32))
+        eq(slice(0, 4), pos.locate_interval(stop=32))
         eq(slice(1, 4), pos.locate_interval(4, 32))
         eq(slice(1, 3), pos.locate_interval(4, 19))
         eq(slice(2, 4), pos.locate_interval(7, 32))
         eq(slice(2, 3), pos.locate_interval(7, 19))
-        eq(slice(3, 3), pos.locate_interval(17, 19))
-        eq(slice(0, 0), pos.locate_interval(0, 0))
-        eq(slice(5, 5), pos.locate_interval(1000, 2000))
+        with self.assertRaises(KeyError):
+            pos.locate_interval(17, 19)
+        with self.assertRaises(KeyError):
+            print(pos.locate_interval(0, 2))
+        with self.assertRaises(KeyError):
+            pos.locate_interval(36, 2000)
+
+    def test_locate_intersection(self):
+        pos1 = PositionIndex([3, 6, 11, 20, 35])
+        pos2 = PositionIndex([4, 6, 20, 39])
+        expect_loc1 = np.array([False, True, False, True, False])
+        expect_loc2 = np.array([False, True, True, False])
+        loc1, loc2 = pos1.locate_intersection(pos2)
+        aeq(expect_loc1, loc1)
+        aeq(expect_loc2, loc2)
+
+    def test_locate_positions(self):
+        pos1 = PositionIndex([3, 6, 11, 20, 35])
+        pos2 = PositionIndex([4, 6, 20, 39])
+        expect = np.array([False, True, False, True, False])
+        actual = pos1.locate_positions(pos2)
+        aeq(expect, actual)
+
+    def test_intersect(self):
+        pos1 = PositionIndex([3, 6, 11, 20, 35])
+        pos2 = PositionIndex([4, 6, 20, 39])
+        expect = PositionIndex([6, 20])
+        actual = pos1.intersect(pos2)
+        aeq(expect, actual)
 
     def test_locate_intervals(self):
-        pos = PosArray([3, 6, 11, 20, 35])
+        pos = PositionIndex([3, 6, 11, 20, 35])
         intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
-        expect_cond1 = np.array([False, True, True, False, True])
-        expect_cond2 = np.array([False, True, False, True, False])
-        cond1, cond2 = pos.locate_intervals(intervals[:, 0], intervals[:, 1])
-        aeq(expect_cond1, cond1)
-        aeq(expect_cond2, cond2)
-        aeq([6, 11, 35], pos[cond1])
-        aeq([[6, 17], [31, 35]], intervals[cond2])
+        expect_loc1 = np.array([False, True, True, False, True])
+        expect_loc2 = np.array([False, True, False, True, False])
+        loc1, loc2 = pos.locate_intervals(intervals[:, 0], intervals[:, 1])
+        aeq(expect_loc1, loc1)
+        aeq(expect_loc2, loc2)
+        aeq([6, 11, 35], pos[loc1])
+        aeq([[6, 17], [31, 35]], intervals[loc2])
 
     # TODO test windowed counts

@@ -81,13 +81,16 @@ HaplotypeArray
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
 
-PosArray
---------
+PositionIndex
+-------------
 
-.. autoclass:: PosArray(data)
+.. autoclass:: PositionIndex(data)
 
     .. autoattribute:: n_variants
+    .. autoattribute:: is_unique
     .. automethod:: locate_position
     .. automethod:: locate_positions
+    .. automethod:: locate_intersection
+    .. automethod:: intersect
     .. automethod:: locate_interval
     .. automethod:: locate_intervals

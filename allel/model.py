@@ -1868,7 +1868,7 @@ class HaplotypeArray(np.ndarray):
         return np.sum(self.is_doubleton(allele=allele))
 
 
-class PosArray(np.ndarray):
+class PositionIndex(np.ndarray):
     """Array of variant positions from a single chromosome or contig.
 
     Parameters
@@ -1887,13 +1887,14 @@ class PosArray(np.ndarray):
 
     Each integer within the array is a 1-based coordinate position within a
     single chromosome or contig. Positions must be given in ascending order,
-    although duplicate positions may be present.
+    although duplicate positions may be present (i.e., positions must be
+    monotonically increasing).
 
     Examples
     --------
 
     >>> import allel
-    >>> pos = allel.PosArray([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> pos = allel.PositionIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
     >>> pos.dtype
     dtype('int32')
     >>> pos.ndim
@@ -1902,6 +1903,8 @@ class PosArray(np.ndarray):
     (7,)
     >>> pos.n_variants
     7
+    >>> pos.is_unique
+    False
 
     """
 
@@ -1917,13 +1920,14 @@ class PosArray(np.ndarray):
             raise TypeError('array with 1 dimension required')
 
         # check sorted ascending
-        if np.any(np.diff(obj) < 0):
-            raise ValueError('array is not sorted')
+        diff = np.diff(obj)
+        if np.any(diff < 0):
+            raise ValueError('array is not monotonically increasing')
 
     def __new__(cls, data, **kwargs):
         """Constructor."""
         obj = np.array(data, **kwargs)
-        cls._check_input_data(obj)
+        is_unique = cls._check_input_data(obj)
         obj = obj.view(cls)
         return obj
 
@@ -1934,11 +1938,11 @@ class PosArray(np.ndarray):
             return
 
         # called after slice (new-from-template)
-        if isinstance(obj, PosArray):
+        if isinstance(obj, PositionIndex):
             return
 
         # called after view
-        PosArray._check_input_data(obj)
+        PositionIndex._check_input_data(obj)
 
     # noinspection PyUnusedLocal
     def __array_wrap__(self, out_arr, context=None):
@@ -1968,13 +1972,19 @@ class PosArray(np.ndarray):
         """Number of variants (length of first dimension)."""
         return self.shape[0]
 
+    @property
+    def is_unique(self):
+        """True if no duplicate entries."""
+        if not hasattr(self, '_is_unique'):
+            self._is_unique = ~np.any(np.diff(self) == 0)
+        return self._is_unique
+
     def __repr__(self):
-        s = super(PosArray, self).__repr__()
+        s = super(PositionIndex, self).__repr__()
         return s[:-1] + ', n_variants=%s)' % self.n_variants
 
     def locate_position(self, p):
-        """Locate index within the array corresponding to the position `p`,
-        if present.
+        """Get index location for the requested position.
 
         Parameters
         ----------
@@ -1985,111 +1995,40 @@ class PosArray(np.ndarray):
         Returns
         -------
 
-        index : int or None
-            Index if `p` is present, otherwise None.
+        loc : int or slice
+            Location of `p` (will be slice if there are duplicate entries).
 
         Examples
         --------
 
         >>> import allel
-        >>> pos = allel.PosArray([3, 6, 11])
+        >>> pos = allel.PositionIndex([3, 6, 6, 11])
+        >>> pos.locate_position(3)
+        0
+        >>> pos.locate_position(11)
+        3
         >>> pos.locate_position(6)
-        1
-        >>> pos.locate_position(7) is None
-        True
+        slice(1, 3, None)
+        >>> try:
+        ...     pos.locate_position(2)
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        2
 
         """
 
-        # find position
-        index = np.searchsorted(self, p)
-        if index < self.size and self[index] == p:
-            return index
+        left = np.searchsorted(self, p, side='left')
+        right = np.searchsorted(self, p, side='right')
+        diff = right - left
+        if diff == 0:
+            raise KeyError(p)
+        elif diff == 1:
+            return left
         else:
-            return None
+            return slice(left, right)
 
-    def locate_positions(self, other, assume_unique=False):
-        """Locate positions also present in `other`.
-
-        Parameters
-        ----------
-
-        other : array_like, int, shape (m_variants,)
-            Array of positions to locate.
-        assume_unique : bool, optional
-            Can speed up processing if both arrays have no duplicates.
-
-        Returns
-        -------
-
-        cond1 : ndarray, bool, shape (n_variants,)
-            Boolean array with location of positions found.
-        cond2 : ndarray, bool, shape (m_variants,)
-            Boolean array with location in `other` of positions found.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> pos1 = allel.PosArray([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PosArray([4, 6, 20, 39])
-        >>> cond1, cond2 = pos1.locate_positions(pos2)
-        >>> cond1
-        array([False,  True, False,  True, False], dtype=bool)
-        >>> cond2
-        array([False,  True,  True, False], dtype=bool)
-        >>> pos1[cond1]
-        PosArray([ 6, 20], n_variants=2)
-        >>> pos2[cond2]
-        PosArray([ 6, 20], n_variants=2)
-
-        """
-
-        # check inputs
-        other = PosArray(other)
-
-        # find intersection
-        cond1 = np.in1d(self, other, assume_unique=assume_unique)
-        cond2 = np.in1d(other, self, assume_unique=assume_unique)
-
-        return cond1, cond2
-
-    def intersect(self, other, assume_unique=False):
-        """Intersect with `other` positions.
-
-        Parameters
-        ----------
-
-        other : array_like, int, shape (m_variants,)
-            Array of positions to locate.
-        assume_unique : bool, optional
-            Can speed up processing if both arrays have no duplicates.
-
-        Returns
-        -------
-
-        out : PosArray
-            Positions in common.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> pos1 = allel.PosArray([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PosArray([4, 6, 20, 39])
-        >>> pos1.intersect(pos2)
-        PosArray([ 6, 20], n_variants=2)
-
-        """
-
-        # check inputs
-        other = PosArray(other)
-
-        # find intersection
-        cond = np.in1d(self, other, assume_unique=assume_unique)
-
-        return np.compress(cond, self)
-
-    def locate_interval(self, start=0, stop=None):
+    def locate_interval(self, start=None, stop=None):
         """Locate slice of array containing all variants within `start` and
         `stop` positions.
 
@@ -2111,22 +2050,142 @@ class PosArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> pos = allel.PosArray([3, 6, 11, 20, 35])
+        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
         >>> loc = pos.locate_interval(4, 32)
         >>> loc
         slice(1, 4, None)
         >>> pos[loc]
-        PosArray([ 6, 11, 20], n_variants=3)
+        PositionIndex([ 6, 11, 20], n_variants=3)
 
         """
 
         # locate start and stop indices
-        start_index = np.searchsorted(self, start)
-        stop_index = np.searchsorted(self, stop, side='right') \
-            if stop is not None else None
+        if start is None:
+            start_index = 0
+        else:
+            start_index = np.searchsorted(self, start)
+        if stop is None:
+            stop_index = len(self)
+        else:
+            stop_index = np.searchsorted(self, stop, side='right')
+
+        if stop_index - start_index == 0:
+            raise KeyError(start, stop)
 
         loc = slice(start_index, stop_index)
         return loc
+
+    def locate_intersection(self, other):
+        """Locate the intersection of two position arrays.
+
+        Parameters
+        ----------
+
+        other : array_like, int, shape (m_variants,)
+            Array of positions to intersect.
+
+        Returns
+        -------
+
+        loc : ndarray, bool, shape (n_variants,)
+            Boolean array with location of intersection.
+        loc_other : ndarray, bool, shape (m_variants,)
+            Boolean array with location in `other` of intersection.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
+        >>> loc1, loc2 = pos1.locate_intersection(pos2)
+        >>> loc1
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> loc2
+        array([False,  True,  True, False], dtype=bool)
+        >>> pos1[loc1]
+        PositionIndex([ 6, 20], n_variants=2)
+        >>> pos2[loc2]
+        PositionIndex([ 6, 20], n_variants=2)
+
+        """
+
+        # check inputs
+        other = PositionIndex(other)
+
+        # find intersection
+        assume_unique = self.is_unique and other.is_unique
+        loc = np.in1d(self, other, assume_unique=assume_unique)
+        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+
+        return loc, loc_other
+
+    def locate_positions(self, other):
+        """Locate positions in `other`.
+
+        Parameters
+        ----------
+
+        other : array_like, int, shape (m_variants,)
+            Array of positions to locate.
+
+        Returns
+        -------
+
+        loc : ndarray, bool, shape (n_variants,)
+            Boolean array with location of positions.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
+        >>> loc = pos1.locate_positions(pos2)
+        >>> loc
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> pos1[loc]
+        PositionIndex([ 6, 20], n_variants=2)
+
+        """
+
+        # check inputs
+        other = PositionIndex(other)
+
+        # find intersection
+        assume_unique = self.is_unique and other.is_unique
+        loc = np.in1d(self, other, assume_unique=assume_unique)
+
+        return loc
+
+    def intersect(self, other):
+        """Intersect with `other` positions.
+
+        Parameters
+        ----------
+
+        other : array_like, int, shape (m_variants,)
+            Array of positions to locate.
+
+        Returns
+        -------
+
+        out : PositionIndex
+            Positions in common.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
+        >>> pos1.intersect(pos2)
+        PositionIndex([ 6, 20], n_variants=2)
+
+        """
+
+        loc = self.locate_positions(other)
+        return np.compress(loc, self)
 
     def locate_intervals(self, starts, stops):
         """Locate positions within any of the given intervals.
@@ -2142,9 +2201,9 @@ class PosArray(np.ndarray):
         Returns
         -------
 
-        cond1 : ndarray, bool, shape (n_variants,)
+        loc : ndarray, bool, shape (n_variants,)
             Boolean array with location of positions found.
-        cond2 : ndarray, bool, shape (n_intervals,)
+        loc_intervals : ndarray, bool, shape (n_intervals,)
             Boolean array with intervals containing one or more positions.
 
         Examples
@@ -2152,18 +2211,18 @@ class PosArray(np.ndarray):
 
         >>> import allel
         >>> import numpy as np
-        >>> pos = allel.PosArray([3, 6, 11, 20, 35])
+        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
         >>> intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
         >>> starts = intervals[:, 0]
         >>> stops = intervals[:, 1]
-        >>> cond1, cond2 = pos.locate_intervals(starts, stops)
-        >>> cond1
-        PosArray([False,  True,  True, False,  True], dtype=bool, n_variants=5)
-        >>> cond2
+        >>> loc1, loc2 = pos.locate_intervals(starts, stops)
+        >>> loc1
+        PositionIndex([False,  True,  True, False,  True], dtype=bool, n_variants=5)
+        >>> loc2
         array([False,  True, False,  True, False], dtype=bool)
-        >>> pos[cond1]
-        PosArray([ 6, 11, 35], n_variants=3)
-        >>> intervals[cond2]
+        >>> pos[loc1]
+        PositionIndex([ 6, 11, 35], n_variants=3)
+        >>> intervals[loc2]
         array([[ 6, 17],
                [31, 35]])
 
@@ -2181,13 +2240,13 @@ class PosArray(np.ndarray):
         stop_indices = np.searchsorted(self, stops, side='right')
 
         # find intervals overlapping at least one position
-        cond2 = start_indices < stop_indices
+        loc2 = start_indices < stop_indices
 
         # find positions within at least one interval
-        cond1 = np.zeros_like(self, dtype=np.bool)
-        for i, j in zip(start_indices[cond2], stop_indices[cond2]):
-            cond1[i:j] = True
+        loc1 = np.zeros_like(self, dtype=np.bool)
+        for i, j in zip(start_indices[loc2], stop_indices[loc2]):
+            loc1[i:j] = True
 
-        return cond1, cond2
+        return loc1, loc2
 
     # TODO windowed counts

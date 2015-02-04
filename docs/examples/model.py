@@ -63,7 +63,7 @@ h.view_genotypes(ploidy=2)
 ##########
 
 import allel
-pos = allel.PosArray([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+pos = allel.PositionIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
 pos.dtype
 pos.ndim
 pos.shape
@@ -74,7 +74,7 @@ pos.n_variants
 #################
 
 import allel
-pos = allel.PosArray([3, 6, 11])
+pos = allel.PositionIndex([3, 6, 11])
 pos.locate_position(6)
 pos.locate_position(7) is None
 
@@ -83,8 +83,8 @@ pos.locate_position(7) is None
 #################
 
 import allel
-pos1 = allel.PosArray([3, 6, 11, 20, 35])
-pos2 = allel.PosArray([4, 6, 20, 39])
+pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+pos2 = allel.PositionIndex([4, 6, 20, 39])
 cond1, cond2 = pos1.locate_positions(pos2)
 cond1
 cond2
@@ -96,8 +96,8 @@ pos2[cond2]
 ###########
 
 import allel
-pos1 = allel.PosArray([3, 6, 11, 20, 35])
-pos2 = allel.PosArray([4, 6, 20, 39])
+pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+pos2 = allel.PositionIndex([4, 6, 20, 39])
 pos1.intersect(pos2)
 
 
@@ -105,7 +105,7 @@ pos1.intersect(pos2)
 #################
 
 import allel
-pos = allel.PosArray([3, 6, 11, 20, 35])
+pos = allel.PositionIndex([3, 6, 11, 20, 35])
 loc = pos.locate_interval(4, 32)
 loc
 pos[loc]
@@ -116,7 +116,7 @@ pos[loc]
 
 import allel
 import numpy as np
-pos = allel.PosArray([3, 6, 11, 20, 35])
+pos = allel.PositionIndex([3, 6, 11, 20, 35])
 intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
 starts = intervals[:, 0]
 stops = intervals[:, 1]
