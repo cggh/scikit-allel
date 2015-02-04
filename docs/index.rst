@@ -18,7 +18,7 @@ Contents
 .. toctree::
     :maxdepth: 2
 
-    gt
+    model
 
 Acknowledgments
 ===============

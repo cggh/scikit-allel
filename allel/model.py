@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+This module defines array classes for variant call data.
+
+"""
 from __future__ import absolute_import, print_function, division
 
 
@@ -10,8 +14,112 @@ from allel.constants import *
 
 
 class GenotypeArray(np.ndarray):
-    """TODO
+    """Array of discrete genotype calls.
 
+    Parameters
+    ----------
+
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+
+    Notes
+    -----
+
+    This class represents data on discrete genotype calls as a
+    3-dimensional numpy array of integers. By convention the first
+    dimension corresponds to the variants genotyped, the second
+    dimension corresponds to the samples genotyped, and the third
+    dimension corresponds to the ploidy of the samples.
+
+    Each integer within the array corresponds to an **allele index**,
+    where 0 is the reference allele, 1 is the first alternate allele,
+    2 is the second alternate allele, ... and -1 (or any other
+    negative integer) is a missing allele call. A single byte integer
+    dtype (int8) can represent up to 127 distinct alleles, which is
+    usually sufficient.  The actual alleles (i.e., the alternate
+    nucleotide sequences) and the physical positions of the variants
+    within the genome of an organism are stored in separate arrays,
+    discussed elsewhere.
+    
+    In many cases the number of distinct alleles for each variant is
+    small, e.g., less than 10, or even 2 (all variants are
+    biallelic). In these cases a genotype array is not the most
+    compact way of storing genotype data in memory. This class defines
+    functions for bit-packing diploid genotype calls into single
+    bytes, and for transforming genotype arrays into sparse matrices,
+    which can assist in cases where memory usage needs to be
+    minimised. Note however that these more compact representations do
+    not allow the same flexibility in terms of using numpy universal
+    functions to access and manipulate data.
+
+    Arrays of this class can store either **phased or unphased**
+    genotype calls. If the genotypes are phased (i.e., haplotypes have
+    been resolved) then individual haplotypes can be extracted by
+    converting to a :class:`HaplotypeArray` then indexing the second
+    dimension. If the genotype calls are unphased then the ordering of
+    alleles along the third (ploidy) dimension is arbitrary. N.B.,
+    this means that an unphased diploid heterozygous call could be
+    stored as (0, 1) or equivalently as (1, 0).
+
+    A genotype array can store genotype calls with any ploidy > 1. For
+    haploid calls, use a :class:`HaplotypeArray`. Note that genotype
+    arrays are not capable of storing calls for samples with differing
+    or variable ploidy.
+
+    Examples
+    --------
+
+    Instantiate a genotype array::
+
+        >>> import allel
+        >>> import numpy as np
+        >>> data = np.array([[[0, 0], [0, 1]],
+        ...                  [[0, 1], [1, 1]],
+        ...                  [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.GenotypeArray(data)
+        >>> g.dtype
+        dtype('int8')
+        >>> g.ndim
+        3
+        >>> g.shape
+        (3, 2, 2)
+        >>> g.n_variants
+        3
+        >>> g.n_samples
+        2
+        >>> g.ploidy
+        2
+
+    Genotype calls for a single variant at all samples can be obtained
+    by indexing the first dimension, e.g.::
+
+        >>> g[1]
+        array([[0, 1],
+               [1, 1]], dtype=int8)
+
+    Genotype calls for a single sample at all variants can be obtained
+    by indexing the second dimension, e.g.::
+
+        >>> g[:, 1]
+        array([[ 0,  1],
+               [ 1,  1],
+               [-1, -1]], dtype=int8)
+
+    A genotype call for a single sample at a single variant can be
+    obtained by indexing the first and second dimensions, e.g.::
+
+        >>> g[1, 0]
+        array([0, 1], dtype=int8)
+
+    A genotype array can store polyploid calls, e.g.::
+
+        >>> data = np.array([[[0, 0, 0], [0, 0, 1]],
+        ...                  [[0, 1, 1], [1, 1, 1]],
+        ...                  [[0, 1, 2], [-1, -1, -1]]], dtype='i1')
+        >>> g_triploid = allel.GenotypeArray(data)
+        >>> g_triploid.ploidy
+        3
+        
     """
 
     @staticmethod
@@ -29,6 +137,7 @@ class GenotypeArray(np.ndarray):
         return obj
 
     def __new__(cls, data):
+        """Constructor."""
         obj = cls._check_input_data(data)
         obj = obj.view(cls)
         return obj
@@ -66,17 +175,17 @@ class GenotypeArray(np.ndarray):
 
     @property
     def n_variants(self):
-        """TODO"""
+        """Number of variants (length of first array dimension)."""
         return self.shape[0]
 
     @property
     def n_samples(self):
-        """TODO"""
+        """Number of samples (length of second array dimension)."""
         return self.shape[1]
 
     @property
     def ploidy(self):
-        """TODO"""
+        """Sample ploidy (length of third array dimension)."""
         return self.shape[2]
 
     def __repr__(self):
@@ -86,7 +195,26 @@ class GenotypeArray(np.ndarray):
 
     # noinspection PyUnusedLocal
     def is_called(self):
-        """TODO
+        """Find non-missing genotype calls.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype call matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.is_called()
+        array([[ True,  True],
+               [ True,  True],
+               [ True, False]], dtype=bool)
 
         """
 
@@ -105,7 +233,26 @@ class GenotypeArray(np.ndarray):
 
     # noinspection PyUnusedLocal
     def is_missing(self):
-        """TODO
+        """Find missing genotype calls.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype call matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.is_missing()
+        array([[False, False],
+               [False, False],
+               [False,  True]], dtype=bool)
 
         """
 
@@ -126,7 +273,36 @@ class GenotypeArray(np.ndarray):
 
     # noinspection PyUnusedLocal
     def is_hom(self, allele=None):
-        """TODO
+        """Find genotype calls that are homozygous.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype call matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_hom()
+        array([[ True, False],
+               [False,  True],
+               [ True, False]], dtype=bool)
+        >>> g.is_hom(allele=1)
+        array([[False, False],
+               [False,  True],
+               [False, False]], dtype=bool)
 
         """
 
@@ -153,7 +329,26 @@ class GenotypeArray(np.ndarray):
         return out
 
     def is_hom_ref(self):
-        """TODO
+        """Find genotype calls that are homozygous for the reference allele.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype call matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.is_hom_ref()
+        array([[ True, False],
+               [False, False],
+               [False, False]], dtype=bool)
 
         """
 
@@ -161,7 +356,27 @@ class GenotypeArray(np.ndarray):
 
     # noinspection PyUnusedLocal
     def is_hom_alt(self):
-        """TODO
+        """Find genotype calls that are homozygous for any alternate (i.e.,
+        non-reference) allele.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype call matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_hom_alt()
+        array([[False, False],
+               [False,  True],
+               [ True, False]], dtype=bool)
 
         """
 
@@ -183,7 +398,26 @@ class GenotypeArray(np.ndarray):
 
     # noinspection PyUnusedLocal
     def is_het(self):
-        """TODO
+        """Find genotype calls that are heterozygous.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype call matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.is_het()
+        array([[False,  True],
+               [ True, False],
+               [ True, False]], dtype=bool)
 
         """
 
@@ -205,7 +439,31 @@ class GenotypeArray(np.ndarray):
 
     # noinspection PyUnusedLocal
     def is_call(self, call):
-        """TODO
+        """Find genotypes with a given call.
+
+        Parameters
+        ----------
+
+        call : array_like, int, shape (ploidy,)
+            The genotype call to find.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants, n_samples)
+            Array where elements are True if the genotype is `call`.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.is_call((0, 2))
+        array([[False, False],
+               [False, False],
+               [ True, False]], dtype=bool)
 
         """
 
@@ -267,12 +525,12 @@ class GenotypeArray(np.ndarray):
         return h
 
     @staticmethod
-    def from_haplotypes(h, ploidy):
+    def from_haplotypes(data, ploidy):
         """TODO
 
         """
 
-        h = HaplotypeArray(h)
+        h = HaplotypeArray(data)
         return h.to_genotypes(ploidy=ploidy)
 
     def to_n_alt(self, fill=0):

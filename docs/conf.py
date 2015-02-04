@@ -14,38 +14,29 @@
 import sys
 import os
 from ast import literal_eval
+from mock import Mock as MagicMock
 
 
-class Mock(object):
-
-    __all__ = []
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __call__(self, *args, **kwargs):
-        return Mock()
-
+class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        elif name[0] == name[0].upper():
-            mock_type = type(name, (), {})
-            mock_type.__module__ = __name__
-            return mock_type
-        else:
             return Mock()
 
-
-MOCK_MODULES = ['numpy', 'scipy', 'scipy.stats', 'scipy.spatial',
+MOCK_MODULES = ['scipy', 'scipy.stats', 'scipy.spatial',
                 'scipy.spatial.distance', 'matplotlib', 'matplotlib.pyplot',
                 'matplotlib.image', 'ipython', 'numexpr', 'sklearn',
                 'sklearn.decomposition', 'h5py', 'rpy2', 'rpy2.robjects',
                 'rpy2.robjects.numpy2ri', 'rpy2.robjects.packages',
-                'sklearn.manifold', 'scipy.special', 'anhima.opt.ld', 'pandas']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock()
+                'sklearn.manifold', 'scipy.special', 'pandas']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+
+# need to special-case numpy because we are sub-classing ndarray
+class MockNumpy(object):
+    class ndarray(object):
+        pass
+
+sys.modules['numpy'] = MockNumpy()
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -297,3 +288,11 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+# autodoc config
+autoclass_content = 'class'
+
+# numpydoc config
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+numpydoc_class_members_toctree = False
