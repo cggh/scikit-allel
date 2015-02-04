@@ -21,6 +21,8 @@ class GenotypeArray(np.ndarray):
 
     data : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype data.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
 
     Notes
     -----
@@ -72,11 +74,9 @@ class GenotypeArray(np.ndarray):
     Instantiate a genotype array::
 
         >>> import allel
-        >>> import numpy as np
-        >>> data = np.array([[[0, 0], [0, 1]],
-        ...                  [[0, 1], [1, 1]],
-        ...                  [[0, 2], [-1, -1]]], dtype='i1')
-        >>> g = allel.GenotypeArray(data)
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]], dtype='i1')
         >>> g.dtype
         dtype('int8')
         >>> g.ndim
@@ -113,18 +113,16 @@ class GenotypeArray(np.ndarray):
 
     A genotype array can store polyploid calls, e.g.::
 
-        >>> data = np.array([[[0, 0, 0], [0, 0, 1]],
-        ...                  [[0, 1, 1], [1, 1, 1]],
-        ...                  [[0, 1, 2], [-1, -1, -1]]], dtype='i1')
-        >>> g_triploid = allel.GenotypeArray(data)
-        >>> g_triploid.ploidy
+        >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
+        ...                          [[0, 1, 1], [1, 1, 1]],
+        ...                          [[0, 1, 2], [-1, -1, -1]]], dtype='i1')
+        >>> g.ploidy
         3
         
     """
 
     @staticmethod
     def _check_input_data(obj):
-        obj = np.asarray(obj)
 
         # check dtype
         if obj.dtype.kind not in 'ui':
@@ -134,11 +132,10 @@ class GenotypeArray(np.ndarray):
         if obj.ndim != 3:
             raise TypeError('array with 3 dimensions required')
 
-        return obj
-
-    def __new__(cls, data):
+    def __new__(cls, data, **kwargs):
         """Constructor."""
-        obj = cls._check_input_data(data)
+        obj = np.array(data, **kwargs)
+        cls._check_input_data(obj)
         obj = obj.view(cls)
         return obj
 
@@ -154,6 +151,11 @@ class GenotypeArray(np.ndarray):
 
         # called after view
         GenotypeArray._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
@@ -513,29 +515,84 @@ class GenotypeArray(np.ndarray):
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
 
-    def to_haplotypes(self):
-        """TODO
+    def view_haplotypes(self):
+        """Reshape a genotype array to view it as haplotypes by
+        dropping the ploidy dimension.
+
+        Returns
+        -------
+
+        h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
+            Haplotype array (sharing same underlying buffer).
+
+        Notes
+        -----
+
+        If genotype calls are unphased, the haplotypes returned by
+        this function will bear no resemblance to the true haplotypes.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.view_haplotypes()
+        HaplotypeArray([[ 0,  0,  0,  1],
+               [ 0,  1,  1,  1],
+               [ 0,  2, -1, -1]], n_variants=3, n_haplotypes=4)
 
         """
 
         # reshape, preserving size of variants dimension
         newshape = (self.shape[DIM_VARIANTS], -1)
         data = np.reshape(self, newshape)
-        h = HaplotypeArray(data)
+        h = HaplotypeArray(data, copy=False)
         return h
 
-    @staticmethod
-    def from_haplotypes(data, ploidy):
-        """TODO
-
-        """
-
-        h = HaplotypeArray(data)
-        return h.to_genotypes(ploidy=ploidy)
-
     def to_n_alt(self, fill=0):
-        """TODO
+        """Transform each genotype call into the number of
+        non-reference alleles.
 
+        Parameters
+        ----------
+
+        fill : int, optional
+            Use this value to represent missing calls.
+
+        Returns
+        -------
+
+        out : ndarray, int, shape (n_variants, n_samples)
+            Array of non-ref alleles per genotype call.
+
+        Notes
+        -----
+
+        This function simply counts the number of non-reference
+        alleles, it makes no distinction between different alternate
+        alleles.
+
+        By default this function returns 0 for missing genotype calls
+        **and** for homozygous reference genotype calls. Use the
+        `fill` argument to change how missing calls are represented.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.to_n_alt()
+        array([[0, 1],
+               [1, 2],
+               [2, 0]], dtype=int8)
+        >>> g.to_n_alt(fill=-1)
+        array([[ 0,  1],
+               [ 1,  2],
+               [ 2, -1]], dtype=int8)
 
         """
 
@@ -551,7 +608,42 @@ class GenotypeArray(np.ndarray):
         return out
 
     def to_allele_counts(self, alleles=None):
-        """TODO
+        """Transform genotype calls into allele counts per call.
+
+        Parameters
+        ----------
+
+        alleles : sequence of ints, optional
+            If not None, count only the given alleles. (By default, count all
+            alleles.)
+
+        Returns
+        -------
+
+        out : ndarray, uint8, shape (n_variants, n_samples, len(alleles))
+            Array of allele counts per call.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                         [[0, 2], [1, 1]],
+        ...                         [[2, 2], [-1, -1]]])
+        >>> g.to_allele_counts()
+        array([[[2, 0, 0],
+                [1, 1, 0]],
+               [[1, 0, 1],
+                [0, 2, 0]],
+               [[0, 0, 2],
+                [0, 0, 0]]], dtype=uint8)
+        >>> g.to_allele_counts(alleles=(0, 1))
+        array([[[2, 0],
+                [1, 1]],
+               [[1, 0],
+                [0, 2]],
+               [[0, 0],
+                [0, 0]]], dtype=uint8)
 
         """
 
@@ -571,7 +663,35 @@ class GenotypeArray(np.ndarray):
         return out
 
     def to_packed(self, boundscheck=True):
-        """TODO
+        """Pack diploid genotypes into a single byte for each genotype,
+        using the left-most 4 bits for the first allele and the right-most 4
+        bits for the second allele. Allows single byte encoding of diploid
+        genotypes for variants with up to 15 alleles.
+
+        Parameters
+        ----------
+
+        boundscheck : bool, optional
+            If False, do not check that minimum and maximum alleles are
+            compatible with bit-packing.
+
+        Returns
+        -------
+
+        packed : ndarray, uint8, shape (n_variants, n_samples)
+            Bit-packed genotype array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]], dtype='i1')
+        >>> g.to_packed()
+        array([[  0,   1],
+               [  2,  17],
+               [ 34, 239]], dtype=uint8)
 
         """
 
@@ -603,7 +723,36 @@ class GenotypeArray(np.ndarray):
 
     @staticmethod
     def from_packed(packed):
-        """TODO
+        """Unpack diploid genotypes that have been bit-packed into single
+        bytes.
+
+        Parameters
+        ----------
+
+        packed : ndarray, uint8, shape (n_variants, n_samples)
+            Bit-packed diploid genotype array.
+
+        Returns
+        -------
+
+        g : GenotypeArray, shape (n_variants, n_samples, 2)
+            Genotype array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> packed = np.array([[0, 1],
+        ...                    [2, 17],
+        ...                    [34, 239]], dtype='u1')
+        >>> allel.GenotypeArray.from_packed(packed)
+        GenotypeArray([[[ 0,  0],
+                [ 0,  1]],
+               [[ 0,  2],
+                [ 1,  1]],
+               [[ 2,  2],
+                [-1, -1]]], dtype=int8, n_variants=3, n_samples=2, ploidy=2)
 
         """
 
@@ -619,108 +768,469 @@ class GenotypeArray(np.ndarray):
         return GenotypeArray(data)
 
     def to_sparse(self, format='csr', **kwargs):
-        """TODO
+        """Convert into a sparse matrix.
+
+        Parameters
+        ----------
+
+        format : {'coo', 'csc', 'csr', 'dia', 'dok', 'lil'}
+            Sparse matrix format.
+        kwargs : keyword arguments
+            Passed through to sparse matrix constructor.
+
+        Returns
+        -------
+
+        m : scipy.sparse.spmatrix
+            Sparse matrix
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 1], [0, 1]],
+        ...                          [[1, 1], [0, 0]],
+        ...                          [[0, 0], [-1, -1]]], dtype='i1')
+        >>> m = g.to_sparse(format='csr')
+        >>> m
+        <4x4 sparse matrix of type '<class 'numpy.int8'>'
+            with 6 stored elements in Compressed Sparse Row format>
+        >>> m.data
+        array([ 1,  1,  1,  1, -1, -1], dtype=int8)
+        >>> m.indices
+        array([1, 3, 0, 1, 2, 3], dtype=int32)
+        >>> m.indptr
+        array([0, 0, 2, 4, 6], dtype=int32)
 
         """
 
-        h = self.to_haplotypes()
+        h = self.view_haplotypes()
         m = h.to_sparse(format=format, **kwargs)
         return m
 
     @staticmethod
     def from_sparse(m, ploidy, order=None, out=None):
-        """TODO
+        """Construct a genotype array from a sparse matrix.
+
+        Parameters
+        ----------
+
+        m : scipy.sparse.spmatrix
+            Sparse matrix
+        ploidy : int
+            The sample ploidy.
+        order : {'C', 'F'}, optional
+            Whether to store data in C (row-major) or Fortran (column-major)
+            order in memory.
+        out : ndarray, shape (n_variants, n_samples), optional
+            Use this array as the output buffer.
+
+        Returns
+        -------
+
+        g : GenotypeArray, shape (n_variants, n_samples, ploidy)
+            Genotype array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> import scipy.sparse
+        >>> data = np.array([ 1,  1,  1,  1, -1, -1], dtype=np.int8)
+        >>> indices = np.array([1, 3, 0, 1, 2, 3], dtype=np.int32)
+        >>> indptr = np.array([0, 0, 2, 4, 6], dtype=np.int32)
+        >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
+        >>> g = allel.GenotypeArray.from_sparse(m, ploidy=2)
+        >>> g
+        GenotypeArray([[[ 0,  0],
+                [ 0,  0]],
+               [[ 0,  1],
+                [ 0,  1]],
+               [[ 1,  1],
+                [ 0,  0]],
+               [[ 0,  0],
+                [-1, -1]]], dtype=int8, n_variants=4, n_samples=2, ploidy=2)
 
         """
 
         h = HaplotypeArray.from_sparse(m, order=order, out=out)
-        g = h.to_genotypes(ploidy=ploidy)
+        g = h.view_genotypes(ploidy=ploidy)
         return g
 
     def allelism(self):
-        """TODO
+        """Determine the number of distinct alleles for each variant.
+
+        Returns
+        -------
+
+        n : ndarray, int, shape (n_variants,)
+            Allelism array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.allelism()
+        array([2, 3, 1])
 
         """
 
-        return self.to_haplotypes().allelism()
+        return self.view_haplotypes().allelism()
 
     def allele_number(self):
-        """TODO
+        """Count the number of non-missing allele calls per variant.
+
+        Returns
+        -------
+
+        an : ndarray, int, shape (n_variants,)
+            Allele number array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.allele_number()
+        array([4, 4, 2])
 
         """
 
-        return self.to_haplotypes().allele_number()
+        return self.view_haplotypes().allele_number()
 
     def allele_count(self, allele=1):
-        """TODO
+        """Count the number of calls of the given allele per variant.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        ac : ndarray, int, shape (n_variants,)
+            Allele count array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.allele_count(allele=1)
+        array([1, 2, 0])
+        >>> g.allele_count(allele=2)
+        array([0, 1, 2])
 
         """
 
-        return self.to_haplotypes().allele_count(allele=allele)
+        return self.view_haplotypes().allele_count(allele=allele)
 
     def allele_frequency(self, allele=1, fill=0):
-        """TODO
+        """Calculate the frequency of the given allele per variant.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+        fill : int, optional
+            The value to use where all genotype calls are missing for a
+            variant.
+
+        Returns
+        -------
+
+        af : ndarray, float, shape (n_variants,)
+            Allele frequency array.
+        ac : ndarray, int, shape (n_variants,)
+            Allele count array (numerator).
+        an : ndarray, int, shape (n_variants,)
+            Allele number array (denominator).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> af, ac, an = g.allele_frequency(allele=1)
+        >>> af
+        array([ 0.25,  0.5 ,  0.  ])
+        >>> af, ac, an = g.allele_frequency(allele=2)
+        >>> af
+        array([ 0.  ,  0.25,  1.  ])
 
         """
 
-        return self.to_haplotypes().allele_frequency(allele=allele, fill=fill)
-
-    def allele_counts(self, alleles=None):
-        """TODO
-
-        """
-
-        return self.to_haplotypes().allele_counts(alleles=alleles)
-
-    def allele_frequencies(self, alleles=None, fill=0):
-        """TODO
-
-        """
-
-        return self.to_haplotypes().allele_frequencies(alleles=alleles,
+        return self.view_haplotypes().allele_frequency(allele=allele,
                                                        fill=fill)
 
-    def is_variant(self):
-        """TODO
+    def allele_counts(self, alleles=None):
+        """Count the number of calls of each allele per variant.
+
+        Parameters
+        ----------
+
+        alleles : sequence of ints, optional
+            The alleles to count. If None, all alleles will be counted.
+
+        Returns
+        -------
+
+        ac : ndarray, int, shape (n_variants, len(alleles))
+            Allele counts array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.allele_counts()
+        array([[3, 1, 0],
+               [1, 2, 1],
+               [0, 0, 2]], dtype=int32)
+        >>> g.allele_counts(alleles=(1, 2))
+        array([[1, 0],
+               [2, 1],
+               [0, 2]], dtype=int32)
 
         """
 
-        return self.to_haplotypes().is_variant()
+        return self.view_haplotypes().allele_counts(alleles=alleles)
+
+    def allele_frequencies(self, alleles=None, fill=0):
+        """Calculate the frequency of each allele per variant.
+
+        Parameters
+        ----------
+
+        alleles : sequence of ints, optional
+            The alleles to calculate frequency of. If None, all allele
+            frequencies will be calculated.
+        fill : int, optional
+            The value to use where all genotype calls are missing for a
+            variant.
+
+        Returns
+        -------
+
+        af : ndarray, float, shape (n_variants, len(alleles))
+            Allele frequencies array.
+        ac : ndarray, int, shape (n_variants, len(alleles))
+            Allele counts array (numerator).
+        an : ndarray, int, shape (n_variants,)
+            Allele number array (denominator).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> af, ac, an = g.allele_frequencies()
+        >>> af
+        array([[ 0.75,  0.25,  0.  ],
+               [ 0.25,  0.5 ,  0.25],
+               [ 0.  ,  0.  ,  1.  ]])
+        >>> af, ac, an = g.allele_frequencies(alleles=(1, 2))
+        >>> af
+        array([[ 0.25,  0.  ],
+               [ 0.5 ,  0.25],
+               [ 0.  ,  1.  ]])
+        """
+
+        return self.view_haplotypes().allele_frequencies(alleles=alleles,
+                                                         fill=fill)
+
+    def is_variant(self):
+        """Find variants with at least one non-reference allele call.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_variant()
+        array([False,  True,  True,  True], dtype=bool)
+
+        """
+
+        return self.view_haplotypes().is_variant()
 
     def is_non_variant(self):
-        """TODO
+        """Find variants with no non-reference allele calls.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_non_variant()
+        array([ True, False, False, False], dtype=bool)
 
         """
 
-        return self.to_haplotypes().is_non_variant()
+        return self.view_haplotypes().is_non_variant()
 
     def is_segregating(self):
-        """TODO
+        """Find segregating variants (where more than one allele is observed).
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_segregating()
+        array([False,  True,  True, False], dtype=bool)
 
         """
 
-        return self.to_haplotypes().is_segregating()
+        return self.view_haplotypes().is_segregating()
 
     def is_non_segregating(self, allele=None):
-        """TODO
+        """Find non-segregating variants (where at most one allele is
+        observed).
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_non_segregating()
+        array([ True, False, False,  True], dtype=bool)
+        >>> g.is_non_segregating(allele=2)
+        array([False, False, False,  True], dtype=bool)
 
         """
 
-        return self.to_haplotypes().is_non_segregating(allele=allele)
+        return self.view_haplotypes().is_non_segregating(allele=allele)
 
     def is_singleton(self, allele=1):
-        """TODO
+        """Find variants with a single call for the given allele.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1]],
+        ...                          [[1, 1], [1, 2]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_singleton(allele=1)
+        array([False,  True, False, False], dtype=bool)
+        >>> g.is_singleton(allele=2)
+        array([False, False,  True, False], dtype=bool)
 
         """
 
-        return self.to_haplotypes().is_singleton(allele=allele)
+        return self.view_haplotypes().is_singleton(allele=allele)
 
     def is_doubleton(self, allele=1):
-        """TODO
+        """Find variants with exactly two calls for the given allele.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [1, 1]],
+        ...                          [[1, 1], [1, 2]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.is_doubleton(allele=1)
+        array([False,  True, False, False], dtype=bool)
+        >>> g.is_doubleton(allele=2)
+        array([False, False, False,  True], dtype=bool)
 
         """
 
-        return self.to_haplotypes().is_doubleton(allele=allele)
+        return self.view_haplotypes().is_doubleton(allele=allele)
 
     def count_variant(self):
         return np.sum(self.is_variant())
@@ -742,13 +1252,85 @@ class GenotypeArray(np.ndarray):
 
 
 class HaplotypeArray(np.ndarray):
-    """TODO
+    """Array of haplotypes.
+
+    Parameters
+    ----------
+
+    data : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype data.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+
+    This class represents haplotype data as a 2-dimensional numpy
+    array of integers. By convention the first dimension corresponds
+    to the variants genotyped, the second dimension corresponds to the
+    haplotypes.
+
+    Each integer within the array corresponds to an **allele index**,
+    where 0 is the reference allele, 1 is the first alternate allele,
+    2 is the second alternate allele, ... and -1 (or any other
+    negative integer) is a missing allele call.
+
+    If adjacent haplotypes originate from the same sample, then a
+    haplotype array can also be viewed as a genotype array. However,
+    this is not a requirement.
+
+    Examples
+    --------
+
+    Instantiate a haplotype array::
+
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.dtype
+        dtype('int8')
+        >>> h.ndim
+        2
+        >>> h.shape
+        (3, 4)
+        >>> h.n_variants
+        3
+        >>> h.n_haplotypes
+        4
+
+    Allele calls for a single variant at all haplotypes can be obtained
+    by indexing the first dimension, e.g.::
+
+        >>> h[1]
+        array([0, 1, 1, 1], dtype=int8)
+
+    A single haplotype can be obtained by indexing the second
+    dimension, e.g.::
+
+        >>> h[:, 1]
+        array([0, 1, 2], dtype=int8)
+
+    An allele call for a single haplotype at a single variant can be
+    obtained by indexing the first and second dimensions, e.g.::
+
+        >>> h[1, 0]
+        0
+
+    View haplotypes as diploid genotypes::
+
+        >>> h.view_genotypes(ploidy=2)
+        GenotypeArray([[[ 0,  0],
+                [ 0,  1]],
+               [[ 0,  1],
+                [ 1,  1]],
+               [[ 0,  2],
+                [-1, -1]]], dtype=int8, n_variants=3, n_samples=2, ploidy=2)
 
     """
 
     @staticmethod
     def _check_input_data(obj):
-        obj = np.asarray(obj)
 
         # check dtype
         if obj.dtype.kind not in 'ui':
@@ -758,10 +1340,10 @@ class HaplotypeArray(np.ndarray):
         if obj.ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-        return obj
-
-    def __new__(cls, data):
-        obj = cls._check_input_data(data)
+    def __new__(cls, data, **kwargs):
+        """Constructor."""
+        obj = np.array(data, **kwargs)
+        cls._check_input_data(obj)
         obj = obj.view(cls)
         return obj
 
@@ -777,6 +1359,11 @@ class HaplotypeArray(np.ndarray):
 
         # called after view
         HaplotypeArray._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
@@ -798,12 +1385,12 @@ class HaplotypeArray(np.ndarray):
 
     @property
     def n_variants(self):
-        """TODO"""
+        """Number of variants (length of first dimension)."""
         return self.shape[0]
 
     @property
     def n_haplotypes(self):
-        """TODO"""
+        """Number of haplotypes (length of second dimension)."""
         return self.shape[1]
 
     def __repr__(self):
@@ -811,8 +1398,36 @@ class HaplotypeArray(np.ndarray):
         return s[:-1] + ', n_variants=%s, n_haplotypes=%s)' % \
                         (self.n_variants, self.n_haplotypes)
 
-    def to_genotypes(self, ploidy):
-        """TODO
+    def view_genotypes(self, ploidy):
+        """Reshape a haplotype array to view it as genotypes by restoring the
+        ploidy dimension.
+
+        Parameters
+        ----------
+
+        ploidy : int
+            The sample ploidy.
+
+        Returns
+        -------
+
+        g : ndarray, int, shape (n_variants, n_samples, ploidy)
+            Genotype array (sharing same underlying buffer).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.view_genotypes(ploidy=2)
+        GenotypeArray([[[ 0,  0],
+                [ 0,  1]],
+               [[ 0,  1],
+                [ 1,  1]],
+               [[ 0,  2],
+                [-1, -1]]], dtype=int8, n_variants=3, n_samples=2, ploidy=2)
 
         """
 
@@ -825,22 +1440,45 @@ class HaplotypeArray(np.ndarray):
         data = self.reshape(newshape)
 
         # wrap
-        g = GenotypeArray(data)
+        g = GenotypeArray(data, copy=False)
 
         return g
 
-    @staticmethod
-    def from_genotypes(g):
-        """TODO
-
-        """
-
-        g = GenotypeArray(g)
-        h = g.to_haplotypes()
-        return h
-
     def to_sparse(self, format='csr', **kwargs):
-        """TODO
+        """Convert into a sparse matrix.
+
+        Parameters
+        ----------
+
+        format : {'coo', 'csc', 'csr', 'dia', 'dok', 'lil'}
+            Sparse matrix format.
+        kwargs : keyword arguments
+            Passed through to sparse matrix constructor.
+
+        Returns
+        -------
+
+        m : scipy.sparse.spmatrix
+            Sparse matrix
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 0],
+        ...                           [0, 1, 0, 1],
+        ...                           [1, 1, 0, 0],
+        ...                           [0, 0, -1, -1]], dtype='i1')
+        >>> m = h.to_sparse(format='csr')
+        >>> m
+        <4x4 sparse matrix of type '<class 'numpy.int8'>'
+            with 6 stored elements in Compressed Sparse Row format>
+        >>> m.data
+        array([ 1,  1,  1,  1, -1, -1], dtype=int8)
+        >>> m.indices
+        array([1, 3, 0, 1, 2, 3], dtype=int32)
+        >>> m.indptr
+        array([0, 0, 2, 4, 6], dtype=int32)
 
         """
 
@@ -866,7 +1504,41 @@ class HaplotypeArray(np.ndarray):
 
     @staticmethod
     def from_sparse(m, order=None, out=None):
-        """TODO
+        """Construct a haplotype array from a sparse matrix.
+
+        Parameters
+        ----------
+
+        m : scipy.sparse.spmatrix
+            Sparse matrix
+        order : {'C', 'F'}, optional
+            Whether to store data in C (row-major) or Fortran (column-major)
+            order in memory.
+        out : ndarray, shape (n_variants, n_samples), optional
+            Use this array as the output buffer.
+
+        Returns
+        -------
+
+        h : HaplotypeArray, shape (n_variants, n_haplotypes)
+            Haplotype array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> import scipy.sparse
+        >>> data = np.array([ 1,  1,  1,  1, -1, -1], dtype=np.int8)
+        >>> indices = np.array([1, 3, 0, 1, 2, 3], dtype=np.int32)
+        >>> indptr = np.array([0, 0, 2, 4, 6], dtype=np.int32)
+        >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
+        >>> h = allel.HaplotypeArray.from_sparse(m)
+        >>> h
+        HaplotypeArray([[ 0,  0,  0,  0],
+               [ 0,  1,  0,  1],
+               [ 1,  1,  0,  0],
+               [ 0,  0, -1, -1]], dtype=int8, n_variants=4, n_haplotypes=4)
 
         """
 
@@ -885,7 +1557,13 @@ class HaplotypeArray(np.ndarray):
         return h
 
     def allelism(self):
-        """TODO
+        """Determine the number of distinct alleles for each variant.
+
+        Returns
+        -------
+
+        n : ndarray, int, shape (n_variants,)
+            Allelism array.
 
         """
 
@@ -898,7 +1576,13 @@ class HaplotypeArray(np.ndarray):
         return n
 
     def allele_number(self):
-        """TODO
+        """Count the number of non-missing allele calls per variant.
+
+        Returns
+        -------
+
+        an : ndarray, int, shape (n_variants,)
+            Allele number array.
 
         """
 
@@ -908,7 +1592,19 @@ class HaplotypeArray(np.ndarray):
         return an
 
     def allele_count(self, allele=1):
-        """TODO
+        """Count the number of calls of the given allele per variant.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        ac : ndarray, int, shape (n_variants,)
+            Allele count array.
 
         """
 
@@ -916,7 +1612,26 @@ class HaplotypeArray(np.ndarray):
         return np.sum(self == allele, axis=1)
 
     def allele_frequency(self, allele=1, fill=0):
-        """TODO
+        """Calculate the frequency of the given allele per variant.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+        fill : int, optional
+            The value to use where all genotype calls are missing for a
+            variant.
+
+        Returns
+        -------
+
+        af : ndarray, float, shape (n_variants,)
+            Allele frequency array.
+        ac : ndarray, int, shape (n_variants,)
+            Allele count array (numerator).
+        an : ndarray, int, shape (n_variants,)
+            Allele number array (denominator).
 
         """
 
@@ -932,7 +1647,19 @@ class HaplotypeArray(np.ndarray):
         return af, ac, an
 
     def allele_counts(self, alleles=None):
-        """TODO
+        """Count the number of calls of each allele per variant.
+
+        Parameters
+        ----------
+
+        alleles : sequence of ints, optional
+            The alleles to count. If None, all alleles will be counted.
+
+        Returns
+        -------
+
+        ac : ndarray, int, shape (n_variants, len(alleles))
+            Allele counts array.
 
         """
 
@@ -951,7 +1678,27 @@ class HaplotypeArray(np.ndarray):
         return ac
 
     def allele_frequencies(self, alleles=None, fill=0):
-        """TODO
+        """Calculate the frequency of each allele per variant.
+
+        Parameters
+        ----------
+
+        alleles : sequence of ints, optional
+            The alleles to calculate frequency of. If None, all allele
+            frequencies will be calculated.
+        fill : int, optional
+            The value to use where all genotype calls are missing for a
+            variant.
+
+        Returns
+        -------
+
+        af : ndarray, float, shape (n_variants, len(alleles))
+            Allele frequencies array.
+        ac : ndarray, int, shape (n_variants, len(alleles))
+            Allele counts array (numerator).
+        an : ndarray, int, shape (n_variants,)
+            Allele number array (denominator).
 
         """
 
@@ -967,7 +1714,14 @@ class HaplotypeArray(np.ndarray):
         return af, ac, an[:, 0]
 
     def is_variant(self):
-        """TODO
+        """Find variants with at least one non-reference allele call.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
 
         """
 
@@ -977,7 +1731,14 @@ class HaplotypeArray(np.ndarray):
         return out
 
     def is_non_variant(self):
-        """TODO
+        """Find variants with no non-reference allele calls.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
 
         """
 
@@ -987,7 +1748,14 @@ class HaplotypeArray(np.ndarray):
         return out
 
     def is_segregating(self):
-        """TODO
+        """Find segregating variants (where more than one allele is observed).
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
 
         """
 
@@ -997,7 +1765,21 @@ class HaplotypeArray(np.ndarray):
         return out
 
     def is_non_segregating(self, allele=None):
-        """TODO
+        """Find non-segregating variants (where at most one allele is
+        observed).
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
 
         """
 
@@ -1016,7 +1798,20 @@ class HaplotypeArray(np.ndarray):
         return out
 
     def is_singleton(self, allele=1):
-        """TODO
+        """Find variants with a single call for the given allele.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
 
         """
 
@@ -1029,7 +1824,20 @@ class HaplotypeArray(np.ndarray):
         return out
 
     def is_doubleton(self, allele=1):
-        """TODO
+        """Find variants with exactly two calls for the given allele.
+
+        Parameters
+        ----------
+
+        allele : int, optional
+            Allele index.
+
+        Returns
+        -------
+
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
 
         """
 
@@ -1061,21 +1869,50 @@ class HaplotypeArray(np.ndarray):
 
 
 class PosArray(np.ndarray):
-    """TODO
+    """Array of variant positions from a single chromosome or contig.
+
+    Parameters
+    ----------
+
+    data : array_like, int, shape (n_variants,)
+        Variant positions (1-based) in ascending order.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+
+    This class represents the genomic positions of a set of variants as a
+    1-dimensional numpy array of integers.
+
+    Each integer within the array is a 1-based coordinate position within a
+    single chromosome or contig. Positions must be given in ascending order,
+    although duplicate positions may be present.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> pos = allel.PosArray([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> pos.dtype
+    dtype('int32')
+    >>> pos.ndim
+    1
+    >>> pos.shape
+    (7,)
+    >>> pos.n_variants
+    7
 
     """
 
     @staticmethod
     def _check_input_data(obj):
-        obj = np.asarray(obj)
 
         # check dtype
         if obj.dtype.kind not in 'ui':
             raise TypeError('integer dtype required')
 
         # check dimensionality
-        print(repr(obj))
-        print(obj.ndim)
         if obj.ndim != 1:
             raise TypeError('array with 1 dimension required')
 
@@ -1083,10 +1920,10 @@ class PosArray(np.ndarray):
         if np.any(np.diff(obj) < 0):
             raise ValueError('array is not sorted')
 
-        return obj
-
-    def __new__(cls, data):
-        obj = cls._check_input_data(data)
+    def __new__(cls, data, **kwargs):
+        """Constructor."""
+        obj = np.array(data, **kwargs)
+        cls._check_input_data(obj)
         obj = obj.view(cls)
         return obj
 
@@ -1102,6 +1939,11 @@ class PosArray(np.ndarray):
 
         # called after view
         PosArray._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
@@ -1123,7 +1965,7 @@ class PosArray(np.ndarray):
 
     @property
     def n_variants(self):
-        """TODO"""
+        """Number of variants (length of first dimension)."""
         return self.shape[0]
 
     def __repr__(self):
@@ -1131,7 +1973,30 @@ class PosArray(np.ndarray):
         return s[:-1] + ', n_variants=%s)' % self.n_variants
 
     def locate_position(self, p):
-        """TODO
+        """Locate index within the array corresponding to the position `p`,
+        if present.
+
+        Parameters
+        ----------
+
+        p : int
+            Position to locate.
+
+        Returns
+        -------
+
+        index : int or None
+            Index if `p` is present, otherwise None.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos = allel.PosArray([3, 6, 11])
+        >>> pos.locate_position(6)
+        1
+        >>> pos.locate_position(7) is None
+        True
 
         """
 
@@ -1143,7 +2008,39 @@ class PosArray(np.ndarray):
             return None
 
     def locate_positions(self, other, assume_unique=False):
-        """TODO
+        """Locate positions also present in `other`.
+
+        Parameters
+        ----------
+
+        other : array_like, int, shape (m_variants,)
+            Array of positions to locate.
+        assume_unique : bool, optional
+            Can speed up processing if both arrays have no duplicates.
+
+        Returns
+        -------
+
+        cond1 : ndarray, bool, shape (n_variants,)
+            Boolean array with location of positions found.
+        cond2 : ndarray, bool, shape (m_variants,)
+            Boolean array with location in `other` of positions found.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PosArray([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PosArray([4, 6, 20, 39])
+        >>> cond1, cond2 = pos1.locate_positions(pos2)
+        >>> cond1
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> cond2
+        array([False,  True,  True, False], dtype=bool)
+        >>> pos1[cond1]
+        PosArray([ 6, 20], n_variants=2)
+        >>> pos2[cond2]
+        PosArray([ 6, 20], n_variants=2)
 
         """
 
@@ -1157,7 +2054,30 @@ class PosArray(np.ndarray):
         return cond1, cond2
 
     def intersect(self, other, assume_unique=False):
-        """TODO
+        """Intersect with `other` positions.
+
+        Parameters
+        ----------
+
+        other : array_like, int, shape (m_variants,)
+            Array of positions to locate.
+        assume_unique : bool, optional
+            Can speed up processing if both arrays have no duplicates.
+
+        Returns
+        -------
+
+        out : PosArray
+            Positions in common.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PosArray([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PosArray([4, 6, 20, 39])
+        >>> pos1.intersect(pos2)
+        PosArray([ 6, 20], n_variants=2)
 
         """
 
@@ -1170,7 +2090,33 @@ class PosArray(np.ndarray):
         return np.compress(cond, self)
 
     def locate_interval(self, start=0, stop=None):
-        """TODO
+        """Locate slice of array containing all variants within `start` and
+        `stop` positions.
+
+        Parameters
+        ----------
+
+        start : int, optional
+            Start position.
+        stop : int, optional
+            Stop position.
+
+        Returns
+        -------
+
+        loc : slice
+            Slice object.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos = allel.PosArray([3, 6, 11, 20, 35])
+        >>> loc = pos.locate_interval(4, 32)
+        >>> loc
+        slice(1, 4, None)
+        >>> pos[loc]
+        PosArray([ 6, 11, 20], n_variants=3)
 
         """
 
@@ -1183,7 +2129,43 @@ class PosArray(np.ndarray):
         return loc
 
     def locate_intervals(self, starts, stops):
-        """TODO
+        """Locate positions within any of the given intervals.
+
+        Parameters
+        ----------
+
+        starts : array_like, int, shape (n_intervals,)
+            Interval start positions.
+        stops : array_like, int, shape (n_intervals,)
+            Interval stop positions.
+
+        Returns
+        -------
+
+        cond1 : ndarray, bool, shape (n_variants,)
+            Boolean array with location of positions found.
+        cond2 : ndarray, bool, shape (n_intervals,)
+            Boolean array with intervals containing one or more positions.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> pos = allel.PosArray([3, 6, 11, 20, 35])
+        >>> intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> starts = intervals[:, 0]
+        >>> stops = intervals[:, 1]
+        >>> cond1, cond2 = pos.locate_intervals(starts, stops)
+        >>> cond1
+        PosArray([False,  True,  True, False,  True], dtype=bool, n_variants=5)
+        >>> cond2
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> pos[cond1]
+        PosArray([ 6, 11, 35], n_variants=3)
+        >>> intervals[cond2]
+        array([[ 6, 17],
+               [31, 35]])
 
         """
 

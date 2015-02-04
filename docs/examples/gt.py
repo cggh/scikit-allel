@@ -68,7 +68,7 @@ import numpy as np
 g = np.array([[[0, 0], [0, 1]],
               [[0, 1], [1, 1]],
               [[0, 2], [-1, -1]]], dtype='i1')
-allel.gt.to_haplotypes(g)
+allel.gt.view_haplotypes(g)
 
 
 # from_haplotypes()

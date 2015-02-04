@@ -574,7 +574,7 @@ def to_haplotypes(g):
     >>> g = np.array([[[0, 0], [0, 1]],
     ...               [[0, 1], [1, 1]],
     ...               [[0, 2], [-1, -1]]], dtype='i1')
-    >>> allel.gt.to_haplotypes(g)
+    >>> allel.gt.view_haplotypes(g)
     array([[ 0,  0,  0,  1],
            [ 0,  1,  1,  1],
            [ 0,  2, -1, -1]], dtype=int8)
@@ -896,8 +896,7 @@ def to_sparse(g, format='csr', **kwargs):
         Passed through to sparse matrix constructor.
 
     Returns
-    -------        actual, _, _ = g.allele_frequencies()
-
+    -------
 
     m : scipy.sparse.spmatrix
         Sparse matrix

@@ -25,8 +25,7 @@ GenotypeArray
     .. automethod:: count_hom_alt
     .. automethod:: count_het
     .. automethod:: count_call
-    .. automethod:: to_haplotypes
-    .. automethod:: from_haplotypes
+    .. automethod:: view_haplotypes
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
     .. automethod:: to_packed
@@ -59,8 +58,28 @@ HaplotypeArray
 .. autoclass:: HaplotypeArray(data)
 
     .. autoattribute:: n_variants
+    .. autoattribute:: n_haplotypes
+    .. automethod:: view_genotypes
+    .. automethod:: to_sparse
+    .. automethod:: from_sparse
+    .. automethod:: allelism
+    .. automethod:: allele_number
+    .. automethod:: allele_count
+    .. automethod:: allele_frequency
+    .. automethod:: allele_counts
+    .. automethod:: allele_frequencies
     .. automethod:: is_variant
     .. automethod:: is_non_variant
+    .. automethod:: is_segregating
+    .. automethod:: is_non_segregating
+    .. automethod:: is_singleton
+    .. automethod:: is_doubleton
+    .. automethod:: count_variant
+    .. automethod:: count_non_variant
+    .. automethod:: count_segregating
+    .. automethod:: count_non_segregating
+    .. automethod:: count_singleton
+    .. automethod:: count_doubleton
 
 PosArray
 --------
@@ -69,3 +88,6 @@ PosArray
 
     .. autoattribute:: n_variants
     .. automethod:: locate_position
+    .. automethod:: locate_positions
+    .. automethod:: locate_interval
+    .. automethod:: locate_intervals

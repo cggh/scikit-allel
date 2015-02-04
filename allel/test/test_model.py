@@ -457,7 +457,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [1, 0, 2, 1, -1, -1],
                            [2, 2, -1, -1, -1, -1],
                            [-1, -1, -1, -1, -1, -1]], dtype='i1')
-        actual = GenotypeArray(diploid_genotype_data).to_haplotypes()
+        actual = GenotypeArray(diploid_genotype_data).view_haplotypes()
         aeq(expect, actual)
 
         # polyploid
@@ -465,7 +465,7 @@ class TestGenotypeArray(unittest.TestCase):
                            [0, 1, 1, 1, 1, 1, -1, -1, -1],
                            [0, 1, 2, -1, -1, -1, -1, -1, -1],
                            [-1, -1, -1, -1, -1, -1, -1, -1, -1]], dtype='i1')
-        actual = GenotypeArray(triploid_genotype_data).to_haplotypes()
+        actual = GenotypeArray(triploid_genotype_data).view_haplotypes()
         aeq(expect, actual)
 
     def test_from_haplotypes(self):
@@ -478,7 +478,7 @@ class TestGenotypeArray(unittest.TestCase):
                               [2, 2, -1, -1, -1, -1],
                               [-1, -1, -1, -1, -1, -1]], dtype='i1')
         expect = diploid_genotype_data
-        actual = GenotypeArray.from_haplotypes(h_diploid, ploidy=2)
+        actual = HaplotypeArray(h_diploid).view_genotypes(ploidy=2)
         self.assertIsInstance(actual, GenotypeArray)
         aeq(expect, actual)
         eq(2, actual.ploidy)
@@ -490,7 +490,7 @@ class TestGenotypeArray(unittest.TestCase):
                                [-1, -1, -1, -1, -1, -1, -1, -1, -1]],
                               dtype='i1')
         expect = triploid_genotype_data
-        actual = GenotypeArray.from_haplotypes(h_triploid, ploidy=3)
+        actual = HaplotypeArray(h_triploid).view_genotypes(ploidy=3)
         self.assertIsInstance(actual, GenotypeArray)
         aeq(expect, actual)
         eq(3, actual.ploidy)
