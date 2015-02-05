@@ -3,13 +3,12 @@ from __future__ import absolute_import, print_function, division
 
 
 import unittest
-
-
 import numpy as np
 from allel.test.tools import assert_array_equal as aeq
 
 
-from allel.model import GenotypeArray, HaplotypeArray, PositionIndex
+from allel.model import GenotypeArray, HaplotypeArray, PositionIndex, \
+    LabelIndex
 
 
 haplotype_data = [[0, 1, -1],
@@ -1352,4 +1351,128 @@ class TestPositionIndex(unittest.TestCase):
         self.assertIsInstance(actual, PositionIndex)
         aeq(expect, actual)
 
-    # TODO test windowed counts
+
+class TestLabelIndex(unittest.TestCase):
+    
+    def test_constructor(self):
+        eq = self.assertEqual
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
+            LabelIndex()
+
+        # data has wrong dimensions
+        data = [['A', 'C'], ['B', 'F']]
+        with self.assertRaises(TypeError):
+            LabelIndex(data)
+
+        # labels are not unique
+        data = ['A', 'B', 'D', 'B']
+        with self.assertRaises(ValueError):
+            LabelIndex(data)
+        
+        # valid data 
+        data = ['A', 'C', 'B', 'F']
+        lbl = LabelIndex(data)
+        aeq(data, lbl)
+        eq(1, lbl.ndim)
+        eq(4, len(lbl))
+
+        # valid data (typed)
+        data = np.array(['A', 'C', 'B', 'F'], dtype='S1')
+        lbl = LabelIndex(data, dtype='S1')
+        aeq(data, lbl)
+
+    def test_slice(self):
+        eq = self.assertEqual
+
+        data = ['A', 'C', 'B', 'F']
+        lbl = LabelIndex(data)
+
+        # row slice
+        s = lbl[1:]
+        self.assertIsInstance(s, LabelIndex)
+        aeq(data[1:], s)
+        eq(3, len(s))
+
+        # index
+        s = lbl[0]
+        self.assertIsInstance(s, str)
+        self.assertNotIsInstance(s, LabelIndex)
+        eq(data[0], s)
+
+    def test_view(self):
+        eq = self.assertEqual
+
+        # data has wrong dimensions
+        data = [['A', 'C'], ['B', 'F']]
+        with self.assertRaises(TypeError):
+            np.array(data).view(LabelIndex)
+
+        # labels are not unique
+        data = ['A', 'B', 'D', 'B']
+        with self.assertRaises(ValueError):
+            np.array(data).view(LabelIndex)
+        
+        # valid data 
+        data = ['A', 'C', 'B', 'F']
+        lbl = np.array(data).view(LabelIndex)
+        aeq(data, lbl)
+        eq(1, lbl.ndim)
+        eq(4, len(lbl))
+
+        # valid data (typed)
+        data = np.array(['A', 'C', 'B', 'F'], dtype='a1')
+        lbl = data.view(LabelIndex)
+        aeq(data, lbl)
+
+    def test_locate_key(self):
+        eq = self.assertEqual
+        lbl = LabelIndex(['A', 'C', 'B', 'F'])
+        f = lbl.locate_key
+        eq(0, f('A'))
+        eq(2, f('B'))
+        with self.assertRaises(KeyError):
+            f('D')
+            
+    def test_locate_keys(self):
+        lbl = LabelIndex(['A', 'C', 'B', 'F'])
+        f = lbl.locate_keys
+        
+        # all found
+        expect = [False, True, False, True]
+        actual = f(['F', 'C'])
+        self.assertNotIsInstance(actual, LabelIndex)
+        aeq(expect, actual)
+        
+        # not all found, lax
+        expect = [False, True, False, True]
+        actual = f(['X', 'F', 'G', 'C', 'Z'], strict=False)
+        self.assertNotIsInstance(actual, LabelIndex)
+        aeq(expect, actual)
+        
+        # not all found, strict
+        with self.assertRaises(KeyError):
+            f(['X', 'F', 'G', 'C', 'Z'])
+
+    def test_locate_intersection(self):
+        lbl1 = LabelIndex(['A', 'C', 'B', 'F'])
+        lbl2 = LabelIndex(['X', 'F', 'G', 'C', 'Z'])
+        expect_loc1 = np.array([False, True, False, True])
+        expect_loc2 = np.array([False, True, False, True, False])
+        loc1, loc2 = lbl1.locate_intersection(lbl2)
+        self.assertNotIsInstance(loc1, LabelIndex)
+        self.assertNotIsInstance(loc2, LabelIndex)
+        aeq(expect_loc1, loc1)
+        aeq(expect_loc2, loc2)
+
+    def test_intersect(self):
+        lbl1 = LabelIndex(['A', 'C', 'B', 'F'])
+        lbl2 = LabelIndex(['X', 'F', 'G', 'C', 'Z'])
+        expect = LabelIndex(['C', 'F'])
+        actual = lbl1.intersect(lbl2)
+        self.assertIsInstance(actual, LabelIndex)
+        expect = LabelIndex(['F', 'C'])
+        actual = lbl2.intersect(lbl1)
+        self.assertIsInstance(actual, LabelIndex)

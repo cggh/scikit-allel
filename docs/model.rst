@@ -1,5 +1,5 @@
-Data model
-==========
+Data structures
+===============
 
 .. automodule:: allel.model
 
@@ -96,3 +96,14 @@ PositionIndex
     .. automethod:: locate_ranges
     .. automethod:: locate_intersection_ranges
     .. automethod:: intersect_ranges
+
+
+LabelIndex
+----------
+
+.. autoclass:: LabelIndex(data)
+
+    .. automethod:: locate_key
+    .. automethod:: locate_keys
+    .. automethod:: locate_intersection
+    .. automethod:: intersect

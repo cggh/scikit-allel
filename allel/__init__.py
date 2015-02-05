@@ -6,5 +6,6 @@ __version__ = '0.2.0.dev0'
 
 
 from allel.constants import *
-from allel.model import GenotypeArray, HaplotypeArray, PositionIndex
+from allel.model import GenotypeArray, HaplotypeArray, PositionIndex, \
+    LabelIndex
 from allel.util import windowed_count, windowed_density

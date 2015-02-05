@@ -1929,7 +1929,7 @@ class PositionIndex(np.ndarray):
     def __new__(cls, data, **kwargs):
         """Constructor."""
         obj = np.array(data, **kwargs)
-        is_unique = cls._check_input_data(obj)
+        cls._check_input_data(obj)
         obj = obj.view(cls)
         return obj
 
@@ -2244,7 +2244,8 @@ class PositionIndex(np.ndarray):
         >>> import allel
         >>> import numpy as np
         >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
+        ...                    [100, 120]])
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
         >>> loc, loc_ranges = pos.locate_intersection_ranges(starts, stops)
@@ -2306,7 +2307,8 @@ class PositionIndex(np.ndarray):
         >>> import allel
         >>> import numpy as np
         >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
+        ...                    [100, 120]])
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
         >>> loc = pos.locate_ranges(starts, stops, strict=False)
@@ -2346,7 +2348,8 @@ class PositionIndex(np.ndarray):
         >>> import allel
         >>> import numpy as np
         >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
+        ...                    [100, 120]])
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
         >>> pos.intersect_ranges(starts, stops)
@@ -2355,4 +2358,256 @@ class PositionIndex(np.ndarray):
         """
 
         loc = self.locate_ranges(starts, stops, strict=False)
+        return np.compress(loc, self)
+
+
+class LabelIndex(np.ndarray):
+    """Array of labels (e.g., variant or sample identifiers).
+
+    Parameters
+    ----------
+
+    data : array_like
+        Labels.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+
+    This class represents an arbitrary set of unique labels, e.g., sample or
+    variant identifiers.
+
+    There is no need for labels to be sorted. However, all labels must be
+    unique within the array, and must be hashable objects.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> lbl = allel.LabelIndex(['A', 'C', 'B', 'F'])
+    >>> lbl.dtype
+    dtype('<U1')
+    >>> lbl.ndim
+    1
+    >>> lbl.shape
+    (4,)
+
+    """
+
+    @staticmethod
+    def _check_input_data(obj):
+
+        # check dimensionality
+        if obj.ndim != 1:
+            raise TypeError('array with 1 dimension required')
+
+        # check unique
+        # noinspection PyTupleAssignmentBalance
+        _, counts = np.unique(obj, return_counts=True)
+        if np.any(counts > 1):
+            raise ValueError('values are not unique')
+
+    def __new__(cls, data, **kwargs):
+        """Constructor."""
+        obj = np.array(data, **kwargs)
+        cls._check_input_data(obj)
+        obj = obj.view(cls)
+        return obj
+
+    def __array_finalize__(self, obj):
+
+        # called after constructor
+        if obj is None:
+            return
+
+        # called after slice (new-from-template)
+        if isinstance(obj, LabelIndex):
+            return
+
+        # called after view
+        LabelIndex._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        if hasattr(s, 'ndim'):
+            if s.ndim == 1:
+                return s
+            elif s.ndim > 0:
+                return np.asarray(s)
+        return s
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        if hasattr(s, 'ndim'):
+            if s.ndim == 1:
+                return s
+            elif s.ndim > 0:
+                return np.asarray(s)
+        return s
+
+    def locate_key(self, key):
+        """Get index location for the requested key.
+
+        Parameters
+        ----------
+
+        key : object
+            Key to locate.
+
+        Returns
+        -------
+
+        loc : int
+            Location of `key`.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> lbl = allel.LabelIndex(['A', 'C', 'B', 'F'])
+        >>> lbl.locate_key('A')
+        0
+        >>> lbl.locate_key('B')
+        2
+        >>> try:
+        ...     lbl.locate_key('X')
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        'X'
+
+        """
+
+        # TODO review implementation for performance with larger arrays
+
+        loc = np.nonzero(self == key)[0]
+        if len(loc) == 0:
+            raise KeyError(key)
+        return loc[0]
+
+    def locate_intersection(self, other):
+        """Locate the intersection with another array.
+
+        Parameters
+        ----------
+
+        other : array_like
+            Array to intersect.
+
+        Returns
+        -------
+
+        loc : ndarray, bool
+            Boolean array with location of intersection.
+        loc_other : ndarray, bool
+            Boolean array with location in `other` of intersection.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> lbl1 = allel.LabelIndex(['A', 'C', 'B', 'F'])
+        >>> lbl2 = allel.LabelIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> loc1, loc2 = lbl1.locate_intersection(lbl2)
+        >>> loc1
+        array([False,  True, False,  True], dtype=bool)
+        >>> loc2
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> lbl1[loc1]
+        LabelIndex(['C', 'F'],
+              dtype='<U1')
+        >>> lbl2[loc2]
+        LabelIndex(['F', 'C'],
+              dtype='<U1')
+
+        """
+
+        # TODO review implementation for performance with larger arrays
+
+        # check inputs
+        other = LabelIndex(other)
+
+        # find intersection
+        assume_unique = True
+        loc = np.in1d(self, other, assume_unique=assume_unique)
+        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+
+        return loc, loc_other
+
+    def locate_keys(self, keys, strict=True):
+        """Get index locations for the requested keys.
+
+        Parameters
+        ----------
+
+        keys : array_like
+            Array of keys to locate.
+        strict : bool, optional
+            If True, raise KeyError if any keys are not found in the index.
+
+        Returns
+        -------
+
+        loc : ndarray, bool
+            Boolean array with location of keys.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> lbl = allel.LabelIndex(['A', 'C', 'B', 'F'])
+        >>> lbl.locate_keys(['F', 'C'])
+        array([False,  True, False,  True], dtype=bool)
+        >>> lbl.locate_keys(['X', 'F', 'G', 'C', 'Z'], strict=False)
+        array([False,  True, False,  True], dtype=bool)
+
+        """
+
+        # check inputs
+        keys = LabelIndex(keys)
+
+        # find intersection
+        loc, found = self.locate_intersection(keys)
+
+        if strict and np.any(~found):
+            raise KeyError(keys[~found])
+
+        return loc
+
+    def intersect(self, other):
+        """Intersect with `other`.
+
+        Parameters
+        ----------
+
+        other : array_like
+            Array to intersect.
+
+        Returns
+        -------
+
+        out : LabelIndex
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> lbl1 = allel.LabelIndex(['A', 'C', 'B', 'F'])
+        >>> lbl2 = allel.LabelIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> lbl1.intersect(lbl2)
+        LabelIndex(['C', 'F'],
+              dtype='<U1')
+        >>> lbl2.intersect(lbl1)
+        LabelIndex(['F', 'C'],
+              dtype='<U1')
+
+        """
+
+        loc = self.locate_keys(other, strict=False)
         return np.compress(loc, self)
