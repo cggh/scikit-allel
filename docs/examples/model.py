@@ -75,8 +75,8 @@ pos.n_variants
 
 import allel
 pos = allel.PositionIndex([3, 6, 11])
-pos.locate_position(6)
-pos.locate_position(7) is None
+pos.locate_key(6)
+pos.locate_key(7) is None
 
 
 # locate_positons
@@ -85,7 +85,7 @@ pos.locate_position(7) is None
 import allel
 pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
 pos2 = allel.PositionIndex([4, 6, 20, 39])
-cond1, cond2 = pos1.locate_positions(pos2)
+cond1, cond2 = pos1.locate_keys(pos2)
 cond1
 cond2
 pos1[cond1]
@@ -106,7 +106,7 @@ pos1.intersect(pos2)
 
 import allel
 pos = allel.PositionIndex([3, 6, 11, 20, 35])
-loc = pos.locate_interval(4, 32)
+loc = pos.locate_range(4, 32)
 loc
 pos[loc]
 
@@ -120,7 +120,7 @@ pos = allel.PositionIndex([3, 6, 11, 20, 35])
 intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
 starts = intervals[:, 0]
 stops = intervals[:, 1]
-cond1, cond2 = pos.locate_intervals(starts, stops)
+cond1, cond2 = pos.locate_ranges(starts, stops)
 cond1
 cond2
 pos[cond1]

@@ -1112,7 +1112,7 @@ class TestPositionIndex(unittest.TestCase):
         aeq(data, pos)
         eq(np.int, pos.dtype)
         eq(1, pos.ndim)
-        eq(5, pos.n_variants)
+        eq(5, len(pos))
         assert pos.is_unique
 
         # valid data (non-unique)
@@ -1121,7 +1121,7 @@ class TestPositionIndex(unittest.TestCase):
         aeq(data, pos)
         eq(np.int, pos.dtype)
         eq(1, pos.ndim)
-        eq(6, pos.n_variants)
+        eq(6, len(pos))
         assert not pos.is_unique
 
         # valid data (typed)
@@ -1140,14 +1140,14 @@ class TestPositionIndex(unittest.TestCase):
         s = pos[1:]
         self.assertIsInstance(s, PositionIndex)
         aeq(data[1:], s)
-        eq(5, s.n_variants)
+        eq(5, len(s))
         assert not s.is_unique
 
         # row slice
         s = pos[3:]
         self.assertIsInstance(s, PositionIndex)
         aeq(data[3:], s)
-        eq(3, s.n_variants)
+        eq(3, len(s))
         assert s.is_unique
 
         # index
@@ -1185,7 +1185,7 @@ class TestPositionIndex(unittest.TestCase):
         aeq(data, pos)
         eq(np.int, pos.dtype)
         eq(1, pos.ndim)
-        eq(5, pos.n_variants)
+        eq(5, len(pos))
         assert pos.is_unique
 
         # valid data (non-unique)
@@ -1194,7 +1194,7 @@ class TestPositionIndex(unittest.TestCase):
         aeq(data, pos)
         eq(np.int, pos.dtype)
         eq(1, pos.ndim)
-        eq(6, pos.n_variants)
+        eq(6, len(pos))
         assert not pos.is_unique
 
         # valid data (typed)
@@ -1203,35 +1203,35 @@ class TestPositionIndex(unittest.TestCase):
         aeq(data, pos)
         eq(np.uint32, pos.dtype)
 
-    def test_locate_position(self):
+    def test_locate_key(self):
         eq = self.assertEqual
         pos = PositionIndex([3, 6, 6, 11])
-        f = pos.locate_position
+        f = pos.locate_key
         eq(0, f(3))
         eq(3, f(11))
         eq(slice(1, 3), f(6))
         with self.assertRaises(KeyError):
             f(2)
             
-    def test_locate_interval(self):
-        eq = self.assertEqual
-        pos = PositionIndex([3, 6, 11, 20, 35])
-        eq(slice(0, 5), pos.locate_interval(2, 37))
-        eq(slice(0, 5), pos.locate_interval(3, 35))
-        eq(slice(1, 5), pos.locate_interval(4, 37))
-        eq(slice(1, 5), pos.locate_interval(start=4))
-        eq(slice(0, 4), pos.locate_interval(2, 32))
-        eq(slice(0, 4), pos.locate_interval(stop=32))
-        eq(slice(1, 4), pos.locate_interval(4, 32))
-        eq(slice(1, 3), pos.locate_interval(4, 19))
-        eq(slice(2, 4), pos.locate_interval(7, 32))
-        eq(slice(2, 3), pos.locate_interval(7, 19))
+    def test_locate_keys(self):
+        pos = PositionIndex([3, 6, 6, 11, 20, 35])
+        f = pos.locate_keys 
+        
+        # all found
+        expect = [False, True, True, False, True, False]
+        actual = f([6, 20])
+        self.assertNotIsInstance(actual, PositionIndex)
+        aeq(expect, actual)
+        
+        # not all found, lax
+        expect = [False, True, True, False, True, False]
+        actual = f([2, 6, 17, 20, 37], strict=False)
+        self.assertNotIsInstance(actual, PositionIndex)
+        aeq(expect, actual)
+        
+        # not all found, strict
         with self.assertRaises(KeyError):
-            pos.locate_interval(17, 19)
-        with self.assertRaises(KeyError):
-            print(pos.locate_interval(0, 2))
-        with self.assertRaises(KeyError):
-            pos.locate_interval(36, 2000)
+            f([2, 6, 17, 20, 37])
 
     def test_locate_intersection(self):
         pos1 = PositionIndex([3, 6, 11, 20, 35])
@@ -1239,32 +1239,117 @@ class TestPositionIndex(unittest.TestCase):
         expect_loc1 = np.array([False, True, False, True, False])
         expect_loc2 = np.array([False, True, True, False])
         loc1, loc2 = pos1.locate_intersection(pos2)
+        self.assertNotIsInstance(loc1, PositionIndex)
+        self.assertNotIsInstance(loc2, PositionIndex)
         aeq(expect_loc1, loc1)
         aeq(expect_loc2, loc2)
-
-    def test_locate_positions(self):
-        pos1 = PositionIndex([3, 6, 11, 20, 35])
-        pos2 = PositionIndex([4, 6, 20, 39])
-        expect = np.array([False, True, False, True, False])
-        actual = pos1.locate_positions(pos2)
-        aeq(expect, actual)
 
     def test_intersect(self):
         pos1 = PositionIndex([3, 6, 11, 20, 35])
         pos2 = PositionIndex([4, 6, 20, 39])
         expect = PositionIndex([6, 20])
         actual = pos1.intersect(pos2)
+        self.assertIsInstance(actual, PositionIndex)
         aeq(expect, actual)
 
-    def test_locate_intervals(self):
+    def test_locate_range(self):
+        eq = self.assertEqual
         pos = PositionIndex([3, 6, 11, 20, 35])
-        intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        f = pos.locate_range
+        eq(slice(0, 5), f(2, 37))
+        eq(slice(0, 5), f(3, 35))
+        eq(slice(1, 5), f(4, 37))
+        eq(slice(1, 5), f(start=4))
+        eq(slice(0, 4), f(2, 32))
+        eq(slice(0, 4), f(stop=32))
+        eq(slice(1, 4), f(4, 32))
+        eq(slice(1, 3), f(4, 19))
+        eq(slice(2, 4), f(7, 32))
+        eq(slice(2, 3), f(7, 19))
+        with self.assertRaises(KeyError):
+            f(17, 19)
+        with self.assertRaises(KeyError):
+            print(f(0, 2))
+        with self.assertRaises(KeyError):
+            f(36, 2000)
+
+    def test_intersect_range(self):
+        pos = PositionIndex([3, 6, 11, 20, 35])
+        f = pos.intersect_range
+        aeq(pos[:], f(2, 37))
+        aeq(pos[:], f(3, 35))
+        aeq(pos[1:], f(4, 37))
+        aeq(pos[1:], f(start=4))
+        aeq(pos[:4], f(2, 32))
+        aeq(pos[:4], f(stop=32))
+        aeq(pos[1:4], f(4, 32))
+        aeq(pos[1:3], f(4, 19))
+        aeq(pos[2:4], f(7, 32))
+        aeq(pos[2:3], f(7, 19))
+        aeq([], f(17, 19))
+        aeq([], f(0, 2))
+        aeq([], f(36, 2000))
+
+    def test_locate_ranges(self):
+        pos = PositionIndex([3, 6, 11, 20, 35])
+
+        # all found
+        ranges = np.array([[6, 12], [31, 35]])
+        expect = np.array([False, True, True, False, True])
+        actual = pos.locate_ranges(ranges[:, 0], ranges[:, 1])
+        self.assertNotIsInstance(actual, PositionIndex)
+        aeq(expect, actual)
+
+        # not all found, lax
+        ranges = np.array([[0, 2], [6, 12], [14, 19], [31, 35], [100, 120]])
+        actual = pos.locate_ranges(ranges[:, 0], ranges[:, 1], strict=False)
+        self.assertNotIsInstance(actual, PositionIndex)
+        aeq(expect, actual)
+
+        # not all found, strict
+        with self.assertRaises(KeyError):
+            pos.locate_ranges(ranges[:, 0], ranges[:, 1])
+
+    def test_locate_intersection_ranges(self):
+        pos = PositionIndex([3, 6, 11, 20, 35])
+        f = pos.locate_intersection_ranges
+
+        # all found
+        ranges = np.array([[6, 12], [31, 35]])
+        expect_loc1 = np.array([False, True, True, False, True])
+        expect_loc2 = np.array([True, True])
+        actual_loc1, actual_loc2 = f(ranges[:, 0], ranges[:, 1])
+        self.assertNotIsInstance(actual_loc1, PositionIndex)
+        self.assertNotIsInstance(actual_loc2, PositionIndex)
+        aeq(expect_loc1, actual_loc1)
+        aeq(expect_loc2, actual_loc2)
+
+        # not all found
+        ranges = np.array([[0, 2], [6, 12], [14, 19], [31, 35], [100, 120]])
         expect_loc1 = np.array([False, True, True, False, True])
         expect_loc2 = np.array([False, True, False, True, False])
-        loc1, loc2 = pos.locate_intervals(intervals[:, 0], intervals[:, 1])
-        aeq(expect_loc1, loc1)
-        aeq(expect_loc2, loc2)
-        aeq([6, 11, 35], pos[loc1])
-        aeq([[6, 17], [31, 35]], intervals[loc2])
+        actual_loc1, actual_loc2 = f(ranges[:, 0], ranges[:, 1])
+        self.assertNotIsInstance(actual_loc1, PositionIndex)
+        self.assertNotIsInstance(actual_loc2, PositionIndex)
+        aeq(expect_loc1, actual_loc1)
+        aeq(expect_loc2, actual_loc2)
+
+    def test_intersect_ranges(self):
+        pos = PositionIndex([3, 6, 11, 20, 35])
+        f = pos.intersect_ranges
+
+        # all found
+        ranges = np.array([[6, 12], [31, 35]])
+        expect = [6, 11, 35]
+        actual = f(ranges[:, 0], ranges[:, 1])
+        self.assertIsInstance(actual, PositionIndex)
+        aeq(expect, actual)
+
+        # not all found
+        ranges = np.array([[0, 2], [6, 12], [14, 19], [31, 35], [100, 120]])
+        expect = [6, 11, 35]
+        actual = f(ranges[:, 0], ranges[:, 1])
+        self.assertIsInstance(actual, PositionIndex)
+        aeq(expect, actual)
 
     # TODO test windowed counts

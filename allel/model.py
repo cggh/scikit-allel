@@ -1869,13 +1869,13 @@ class HaplotypeArray(np.ndarray):
 
 
 class PositionIndex(np.ndarray):
-    """Array of variant positions from a single chromosome or contig.
+    """Array of positions from a single chromosome or contig.
 
     Parameters
     ----------
 
-    data : array_like, int, shape (n_variants,)
-        Variant positions (1-based) in ascending order.
+    data : array_like, int
+        Positions (1-based) in ascending order.
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
 
@@ -1901,8 +1901,6 @@ class PositionIndex(np.ndarray):
     1
     >>> pos.shape
     (7,)
-    >>> pos.n_variants
-    7
     >>> pos.is_unique
     False
 
@@ -1968,49 +1966,40 @@ class PositionIndex(np.ndarray):
         return s
 
     @property
-    def n_variants(self):
-        """Number of variants (length of first dimension)."""
-        return self.shape[0]
-
-    @property
     def is_unique(self):
         """True if no duplicate entries."""
         if not hasattr(self, '_is_unique'):
             self._is_unique = ~np.any(np.diff(self) == 0)
         return self._is_unique
 
-    def __repr__(self):
-        s = super(PositionIndex, self).__repr__()
-        return s[:-1] + ', n_variants=%s)' % self.n_variants
-
-    def locate_position(self, p):
-        """Get index location for the requested position.
+    def locate_key(self, key):
+        """Get index location for the requested key.
 
         Parameters
         ----------
 
-        p : int
+        key : int
             Position to locate.
 
         Returns
         -------
 
         loc : int or slice
-            Location of `p` (will be slice if there are duplicate entries).
+            Location of `key` (will be slice if there are duplicate entries).
 
         Examples
         --------
 
         >>> import allel
         >>> pos = allel.PositionIndex([3, 6, 6, 11])
-        >>> pos.locate_position(3)
+        >>> pos.locate_key(3)
         0
-        >>> pos.locate_position(11)
+        >>> pos.locate_key(11)
         3
-        >>> pos.locate_position(6)
+        >>> pos.locate_key(6)
         slice(1, 3, None)
         >>> try:
-        ...     pos.locate_position(2)
+        ...     pos.locate_key(2)
         ... except KeyError as e:
         ...     print(e)
         ...
@@ -2018,19 +2007,135 @@ class PositionIndex(np.ndarray):
 
         """
 
-        left = np.searchsorted(self, p, side='left')
-        right = np.searchsorted(self, p, side='right')
+        left = np.searchsorted(self, key, side='left')
+        right = np.searchsorted(self, key, side='right')
         diff = right - left
         if diff == 0:
-            raise KeyError(p)
+            raise KeyError(key)
         elif diff == 1:
             return left
         else:
             return slice(left, right)
 
-    def locate_interval(self, start=None, stop=None):
-        """Locate slice of array containing all variants within `start` and
-        `stop` positions.
+    def locate_intersection(self, other):
+        """Locate the intersection with another position array.
+
+        Parameters
+        ----------
+
+        other : array_like, int
+            Array of positions to intersect.
+
+        Returns
+        -------
+
+        loc : ndarray, bool
+            Boolean array with location of intersection.
+        loc_other : ndarray, bool
+            Boolean array with location in `other` of intersection.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
+        >>> loc1, loc2 = pos1.locate_intersection(pos2)
+        >>> loc1
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> loc2
+        array([False,  True,  True, False], dtype=bool)
+        >>> pos1[loc1]
+        PositionIndex([ 6, 20])
+        >>> pos2[loc2]
+        PositionIndex([ 6, 20])
+
+        """
+
+        # check inputs
+        other = PositionIndex(other)
+
+        # find intersection
+        assume_unique = self.is_unique and other.is_unique
+        loc = np.in1d(self, other, assume_unique=assume_unique)
+        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+
+        return loc, loc_other
+
+    def locate_keys(self, keys, strict=True):
+        """Get index locations for the requested keys.
+
+        Parameters
+        ----------
+
+        keys : array_like, int
+            Array of keys to locate.
+        strict : bool, optional
+            If True, raise KeyError if any keys are not found in the index.
+
+        Returns
+        -------
+
+        loc : ndarray, bool
+            Boolean array with location of positions.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
+        >>> loc = pos1.locate_keys(pos2, strict=False)
+        >>> loc
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> pos1[loc]
+        PositionIndex([ 6, 20])
+
+        """
+
+        # check inputs
+        keys = PositionIndex(keys)
+
+        # find intersection
+        loc, found = self.locate_intersection(keys)
+
+        if strict and np.any(~found):
+            raise KeyError(keys[~found])
+
+        return loc
+
+    def intersect(self, other):
+        """Intersect with `other` positions.
+
+        Parameters
+        ----------
+
+        other : array_like, int
+            Array of positions to locate.
+
+        Returns
+        -------
+
+        out : PositionIndex
+            Positions in common.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
+        >>> pos1.intersect(pos2)
+        PositionIndex([ 6, 20])
+
+        """
+
+        loc = self.locate_keys(other, strict=False)
+        return np.compress(loc, self)
+
+    def locate_range(self, start=None, stop=None):
+        """Locate slice of index containing all entries within `start` and
+        `stop` positions **inclusive**.
 
         Parameters
         ----------
@@ -2051,11 +2156,11 @@ class PositionIndex(np.ndarray):
 
         >>> import allel
         >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> loc = pos.locate_interval(4, 32)
+        >>> loc = pos.locate_range(4, 32)
         >>> loc
         slice(1, 4, None)
         >>> pos[loc]
-        PositionIndex([ 6, 11, 20], n_variants=3)
+        PositionIndex([ 6, 11, 20])
 
         """
 
@@ -2075,136 +2180,59 @@ class PositionIndex(np.ndarray):
         loc = slice(start_index, stop_index)
         return loc
 
-    def locate_intersection(self, other):
-        """Locate the intersection of two position arrays.
+    def intersect_range(self, start=None, stop=None):
+        """Intersect with range defined by `start` and `stop` positions
+        **inclusive**.
 
         Parameters
         ----------
 
-        other : array_like, int, shape (m_variants,)
-            Array of positions to intersect.
+        start : int, optional
+            Start position.
+        stop : int, optional
+            Stop position.
 
         Returns
         -------
 
-        loc : ndarray, bool, shape (n_variants,)
-            Boolean array with location of intersection.
-        loc_other : ndarray, bool, shape (m_variants,)
-            Boolean array with location in `other` of intersection.
+        pos : PositionIndex
 
         Examples
         --------
 
         >>> import allel
-        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
-        >>> loc1, loc2 = pos1.locate_intersection(pos2)
-        >>> loc1
-        array([False,  True, False,  True, False], dtype=bool)
-        >>> loc2
-        array([False,  True,  True, False], dtype=bool)
-        >>> pos1[loc1]
-        PositionIndex([ 6, 20], n_variants=2)
-        >>> pos2[loc2]
-        PositionIndex([ 6, 20], n_variants=2)
+        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> pos.intersect_range(4, 32)
+        PositionIndex([ 6, 11, 20])
 
         """
 
-        # check inputs
-        other = PositionIndex(other)
+        try:
+            loc = self.locate_range(start=start, stop=stop)
+        except KeyError:
+            return self[0:0]
+        else:
+            return self[loc]
 
-        # find intersection
-        assume_unique = self.is_unique and other.is_unique
-        loc = np.in1d(self, other, assume_unique=assume_unique)
-        loc_other = np.in1d(other, self, assume_unique=assume_unique)
-
-        return loc, loc_other
-
-    def locate_positions(self, other):
-        """Locate positions in `other`.
+    def locate_intersection_ranges(self, starts, stops):
+        """Locate the intersection with a set of ranges.
 
         Parameters
         ----------
 
-        other : array_like, int, shape (m_variants,)
-            Array of positions to locate.
+        starts : array_like, int
+            Range start positions.
+        stops : array_like, int
+            Range stop positions.
 
         Returns
         -------
 
-        loc : ndarray, bool, shape (n_variants,)
-            Boolean array with location of positions.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
-        >>> loc = pos1.locate_positions(pos2)
-        >>> loc
-        array([False,  True, False,  True, False], dtype=bool)
-        >>> pos1[loc]
-        PositionIndex([ 6, 20], n_variants=2)
-
-        """
-
-        # check inputs
-        other = PositionIndex(other)
-
-        # find intersection
-        assume_unique = self.is_unique and other.is_unique
-        loc = np.in1d(self, other, assume_unique=assume_unique)
-
-        return loc
-
-    def intersect(self, other):
-        """Intersect with `other` positions.
-
-        Parameters
-        ----------
-
-        other : array_like, int, shape (m_variants,)
-            Array of positions to locate.
-
-        Returns
-        -------
-
-        out : PositionIndex
-            Positions in common.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
-        >>> pos1.intersect(pos2)
-        PositionIndex([ 6, 20], n_variants=2)
-
-        """
-
-        loc = self.locate_positions(other)
-        return np.compress(loc, self)
-
-    def locate_intervals(self, starts, stops):
-        """Locate positions within any of the given intervals.
-
-        Parameters
-        ----------
-
-        starts : array_like, int, shape (n_intervals,)
-            Interval start positions.
-        stops : array_like, int, shape (n_intervals,)
-            Interval stop positions.
-
-        Returns
-        -------
-
-        loc : ndarray, bool, shape (n_variants,)
-            Boolean array with location of positions found.
-        loc_intervals : ndarray, bool, shape (n_intervals,)
-            Boolean array with intervals containing one or more positions.
+        loc : ndarray, bool
+            Boolean array with location of entries found.
+        loc_ranges : ndarray, bool
+            Boolean array with location of ranges containing one or more
+            entries.
 
         Examples
         --------
@@ -2212,17 +2240,17 @@ class PositionIndex(np.ndarray):
         >>> import allel
         >>> import numpy as np
         >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> intervals = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
-        >>> starts = intervals[:, 0]
-        >>> stops = intervals[:, 1]
-        >>> loc1, loc2 = pos.locate_intervals(starts, stops)
-        >>> loc1
-        PositionIndex([False,  True,  True, False,  True], dtype=bool, n_variants=5)
-        >>> loc2
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> starts = ranges[:, 0]
+        >>> stops = ranges[:, 1]
+        >>> loc, loc_ranges = pos.locate_intersection_ranges(starts, stops)
+        >>> loc
+        array([False,  True,  True, False,  True], dtype=bool)
+        >>> loc_ranges
         array([False,  True, False,  True, False], dtype=bool)
-        >>> pos[loc1]
-        PositionIndex([ 6, 11, 35], n_variants=3)
-        >>> intervals[loc2]
+        >>> pos[loc]
+        PositionIndex([ 6, 11, 35])
+        >>> ranges[loc_ranges]
         array([[ 6, 17],
                [31, 35]])
 
@@ -2240,13 +2268,89 @@ class PositionIndex(np.ndarray):
         stop_indices = np.searchsorted(self, stops, side='right')
 
         # find intervals overlapping at least one position
-        loc2 = start_indices < stop_indices
+        loc_ranges = start_indices < stop_indices
 
         # find positions within at least one interval
-        loc1 = np.zeros_like(self, dtype=np.bool)
-        for i, j in zip(start_indices[loc2], stop_indices[loc2]):
-            loc1[i:j] = True
+        loc = np.zeros(self.shape, dtype=np.bool)
+        for i, j in zip(start_indices[loc_ranges], stop_indices[loc_ranges]):
+            loc[i:j] = True
 
-        return loc1, loc2
+        return loc, loc_ranges
+
+    def locate_ranges(self, starts, stops, strict=True):
+        """Locate items within the given ranges.
+
+        Parameters
+        ----------
+
+        starts : array_like, int
+            Range start positions.
+        stops : array_like, int
+            Range stop positions.
+        strict : bool, optional
+            If True, raise KeyError if any ranges contain no entries.
+
+        Returns
+        -------
+
+        loc : ndarray, bool
+            Boolean array with location of entries found.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> starts = ranges[:, 0]
+        >>> stops = ranges[:, 1]
+        >>> loc = pos.locate_ranges(starts, stops, strict=False)
+        >>> loc
+        array([False,  True,  True, False,  True], dtype=bool)
+        >>> pos[loc]
+        PositionIndex([ 6, 11, 35])
+
+        """
+
+        loc, found = self.locate_intersection_ranges(starts, stops)
+
+        if strict and np.any(~found):
+            raise KeyError(starts[~found], stops[~found])
+
+        return loc
+
+    def intersect_ranges(self, starts, stops):
+        """Intersect with a set of ranges.
+
+        Parameters
+        ----------
+
+        starts : array_like, int
+            Range start positions.
+        stops : array_like, int
+            Range stop positions.
+
+        Returns
+        -------
+
+        pos : PositionIndex
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35], [100, 120]])
+        >>> starts = ranges[:, 0]
+        >>> stops = ranges[:, 1]
+        >>> pos.intersect_ranges(starts, stops)
+        PositionIndex([ 6, 11, 35])
+
+        """
+
+        loc = self.locate_ranges(starts, stops, strict=False)
+        return np.compress(loc, self)
 
     # TODO windowed counts
