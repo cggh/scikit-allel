@@ -173,8 +173,8 @@ def windowed_density(pos, b, window, start=None, stop=None,
         ...                           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ...                           dtype=bool)
         >>> densities, counts, widths, edges = allel.windowed_density(
-        ...     pos, b, start=1, stop=31, window=10, is_accessible=is_accessible,
-        ...     fill=np.nan
+        ...     pos, b, start=1, stop=31, window=10,
+        ...     is_accessible=is_accessible, fill=np.nan
         ... )
         >>> edges
         array([ 1, 11, 21, 31])

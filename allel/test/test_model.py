@@ -695,58 +695,58 @@ class TestGenotypeArray(unittest.TestCase):
 
     def test_is_count_variant(self):
         eq = self.assertEqual
-        
+
         # diploid
         g = GenotypeArray(diploid_genotype_data)
         expect = np.array([1, 1, 1, 1, 0], dtype='b1')
         actual = g.is_variant()
         aeq(expect, actual)
         eq(np.sum(expect), g.count_variant())
-    
+
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
         expect = np.array([1, 1, 1, 0], dtype='b1')
         actual = g.is_variant()
         aeq(expect, actual)
         eq(np.sum(expect), g.count_variant())
-    
+
     def test_is_count_non_variant(self):
         eq = self.assertEqual
-    
+
         # diploid
         g = GenotypeArray(diploid_genotype_data)
         expect = np.array([0, 0, 0, 0, 1], dtype='b1')
         actual = g.is_non_variant()
         aeq(expect, actual)
         eq(np.sum(expect), g.count_non_variant())
-    
+
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
         expect = np.array([0, 0, 0, 1], dtype='b1')
         actual = g.is_non_variant()
         aeq(expect, actual)
         eq(np.sum(expect), g.count_non_variant())
-        
+
     def test_is_count_segregating(self):
         eq = self.assertEqual
-        
+
         # diploid
         g = GenotypeArray(diploid_genotype_data)
         expect = np.array([1, 1, 1, 0, 0], dtype='b1')
         actual = g.is_segregating()
         aeq(expect, actual)
         eq(np.sum(expect), g.count_segregating())
-    
+
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
         expect = np.array([1, 1, 1, 0], dtype='b1')
         actual = g.is_segregating()
         aeq(expect, actual)
         eq(np.sum(expect), g.count_segregating())
-    
+
     def test_is_count_non_segregating(self):
         eq = self.assertEqual
-        
+
         # diploid
         g = GenotypeArray(diploid_genotype_data)
         expect = np.array([0, 0, 0, 1, 1], dtype='b1')
@@ -757,7 +757,7 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.is_non_segregating(allele=2)
         aeq(expect, actual)
         eq(np.sum(expect), g.count_non_segregating(allele=2))
-    
+
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
         expect = np.array([0, 0, 0, 1], dtype='b1')
@@ -768,10 +768,10 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.is_non_segregating(allele=2)
         aeq(expect, actual)
         eq(np.sum(expect), g.count_non_segregating(allele=2))
-        
+
     def test_is_count_singleton(self):
         eq = self.assertEqual
-    
+
         # diploid
         g = GenotypeArray(diploid_genotype_data)
         expect = np.array([1, 0, 0, 0, 0], dtype='b1')
@@ -782,7 +782,7 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.is_singleton(allele=2)
         aeq(expect, actual)
         eq(np.sum(expect), g.count_singleton(allele=2))
-    
+
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
         expect = np.array([1, 0, 1, 0], dtype='b1')
@@ -793,10 +793,10 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.is_singleton(allele=2)
         aeq(expect, actual)
         eq(np.sum(expect), g.count_singleton(allele=2))
-    
+
     def test_is_count_doubleton(self):
         eq = self.assertEqual
-    
+
         # diploid
         g = GenotypeArray(diploid_genotype_data)
         expect = np.array([0, 1, 1, 0, 0], dtype='b1')
@@ -807,7 +807,7 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.is_doubleton(allele=2)
         aeq(expect, actual)
         eq(np.sum(expect), g.count_doubleton(allele=2))
-    
+
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
         expect = np.array([0, 0, 0, 0], dtype='b1')
@@ -975,12 +975,12 @@ class TestHaplotypeArray(unittest.TestCase):
         expect = np.array([2, 1, 1, 0])
         actual = HaplotypeArray(haplotype_data).allelism()
         aeq(expect, actual)
-    
+
     def test_allele_number(self):
         expect = np.array([2, 2, 1, 0])
         actual = HaplotypeArray(haplotype_data).allele_number()
         aeq(expect, actual)
-    
+
     def test_allele_count(self):
         expect = np.array([1, 2, 0, 0])
         actual = HaplotypeArray(haplotype_data).allele_count(allele=1)
@@ -988,7 +988,7 @@ class TestHaplotypeArray(unittest.TestCase):
         expect = np.array([0, 0, 1, 0])
         actual = HaplotypeArray(haplotype_data).allele_count(allele=2)
         aeq(expect, actual)
-    
+
     def test_allele_frequency(self):
         expect = np.array([1/2, 2/2, 0/1, 0])
         h = HaplotypeArray(haplotype_data)
@@ -997,7 +997,7 @@ class TestHaplotypeArray(unittest.TestCase):
         expect = np.array([0/2, 0/2, 1/1, 0])
         actual, _, _ = h.allele_frequency(allele=2)
         aeq(expect, actual)
-    
+
     def test_allele_counts(self):
         expect = np.array([[1, 1, 0],
                            [0, 2, 0],
@@ -1005,7 +1005,7 @@ class TestHaplotypeArray(unittest.TestCase):
                            [0, 0, 0]])
         actual = HaplotypeArray(haplotype_data).allele_counts()
         aeq(expect, actual)
-    
+
     def test_allele_frequencies(self):
         expect = np.array([[1/2, 1/2, 0/2],
                            [0/2, 2/2, 0/2],
@@ -1013,28 +1013,28 @@ class TestHaplotypeArray(unittest.TestCase):
                            [0, 0, 0]])
         actual, _, _ = HaplotypeArray(haplotype_data).allele_frequencies()
         aeq(expect, actual)
-    
+
     def test_is_count_variant(self):
         expect = np.array([1, 1, 1, 0], dtype='b1')
         h = HaplotypeArray(haplotype_data)
         actual = h.is_variant()
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_variant())
-    
+
     def test_is_count_non_variant(self):
         expect = np.array([0, 0, 0, 1], dtype='b1')
         h = HaplotypeArray(haplotype_data)
         actual = h.is_non_variant()
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_non_variant())
-    
+
     def test_is_count_segregating(self):
         expect = np.array([1, 0, 0, 0], dtype='b1')
         h = HaplotypeArray(haplotype_data)
         actual = h.is_segregating()
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_segregating())
-    
+
     def test_is_count_non_segregating(self):
         expect = np.array([0, 1, 1, 1], dtype='b1')
         h = HaplotypeArray(haplotype_data)
@@ -1047,7 +1047,7 @@ class TestHaplotypeArray(unittest.TestCase):
         actual = h.is_non_segregating(allele=2)
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_non_segregating(allele=2))
-        
+
     def test_is_count_singleton(self):
         expect = np.array([1, 0, 0, 0], dtype='b1')
         h = HaplotypeArray(haplotype_data)
@@ -1060,7 +1060,7 @@ class TestHaplotypeArray(unittest.TestCase):
         actual = h.is_singleton(allele=2)
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_singleton(allele=2))
-    
+
     def test_is_count_doubleton(self):
         expect = np.array([0, 1, 0, 0], dtype='b1')
         h = HaplotypeArray(haplotype_data)
@@ -1073,10 +1073,10 @@ class TestHaplotypeArray(unittest.TestCase):
         actual = h.is_doubleton(allele=2)
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_doubleton(allele=2))
-    
+
 
 class TestPositionIndex(unittest.TestCase):
-    
+
     def test_constructor(self):
         eq = self.assertEqual
 
@@ -1104,7 +1104,7 @@ class TestPositionIndex(unittest.TestCase):
         data = [2, 1, 3, 5]
         with self.assertRaises(ValueError):
             PositionIndex(data)
-        
+
         # valid data (unique)
         data = [1, 4, 5, 7, 12]
         pos = PositionIndex(data)
@@ -1177,7 +1177,7 @@ class TestPositionIndex(unittest.TestCase):
         data = [2, 1, 3, 5]
         with self.assertRaises(ValueError):
             np.asarray(data).view(PositionIndex)
-        
+
         # valid data (unique)
         data = [1, 4, 5, 7, 12]
         pos = np.asarray(data).view(PositionIndex)
@@ -1211,23 +1211,23 @@ class TestPositionIndex(unittest.TestCase):
         eq(slice(1, 3), f(6))
         with self.assertRaises(KeyError):
             f(2)
-            
+
     def test_locate_keys(self):
         pos = PositionIndex([3, 6, 6, 11, 20, 35])
-        f = pos.locate_keys 
-        
+        f = pos.locate_keys
+
         # all found
         expect = [False, True, True, False, True, False]
         actual = f([6, 20])
         self.assertNotIsInstance(actual, PositionIndex)
         aeq(expect, actual)
-        
+
         # not all found, lax
         expect = [False, True, True, False, True, False]
         actual = f([2, 6, 17, 20, 37], strict=False)
         self.assertNotIsInstance(actual, PositionIndex)
         aeq(expect, actual)
-        
+
         # not all found, strict
         with self.assertRaises(KeyError):
             f([2, 6, 17, 20, 37])
@@ -1353,7 +1353,7 @@ class TestPositionIndex(unittest.TestCase):
 
 
 class TestLabelIndex(unittest.TestCase):
-    
+
     def test_constructor(self):
         eq = self.assertEqual
 
@@ -1371,8 +1371,8 @@ class TestLabelIndex(unittest.TestCase):
         data = ['A', 'B', 'D', 'B']
         with self.assertRaises(ValueError):
             LabelIndex(data)
-        
-        # valid data 
+
+        # valid data
         data = ['A', 'C', 'B', 'F']
         lbl = LabelIndex(data)
         aeq(data, lbl)
@@ -1414,8 +1414,8 @@ class TestLabelIndex(unittest.TestCase):
         data = ['A', 'B', 'D', 'B']
         with self.assertRaises(ValueError):
             np.array(data).view(LabelIndex)
-        
-        # valid data 
+
+        # valid data
         data = ['A', 'C', 'B', 'F']
         lbl = np.array(data).view(LabelIndex)
         aeq(data, lbl)
@@ -1435,23 +1435,23 @@ class TestLabelIndex(unittest.TestCase):
         eq(2, f('B'))
         with self.assertRaises(KeyError):
             f('D')
-            
+
     def test_locate_keys(self):
         lbl = LabelIndex(['A', 'C', 'B', 'F'])
         f = lbl.locate_keys
-        
+
         # all found
         expect = [False, True, False, True]
         actual = f(['F', 'C'])
         self.assertNotIsInstance(actual, LabelIndex)
         aeq(expect, actual)
-        
+
         # not all found, lax
         expect = [False, True, False, True]
         actual = f(['X', 'F', 'G', 'C', 'Z'], strict=False)
         self.assertNotIsInstance(actual, LabelIndex)
         aeq(expect, actual)
-        
+
         # not all found, strict
         with self.assertRaises(KeyError):
             f(['X', 'F', 'G', 'C', 'Z'])
@@ -1470,9 +1470,13 @@ class TestLabelIndex(unittest.TestCase):
     def test_intersect(self):
         lbl1 = LabelIndex(['A', 'C', 'B', 'F'])
         lbl2 = LabelIndex(['X', 'F', 'G', 'C', 'Z'])
+
         expect = LabelIndex(['C', 'F'])
         actual = lbl1.intersect(lbl2)
         self.assertIsInstance(actual, LabelIndex)
+        aeq(expect, actual)
+
         expect = LabelIndex(['F', 'C'])
         actual = lbl2.intersect(lbl1)
         self.assertIsInstance(actual, LabelIndex)
+        aeq(expect, actual)

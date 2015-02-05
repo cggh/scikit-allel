@@ -10,7 +10,7 @@ import numpy as np
 import numexpr as ne
 
 
-from allel.constants import *
+from allel.constants import DIM_VARIANTS, DIM_PLOIDY, DIPLOID
 
 
 class GenotypeArray(np.ndarray):
@@ -42,7 +42,7 @@ class GenotypeArray(np.ndarray):
     nucleotide sequences) and the physical positions of the variants
     within the genome of an organism are stored in separate arrays,
     discussed elsewhere.
-    
+
     In many cases the number of distinct alleles for each variant is
     small, e.g., less than 10, or even 2 (all variants are
     biallelic). In these cases a genotype array is not the most
@@ -118,7 +118,7 @@ class GenotypeArray(np.ndarray):
         ...                          [[0, 1, 2], [-1, -1, -1]]], dtype='i1')
         >>> g.ploidy
         3
-        
+
     """
 
     @staticmethod
