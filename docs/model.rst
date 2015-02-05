@@ -50,6 +50,7 @@ GenotypeArray
     .. automethod:: count_non_segregating
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
+    .. automethod:: haploidify
 
 
 HaplotypeArray

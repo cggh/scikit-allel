@@ -820,10 +820,34 @@ class TestGenotypeArray(unittest.TestCase):
         eq(np.sum(expect), g.count_doubleton(allele=2))
 
     def test_haploidify(self):
+        eq = self.assertEqual
 
         # diploid
-        g = GenotypeArray(diploid_genotype_data)
-        # TODO
+        g = GenotypeArray([[[0, 1], [2, 3]],
+                           [[4, 5], [6, 7]],
+                           [[8, 9], [10, 11]]], dtype='i1')
+        h = g.haploidify()
+        eq(2, h.ndim)
+        eq(3, h.n_variants)
+        eq(2, h.n_haplotypes)
+        eq(np.int8, h.dtype)
+        for i in range(g.n_variants):
+            for j in range(g.n_samples):
+                self.assertIn(h[i, j], set(g[i, j]))
+        print(repr(h))
+
+        # triploid
+        g = GenotypeArray([[[0, 1, 2], [3, 4, 5]],
+                           [[6, 7, 8], [9, 10, 11]],
+                           [[12, 13, 14], [15, 16, 17]]], dtype='i1')
+        h = g.haploidify()
+        eq(2, h.ndim)
+        eq(3, h.n_variants)
+        eq(2, h.n_haplotypes)
+        eq(np.int8, h.dtype)
+        for i in range(g.n_variants):
+            for j in range(g.n_samples):
+                self.assertIn(h[i, j], set(g[i, j]))
 
 
 class TestHaplotypeArray(unittest.TestCase):

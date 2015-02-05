@@ -10,7 +10,7 @@ import numpy as np
 import numexpr as ne
 
 
-from allel.constants import DIM_VARIANTS, DIM_PLOIDY, DIPLOID
+from allel.constants import DIM_PLOIDY, DIPLOID
 
 
 class GenotypeArray(np.ndarray):
@@ -1253,6 +1253,67 @@ class GenotypeArray(np.ndarray):
 
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
+
+    def haploidify(self):
+        """Construct representative haplotypes by randomly selecting an
+        allele from each genotype call.
+
+        Returns
+        -------
+
+        h : HaplotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> np.random.seed(42)
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[1, 2], [2, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.haploidify()
+        HaplotypeArray([[ 0,  1],
+               [ 0,  1],
+               [ 1,  1],
+               [ 2, -1]], n_variants=4, n_haplotypes=2)
+        >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
+        ...                          [[0, 1, 1], [1, 1, 1]],
+        ...                          [[0, 1, 2], [-1, -1, -1]]])
+        >>> g.haploidify()
+        HaplotypeArray([[ 0,  0],
+               [ 1,  1],
+               [ 2, -1]], n_variants=3, n_haplotypes=2)
+
+        """
+
+        # N.B., this implementation is obscure and uses more memory that
+        # necessary, TODO review
+
+        # define the range of possible indices, e.g., diploid => (0, 1)
+        index_range = np.arange(0, self.ploidy, dtype='u1')
+
+        # create a random index for each genotype call
+        indices = np.random.choice(index_range,
+                                   size=(self.n_variants * self.n_samples),
+                                   replace=True)
+
+        # reshape genotype data so it's suitable for passing to np.choose
+        # by merging the variants and samples dimensions
+        choices = self.reshape(-1, self.ploidy).T
+
+        # now use random indices to haploidify
+        data = np.choose(indices, choices)
+
+        # reshape the haploidified data to restore the variants and samples
+        # dimensions
+        data = data.reshape((self.n_variants, self.n_samples))
+
+        # view as haplotype array
+        h = HaplotypeArray(data, copy=False)
+
+        return h
 
 
 class HaplotypeArray(np.ndarray):
