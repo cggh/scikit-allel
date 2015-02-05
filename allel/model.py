@@ -132,6 +132,10 @@ class GenotypeArray(np.ndarray):
         if obj.ndim != 3:
             raise TypeError('array with 3 dimensions required')
 
+        # check length of ploidy dimension
+        if obj.shape[DIM_PLOIDY] == 1:
+            raise ValueError('use HaplotypeArray for haploid calls')
+
     def __new__(cls, data, **kwargs):
         """Constructor."""
         obj = np.array(data, **kwargs)
@@ -1244,10 +1248,10 @@ class GenotypeArray(np.ndarray):
     def count_non_segregating(self, allele=None):
         return np.sum(self.is_non_segregating(allele=allele))
 
-    def count_singleton(self, allele=None):
+    def count_singleton(self, allele=1):
         return np.sum(self.is_singleton(allele=allele))
 
-    def count_doubleton(self, allele=None):
+    def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
 
@@ -1861,10 +1865,10 @@ class HaplotypeArray(np.ndarray):
     def count_non_segregating(self, allele=None):
         return np.sum(self.is_non_segregating(allele=allele))
 
-    def count_singleton(self, allele=None):
+    def count_singleton(self, allele=1):
         return np.sum(self.is_singleton(allele=allele))
 
-    def count_doubleton(self, allele=None):
+    def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
 
@@ -2352,5 +2356,3 @@ class PositionIndex(np.ndarray):
 
         loc = self.locate_ranges(starts, stops, strict=False)
         return np.compress(loc, self)
-
-    # TODO windowed counts
