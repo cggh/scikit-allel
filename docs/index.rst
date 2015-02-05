@@ -12,8 +12,16 @@ questions please email Alistair Miles <alimanfoo@googlemail.com>.
 
 * GitHub repository: https://github.com/cggh/scikit-allel 
 
+Installation
+------------
+
+This package requires numpy, scipy and numexpr. Install these
+dependencies first, then::
+
+    $ pip install -U scikit-allel
+
 Contents
-========
+--------
 
 .. toctree::
     :maxdepth: 2
@@ -22,13 +30,13 @@ Contents
     util
 
 Acknowledgments
-===============
+---------------
 
 Development of this package is supported by the
 `MRC Centre for Genomics and Global Health <http://www.cggh.org>`_.
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
