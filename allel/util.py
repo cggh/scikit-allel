@@ -50,9 +50,8 @@ def windowed_count(pos, b, window, start=None, stop=None):
     array([ 2, 12, 22, 32])
     >>> counts
     array([0, 2, 1])
-    >>> counts, edges = allel.windowed_count(pos, b, window=10,
-    ...                                          start=1,
-    ...                                          stop=27)
+    >>> counts, edges = allel.windowed_count(pos, b, window=10, start=1,
+    ...                                      stop=27)
     >>> edges
     array([ 1, 11, 21, 27])
     >>> counts
