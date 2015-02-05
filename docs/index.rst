@@ -1,7 +1,7 @@
 .. module:: allel
 
-scikit-allel - Explore and analyse genetic variation data
-=========================================================
+scikit-allel - Explore and analyse genetic variation
+====================================================
 
 This package provides utility functions for working with large scale
 genetic variation data using `numpy <http://www.numpy.org/>`_, `scipy
