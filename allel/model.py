@@ -550,7 +550,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # reshape, preserving size of variants dimension
-        newshape = (self.shape[DIM_VARIANTS], -1)
+        newshape = (self.n_variants, -1)
         data = np.reshape(self, newshape)
         h = HaplotypeArray(data, copy=False)
         return h
@@ -601,7 +601,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # count number of alternate alleles
-        out = np.empty(self.shape[:-1], dtype='i1')
+        out = np.empty((self.n_variants, self.n_samples), dtype='i1')
         np.sum(self > 0, axis=DIM_PLOIDY, out=out)
 
         # fill missing calls
@@ -657,7 +657,7 @@ class GenotypeArray(np.ndarray):
             alleles = list(range(m+1))
 
         # set up output array
-        outshape = self.shape[:2] + (len(alleles),)
+        outshape = (self.n_variants, self.n_samples, len(alleles))
         out = np.zeros(outshape, dtype='u1')
 
         for i, allele in enumerate(alleles):
@@ -1440,7 +1440,7 @@ class HaplotypeArray(np.ndarray):
             raise ValueError('incompatible ploidy')
 
         # reshape
-        newshape = (self.shape[0], -1, ploidy)
+        newshape = (self.n_variants, -1, ploidy)
         data = self.reshape(newshape)
 
         # wrap

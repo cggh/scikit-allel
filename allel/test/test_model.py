@@ -819,6 +819,12 @@ class TestGenotypeArray(unittest.TestCase):
         aeq(expect, actual)
         eq(np.sum(expect), g.count_doubleton(allele=2))
 
+    def test_haploidify(self):
+
+        # diploid
+        g = GenotypeArray(diploid_genotype_data)
+        # TODO
+
 
 class TestHaplotypeArray(unittest.TestCase):
 
