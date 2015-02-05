@@ -24,7 +24,10 @@ DOWNLOAD_URL = 'http://pypi.python.org/pypi/scikit-allele'
 
 LICENSE = 'MIT'
 
-INSTALL_REQUIRES = ['numpy']
+# strictly speaking, allel requires numpy, scipy and numexpr, but numexpr
+# won't install unless numpy is already installed, so leave this blank for now
+# and require user to pre-install numpy, scipy and numexpr themselves
+INSTALL_REQUIRES = []
 
 CLASSIFIERS = [
     'Development Status :: 1 - Planning',

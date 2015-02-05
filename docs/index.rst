@@ -18,12 +18,13 @@ Contents
 .. toctree::
     :maxdepth: 2
 
-    gt
+    model
+    util
 
 Acknowledgments
 ===============
 
-This package is primarily developed and maintained by members of the
+Development of this package is supported by the
 `MRC Centre for Genomics and Global Health <http://www.cggh.org>`_.
 
 Indices and tables

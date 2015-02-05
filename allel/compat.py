@@ -14,22 +14,13 @@ if PY2:
     range = xrange
     map = itertools.imap
     string_types = basestring,
+    text_type = unicode
+    binary_type = str
     zip = itertools.izip
 else:
     range = range
     map = map
     string_types = str,
+    text_type = str
+    binary_type = bytes
     zip = zip
-
-
-def force_bytes(o):
-    if PY2:
-        return o
-    elif isinstance(o, str):
-        return o.encode('ascii')
-    elif isinstance(o, list):
-        return [force_bytes(x) for x in o]
-    elif isinstance(o, tuple):
-        return tuple(force_bytes(x) for x in o)
-    else:
-        return o
