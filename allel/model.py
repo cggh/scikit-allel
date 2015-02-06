@@ -6,11 +6,20 @@ This module defines array classes for variant call data.
 from __future__ import absolute_import, print_function, division
 
 
+import itertools
+import logging
+import collections
+
+
 import numpy as np
 import numexpr as ne
 
 
-from allel.constants import DIM_PLOIDY, DIPLOID
+logger = logging.getLogger(__name__)
+debug = logger.debug
+
+
+from allel.constants import DIM_SAMPLES, DIM_PLOIDY, DIPLOID
 
 
 class GenotypeArray(np.ndarray):
@@ -1254,7 +1263,7 @@ class GenotypeArray(np.ndarray):
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
-    def haploidify(self):
+    def haploidify_samples(self):
         """Construct representative haplotypes by randomly selecting an
         allele from each genotype call.
 
@@ -1273,7 +1282,7 @@ class GenotypeArray(np.ndarray):
         ...                          [[0, 2], [1, 1]],
         ...                          [[1, 2], [2, 1]],
         ...                          [[2, 2], [-1, -1]]])
-        >>> g.haploidify()
+        >>> g.haploidify_samples()
         HaplotypeArray([[ 0,  1],
                [ 0,  1],
                [ 1,  1],
@@ -1281,7 +1290,7 @@ class GenotypeArray(np.ndarray):
         >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
         ...                          [[0, 1, 1], [1, 1, 1]],
         ...                          [[0, 1, 2], [-1, -1, -1]]])
-        >>> g.haploidify()
+        >>> g.haploidify_samples()
         HaplotypeArray([[ 0,  0],
                [ 1,  1],
                [ 2, -1]], n_variants=3, n_haplotypes=2)
@@ -1314,6 +1323,172 @@ class GenotypeArray(np.ndarray):
         h = HaplotypeArray(data, copy=False)
 
         return h
+
+    def heterozygosity_observed(self, fill=0):
+        """Calculate the rate of observed heterozygosity for each variant.
+
+        Parameters
+        ----------
+
+        fill : float, optional
+            Use this value for variants where all calls are missing.
+
+        Returns
+        -------
+
+        ho : ndarray, float, shape (n_variants,)
+            Observed heterozygosity
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1], [1, 1]],
+        ...                          [[0, 0], [1, 1], [2, 2]],
+        ...                          [[1, 1], [1, 2], [-1, -1]]])
+        >>> g.heterozygosity_observed()
+        array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
+
+        """
+
+        # count hets
+        n_het = self.count_het(axis=DIM_SAMPLES)
+        n_called = self.count_called(axis=DIM_SAMPLES)
+
+        # calculate rate of observed heterozygosity, accounting for variants
+        # where all calls are missing
+        err = np.seterr(invalid='ignore')
+        ho = np.where(n_called > 0, n_het / n_called, fill)
+        np.seterr(**err)
+
+        return ho
+
+    def heterozygosity_expected(self, fill=0):
+        """Calculate the expected rate of heterozygosity for each variant
+        under Hardy-Weinberg equilibrium.
+
+        Parameters
+        ----------
+
+        fill : float, optional
+            Use this value for variants where all calls are missing.
+
+        Returns
+        -------
+
+        he : ndarray, float, shape (n_variants,)
+            Expected heterozygosity
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1], [1, 1]],
+        ...                          [[0, 0], [1, 1], [2, 2]],
+        ...                          [[1, 1], [1, 2], [-1, -1]]])
+        >>> g.heterozygosity_expected()
+        array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
+
+        """
+
+        # Implementation note: To cope with different ploidies and different
+        # numbers of alleles, generate an expression which is appropriate
+        # to the data, then use numexpr to evaluate it. For example...
+        # ploidy 2, 2 alleles: '2*p0*p1'
+        # ploidy 2, 3 alleles: '2*p1*p2 + 2*p0*p2 + 2*p0*p1'
+        # ploidy 3, 3 alleles: '3*p0*p0*p1 + 3*p0*p0*p2 + 3*p1*p1*p2
+        #                       + 3*p0*p2*p2 + 3*p0*p1*p1 + 6*p0*p1*p2
+        #                       + 3*p1*p2*p2'
+        # ...etc.
+
+        # calculate allele frequencies
+        af, _, an = self.allele_frequencies(fill=0)
+
+        # determine ploidy and number of alleles
+        ploidy = self.ploidy
+        n_alleles = af.shape[1]
+
+        # declare one allele frequency variable for each allele, e.g.,
+        # p0 is frequency of the 0th allele, etc.
+        variables = ['p%s' % i for i in range(n_alleles)]
+
+        # construct the multiplication terms, not including the homozygous
+        # cases
+        terms = [t for t in itertools.product(variables, repeat=ploidy)
+                 if len(set(t)) > 1]
+
+        # collect and count multiplication terms that are identical
+        terms = collections.Counter(tuple(sorted(t)) for t in terms)
+
+        # construct the full expression
+        expr = ' + '.join('%s*%s' % (n, '*'.join(t))
+                          for (t, n) in terms.items())
+        debug(expr)
+
+        # construct a dictionary holding the allele frequency variables
+        local_dict = {v: af[:, i] for i, v in enumerate(variables)}
+
+        # evaluate the expression
+        out = ne.evaluate(expr, local_dict=local_dict)
+
+        # fill values where allele frequencies could not be calculated
+        if fill != 0:
+            out[an == 0] = fill
+
+        return out
+
+    def inbreeding_coefficient(self, fill=0):
+        """Calculate the inbreeding coefficient for each variant.
+
+        Parameters
+        ----------
+
+        fill : float, optional
+            Use this value for variants where the expected heterozygosity is
+            zero.
+
+        Returns
+        -------
+
+        he : ndarray, float, shape (n_variants,)
+            Expected heterozygosity
+
+        Notes
+        -----
+
+        The inbreeding coefficient is calculated as *1 - (Ho/He)* where *Ho* is
+        the observed heterozygosity and *He* is the expected heterozygosity.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1], [1, 1]],
+        ...                          [[0, 0], [1, 1], [2, 2]],
+        ...                          [[1, 1], [1, 2], [-1, -1]]])
+        >>> g.heterozygosity_observed()
+        array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
+        >>> g.heterozygosity_expected()
+        array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
+        >>> g.inbreeding_coefficient()
+        array([ 0.        ,  0.33333333,  1.        , -0.33333333])
+
+        """
+
+        # calculate observed and expected heterozygosity
+        ho = self.heterozygosity_observed(fill=0)
+        he = self.heterozygosity_expected(fill=0)
+
+        # calculate inbreeding coefficient, accounting for variants with no
+        # expected heterozygosity
+        err = np.seterr(invalid='ignore')
+        f = np.where(he > 0, 1 - (ho / he), fill)
+        np.seterr(**err)
+
+        return f
 
 
 class HaplotypeArray(np.ndarray):

@@ -9,8 +9,18 @@ g = allel.GenotypeArray([[[0, 0], [0, 1]],
                          [[0, 2], [1, 1]],
                          [[1, 2], [2, 1]],
                          [[2, 2], [-1, -1]]])
-g.haploidify()
+g.haploidify_samples()
 g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
                          [[0, 1, 1], [1, 1, 1]],
                          [[0, 1, 2], [-1, -1, -1]]])
-g.haploidify()
+g.haploidify_samples()
+
+
+import allel
+g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+                         [[0, 0], [0, 1], [1, 1]],
+                         [[0, 0], [1, 1], [2, 2]],
+                         [[1, 1], [1, 2], [-1, -1]]])
+g.heterozygosity_observed()
+g.heterozygosity_expected()
+g.inbreeding_coefficient()

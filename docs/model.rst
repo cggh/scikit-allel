@@ -50,7 +50,10 @@ GenotypeArray
     .. automethod:: count_non_segregating
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
-    .. automethod:: haploidify
+    .. automethod:: haploidify_samples
+    .. automethod:: heterozygosity_observed
+    .. automethod:: heterozygosity_expected
+    .. automethod:: inbreeding_coefficient
 
 
 HaplotypeArray

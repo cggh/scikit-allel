@@ -4,7 +4,7 @@ from __future__ import absolute_import, print_function, division
 
 import unittest
 import numpy as np
-from allel.test.tools import assert_array_equal as aeq
+from allel.test.tools import assert_array_equal as aeq, assert_array_close
 
 
 from allel.model import GenotypeArray, HaplotypeArray, PositionIndex, \
@@ -819,14 +819,14 @@ class TestGenotypeArray(unittest.TestCase):
         aeq(expect, actual)
         eq(np.sum(expect), g.count_doubleton(allele=2))
 
-    def test_haploidify(self):
+    def test_haploidify_samples(self):
         eq = self.assertEqual
 
         # diploid
         g = GenotypeArray([[[0, 1], [2, 3]],
                            [[4, 5], [6, 7]],
                            [[8, 9], [10, 11]]], dtype='i1')
-        h = g.haploidify()
+        h = g.haploidify_samples()
         eq(2, h.ndim)
         eq(3, h.n_variants)
         eq(2, h.n_haplotypes)
@@ -840,7 +840,7 @@ class TestGenotypeArray(unittest.TestCase):
         g = GenotypeArray([[[0, 1, 2], [3, 4, 5]],
                            [[6, 7, 8], [9, 10, 11]],
                            [[12, 13, 14], [15, 16, 17]]], dtype='i1')
-        h = g.haploidify()
+        h = g.haploidify_samples()
         eq(2, h.ndim)
         eq(3, h.n_variants)
         eq(2, h.n_haplotypes)
@@ -848,6 +848,125 @@ class TestGenotypeArray(unittest.TestCase):
         for i in range(g.n_variants):
             for j in range(g.n_samples):
                 self.assertIn(h[i, j], set(g[i, j]))
+
+    def test_heterozygosity_observed(self):
+
+        # diploid
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[1, 1], [1, 1]],
+                           [[1, 1], [2, 2]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [0, 2]],
+                           [[1, 1], [1, 2]],
+                           [[0, 1], [0, 1]],
+                           [[0, 1], [1, 2]],
+                           [[0, 0], [-1, -1]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]], dtype='i1')
+        expect = [0, 0, 0, .5, .5, .5, 1, 1, 0, 1, -1]
+        actual = g.heterozygosity_observed(fill=-1)
+        aeq(expect, actual)
+
+        # polyploid
+        g = GenotypeArray([[[0, 0, 0], [0, 0, 0]],
+                           [[1, 1, 1], [1, 1, 1]],
+                           [[1, 1, 1], [2, 2, 2]],
+                           [[0, 0, 0], [0, 0, 1]],
+                           [[0, 0, 0], [0, 0, 2]],
+                           [[1, 1, 1], [0, 1, 2]],
+                           [[0, 0, 1], [0, 1, 1]],
+                           [[0, 1, 1], [0, 1, 2]],
+                           [[0, 0, 0], [-1, -1, -1]],
+                           [[0, 0, 1], [-1, -1, -1]],
+                           [[-1, -1, -1], [-1, -1, -1]]], dtype='i1')
+        expect = [0, 0, 0, .5, .5, .5, 1, 1, 0, 1, -1]
+        actual = g.heterozygosity_observed(fill=-1)
+        aeq(expect, actual)
+
+    def test_heterozygosity_expected(self):
+
+        def refimpl(g, fill=0):
+            """Limited reference implementation for testing purposes."""
+
+            # calculate allele frequencies
+            af, _, an = g.allele_frequencies()
+
+            # assume three alleles
+            p = af[:, 0]
+            q = af[:, 1]
+            r = af[:, 2]
+
+            if g.ploidy == 2:
+                out = 2*p*q + 2*p*r + 2*q*r
+
+            elif g.ploidy == 3:
+                out = 3*p*p*q + 3*p*p*r + 3*p*q*q \
+                    + 6*p*q*r \
+                    + 3*p*r*r + 3*q*q*r + 3*q*r*r
+
+            else:
+                raise NotImplementedError
+
+            out[an == 0] = fill
+
+            return out
+
+        # diploid
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[1, 1], [1, 1]],
+                           [[1, 1], [2, 2]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [0, 2]],
+                           [[1, 1], [1, 2]],
+                           [[0, 1], [0, 1]],
+                           [[0, 1], [1, 2]],
+                           [[0, 0], [-1, -1]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]], dtype='i1')
+        expect1 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, -1]
+        expect2 = refimpl(g, fill=-1)
+        actual = g.heterozygosity_expected(fill=-1)
+        assert_array_close(expect1, actual)
+        assert_array_close(expect2, actual)
+
+        # polyploid
+        g = GenotypeArray([[[0, 0, 0], [0, 0, 0]],
+                           [[1, 1, 1], [1, 1, 1]],
+                           [[1, 1, 1], [2, 2, 2]],
+                           [[0, 0, 0], [0, 0, 1]],
+                           [[0, 0, 0], [0, 0, 2]],
+                           [[1, 1, 1], [0, 1, 2]],
+                           [[0, 0, 1], [0, 1, 1]],
+                           [[0, 1, 1], [0, 1, 2]],
+                           [[0, 0, 0], [-1, -1, -1]],
+                           [[0, 0, 1], [-1, -1, -1]],
+                           [[-1, -1, -1], [-1, -1, -1]]], dtype='i1')
+        expect = refimpl(g, fill=-1)
+        actual = g.heterozygosity_expected(fill=-1)
+        assert_array_close(expect, actual)
+
+    def test_inbreeding_coefficient(self):
+
+        # diploid
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[1, 1], [1, 1]],
+                           [[1, 1], [2, 2]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [0, 2]],
+                           [[1, 1], [1, 2]],
+                           [[0, 1], [0, 1]],
+                           [[0, 1], [1, 2]],
+                           [[0, 0], [-1, -1]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]], dtype='i1')
+        # ho = np.array([0, 0, 0, .5, .5, .5, 1, 1, 0, 1, -1])
+        # he = np.array([0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, -1])
+        # expect = 1 - (ho/he)
+        # expect[he == 0] = -1
+        expect = [-1, -1, 1-0, 1-(.5/.375), 1-(.5/.375), 1-(.5/.375),
+                  1-(1/.5), 1-(1/.625), -1, 1-(1/.5), -1]
+        actual = g.inbreeding_coefficient(fill=-1)
+        assert_array_close(expect, actual)
 
 
 class TestHaplotypeArray(unittest.TestCase):

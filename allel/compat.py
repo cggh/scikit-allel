@@ -17,6 +17,7 @@ if PY2:
     text_type = unicode
     binary_type = str
     zip = itertools.izip
+    reduce = reduce
 else:
     range = range
     map = map
@@ -24,3 +25,5 @@ else:
     text_type = str
     binary_type = bytes
     zip = zip
+    import functools
+    reduce = functools.reduce
