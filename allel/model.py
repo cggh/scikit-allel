@@ -1264,8 +1264,8 @@ class GenotypeArray(np.ndarray):
         return np.sum(self.is_doubleton(allele=allele))
 
     def haploidify_samples(self):
-        """Construct representative haplotypes by randomly selecting an
-        allele from each genotype call.
+        """Construct a pseudo-haplotype for each sample by randomly
+        selecting an allele from each genotype call.
 
         Returns
         -------
