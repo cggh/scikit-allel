@@ -1452,8 +1452,8 @@ class GenotypeArray(np.ndarray):
         Returns
         -------
 
-        he : ndarray, float, shape (n_variants,)
-            Expected heterozygosity
+        f : ndarray, float, shape (n_variants,)
+            Inbreeding coefficient.
 
         Notes
         -----
@@ -1465,6 +1465,7 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
+        >>> import numpy as np
         >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
         ...                          [[0, 0], [0, 1], [1, 1]],
         ...                          [[0, 0], [1, 1], [2, 2]],
@@ -1473,8 +1474,8 @@ class GenotypeArray(np.ndarray):
         array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
         >>> g.heterozygosity_expected()
         array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
-        >>> g.inbreeding_coefficient()
-        array([ 0.        ,  0.33333333,  1.        , -0.33333333])
+        >>> g.inbreeding_coefficient(fill=np.nan)
+        array([        nan,  0.33333333,  1.        , -0.33333333])
 
         """
 
