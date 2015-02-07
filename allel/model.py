@@ -1393,46 +1393,14 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        # Implementation note: To cope with different ploidies and different
-        # numbers of alleles, generate an expression which is appropriate
-        # to the data, then use numexpr to evaluate it. For example...
-        # ploidy 2, 2 alleles: '2*p0*p1'
-        # ploidy 2, 3 alleles: '2*p1*p2 + 2*p0*p2 + 2*p0*p1'
-        # ploidy 3, 3 alleles: '3*p0*p0*p1 + 3*p0*p0*p2 + 3*p1*p1*p2
-        #                       + 3*p0*p2*p2 + 3*p0*p1*p1 + 6*p0*p1*p2
-        #                       + 3*p1*p2*p2'
-        # ...etc.
-
         # calculate allele frequencies
         af, _, an = self.allele_frequencies(fill=0)
 
-        # determine ploidy and number of alleles
-        ploidy = self.ploidy
-        n_alleles = af.shape[1]
+        # calculate expected heterozygosity
+        out = 1 - np.sum(np.power(af, self.ploidy), axis=1)
 
-        # declare one allele frequency variable for each allele, e.g.,
-        # p0 is frequency of the 0th allele, etc.
-        variables = ['p%s' % i for i in range(n_alleles)]
-
-        # construct the multiplication terms, not including the homozygous
-        # cases
-        terms = [t for t in itertools.product(variables, repeat=ploidy)
-                 if len(set(t)) > 1]
-
-        # collect and count multiplication terms that are identical
-        terms = collections.Counter(tuple(sorted(t)) for t in terms)
-
-        # construct the full expression
-        expr = ' + '.join('%s*%s' % (n, '*'.join(t))
-                          for (t, n) in terms.items())
-        debug(expr)
-
-        # construct a dictionary holding the allele frequency variables
-        local_dict = {v: af[:, i] for i, v in enumerate(variables)}
-
-        # evaluate the expression
-        out = ne.evaluate(expr, local_dict=local_dict)
-
+        # TODO add ddof adjustment
+        
         # fill values where allele frequencies could not be calculated
         if fill != 0:
             out[an == 0] = fill

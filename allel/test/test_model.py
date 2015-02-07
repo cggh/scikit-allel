@@ -888,6 +888,8 @@ class TestGenotypeArray(unittest.TestCase):
         def refimpl(g, fill=0):
             """Limited reference implementation for testing purposes."""
 
+            ploidy = g.ploidy
+
             # calculate allele frequencies
             af, _, an = g.allele_frequencies()
 
@@ -896,17 +898,7 @@ class TestGenotypeArray(unittest.TestCase):
             q = af[:, 1]
             r = af[:, 2]
 
-            if g.ploidy == 2:
-                out = 2*p*q + 2*p*r + 2*q*r
-
-            elif g.ploidy == 3:
-                out = 3*p*p*q + 3*p*p*r + 3*p*q*q \
-                    + 6*p*q*r \
-                    + 3*p*r*r + 3*q*q*r + 3*q*r*r
-
-            else:
-                raise NotImplementedError
-
+            out = 1 - p**ploidy - q**ploidy - r**ploidy
             out[an == 0] = fill
 
             return out
