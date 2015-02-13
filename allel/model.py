@@ -6,20 +6,18 @@ This module defines array classes for variant call data.
 from __future__ import absolute_import, print_function, division
 
 
-import itertools
 import logging
-import collections
 
 
 import numpy as np
 import numexpr as ne
 
 
+from allel.constants import DIM_SAMPLES, DIM_PLOIDY, DIPLOID
+
+
 logger = logging.getLogger(__name__)
 debug = logger.debug
-
-
-from allel.constants import DIM_SAMPLES, DIM_PLOIDY, DIPLOID
 
 
 class GenotypeArray(np.ndarray):
@@ -949,7 +947,7 @@ class GenotypeArray(np.ndarray):
 
         return self.view_haplotypes().allele_count(allele=allele)
 
-    def allele_frequency(self, allele=1, fill=0):
+    def allele_frequency(self, allele=1, fill=np.nan):
         """Calculate the frequency of the given allele per variant.
 
         Parameters
@@ -1025,7 +1023,7 @@ class GenotypeArray(np.ndarray):
 
         return self.view_haplotypes().allele_counts(alleles=alleles)
 
-    def allele_frequencies(self, alleles=None, fill=0):
+    def allele_frequencies(self, alleles=None, fill=np.nan):
         """Calculate the frequency of each allele per variant.
 
         Parameters
@@ -1324,7 +1322,7 @@ class GenotypeArray(np.ndarray):
 
         return h
 
-    def heterozygosity_observed(self, fill=0):
+    def heterozygosity_observed(self, fill=np.nan):
         """Calculate the rate of observed heterozygosity for each variant.
 
         Parameters
@@ -1364,7 +1362,7 @@ class GenotypeArray(np.ndarray):
 
         return ho
 
-    def heterozygosity_expected(self, fill=0):
+    def heterozygosity_expected(self, fill=np.nan):
         """Calculate the expected rate of heterozygosity for each variant
         under Hardy-Weinberg equilibrium.
 
@@ -1399,15 +1397,12 @@ class GenotypeArray(np.ndarray):
         # calculate expected heterozygosity
         out = 1 - np.sum(np.power(af, self.ploidy), axis=1)
 
-        # TODO add ddof adjustment
-        
         # fill values where allele frequencies could not be calculated
-        if fill != 0:
-            out[an == 0] = fill
+        out[an == 0] = fill
 
         return out
 
-    def inbreeding_coefficient(self, fill=0):
+    def inbreeding_coefficient(self, fill=np.nan):
         """Calculate the inbreeding coefficient for each variant.
 
         Parameters
@@ -1442,22 +1437,67 @@ class GenotypeArray(np.ndarray):
         array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
         >>> g.heterozygosity_expected()
         array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
-        >>> g.inbreeding_coefficient(fill=np.nan)
+        >>> g.inbreeding_coefficient()
         array([        nan,  0.33333333,  1.        , -0.33333333])
 
         """
 
         # calculate observed and expected heterozygosity
-        ho = self.heterozygosity_observed(fill=0)
-        he = self.heterozygosity_expected(fill=0)
+        ho = self.heterozygosity_observed()
+        he = self.heterozygosity_expected()
 
         # calculate inbreeding coefficient, accounting for variants with no
         # expected heterozygosity
+        debug(ho)
+        debug(he)
         err = np.seterr(invalid='ignore')
         f = np.where(he > 0, 1 - (ho / he), fill)
         np.seterr(**err)
 
         return f
+
+    def mean_pairwise_difference(self, fill=np.nan):
+        """Calculate the mean number of pairwise differences between
+        haplotypes for each variant.
+
+        Parameters
+        ----------
+
+        fill : float
+            Use this value where there are no pairs to compare (e.g.,
+            all allele calls are missing).
+
+        Returns
+        -------
+
+        m : ndarray, float, shape (n_variants,)
+
+        Notes
+        -----
+
+        The values returned by this function can be summed over a genome
+        region and divided by the number of accessible bases to estimate
+        nucleotide diversity.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+        ...                          [[0, 0], [0, 1]],
+        ...                          [[0, 0], [1, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[1, 1], [1, 1]],
+        ...                          [[0, 0], [1, 2]],
+        ...                          [[0, 1], [1, 2]],
+        ...                          [[0, 1], [-1, -1]]])
+        >>> g.mean_pairwise_difference()
+        array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
+                0.83333333,  0.83333333,  1.        ])
+
+        """
+
+        return self.view_haplotypes().mean_pairwise_difference(fill=np.nan)
 
 
 class HaplotypeArray(np.ndarray):
@@ -1820,7 +1860,7 @@ class HaplotypeArray(np.ndarray):
         # count non-missing calls over samples
         return np.sum(self == allele, axis=1)
 
-    def allele_frequency(self, allele=1, fill=0):
+    def allele_frequency(self, allele=1, fill=np.nan):
         """Calculate the frequency of the given allele per variant.
 
         Parameters
@@ -1886,7 +1926,7 @@ class HaplotypeArray(np.ndarray):
 
         return ac
 
-    def allele_frequencies(self, alleles=None, fill=0):
+    def allele_frequencies(self, alleles=None, fill=np.nan):
         """Calculate the frequency of each allele per variant.
 
         Parameters
@@ -2075,6 +2115,76 @@ class HaplotypeArray(np.ndarray):
 
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
+
+    def mean_pairwise_difference(self, fill=np.nan):
+        """Calculate the mean number of pairwise differences between
+        haplotypes for each variant.
+
+        Parameters
+        ----------
+
+        fill : float
+            Use this value where there are no pairs to compare (e.g.,
+            all allele calls are missing).
+
+        Returns
+        -------
+
+        m : ndarray, float, shape (n_variants,)
+
+        Notes
+        -----
+
+        The values returned by this function can be summed over a genome
+        region and divided by the number of accessible bases to estimate
+        nucleotide diversity.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 0],
+        ...                           [0, 0, 0, 1],
+        ...                           [0, 0, 1, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [1, 1, 1, 1],
+        ...                           [0, 0, 1, 2],
+        ...                           [0, 1, 1, 2],
+        ...                           [0, 1, -1, -1]])
+        >>> h.mean_pairwise_difference()
+        array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
+                0.83333333,  0.83333333,  1.        ])
+
+        """
+
+        # This function calculates the mean number of pairwise differences
+        # between haplotypes, generalising to any number of alleles.
+
+        # number of non-missing alleles (i.e., haplotypes) for each variant
+        an = self.allele_number()
+
+        # allele counts for each variant
+        ac = self.allele_counts()
+
+        # total number of pairwise comparisons for each variant:
+        # (an choose 2)
+        n_pairs = an * (an - 1) / 2
+
+        # number of pairwise comparisons where there is no difference:
+        # sum of (ac choose 2) for each allele (i.e., number of ways to
+        # choose the same allele twice)
+        n_same = np.sum(ac * (ac - 1) / 2, axis=1)
+
+        # number of pairwise differences
+        n_diff = n_pairs - n_same
+
+        # mean number of pairwise differences, accounting for cases where
+        # there are no pairs
+        err = np.seterr(invalid='ignore')
+        m = np.where(n_pairs > 0, n_diff / n_pairs, fill)
+        np.seterr(**err)
+
+        return m
 
 
 class PositionIndex(np.ndarray):

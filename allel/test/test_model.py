@@ -635,20 +635,20 @@ class TestGenotypeArray(unittest.TestCase):
 
         # diploid
         g = GenotypeArray(diploid_genotype_data)
-        expect = np.array([1/4, 2/4, 2/4, 0/2, 0])
-        actual, _, _ = g.allele_frequency(allele=1)
+        expect = np.array([1/4, 2/4, 2/4, 0/2, -1])
+        actual, _, _ = g.allele_frequency(allele=1, fill=-1)
         aeq(expect, actual)
-        expect = np.array([0/4, 1/4, 1/4, 2/2, 0])
-        actual, _, _ = g.allele_frequency(allele=2)
+        expect = np.array([0/4, 1/4, 1/4, 2/2, -1])
+        actual, _, _ = g.allele_frequency(allele=2, fill=-1)
         aeq(expect, actual)
 
         # polyploid
         g = GenotypeArray(triploid_genotype_data)
-        expect = np.array([1/6, 5/6, 1/3, 0])
-        actual, _, _ = g.allele_frequency(allele=1)
+        expect = np.array([1/6, 5/6, 1/3, -1])
+        actual, _, _ = g.allele_frequency(allele=1, fill=-1)
         aeq(expect, actual)
-        expect = np.array([0/6, 0/6, 1/3, 0])
-        actual, _, _ = g.allele_frequency(allele=2)
+        expect = np.array([0/6, 0/6, 1/3, -1])
+        actual, _, _ = g.allele_frequency(allele=2, fill=-1)
         aeq(expect, actual)
 
     def test_allele_counts(self):
@@ -680,8 +680,8 @@ class TestGenotypeArray(unittest.TestCase):
                            [1/4, 2/4, 1/4],
                            [1/4, 2/4, 1/4],
                            [0/2, 0/2, 2/2],
-                           [0, 0, 0]])
-        actual, _, _ = g.allele_frequencies()
+                           [-1, -1, -1]])
+        actual, _, _ = g.allele_frequencies(fill=-1)
         aeq(expect, actual)
 
         # polyploid
@@ -689,8 +689,8 @@ class TestGenotypeArray(unittest.TestCase):
         expect = np.array([[5/6, 1/6, 0/6],
                            [1/6, 5/6, 0/6],
                            [1/3, 1/3, 1/3],
-                           [0, 0, 0]])
-        actual, _, _ = g.allele_frequencies()
+                           [-1, -1, -1]])
+        actual, _, _ = g.allele_frequencies(fill=-1)
         aeq(expect, actual)
 
     def test_is_count_variant(self):
@@ -920,6 +920,9 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.heterozygosity_expected(fill=-1)
         assert_array_close(expect1, actual)
         assert_array_close(expect2, actual)
+        expect3 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, 0]
+        actual = g.heterozygosity_expected(fill=0)
+        assert_array_close(expect3, actual)
 
         # polyploid
         g = GenotypeArray([[[0, 0, 0], [0, 0, 0]],
@@ -1131,12 +1134,12 @@ class TestHaplotypeArray(unittest.TestCase):
         aeq(expect, actual)
 
     def test_allele_frequency(self):
-        expect = np.array([1/2, 2/2, 0/1, 0])
+        expect = np.array([1/2, 2/2, 0/1, -1])
         h = HaplotypeArray(haplotype_data)
-        actual, _, _ = h.allele_frequency(allele=1)
+        actual, _, _ = h.allele_frequency(allele=1, fill=-1)
         aeq(expect, actual)
-        expect = np.array([0/2, 0/2, 1/1, 0])
-        actual, _, _ = h.allele_frequency(allele=2)
+        expect = np.array([0/2, 0/2, 1/1, -1])
+        actual, _, _ = h.allele_frequency(allele=2, fill=-1)
         aeq(expect, actual)
 
     def test_allele_counts(self):
@@ -1151,8 +1154,9 @@ class TestHaplotypeArray(unittest.TestCase):
         expect = np.array([[1/2, 1/2, 0/2],
                            [0/2, 2/2, 0/2],
                            [0/1, 0/1, 1/1],
-                           [0, 0, 0]])
-        actual, _, _ = HaplotypeArray(haplotype_data).allele_frequencies()
+                           [-1, -1, -1]])
+        actual, _, _ = \
+            HaplotypeArray(haplotype_data).allele_frequencies(fill=-1)
         aeq(expect, actual)
 
     def test_is_count_variant(self):
@@ -1214,6 +1218,33 @@ class TestHaplotypeArray(unittest.TestCase):
         actual = h.is_doubleton(allele=2)
         aeq(expect, actual)
         self.assertEqual(np.sum(expect), h.count_doubleton(allele=2))
+
+    def test_mean_pairwise_difference(self):
+
+        # start with simplest case, two haplotypes, one pairwise comparison
+        h = HaplotypeArray([[0, 0],
+                            [1, 1],
+                            [0, 1],
+                            [1, 2],
+                            [0, -1],
+                            [-1, -1]])
+        expect = [0, 0, 1, 1, -1, -1]
+        actual = h.mean_pairwise_difference(fill=-1)
+        aeq(expect, actual)
+
+        # four haplotypes, 6 pairwise comparison
+        h = HaplotypeArray([[0, 0, 0, 0],
+                            [0, 0, 0, 1],
+                            [0, 0, 1, 1],
+                            [0, 1, 1, 1],
+                            [1, 1, 1, 1],
+                            [0, 0, 1, 2],
+                            [0, 1, 1, 2],
+                            [0, 1, -1, -1],
+                            [-1, -1, -1, -1]])
+        expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
+        actual = h.mean_pairwise_difference(fill=-1)
+        assert_array_close(expect, actual)
 
 
 class TestPositionIndex(unittest.TestCase):

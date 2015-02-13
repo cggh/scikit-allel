@@ -54,6 +54,7 @@ GenotypeArray
     .. automethod:: heterozygosity_observed
     .. automethod:: heterozygosity_expected
     .. automethod:: inbreeding_coefficient
+    .. automethod:: mean_pairwise_difference
 
 
 HaplotypeArray
@@ -84,6 +85,7 @@ HaplotypeArray
     .. automethod:: count_non_segregating
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
+    .. automethod:: mean_pairwise_difference
 
 PositionIndex
 -------------

@@ -24,3 +24,15 @@ g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
 g.heterozygosity_observed()
 g.heterozygosity_expected()
 g.inbreeding_coefficient()
+
+import allel
+g = allel.GenotypeArray([[[0, 0], [0, 0]],
+                         [[0, 0], [0, 1]],
+                         [[0, 0], [1, 1]],
+                         [[0, 1], [1, 1]],
+                         [[1, 1], [1, 1]],
+                         [[0, 0], [1, 2]],
+                         [[0, 1], [1, 2]],
+                         [[0, 1], [-1, -1]]])
+g.mean_pairwise_difference()
+
