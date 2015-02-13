@@ -5,13 +5,13 @@ from __future__ import absolute_import, print_function, division
 import unittest
 from allel.test.tools import assert_array_equal as aeq
 import numpy as np
-from allel.util import windowed_count, windowed_density
+from allel.util import windowed_nnz, windowed_density
 
 
 class TestWindowedCounts(unittest.TestCase):
 
     def test_windowed_count(self):
-        f = windowed_count
+        f = windowed_nnz
         pos = [1, 12, 15, 27]
 
         # boolean array, all true

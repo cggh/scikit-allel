@@ -13,11 +13,14 @@ import numpy as np
 import numexpr as ne
 
 
-from allel.constants import DIM_SAMPLES, DIM_PLOIDY, DIPLOID
+from allel.util import ignore_invalid
 
 
 logger = logging.getLogger(__name__)
 debug = logger.debug
+
+
+from allel.constants import DIM_SAMPLES, DIM_PLOIDY, DIPLOID
 
 
 class GenotypeArray(np.ndarray):
@@ -1356,9 +1359,8 @@ class GenotypeArray(np.ndarray):
 
         # calculate rate of observed heterozygosity, accounting for variants
         # where all calls are missing
-        err = np.seterr(invalid='ignore')
-        ho = np.where(n_called > 0, n_het / n_called, fill)
-        np.seterr(**err)
+        with ignore_invalid():
+            ho = np.where(n_called > 0, n_het / n_called, fill)
 
         return ho
 
@@ -1448,11 +1450,8 @@ class GenotypeArray(np.ndarray):
 
         # calculate inbreeding coefficient, accounting for variants with no
         # expected heterozygosity
-        debug(ho)
-        debug(he)
-        err = np.seterr(invalid='ignore')
-        f = np.where(he > 0, 1 - (ho / he), fill)
-        np.seterr(**err)
+        with ignore_invalid():
+            f = np.where(he > 0, 1 - (ho / he), fill)
 
         return f
 
@@ -1889,9 +1888,8 @@ class HaplotypeArray(np.ndarray):
         ac = self.allele_count(allele=allele)
 
         # calculate allele frequency, accounting for variants with no calls
-        err = np.seterr(invalid='ignore')
-        af = np.where(an > 0, ac / an, fill)
-        np.seterr(**err)
+        with ignore_invalid():
+            af = np.where(an > 0, ac / an, fill)
 
         return af, ac, an
 
@@ -1956,9 +1954,8 @@ class HaplotypeArray(np.ndarray):
         ac = self.allele_counts(alleles=alleles)
 
         # calculate allele frequency, accounting for variants with no calls
-        err = np.seterr(invalid='ignore')
-        af = np.where(an > 0, ac / an, fill)
-        np.seterr(**err)
+        with ignore_invalid():
+            af = np.where(an > 0, ac / an, fill)
 
         return af, ac, an[:, 0]
 
@@ -2180,9 +2177,8 @@ class HaplotypeArray(np.ndarray):
 
         # mean number of pairwise differences, accounting for cases where
         # there are no pairs
-        err = np.seterr(invalid='ignore')
-        m = np.where(n_pairs > 0, n_diff / n_pairs, fill)
-        np.seterr(**err)
+        with ignore_invalid():
+            m = np.where(n_pairs > 0, n_diff / n_pairs, fill)
 
         return m
 
