@@ -1496,7 +1496,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().mean_pairwise_difference(fill=np.nan)
+        return self.view_haplotypes().mean_pairwise_difference(fill=fill)
 
 
 class HaplotypeArray(np.ndarray):

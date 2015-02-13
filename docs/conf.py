@@ -36,6 +36,8 @@ class MockNumpy(object):
     class ndarray(object):
         pass
     nan = Mock()
+    nan.__repr__ = lambda self: 'nan'
+
 
 sys.modules['numpy'] = MockNumpy()
 

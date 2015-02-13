@@ -963,6 +963,22 @@ class TestGenotypeArray(unittest.TestCase):
         actual = g.inbreeding_coefficient(fill=-1)
         assert_array_close(expect, actual)
 
+    def test_mean_pairwise_difference(self):
+
+        # four haplotypes, 6 pairwise comparison
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [1, 1]],
+                           [[0, 1], [1, 1]],
+                           [[1, 1], [1, 1]],
+                           [[0, 0], [1, 2]],
+                           [[0, 1], [1, 2]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]])
+        expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
+        actual = g.mean_pairwise_difference(fill=-1)
+        assert_array_close(expect, actual)
+
 
 class TestHaplotypeArray(unittest.TestCase):
 

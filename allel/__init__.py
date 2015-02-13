@@ -9,4 +9,5 @@ __version__ = '0.4.0.dev0'
 from allel.constants import *
 from allel.model import GenotypeArray, HaplotypeArray, PositionIndex, \
     LabelIndex
-from allel.util import windowed_nnz, windowed_density
+from allel.stats import windowed_statistic, windowed_nnz, \
+    windowed_mean_per_base, windowed_nnz_per_base, windowed_nucleotide_diversity

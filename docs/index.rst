@@ -27,7 +27,7 @@ Contents
     :maxdepth: 2
 
     model
-    util
+    stats
 
 Acknowledgments
 ---------------
