@@ -17,6 +17,10 @@ from allel.constants import DIM_PLOIDY, DIPLOID
 from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
 
 
+__all__ = ['GenotypeArray', 'HaplotypeArray', 'SortedIndex', 'UniqueIndex',
+           'GenomeIndex']
+
+
 logger = logging.getLogger(__name__)
 debug = logger.debug
 
@@ -222,9 +226,9 @@ class GenotypeArray(np.ndarray):
         return self.shape[2]
 
     def __repr__(self):
-        s = super(GenotypeArray, self).__repr__()
-        return s[:-1] + ', n_variants=%s, n_samples=%s, ploidy=%s)' % \
-                        (self.n_variants, self.n_samples, self.ploidy)
+        s = 'GenotypeArray(%s, %s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
 
     def subset(self, variants, samples):
         """Make a sub-selection of variants and/or samples.
@@ -993,10 +997,6 @@ class GenotypeArray(np.ndarray):
 
         af : ndarray, float, shape (n_variants,)
             Allele frequency array.
-        ac : ndarray, int, shape (n_variants,)
-            Allele count array (numerator).
-        an : ndarray, int, shape (n_variants,)
-            Allele number array (denominator).
 
         Examples
         --------
@@ -1070,10 +1070,6 @@ class GenotypeArray(np.ndarray):
 
         af : ndarray, float, shape (n_variants, len(alleles))
             Allele frequencies array.
-        ac : ndarray, int, shape (n_variants, len(alleles))
-            Allele counts array (numerator).
-        an : ndarray, int, shape (n_variants,)
-            Allele number array (denominator).
 
         Examples
         --------
@@ -1273,22 +1269,22 @@ class GenotypeArray(np.ndarray):
         return self.view_haplotypes().is_doubleton(allele=allele)
 
     def count_variant(self):
-        return np.sum(self.is_variant())
+        return self.view_haplotypes().count_variant()
 
     def count_non_variant(self):
-        return np.sum(self.is_non_variant())
+        return self.view_haplotypes().count_non_variant()
 
     def count_segregating(self):
-        return np.sum(self.is_segregating())
+        return self.view_haplotypes().count_segregating()
 
     def count_non_segregating(self, allele=None):
-        return np.sum(self.is_non_segregating(allele=allele))
+        return self.view_haplotypes().count_non_segregating(allele=allele)
 
     def count_singleton(self, allele=1):
-        return np.sum(self.is_singleton(allele=allele))
+        return self.view_haplotypes().count_singleton(allele=allele)
 
     def count_doubleton(self, allele=1):
-        return np.sum(self.is_doubleton(allele=allele))
+        return self.view_haplotypes().count_doubleton(allele=allele)
 
     def haploidify_samples(self):
         """Construct a pseudo-haplotype for each sample by randomly
@@ -1495,9 +1491,9 @@ class HaplotypeArray(np.ndarray):
         return self.shape[1]
 
     def __repr__(self):
-        s = super(HaplotypeArray, self).__repr__()
-        return s[:-1] + ', n_variants=%s, n_haplotypes=%s)' % \
-                        (self.n_variants, self.n_haplotypes)
+        s = 'HaplotypeArray(%s, %s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
 
     def subset(self, variants, samples):
         """Make a sub-selection of variants and/or samples.
@@ -1756,10 +1752,6 @@ class HaplotypeArray(np.ndarray):
 
         af : ndarray, float, shape (n_variants,)
             Allele frequency array.
-        ac : ndarray, int, shape (n_variants,)
-            Allele count array (numerator).
-        an : ndarray, int, shape (n_variants,)
-            Allele number array (denominator).
 
         """
 
@@ -1771,7 +1763,7 @@ class HaplotypeArray(np.ndarray):
         with ignore_invalid():
             af = np.where(an > 0, ac / an, fill)
 
-        return af, ac, an
+        return af
 
     def allele_counts(self, alleles=None):
         """Count the number of calls of each allele per variant.
@@ -1822,10 +1814,6 @@ class HaplotypeArray(np.ndarray):
 
         af : ndarray, float, shape (n_variants, len(alleles))
             Allele frequencies array.
-        ac : ndarray, int, shape (n_variants, len(alleles))
-            Allele counts array (numerator).
-        an : ndarray, int, shape (n_variants,)
-            Allele number array (denominator).
 
         """
 
@@ -1837,7 +1825,7 @@ class HaplotypeArray(np.ndarray):
         with ignore_invalid():
             af = np.where(an > 0, ac / an, fill)
 
-        return af, ac, an[:, 0]
+        return af
 
     def is_variant(self):
         """Find variants with at least one non-reference allele call.
@@ -2088,6 +2076,11 @@ class SortedIndex(np.ndarray):
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
+        return s
+
+    def __repr__(self):
+        s = 'SortedIndex(%s, %s)\n' % (self.shape[0], self.dtype)
+        s += str(self)
         return s
 
     @property
@@ -2572,6 +2565,11 @@ class UniqueIndex(np.ndarray):
                 return np.asarray(s)
         return s
 
+    def __repr__(self):
+        s = 'UniqueIndex(%s, %s)\n' % (self.shape[0], self.dtype)
+        s += str(self)
+        return s
+
     def locate_key(self, key):
         """Get index location for the requested key.
 
@@ -2744,7 +2742,7 @@ class GenomeIndex(object):
         self.chrom = chrom
         self.pos = pos
         self.offset = dict()
-        self.midx = dict()
+        self.pidx = dict()
         for c in np.unique(chrom):
             loc = chrom.locate_key(c)
             if isinstance(loc, slice):
@@ -2755,11 +2753,19 @@ class GenomeIndex(object):
                 start = loc
                 stop = loc + 1
             self.offset[c] = start
-            self.midx[c] = SortedIndex(pos[start:stop], copy=False)
+            self.pidx[c] = SortedIndex(pos[start:stop], copy=False)
+
+    def __repr__(self):
+        s = ('GenomeIndex(%s)\n' % len(self))
+        return s
+
+    def __str__(self):
+        s = ('GenomeIndex(%s)\n' % len(self))
+        return s
 
     def locate_position(self, chrom, pos):
         offset = self.offset[chrom]
-        rloc = self.midx[chrom].locate_key(pos)
+        rloc = self.pidx[chrom].locate_key(pos)
         if isinstance(rloc, slice):
             loc = slice(rloc.start + offset, rloc.stop + offset)
             if loc.stop - loc.start == 1:
@@ -2771,7 +2777,7 @@ class GenomeIndex(object):
 
     def locate_interval(self, chrom, start=None, stop=None):
         offset = self.offset[chrom]
-        rloc = self.midx[chrom].locate_range(start, stop)
+        rloc = self.pidx[chrom].locate_range(start, stop)
         if isinstance(rloc, slice):
             loc = slice(rloc.start + offset, rloc.stop + offset)
             if loc.stop - loc.start == 1:

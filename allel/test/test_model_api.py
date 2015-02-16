@@ -647,19 +647,19 @@ class GenotypeArrayInterface(object):
         # diploid
         g = self.setup_instance(diploid_genotype_data)
         expect = np.array([1/4, 2/4, 2/4, 0/2, -1])
-        actual, _, _ = g.allele_frequency(allele=1, fill=-1)
+        actual = g.allele_frequency(allele=1, fill=-1)
         aeq(expect, actual)
         expect = np.array([0/4, 1/4, 1/4, 2/2, -1])
-        actual, _, _ = g.allele_frequency(allele=2, fill=-1)
+        actual = g.allele_frequency(allele=2, fill=-1)
         aeq(expect, actual)
 
         # polyploid
         g = self.setup_instance(triploid_genotype_data)
         expect = np.array([1/6, 5/6, 1/3, -1])
-        actual, _, _ = g.allele_frequency(allele=1, fill=-1)
+        actual = g.allele_frequency(allele=1, fill=-1)
         aeq(expect, actual)
         expect = np.array([0/6, 0/6, 1/3, -1])
-        actual, _, _ = g.allele_frequency(allele=2, fill=-1)
+        actual = g.allele_frequency(allele=2, fill=-1)
         aeq(expect, actual)
 
     def test_allele_counts(self):
@@ -692,7 +692,7 @@ class GenotypeArrayInterface(object):
                            [1/4, 2/4, 1/4],
                            [0/2, 0/2, 2/2],
                            [-1, -1, -1]])
-        actual, _, _ = g.allele_frequencies(fill=-1)
+        actual = g.allele_frequencies(fill=-1)
         aeq(expect, actual)
 
         # polyploid
@@ -701,7 +701,7 @@ class GenotypeArrayInterface(object):
                            [1/6, 5/6, 0/6],
                            [1/3, 1/3, 1/3],
                            [-1, -1, -1]])
-        actual, _, _ = g.allele_frequencies(fill=-1)
+        actual = g.allele_frequencies(fill=-1)
         aeq(expect, actual)
 
     # variant counting methods
@@ -1065,10 +1065,10 @@ class HaplotypeArrayInterface(object):
     def test_allele_frequency(self):
         expect = np.array([1/2, 2/2, 0/1, -1])
         h = self.setup_instance(haplotype_data)
-        actual, _, _ = h.allele_frequency(allele=1, fill=-1)
+        actual = h.allele_frequency(allele=1, fill=-1)
         aeq(expect, actual)
         expect = np.array([0/2, 0/2, 1/1, -1])
-        actual, _, _ = h.allele_frequency(allele=2, fill=-1)
+        actual = h.allele_frequency(allele=2, fill=-1)
         aeq(expect, actual)
 
     def test_allele_counts(self):
@@ -1084,7 +1084,7 @@ class HaplotypeArrayInterface(object):
                            [0/2, 2/2, 0/2],
                            [0/1, 0/1, 1/1],
                            [-1, -1, -1]])
-        actual, _, _ = \
+        actual = \
             self.setup_instance(haplotype_data).allele_frequencies(fill=-1)
         aeq(expect, actual)
 

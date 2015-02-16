@@ -16,6 +16,7 @@ if PY2:
     string_types = basestring,
     text_type = unicode
     binary_type = str
+    integer_types = int, long
     zip = itertools.izip
     reduce = reduce
 else:
@@ -24,6 +25,7 @@ else:
     string_types = str,
     text_type = str
     binary_type = bytes
+    integer_types = int,
     zip = zip
     import functools
     reduce = functools.reduce

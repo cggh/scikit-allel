@@ -3,3 +3,4 @@ scipy
 numexpr
 h5py
 nose
+bcolz
