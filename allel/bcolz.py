@@ -252,7 +252,11 @@ class GenotypeCArray(object):
             raise TypeError('integer dtype required')
 
         # check dimensionality
-        if obj.ndim != 3:
+        if hasattr(obj, 'ndim'):
+            ndim = obj.ndim
+        else:
+            ndim = len(obj.shape)
+        if ndim != 3:
             raise TypeError('array with 3 dimensions required')
 
         # check length of ploidy dimension
@@ -305,17 +309,14 @@ class GenotypeCArray(object):
 
     @property
     def n_variants(self):
-        """Number of variants (length of first array dimension)."""
         return self.data.shape[0]
 
     @property
     def n_samples(self):
-        """Number of samples (length of second array dimension)."""
         return self.data.shape[1]
 
     @property
     def ploidy(self):
-        """Sample ploidy (length of third array dimension)."""
         return self.data.shape[2]
 
     def __repr__(self):
@@ -327,120 +328,13 @@ class GenotypeCArray(object):
         data = _block_compress(condition, self.data, axis)
         return GenotypeCArray(data, copy=False)
 
-        # # check inputs
-        # condition = asarray_ndim(condition, 1)
-        # if axis not in {0, 1}:
-        #     raise NotImplementedError('only axis 0 (variants) or 1 (samples) '
-        #                               'supported')
-        #
-        # if axis == 0:
-        #     if condition.size != self.n_variants:
-        #         raise ValueError('length of condition must match length of '
-        #                          'first dimension; expected %s, found %s' %
-        #                          (self.n_variants, condition.size))
-        #
-        #     # setup output
-        #     n = np.count_nonzero(condition) * self.n_samples * self.ploidy
-        #     out = bcolz.zeros((0, self.n_samples, self.ploidy),
-        #                       dtype=self.data.dtype,
-        #                       expectedlen=n)
-        #
-        #     # build output
-        #     bs = self.data.chunklen
-        #     for i in range(0, self.n_variants, bs):
-        #         block = self.data[i:i+bs]
-        #         vcond = condition[i:i+bs]
-        #         out.append(np.compress(vcond, block, axis=0))
-        #
-        #     return out
-        #
-        # elif axis == 1:
-        #     if condition.size != self.n_samples:
-        #         raise ValueError('length of condition must match length of '
-        #                          'second dimension; expected %s, found %s' %
-        #                          (self.n_samples, condition.size))
-        #
-        #     # setup output
-        #     n = self.n_variants * np.count_nonzero(condition) * self.ploidy
-        #     out = bcolz.zeros((0, np.count_nonzero(condition), self.ploidy),
-        #                       dtype=self.data.dtype,
-        #                       expectedlen=n)
-        #
-        #     # build output
-        #     bs = self.data.chunklen
-        #     for i in range(0, self.n_variants, bs):
-        #         block = self.data[i:i+bs]
-        #         out.append(np.compress(condition, block, axis=1))
-        #
-        #     return out
-
     def take(self, indices, axis):
         data = _block_take(self.data, indices, axis)
         return GenotypeCArray(data, copy=False)
 
-        # # check inputs
-        # indices = asarray_ndim(indices, 1)
-        # if axis not in {0, 1}:
-        #     raise NotImplementedError('only axis 0 (variants) or 1 (samples) '
-        #                               'supported')
-        #
-        # if axis == 0:
-        #     condition = np.zeros((self.n_variants,), dtype=bool)
-        #     condition[indices] = True
-        #     return self.compress(condition, axis=0)
-        #
-        # elif axis == 1:
-        #     condition = np.zeros((self.n_samples,), dtype=bool)
-        #     condition[indices] = True
-        #     return self.compress(condition, axis=1)
-
     def subset(self, variants, samples):
         data = _block_subset(GenotypeArray, self.data, variants, samples)
         return GenotypeCArray(data, copy=False)
-
-        # # check inputs
-        # variants = asarray_ndim(variants, 1, allow_none=True)
-        # samples = asarray_ndim(samples, 1, allow_none=True)
-        # if variants is None and samples is None:
-        #     raise ValueError('variants and/or samples required')
-        #
-        # # if either variants or samples is None, use take/compress
-        # if samples is None:
-        #     if variants.size < self.n_variants:
-        #         return self.take(variants, axis=0)
-        #     else:
-        #         return self.compress(variants, axis=0)
-        # elif variants is None:
-        #     if samples.size < self.n_samples:
-        #         return self.take(samples, axis=1)
-        #     else:
-        #         return self.compress(samples, axis=1)
-        #
-        # # ensure boolean array for variants
-        # if variants.size < self.n_variants:
-        #     tmp = np.zeros((self.n_variants,), dtype=bool)
-        #     tmp[variants] = True
-        #     variants = tmp
-        #
-        # # ensure indices for samples
-        # if samples.size == self.n_variants:
-        #     samples = np.nonzero(samples)[0]
-        #
-        # # setup output
-        # n = np.count_nonzero(variants) * samples.size * self.ploidy
-        # out = bcolz.zeros((0, samples.size, self.ploidy),
-        #                   dtype=self.data.dtype,
-        #                   expectedlen=n)
-        #
-        # # build output
-        # bs = self.data.chunklen
-        # for i in range(0, self.n_variants, bs):
-        #     block = self.data[i:i+bs]
-        #     vcond = variants[i:i+bs]
-        #     g = GenotypeArray(block, copy=False)
-        #     out.append(g.subset(variants=vcond, samples=samples))
-        #
-        # return out
 
     def max(self, axis=None):
         return _block_max(self.data, axis=axis)
@@ -805,6 +699,57 @@ class GenotypeCArray(object):
     def count_doubleton(self, allele=1):
         return _block_sum(self.is_doubleton(allele=allele))
 
+    @staticmethod
+    def from_hdf5(*args, **kwargs):
+        import h5py
+
+        h5f = None
+
+        if len(args) == 1:
+            dataset = args[0]
+            if not isinstance(dataset, h5py.Dataset):
+                raise ValueError('bad argument: expected dataset or '
+                                 '(file_path, node_path), found %s' %
+                                 repr(dataset))
+
+        elif len(args) == 2:
+            file_path, node_path = args
+            h5f = h5py.File(file_path, mode='r')
+            try:
+                dataset = h5f[node_path]
+            except:
+                h5f.close()
+                raise
+
+        else:
+            raise ValueError('bad arguments; expected dataset or (file_path, '
+                             'node_path), found %s' % repr(args))
+
+        try:
+
+            # check input dataset
+            GenotypeCArray._check_input_data(dataset)
+            start = kwargs.pop('start', 0)
+            stop = kwargs.pop('stop', dataset.shape[0])
+
+            # setup output data
+            n = reduce(operator.mul, dataset.shape)
+            kwargs.setdefault('expectedlen', n)
+            kwargs.setdefault('dtype', dataset.dtype)
+            data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
+
+            # load block-wise
+            bs = dataset.chunks[0]
+            for i in range(start, stop, bs):
+                j = min(i + bs, stop)
+                data.append(dataset[i:j])
+
+            return GenotypeCArray(data, copy=False)
+
+        finally:
+            if h5f is not None:
+                h5f.close()
+
 
 class HaplotypeCArray(object):
 
@@ -816,7 +761,12 @@ class HaplotypeCArray(object):
             raise TypeError('integer dtype required')
 
         # check dimensionality
-        if obj.ndim != 2:
+        # check dimensionality
+        if hasattr(obj, 'ndim'):
+            ndim = obj.ndim
+        else:
+            ndim = len(obj.shape)
+        if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
     def __init__(self, data, copy=True, **kwargs):
@@ -879,13 +829,16 @@ class HaplotypeCArray(object):
         return s
 
     def compress(self, condition, axis):
-        return _block_compress(condition, self.data, axis)
+        data = _block_compress(condition, self.data, axis)
+        return HaplotypeCArray(data, copy=False)
 
     def take(self, indices, axis):
-        return _block_take(self.data, indices, axis)
+        data = _block_take(self.data, indices, axis)
+        return HaplotypeCArray(data, copy=False)
 
     def subset(self, variants, samples):
-        return _block_subset(HaplotypeArray, self.data, variants, samples)
+        data = _block_subset(HaplotypeArray, self.data, variants, samples)
+        return HaplotypeCArray(data, copy=False)
 
     def max(self, axis=None):
         return _block_max(self.data, axis=axis)
@@ -1000,7 +953,13 @@ class HaplotypeCArray(object):
         return out
 
     def allele_counts(self, alleles=None):
-        out = bcolz.zeros((0,), dtype=int)
+        # if alleles not specified, count all alleles
+        if alleles is None:
+            m = self.max()
+            alleles = list(range(m+1))
+
+        # setup output
+        out = bcolz.zeros((0, len(alleles)), dtype=int)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1010,7 +969,14 @@ class HaplotypeCArray(object):
         return out
 
     def allele_frequencies(self, alleles=None, fill=np.nan):
-        out = bcolz.zeros((0,), dtype=float)
+
+        # if alleles not specified, count all alleles
+        if alleles is None:
+            m = self.max()
+            alleles = list(range(m+1))
+
+        # setup output
+        out = bcolz.zeros((0, len(alleles)), dtype=float)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1098,5 +1064,49 @@ class HaplotypeCArray(object):
     def count_doubleton(self, allele=1):
         return _block_sum(self.is_doubleton(allele=allele))
 
+    @staticmethod
+    def from_hdf5(*args, **kwargs):
+        import h5py
 
-# TODO from_hdf5
+        h5f = None
+
+        if len(args) == 1:
+            dataset = args[0]
+
+        elif len(args) == 2:
+            file_path, node_path = args
+            h5f = h5py.File(file_path, mode='r')
+            try:
+                dataset = h5f[node_path]
+            except:
+                h5f.close()
+                raise
+
+        else:
+            raise ValueError('bad arguments; expected dataset or (file_path, '
+                             'node_path), found %s' % repr(args))
+
+        try:
+
+            # check input dataset
+            HaplotypeCArray._check_input_data(dataset)
+            start = kwargs.pop('start', 0)
+            stop = kwargs.pop('stop', dataset.shape[0])
+
+            # setup output data
+            n = reduce(operator.mul, dataset.shape)
+            kwargs.setdefault('expectedlen', n)
+            kwargs.setdefault('dtype', dataset.dtype)
+            data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
+
+            # load block-wise
+            bs = dataset.chunks[0]
+            for i in range(start, stop, bs):
+                j = min(i + bs, stop)
+                data.append(dataset[i:j])
+
+            return HaplotypeCArray(data, copy=False)
+
+        finally:
+            if h5f is not None:
+                h5f.close()

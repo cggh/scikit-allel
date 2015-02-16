@@ -915,7 +915,7 @@ class HaplotypeArrayInterface(object):
         h = self.setup_instance(haplotype_data)
 
         # compress variants
-        condition = [True, False, True, False, False]
+        condition = [True, False, True, False]
         t = h.compress(condition, axis=0)
         eq(2, t.n_variants)
         eq(h.n_haplotypes, t.n_haplotypes)
