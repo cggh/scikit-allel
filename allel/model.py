@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module defines array classes for variant call data.
+This module defines NumPy array classes for variant call data.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -13,14 +13,30 @@ import numpy as np
 import numexpr as ne
 
 
-from allel.util import ignore_invalid
+from allel.constants import DIM_PLOIDY, DIPLOID
+from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
 
 
 logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-from allel.constants import DIM_SAMPLES, DIM_PLOIDY, DIPLOID
+def _subset(a, variants, samples):
+
+    # check inputs
+    variants = asarray_ndim(variants, 1)
+    samples = asarray_ndim(samples, 1)
+
+    # ensure indices
+    if variants.size == a.shape[0]:
+        variants = np.nonzero(variants)[0]
+    if samples.size == a.shape[1]:
+        samples = np.nonzero(samples)[0]
+
+    # ensure variant indices can be broadcast correctly
+    variants = variants[:, None]
+
+    return a[variants, samples]
 
 
 class GenotypeArray(np.ndarray):
@@ -84,9 +100,9 @@ class GenotypeArray(np.ndarray):
     Instantiate a genotype array::
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]], dtype='i1')
         >>> g.dtype
         dtype('int8')
         >>> g.ndim
@@ -123,9 +139,10 @@ class GenotypeArray(np.ndarray):
 
     A genotype array can store polyploid calls, e.g.::
 
-        >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
-        ...                          [[0, 1, 1], [1, 1, 1]],
-        ...                          [[0, 1, 2], [-1, -1, -1]]], dtype='i1')
+        >>> g = allel.model.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
+        ...                                [[0, 1, 1], [1, 1, 1]],
+        ...                                [[0, 1, 2], [-1, -1, -1]]],
+        ...                                dtype='i1')
         >>> g.ploidy
         3
 
@@ -209,6 +226,15 @@ class GenotypeArray(np.ndarray):
         return s[:-1] + ', n_variants=%s, n_samples=%s, ploidy=%s)' % \
                         (self.n_variants, self.n_samples, self.ploidy)
 
+    def subset(self, variants, samples):
+        """Make a sub-selection of variants and/or samples.
+
+        TODO params etc.
+
+        """
+
+        return _subset(self, variants, samples)
+
     # noinspection PyUnusedLocal
     def is_called(self):
         """Find non-missing genotype calls.
@@ -224,9 +250,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]])
         >>> g.is_called()
         array([[ True,  True],
                [ True,  True],
@@ -262,9 +288,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]])
         >>> g.is_missing()
         array([[False, False],
                [False, False],
@@ -308,9 +334,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_hom()
         array([[ True, False],
                [False,  True],
@@ -358,9 +384,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]])
         >>> g.is_hom_ref()
         array([[ True, False],
                [False, False],
@@ -386,9 +412,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_hom_alt()
         array([[False, False],
                [False,  True],
@@ -427,9 +453,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]])
         >>> g.is_het()
         array([[False,  True],
                [ True, False],
@@ -473,9 +499,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]])
         >>> g.is_call((0, 2))
         array([[False, False],
                [False, False],
@@ -549,9 +575,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]])
         >>> g.view_haplotypes()
         HaplotypeArray([[ 0,  0,  0,  1],
                [ 0,  1,  1,  1],
@@ -596,9 +622,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.to_n_alt()
         array([[0, 1],
                [1, 2],
@@ -641,9 +667,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                         [[0, 2], [1, 1]],
-        ...                         [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                               [[0, 2], [1, 1]],
+        ...                               [[2, 2], [-1, -1]]])
         >>> g.to_allele_counts()
         array([[[2, 0, 0],
                 [1, 1, 0]],
@@ -699,9 +725,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]], dtype='i1')
         >>> g.to_packed()
         array([[  0,   1],
                [  2,  17],
@@ -760,7 +786,7 @@ class GenotypeArray(np.ndarray):
         >>> packed = np.array([[0, 1],
         ...                    [2, 17],
         ...                    [34, 239]], dtype='u1')
-        >>> allel.GenotypeArray.from_packed(packed)
+        >>> allel.model.GenotypeArray.from_packed(packed)
         GenotypeArray([[[ 0,  0],
                 [ 0,  1]],
                [[ 0,  2],
@@ -802,10 +828,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 1], [0, 1]],
-        ...                          [[1, 1], [0, 0]],
-        ...                          [[0, 0], [-1, -1]]], dtype='i1')
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 1], [0, 1]],
+        ...                                [[1, 1], [0, 0]],
+        ...                                [[0, 0], [-1, -1]]], dtype='i1')
         >>> m = g.to_sparse(format='csr')
         >>> m
         <4x4 sparse matrix of type '<class 'numpy.int8'>'
@@ -856,7 +882,7 @@ class GenotypeArray(np.ndarray):
         >>> indices = np.array([1, 3, 0, 1, 2, 3], dtype=np.int32)
         >>> indptr = np.array([0, 0, 2, 4, 6], dtype=np.int32)
         >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
-        >>> g = allel.GenotypeArray.from_sparse(m, ploidy=2)
+        >>> g = allel.model.GenotypeArray.from_sparse(m, ploidy=2)
         >>> g
         GenotypeArray([[[ 0,  0],
                 [ 0,  0]],
@@ -886,9 +912,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.allelism()
         array([2, 3, 1])
 
@@ -909,9 +935,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.allele_number()
         array([4, 4, 2])
 
@@ -938,9 +964,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.allele_count(allele=1)
         array([1, 2, 0])
         >>> g.allele_count(allele=2)
@@ -976,9 +1002,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> af, ac, an = g.allele_frequency(allele=1)
         >>> af
         array([ 0.25,  0.5 ,  0.  ])
@@ -1010,9 +1036,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.allele_counts()
         array([[3, 1, 0],
                [1, 2, 1],
@@ -1053,9 +1079,9 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> af, ac, an = g.allele_frequencies()
         >>> af
         array([[ 0.75,  0.25,  0.  ],
@@ -1085,10 +1111,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_variant()
         array([False,  True,  True,  True], dtype=bool)
 
@@ -1110,10 +1136,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_non_variant()
         array([ True, False, False, False], dtype=bool)
 
@@ -1135,10 +1161,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_segregating()
         array([False,  True,  True, False], dtype=bool)
 
@@ -1167,10 +1193,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_non_segregating()
         array([ True, False, False,  True], dtype=bool)
         >>> g.is_non_segregating(allele=2)
@@ -1200,10 +1226,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1]],
-        ...                          [[1, 1], [1, 2]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [0, 1]],
+        ...                                [[1, 1], [1, 2]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_singleton(allele=1)
         array([False,  True, False, False], dtype=bool)
         >>> g.is_singleton(allele=2)
@@ -1233,10 +1259,10 @@ class GenotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [1, 1]],
-        ...                          [[1, 1], [1, 2]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [1, 1]],
+        ...                                [[1, 1], [1, 2]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.is_doubleton(allele=1)
         array([False,  True, False, False], dtype=bool)
         >>> g.is_doubleton(allele=2)
@@ -1279,18 +1305,18 @@ class GenotypeArray(np.ndarray):
         >>> import allel
         >>> import numpy as np
         >>> np.random.seed(42)
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[1, 2], [2, 1]],
-        ...                          [[2, 2], [-1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[1, 2], [2, 1]],
+        ...                                [[2, 2], [-1, -1]]])
         >>> g.haploidify_samples()
         HaplotypeArray([[ 0,  1],
                [ 0,  1],
                [ 1,  1],
                [ 2, -1]], n_variants=4, n_haplotypes=2)
-        >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
-        ...                          [[0, 1, 1], [1, 1, 1]],
-        ...                          [[0, 1, 2], [-1, -1, -1]]])
+        >>> g = allel.model.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
+        ...                                [[0, 1, 1], [1, 1, 1]],
+        ...                                [[0, 1, 2], [-1, -1, -1]]])
         >>> g.haploidify_samples()
         HaplotypeArray([[ 0,  0],
                [ 1,  1],
@@ -1324,179 +1350,6 @@ class GenotypeArray(np.ndarray):
         h = HaplotypeArray(data, copy=False)
 
         return h
-
-    def heterozygosity_observed(self, fill=np.nan):
-        """Calculate the rate of observed heterozygosity for each variant.
-
-        Parameters
-        ----------
-
-        fill : float, optional
-            Use this value for variants where all calls are missing.
-
-        Returns
-        -------
-
-        ho : ndarray, float, shape (n_variants,)
-            Observed heterozygosity
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1], [1, 1]],
-        ...                          [[0, 0], [1, 1], [2, 2]],
-        ...                          [[1, 1], [1, 2], [-1, -1]]])
-        >>> g.heterozygosity_observed()
-        array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
-
-        """
-
-        # count hets
-        n_het = self.count_het(axis=DIM_SAMPLES)
-        n_called = self.count_called(axis=DIM_SAMPLES)
-
-        # calculate rate of observed heterozygosity, accounting for variants
-        # where all calls are missing
-        with ignore_invalid():
-            ho = np.where(n_called > 0, n_het / n_called, fill)
-
-        return ho
-
-    def heterozygosity_expected(self, fill=np.nan):
-        """Calculate the expected rate of heterozygosity for each variant
-        under Hardy-Weinberg equilibrium.
-
-        Parameters
-        ----------
-
-        fill : float, optional
-            Use this value for variants where all calls are missing.
-
-        Returns
-        -------
-
-        he : ndarray, float, shape (n_variants,)
-            Expected heterozygosity
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1], [1, 1]],
-        ...                          [[0, 0], [1, 1], [2, 2]],
-        ...                          [[1, 1], [1, 2], [-1, -1]]])
-        >>> g.heterozygosity_expected()
-        array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
-
-        """
-
-        # calculate allele frequencies
-        af, _, an = self.allele_frequencies(fill=0)
-
-        # calculate expected heterozygosity
-        out = 1 - np.sum(np.power(af, self.ploidy), axis=1)
-
-        # fill values where allele frequencies could not be calculated
-        out[an == 0] = fill
-
-        return out
-
-    def inbreeding_coefficient(self, fill=np.nan):
-        """Calculate the inbreeding coefficient for each variant.
-
-        Parameters
-        ----------
-
-        fill : float, optional
-            Use this value for variants where the expected heterozygosity is
-            zero.
-
-        Returns
-        -------
-
-        f : ndarray, float, shape (n_variants,)
-            Inbreeding coefficient.
-
-        Notes
-        -----
-
-        The inbreeding coefficient is calculated as *1 - (Ho/He)* where *Ho* is
-        the observed heterozygosity and *He* is the expected heterozygosity.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> import numpy as np
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1], [1, 1]],
-        ...                          [[0, 0], [1, 1], [2, 2]],
-        ...                          [[1, 1], [1, 2], [-1, -1]]])
-        >>> g.heterozygosity_observed()
-        array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
-        >>> g.heterozygosity_expected()
-        array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
-        >>> g.inbreeding_coefficient()
-        array([        nan,  0.33333333,  1.        , -0.33333333])
-
-        """
-
-        # calculate observed and expected heterozygosity
-        ho = self.heterozygosity_observed()
-        he = self.heterozygosity_expected()
-
-        # calculate inbreeding coefficient, accounting for variants with no
-        # expected heterozygosity
-        with ignore_invalid():
-            f = np.where(he > 0, 1 - (ho / he), fill)
-
-        return f
-
-    def mean_pairwise_difference(self, fill=np.nan):
-        """Calculate the mean number of pairwise differences between
-        haplotypes for each variant.
-
-        Parameters
-        ----------
-
-        fill : float
-            Use this value where there are no pairs to compare (e.g.,
-            all allele calls are missing).
-
-        Returns
-        -------
-
-        m : ndarray, float, shape (n_variants,)
-
-        Notes
-        -----
-
-        The values returned by this function can be summed over a genome
-        region and divided by the number of accessible bases to estimate
-        nucleotide diversity.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
-        ...                          [[0, 0], [0, 1]],
-        ...                          [[0, 0], [1, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[1, 1], [1, 1]],
-        ...                          [[0, 0], [1, 2]],
-        ...                          [[0, 1], [1, 2]],
-        ...                          [[0, 1], [-1, -1]]])
-        >>> g.mean_pairwise_difference()
-        array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
-                0.83333333,  0.83333333,  1.        ])
-
-        """
-
-        return self.view_haplotypes().mean_pairwise_difference(fill=fill)
 
 
 class HaplotypeArray(np.ndarray):
@@ -1533,9 +1386,9 @@ class HaplotypeArray(np.ndarray):
     Instantiate a haplotype array::
 
         >>> import allel
-        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
-        ...                           [0, 1, 1, 1],
-        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 1],
+        ...                                 [0, 1, 1, 1],
+        ...                                 [0, 2, -1, -1]], dtype='i1')
         >>> h.dtype
         dtype('int8')
         >>> h.ndim
@@ -1646,6 +1499,33 @@ class HaplotypeArray(np.ndarray):
         return s[:-1] + ', n_variants=%s, n_haplotypes=%s)' % \
                         (self.n_variants, self.n_haplotypes)
 
+    def subset(self, variants, samples):
+        """Make a sub-selection of variants and/or samples.
+
+        TODO params etc.
+
+        """
+
+        return _subset(self, variants, samples)
+
+    def is_called(self):
+        return self >= 0
+
+    def is_missing(self):
+        return self < 0
+
+    def is_ref(self):
+        return self == 0
+
+    def is_alt(self, allele=None):
+        if allele is None:
+            return self > 0
+        else:
+            return self == allele
+
+    def is_call(self, allele):
+        return self == allele
+
     def view_genotypes(self, ploidy):
         """Reshape a haplotype array to view it as genotypes by restoring the
         ploidy dimension.
@@ -1666,9 +1546,9 @@ class HaplotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
-        ...                           [0, 1, 1, 1],
-        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 1],
+        ...                                 [0, 1, 1, 1],
+        ...                                 [0, 2, -1, -1]], dtype='i1')
         >>> h.view_genotypes(ploidy=2)
         GenotypeArray([[[ 0,  0],
                 [ 0,  1]],
@@ -1713,10 +1593,10 @@ class HaplotypeArray(np.ndarray):
         --------
 
         >>> import allel
-        >>> h = allel.HaplotypeArray([[0, 0, 0, 0],
-        ...                           [0, 1, 0, 1],
-        ...                           [1, 1, 0, 0],
-        ...                           [0, 0, -1, -1]], dtype='i1')
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 0],
+        ...                                 [0, 1, 0, 1],
+        ...                                 [1, 1, 0, 0],
+        ...                                 [0, 0, -1, -1]], dtype='i1')
         >>> m = h.to_sparse(format='csr')
         >>> m
         <4x4 sparse matrix of type '<class 'numpy.int8'>'
@@ -1781,7 +1661,7 @@ class HaplotypeArray(np.ndarray):
         >>> indices = np.array([1, 3, 0, 1, 2, 3], dtype=np.int32)
         >>> indptr = np.array([0, 0, 2, 4, 6], dtype=np.int32)
         >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
-        >>> h = allel.HaplotypeArray.from_sparse(m)
+        >>> h = allel.model.HaplotypeArray.from_sparse(m)
         >>> h
         HaplotypeArray([[ 0,  0,  0,  0],
                [ 0,  1,  0,  1],
@@ -2113,110 +1993,40 @@ class HaplotypeArray(np.ndarray):
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
-    def mean_pairwise_difference(self, fill=np.nan):
-        """Calculate the mean number of pairwise differences between
-        haplotypes for each variant.
 
-        Parameters
-        ----------
-
-        fill : float
-            Use this value where there are no pairs to compare (e.g.,
-            all allele calls are missing).
-
-        Returns
-        -------
-
-        m : ndarray, float, shape (n_variants,)
-
-        Notes
-        -----
-
-        The values returned by this function can be summed over a genome
-        region and divided by the number of accessible bases to estimate
-        nucleotide diversity.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> h = allel.HaplotypeArray([[0, 0, 0, 0],
-        ...                           [0, 0, 0, 1],
-        ...                           [0, 0, 1, 1],
-        ...                           [0, 1, 1, 1],
-        ...                           [1, 1, 1, 1],
-        ...                           [0, 0, 1, 2],
-        ...                           [0, 1, 1, 2],
-        ...                           [0, 1, -1, -1]])
-        >>> h.mean_pairwise_difference()
-        array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
-                0.83333333,  0.83333333,  1.        ])
-
-        """
-
-        # This function calculates the mean number of pairwise differences
-        # between haplotypes, generalising to any number of alleles.
-
-        # number of non-missing alleles (i.e., haplotypes) for each variant
-        an = self.allele_number()
-
-        # allele counts for each variant
-        ac = self.allele_counts()
-
-        # total number of pairwise comparisons for each variant:
-        # (an choose 2)
-        n_pairs = an * (an - 1) / 2
-
-        # number of pairwise comparisons where there is no difference:
-        # sum of (ac choose 2) for each allele (i.e., number of ways to
-        # choose the same allele twice)
-        n_same = np.sum(ac * (ac - 1) / 2, axis=1)
-
-        # number of pairwise differences
-        n_diff = n_pairs - n_same
-
-        # mean number of pairwise differences, accounting for cases where
-        # there are no pairs
-        with ignore_invalid():
-            m = np.where(n_pairs > 0, n_diff / n_pairs, fill)
-
-        return m
-
-
-class PositionIndex(np.ndarray):
-    """Array of positions from a single chromosome or contig.
+class SortedIndex(np.ndarray):
+    """Index of sorted values, e.g., positions from a single chromosome or
+    contig.
 
     Parameters
     ----------
 
     data : array_like, int
-        Positions (1-based) in ascending order.
+        Values in ascending order.
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
 
     Notes
     -----
 
-    This class represents the genomic positions of a set of variants as a
-    1-dimensional numpy array of integers.
+    This class represents an index of sorted values, e.g., the genomic
+    positions of a set of variants as a 1-dimensional numpy array of integers.
 
-    Each integer within the array is a 1-based coordinate position within a
-    single chromosome or contig. Positions must be given in ascending order,
-    although duplicate positions may be present (i.e., positions must be
-    monotonically increasing).
+    Values must be given in ascending order, although duplicate values
+    may be present (i.e., values must be monotonically increasing).
 
     Examples
     --------
 
     >>> import allel
-    >>> pos = allel.PositionIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
-    >>> pos.dtype
+    >>> idx = allel.model.SortedIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> idx.dtype
     dtype('int32')
-    >>> pos.ndim
+    >>> idx.ndim
     1
-    >>> pos.shape
+    >>> idx.shape
     (7,)
-    >>> pos.is_unique
+    >>> idx.is_unique
     False
 
     """
@@ -2251,11 +2061,11 @@ class PositionIndex(np.ndarray):
             return
 
         # called after slice (new-from-template)
-        if isinstance(obj, PositionIndex):
+        if isinstance(obj, SortedIndex):
             return
 
         # called after view
-        PositionIndex._check_input_data(obj)
+        SortedIndex._check_input_data(obj)
 
     # noinspection PyUnusedLocal
     def __array_wrap__(self, out_arr, context=None):
@@ -2306,15 +2116,15 @@ class PositionIndex(np.ndarray):
         --------
 
         >>> import allel
-        >>> pos = allel.PositionIndex([3, 6, 6, 11])
-        >>> pos.locate_key(3)
+        >>> idx = allel.model.SortedIndex([3, 6, 6, 11])
+        >>> idx.locate_key(3)
         0
-        >>> pos.locate_key(11)
+        >>> idx.locate_key(11)
         3
-        >>> pos.locate_key(6)
+        >>> idx.locate_key(6)
         slice(1, 3, None)
         >>> try:
-        ...     pos.locate_key(2)
+        ...     idx.locate_key(2)
         ... except KeyError as e:
         ...     print(e)
         ...
@@ -2333,13 +2143,13 @@ class PositionIndex(np.ndarray):
             return slice(left, right)
 
     def locate_intersection(self, other):
-        """Locate the intersection with another position array.
+        """Locate the intersection with another array.
 
         Parameters
         ----------
 
         other : array_like, int
-            Array of positions to intersect.
+            Array of values to intersect.
 
         Returns
         -------
@@ -2353,22 +2163,22 @@ class PositionIndex(np.ndarray):
         --------
 
         >>> import allel
-        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
-        >>> loc1, loc2 = pos1.locate_intersection(pos2)
+        >>> idx1 = allel.model.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx2 = allel.model.SortedIndex([4, 6, 20, 39])
+        >>> loc1, loc2 = idx1.locate_intersection(idx2)
         >>> loc1
         array([False,  True, False,  True, False], dtype=bool)
         >>> loc2
         array([False,  True,  True, False], dtype=bool)
-        >>> pos1[loc1]
-        PositionIndex([ 6, 20])
-        >>> pos2[loc2]
-        PositionIndex([ 6, 20])
+        >>> idx1[loc1]
+        SortedIndex([ 6, 20])
+        >>> idx2[loc2]
+        SortedIndex([ 6, 20])
 
         """
 
         # check inputs
-        other = PositionIndex(other)
+        other = SortedIndex(other, copy=False)
 
         # find intersection
         assume_unique = self.is_unique and other.is_unique
@@ -2392,24 +2202,24 @@ class PositionIndex(np.ndarray):
         -------
 
         loc : ndarray, bool
-            Boolean array with location of positions.
+            Boolean array with location of values.
 
         Examples
         --------
 
         >>> import allel
-        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
-        >>> loc = pos1.locate_keys(pos2, strict=False)
+        >>> idx1 = allel.model.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx2 = allel.model.SortedIndex([4, 6, 20, 39])
+        >>> loc = idx1.locate_keys(idx2, strict=False)
         >>> loc
         array([False,  True, False,  True, False], dtype=bool)
-        >>> pos1[loc]
-        PositionIndex([ 6, 20])
+        >>> idx1[loc]
+        SortedIndex([ 6, 20])
 
         """
 
         # check inputs
-        keys = PositionIndex(keys)
+        keys = SortedIndex(keys, copy=False)
 
         # find intersection
         loc, found = self.locate_intersection(keys)
@@ -2420,28 +2230,28 @@ class PositionIndex(np.ndarray):
         return loc
 
     def intersect(self, other):
-        """Intersect with `other` positions.
+        """Intersect with `other` sorted index.
 
         Parameters
         ----------
 
         other : array_like, int
-            Array of positions to locate.
+            Array of values to intersect with.
 
         Returns
         -------
 
-        out : PositionIndex
-            Positions in common.
+        out : SortedIndex
+            Values in common.
 
         Examples
         --------
 
         >>> import allel
-        >>> pos1 = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos2 = allel.PositionIndex([4, 6, 20, 39])
-        >>> pos1.intersect(pos2)
-        PositionIndex([ 6, 20])
+        >>> idx1 = allel.model.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx2 = allel.model.SortedIndex([4, 6, 20, 39])
+        >>> idx1.intersect(idx2)
+        SortedIndex([ 6, 20])
 
         """
 
@@ -2450,15 +2260,15 @@ class PositionIndex(np.ndarray):
 
     def locate_range(self, start=None, stop=None):
         """Locate slice of index containing all entries within `start` and
-        `stop` positions **inclusive**.
+        `stop` values **inclusive**.
 
         Parameters
         ----------
 
         start : int, optional
-            Start position.
+            Start value.
         stop : int, optional
-            Stop position.
+            Stop value.
 
         Returns
         -------
@@ -2470,12 +2280,12 @@ class PositionIndex(np.ndarray):
         --------
 
         >>> import allel
-        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> loc = pos.locate_range(4, 32)
+        >>> idx = allel.model.SortedIndex([3, 6, 11, 20, 35])
+        >>> loc = idx.locate_range(4, 32)
         >>> loc
         slice(1, 4, None)
-        >>> pos[loc]
-        PositionIndex([ 6, 11, 20])
+        >>> idx[loc]
+        SortedIndex([ 6, 11, 20])
 
         """
 
@@ -2496,29 +2306,29 @@ class PositionIndex(np.ndarray):
         return loc
 
     def intersect_range(self, start=None, stop=None):
-        """Intersect with range defined by `start` and `stop` positions
+        """Intersect with range defined by `start` and `stop` values
         **inclusive**.
 
         Parameters
         ----------
 
         start : int, optional
-            Start position.
+            Start value.
         stop : int, optional
-            Stop position.
+            Stop value.
 
         Returns
         -------
 
-        pos : PositionIndex
+        idx : SortedIndex
 
         Examples
         --------
 
         >>> import allel
-        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
-        >>> pos.intersect_range(4, 32)
-        PositionIndex([ 6, 11, 20])
+        >>> idx = allel.model.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx.intersect_range(4, 32)
+        SortedIndex([ 6, 11, 20])
 
         """
 
@@ -2536,9 +2346,9 @@ class PositionIndex(np.ndarray):
         ----------
 
         starts : array_like, int
-            Range start positions.
+            Range start values.
         stops : array_like, int
-            Range stop positions.
+            Range stop values.
 
         Returns
         -------
@@ -2554,18 +2364,18 @@ class PositionIndex(np.ndarray):
 
         >>> import allel
         >>> import numpy as np
-        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> idx = allel.model.SortedIndex([3, 6, 11, 20, 35])
         >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
         ...                    [100, 120]])
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
-        >>> loc, loc_ranges = pos.locate_intersection_ranges(starts, stops)
+        >>> loc, loc_ranges = idx.locate_intersection_ranges(starts, stops)
         >>> loc
         array([False,  True,  True, False,  True], dtype=bool)
         >>> loc_ranges
         array([False,  True, False,  True, False], dtype=bool)
-        >>> pos[loc]
-        PositionIndex([ 6, 11, 35])
+        >>> idx[loc]
+        SortedIndex([ 6, 11, 35])
         >>> ranges[loc_ranges]
         array([[ 6, 17],
                [31, 35]])
@@ -2579,14 +2389,14 @@ class PositionIndex(np.ndarray):
         assert starts.ndim == stops.ndim == 1
         assert starts.shape[0] == stops.shape[0]
 
-        # find indices of start and stop positions in pos
+        # find indices of start and stop values in idx
         start_indices = np.searchsorted(self, starts)
         stop_indices = np.searchsorted(self, stops, side='right')
 
-        # find intervals overlapping at least one position
+        # find intervals overlapping at least one value
         loc_ranges = start_indices < stop_indices
 
-        # find positions within at least one interval
+        # find values within at least one interval
         loc = np.zeros(self.shape, dtype=np.bool)
         for i, j in zip(start_indices[loc_ranges], stop_indices[loc_ranges]):
             loc[i:j] = True
@@ -2600,9 +2410,9 @@ class PositionIndex(np.ndarray):
         ----------
 
         starts : array_like, int
-            Range start positions.
+            Range start values.
         stops : array_like, int
-            Range stop positions.
+            Range stop values.
         strict : bool, optional
             If True, raise KeyError if any ranges contain no entries.
 
@@ -2617,16 +2427,16 @@ class PositionIndex(np.ndarray):
 
         >>> import allel
         >>> import numpy as np
-        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> idx = allel.model.SortedIndex([3, 6, 11, 20, 35])
         >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
         ...                    [100, 120]])
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
-        >>> loc = pos.locate_ranges(starts, stops, strict=False)
+        >>> loc = idx.locate_ranges(starts, stops, strict=False)
         >>> loc
         array([False,  True,  True, False,  True], dtype=bool)
-        >>> pos[loc]
-        PositionIndex([ 6, 11, 35])
+        >>> idx[loc]
+        SortedIndex([ 6, 11, 35])
 
         """
 
@@ -2644,27 +2454,27 @@ class PositionIndex(np.ndarray):
         ----------
 
         starts : array_like, int
-            Range start positions.
+            Range start values.
         stops : array_like, int
-            Range stop positions.
+            Range stop values.
 
         Returns
         -------
 
-        pos : PositionIndex
+        idx : SortedIndex
 
         Examples
         --------
 
         >>> import allel
         >>> import numpy as np
-        >>> pos = allel.PositionIndex([3, 6, 11, 20, 35])
+        >>> idx = allel.model.SortedIndex([3, 6, 11, 20, 35])
         >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
         ...                    [100, 120]])
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
-        >>> pos.intersect_ranges(starts, stops)
-        PositionIndex([ 6, 11, 35])
+        >>> idx.intersect_ranges(starts, stops)
+        SortedIndex([ 6, 11, 35])
 
         """
 
@@ -2672,36 +2482,36 @@ class PositionIndex(np.ndarray):
         return np.compress(loc, self)
 
 
-class LabelIndex(np.ndarray):
-    """Array of labels (e.g., variant or sample identifiers).
+class UniqueIndex(np.ndarray):
+    """Array of unique values (e.g., variant or sample identifiers).
 
     Parameters
     ----------
 
     data : array_like
-        Labels.
+        Values.
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
 
     Notes
     -----
 
-    This class represents an arbitrary set of unique labels, e.g., sample or
+    This class represents an arbitrary set of unique values, e.g., sample or
     variant identifiers.
 
-    There is no need for labels to be sorted. However, all labels must be
+    There is no need for values to be sorted. However, all values must be
     unique within the array, and must be hashable objects.
 
     Examples
     --------
 
     >>> import allel
-    >>> lbl = allel.LabelIndex(['A', 'C', 'B', 'F'])
-    >>> lbl.dtype
+    >>> idx = allel.model.UniqueIndex(['A', 'C', 'B', 'F'])
+    >>> idx.dtype
     dtype('<U1')
-    >>> lbl.ndim
+    >>> idx.ndim
     1
-    >>> lbl.shape
+    >>> idx.shape
     (4,)
 
     """
@@ -2733,11 +2543,11 @@ class LabelIndex(np.ndarray):
             return
 
         # called after slice (new-from-template)
-        if isinstance(obj, LabelIndex):
+        if isinstance(obj, UniqueIndex):
             return
 
         # called after view
-        LabelIndex._check_input_data(obj)
+        UniqueIndex._check_input_data(obj)
 
     # noinspection PyUnusedLocal
     def __array_wrap__(self, out_arr, context=None):
@@ -2781,13 +2591,13 @@ class LabelIndex(np.ndarray):
         --------
 
         >>> import allel
-        >>> lbl = allel.LabelIndex(['A', 'C', 'B', 'F'])
-        >>> lbl.locate_key('A')
+        >>> idx = allel.model.UniqueIndex(['A', 'C', 'B', 'F'])
+        >>> idx.locate_key('A')
         0
-        >>> lbl.locate_key('B')
+        >>> idx.locate_key('B')
         2
         >>> try:
-        ...     lbl.locate_key('X')
+        ...     idx.locate_key('X')
         ... except KeyError as e:
         ...     print(e)
         ...
@@ -2823,18 +2633,18 @@ class LabelIndex(np.ndarray):
         --------
 
         >>> import allel
-        >>> lbl1 = allel.LabelIndex(['A', 'C', 'B', 'F'])
-        >>> lbl2 = allel.LabelIndex(['X', 'F', 'G', 'C', 'Z'])
-        >>> loc1, loc2 = lbl1.locate_intersection(lbl2)
+        >>> idx1 = allel.model.UniqueIndex(['A', 'C', 'B', 'F'])
+        >>> idx2 = allel.model.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> loc1, loc2 = idx1.locate_intersection(idx2)
         >>> loc1
         array([False,  True, False,  True], dtype=bool)
         >>> loc2
         array([False,  True, False,  True, False], dtype=bool)
-        >>> lbl1[loc1]
-        LabelIndex(['C', 'F'],
+        >>> idx1[loc1]
+        UniqueIndex(['C', 'F'],
               dtype='<U1')
-        >>> lbl2[loc2]
-        LabelIndex(['F', 'C'],
+        >>> idx2[loc2]
+        UniqueIndex(['F', 'C'],
               dtype='<U1')
 
         """
@@ -2842,7 +2652,7 @@ class LabelIndex(np.ndarray):
         # TODO review implementation for performance with larger arrays
 
         # check inputs
-        other = LabelIndex(other)
+        other = UniqueIndex(other)
 
         # find intersection
         assume_unique = True
@@ -2872,16 +2682,16 @@ class LabelIndex(np.ndarray):
         --------
 
         >>> import allel
-        >>> lbl = allel.LabelIndex(['A', 'C', 'B', 'F'])
-        >>> lbl.locate_keys(['F', 'C'])
+        >>> idx = allel.model.UniqueIndex(['A', 'C', 'B', 'F'])
+        >>> idx.locate_keys(['F', 'C'])
         array([False,  True, False,  True], dtype=bool)
-        >>> lbl.locate_keys(['X', 'F', 'G', 'C', 'Z'], strict=False)
+        >>> idx.locate_keys(['X', 'F', 'G', 'C', 'Z'], strict=False)
         array([False,  True, False,  True], dtype=bool)
 
         """
 
         # check inputs
-        keys = LabelIndex(keys)
+        keys = UniqueIndex(keys)
 
         # find intersection
         loc, found = self.locate_intersection(keys)
@@ -2903,22 +2713,73 @@ class LabelIndex(np.ndarray):
         Returns
         -------
 
-        out : LabelIndex
+        out : UniqueIndex
 
         Examples
         --------
 
         >>> import allel
-        >>> lbl1 = allel.LabelIndex(['A', 'C', 'B', 'F'])
-        >>> lbl2 = allel.LabelIndex(['X', 'F', 'G', 'C', 'Z'])
-        >>> lbl1.intersect(lbl2)
-        LabelIndex(['C', 'F'],
+        >>> idx1 = allel.model.UniqueIndex(['A', 'C', 'B', 'F'])
+        >>> idx2 = allel.model.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> idx1.intersect(idx2)
+        UniqueIndex(['C', 'F'],
               dtype='<U1')
-        >>> lbl2.intersect(lbl1)
-        LabelIndex(['F', 'C'],
+        >>> idx2.intersect(idx1)
+        UniqueIndex(['F', 'C'],
               dtype='<U1')
 
         """
 
         loc = self.locate_keys(other, strict=False)
         return np.compress(loc, self)
+
+
+class GenomeIndex(object):
+
+    def __init__(self, chrom, pos, copy=True):
+        chrom = SortedIndex(chrom, copy=copy)
+        pos = np.array(pos, copy=copy)
+        pos = asarray_ndim(pos, 1)
+        check_arrays_aligned(chrom, pos)
+        self.chrom = chrom
+        self.pos = pos
+        self.offset = dict()
+        self.midx = dict()
+        for c in np.unique(chrom):
+            loc = chrom.locate_key(c)
+            if isinstance(loc, slice):
+                start = loc.start
+                stop = loc.stop
+            else:
+                # assume singleton
+                start = loc
+                stop = loc + 1
+            self.offset[c] = start
+            self.midx[c] = SortedIndex(pos[start:stop], copy=False)
+
+    def locate_position(self, chrom, pos):
+        offset = self.offset[chrom]
+        rloc = self.midx[chrom].locate_key(pos)
+        if isinstance(rloc, slice):
+            loc = slice(rloc.start + offset, rloc.stop + offset)
+            if loc.stop - loc.start == 1:
+                loc = loc.start
+        else:
+            # assume singleton
+            loc = rloc + offset
+        return loc
+
+    def locate_interval(self, chrom, start=None, stop=None):
+        offset = self.offset[chrom]
+        rloc = self.midx[chrom].locate_range(start, stop)
+        if isinstance(rloc, slice):
+            loc = slice(rloc.start + offset, rloc.stop + offset)
+            if loc.stop - loc.start == 1:
+                loc = loc.start
+        else:
+            # assume singleton
+            loc = rloc + offset
+        return loc
+
+    def __len__(self):
+        return len(self.chrom)

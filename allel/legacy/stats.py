@@ -10,8 +10,12 @@ import numpy as np
 import scipy.stats
 
 
-from allel.model import GenotypeArray, PositionIndex
+from allel.model import GenotypeArray, HaplotypeArray, SortedIndex
 from allel.util import ignore_invalid, check_arrays_aligned, asarray_ndim
+
+
+# Window utilities
+##################
 
 
 def make_window_edges(pos, window, start=None, stop=None):
@@ -131,7 +135,7 @@ def windowed_nnz(pos, b, window, start=None, stop=None):
     """
 
     # check arguments
-    pos = PositionIndex(pos)
+    pos = SortedIndex(pos)
     b = asarray_ndim(b, 1, 2)
     check_arrays_aligned(pos, b)
 
@@ -347,7 +351,91 @@ def windowed_nnz_per_base(pos, b, window, start=None, stop=None,
     return densities, edges, counts, widths
 
 
-def windowed_nucleotide_diversity(g, pos, window, start=None, stop=None,
+# Diversity
+###########
+
+
+def mean_pairwise_difference(a, fill=np.nan):
+    """Calculate the mean number of pairwise differences between
+    haplotypes for each variant.
+
+    Parameters
+    ----------
+
+    a : array_like, int
+        Genotype array (shape (n_variants, n_samples, ploidy)) or haplotype
+        array (shape (n_variants, n_haplotypes)).
+    fill : float
+        Use this value where there are no pairs to compare (e.g.,
+        all allele calls are missing).
+
+    Returns
+    -------
+
+    mpd : ndarray, float, shape (n_variants,)
+
+    Notes
+    -----
+
+    The values returned by this function can be summed over a genome
+    region and divided by the number of accessible bases to estimate
+    nucleotide diversity.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> h = allel.HaplotypeArray([[0, 0, 0, 0],
+    ...                           [0, 0, 0, 1],
+    ...                           [0, 0, 1, 1],
+    ...                           [0, 1, 1, 1],
+    ...                           [1, 1, 1, 1],
+    ...                           [0, 0, 1, 2],
+    ...                           [0, 1, 1, 2],
+    ...                           [0, 1, -1, -1]])
+    >>> h.mean_pairwise_difference()
+    array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
+            0.83333333,  0.83333333,  1.        ])
+
+    """
+
+    # This function calculates the mean number of pairwise differences
+    # between haplotypes, generalising to any number of alleles.
+
+    # check inputs
+    a = asarray_ndim(a, 2, 3)
+    if a.ndim == 2:
+        h = HaplotypeArray(a, copy=False)
+    else:
+        h = GenotypeArray(a, copy=False).view_haplotypes()
+
+    # number of non-missing alleles (i.e., haplotypes) for each variant
+    an = h.allele_number()
+
+    # allele counts for each variant
+    ac = h.allele_counts()
+
+    # total number of pairwise comparisons for each variant:
+    # (an choose 2)
+    n_pairs = an * (an - 1) / 2
+
+    # number of pairwise comparisons where there is no difference:
+    # sum of (ac choose 2) for each allele (i.e., number of ways to
+    # choose the same allele twice)
+    n_same = np.sum(ac * (ac - 1) / 2, axis=1)
+
+    # number of pairwise differences
+    n_diff = n_pairs - n_same
+
+    # mean number of pairwise differences, accounting for cases where
+    # there are no pairs
+    with ignore_invalid():
+        mpd = np.where(n_pairs > 0, n_diff / n_pairs, fill)
+
+    return mpd
+
+
+def windowed_nucleotide_diversity(a, pos, window, start=None, stop=None,
                                   is_accessible=None, fill=np.nan):
     """Calculate nucleotide diversity in non-overlapping windows over a
     single chromosome/contig.
@@ -355,8 +443,9 @@ def windowed_nucleotide_diversity(g, pos, window, start=None, stop=None,
     Parameters
     ----------
 
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
+    a : array_like, int
+        Genotype array (shape (n_variants, n_samples, ploidy)) or haplotype
+        array (shape (n_variants, n_haplotypes)).
     pos : array_like, int, shape (n_variants,)
         Positions array.
     window : int
@@ -385,12 +474,12 @@ def windowed_nucleotide_diversity(g, pos, window, start=None, stop=None,
     """
 
     # check inputs
-    g = GenotypeArray(g, copy=False)
-    pos = PositionIndex(pos, copy=False)
-    check_arrays_aligned(g, pos)
+    a = asarray_ndim(a, 2, 3)
+    pos = SortedIndex(pos, copy=False)
+    check_arrays_aligned(a, pos)
 
     # compute pairwise differences
-    mpd = g.mean_pairwise_difference(fill=0)
+    mpd = mean_pairwise_difference(a, fill=0)
 
     # mean per base
     pi, edges, widths = windowed_mean_per_base(
@@ -399,3 +488,138 @@ def windowed_nucleotide_diversity(g, pos, window, start=None, stop=None,
     )
 
     return pi, edges, widths
+
+
+def heterozygosity_observed(g, fill=np.nan):
+    """Calculate the rate of observed heterozygosity for each variant.
+
+    Parameters
+    ----------
+
+    TODO
+    fill : float, optional
+        Use this value for variants where all calls are missing.
+
+    Returns
+    -------
+
+    ho : ndarray, float, shape (n_variants,)
+        Observed heterozygosity
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+    ...                          [[0, 0], [0, 1], [1, 1]],
+    ...                          [[0, 0], [1, 1], [2, 2]],
+    ...                          [[1, 1], [1, 2], [-1, -1]]])
+    >>> allel.heterozygosity_observed(g)
+    array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
+
+    """
+
+    # count hets
+    n_het = g.count_het(axis=DIM_SAMPLES)
+    n_called = g.count_called(axis=DIM_SAMPLES)
+
+    # calculate rate of observed heterozygosity, accounting for variants
+    # where all calls are missing
+    with ignore_invalid():
+        ho = np.where(n_called > 0, n_het / n_called, fill)
+
+    return ho
+
+
+def heterozygosity_expected(g, fill=np.nan):
+    """Calculate the expected rate of heterozygosity for each variant
+    under Hardy-Weinberg equilibrium.
+
+    Parameters
+    ----------
+
+    TODO
+    fill : float, optional
+        Use this value for variants where all calls are missing.
+
+    Returns
+    -------
+
+    he : ndarray, float, shape (n_variants,)
+        Expected heterozygosity
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+    ...                          [[0, 0], [0, 1], [1, 1]],
+    ...                          [[0, 0], [1, 1], [2, 2]],
+    ...                          [[1, 1], [1, 2], [-1, -1]]])
+    >>> allel.heterozygosity_expected(g)
+    array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
+
+    """
+
+    # calculate allele frequencies
+    af, _, an = g.allele_frequencies(fill=0)
+
+    # calculate expected heterozygosity
+    out = 1 - np.sum(np.power(af, g.ploidy), axis=1)
+
+    # fill values where allele frequencies could not be calculated
+    out[an == 0] = fill
+
+    return out
+
+
+def inbreeding_coefficient(g, fill=np.nan):
+    """Calculate the inbreeding coefficient for each variant.
+
+    Parameters
+    ----------
+
+    fill : float, optional
+        Use this value for variants where the expected heterozygosity is
+        zero.
+
+    Returns
+    -------
+
+    f : ndarray, float, shape (n_variants,)
+        Inbreeding coefficient.
+
+    Notes
+    -----
+
+    The inbreeding coefficient is calculated as *1 - (Ho/He)* where *Ho* is
+    the observed heterozygosity and *He* is the expected heterozygosity.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
+    ...                          [[0, 0], [0, 1], [1, 1]],
+    ...                          [[0, 0], [1, 1], [2, 2]],
+    ...                          [[1, 1], [1, 2], [-1, -1]]])
+    >>> allel.heterozygosity_observed(g)
+    array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
+    >>> allel.heterozygosity_expected(g)
+    array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
+    >>> allel.inbreeding_coefficient(g)
+    array([        nan,  0.33333333,  1.        , -0.33333333])
+
+    """
+
+    # calculate observed and expected heterozygosity
+    ho = g.heterozygosity_observed()
+    he = g.heterozygosity_expected()
+
+    # calculate inbreeding coefficient, accounting for variants with no
+    # expected heterozygosity
+    with ignore_invalid():
+        f = np.where(he > 0, 1 - (ho / he), fill)
+
+    return f

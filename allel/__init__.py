@@ -6,8 +6,5 @@ from __future__ import absolute_import, print_function, division
 __version__ = '0.5.0.dev0'
 
 
-from allel.constants import *
-from allel.model import GenotypeArray, HaplotypeArray, PositionIndex, \
-    LabelIndex
-from allel.stats import windowed_statistic, windowed_nnz, \
-    windowed_mean_per_base, windowed_nnz_per_base, windowed_nucleotide_diversity
+import allel.model as model
+import allel.constants as constants
