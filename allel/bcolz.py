@@ -18,8 +18,9 @@ from allel.util import asarray_ndim
 __all__ = ['GenotypeCArray', 'HaplotypeCArray']
 
 
-def _block_append(f, data, out):
-    bs = data.chunklen
+def _block_append(f, data, out, bs=None):
+    if bs is None:
+        bs = data.chunklen
     for i in range(0, data.shape[0], bs):
         block = data[i:i+bs]
         out.append(f(block))
@@ -64,22 +65,25 @@ def _block_max(data, axis=None):
                 out = m if m > out else out
         return out
 
-    elif axis == 0:
+    elif axis == 0 or axis == (0, 2):
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
-            m = np.max(block, axis=0)
-            if m is None:
+            m = np.max(block, axis=axis)
+            if out is None:
                 out = m
             else:
                 out = np.where(m > out, m, out)
         return out
 
-    elif axis == 1:
+    elif axis == 1 or axis == (1, 2):
         out = np.zeros((data.shape[0],), dtype=int)
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
-            out[i:i+bs] = np.max(block, axis=1)
+            out[i:i+bs] = np.max(block, axis=axis)
         return out
+
+    else:
+        raise NotImplementedError('axis not supported: %s' % axis)
 
 
 def _block_min(data, axis=None):
@@ -96,22 +100,25 @@ def _block_min(data, axis=None):
                 out = m if m < out else out
         return out
 
-    elif axis == 0:
+    elif axis == 0 or axis == (0, 2):
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
-            m = np.min(block, axis=0)
-            if m is None:
+            m = np.min(block, axis=axis)
+            if out is None:
                 out = m
             else:
                 out = np.where(m < out, m, out)
         return out
 
-    elif axis == 1:
+    elif axis == 1 or axis == (1, 2):
         out = np.zeros((data.shape[0],), dtype=int)
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
-            out[i:i+bs] = np.min(block, axis=1)
+            out[i:i+bs] = np.min(block, axis=axis)
         return out
+
+    else:
+        raise NotImplementedError('axis not supported: %s' % axis)
 
 
 def _block_compress(condition, data, axis):
@@ -269,6 +276,34 @@ class GenotypeCArray(object):
         return self.data[:]
 
     @property
+    def ndim(self):
+        return self.data.ndim
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    @property
+    def nbytes(self):
+        return self.data.nbytes
+
+    @property
+    def cbytes(self):
+        return self.data.cbytes
+
+    @property
+    def chunklen(self):
+        return self.data.chunklen
+
+    @property
+    def cparams(self):
+        return self.data.cparams
+
+    @property
     def n_variants(self):
         """Number of variants (length of first array dimension)."""
         return self.data.shape[0]
@@ -406,6 +441,12 @@ class GenotypeCArray(object):
         #     out.append(g.subset(variants=vcond, samples=samples))
         #
         # return out
+
+    def max(self, axis=None):
+        return _block_max(self.data, axis=axis)
+
+    def min(self, axis=None):
+        return _block_min(self.data, axis=axis)
 
     def is_called(self):
 
@@ -547,18 +588,6 @@ class GenotypeCArray(object):
 
         return out
 
-    def max(self, axis=None):
-        if axis not in {None, 0, 1}:
-            raise NotImplementedError('only axis None, 0 (variants) or 1 '
-                                      '(samples) supported')
-        return _block_max(self.data, axis=axis)
-
-    def min(self, axis=None):
-        if axis not in {None, 0, 1}:
-            raise NotImplementedError('only axis None, 0 (variants) or 1 '
-                                      '(samples) supported')
-        return _block_min(self.data, axis=axis)
-
     def to_allele_counts(self, alleles=None):
 
         # determine alleles to count
@@ -598,7 +627,7 @@ class GenotypeCArray(object):
 
         # set up output
         n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='i1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
 
         # build output
         def f(block):
@@ -619,11 +648,12 @@ class GenotypeCArray(object):
         # set up output
         n = packed.shape[0] * packed.shape[1] * 2
         out = bcolz.zeros((0, packed.shape[1], 2), dtype='i1', expectedlen=n)
+        bs = out.chunklen
 
         # build output
         def f(block):
             return GenotypeArray.from_packed(block)
-        _block_append(f, packed, out)
+        _block_append(f, packed, out, bs)
 
         return GenotypeCArray(out, copy=False)
 
@@ -806,6 +836,34 @@ class HaplotypeCArray(object):
         return self.data[:]
 
     @property
+    def ndim(self):
+        return self.data.ndim
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    @property
+    def nbytes(self):
+        return self.data.nbytes
+
+    @property
+    def cbytes(self):
+        return self.data.cbytes
+
+    @property
+    def chunklen(self):
+        return self.data.chunklen
+
+    @property
+    def cparams(self):
+        return self.data.cparams
+
+    @property
     def n_variants(self):
         """Number of variants (length of first array dimension)."""
         return self.data.shape[0]
@@ -828,6 +886,12 @@ class HaplotypeCArray(object):
 
     def subset(self, variants, samples):
         return _block_subset(HaplotypeArray, self.data, variants, samples)
+
+    def max(self, axis=None):
+        return _block_max(self.data, axis=axis)
+
+    def min(self, axis=None):
+        return _block_min(self.data, axis=axis)
 
     def view_genotypes(self, ploidy):
         # Unfortunately this cannot be implemented as a lightweight view,
@@ -1033,3 +1097,6 @@ class HaplotypeCArray(object):
 
     def count_doubleton(self, allele=1):
         return _block_sum(self.is_doubleton(allele=allele))
+
+
+# TODO from_hdf5

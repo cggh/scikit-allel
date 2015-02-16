@@ -34,7 +34,7 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with assert_raises(NotImplementedError):
             GenotypeCArray(data)
 
         # data has wrong dtype
@@ -64,9 +64,9 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
         # cparams
         g = GenotypeCArray(diploid_genotype_data,
-                           cparams=bcolz.cparams(level=10))
-        aeq(triploid_genotype_data, g)
-        eq(10, g.cparams.level)
+                           cparams=bcolz.cparams(clevel=10))
+        aeq(diploid_genotype_data, g)
+        eq(10, g.cparams.clevel)
 
     def test_slice_types(self):
 
