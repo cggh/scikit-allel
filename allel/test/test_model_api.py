@@ -937,38 +937,38 @@ class HaplotypeArrayInterface(object):
 
         # test with indices
         variants = [0, 2]
-        samples = [0, 2]
-        s = h.subset(variants=variants, samples=samples)
+        haplotypes = [0, 2]
+        s = h.subset(variants=variants, haplotypes=haplotypes)
         expect = np.array(haplotype_data)\
             .take(variants, axis=0)\
-            .take(samples, axis=1)
+            .take(haplotypes, axis=1)
         aeq(expect, s)
 
         # test with condition
         variants = [True, False, True, False]
-        samples = [True, False, True]
-        s = h.subset(variants=variants, samples=samples)
+        haplotypes = [True, False, True]
+        s = h.subset(variants=variants, haplotypes=haplotypes)
         expect = np.array(haplotype_data)\
             .compress(variants, axis=0)\
-            .compress(samples, axis=1)
+            .compress(haplotypes, axis=1)
         aeq(expect, s)
 
         # mix and match
         variants = [0, 2]
-        samples = [True, False, True]
-        s = h.subset(variants=variants, samples=samples)
+        haplotypes = [True, False, True]
+        s = h.subset(variants=variants, haplotypes=haplotypes)
         expect = np.array(haplotype_data)\
             .take(variants, axis=0)\
-            .compress(samples, axis=1)
+            .compress(haplotypes, axis=1)
         aeq(expect, s)
 
         # mix and match
         variants = [True, False, True, False]
-        samples = [0, 2]
-        s = h.subset(variants=variants, samples=samples)
+        haplotypes = [0, 2]
+        s = h.subset(variants=variants, haplotypes=haplotypes)
         expect = np.array(haplotype_data)\
             .compress(variants, axis=0)\
-            .take(samples, axis=1)
+            .take(haplotypes, axis=1)
         aeq(expect, s)
 
     # allele call matching and counting methods

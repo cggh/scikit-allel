@@ -123,7 +123,7 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
         # file and node path
         g = GenotypeCArray.from_hdf5(file_path, node_path)
         aeq(diploid_genotype_data, g)
-        
+
         # dataset
         with h5py.File(file_path, mode='r') as h5f:
             dataset = h5f[node_path]
@@ -223,7 +223,7 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         # file and node path
         h = HaplotypeCArray.from_hdf5(file_path, node_path)
         aeq(haplotype_data, h)
-        
+
         # dataset
         with h5py.File(file_path, mode='r') as h5f:
             dataset = h5f[node_path]

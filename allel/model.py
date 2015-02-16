@@ -210,6 +210,11 @@ class GenotypeArray(np.ndarray):
                 return np.asarray(s)
         return s
 
+    def __repr__(self):
+        s = 'GenotypeArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
+
     @property
     def n_variants(self):
         """Number of variants (length of first array dimension)."""
@@ -224,11 +229,6 @@ class GenotypeArray(np.ndarray):
     def ploidy(self):
         """Sample ploidy (length of third array dimension)."""
         return self.shape[2]
-
-    def __repr__(self):
-        s = 'GenotypeArray(%s, %s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
 
     def subset(self, variants, samples):
         """Make a sub-selection of variants and/or samples.
@@ -583,9 +583,10 @@ class GenotypeArray(np.ndarray):
         ...                                [[0, 1], [1, 1]],
         ...                                [[0, 2], [-1, -1]]])
         >>> g.view_haplotypes()
-        HaplotypeArray([[ 0,  0,  0,  1],
-               [ 0,  1,  1,  1],
-               [ 0,  2, -1, -1]], n_variants=3, n_haplotypes=4)
+        HaplotypeArray((3, 4), dtype=int64)
+        [[ 0  0  0  1]
+         [ 0  1  1  1]
+         [ 0  2 -1 -1]]
 
         """
 
@@ -791,12 +792,13 @@ class GenotypeArray(np.ndarray):
         ...                    [2, 17],
         ...                    [34, 239]], dtype='u1')
         >>> allel.model.GenotypeArray.from_packed(packed)
-        GenotypeArray([[[ 0,  0],
-                [ 0,  1]],
-               [[ 0,  2],
-                [ 1,  1]],
-               [[ 2,  2],
-                [-1, -1]]], dtype=int8, n_variants=3, n_samples=2, ploidy=2)
+        GenotypeArray((3, 2, 2), dtype=int8)
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  2]
+          [ 1  1]]
+         [[ 2  2]
+          [-1 -1]]]
 
         """
 
@@ -888,14 +890,15 @@ class GenotypeArray(np.ndarray):
         >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
         >>> g = allel.model.GenotypeArray.from_sparse(m, ploidy=2)
         >>> g
-        GenotypeArray([[[ 0,  0],
-                [ 0,  0]],
-               [[ 0,  1],
-                [ 0,  1]],
-               [[ 1,  1],
-                [ 0,  0]],
-               [[ 0,  0],
-                [-1, -1]]], dtype=int8, n_variants=4, n_samples=2, ploidy=2)
+        GenotypeArray((4, 2, 2), dtype=int8)
+        [[[ 0  0]
+          [ 0  0]]
+         [[ 0  1]
+          [ 0  1]]
+         [[ 1  1]
+          [ 0  0]]
+         [[ 0  0]
+          [-1 -1]]]
 
         """
 
@@ -1005,10 +1008,10 @@ class GenotypeArray(np.ndarray):
         >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
         ...                                [[0, 2], [1, 1]],
         ...                                [[2, 2], [-1, -1]]])
-        >>> af, ac, an = g.allele_frequency(allele=1)
+        >>> af = g.allele_frequency(allele=1)
         >>> af
         array([ 0.25,  0.5 ,  0.  ])
-        >>> af, ac, an = g.allele_frequency(allele=2)
+        >>> af = g.allele_frequency(allele=2)
         >>> af
         array([ 0.  ,  0.25,  1.  ])
 
@@ -1078,12 +1081,12 @@ class GenotypeArray(np.ndarray):
         >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
         ...                                [[0, 2], [1, 1]],
         ...                                [[2, 2], [-1, -1]]])
-        >>> af, ac, an = g.allele_frequencies()
+        >>> af = g.allele_frequencies()
         >>> af
         array([[ 0.75,  0.25,  0.  ],
                [ 0.25,  0.5 ,  0.25],
                [ 0.  ,  0.  ,  1.  ]])
-        >>> af, ac, an = g.allele_frequencies(alleles=(1, 2))
+        >>> af = g.allele_frequencies(alleles=(1, 2))
         >>> af
         array([[ 0.25,  0.  ],
                [ 0.5 ,  0.25],
@@ -1306,17 +1309,19 @@ class GenotypeArray(np.ndarray):
         ...                                [[1, 2], [2, 1]],
         ...                                [[2, 2], [-1, -1]]])
         >>> g.haploidify_samples()
-        HaplotypeArray([[ 0,  1],
-               [ 0,  1],
-               [ 1,  1],
-               [ 2, -1]], n_variants=4, n_haplotypes=2)
+        HaplotypeArray((4, 2), dtype=int64)
+        [[ 0  1]
+         [ 0  1]
+         [ 1  1]
+         [ 2 -1]]
         >>> g = allel.model.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
         ...                                [[0, 1, 1], [1, 1, 1]],
         ...                                [[0, 1, 2], [-1, -1, -1]]])
         >>> g.haploidify_samples()
-        HaplotypeArray([[ 0,  0],
-               [ 1,  1],
-               [ 2, -1]], n_variants=3, n_haplotypes=2)
+        HaplotypeArray((3, 2), dtype=int64)
+        [[ 0  0]
+         [ 1  1]
+         [ 2 -1]]
 
         """
 
@@ -1417,12 +1422,13 @@ class HaplotypeArray(np.ndarray):
     View haplotypes as diploid genotypes::
 
         >>> h.view_genotypes(ploidy=2)
-        GenotypeArray([[[ 0,  0],
-                [ 0,  1]],
-               [[ 0,  1],
-                [ 1,  1]],
-               [[ 0,  2],
-                [-1, -1]]], dtype=int8, n_variants=3, n_samples=2, ploidy=2)
+        GenotypeArray((3, 2, 2), dtype=int8)
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
 
     """
 
@@ -1480,6 +1486,11 @@ class HaplotypeArray(np.ndarray):
                 return np.asarray(s)
         return s
 
+    def __repr__(self):
+        s = 'HaplotypeArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
+
     @property
     def n_variants(self):
         """Number of variants (length of first dimension)."""
@@ -1490,19 +1501,14 @@ class HaplotypeArray(np.ndarray):
         """Number of haplotypes (length of second dimension)."""
         return self.shape[1]
 
-    def __repr__(self):
-        s = 'HaplotypeArray(%s, %s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
-    def subset(self, variants, samples):
-        """Make a sub-selection of variants and/or samples.
+    def subset(self, variants, haplotypes):
+        """Make a sub-selection of variants and/or haplotypes.
 
         TODO params etc.
 
         """
 
-        return _subset(self, variants, samples)
+        return _subset(self, variants, haplotypes)
 
     def is_called(self):
         return self >= 0
@@ -1546,12 +1552,13 @@ class HaplotypeArray(np.ndarray):
         ...                                 [0, 1, 1, 1],
         ...                                 [0, 2, -1, -1]], dtype='i1')
         >>> h.view_genotypes(ploidy=2)
-        GenotypeArray([[[ 0,  0],
-                [ 0,  1]],
-               [[ 0,  1],
-                [ 1,  1]],
-               [[ 0,  2],
-                [-1, -1]]], dtype=int8, n_variants=3, n_samples=2, ploidy=2)
+        GenotypeArray((3, 2, 2), dtype=int8)
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
 
         """
 
@@ -1659,10 +1666,11 @@ class HaplotypeArray(np.ndarray):
         >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
         >>> h = allel.model.HaplotypeArray.from_sparse(m)
         >>> h
-        HaplotypeArray([[ 0,  0,  0,  0],
-               [ 0,  1,  0,  1],
-               [ 1,  1,  0,  0],
-               [ 0,  0, -1, -1]], dtype=int8, n_variants=4, n_haplotypes=4)
+        HaplotypeArray((4, 4), dtype=int8)
+        [[ 0  0  0  0]
+         [ 0  1  0  1]
+         [ 1  1  0  0]
+         [ 0  0 -1 -1]]
 
         """
 
@@ -2079,7 +2087,7 @@ class SortedIndex(np.ndarray):
         return s
 
     def __repr__(self):
-        s = 'SortedIndex(%s, %s)\n' % (self.shape[0], self.dtype)
+        s = 'SortedIndex(%s, dtype=%s)\n' % (self.shape[0], self.dtype)
         s += str(self)
         return s
 
@@ -2164,9 +2172,11 @@ class SortedIndex(np.ndarray):
         >>> loc2
         array([False,  True,  True, False], dtype=bool)
         >>> idx1[loc1]
-        SortedIndex([ 6, 20])
+        SortedIndex(2, dtype=int64)
+        [ 6 20]
         >>> idx2[loc2]
-        SortedIndex([ 6, 20])
+        SortedIndex(2, dtype=int64)
+        [ 6 20]
 
         """
 
@@ -2207,7 +2217,8 @@ class SortedIndex(np.ndarray):
         >>> loc
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc]
-        SortedIndex([ 6, 20])
+        SortedIndex(2, dtype=int64)
+        [ 6 20]
 
         """
 
@@ -2244,7 +2255,8 @@ class SortedIndex(np.ndarray):
         >>> idx1 = allel.model.SortedIndex([3, 6, 11, 20, 35])
         >>> idx2 = allel.model.SortedIndex([4, 6, 20, 39])
         >>> idx1.intersect(idx2)
-        SortedIndex([ 6, 20])
+        SortedIndex(2, dtype=int64)
+        [ 6 20]
 
         """
 
@@ -2278,7 +2290,8 @@ class SortedIndex(np.ndarray):
         >>> loc
         slice(1, 4, None)
         >>> idx[loc]
-        SortedIndex([ 6, 11, 20])
+        SortedIndex(3, dtype=int64)
+        [ 6 11 20]
 
         """
 
@@ -2321,7 +2334,8 @@ class SortedIndex(np.ndarray):
         >>> import allel
         >>> idx = allel.model.SortedIndex([3, 6, 11, 20, 35])
         >>> idx.intersect_range(4, 32)
-        SortedIndex([ 6, 11, 20])
+        SortedIndex(3, dtype=int64)
+        [ 6 11 20]
 
         """
 
@@ -2368,7 +2382,8 @@ class SortedIndex(np.ndarray):
         >>> loc_ranges
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx[loc]
-        SortedIndex([ 6, 11, 35])
+        SortedIndex(3, dtype=int64)
+        [ 6 11 35]
         >>> ranges[loc_ranges]
         array([[ 6, 17],
                [31, 35]])
@@ -2429,7 +2444,8 @@ class SortedIndex(np.ndarray):
         >>> loc
         array([False,  True,  True, False,  True], dtype=bool)
         >>> idx[loc]
-        SortedIndex([ 6, 11, 35])
+        SortedIndex(3, dtype=int64)
+        [ 6 11 35]
 
         """
 
@@ -2467,7 +2483,8 @@ class SortedIndex(np.ndarray):
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
         >>> idx.intersect_ranges(starts, stops)
-        SortedIndex([ 6, 11, 35])
+        SortedIndex(3, dtype=int64)
+        [ 6 11 35]
 
         """
 
@@ -2566,7 +2583,7 @@ class UniqueIndex(np.ndarray):
         return s
 
     def __repr__(self):
-        s = 'UniqueIndex(%s, %s)\n' % (self.shape[0], self.dtype)
+        s = 'UniqueIndex(%s, dtype=%s)\n' % (self.shape[0], self.dtype)
         s += str(self)
         return s
 
@@ -2639,11 +2656,11 @@ class UniqueIndex(np.ndarray):
         >>> loc2
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc1]
-        UniqueIndex(['C', 'F'],
-              dtype='<U1')
+        UniqueIndex(2, dtype=<U1)
+        ['C' 'F']
         >>> idx2[loc2]
-        UniqueIndex(['F', 'C'],
-              dtype='<U1')
+        UniqueIndex(2, dtype=<U1)
+        ['F' 'C']
 
         """
 
@@ -2720,11 +2737,11 @@ class UniqueIndex(np.ndarray):
         >>> idx1 = allel.model.UniqueIndex(['A', 'C', 'B', 'F'])
         >>> idx2 = allel.model.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
         >>> idx1.intersect(idx2)
-        UniqueIndex(['C', 'F'],
-              dtype='<U1')
+        UniqueIndex(2, dtype=<U1)
+        ['C' 'F']
         >>> idx2.intersect(idx1)
-        UniqueIndex(['F', 'C'],
-              dtype='<U1')
+        UniqueIndex(2, dtype=<U1)
+        ['F' 'C']
 
         """
 

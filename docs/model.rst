@@ -6,7 +6,7 @@ Data structures
 GenotypeArray
 -------------
 
-.. autoclass:: GenotypeArray(data)
+.. autoclass:: GenotypeArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_samples
@@ -51,16 +51,12 @@ GenotypeArray
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
     .. automethod:: haploidify_samples
-    .. automethod:: heterozygosity_observed
-    .. automethod:: heterozygosity_expected
-    .. automethod:: inbreeding_coefficient
-    .. automethod:: mean_pairwise_difference
 
 
 HaplotypeArray
 --------------
 
-.. autoclass:: HaplotypeArray(data)
+.. autoclass:: HaplotypeArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_haplotypes
@@ -85,12 +81,11 @@ HaplotypeArray
     .. automethod:: count_non_segregating
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
-    .. automethod:: mean_pairwise_difference
 
-PositionIndex
--------------
+SortedIndex
+-----------
 
-.. autoclass:: PositionIndex(data)
+.. autoclass:: SortedIndex
 
     .. autoattribute:: is_unique
     .. automethod:: locate_key
@@ -104,12 +99,19 @@ PositionIndex
     .. automethod:: intersect_ranges
 
 
-LabelIndex
-----------
+UniqueIndex
+-----------
 
-.. autoclass:: LabelIndex(data)
+.. autoclass:: UniqueIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_keys
     .. automethod:: locate_intersection
     .. automethod:: intersect
+
+GenomeIndex
+-----------
+
+.. autoclass:: GenomeIndex
+
+TODO methods

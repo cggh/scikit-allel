@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+TODO doco
+
+"""
 from __future__ import absolute_import, print_function, division
 
 
@@ -193,41 +197,41 @@ def _block_take(data, indices, axis):
         return _block_compress(condition, data, axis=1)
 
 
-def _block_subset(cls, data, variants, samples):
+def _block_subset(cls, data, sel0, sel1):
 
     # check inputs
-    variants = asarray_ndim(variants, 1, allow_none=True)
-    samples = asarray_ndim(samples, 1, allow_none=True)
-    if variants is None and samples is None:
-        raise ValueError('variants and/or samples required')
+    sel0 = asarray_ndim(sel0, 1, allow_none=True)
+    sel1 = asarray_ndim(sel1, 1, allow_none=True)
+    if sel0 is None and sel1 is None:
+        raise ValueError('missing selection')
 
-    # if either variants or samples is None, use take/compress
-    if samples is None:
-        if variants.size < data.shape[0]:
-            return _block_take(data, variants, axis=0)
+    # if either selection is None, use take/compress
+    if sel1 is None:
+        if sel0.size < data.shape[0]:
+            return _block_take(data, sel0, axis=0)
         else:
-            return _block_compress(variants, data, axis=0)
-    elif variants is None:
-        if samples.size < data.shape[1]:
-            return _block_take(data, samples, axis=1)
+            return _block_compress(sel0, data, axis=0)
+    elif sel0 is None:
+        if sel1.size < data.shape[1]:
+            return _block_take(data, sel1, axis=1)
         else:
-            return _block_compress(samples, data, axis=1)
+            return _block_compress(sel1, data, axis=1)
 
     # ensure boolean array for variants
-    if variants.size < data.shape[0]:
+    if sel0.size < data.shape[0]:
         tmp = np.zeros((data.shape[0],), dtype=bool)
-        tmp[variants] = True
-        variants = tmp
+        tmp[sel0] = True
+        sel0 = tmp
 
-    # ensure indices for samples
-    if samples.size == data.shape[1]:
-        samples = np.nonzero(samples)[0]
+    # ensure indices for samples/haplotypes
+    if sel1.size == data.shape[1]:
+        sel1 = np.nonzero(sel1)[0]
 
     # setup output
-    n = np.count_nonzero(variants) \
-        * samples.size \
+    n = np.count_nonzero(sel0) \
+        * sel1.size \
         * reduce(operator.mul, data.shape[2:], 1)
-    out = bcolz.zeros((0, samples.size) + data.shape[2:],
+    out = bcolz.zeros((0, sel1.size) + data.shape[2:],
                       dtype=data.dtype,
                       expectedlen=n)
 
@@ -235,14 +239,17 @@ def _block_subset(cls, data, variants, samples):
     bs = data.chunklen
     for i in range(0, data.shape[0], bs):
         block = data[i:i+bs]
-        vcond = variants[i:i+bs]
+        bsel0 = sel0[i:i+bs]
         x = cls(block, copy=False)
-        out.append(x.subset(variants=vcond, samples=samples))
+        out.append(x.subset(bsel0, sel1))
 
     return out
 
 
 class GenotypeCArray(object):
+    """TODO doco
+
+    """
 
     @staticmethod
     def _check_input_data(obj):
@@ -752,6 +759,9 @@ class GenotypeCArray(object):
 
 
 class HaplotypeCArray(object):
+    """TODO doco
+
+    """
 
     @staticmethod
     def _check_input_data(obj):
@@ -760,7 +770,6 @@ class HaplotypeCArray(object):
         if obj.dtype.kind not in 'ui':
             raise TypeError('integer dtype required')
 
-        # check dimensionality
         # check dimensionality
         if hasattr(obj, 'ndim'):
             ndim = obj.ndim
@@ -836,8 +845,8 @@ class HaplotypeCArray(object):
         data = _block_take(self.data, indices, axis)
         return HaplotypeCArray(data, copy=False)
 
-    def subset(self, variants, samples):
-        data = _block_subset(HaplotypeArray, self.data, variants, samples)
+    def subset(self, variants, haplotypes):
+        data = _block_subset(HaplotypeArray, self.data, variants, haplotypes)
         return HaplotypeCArray(data, copy=False)
 
     def max(self, axis=None):
