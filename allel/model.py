@@ -1528,6 +1528,26 @@ class HaplotypeArray(np.ndarray):
     def is_call(self, allele):
         return self == allele
 
+    def count_called(self, axis=None):
+        b = self.is_called()
+        return np.sum(b, axis=axis)
+
+    def count_missing(self, axis=None):
+        b = self.is_missing()
+        return np.sum(b, axis=axis)
+
+    def count_ref(self, axis=None):
+        b = self.is_ref()
+        return np.sum(b, axis=axis)
+
+    def count_alt(self, axis=None):
+        b = self.is_alt()
+        return np.sum(b, axis=axis)
+
+    def count_call(self, allele, axis=None):
+        b = self.is_call(allele=allele)
+        return np.sum(b, axis=axis)
+
     def view_genotypes(self, ploidy):
         """Reshape a haplotype array to view it as genotypes by restoring the
         ploidy dimension.

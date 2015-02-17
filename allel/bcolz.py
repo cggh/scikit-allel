@@ -30,13 +30,15 @@ def _block_append(f, data, out, bs=None):
         out.append(f(block))
 
 
-def _block_sum(data, axis=None):
+def _block_sum(data, axis=None, f=None):
     bs = data.chunklen
 
     if axis is None:
         out = 0
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
+            if f:
+                block = f(block)
             out += np.sum(block)
         return out
 
@@ -44,6 +46,8 @@ def _block_sum(data, axis=None):
         out = np.zeros((data.shape[1],), dtype=int)
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
+            if f:
+                block = f(block)
             out += np.sum(block, axis=0)
         return out
 
@@ -51,6 +55,8 @@ def _block_sum(data, axis=None):
         out = np.zeros((data.shape[0],), dtype=int)
         for i in range(0, data.shape[0], bs):
             block = data[i:i+bs]
+            if f:
+                block = f(block)
             out[i:i+bs] += np.sum(block, axis=1)
         return out
 
@@ -140,11 +146,9 @@ def _block_compress(condition, data, axis):
                              (data.shape[0], condition.size))
 
         # setup output
-        n = np.count_nonzero(condition) \
-            * reduce(operator.mul, data.shape[1:], 1)
         out = bcolz.zeros((0,) + data.shape[1:],
                           dtype=data.dtype,
-                          expectedlen=n)
+                          expectedlen=np.count_nonzero(condition))
 
         # build output
         bs = data.chunklen
@@ -162,12 +166,9 @@ def _block_compress(condition, data, axis):
                              (data.shape[1], condition.size))
 
         # setup output
-        n = data.shape[0] \
-            * np.count_nonzero(condition) \
-            * reduce(operator.mul, data.shape[2:], 1)
         out = bcolz.zeros((0, np.count_nonzero(condition)) + data.shape[2:],
                           dtype=data.dtype,
-                          expectedlen=n)
+                          expectedlen=data.shape[0])
 
         # build output
         bs = data.chunklen
@@ -228,12 +229,9 @@ def _block_subset(cls, data, sel0, sel1):
         sel1 = np.nonzero(sel1)[0]
 
     # setup output
-    n = np.count_nonzero(sel0) \
-        * sel1.size \
-        * reduce(operator.mul, data.shape[2:], 1)
     out = bcolz.zeros((0, sel1.size) + data.shape[2:],
                       dtype=data.dtype,
-                      expectedlen=n)
+                      expectedlen=np.count_nonzero(sel0))
 
     # build output
     bs = data.chunklen
@@ -352,8 +350,9 @@ class GenotypeCArray(object):
     def is_called(self):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_called()
@@ -364,8 +363,9 @@ class GenotypeCArray(object):
     def is_missing(self):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_missing()
@@ -376,8 +376,9 @@ class GenotypeCArray(object):
     def is_hom(self, allele=None):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom(allele=allele)
@@ -388,8 +389,9 @@ class GenotypeCArray(object):
     def is_hom_ref(self):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom_ref()
@@ -400,8 +402,9 @@ class GenotypeCArray(object):
     def is_hom_alt(self):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom_alt()
@@ -412,8 +415,9 @@ class GenotypeCArray(object):
     def is_het(self):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_het()
@@ -424,8 +428,9 @@ class GenotypeCArray(object):
     def is_call(self, call):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_call(call)
@@ -434,32 +439,36 @@ class GenotypeCArray(object):
         return out
 
     def count_called(self, axis=None):
-        b = self.is_called()
-        return _block_sum(b, axis=axis)
+        f = lambda block: GenotypeArray(block, copy=False).is_called()
+        return _block_sum(self.data, axis=axis, f=f)
 
     def count_missing(self, axis=None):
-        b = self.is_missing()
-        return _block_sum(b, axis=axis)
+        f = lambda block: GenotypeArray(block, copy=False).is_missing()
+        return _block_sum(self.data, axis=axis, f=f)
 
     def count_hom(self, allele=None, axis=None):
-        b = self.is_hom(allele=allele)
-        return _block_sum(b, axis=axis)
+        def f(block):
+            g = GenotypeArray(block, copy=False)
+            return g.is_hom(allele=allele)
+        return _block_sum(self.data, axis=axis, f=f)
 
     def count_hom_ref(self, axis=None):
-        b = self.is_hom_ref()
-        return _block_sum(b, axis=axis)
+        f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
+        return _block_sum(self.data, axis=axis, f=f)
 
     def count_hom_alt(self, axis=None):
-        b = self.is_hom_alt()
-        return _block_sum(b, axis=axis)
+        f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
+        return _block_sum(self.data, axis=axis, f=f)
 
     def count_het(self, axis=None):
-        b = self.is_het()
-        return _block_sum(b, axis=axis)
+        f = lambda block: GenotypeArray(block, copy=False).is_het()
+        return _block_sum(self.data, axis=axis, f=f)
 
     def count_call(self, call, axis=None):
-        b = self.is_call(call=call)
-        return _block_sum(b, axis=axis)
+        def f(block):
+            g = GenotypeArray(block, copy=False)
+            return g.is_call(call=call)
+        return _block_sum(self.data, axis=axis, f=f)
 
     def view_haplotypes(self):
         # Unfortunately this cannot be implemented as a lightweight view,
@@ -480,8 +489,9 @@ class GenotypeCArray(object):
     def to_n_alt(self, fill=0):
 
         # setup output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='i1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='i1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).to_n_alt(fill)
@@ -497,10 +507,9 @@ class GenotypeCArray(object):
             alleles = list(range(m+1))
 
         # set up output
-        n = self.n_variants * self.n_samples * len(alleles)
         out = bcolz.zeros((0, self.n_samples, len(alleles)),
                           dtype='u1',
-                          expectedlen=n)
+                          expectedlen=self.n_variants)
 
         # build output
         def f(block):
@@ -527,8 +536,9 @@ class GenotypeCArray(object):
                                  % amn)
 
         # set up output
-        n = self.n_variants * self.n_samples
-        out = bcolz.zeros((0, self.n_samples), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_samples),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         def f(block):
@@ -547,8 +557,9 @@ class GenotypeCArray(object):
             packed = np.asarray(packed)
 
         # set up output
-        n = packed.shape[0] * packed.shape[1] * 2
-        out = bcolz.zeros((0, packed.shape[1], 2), dtype='i1', expectedlen=n)
+        out = bcolz.zeros((0, packed.shape[1], 2),
+                          dtype='i1',
+                          expectedlen=packed.shape[0])
         bs = out.chunklen
 
         # build output
@@ -738,10 +749,10 @@ class GenotypeCArray(object):
             GenotypeCArray._check_input_data(dataset)
             start = kwargs.pop('start', 0)
             stop = kwargs.pop('stop', dataset.shape[0])
+            step = kwargs.pop('step', 1)
 
             # setup output data
-            n = reduce(operator.mul, dataset.shape)
-            kwargs.setdefault('expectedlen', n)
+            kwargs.setdefault('expectedlen', dataset.shape[0])
             kwargs.setdefault('dtype', dataset.dtype)
             data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
 
@@ -749,7 +760,7 @@ class GenotypeCArray(object):
             bs = dataset.chunks[0]
             for i in range(start, stop, bs):
                 j = min(i + bs, stop)
-                data.append(dataset[i:j])
+                data.append(dataset[i:j:step])
 
             return GenotypeCArray(data, copy=False)
 
@@ -894,13 +905,36 @@ class HaplotypeCArray(object):
     def is_call(self, allele):
         return self == allele
 
+    def count_called(self, axis=None):
+        f = lambda block: HaplotypeArray(block, copy=False).is_called()
+        return _block_sum(self.data, axis=axis, f=f)
+
+    def count_missing(self, axis=None):
+        f = lambda block: HaplotypeArray(block, copy=False).is_missing()
+        return _block_sum(self.data, axis=axis, f=f)
+
+    def count_ref(self, axis=None):
+        f = lambda block: HaplotypeArray(block, copy=False).is_ref()
+        return _block_sum(self.data, axis=axis, f=f)
+
+    def count_alt(self, axis=None):
+        f = lambda block: HaplotypeArray(block, copy=False).is_alt()
+        return _block_sum(self.data, axis=axis, f=f)
+
+    def count_call(self, allele, axis=None):
+        def f(block):
+            h = HaplotypeArray(block, copy=False)
+            return h.is_call(allele=allele)
+        return _block_sum(self.data, axis=axis, f=f)
+
     def _op(self, op, other):
         if not isinstance(other, integer_types):
             raise NotImplementedError('only supported for scalars')
 
         # setup output
-        n = self.n_variants * self.n_haplotypes
-        out = bcolz.zeros((0, self.n_haplotypes), dtype='u1', expectedlen=n)
+        out = bcolz.zeros((0, self.n_haplotypes),
+                          dtype='u1',
+                          expectedlen=self.n_variants)
 
         # build output
         f = lambda data: op(data, other)
@@ -1101,10 +1135,10 @@ class HaplotypeCArray(object):
             HaplotypeCArray._check_input_data(dataset)
             start = kwargs.pop('start', 0)
             stop = kwargs.pop('stop', dataset.shape[0])
+            step = kwargs.pop('step', 1)
 
             # setup output data
-            n = reduce(operator.mul, dataset.shape)
-            kwargs.setdefault('expectedlen', n)
+            kwargs.setdefault('expectedlen', dataset.shape[0])
             kwargs.setdefault('dtype', dataset.dtype)
             data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
 
@@ -1112,7 +1146,7 @@ class HaplotypeCArray(object):
             bs = dataset.chunks[0]
             for i in range(start, stop, bs):
                 j = min(i + bs, stop)
-                data.append(dataset[i:j])
+                data.append(dataset[i:j:step])
 
             return HaplotypeCArray(data, copy=False)
 
