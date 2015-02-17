@@ -241,39 +241,6 @@ class TestHardyWeinberg(unittest.TestCase):
 
 class TestDiversity(unittest.TestCase):
 
-    def test_mean_pairwise_difference(self):
-
-        # start with simplest case, two haplotypes, one pairwise comparison
-        h = HaplotypeArray([[0, 0],
-                            [1, 1],
-                            [0, 1],
-                            [1, 2],
-                            [0, -1],
-                            [-1, -1]])
-        expect = [0, 0, 1, 1, -1, -1]
-        actual = mean_pairwise_difference(h, fill=-1)
-        aeq(expect, actual)
-
-        # four haplotypes, 6 pairwise comparison
-        h = HaplotypeArray([[0, 0, 0, 0],
-                            [0, 0, 0, 1],
-                            [0, 0, 1, 1],
-                            [0, 1, 1, 1],
-                            [1, 1, 1, 1],
-                            [0, 0, 1, 2],
-                            [0, 1, 1, 2],
-                            [0, 1, -1, -1],
-                            [-1, -1, -1, -1]])
-        expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        actual = mean_pairwise_difference(h, fill=-1)
-        assert_array_close(expect, actual)
-
-        # should also work for genotypes
-        g = h.to_genotypes(ploidy=2)
-        expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        actual = mean_pairwise_difference(g, fill=-1)
-        assert_array_close(expect, actual)
-
     def test_windowed_nucleotide_diversity(self):
 
         g = GenotypeArray([[[0, 0], [0, 0]],

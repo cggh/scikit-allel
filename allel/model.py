@@ -25,22 +25,36 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def _subset(a, variants, samples):
+def _subset(data, sel0, sel1):
 
     # check inputs
-    variants = asarray_ndim(variants, 1)
-    samples = asarray_ndim(samples, 1)
+    sel0 = asarray_ndim(sel0, 1, allow_none=True)
+    sel1 = asarray_ndim(sel1, 1, allow_none=True)
+    if sel0 is None and sel1 is None:
+        raise ValueError('missing selection')
 
+    # if either selection is None, use take/compress
+    if sel1 is None:
+        if sel0.size < data.shape[0]:
+            return np.take(data, sel0, axis=0)
+        else:
+            return np.compress(sel0, data, axis=0)
+    elif sel0 is None:
+        if sel1.size < data.shape[1]:
+            return np.take(data, sel1, axis=1)
+        else:
+            return np.compress(sel1, data, axis=1)
+        
     # ensure indices
-    if variants.size == a.shape[0]:
-        variants = np.nonzero(variants)[0]
-    if samples.size == a.shape[1]:
-        samples = np.nonzero(samples)[0]
+    if sel0.size == data.shape[0]:
+        sel0 = np.nonzero(sel0)[0]
+    if sel1.size == data.shape[1]:
+        sel1 = np.nonzero(sel1)[0]
 
     # ensure variant indices can be broadcast correctly
-    variants = variants[:, None]
+    sel0 = sel0[:, None]
 
-    return a[variants, samples]
+    return data[sel0, sel1]
 
 
 class GenotypeArray(np.ndarray):
@@ -230,7 +244,7 @@ class GenotypeArray(np.ndarray):
         """Sample ploidy (length of third array dimension)."""
         return self.shape[2]
 
-    def subset(self, variants, samples):
+    def subset(self, variants=None, samples=None):
         """Make a sub-selection of variants and/or samples.
 
         TODO params etc.
@@ -1503,7 +1517,7 @@ class HaplotypeArray(np.ndarray):
         """Number of haplotypes (length of second dimension)."""
         return self.shape[1]
 
-    def subset(self, variants, haplotypes):
+    def subset(self, variants=None, haplotypes=None):
         """Make a sub-selection of variants and/or haplotypes.
 
         TODO params etc.
