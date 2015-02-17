@@ -484,7 +484,7 @@ class GenotypeArrayInterface(object):
     # data transformation methods
     #############################
 
-    def test_view_haplotypes(self):
+    def test_to_haplotypes(self):
 
         # diploid
         expect = np.array([[0, 0, 0, 1, -1, -1],
@@ -492,7 +492,7 @@ class GenotypeArrayInterface(object):
                            [1, 0, 2, 1, -1, -1],
                            [2, 2, -1, -1, -1, -1],
                            [-1, -1, -1, -1, -1, -1]], dtype='i1')
-        actual = self.setup_instance(diploid_genotype_data).view_haplotypes()
+        actual = self.setup_instance(diploid_genotype_data).to_haplotypes()
         aeq(expect, actual)
 
         # polyploid
@@ -500,7 +500,7 @@ class GenotypeArrayInterface(object):
                            [0, 1, 1, 1, 1, 1, -1, -1, -1],
                            [0, 1, 2, -1, -1, -1, -1, -1, -1],
                            [-1, -1, -1, -1, -1, -1, -1, -1, -1]], dtype='i1')
-        actual = self.setup_instance(triploid_genotype_data).view_haplotypes()
+        actual = self.setup_instance(triploid_genotype_data).to_haplotypes()
         aeq(expect, actual)
 
     def test_to_n_alt(self):
@@ -1024,6 +1024,8 @@ class HaplotypeArrayInterface(object):
         actual = self.setup_instance(haplotype_data).is_call(2)
         aeq(expect, actual)
 
+    # TODO test to_genotypes()
+    
     # allelism and allele counting methods
     ######################################
 

@@ -269,7 +269,7 @@ class TestDiversity(unittest.TestCase):
         assert_array_close(expect, actual)
 
         # should also work for genotypes
-        g = h.view_genotypes(ploidy=2)
+        g = h.to_genotypes(ploidy=2)
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         actual = mean_pairwise_difference(g, fill=-1)
         assert_array_close(expect, actual)
@@ -293,6 +293,6 @@ class TestDiversity(unittest.TestCase):
         assert_array_close(expect, actual)
 
         # should also work with haplotypes as input
-        h = g.view_haplotypes()
+        h = g.to_haplotypes()
         actual, _, _ = windowed_nucleotide_diversity(h, pos, window=10)
         assert_array_close(expect, actual)

@@ -559,7 +559,7 @@ class GenotypeArray(np.ndarray):
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
 
-    def view_haplotypes(self):
+    def to_haplotypes(self, copy=False):
         """Reshape a genotype array to view it as haplotypes by
         dropping the ploidy dimension.
 
@@ -567,7 +567,9 @@ class GenotypeArray(np.ndarray):
         -------
 
         h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
-            Haplotype array (sharing same underlying buffer).
+            Haplotype array.
+        copy : bool, optional
+            If True, make a copy of the data.
 
         Notes
         -----
@@ -582,7 +584,7 @@ class GenotypeArray(np.ndarray):
         >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
         ...                                [[0, 1], [1, 1]],
         ...                                [[0, 2], [-1, -1]]])
-        >>> g.view_haplotypes()
+        >>> g.to_haplotypes()
         HaplotypeArray((3, 4), dtype=int64)
         [[ 0  0  0  1]
          [ 0  1  1  1]
@@ -593,7 +595,7 @@ class GenotypeArray(np.ndarray):
         # reshape, preserving size of variants dimension
         newshape = (self.n_variants, -1)
         data = np.reshape(self, newshape)
-        h = HaplotypeArray(data, copy=False)
+        h = HaplotypeArray(data, copy=copy)
         return h
 
     def to_n_alt(self, fill=0):
@@ -851,7 +853,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        h = self.view_haplotypes()
+        h = self.to_haplotypes()
         m = h.to_sparse(format=format, **kwargs)
         return m
 
@@ -903,7 +905,7 @@ class GenotypeArray(np.ndarray):
         """
 
         h = HaplotypeArray.from_sparse(m, order=order, out=out)
-        g = h.view_genotypes(ploidy=ploidy)
+        g = h.to_genotypes(ploidy=ploidy)
         return g
 
     def allelism(self):
@@ -927,7 +929,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().allelism()
+        return self.to_haplotypes().allelism()
 
     def allele_number(self):
         """Count the number of non-missing allele calls per variant.
@@ -950,7 +952,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().allele_number()
+        return self.to_haplotypes().allele_number()
 
     def allele_count(self, allele=1):
         """Count the number of calls of the given allele per variant.
@@ -981,7 +983,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().allele_count(allele=allele)
+        return self.to_haplotypes().allele_count(allele=allele)
 
     def allele_frequency(self, allele=1, fill=np.nan):
         """Calculate the frequency of the given allele per variant.
@@ -1017,7 +1019,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().allele_frequency(allele=allele,
+        return self.to_haplotypes().allele_frequency(allele=allele,
                                                        fill=fill)
 
     def allele_counts(self, alleles=None):
@@ -1053,7 +1055,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().allele_counts(alleles=alleles)
+        return self.to_haplotypes().allele_counts(alleles=alleles)
 
     def allele_frequencies(self, alleles=None, fill=np.nan):
         """Calculate the frequency of each allele per variant.
@@ -1093,7 +1095,7 @@ class GenotypeArray(np.ndarray):
                [ 0.  ,  1.  ]])
         """
 
-        return self.view_haplotypes().allele_frequencies(alleles=alleles,
+        return self.to_haplotypes().allele_frequencies(alleles=alleles,
                                                          fill=fill)
 
     def is_variant(self):
@@ -1119,7 +1121,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().is_variant()
+        return self.to_haplotypes().is_variant()
 
     def is_non_variant(self):
         """Find variants with no non-reference allele calls.
@@ -1144,7 +1146,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().is_non_variant()
+        return self.to_haplotypes().is_non_variant()
 
     def is_segregating(self):
         """Find segregating variants (where more than one allele is observed).
@@ -1169,7 +1171,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().is_segregating()
+        return self.to_haplotypes().is_segregating()
 
     def is_non_segregating(self, allele=None):
         """Find non-segregating variants (where at most one allele is
@@ -1203,7 +1205,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().is_non_segregating(allele=allele)
+        return self.to_haplotypes().is_non_segregating(allele=allele)
 
     def is_singleton(self, allele=1):
         """Find variants with a single call for the given allele.
@@ -1236,7 +1238,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().is_singleton(allele=allele)
+        return self.to_haplotypes().is_singleton(allele=allele)
 
     def is_doubleton(self, allele=1):
         """Find variants with exactly two calls for the given allele.
@@ -1269,25 +1271,25 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.view_haplotypes().is_doubleton(allele=allele)
+        return self.to_haplotypes().is_doubleton(allele=allele)
 
     def count_variant(self):
-        return self.view_haplotypes().count_variant()
+        return self.to_haplotypes().count_variant()
 
     def count_non_variant(self):
-        return self.view_haplotypes().count_non_variant()
+        return self.to_haplotypes().count_non_variant()
 
     def count_segregating(self):
-        return self.view_haplotypes().count_segregating()
+        return self.to_haplotypes().count_segregating()
 
     def count_non_segregating(self, allele=None):
-        return self.view_haplotypes().count_non_segregating(allele=allele)
+        return self.to_haplotypes().count_non_segregating(allele=allele)
 
     def count_singleton(self, allele=1):
-        return self.view_haplotypes().count_singleton(allele=allele)
+        return self.to_haplotypes().count_singleton(allele=allele)
 
     def count_doubleton(self, allele=1):
-        return self.view_haplotypes().count_doubleton(allele=allele)
+        return self.to_haplotypes().count_doubleton(allele=allele)
 
     def haploidify_samples(self):
         """Construct a pseudo-haplotype for each sample by randomly
@@ -1421,7 +1423,7 @@ class HaplotypeArray(np.ndarray):
 
     View haplotypes as diploid genotypes::
 
-        >>> h.view_genotypes(ploidy=2)
+        >>> h.to_genotypes(ploidy=2)
         GenotypeArray((3, 2, 2), dtype=int8)
         [[[ 0  0]
           [ 0  1]]
@@ -1548,7 +1550,7 @@ class HaplotypeArray(np.ndarray):
         b = self.is_call(allele=allele)
         return np.sum(b, axis=axis)
 
-    def view_genotypes(self, ploidy):
+    def to_genotypes(self, ploidy, copy=False):
         """Reshape a haplotype array to view it as genotypes by restoring the
         ploidy dimension.
 
@@ -1563,6 +1565,8 @@ class HaplotypeArray(np.ndarray):
 
         g : ndarray, int, shape (n_variants, n_samples, ploidy)
             Genotype array (sharing same underlying buffer).
+        copy : bool, optional
+            If True, copy the data.
 
         Examples
         --------
@@ -1571,7 +1575,7 @@ class HaplotypeArray(np.ndarray):
         >>> h = allel.model.HaplotypeArray([[0, 0, 0, 1],
         ...                                 [0, 1, 1, 1],
         ...                                 [0, 2, -1, -1]], dtype='i1')
-        >>> h.view_genotypes(ploidy=2)
+        >>> h.to_genotypes(ploidy=2)
         GenotypeArray((3, 2, 2), dtype=int8)
         [[[ 0  0]
           [ 0  1]]
@@ -1591,7 +1595,7 @@ class HaplotypeArray(np.ndarray):
         data = self.reshape(newshape)
 
         # wrap
-        g = GenotypeArray(data, copy=False)
+        g = GenotypeArray(data, copy=copy)
 
         return g
 

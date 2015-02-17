@@ -407,7 +407,7 @@ def mean_pairwise_difference(a, fill=np.nan):
     if a.ndim == 2:
         h = HaplotypeArray(a, copy=False)
     else:
-        h = GenotypeArray(a, copy=False).view_haplotypes()
+        h = GenotypeArray(a, copy=False).to_haplotypes()
 
     # number of non-missing alleles (i.e., haplotypes) for each variant
     an = h.allele_number()

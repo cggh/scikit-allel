@@ -131,7 +131,7 @@ def _block_min(data, axis=None):
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def _block_compress(condition, data, axis):
+def _block_compress(condition, data, axis, **kwargs):
 
     # check inputs
     condition = asarray_ndim(condition, 1)
@@ -146,9 +146,9 @@ def _block_compress(condition, data, axis):
                              (data.shape[0], condition.size))
 
         # setup output
-        out = bcolz.zeros((0,) + data.shape[1:],
-                          dtype=data.dtype,
-                          expectedlen=np.count_nonzero(condition))
+        kwargs.setdefault('dtype', data.dtype)
+        kwargs.setdefault('expectedlen', np.count_nonzero(condition))
+        out = bcolz.zeros((0,) + data.shape[1:], **kwargs)
 
         # build output
         bs = data.chunklen
@@ -166,9 +166,10 @@ def _block_compress(condition, data, axis):
                              (data.shape[1], condition.size))
 
         # setup output
+        kwargs.setdefault('dtype', data.dtype)
+        kwargs.setdefault('expectedlen', data.shape[0])
         out = bcolz.zeros((0, np.count_nonzero(condition)) + data.shape[2:],
-                          dtype=data.dtype,
-                          expectedlen=data.shape[0])
+                          **kwargs)
 
         # build output
         bs = data.chunklen
@@ -179,7 +180,7 @@ def _block_compress(condition, data, axis):
         return out
 
 
-def _block_take(data, indices, axis):
+def _block_take(data, indices, axis, **kwargs):
 
     # check inputs
     indices = asarray_ndim(indices, 1)
@@ -190,15 +191,15 @@ def _block_take(data, indices, axis):
     if axis == 0:
         condition = np.zeros((data.shape[0],), dtype=bool)
         condition[indices] = True
-        return _block_compress(condition, data, axis=0)
+        return _block_compress(condition, data, axis=0, **kwargs)
 
     elif axis == 1:
         condition = np.zeros((data.shape[1],), dtype=bool)
         condition[indices] = True
-        return _block_compress(condition, data, axis=1)
+        return _block_compress(condition, data, axis=1, **kwargs)
 
 
-def _block_subset(cls, data, sel0, sel1):
+def _block_subset(cls, data, sel0, sel1, **kwargs):
 
     # check inputs
     sel0 = asarray_ndim(sel0, 1, allow_none=True)
@@ -209,14 +210,14 @@ def _block_subset(cls, data, sel0, sel1):
     # if either selection is None, use take/compress
     if sel1 is None:
         if sel0.size < data.shape[0]:
-            return _block_take(data, sel0, axis=0)
+            return _block_take(data, sel0, axis=0, **kwargs)
         else:
-            return _block_compress(sel0, data, axis=0)
+            return _block_compress(sel0, data, axis=0, **kwargs)
     elif sel0 is None:
         if sel1.size < data.shape[1]:
-            return _block_take(data, sel1, axis=1)
+            return _block_take(data, sel1, axis=1, **kwargs)
         else:
-            return _block_compress(sel1, data, axis=1)
+            return _block_compress(sel1, data, axis=1, **kwargs)
 
     # ensure boolean array for variants
     if sel0.size < data.shape[0]:
@@ -229,9 +230,9 @@ def _block_subset(cls, data, sel0, sel1):
         sel1 = np.nonzero(sel1)[0]
 
     # setup output
-    out = bcolz.zeros((0, sel1.size) + data.shape[2:],
-                      dtype=data.dtype,
-                      expectedlen=np.count_nonzero(sel0))
+    kwargs.setdefault('dtype', data.dtype)
+    kwargs.setdefault('expectedlen', np.count_nonzero(sel0))
+    out = bcolz.zeros((0, sel1.size) + data.shape[2:], **kwargs)
 
     # build output
     bs = data.chunklen
@@ -329,16 +330,17 @@ class GenotypeCArray(object):
         s = 'GenotypeCArray' + s[6:]
         return s
 
-    def compress(self, condition, axis):
-        data = _block_compress(condition, self.data, axis)
+    def compress(self, condition, axis, **kwargs):
+        data = _block_compress(condition, self.data, axis, **kwargs)
         return GenotypeCArray(data, copy=False)
 
-    def take(self, indices, axis):
-        data = _block_take(self.data, indices, axis)
+    def take(self, indices, axis, **kwargs):
+        data = _block_take(self.data, indices, axis, **kwargs)
         return GenotypeCArray(data, copy=False)
 
-    def subset(self, variants, samples):
-        data = _block_subset(GenotypeArray, self.data, variants, samples)
+    def subset(self, variants, samples, **kwargs):
+        data = _block_subset(GenotypeArray, self.data, variants, samples,
+                             **kwargs)
         return GenotypeCArray(data, copy=False)
 
     def max(self, axis=None):
@@ -347,12 +349,12 @@ class GenotypeCArray(object):
     def min(self, axis=None):
         return _block_min(self.data, axis=axis)
 
-    def is_called(self):
+    def is_called(self, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_called()
@@ -360,12 +362,12 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_missing(self):
+    def is_missing(self, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_missing()
@@ -373,12 +375,12 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_hom(self, allele=None):
+    def is_hom(self, allele=None, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom(allele=allele)
@@ -386,12 +388,12 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_hom_ref(self):
+    def is_hom_ref(self, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom_ref()
@@ -399,12 +401,12 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_hom_alt(self):
+    def is_hom_alt(self, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom_alt()
@@ -412,12 +414,12 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_het(self):
+    def is_het(self, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_het()
@@ -425,12 +427,12 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_call(self, call):
+    def is_call(self, call, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).is_call(call)
@@ -470,14 +472,14 @@ class GenotypeCArray(object):
             return g.is_call(call=call)
         return _block_sum(self.data, axis=axis, f=f)
 
-    def view_haplotypes(self):
+    def to_haplotypes(self, **kwargs):
         # Unfortunately this cannot be implemented as a lightweight view,
         # so we have to copy.
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples * self.ploidy),
-                          dtype=self.data.dtype,
-                          chunklen=self.data.chunklen)
+        kwargs.setdefault('dtype', self.data.dtype)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples * self.ploidy), **kwargs)
 
         # build output
         f = lambda block: block.reshape((block.shape[0], -1))
@@ -486,12 +488,12 @@ class GenotypeCArray(object):
         h = HaplotypeCArray(out, copy=False)
         return h
 
-    def to_n_alt(self, fill=0):
+    def to_n_alt(self, fill=0, **kwargs):
 
         # setup output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='i1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', 'i1')
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         f = lambda data: GenotypeArray(data, copy=False).to_n_alt(fill)
@@ -499,7 +501,7 @@ class GenotypeCArray(object):
 
         return out
 
-    def to_allele_counts(self, alleles=None):
+    def to_allele_counts(self, alleles=None, **kwargs):
 
         # determine alleles to count
         if alleles is None:
@@ -507,9 +509,9 @@ class GenotypeCArray(object):
             alleles = list(range(m+1))
 
         # set up output
-        out = bcolz.zeros((0, self.n_samples, len(alleles)),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', 'u1')
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples, len(alleles)), **kwargs)
 
         # build output
         def f(block):
@@ -520,7 +522,7 @@ class GenotypeCArray(object):
 
         return out
 
-    def to_packed(self, boundscheck=True):
+    def to_packed(self, boundscheck=True, **kwargs):
 
         if self.ploidy != 2:
             raise ValueError('can only pack diploid calls')
@@ -536,9 +538,9 @@ class GenotypeCArray(object):
                                  % amn)
 
         # set up output
-        out = bcolz.zeros((0, self.n_samples),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs['dtype'] = 'u1'  # force dtype
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_samples), **kwargs)
 
         # build output
         def f(block):
@@ -550,16 +552,16 @@ class GenotypeCArray(object):
         return out
 
     @staticmethod
-    def from_packed(packed):
+    def from_packed(packed, **kwargs):
 
         # check input
         if not isinstance(packed, (np.ndarray, bcolz.carray)):
             packed = np.asarray(packed)
 
         # set up output
-        out = bcolz.zeros((0, packed.shape[1], 2),
-                          dtype='i1',
-                          expectedlen=packed.shape[0])
+        kwargs.setdefault('dtype', 'i1')
+        kwargs.setdefault('expectedlen', packed.shape[0])
+        out = bcolz.zeros((0, packed.shape[1], 2), **kwargs)
         bs = out.chunklen
 
         # build output
@@ -569,32 +571,40 @@ class GenotypeCArray(object):
 
         return GenotypeCArray(out, copy=False)
 
-    def allelism(self):
-        out = bcolz.zeros((0,), dtype=int)
+    def allelism(self, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', int)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             return GenotypeArray(block, copy=False).allelism()
         _block_append(f, self.data, out)
         return out
 
-    def allele_number(self):
-        out = bcolz.zeros((0,), dtype=int)
+    def allele_number(self, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', int)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             return GenotypeArray(block, copy=False).allele_number()
         _block_append(f, self.data, out)
         return out
 
-    def allele_count(self, allele=1):
-        out = bcolz.zeros((0,), dtype=int)
+    def allele_count(self, allele=1, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', int)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             return GenotypeArray(block, copy=False).allele_count(allele=allele)
         _block_append(f, self.data, out)
         return out
 
-    def allele_frequency(self, allele=1, fill=np.nan):
-        out = bcolz.zeros((0,), dtype=float)
+    def allele_frequency(self, allele=1, fill=np.nan, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', float)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -604,7 +614,7 @@ class GenotypeCArray(object):
 
         return out
 
-    def allele_counts(self, alleles=None):
+    def allele_counts(self, alleles=None, **kwargs):
 
         # if alleles not specified, count all alleles
         if alleles is None:
@@ -612,7 +622,9 @@ class GenotypeCArray(object):
             alleles = list(range(m+1))
 
         # setup output
-        out = bcolz.zeros((0, len(alleles)), dtype=int)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', int)
+        out = bcolz.zeros((0, len(alleles)), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -621,7 +633,7 @@ class GenotypeCArray(object):
 
         return out
 
-    def allele_frequencies(self, alleles=None, fill=np.nan):
+    def allele_frequencies(self, alleles=None, fill=np.nan, **kwargs):
 
         # if alleles not specified, count all alleles
         if alleles is None:
@@ -629,7 +641,9 @@ class GenotypeCArray(object):
             alleles = list(range(m+1))
 
         # setup output
-        out = bcolz.zeros((0, len(alleles)), dtype=float)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', float)
+        out = bcolz.zeros((0, len(alleles)), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -639,8 +653,10 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_variant(self):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_variant(self, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -649,8 +665,10 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_non_variant(self):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_non_variant(self, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -659,8 +677,10 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_segregating(self):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_segregating(self, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -669,8 +689,10 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_non_segregating(self, allele=None):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_non_segregating(self, allele=None, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -679,8 +701,10 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_singleton(self, allele=1):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_singleton(self, allele=1, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -689,8 +713,10 @@ class GenotypeCArray(object):
 
         return out
 
-    def is_doubleton(self, allele=1):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_doubleton(self, allele=1, **kwargs):
+        kwargs.setdefault('expectedlen', self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(block):
             g = GenotypeArray(block, copy=False)
@@ -848,16 +874,17 @@ class HaplotypeCArray(object):
         s = 'HaplotypeCArray' + s[6:]
         return s
 
-    def compress(self, condition, axis):
-        data = _block_compress(condition, self.data, axis)
+    def compress(self, condition, axis, **kwargs):
+        data = _block_compress(condition, self.data, axis, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
-    def take(self, indices, axis):
-        data = _block_take(self.data, indices, axis)
+    def take(self, indices, axis, **kwargs):
+        data = _block_take(self.data, indices, axis, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
-    def subset(self, variants, haplotypes):
-        data = _block_subset(HaplotypeArray, self.data, variants, haplotypes)
+    def subset(self, variants, haplotypes, **kwargs):
+        data = _block_subset(HaplotypeArray, self.data, variants, haplotypes,
+                             **kwargs)
         return HaplotypeCArray(data, copy=False)
 
     def max(self, axis=None):
@@ -866,7 +893,7 @@ class HaplotypeCArray(object):
     def min(self, axis=None):
         return _block_min(self.data, axis=axis)
 
-    def view_genotypes(self, ploidy):
+    def to_genotypes(self, ploidy, **kwargs):
         # Unfortunately this cannot be implemented as a lightweight view,
         # so we have to copy.
 
@@ -876,9 +903,9 @@ class HaplotypeCArray(object):
 
         # setup output
         n_samples = self.n_haplotypes / ploidy
-        out = bcolz.zeros((0, n_samples, ploidy),
-                          dtype=self.data.dtype,
-                          chunklen=self.data.chunklen)
+        kwargs.setdefault('dtype', self.data.dtype)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, n_samples, ploidy), **kwargs)
 
         # build output
         f = lambda block: block.reshape((block.shape[0], -1, ploidy))
@@ -887,23 +914,23 @@ class HaplotypeCArray(object):
         g = GenotypeCArray(out, copy=False)
         return g
 
-    def is_called(self):
-        return self >= 0
+    def is_called(self, **kwargs):
+        return self.compare_scalar(operator.ge, 0, **kwargs)
 
-    def is_missing(self):
-        return self < 0
+    def is_missing(self, **kwargs):
+        return self.compare_scalar(operator.lt, 0, **kwargs)
 
-    def is_ref(self):
-        return self == 0
+    def is_ref(self, **kwargs):
+        return self.compare_scalar(operator.eq, 0, **kwargs)
 
-    def is_alt(self, allele=None):
+    def is_alt(self, allele=None, **kwargs):
         if allele is None:
-            return self > 0
+            return self.compare_scalar(operator.gt, 0, **kwargs)
         else:
-            return self == allele
+            return self.compare_scalar(operator.eq, allele, **kwargs)
 
-    def is_call(self, allele):
-        return self == allele
+    def is_call(self, allele, **kwargs):
+        return self.compare_scalar(operator.eq, allele, **kwargs)
 
     def count_called(self, axis=None):
         f = lambda block: HaplotypeArray(block, copy=False).is_called()
@@ -927,14 +954,14 @@ class HaplotypeCArray(object):
             return h.is_call(allele=allele)
         return _block_sum(self.data, axis=axis, f=f)
 
-    def _op(self, op, other):
+    def compare_scalar(self, op, other, **kwargs):
         if not isinstance(other, integer_types):
             raise NotImplementedError('only supported for scalars')
 
         # setup output
-        out = bcolz.zeros((0, self.n_haplotypes),
-                          dtype='u1',
-                          expectedlen=self.n_variants)
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, self.n_haplotypes), **kwargs)
 
         # build output
         f = lambda data: op(data, other)
@@ -943,49 +970,57 @@ class HaplotypeCArray(object):
         return out
 
     def __eq__(self, other):
-        return self._op(operator.eq, other)
+        return self.compare_scalar(operator.eq, other)
 
     def __ne__(self, other):
-        return self._op(operator.ne, other)
+        return self.compare_scalar(operator.ne, other)
 
     def __lt__(self, other):
-        return self._op(operator.lt, other)
+        return self.compare_scalar(operator.lt, other)
 
     def __gt__(self, other):
-        return self._op(operator.gt, other)
+        return self.compare_scalar(operator.gt, other)
 
     def __le__(self, other):
-        return self._op(operator.le, other)
+        return self.compare_scalar(operator.le, other)
 
     def __ge__(self, other):
-        return self._op(operator.ge, other)
+        return self.compare_scalar(operator.ge, other)
 
-    def allelism(self):
-        out = bcolz.zeros((0,), dtype=int)
+    def allelism(self, **kwargs):
+        kwargs.setdefault('dtype', int)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             return HaplotypeArray(data, copy=False).allelism()
         _block_append(f, self.data, out)
         return out
 
-    def allele_number(self):
-        out = bcolz.zeros((0,), dtype=int)
+    def allele_number(self, **kwargs):
+        kwargs.setdefault('dtype', int)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             return HaplotypeArray(data, copy=False).allele_number()
         _block_append(f, self.data, out)
         return out
 
-    def allele_count(self, allele=1):
-        out = bcolz.zeros((0,), dtype=int)
+    def allele_count(self, allele=1, **kwargs):
+        kwargs.setdefault('dtype', int)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             return HaplotypeArray(data, copy=False).allele_count(allele=allele)
         _block_append(f, self.data, out)
         return out
 
-    def allele_frequency(self, allele=1, fill=np.nan):
-        out = bcolz.zeros((0,), dtype=float)
+    def allele_frequency(self, allele=1, fill=np.nan, **kwargs):
+        kwargs.setdefault('dtype', float)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -995,14 +1030,16 @@ class HaplotypeCArray(object):
 
         return out
 
-    def allele_counts(self, alleles=None):
+    def allele_counts(self, alleles=None, **kwargs):
         # if alleles not specified, count all alleles
         if alleles is None:
             m = self.max()
             alleles = list(range(m+1))
 
         # setup output
-        out = bcolz.zeros((0, len(alleles)), dtype=int)
+        kwargs.setdefault('dtype', int)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, len(alleles)), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1011,7 +1048,7 @@ class HaplotypeCArray(object):
 
         return out
 
-    def allele_frequencies(self, alleles=None, fill=np.nan):
+    def allele_frequencies(self, alleles=None, fill=np.nan, **kwargs):
 
         # if alleles not specified, count all alleles
         if alleles is None:
@@ -1019,7 +1056,9 @@ class HaplotypeCArray(object):
             alleles = list(range(m+1))
 
         # setup output
-        out = bcolz.zeros((0, len(alleles)), dtype=float)
+        kwargs.setdefault('dtype', float)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0, len(alleles)), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1029,8 +1068,10 @@ class HaplotypeCArray(object):
 
         return out
 
-    def is_variant(self):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_variant(self, **kwargs):
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1039,8 +1080,10 @@ class HaplotypeCArray(object):
 
         return out
 
-    def is_non_variant(self):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_non_variant(self, **kwargs):
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1049,8 +1092,10 @@ class HaplotypeCArray(object):
 
         return out
 
-    def is_segregating(self):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_segregating(self, **kwargs):
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1059,8 +1104,10 @@ class HaplotypeCArray(object):
 
         return out
 
-    def is_non_segregating(self, allele=None):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_non_segregating(self, allele=None, **kwargs):
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1069,8 +1116,10 @@ class HaplotypeCArray(object):
 
         return out
 
-    def is_singleton(self, allele=1):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_singleton(self, allele=1, **kwargs):
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
@@ -1079,8 +1128,10 @@ class HaplotypeCArray(object):
 
         return out
 
-    def is_doubleton(self, allele=1):
-        out = bcolz.zeros((0,), dtype=bool)
+    def is_doubleton(self, allele=1, **kwargs):
+        kwargs.setdefault('dtype', bool)
+        kwargs.setdefault('expectedlen', self.n_variants)
+        out = bcolz.zeros((0,), **kwargs)
 
         def f(data):
             g = HaplotypeArray(data, copy=False)
