@@ -31,7 +31,7 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             # noinspection PyArgumentList
             GenotypeCArray()
 
@@ -142,7 +142,7 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             # noinspection PyArgumentList
             HaplotypeCArray()
 
@@ -242,7 +242,7 @@ class AlleleCountsCArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             # noinspection PyArgumentList
             AlleleCountsCArray()
 

@@ -51,7 +51,33 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     return np.array(out)
 
 
-def windowed_count(pos, size, start=None, stop=None, step=None):
+def _generate_windows(pos, size, start, stop, step):
+    last = False
+
+    # determine start and stop positions
+    if start is None:
+        start = pos[0]
+    if stop is None:
+        stop = pos[-1]
+    if step is None:
+        step = size
+
+    for window_start in range(start, stop, step):
+
+        # determine window stop
+        window_stop = window_start + size
+        if window_stop >= stop:
+            # last window
+            window_stop = stop
+            last = True
+        else:
+            window_stop -= 1
+            last = False
+
+        yield window_start, window_stop
+
+
+def windowed_count(pos, size=None, start=None, stop=None, step=None):
     """TODO doco
 
     """
@@ -168,8 +194,8 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
 
 
 def mean_pairwise_diversity(ac, fill=np.nan):
-    """Calculate the mean number of pairwise differences between
-    haplotypes for each variant.
+    """Calculate the mean number of pairwise differences for each variant
+    between haplotypes within a single population.
 
     Parameters
     ----------
@@ -190,7 +216,7 @@ def mean_pairwise_diversity(ac, fill=np.nan):
 
     The values returned by this function can be summed over a genome
     region and divided by the number of accessible bases to estimate
-    nucleotide diversity.
+    nucleotide diversity, a.k.a. *pi*.
 
     Examples
     --------
@@ -208,6 +234,11 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     >>> allel.stats.mean_pairwise_diversity(ac)
     array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
             0.83333333,  0.83333333,  1.        ])
+
+    See Also
+    --------
+
+    windowed_diversity
 
     """
 
@@ -249,7 +280,53 @@ def _resize_dim2(a, l):
 
 
 def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
-    """TODO doco
+    """Calculate the mean number of pairwise differences for each variant
+    between haplotypes from two different populations.
+
+    Parameters
+    ----------
+
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    fill : float
+        Use this value where there are no pairs to compare (e.g.,
+        all allele calls are missing).
+
+    Returns
+    -------
+
+    mpd : ndarray, float, shape (n_variants,)
+
+    Notes
+    -----
+
+    The values returned by this function can be summed over a genome
+    region and divided by the number of accessible bases to estimate
+    nucleotide divergence, a.k.a. *Dxy*.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> h = allel.model.HaplotypeArray([[0, 0, 0, 0],
+    ...                                 [0, 0, 0, 1],
+    ...                                 [0, 0, 1, 1],
+    ...                                 [0, 1, 1, 1],
+    ...                                 [1, 1, 1, 1],
+    ...                                 [0, 0, 1, 2],
+    ...                                 [0, 1, 1, 2],
+    ...                                 [0, 1, -1, -1]])
+    >>> ac1 = h.take([0, 1], axis=1).count_alleles()
+    >>> ac2 = h.take([2, 3], axis=1).count_alleles()
+    >>> allel.stats.mean_pairwise_divergence(ac1, ac2)
+    array([ 0.  ,  0.5 ,  1.  ,  0.5 ,  0.  ,  1.  ,  0.75,   nan])
+
+    See Also
+    --------
+
+    windowed_divergence
 
     """
 
@@ -289,6 +366,21 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
         mpd = np.where(n_pairs > 0, n_diff / n_pairs, fill)
 
     return mpd
+
+
+def per_base(x, windows, is_accessible=None):
+
+    # calculate window sizes
+    if is_accessible is None:
+        # N.B., window stops are included
+        n_bases = np.diff(windows, axis=1).reshape(-1) + 1
+    else:
+        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
+        n_bases, _ = windowed_count(pos_accessible, size, start=start,
+                                    stop=stop, step=step)
+
+    with ignore_invalid():
+        pi = np.where(n_bases > 0, mpd_sum / n_bases, fill)
 
 
 def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,

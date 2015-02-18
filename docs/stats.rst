@@ -20,4 +20,5 @@ Utility functions
 -----------------
 
 .. autofunction:: windowed_statistic
+.. autofunction:: windowed_count
 .. autofunction:: moving_statistic

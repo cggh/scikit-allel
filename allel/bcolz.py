@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-TODO doco
+This module provides alternative implementations of array interfaces defined in
+the :mod:`allel.model` module, using `bcolz <http://bcolz.blosc.org>`_
+compressed arrays (:class:`bcolz.carray`) instead of numpy arrays for data
+storage. Compressed arrays can use either main memory or be stored on disk.
+In either case, the use of compressed arrays enables analysis of data that
+are too large to fit uncompressed into main memory.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -339,7 +344,10 @@ class _CArrayWrapper(object):
             data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
 
             # load block-wise
-            bs = dataset.chunks[0]
+            if hasattr(dataset, 'chunks'):
+                bs = dataset.chunks[0]
+            else:
+                bs = data.chunklen
             for i in range(start, stop, bs):
                 j = min(i + bs, stop)
                 data.append(dataset[i:j:step])
@@ -352,7 +360,127 @@ class _CArrayWrapper(object):
 
 
 class GenotypeCArray(_CArrayWrapper):
-    """TODO doco
+    """Alternative implementation of the :class:`allel.model.GenotypeArray`
+    interface, using a :class:`bcolz.carray` as the backing store.
+
+    Parameters
+    ----------
+
+    data : array_like, int, shape (n_variants, n_samples, ploidy), optional
+        Data to initialise the array with. May be a bcolz carray, which will
+        not be copied if copy=False. May also be None, in which case rootdir
+        must be provided (disk-based array).
+    copy : bool, optional
+        If True, copy the input data into a new bcolz carray.
+    **kwargs : keyword arguments
+        Passed through to the bcolz carray constructor.
+
+    Examples
+    --------
+
+    Instantiate a genotype compressed array from existing data::
+
+        >>> import allel
+        >>> g = allel.bcolz.GenotypeCArray([[[0, 0], [0, 1]],
+        ...                                 [[0, 1], [1, 1]],
+        ...                                 [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g
+        GenotypeCArray((3, 2, 2), int8)
+          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
+
+    Obtain a numpy ndarray from a compressed array by slicing::
+
+        >>> g[:]
+        GenotypeArray((3, 2, 2), dtype=int8)
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
+
+    Build incrementally::
+
+        >>> import bcolz
+        >>> data = bcolz.zeros((0, 2, 2), dtype='i1')
+        >>> data.append([[0, 0], [0, 1]])
+        >>> data.append([[0, 1], [1, 1]])
+        >>> data.append([[0, 2], [-1, -1]])
+        >>> g = allel.bcolz.GenotypeCArray(data, copy=False)
+        >>> g
+        GenotypeCArray((3, 2, 2), int8)
+          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
+
+    Load from HDF5::
+
+        >>> import h5py
+        >>> with h5py.File('example.h5', mode='w') as h5f:
+        ...     h5f.create_dataset('genotype',
+        ...                        data=[[[0, 0], [0, 1]],
+        ...                              [[0, 1], [1, 1]],
+        ...                              [[0, 2], [-1, -1]]],
+        ...                        dtype='i1',
+        ...                        chunks=(2, 2, 2))
+        ...
+        <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
+        >>> g = allel.bcolz.GenotypeCArray.from_hdf5('example.h5', 'genotype')
+        >>> g
+        GenotypeCArray((3, 2, 2), int8)
+          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
+
+    Note that methods of this class will return bcolz carrays rather than
+    numpy ndarrays where possible. E.g.::
+
+        >>> g.take([0, 2], axis=0)
+        GenotypeCArray((2, 2, 2), int8)
+          nbytes: 8; cbytes: 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  2]
+          [-1 -1]]]
+        >>> g.is_called()
+        carray((3, 2), bool)
+          nbytes: 6; cbytes: 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[ True  True]
+         [ True  True]
+         [ True False]]
+        >>> g.to_haplotypes()
+        HaplotypeCArray((3, 4), int8)
+          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[ 0  0  0  1]
+         [ 0  1  1  1]
+         [ 0  2 -1 -1]]
+        >>> g.count_alleles()
+        AlleleCountsCArray((3, 3), int64)
+          nbytes: 72; cbytes: 15.98 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [[3 1 0]
+         [1 3 0]
+         [1 0 1]]
 
     """
 
@@ -375,7 +503,7 @@ class GenotypeCArray(_CArrayWrapper):
         if obj.shape[DIM_PLOIDY] == 1:
             raise ValueError('use HaplotypeCArray for haploid calls')
 
-    def __init__(self, data, copy=True, **kwargs):
+    def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
             data = bcolz.carray(data, **kwargs)
         # check late to avoid creating an intermediate numpy array
@@ -655,7 +783,20 @@ class GenotypeCArray(_CArrayWrapper):
 
 
 class HaplotypeCArray(_CArrayWrapper):
-    """TODO doco
+    """Alternative implementation of the :class:`allel.model.HaplotypeArray`
+    interface, using a :class:`bcolz.carray` as the backing store.
+
+    Parameters
+    ----------
+
+    data : array_like, int, shape (n_variants, n_haplotypes), optional
+        Data to initialise the array with. May be a bcolz carray, which will
+        not be copied if copy=False. May also be None, in which case rootdir
+        must be provided (disk-based array).
+    copy : bool, optional
+        If True, copy the input data into a new bcolz carray.
+    **kwargs : keyword arguments
+        Passed through to the bcolz carray constructor.
 
     """
 
@@ -674,7 +815,7 @@ class HaplotypeCArray(_CArrayWrapper):
         if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-    def __init__(self, data, copy=True, **kwargs):
+    def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
             data = bcolz.carray(data, **kwargs)
         # check late to avoid creating an intermediate numpy array
@@ -791,7 +932,20 @@ class HaplotypeCArray(_CArrayWrapper):
 
 
 class AlleleCountsCArray(_CArrayWrapper):
-    """TODO doco
+    """Alternative implementation of the :class:`allel.model.AlleleCountsArray`
+    interface, using a :class:`bcolz.carray` as the backing store.
+
+    Parameters
+    ----------
+
+    data : array_like, int, shape (n_variants, n_alleles), optional
+        Data to initialise the array with. May be a bcolz carray, which will
+        not be copied if copy=False. May also be None, in which case rootdir
+        must be provided (disk-based array).
+    copy : bool, optional
+        If True, copy the input data into a new bcolz carray.
+    **kwargs : keyword arguments
+        Passed through to the bcolz carray constructor.
 
     """
 
@@ -810,7 +964,7 @@ class AlleleCountsCArray(_CArrayWrapper):
         if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-    def __init__(self, data, copy=True, **kwargs):
+    def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
             data = bcolz.carray(data, **kwargs)
         # check late to avoid creating an intermediate numpy array

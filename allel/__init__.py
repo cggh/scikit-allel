@@ -9,4 +9,4 @@ __version__ = '0.5.0.dev0'
 import allel.model as model
 import allel.stats as stats
 import allel.constants as constants
-# require explicit import for allel.bcolz
+import allel.bcolz as bcolz
