@@ -217,7 +217,7 @@ def mean_pairwise_diversity(ac, fill=np.nan):
 
     # check inputs
     ac = asarray_ndim(ac, 2)
-    
+
     # total number of haplotypes
     n = np.sum(ac, axis=1)
 
@@ -314,8 +314,8 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
         n_bases = np.diff(windows, axis=1).reshape(-1) + 1
     else:
         pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        n_bases, _ = windowed_count(pos, size, start=start, stop=stop,
-                                    step=step)
+        n_bases, _ = windowed_count(pos_accessible, size, start=start,
+                                    stop=stop, step=step)
 
     with ignore_invalid():
         pi = np.where(n_bases > 0, mpd_sum / n_bases, fill)
@@ -347,8 +347,8 @@ def windowed_divergence(pos, ac1, ac2, size,
         n_bases = np.diff(windows, axis=1).reshape(-1) + 1
     else:
         pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        n_bases, _ = windowed_count(pos, size, start=start, stop=stop,
-                                    step=step)
+        n_bases, _ = windowed_count(pos_accessible, size, start=start,
+                                    stop=stop, step=step)
 
     with ignore_invalid():
         dxy = np.where(n_bases > 0, mpd_sum / n_bases, fill)

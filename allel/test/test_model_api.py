@@ -838,7 +838,7 @@ class HaplotypeArrayInterface(object):
         aeq(expect, actual)
 
     # TODO test to_genotypes()
-    
+
     def test_max(self):
 
         # overall

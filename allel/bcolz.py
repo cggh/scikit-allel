@@ -7,7 +7,7 @@ from __future__ import absolute_import, print_function, division
 
 
 import operator
-from allel.compat import range, reduce, integer_types
+from allel.compat import range
 
 
 import numpy as np
@@ -790,7 +790,6 @@ class HaplotypeCArray(_CArrayWrapper):
         return AlleleCountsCArray(out, copy=False)
 
 
-
 class AlleleCountsCArray(_CArrayWrapper):
     """TODO doco
 
@@ -867,7 +866,7 @@ class AlleleCountsCArray(_CArrayWrapper):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', int)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             return AlleleCountsArray(block, copy=False).allelism()
         _block_append(f, self.data, out)
@@ -877,88 +876,88 @@ class AlleleCountsCArray(_CArrayWrapper):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', bool)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_variant()
         _block_append(f, self.data, out)
-    
+
         return out
-    
+
     def is_non_variant(self, **kwargs):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', bool)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_non_variant()
         _block_append(f, self.data, out)
-    
+
         return out
-    
+
     def is_segregating(self, **kwargs):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', bool)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_segregating()
         _block_append(f, self.data, out)
-    
+
         return out
-    
+
     def is_non_segregating(self, allele=None, **kwargs):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', bool)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_non_segregating(allele=allele)
         _block_append(f, self.data, out)
-    
+
         return out
-    
+
     def is_singleton(self, allele=1, **kwargs):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', bool)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_singleton(allele=allele)
         _block_append(f, self.data, out)
-    
+
         return out
-    
+
     def is_doubleton(self, allele=1, **kwargs):
         kwargs.setdefault('expectedlen', self.n_variants)
         kwargs.setdefault('dtype', bool)
         out = bcolz.zeros((0,), **kwargs)
-    
+
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_doubleton(allele=allele)
         _block_append(f, self.data, out)
-    
+
         return out
-    
+
     def count_variant(self):
         return _block_sum(self.is_variant())
-    
+
     def count_non_variant(self):
         return _block_sum(self.is_non_variant())
-    
+
     def count_segregating(self):
         return _block_sum(self.is_segregating())
-    
+
     def count_non_segregating(self, allele=None):
         return _block_sum(self.is_non_segregating(allele=allele))
-    
+
     def count_singleton(self, allele=1):
         return _block_sum(self.is_singleton(allele=allele))
-    
+
     def count_doubleton(self, allele=1):
         return _block_sum(self.is_doubleton(allele=allele))

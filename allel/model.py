@@ -44,7 +44,7 @@ def _subset(cls, data, sel0, sel1):
             return np.take(data, sel1, axis=1)
         else:
             return np.compress(sel1, data, axis=1)
-        
+
     # ensure indices
     if sel0.size == data.shape[0]:
         sel0 = np.nonzero(sel0)[0]
@@ -1565,6 +1565,9 @@ class AlleleCountsArray(np.ndarray):
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
         if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.ndim == 2 and s.shape[1] == self.shape[1]:
+                # wrap only if number of alleles is preserved
+                return AlleleCountsArray(s, copy=False)
             return np.asarray(s)
         return s
 

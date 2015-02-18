@@ -290,7 +290,7 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
             AlleleCountsArray(data)
 
         # data has wrong dimensions
-        data = diploid_genotype_data  
+        data = diploid_genotype_data
         with self.assertRaises(TypeError):
             AlleleCountsArray(data)
 
