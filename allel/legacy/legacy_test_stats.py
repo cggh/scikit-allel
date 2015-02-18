@@ -237,29 +237,3 @@ class TestHardyWeinberg(unittest.TestCase):
                   1-(1/.5), 1-(1/.625), -1, 1-(1/.5), -1]
         actual = inbreeding_coefficient(g, fill=-1)
         assert_array_close(expect, actual)
-
-
-class TestDiversity(unittest.TestCase):
-
-    def test_windowed_nucleotide_diversity(self):
-
-        g = GenotypeArray([[[0, 0], [0, 0]],
-                           [[0, 0], [0, 1]],
-                           [[0, 0], [1, 1]],
-                           [[0, 1], [1, 1]],
-                           [[1, 1], [1, 1]],
-                           [[0, 0], [1, 2]],
-                           [[0, 1], [1, 2]],
-                           [[0, 1], [-1, -1]],
-                           [[-1, -1], [-1, -1]]])
-        pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
-        # mean pairwise differences
-        # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        expect = [(7/6)/10, (13/6)/10, 1/11]
-        actual, _, _ = windowed_nucleotide_diversity(g, pos, window=10)
-        assert_array_close(expect, actual)
-
-        # should also work with haplotypes as input
-        h = g.to_haplotypes()
-        actual, _, _ = windowed_nucleotide_diversity(h, pos, window=10)
-        assert_array_close(expect, actual)

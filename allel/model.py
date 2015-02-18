@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def _subset(data, sel0, sel1):
+def _subset(cls, data, sel0, sel1):
 
     # check inputs
     sel0 = asarray_ndim(sel0, 1, allow_none=True)
@@ -54,7 +54,7 @@ def _subset(data, sel0, sel1):
     # ensure variant indices can be broadcast correctly
     sel0 = sel0[:, None]
 
-    return data[sel0, sel1]
+    return cls(data[sel0, sel1], copy=False)
 
 
 class GenotypeArray(np.ndarray):
@@ -247,11 +247,36 @@ class GenotypeArray(np.ndarray):
     def subset(self, variants=None, samples=None):
         """Make a sub-selection of variants and/or samples.
 
-        TODO params etc.
+        Parameters
+        ----------
+
+        variants : array_like
+            Boolean array or list of indices.
+        samples : array_like
+            Boolean array or list of indices.
+
+        Returns
+        -------
+
+        out : GenotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
+        ...                                [[0, 1], [1, 1], [1, 2]],
+        ...                                [[0, 2], [-1, -1], [-1, -1]]])
+        >>> g.subset(variants=[0, 1], samples=[0, 2])
+        GenotypeArray((2, 2, 2), dtype=int64)
+        [[[0 0]
+          [1 1]]
+         [[0 1]
+          [1 2]]]
 
         """
 
-        return _subset(self, variants, samples)
+        return _subset(GenotypeArray, self, variants, samples)
 
     # noinspection PyUnusedLocal
     def is_called(self):
@@ -572,6 +597,43 @@ class GenotypeArray(np.ndarray):
     def count_call(self, call, axis=None):
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
+
+    def count_alleles(self, max_allele=None):
+        """Count the number of calls of each allele per variant.
+
+        Parameters
+        ----------
+
+        max_allele : int, optional
+            The highest allele index to count. Alleles above this will be
+            ignored.
+
+        Returns
+        -------
+
+        ac : AlleleCountsArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
+        >>> g.count_alleles()
+        AlleleCountsArray((3, 3), dtype=int32)
+        [[3 1 0]
+         [1 2 1]
+         [0 0 2]]
+        >>> g.count_alleles(max_allele=1)
+        AlleleCountsArray((3, 2), dtype=int32)
+        [[3 1]
+         [1 2]
+         [0 0]]
+
+        """
+
+        return self.to_haplotypes().count_alleles(max_allele=max_allele)
 
     def to_haplotypes(self, copy=False):
         """Reshape a genotype array to view it as haplotypes by
@@ -922,36 +984,6 @@ class GenotypeArray(np.ndarray):
         g = h.to_genotypes(ploidy=ploidy)
         return g
 
-    def count_alleles(self, max_allele=None):
-        """Count the number of calls of each allele per variant.
-
-        Parameters
-        ----------
-
-        max_allele : int, optional
-            The highest allele index to count. Alleles above this will be
-            ignored.
-
-        Returns
-        -------
-
-        ac : ndarray, int, shape (n_variants, len(alleles))
-            Allele counts array.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
-        ...                                [[0, 2], [1, 1]],
-        ...                                [[2, 2], [-1, -1]]])
-        >>> g.count_alleles()
-        >>> g.count_alleles(max_allele=1)
-
-        """
-
-        return self.to_haplotypes().count_alleles(max_allele=max_allele)
-
     def haploidify_samples(self):
         """Construct a pseudo-haplotype for each sample by randomly
         selecting an allele from each genotype call.
@@ -1167,11 +1199,22 @@ class HaplotypeArray(np.ndarray):
     def subset(self, variants=None, haplotypes=None):
         """Make a sub-selection of variants and/or haplotypes.
 
-        TODO params etc.
+        Parameters
+        ----------
+
+        variants : array_like
+            Boolean array or list of indices.
+        haplotypes : array_like
+            Boolean array or list of indices.
+
+        Returns
+        -------
+
+        out : HaplotypeArray
 
         """
 
-        return _subset(self, variants, haplotypes)
+        return _subset(HaplotypeArray, self, variants, haplotypes)
 
     def is_called(self):
         return self >= 0
@@ -1388,6 +1431,20 @@ class HaplotypeArray(np.ndarray):
 
         ac : AlleleCountsArray, int, shape (n_variants, n_alleles)
 
+        Examples
+        --------
+
+        >>> import allel
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 1],
+        ...                                 [0, 1, 1, 1],
+        ...                                 [0, 2, -1, -1]], dtype='i1')
+        >>> ac = h.count_alleles()
+        >>> ac
+        AlleleCountsArray((3, 3), dtype=int32)
+        [[3 1 0]
+         [1 3 0]
+         [1 0 1]]
+
         """
 
         # determine alleles to count
@@ -1435,26 +1492,37 @@ class AlleleCountsArray(np.ndarray):
         ...                                [[0, 2], [-1, -1]]], dtype='i1')
         >>> ac = g.count_alleles()
         >>> ac
+        AlleleCountsArray((3, 3), dtype=int32)
+        [[3 1 0]
+         [1 3 0]
+         [1 0 1]]
         >>> ac.dtype
+        dtype('int32')
         >>> ac.shape
+        (3, 3)
         >>> ac.n_variants
+        3
         >>> ac.n_alleles
+        3
 
     Allele counts for a single variant can be obtained by indexing the first
     dimension, e.g.::
 
         >>> ac[1]
+        array([1, 3, 0], dtype=int32)
 
     Allele counts for a specific allele can be obtained by indexing the
     second dimension, e.g., reference allele counts:
 
         >>> ac[:, 0]
+        array([3, 1, 1], dtype=int32)
 
     Calculate the total number of alleles called for each variant:
 
         >>> import numpy as np
         >>> n = np.sum(ac, axis=1)
         >>> n
+        array([4, 4, 2])
 
     """
 
@@ -1557,7 +1625,6 @@ class AlleleCountsArray(np.ndarray):
         with ignore_invalid():
             af = np.where(n > 0, self / n, fill)
 
-        print(af)
         return af
 
     def allelism(self):

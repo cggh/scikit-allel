@@ -14,3 +14,7 @@ HaplotypeCArray
 
 .. autoclass:: HaplotypeCArray(data)
 
+AlleleCountsCArray
+------------------
+
+.. autoclass:: AlleleCountsCArray(data)

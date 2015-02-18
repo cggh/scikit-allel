@@ -11,6 +11,7 @@ GenotypeArray
     .. autoattribute:: n_variants
     .. autoattribute:: n_samples
     .. autoattribute:: ploidy
+    .. automethod:: subset
     .. automethod:: is_called
     .. automethod:: is_missing
     .. automethod:: is_hom
@@ -25,31 +26,14 @@ GenotypeArray
     .. automethod:: count_hom_alt
     .. automethod:: count_het
     .. automethod:: count_call
-    .. automethod:: view_haplotypes
+    .. automethod:: count_alleles
+    .. automethod:: to_haplotypes
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
     .. automethod:: to_packed
     .. automethod:: from_packed
     .. automethod:: to_sparse
     .. automethod:: from_sparse
-    .. automethod:: allelism
-    .. automethod:: allele_number
-    .. automethod:: allele_count
-    .. automethod:: allele_frequency
-    .. automethod:: allele_counts
-    .. automethod:: allele_frequencies
-    .. automethod:: is_variant
-    .. automethod:: is_non_variant
-    .. automethod:: is_segregating
-    .. automethod:: is_non_segregating
-    .. automethod:: is_singleton
-    .. automethod:: is_doubleton
-    .. automethod:: count_variant
-    .. automethod:: count_non_variant
-    .. automethod:: count_segregating
-    .. automethod:: count_non_segregating
-    .. automethod:: count_singleton
-    .. automethod:: count_doubleton
     .. automethod:: haploidify_samples
 
 
@@ -60,15 +44,30 @@ HaplotypeArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_haplotypes
-    .. automethod:: view_genotypes
+    .. automethod:: subset
+    .. automethod:: is_called
+    .. automethod:: is_missing
+    .. automethod:: is_ref
+    .. automethod:: is_alt
+    .. automethod:: is_call
+    .. automethod:: count_called
+    .. automethod:: count_missing
+    .. automethod:: count_ref
+    .. automethod:: count_alt
+    .. automethod:: count_call
+    .. automethod:: count_alleles
+    .. automethod:: to_genotypes
     .. automethod:: to_sparse
     .. automethod:: from_sparse
+
+AlleleCountsArray
+-----------------
+
+.. autoclass:: AlleleCountsArray
+
+    .. autoattribute:: n_variants
+    .. autoattribute:: n_alleles
     .. automethod:: allelism
-    .. automethod:: allele_number
-    .. automethod:: allele_count
-    .. automethod:: allele_frequency
-    .. automethod:: allele_counts
-    .. automethod:: allele_frequencies
     .. automethod:: is_variant
     .. automethod:: is_non_variant
     .. automethod:: is_segregating
@@ -81,6 +80,7 @@ HaplotypeArray
     .. automethod:: count_non_segregating
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
+    .. automethod:: to_frequencies
 
 SortedIndex
 -----------
@@ -114,4 +114,5 @@ GenomeIndex
 
 .. autoclass:: GenomeIndex
 
-TODO methods
+    .. automethod:: locate_position
+    .. automethod:: locate_region

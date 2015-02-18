@@ -204,7 +204,7 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     ...                                 [0, 0, 1, 2],
     ...                                 [0, 1, 1, 2],
     ...                                 [0, 1, -1, -1]])
-    >>> ac = h.allele_counts()
+    >>> ac = h.count_alleles()
     >>> allel.stats.mean_pairwise_diversity(ac)
     array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
             0.83333333,  0.83333333,  1.        ])
