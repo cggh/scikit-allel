@@ -305,8 +305,7 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
 
         # row slice
         s = ac[1:]
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, AlleleCountsArray)
+        assert_is_instance(s, AlleleCountsArray)
 
         # col slice
         s = ac[:, 1:]

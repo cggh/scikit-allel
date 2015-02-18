@@ -12,12 +12,13 @@ import h5py
 from nose.tools import eq_ as eq, assert_raises
 
 
-from allel.model import GenotypeArray, HaplotypeArray
+from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
-    HaplotypeArrayInterface, diploid_genotype_data, triploid_genotype_data, \
-    haplotype_data
-from allel.bcolz import GenotypeCArray, HaplotypeCArray
+    HaplotypeArrayInterface, AlleleCountsArrayInterface, \
+    diploid_genotype_data, triploid_genotype_data, haplotype_data, \
+    allele_counts_data
+from allel.bcolz import GenotypeCArray, HaplotypeCArray, AlleleCountsCArray
 
 
 class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -229,3 +230,82 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
             dataset = h5f[node_path]
             h = HaplotypeCArray.from_hdf5(dataset)
             aeq(haplotype_data, h)
+
+
+class AlleleCountsCArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
+
+    _class = AlleleCountsCArray
+
+    def setup_instance(self, data):
+        return AlleleCountsCArray(data)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with assert_raises(TypeError):
+            # noinspection PyArgumentList
+            AlleleCountsCArray()
+
+        # data has wrong dtype
+        data = 'foo bar'
+        with assert_raises(NotImplementedError):
+            AlleleCountsCArray(data)
+
+        # data has wrong dtype
+        data = [4., 5., 3.7]
+        with assert_raises(TypeError):
+            GenotypeCArray(data)
+
+        # data has wrong dimensions
+        data = [1, 2, 3]
+        with assert_raises(TypeError):
+            AlleleCountsCArray(data)
+
+        # data has wrong dimensions
+        data = [[[1, 2], [3, 4]]]
+        with assert_raises(TypeError):
+            AlleleCountsCArray(data)
+
+        # typed data (typed)
+        ac = AlleleCountsCArray(allele_counts_data, dtype='u1')
+        aeq(allele_counts_data, ac)
+        eq(np.uint8, ac.dtype)
+
+        # cparams
+        ac = AlleleCountsCArray(allele_counts_data,
+                                cparams=bcolz.cparams(clevel=10))
+        aeq(allele_counts_data, ac)
+        eq(10, ac.cparams.clevel)
+
+    def test_slice_types(self):
+
+        h = AlleleCountsCArray(allele_counts_data, dtype='u1')
+
+        # row slice
+        s = h[1:]
+        self.assertNotIsInstance(s, AlleleCountsCArray)
+        self.assertIsInstance(s, AlleleCountsArray)
+
+        # col slice
+        s = h[:, 1:]
+        self.assertNotIsInstance(s, AlleleCountsCArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # row index
+        s = h[0]
+        self.assertNotIsInstance(s, AlleleCountsCArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # col index
+        s = h[:, 0]
+        self.assertNotIsInstance(s, AlleleCountsCArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # item
+        s = h[0, 0]
+        self.assertNotIsInstance(s, AlleleCountsCArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.uint8)

@@ -167,7 +167,7 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
     return np.array(out), np.array(windows), np.array(counts)
 
 
-def mean_pairwise_diversity(ac, an, fill=np.nan):
+def mean_pairwise_diversity(ac, fill=np.nan):
     """Calculate the mean number of pairwise differences between
     haplotypes for each variant.
 
@@ -176,8 +176,6 @@ def mean_pairwise_diversity(ac, an, fill=np.nan):
 
     ac : array_like, int, shape (n_variants, n_alleles)
         Allele counts array.
-    an : array_like, int, shape (n_variants,)
-        Allele number array.
     fill : float
         Use this value where there are no pairs to compare (e.g.,
         all allele calls are missing).
@@ -207,8 +205,7 @@ def mean_pairwise_diversity(ac, an, fill=np.nan):
     ...                                 [0, 1, 1, 2],
     ...                                 [0, 1, -1, -1]])
     >>> ac = h.allele_counts()
-    >>> an = h.allele_number()
-    >>> allel.stats.mean_pairwise_diversity(ac, an)
+    >>> allel.stats.mean_pairwise_diversity(ac)
     array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
             0.83333333,  0.83333333,  1.        ])
 
@@ -220,11 +217,13 @@ def mean_pairwise_diversity(ac, an, fill=np.nan):
 
     # check inputs
     ac = asarray_ndim(ac, 2)
-    an = asarray_ndim(an, 1)
+    
+    # total number of haplotypes
+    n = np.sum(ac, axis=1)
 
     # total number of pairwise comparisons for each variant:
     # (an choose 2)
-    n_pairs = an * (an - 1) / 2
+    n_pairs = n * (n - 1) / 2
 
     # number of pairwise comparisons where there is no difference:
     # sum of (ac choose 2) for each allele (i.e., number of ways to
@@ -249,7 +248,7 @@ def _resize_dim2(a, l):
     return b
 
 
-def mean_pairwise_divergence(pop1_ac, pop2_ac, pop1_an, pop2_an, fill=np.nan):
+def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
     """TODO doco
 
     """
@@ -259,27 +258,27 @@ def mean_pairwise_divergence(pop1_ac, pop2_ac, pop1_an, pop2_an, fill=np.nan):
     # number of alleles.
 
     # check inputs
-    pop1_ac = asarray_ndim(pop1_ac, 2)
-    pop1_an = asarray_ndim(pop1_an, 1)
-    pop2_ac = asarray_ndim(pop2_ac, 2)
-    pop2_an = asarray_ndim(pop2_an, 1)
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
     # check lengths match
-    check_arrays_aligned(pop1_ac, pop1_an)
-    check_arrays_aligned(pop1_ac, pop2_ac)
-    check_arrays_aligned(pop1_ac, pop2_an)
+    check_arrays_aligned(ac1, ac2)
     # ensure same number of alleles in both pops
-    if pop1_ac.shape[1] < pop2_ac.shape[1]:
-        pop1_ac = _resize_dim2(pop1_ac, pop2_ac.shape[1])
-    elif pop2_ac.shape[1] < pop1_ac.shape[1]:
-        pop2_ac = _resize_dim2(pop2_ac, pop1_ac.shape[1])
+    if ac1.shape[1] < ac2.shape[1]:
+        ac1 = _resize_dim2(ac1, ac2.shape[1])
+    elif ac2.shape[1] < ac1.shape[1]:
+        ac2 = _resize_dim2(ac2, ac1.shape[1])
+
+    # total number of haplotypes sampled from each population
+    n1 = np.sum(ac1, axis=1)
+    n2 = np.sum(ac2, axis=1)
 
     # total number of pairwise comparisons for each variant
-    n_pairs = pop1_an * pop2_an
+    n_pairs = n1 * n2
 
     # number of pairwise comparisons where there is no difference:
-    # sum of (pop1_ac * pop2_ac) for each allele (i.e., number of ways to
+    # sum of (ac1 * ac2) for each allele (i.e., number of ways to
     # choose the same allele twice)
-    n_same = np.sum(pop1_ac * pop2_ac, axis=1)
+    n_same = np.sum(ac1 * ac2, axis=1)
 
     # number of pairwise differences
     n_diff = n_pairs - n_same
@@ -292,7 +291,7 @@ def mean_pairwise_divergence(pop1_ac, pop2_ac, pop1_an, pop2_an, fill=np.nan):
     return mpd
 
 
-def windowed_diversity(pos, ac, an, size, start=None, stop=None, step=None,
+def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
                        is_accessible=None, fill=np.nan):
 
     # check inputs
@@ -300,7 +299,7 @@ def windowed_diversity(pos, ac, an, size, start=None, stop=None, step=None,
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise diversity
-    mpd = mean_pairwise_diversity(ac, an, fill=0)
+    mpd = mean_pairwise_diversity(ac, fill=0)
 
     # sum in windows
     mpd_sum, windows, _ = windowed_statistic(pos, values=mpd, statistic=np.sum,
@@ -324,7 +323,7 @@ def windowed_diversity(pos, ac, an, size, start=None, stop=None, step=None,
     return pi, windows, n_bases
 
 
-def windowed_divergence(pos, pop1_ac, pop2_ac, pop1_an, pop2_an, size,
+def windowed_divergence(pos, ac1, ac2, size,
                         start=None, stop=None, step=None,
                         is_accessible=None, fill=np.nan):
 
@@ -333,7 +332,7 @@ def windowed_divergence(pos, pop1_ac, pop2_ac, pop1_an, pop2_an, size,
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise divergence
-    mpd = mean_pairwise_divergence(pop1_ac, pop2_ac, pop1_an, pop2_an, fill=0)
+    mpd = mean_pairwise_divergence(ac1, ac2, fill=0)
 
     # sum in windows
     mpd_sum, windows, _ = windowed_statistic(pos, values=mpd, statistic=np.sum,

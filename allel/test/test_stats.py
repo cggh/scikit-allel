@@ -99,10 +99,9 @@ class TestDiversity(unittest.TestCase):
                             [1, 2],
                             [0, -1],
                             [-1, -1]])
-        ac = h.allele_counts()
-        an = h.allele_number()
+        ac = h.count_alleles()
         expect = [0, 0, 1, 1, -1, -1]
-        actual = mean_pairwise_diversity(ac, an, fill=-1)
+        actual = mean_pairwise_diversity(ac, fill=-1)
         aeq(expect, actual)
 
         # four haplotypes, 6 pairwise comparison
@@ -115,10 +114,9 @@ class TestDiversity(unittest.TestCase):
                             [0, 1, 1, 2],
                             [0, 1, -1, -1],
                             [-1, -1, -1, -1]])
-        ac = h.allele_counts()
-        an = h.allele_number()
+        ac = h.count_alleles()
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        actual = mean_pairwise_diversity(ac, an, fill=-1)
+        actual = mean_pairwise_diversity(ac, fill=-1)
         assert_array_close(expect, actual)
 
     def test_windowed_diversity(self):
@@ -133,14 +131,12 @@ class TestDiversity(unittest.TestCase):
                             [0, 1, 1, 2],
                             [0, 1, -1, -1],
                             [-1, -1, -1, -1]])
-        ac = h.allele_counts()
-        an = h.allele_number()
+        ac = h.count_alleles()
         # mean pairwise diversity
         # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
         expect = [(7/6)/10, (13/6)/10, 1/11]
-        actual, _, _ = windowed_diversity(pos, ac, an, size=10, start=1,
-                                          stop=31)
+        actual, _, _ = windowed_diversity(pos, ac, size=10, start=1, stop=31)
         assert_array_close(expect, actual)
 
     def test_mean_pairwise_divergence(self):
@@ -157,13 +153,11 @@ class TestDiversity(unittest.TestCase):
                             [-1, -1, -1, -1]])
         h1 = h.subset(haplotypes=[0, 1])
         h2 = h.subset(haplotypes=[2, 3])
-        ac1 = h1.allele_counts()
-        an1 = h1.allele_number()
-        ac2 = h2.allele_counts()
-        an2 = h2.allele_number()
+        ac1 = h1.count_alleles()
+        ac2 = h2.count_alleles()
 
         expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
-        actual = mean_pairwise_divergence(ac1, ac2, an1, an2, fill=-1)
+        actual = mean_pairwise_divergence(ac1, ac2, fill=-1)
         aeq(expect, actual)
 
     # TODO test windowed_divergence
