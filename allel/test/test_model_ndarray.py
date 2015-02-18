@@ -4,16 +4,17 @@ from __future__ import absolute_import, print_function, division
 
 import numpy as np
 import unittest
-from nose.tools import eq_ as eq, assert_raises
+from nose.tools import eq_ as eq, assert_raises, assert_is_instance, \
+    assert_not_is_instance
 from allel.test.tools import assert_array_equal as aeq
 
 
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex, \
-    UniqueIndex, GenomeIndex
+    UniqueIndex, GenomeIndex, AlleleCountsArray
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
     GenomeIndexInterface, diploid_genotype_data, triploid_genotype_data, \
-    haplotype_data
+    haplotype_data, AlleleCountsArrayInterface, allele_counts_data
 
 
 class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -66,31 +67,31 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
         # row slice
         s = g[1:]
-        self.assertIsInstance(s, GenotypeArray)
+        assert_is_instance(s, GenotypeArray)
 
         # col slice
         s = g[:, 1:]
-        self.assertIsInstance(s, GenotypeArray)
+        assert_is_instance(s, GenotypeArray)
 
         # row index
         s = g[0]
-        self.assertIsInstance(s, np.ndarray)
-        self.assertNotIsInstance(s, GenotypeArray)
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, GenotypeArray)
 
         # col index
         s = g[:, 0]
-        self.assertIsInstance(s, np.ndarray)
-        self.assertNotIsInstance(s, GenotypeArray)
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, GenotypeArray)
 
         # ploidy index
         s = g[:, :, 0]
-        self.assertIsInstance(s, np.ndarray)
-        self.assertNotIsInstance(s, GenotypeArray)
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, GenotypeArray)
 
         # item
         s = g[0, 0, 0]
-        self.assertIsInstance(s, np.int8)
-        self.assertNotIsInstance(s, GenotypeArray)
+        assert_is_instance(s, np.int8)
+        assert_not_is_instance(s, GenotypeArray)
 
     def test_view(self):
 
@@ -207,26 +208,26 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
         # row slice
         s = h[1:]
-        self.assertIsInstance(s, HaplotypeArray)
+        assert_is_instance(s, HaplotypeArray)
 
         # col slice
         s = h[:, 1:]
-        self.assertIsInstance(s, HaplotypeArray)
+        assert_is_instance(s, HaplotypeArray)
 
         # row index
         s = h[0]
-        self.assertIsInstance(s, np.ndarray)
-        self.assertNotIsInstance(s, HaplotypeArray)
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, HaplotypeArray)
 
         # col index
         s = h[:, 0]
-        self.assertIsInstance(s, np.ndarray)
-        self.assertNotIsInstance(s, HaplotypeArray)
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, HaplotypeArray)
 
         # item
         s = h[0, 0]
-        self.assertIsInstance(s, np.int8)
-        self.assertNotIsInstance(s, HaplotypeArray)
+        assert_is_instance(s, np.int8)
+        assert_not_is_instance(s, HaplotypeArray)
 
     def test_view(self):
 
@@ -257,6 +258,105 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         eq(2, h.ndim)
         eq(4, h.n_variants)
         eq(3, h.n_haplotypes)
+
+
+class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
+
+    _class = AlleleCountsArray
+
+    def setup_instance(self, data):
+        return AlleleCountsArray(data)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
+            AlleleCountsArray()
+
+        # data has wrong dtype
+        data = 'foo bar'
+        with self.assertRaises(TypeError):
+            AlleleCountsArray(data)
+
+        # data has wrong dtype
+        data = [4., 5., 3.7]
+        with self.assertRaises(TypeError):
+            AlleleCountsArray(data)
+
+        # data has wrong dimensions
+        data = [1, 2, 3]
+        with self.assertRaises(TypeError):
+            AlleleCountsArray(data)
+
+        # data has wrong dimensions
+        data = diploid_genotype_data  
+        with self.assertRaises(TypeError):
+            AlleleCountsArray(data)
+
+        # valid data (typed)
+        ac = AlleleCountsArray(allele_counts_data, dtype='u1')
+        aeq(allele_counts_data, ac)
+        eq(np.uint8, ac.dtype)
+
+    def test_slice_types(self):
+
+        ac = AlleleCountsArray(allele_counts_data, dtype='u1')
+
+        # row slice
+        s = ac[1:]
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, AlleleCountsArray)
+
+        # col slice
+        s = ac[:, 1:]
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, AlleleCountsArray)
+
+        # row index
+        s = ac[0]
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, AlleleCountsArray)
+
+        # col index
+        s = ac[:, 0]
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, AlleleCountsArray)
+
+        # item
+        s = ac[0, 0]
+        assert_is_instance(s, np.uint8)
+        assert_not_is_instance(s, AlleleCountsArray)
+
+    def test_view(self):
+
+        # data has wrong dtype
+        data = 'foo bar'
+        with self.assertRaises(TypeError):
+            np.array(data).view(AlleleCountsArray)
+
+        # data has wrong dtype
+        data = [4., 5., 3.7]
+        with self.assertRaises(TypeError):
+            np.array(data).view(AlleleCountsArray)
+
+        # data has wrong dimensions
+        data = [1, 2, 3]
+        with self.assertRaises(TypeError):
+            np.array(data).view(AlleleCountsArray)
+
+        # data has wrong dimensions
+        data = diploid_genotype_data
+        with self.assertRaises(TypeError):
+            np.array(data).view(AlleleCountsArray)
+
+        # valid data
+        ac = np.array(allele_counts_data).view(AlleleCountsArray)
+        aeq(allele_counts_data, ac)
+        eq(np.int, ac.dtype)
+        eq(2, ac.ndim)
+        eq(5, ac.n_variants)
+        eq(3, ac.n_alleles)
 
 
 class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
@@ -324,12 +424,12 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
 
         # row slice
         s = pos[1:]
-        self.assertIsInstance(s, SortedIndex)
+        assert_is_instance(s, SortedIndex)
 
         # index
         s = pos[0]
-        self.assertIsInstance(s, np.uint32)
-        self.assertNotIsInstance(s, SortedIndex)
+        assert_is_instance(s, np.uint32)
+        assert_not_is_instance(s, SortedIndex)
         eq(data[0], s)
 
     def test_view(self):
@@ -422,12 +522,12 @@ class UniqueIndexTests(UniqueIndexInterface, unittest.TestCase):
 
         # row slice
         s = lbl[1:]
-        self.assertIsInstance(s, UniqueIndex)
+        assert_is_instance(s, UniqueIndex)
 
         # index
         s = lbl[0]
-        self.assertIsInstance(s, str)
-        self.assertNotIsInstance(s, UniqueIndex)
+        assert_is_instance(s, str)
+        assert_not_is_instance(s, UniqueIndex)
 
     def test_view(self):
 

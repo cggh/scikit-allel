@@ -17,8 +17,8 @@ from allel.constants import DIM_PLOIDY, DIPLOID
 from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
 
 
-__all__ = ['GenotypeArray', 'HaplotypeArray', 'SortedIndex', 'UniqueIndex',
-           'GenomeIndex']
+__all__ = ['GenotypeArray', 'HaplotypeArray', 'AlleleCountsArray',
+           'SortedIndex', 'UniqueIndex', 'GenomeIndex']
 
 
 logger = logging.getLogger(__name__)
@@ -2830,7 +2830,7 @@ class GenomeIndex(object):
             loc = rloc + offset
         return loc
 
-    def locate_interval(self, chrom, start=None, stop=None):
+    def locate_region(self, chrom, start=None, stop=None):
         offset = self.offset[chrom]
         rloc = self.pidx[chrom].locate_range(start, stop)
         if isinstance(rloc, slice):
@@ -2844,3 +2844,142 @@ class GenomeIndex(object):
 
     def __len__(self):
         return len(self.chrom)
+
+
+class AlleleCountsArray(np.ndarray):
+    """TODO doco
+
+    """
+
+    @staticmethod
+    def _check_input_data(obj):
+
+        # check dtype
+        if obj.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+        # check dimensionality
+        if obj.ndim != 2:
+            raise TypeError('array with 2 dimensions required')
+
+    def __new__(cls, data, **kwargs):
+        """Constructor."""
+        obj = np.array(data, **kwargs)
+        cls._check_input_data(obj)
+        obj = obj.view(cls)
+        return obj
+
+    def __array_finalize__(self, obj):
+
+        # called after constructor
+        if obj is None:
+            return
+
+        # called after slice (new-from-template)
+        if isinstance(obj, AlleleCountsArray):
+            return
+
+        # called after view
+        AlleleCountsArray._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            return np.asarray(s)
+        return s
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            return np.asarray(s)
+        return s
+
+    def __repr__(self):
+        s = 'AlleleCountsArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.shape[0]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles (length of second array dimension)."""
+        return self.shape[1]
+
+    def allelism(self):
+        """TODO doco
+
+        """
+
+        return np.sum(self > 0, axis=1)
+
+    def is_variant(self):
+        """TODO doco
+
+        """
+
+        return np.any(self[:, 1:] > 0, axis=1)
+
+    def is_non_variant(self):
+        """TODO doco
+
+        """
+
+        return np.all(self[:, 1:] == 0, axis=1)
+
+    def is_segregating(self):
+        """TODO doco
+
+        """
+
+        return self.allelism() > 1
+
+    def is_non_segregating(self, allele=None):
+        """TODO
+
+        """
+
+        if allele is None:
+            return self.allelism() <= 1
+        else:
+            return (self.allelism() == 1) & (self[:, allele] > 0)
+
+    def is_singleton(self, allele):
+        """TODO
+
+        """
+
+        return self[:, allele] == 1
+
+    def is_doubleton(self, allele):
+        """TODO
+
+        """
+
+        return self[:, allele] == 2
+
+    def count_variant(self):
+        return np.sum(self.is_variant())
+
+    def count_non_variant(self):
+        return np.sum(self.is_non_variant())
+
+    def count_segregating(self):
+        return np.sum(self.is_segregating())
+
+    def count_non_segregating(self, allele=None):
+        return np.sum(self.is_non_segregating(allele=allele))
+
+    def count_singleton(self, allele=1):
+        return np.sum(self.is_singleton(allele=allele))
+
+    def count_doubleton(self, allele=1):
+        return np.sum(self.is_doubleton(allele=allele))

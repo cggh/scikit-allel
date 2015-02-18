@@ -29,6 +29,12 @@ triploid_genotype_data = [[[0, 0, 0], [0, 0, 1], [-1, -1, -1]],
                           [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
                           [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
 
+allele_counts_data = [[3, 1, 0],
+                      [1, 2, 1],
+                      [1, 2, 1],
+                      [0, 0, 2],
+                      [0, 0, 0]]
+
 
 class GenotypeArrayInterface(object):
 
@@ -598,18 +604,6 @@ class GenotypeArrayInterface(object):
         actual = self.setup_instance(diploid_genotype_data).max(axis=(1, 2))
         aeq(expect, actual)
 
-    def test_allelism(self):
-
-        # diploid
-        expect = np.array([2, 3, 3, 1, 0])
-        actual = self.setup_instance(diploid_genotype_data).allelism()
-        aeq(expect, actual)
-
-        # polyploid
-        expect = np.array([2, 2, 3, 0])
-        actual = self.setup_instance(triploid_genotype_data).allelism()
-        aeq(expect, actual)
-
     def test_allele_number(self):
 
         # diploid
@@ -703,129 +697,6 @@ class GenotypeArrayInterface(object):
                            [-1, -1, -1]])
         actual = g.allele_frequencies(fill=-1)
         aeq(expect, actual)
-
-    # variant counting methods
-    ##########################
-
-    def test_is_count_variant(self):
-
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([1, 1, 1, 1, 0], dtype='b1')
-        actual = g.is_variant()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_variant())
-
-        # polyploid
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([1, 1, 1, 0], dtype='b1')
-        actual = g.is_variant()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_variant())
-
-    def test_is_count_non_variant(self):
-
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([0, 0, 0, 0, 1], dtype='b1')
-        actual = g.is_non_variant()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_non_variant())
-
-        # polyploid
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([0, 0, 0, 1], dtype='b1')
-        actual = g.is_non_variant()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_non_variant())
-
-    def test_is_count_segregating(self):
-
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([1, 1, 1, 0, 0], dtype='b1')
-        actual = g.is_segregating()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_segregating())
-
-        # polyploid
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([1, 1, 1, 0], dtype='b1')
-        actual = g.is_segregating()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_segregating())
-
-    def test_is_count_non_segregating(self):
-
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([0, 0, 0, 1, 1], dtype='b1')
-        actual = g.is_non_segregating()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_non_segregating())
-        expect = np.array([0, 0, 0, 1, 1], dtype='b1')
-        actual = g.is_non_segregating(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_non_segregating(allele=2))
-
-        # polyploid
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([0, 0, 0, 1], dtype='b1')
-        actual = g.is_non_segregating()
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_non_segregating())
-        expect = np.array([0, 0, 0, 1], dtype='b1')
-        actual = g.is_non_segregating(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_non_segregating(allele=2))
-
-    def test_is_count_singleton(self):
-
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([1, 0, 0, 0, 0], dtype='b1')
-        actual = g.is_singleton(allele=1)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_singleton(allele=1))
-        expect = np.array([0, 1, 1, 0, 0], dtype='b1')
-        actual = g.is_singleton(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_singleton(allele=2))
-
-        # polyploid
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([1, 0, 1, 0], dtype='b1')
-        actual = g.is_singleton(allele=1)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_singleton(allele=1))
-        expect = np.array([0, 0, 1, 0], dtype='b1')
-        actual = g.is_singleton(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_singleton(allele=2))
-
-    def test_is_count_doubleton(self):
-
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([0, 1, 1, 0, 0], dtype='b1')
-        actual = g.is_doubleton(allele=1)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_doubleton(allele=1))
-        expect = np.array([0, 0, 0, 1, 0], dtype='b1')
-        actual = g.is_doubleton(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_doubleton(allele=2))
-
-        # polyploid
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([0, 0, 0, 0], dtype='b1')
-        actual = g.is_doubleton(allele=1)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_doubleton(allele=1))
-        expect = np.array([0, 0, 0, 0], dtype='b1')
-        actual = g.is_doubleton(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), g.count_doubleton(allele=2))
 
 
 class HaplotypeArrayInterface(object):
@@ -1046,11 +917,6 @@ class HaplotypeArrayInterface(object):
         actual = self.setup_instance(haplotype_data).max(axis=1)
         aeq(expect, actual)
 
-    def test_allelism(self):
-        expect = np.array([2, 1, 1, 0])
-        actual = self.setup_instance(haplotype_data).allelism()
-        aeq(expect, actual)
-
     def test_allele_number(self):
         expect = np.array([2, 2, 1, 0])
         actual = self.setup_instance(haplotype_data).allele_number()
@@ -1089,69 +955,6 @@ class HaplotypeArrayInterface(object):
         actual = \
             self.setup_instance(haplotype_data).allele_frequencies(fill=-1)
         aeq(expect, actual)
-
-    # variant counting methods
-    ##########################
-
-    def test_is_count_variant(self):
-        expect = np.array([1, 1, 1, 0], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_variant()
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_variant())
-
-    def test_is_count_non_variant(self):
-        expect = np.array([0, 0, 0, 1], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_non_variant()
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_non_variant())
-
-    def test_is_count_segregating(self):
-        expect = np.array([1, 0, 0, 0], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_segregating()
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_segregating())
-
-    def test_is_count_non_segregating(self):
-        expect = np.array([0, 1, 1, 1], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_non_segregating()
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_non_segregating())
-
-        expect = np.array([0, 0, 1, 1], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_non_segregating(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_non_segregating(allele=2))
-
-    def test_is_count_singleton(self):
-        expect = np.array([1, 0, 0, 0], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_singleton(allele=1)
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_singleton(allele=1))
-
-        expect = np.array([0, 0, 1, 0], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_singleton(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_singleton(allele=2))
-
-    def test_is_count_doubleton(self):
-        expect = np.array([0, 1, 0, 0], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_doubleton(allele=1)
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_doubleton(allele=1))
-
-        expect = np.array([0, 0, 0, 0], dtype='b1')
-        h = self.setup_instance(haplotype_data)
-        actual = h.is_doubleton(allele=2)
-        aeq(expect, actual)
-        eq(np.sum(expect), h.count_doubleton(allele=2))
 
 
 class SortedIndexInterface(object):
@@ -1464,11 +1267,11 @@ class GenomeIndexInterface(object):
         with assert_raises(KeyError):
             f(3, 4)
 
-    def test_locate_interval(self):
+    def test_locate_region(self):
         chrom = [0, 0, 1, 1, 1, 2]
         pos = [1, 4, 2, 5, 5, 3]
         idx = self.setup_instance(chrom, pos)
-        f = idx.locate_interval
+        f = idx.locate_region
 
         eq(slice(0, 2), f(0))
         eq(slice(2, 5), f(1))
@@ -1486,3 +1289,169 @@ class GenomeIndexInterface(object):
             f(2, 1, 2)
         with assert_raises(KeyError):
             f(3, 2, 4)
+
+
+class AlleleCountsArrayInterface(object):
+
+    def setup_instance(self, data):
+        # to be implemented in sub-classes
+        pass
+
+    # to be overriden in sub-classes
+    _class = None
+
+    # basic properties and data access methods
+    ##########################################
+
+    def test_properties(self):
+        ac = self.setup_instance(allele_counts_data)
+        eq(2, ac.ndim)
+        eq((5, 3), ac.shape)
+        eq(5, ac.n_variants)
+        eq(3, ac.n_alleles)
+
+    def test_array_like(self):
+        # Test that an instance is array-like, in that it can be used as
+        # input argument to np.array(). I.e., there is a standard way to get
+        # a vanilla numpy array representation of the data.
+
+        ac = self.setup_instance(allele_counts_data)
+        a = np.array(ac, copy=False)
+        aeq(allele_counts_data, a)
+
+    def test_slice(self):
+        ac = self.setup_instance(allele_counts_data)
+
+        # row slice
+        s = ac[1:]
+        aeq(allele_counts_data[1:], s)
+        assert not hasattr(s, 'n_variants')
+        assert not hasattr(s, 'n_alleles')
+
+        # col slice
+        s = ac[:, 1:]
+        aeq(np.array(allele_counts_data)[:, 1:], s)
+        assert not hasattr(s, 'n_variants')
+        assert not hasattr(s, 'n_alleles')
+
+        # row index
+        s = ac[0]
+        assert not hasattr(s, 'n_variants')
+        assert not hasattr(s, 'n_alleles')
+        aeq(allele_counts_data[0], s)
+
+        # col index
+        s = ac[:, 0]
+        assert not hasattr(s, 'n_variants')
+        assert not hasattr(s, 'n_alleles')
+        aeq(np.array(allele_counts_data)[:, 0], s)
+
+        # item
+        s = ac[0, 0]
+        eq(3, s)
+
+    def test_take(self):
+        # Test the take() method.
+
+        ac = self.setup_instance(allele_counts_data)
+
+        # take variants
+        indices = [0, 2]
+        t = ac.take(indices, axis=0)
+        eq(2, t.n_variants)
+        eq(ac.n_alleles, t.n_alleles)
+        expect = np.array(allele_counts_data).take(indices, axis=0)
+        aeq(expect, t)
+
+    def test_compress(self):
+        # Test the compress() method.
+
+        ac = self.setup_instance(allele_counts_data)
+
+        # compress variants
+        condition = [True, False, True, False, True]
+        t = ac.compress(condition, axis=0)
+        eq(3, t.n_variants)
+        eq(ac.n_alleles, t.n_alleles)
+        expect = np.array(allele_counts_data).compress(condition, axis=0)
+        aeq(expect, t)
+
+    def test_subset(self):
+        # Test the subset() method.
+
+        ac = self.setup_instance(allele_counts_data)
+
+        # test with indices
+        variants = [0, 2]
+        s = ac.subset(variants=variants)
+        expect = np.array(allele_counts_data).take(variants, axis=0)
+        aeq(expect, s)
+
+        # test with condition
+        variants = [True, False, True, False, True]
+        s = ac.subset(variants=variants)
+        expect = np.array(allele_counts_data).compress(variants, axis=0)
+        aeq(expect, s)
+
+    # allelism and variant matching and counting methods
+    ####################################################
+
+    def test_allelism(self):
+
+        expect = np.array([2, 3, 3, 1, 0])
+        actual = self.setup_instance(allele_counts_data).allelism()
+        aeq(expect, actual)
+
+    def test_is_count_variant(self):
+        ac = self.setup_instance(allele_counts_data)
+        expect = np.array([1, 1, 1, 1, 0], dtype='b1')
+        actual = ac.is_variant()
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_variant())
+
+    def test_is_count_non_variant(self):
+        ac = self.setup_instance(allele_counts_data)
+        expect = np.array([0, 0, 0, 0, 1], dtype='b1')
+        actual = ac.is_non_variant()
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_non_variant())
+
+    def test_is_count_segregating(self):
+        ac = self.setup_instance(allele_counts_data)
+        expect = np.array([1, 1, 1, 0, 0], dtype='b1')
+        actual = ac.is_segregating()
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_segregating())
+
+    def test_is_count_non_segregating(self):
+        ac = self.setup_instance(allele_counts_data)
+        expect = np.array([0, 0, 0, 1, 1], dtype='b1')
+        actual = ac.is_non_segregating()
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_non_segregating())
+        expect = np.array([0, 0, 0, 1, 0], dtype='b1')
+        actual = ac.is_non_segregating(allele=2)
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_non_segregating(allele=2))
+
+    def test_is_count_singleton(self):
+        ac = self.setup_instance(allele_counts_data)
+        expect = np.array([1, 0, 0, 0, 0], dtype='b1')
+        actual = ac.is_singleton(allele=1)
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_singleton(allele=1))
+        expect = np.array([0, 1, 1, 0, 0], dtype='b1')
+        actual = ac.is_singleton(allele=2)
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_singleton(allele=2))
+
+    def test_is_count_doubleton(self):
+        ac = self.setup_instance(allele_counts_data)
+        expect = np.array([0, 1, 1, 0, 0], dtype='b1')
+        actual = ac.is_doubleton(allele=1)
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_doubleton(allele=1))
+        expect = np.array([0, 0, 0, 1, 0], dtype='b1')
+        actual = ac.is_doubleton(allele=2)
+        aeq(expect, actual)
+        eq(np.sum(expect), ac.count_doubleton(allele=2))
