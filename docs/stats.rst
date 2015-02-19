@@ -3,6 +3,14 @@ Statistics
 
 .. automodule:: allel.stats
 
+Window utilities
+----------------
+
+.. autofunction:: moving_statistic
+.. autofunction:: windowed_count
+.. autofunction:: windowed_statistic
+.. autofunction:: per_base
+
 Diversity & divergence
 ----------------------
 
@@ -14,11 +22,7 @@ Diversity & divergence
 Hardy-Weinberg equilibrium
 --------------------------
 
-TODO
+.. autofunction:: heterozygosity_observed
+.. autofunction:: heterozygosity_expected
+.. autofunction:: inbreeding_coefficient
 
-Utility functions
------------------
-
-.. autofunction:: windowed_statistic
-.. autofunction:: windowed_count
-.. autofunction:: moving_statistic

@@ -304,7 +304,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.ploidy == DIPLOID:
+        if self.shape[-1] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 >= 0) & (allele2 >= 0)'
@@ -312,7 +312,7 @@ class GenotypeArray(np.ndarray):
 
         # general ploidy case
         else:
-            out = np.all(self >= 0, axis=DIM_PLOIDY)
+            out = np.all(self >= 0, axis=-1)
 
         return out
 
@@ -342,7 +342,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.ploidy == DIPLOID:
+        if self.shape[-1] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             # call is missing if either allele is missing
@@ -352,7 +352,7 @@ class GenotypeArray(np.ndarray):
         # general ploidy case
         else:
             # call is missing if any allele is missing
-            out = np.any(self < 0, axis=DIM_PLOIDY)
+            out = np.any(self < 0, axis=-1)
 
         return out
 
@@ -392,7 +392,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.ploidy == DIPLOID:
+        if self.shape[-1] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             if allele is None:
@@ -407,9 +407,9 @@ class GenotypeArray(np.ndarray):
                 allele1 = self[..., 0, None]  # noqa
                 other_alleles = self[..., 1:]  # noqa
                 ex = '(allele1 >= 0) & (allele1 == other_alleles)'
-                out = np.all(ne.evaluate(ex), axis=DIM_PLOIDY)
+                out = np.all(ne.evaluate(ex), axis=-1)
             else:
-                out = np.all(self == allele, axis=DIM_PLOIDY)
+                out = np.all(self == allele, axis=-1)
 
         return out
 
@@ -466,7 +466,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.ploidy == DIPLOID:
+        if self.shape[-1] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 > 0) & (allele1  == allele2)'
@@ -477,7 +477,7 @@ class GenotypeArray(np.ndarray):
             allele1 = self[..., 0, None]  # noqa
             other_alleles = self[..., 1:]  # noqa
             ex = '(allele1 > 0) & (allele1 == other_alleles)'
-            out = np.all(ne.evaluate(ex), axis=DIM_PLOIDY)
+            out = np.all(ne.evaluate(ex), axis=-1)
 
         return out
 
@@ -507,7 +507,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.ploidy == DIPLOID:
+        if self.shape[-1] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 >= 0) & (allele2  >= 0) & (allele1 != allele2)'
@@ -517,8 +517,8 @@ class GenotypeArray(np.ndarray):
         else:
             allele1 = self[..., 0, None]  # noqa
             other_alleles = self[..., 1:]  # noqa
-            out = np.all(self >= 0, axis=DIM_PLOIDY) \
-                & np.any(allele1 != other_alleles, axis=DIM_PLOIDY)
+            out = np.all(self >= 0, axis=-1) \
+                & np.any(allele1 != other_alleles, axis=-1)
 
         return out
 
@@ -553,7 +553,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.ploidy == DIPLOID:
+        if self.shape[-1] == DIPLOID:
             if not len(call) == DIPLOID:
                 raise ValueError('invalid call: %r', call)
             allele1 = self[..., 0]  # noqa
@@ -563,10 +563,10 @@ class GenotypeArray(np.ndarray):
 
         # general ploidy case
         else:
-            if not len(call) == self.ploidy:
+            if not len(call) == self.shape[-1]:
                 raise ValueError('invalid call: %r', call)
             call = np.asarray(call)[None, None, :]
-            out = np.all(self == call, axis=DIM_PLOIDY)
+            out = np.all(self == call, axis=-1)
 
         return out
 
@@ -721,7 +721,7 @@ class GenotypeArray(np.ndarray):
 
         # count number of alternate alleles
         out = np.empty((self.n_variants, self.n_samples), dtype='i1')
-        np.sum(self > 0, axis=DIM_PLOIDY, out=out)
+        np.sum(self > 0, axis=-1, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -781,7 +781,7 @@ class GenotypeArray(np.ndarray):
 
         for i, allele in enumerate(alleles):
             # count alleles along ploidy dimension
-            np.sum(self == allele, axis=DIM_PLOIDY, out=out[..., i])
+            np.sum(self == allele, axis=-1, out=out[..., i])
 
         return out
 
@@ -818,7 +818,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        if self.ploidy != 2:
+        if self.shape[-1] != 2:
             raise ValueError('can only pack diploid calls')
 
         if boundscheck:
@@ -1024,7 +1024,7 @@ class GenotypeArray(np.ndarray):
         # necessary, TODO review
 
         # define the range of possible indices, e.g., diploid => (0, 1)
-        index_range = np.arange(0, self.ploidy, dtype='u1')
+        index_range = np.arange(0, self.shape[-1], dtype='u1')
 
         # create a random index for each genotype call
         indices = np.random.choice(index_range,
@@ -1033,7 +1033,7 @@ class GenotypeArray(np.ndarray):
 
         # reshape genotype data so it's suitable for passing to np.choose
         # by merging the variants and samples dimensions
-        choices = self.reshape(-1, self.ploidy).T
+        choices = self.reshape(-1, self.shape[-1]).T
 
         # now use random indices to haploidify
         data = np.choose(indices, choices)
