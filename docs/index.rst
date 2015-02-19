@@ -29,6 +29,7 @@ Contents
     model
     bcolz
     stats
+    plot
 
 Acknowledgments
 ---------------

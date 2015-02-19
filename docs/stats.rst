@@ -19,10 +19,14 @@ Diversity & divergence
 .. autofunction:: mean_pairwise_divergence
 .. autofunction:: windowed_divergence
 
+Pairwise distance
+-----------------
+
+.. autofunction:: pairwise_distance
+
 Hardy-Weinberg equilibrium
 --------------------------
 
 .. autofunction:: heterozygosity_observed
 .. autofunction:: heterozygosity_expected
 .. autofunction:: inbreeding_coefficient
-

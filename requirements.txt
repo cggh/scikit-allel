@@ -1,6 +1,7 @@
 numpy
 scipy
+matplotlib
 numexpr
 h5py
-nose
 bcolz
+nose

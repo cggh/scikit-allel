@@ -912,3 +912,90 @@ def inbreeding_coefficient(g, fill=np.nan):
         f = np.where(he > 0, 1 - (ho / he), fill)
 
     return f
+
+
+def pairwise_distance(x, metric):
+    """Compute pairwise distance between individuals (samples or haplotypes).
+
+    Parameters
+    ----------
+
+    x : array_like, shape (n_variants, n_individuals)
+        Array of genotype data.
+    metric : string or function
+        Distance metric. See documentation for the function
+        :func:`scipy.spatial.distance.pdist` for a list of built-in
+        distance metrics.
+
+    Returns
+    -------
+
+    dist : ndarray, shape (n_individuals * (n_individuals - 1) / 2,)
+        Distance matrix in condensed form.
+
+    See Also
+    --------
+
+    allel.plot.pairwise_distance
+
+    Notes
+    -----
+
+    If `x` is a bcolz carray, a chunk-wise implementation will be used to
+    avoid loading the entire input array into memory. This means that
+    a distance matrix will be calculated for each chunk in the input array,
+    and the results will be summed to produce the final output. For some
+    distance metrics this will return a different result from the standard
+    implementation, although the relative distances may be equivalent.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
+    ...                                [[0, 1], [1, 1], [1, 2]],
+    ...                                [[0, 2], [2, 2], [-1, -1]]])
+    >>> d = allel.stats.pairwise_distance(g.to_n_alt(), metric='cityblock')
+    >>> d
+    array([ 3.,  4.,  3.])
+    >>> import scipy.spatial
+    >>> scipy.spatial.distance.squareform(d)
+    array([[ 0.,  3.,  4.],
+           [ 3.,  0.,  3.],
+           [ 4.,  3.,  0.]])
+
+    """
+
+    import scipy.spatial
+
+    # check inputs
+    if not hasattr(x, 'ndim'):
+        x = np.asarray(x)
+    if x.ndim != 2:
+        raise ValueError('expected array with 2 dimensions')
+
+    def f(b):
+
+        # transpose as pdist expects (m, n) for m observations in an
+        # n-dimensional space
+        t = b.T
+
+        # compute the distance matrix
+        return scipy.spatial.distance.pdist(t, metric=metric)
+
+    if hasattr(x, 'chunklen'):
+        # use chunk-wise implementation
+        bs = x.chunklen
+        dist = None
+        for i in range(0, x.shape[0], bs):
+            block = x[i:i+bs]
+            if dist is None:
+                dist = f(block)
+            else:
+                dist += f(block)
+
+    else:
+        # standard implementation
+        dist = f(x)
+
+    return dist

@@ -7,6 +7,7 @@ __version__ = '0.5.0.dev0'
 
 
 import allel.model as model
-import allel.stats as stats
-import allel.constants as constants
 import allel.bcolz as bcolz
+import allel.stats as stats
+import allel.plot as plot
+import allel.constants as constants
