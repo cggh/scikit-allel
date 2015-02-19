@@ -854,7 +854,8 @@ def heterozygosity_expected(af, ploidy, fill=np.nan):
 
     # fill values where allele frequencies could not be calculated
     af_sum = np.sum(af, axis=1)
-    out[(af_sum < 1) | np.isnan(af_sum)] = fill
+    with ignore_invalid():
+        out[(af_sum < 1) | np.isnan(af_sum)] = fill
 
     return out
 
