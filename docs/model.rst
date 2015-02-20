@@ -109,10 +109,10 @@ UniqueIndex
     .. automethod:: locate_intersection
     .. automethod:: intersect
 
-GenomeIndex
------------
+SortedMultiIndex
+----------------
 
-.. autoclass:: GenomeIndex
+.. autoclass:: SortedMultiIndex
 
-    .. automethod:: locate_position
-    .. automethod:: locate_region
+    .. automethod:: locate_key
+    .. automethod:: locate_range

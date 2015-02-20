@@ -10,10 +10,10 @@ from allel.test.tools import assert_array_equal as aeq
 
 
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex, \
-    UniqueIndex, GenomeIndex, AlleleCountsArray
+    UniqueIndex, SortedMultiIndex, AlleleCountsArray
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
-    GenomeIndexInterface, diploid_genotype_data, triploid_genotype_data, \
+    SortedMultiIndexInterface, diploid_genotype_data, triploid_genotype_data, \
     haplotype_data, AlleleCountsArrayInterface, allele_counts_data
 
 
@@ -377,56 +377,61 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
         with self.assertRaises(TypeError):
             SortedIndex(data)
 
-        # data has wrong dtype
-        data = [4., 5., 3.7]
-        with self.assertRaises(TypeError):
-            SortedIndex(data)
-
         # data has wrong dimensions
         data = [[1, 2], [3, 4]]
         with self.assertRaises(TypeError):
             SortedIndex(data)
 
-        # positions are not sorted
+        # values are not sorted
         data = [2, 1, 3, 5]
+        with self.assertRaises(ValueError):
+            SortedIndex(data)
+
+        # values are not sorted
+        data = [4., 5., 3.7]
         with self.assertRaises(ValueError):
             SortedIndex(data)
 
         # valid data (unique)
         data = [1, 4, 5, 7, 12]
-        pos = SortedIndex(data)
-        aeq(data, pos)
-        eq(np.int, pos.dtype)
-        eq(1, pos.ndim)
-        eq(5, len(pos))
-        assert pos.is_unique
+        idx = SortedIndex(data)
+        aeq(data, idx)
+        eq(np.int, idx.dtype)
+        eq(1, idx.ndim)
+        eq(5, len(idx))
+        assert idx.is_unique
 
         # valid data (non-unique)
         data = [1, 4, 5, 5, 7, 12]
-        pos = SortedIndex(data)
-        aeq(data, pos)
-        eq(np.int, pos.dtype)
-        eq(1, pos.ndim)
-        eq(6, len(pos))
-        assert not pos.is_unique
+        idx = SortedIndex(data)
+        aeq(data, idx)
+        eq(np.int, idx.dtype)
+        eq(1, idx.ndim)
+        eq(6, len(idx))
+        assert not idx.is_unique
 
         # valid data (typed)
         data = [1, 4, 5, 5, 7, 12]
-        pos = SortedIndex(data, dtype='u4')
-        aeq(data, pos)
-        eq(np.uint32, pos.dtype)
+        idx = SortedIndex(data, dtype='u4')
+        aeq(data, idx)
+        eq(np.uint32, idx.dtype)
+
+        # valid data (non-numeric)
+        data = ['1', '12', '4', '5', '5', '7']
+        idx = SortedIndex(data)
+        aeq(data, idx)
 
     def test_slice(self):
 
         data = [1, 4, 5, 5, 7, 12]
-        pos = SortedIndex(data, dtype='u4')
+        idx = SortedIndex(data, dtype='u4')
 
         # row slice
-        s = pos[1:]
+        s = idx[1:]
         assert_is_instance(s, SortedIndex)
 
         # index
-        s = pos[0]
+        s = idx[0]
         assert_is_instance(s, np.uint32)
         assert_not_is_instance(s, SortedIndex)
         eq(data[0], s)
@@ -438,44 +443,49 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
         with self.assertRaises(TypeError):
             np.asarray(data).view(SortedIndex)
 
-        # data has wrong dtype
-        data = [4., 5., 3.7]
-        with self.assertRaises(TypeError):
-            np.asarray(data).view(SortedIndex)
-
         # data has wrong dimensions
         data = [[1, 2], [3, 4]]
         with self.assertRaises(TypeError):
             np.asarray(data).view(SortedIndex)
 
-        # positions are not sorted
+        # values are not sorted
         data = [2, 1, 3, 5]
+        with self.assertRaises(ValueError):
+            np.asarray(data).view(SortedIndex)
+
+        # values are not sorted
+        data = [4., 5., 3.7]
         with self.assertRaises(ValueError):
             np.asarray(data).view(SortedIndex)
 
         # valid data (unique)
         data = [1, 4, 5, 7, 12]
-        pos = np.asarray(data).view(SortedIndex)
-        aeq(data, pos)
-        eq(np.int, pos.dtype)
-        eq(1, pos.ndim)
-        eq(5, len(pos))
-        assert pos.is_unique
+        idx = np.asarray(data).view(SortedIndex)
+        aeq(data, idx)
+        eq(np.int, idx.dtype)
+        eq(1, idx.ndim)
+        eq(5, len(idx))
+        assert idx.is_unique
 
         # valid data (non-unique)
         data = [1, 4, 5, 5, 7, 12]
-        pos = np.asarray(data).view(SortedIndex)
-        aeq(data, pos)
-        eq(np.int, pos.dtype)
-        eq(1, pos.ndim)
-        eq(6, len(pos))
-        assert not pos.is_unique
+        idx = np.asarray(data).view(SortedIndex)
+        aeq(data, idx)
+        eq(np.int, idx.dtype)
+        eq(1, idx.ndim)
+        eq(6, len(idx))
+        assert not idx.is_unique
 
         # valid data (typed)
         data = np.array([1, 4, 5, 5, 7, 12], dtype='u4')
-        pos = np.asarray(data).view(SortedIndex)
-        aeq(data, pos)
-        eq(np.uint32, pos.dtype)
+        idx = np.asarray(data).view(SortedIndex)
+        aeq(data, idx)
+        eq(np.uint32, idx.dtype)
+
+        # valid data (non-numeric)
+        data = ['1', '12', '4', '5', '5', '7']
+        idx = np.asarray(data).view(SortedIndex)
+        aeq(data, idx)
 
 
 class UniqueIndexTests(UniqueIndexInterface, unittest.TestCase):
@@ -553,9 +563,9 @@ class UniqueIndexTests(UniqueIndexInterface, unittest.TestCase):
         aeq(data, lbl)
 
 
-class GenomeIndexTests(GenomeIndexInterface, unittest.TestCase):
+class SortedMultiIndexTests(SortedMultiIndexInterface, unittest.TestCase):
 
     def setup_instance(self, chrom, pos):
-        return GenomeIndex(chrom, pos)
+        return SortedMultiIndex(chrom, pos)
 
-    _class = GenomeIndex
+    _class = SortedMultiIndex

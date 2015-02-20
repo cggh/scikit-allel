@@ -1326,7 +1326,7 @@ class UniqueIndexInterface(object):
         aeq(expect, actual)
 
 
-class GenomeIndexInterface(object):
+class SortedMultiIndexInterface(object):
 
     _class = None
 
@@ -1339,11 +1339,12 @@ class GenomeIndexInterface(object):
         idx = self.setup_instance(chrom, pos)
         eq(6, len(idx))
 
-    def test_locate_position(self):
+    def test_locate_key(self):
         chrom = [0, 0, 1, 1, 1, 2]
         pos = [1, 4, 2, 5, 5, 3]
         idx = self.setup_instance(chrom, pos)
-        f = idx.locate_position
+        f = idx.locate_key
+        eq(slice(0, 2), f(0))
         eq(0, f(0, 1))
         eq(2, f(1, 2))
         eq(slice(3, 5), f(1, 5))
@@ -1352,20 +1353,20 @@ class GenomeIndexInterface(object):
         with assert_raises(KeyError):
             f(3, 4)
 
-    def test_locate_region(self):
+    def test_locate_range(self):
         chrom = [0, 0, 1, 1, 1, 2]
         pos = [1, 4, 2, 5, 5, 3]
         idx = self.setup_instance(chrom, pos)
-        f = idx.locate_region
+        f = idx.locate_range
 
         eq(slice(0, 2), f(0))
         eq(slice(2, 5), f(1))
-        eq(5, f(2))
+        eq(slice(5, 6), f(2))
         eq(slice(0, 2), f(0, 1, 5))
-        eq(0, f(0, 1, 3))
+        eq(slice(0, 1), f(0, 1, 3))
         eq(slice(2, 5), f(1, 1, 5))
-        eq(2, f(1, 1, 4))
-        eq(5, f(2, 2, 6))
+        eq(slice(2, 3), f(1, 1, 4))
+        eq(slice(5, 6), f(2, 2, 6))
         with assert_raises(KeyError):
             f(0, 17, 19)
         with assert_raises(KeyError):

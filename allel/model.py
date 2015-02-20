@@ -18,7 +18,7 @@ from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
 
 
 __all__ = ['GenotypeArray', 'HaplotypeArray', 'AlleleCountsArray',
-           'SortedIndex', 'UniqueIndex', 'GenomeIndex']
+           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex']
 
 
 logger = logging.getLogger(__name__)
@@ -1864,16 +1864,13 @@ class SortedIndex(np.ndarray):
     Parameters
     ----------
 
-    data : array_like, int
+    data : array_like
         Values in ascending order.
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
 
     Notes
     -----
-
-    This class represents an index of sorted values, e.g., the genomic
-    positions of a set of variants as a 1-dimensional numpy array of integers.
 
     Values must be given in ascending order, although duplicate values
     may be present (i.e., values must be monotonically increasing).
@@ -1897,17 +1894,12 @@ class SortedIndex(np.ndarray):
     @staticmethod
     def _check_input_data(obj):
 
-        # check dtype
-        if obj.dtype.kind not in 'ui':
-            raise TypeError('integer dtype required')
-
         # check dimensionality
         if obj.ndim != 1:
             raise TypeError('array with 1 dimension required')
 
         # check sorted ascending
-        diff = np.diff(obj)
-        if np.any(diff < 0):
+        if np.any(obj[:-1] > obj[1:]):
             raise ValueError('array is not monotonically increasing')
 
     def __new__(cls, data, **kwargs):
@@ -1962,7 +1954,7 @@ class SortedIndex(np.ndarray):
     def is_unique(self):
         """True if no duplicate entries."""
         if not hasattr(self, '_is_unique'):
-            self._is_unique = ~np.any(np.diff(self) == 0)
+            self._is_unique = ~np.any(self[:-1] == self[1:])
         return self._is_unique
 
     def locate_key(self, key):
@@ -1972,7 +1964,7 @@ class SortedIndex(np.ndarray):
         ----------
 
         key : int
-            Position to locate.
+            Value to locate.
 
         Returns
         -------
@@ -2616,60 +2608,182 @@ class UniqueIndex(np.ndarray):
         return np.compress(loc, self)
 
 
-class GenomeIndex(object):
+# TODO VariantTable
+# TODO SortedIndex and SortedMultiIndex support non-arrays (using bisect)
 
-    def __init__(self, chrom, pos, copy=True):
-        chrom = SortedIndex(chrom, copy=copy)
-        pos = np.array(pos, copy=copy)
-        pos = asarray_ndim(pos, 1)
-        check_arrays_aligned(chrom, pos)
-        self.chrom = chrom
-        self.pos = pos
-        self.offset = dict()
-        self.pidx = dict()
-        for c in np.unique(chrom):
-            loc = chrom.locate_key(c)
-            if isinstance(loc, slice):
-                start = loc.start
-                stop = loc.stop
-            else:
-                # assume singleton
-                start = loc
-                stop = loc + 1
-            self.offset[c] = start
-            self.pidx[c] = SortedIndex(pos[start:stop], copy=False)
+
+class SortedMultiIndex(object):
+    """Two-level index of sorted values, e.g., variant positions from two or
+    more chromosomes/contigs.
+
+    Parameters
+    ----------
+
+    l1 : array_like
+        First level values in ascending order.
+    l2 : array_like
+        Second level values, in ascending order within each sub-level.
+    copy : bool, optional
+        If True, inputs will be copied into new arrays.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
+    >>> pos = [1, 4, 2, 5, 5, 3]
+    >>> idx = allel.model.SortedMultiIndex(chrom, pos)
+    >>> len(idx)
+    6
+
+    """
+
+    def __init__(self, l1, l2, copy=True):
+        l1 = SortedIndex(l1, copy=copy)
+        l2 = np.array(l2, copy=copy)
+        l2 = asarray_ndim(l2, 1)
+        check_arrays_aligned(l1, l2)
+        self.l1 = l1
+        self.l2 = l2
 
     def __repr__(self):
-        s = ('GenomeIndex(%s)\n' % len(self))
+        s = ('SortedMultiIndex(%s)\n' % len(self))
         return s
 
     def __str__(self):
-        s = ('GenomeIndex(%s)\n' % len(self))
+        s = ('SortedMultiIndex(%s)\n' % len(self))
         return s
 
-    def locate_position(self, chrom, pos):
-        offset = self.offset[chrom]
-        rloc = self.pidx[chrom].locate_key(pos)
-        if isinstance(rloc, slice):
-            loc = slice(rloc.start + offset, rloc.stop + offset)
-            if loc.stop - loc.start == 1:
-                loc = loc.start
+    def locate_key(self, k1, k2=None):
+        """
+        Get index location for the requested key.
+
+        Parameters
+        ----------
+
+        k1 : object
+            Level 1 key.
+        k2 : object, optional
+            Level 2 key.
+
+        Returns
+        -------
+
+        loc : int or slice
+            Location of requested key (will be slice if there are duplicate
+            entries).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.model.SortedMultiIndex(chrom, pos)
+        >>> idx.locate_key('chr1')
+        slice(0, 2, None)
+        >>> idx.locate_key('chr1', 4)
+        1
+        >>> idx.locate_key('chr2', 5)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_key('chr3', 4)
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        ('chr3', 4)
+
+        """
+
+        loc1 = self.l1.locate_key(k1)
+        if k2 is None:
+            return loc1
+        if isinstance(loc1, slice):
+            offset = loc1.start
+            try:
+                loc2 = SortedIndex(self.l2[loc1], copy=False).locate_key(k2)
+            except KeyError:
+                # reraise with more information
+                raise KeyError(k1, k2)
+            else:
+                if isinstance(loc2, slice):
+                    loc = slice(offset + loc2.start, offset + loc2.stop)
+                else:
+                    # assume singleton
+                    loc = offset + loc2
         else:
-            # assume singleton
-            loc = rloc + offset
+            # singleton match in l1
+            v = self.l2[loc1]
+            if v == k2:
+                loc = loc1
+            else:
+                raise KeyError(k1, k2)
         return loc
 
-    def locate_region(self, chrom, start=None, stop=None):
-        offset = self.offset[chrom]
-        rloc = self.pidx[chrom].locate_range(start, stop)
-        if isinstance(rloc, slice):
-            loc = slice(rloc.start + offset, rloc.stop + offset)
-            if loc.stop - loc.start == 1:
-                loc = loc.start
+    def locate_range(self, k1, start=None, stop=None):
+        """Locate slice of index containing all entries within the range
+        `key`:`start`-`stop` **inclusive**.
+
+        Parameters
+        ----------
+
+        key : object
+            Level 1 key value.
+        start : object, optional
+            Level 2 start value.
+        stop : object, optional
+            Level 2 stop value.
+
+        Returns
+        -------
+
+        loc : slice
+            Slice object.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.model.SortedMultiIndex(chrom, pos)
+        >>> idx.locate_range('chr1')
+        slice(0, 2, None)
+        >>> idx.locate_range('chr1', 1, 4)
+        slice(0, 2, None)
+        >>> idx.locate_range('chr2', 3, 7)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_range('chr3', 4, 9)
+        ... except KeyError as e:
+        ...     print(e)
+        ('chr3', 4, 9)
+
+        """
+
+        loc1 = self.l1.locate_key(k1)
+        if start is None and stop is None:
+            loc = loc1
+        elif isinstance(loc1, slice):
+            offset = loc1.start
+            idx = SortedIndex(self.l2[loc1], copy=False)
+            try:
+                loc2 = idx.locate_range(start, stop)
+            except KeyError:
+                raise KeyError(k1, start, stop)
+            else:
+                loc = slice(offset + loc2.start, offset + loc2.stop)
         else:
-            # assume singleton
-            loc = rloc + offset
+            # singleton match in l1
+            v = self.l2[loc1]
+            if start <= v <= stop:
+                loc = loc1
+            else:
+                raise KeyError(k1, start, stop)
+        # ensure slice is always returned
+        if not isinstance(loc, slice):
+            loc = slice(loc, loc + 1)
         return loc
 
     def __len__(self):
-        return len(self.chrom)
+        return len(self.l1)

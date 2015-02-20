@@ -250,6 +250,136 @@ def _block_subset(cls, data, sel0, sel1, **kwargs):
     return out
 
 
+def carray_from_hdf5(*args, **kwargs):
+    """TODO
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if len(args) == 1:
+        dataset = args[0]
+
+    elif len(args) == 2:
+        file_path, node_path = args
+        h5f = h5py.File(file_path, mode='r')
+        try:
+            dataset = h5f[node_path]
+        except:
+            h5f.close()
+            raise
+
+    else:
+        raise ValueError('bad arguments; expected dataset or (file_path, '
+                         'node_path), found %s' % repr(args))
+
+    try:
+
+        if not isinstance(dataset, h5py.Dataset):
+            raise ValueError('expected dataset, found %r' % dataset)
+
+        start = kwargs.pop('start', 0)
+        stop = kwargs.pop('stop', dataset.shape[0])
+
+        # setup output data
+        kwargs.setdefault('expectedlen', dataset.shape[0])
+        kwargs.setdefault('dtype', dataset.dtype)
+        data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
+
+        # load block-wise
+        if hasattr(dataset, 'chunks'):
+            # use input chunk length
+            bs = dataset.chunks[0]
+        else:
+            # use output chunk length
+            bs = data.chunklen
+        for i in range(start, stop, bs):
+            j = min(i + bs, stop)
+            chunk = dataset[i:j]
+            data.append(chunk)
+
+        return data
+
+    finally:
+        if h5f is not None:
+            h5f.close()
+
+
+def ctable_from_hdf5_group(*args, **kwargs):
+    """TODO
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if len(args) == 1:
+        group = args[0]
+
+    elif len(args) == 2:
+        file_path, node_path = args
+        h5f = h5py.File(file_path, mode='r')
+        try:
+            group = h5f[node_path]
+        except:
+            h5f.close()
+            raise
+
+    else:
+        raise ValueError('bad arguments; expected group or (file_path, '
+                         'node_path), found %s' % repr(args))
+
+    try:
+
+        if not isinstance(group, h5py.Group):
+            raise ValueError('expected group, found %r' % group)
+
+        # determine dataset names to load
+        available_dataset_names = [n for n in group.keys()
+                                   if isinstance(group[n], h5py.Dataset)]
+        names = kwargs.pop('names', available_dataset_names)
+        for n in names:
+            if n not in set(group.keys()):
+                raise ValueError('name not found: %s' % n)
+            if not isinstance(group[n], h5py.Dataset):
+                raise ValueError('name does not refer to a dataset: %s, %r'
+                                 % (n, group[n]))
+
+        # check datasets are aligned
+        datasets = [group[n] for n in names]
+        length = datasets[0].shape[0]
+        for d in datasets[1:]:
+            if d.shape[0] != length:
+                raise ValueError('datasets must be of equal length')
+
+        # determine start and stop parameters for load
+        start = kwargs.pop('start', 0)
+        stop = kwargs.pop('stop', length)
+
+        # setup output data
+        kwargs.setdefault('expectedlen', length)
+        bs = max([d.chunks[0] for d in datasets if hasattr(d, 'chunks')])
+        data = None
+
+        # load block-wise
+        for i in range(start, stop, bs):
+            j = min(i + bs, stop)
+            columns = [d[i:j] for d in datasets]
+            if data is None:
+                data = bcolz.ctable(columns, names=names, **kwargs)
+            else:
+                data.append(columns)
+
+        return data
+
+    finally:
+        if h5f is not None:
+            h5f.close()
+
+
 class _CArrayWrapper(object):
 
     def __setitem__(self, key, value):
@@ -310,53 +440,8 @@ class _CArrayWrapper(object):
 
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
-        import h5py
-
-        h5f = None
-
-        if len(args) == 1:
-            dataset = args[0]
-
-        elif len(args) == 2:
-            file_path, node_path = args
-            h5f = h5py.File(file_path, mode='r')
-            try:
-                dataset = h5f[node_path]
-            except:
-                h5f.close()
-                raise
-
-        else:
-            raise ValueError('bad arguments; expected dataset or (file_path, '
-                             'node_path), found %s' % repr(args))
-
-        try:
-
-            # check input dataset
-            cls.check_input_data(dataset)
-            start = kwargs.pop('start', 0)
-            stop = kwargs.pop('stop', dataset.shape[0])
-            step = kwargs.pop('step', 1)
-
-            # setup output data
-            kwargs.setdefault('expectedlen', dataset.shape[0])
-            kwargs.setdefault('dtype', dataset.dtype)
-            data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
-
-            # load block-wise
-            if hasattr(dataset, 'chunks'):
-                bs = dataset.chunks[0]
-            else:
-                bs = data.chunklen
-            for i in range(start, stop, bs):
-                j = min(i + bs, stop)
-                data.append(dataset[i:j:step])
-
-            return cls(data, copy=False)
-
-        finally:
-            if h5f is not None:
-                h5f.close()
+        data = carray_from_hdf5(*args, **kwargs)
+        return cls(data, copy=False)
 
 
 class GenotypeCArray(_CArrayWrapper):
