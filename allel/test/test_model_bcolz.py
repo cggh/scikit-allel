@@ -12,13 +12,16 @@ import h5py
 from nose.tools import eq_ as eq, assert_raises
 
 
-from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray
+from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
+    VariantTable
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, AlleleCountsArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, haplotype_data, \
-    allele_counts_data
-from allel.bcolz import GenotypeCArray, HaplotypeCArray, AlleleCountsCArray
+    allele_counts_data, VariantTableInterface, variant_table_data, \
+    variant_table_names
+from allel.bcolz import GenotypeCArray, HaplotypeCArray, AlleleCountsCArray,\
+    VariantCTable
 
 
 class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -309,3 +312,39 @@ class AlleleCountsCArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
         self.assertNotIsInstance(s, AlleleCountsCArray)
         self.assertNotIsInstance(s, AlleleCountsArray)
         self.assertIsInstance(s, np.uint8)
+
+
+class VariantCTableTests(VariantTableInterface, unittest.TestCase):
+
+    _class = VariantCTable
+
+    def setup_instance(self, data, **kwargs):
+        return VariantCTable(data, **kwargs)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
+            VariantCTable()
+
+    def test_slice_types(self):
+
+        vt = VariantCTable(variant_table_data, names=variant_table_names)
+
+        # row slice
+        s = vt[1:]
+        self.assertNotIsInstance(s, VariantCTable)
+        self.assertIsInstance(s, VariantTable)
+
+        # row index
+        s = vt[0]
+        self.assertNotIsInstance(s, VariantCTable)
+        self.assertNotIsInstance(s, VariantTable)
+        self.assertIsInstance(s, np.record)
+
+        # col access
+        s = vt['CHROM']
+        self.assertNotIsInstance(s, VariantCTable)
+        self.assertNotIsInstance(s, VariantTable)
+        self.assertIsInstance(s, bcolz.carray)

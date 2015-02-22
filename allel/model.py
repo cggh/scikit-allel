@@ -2787,3 +2787,98 @@ class SortedMultiIndex(object):
 
     def __len__(self):
         return len(self.l1)
+
+
+class VariantTable(np.recarray):
+    """TODO
+
+    """
+
+    def __new__(cls, data, index=None, **kwargs):
+        """Constructor."""
+        obj = np.rec.array(data, **kwargs)
+        obj = obj.view(cls)
+        # initialise index
+        if index is not None:
+            if isinstance(index, str):
+                index = SortedIndex(obj[index], copy=False)
+            elif isinstance(index, (tuple, list)) and len(index) == 2:
+                index = SortedMultiIndex(obj[index[0]], obj[index[1]],
+                                         copy=False)
+            else:
+                raise ValueError('invalid index argument, expected string or '
+                                 'pair of strings, found %s' % repr(index))
+            obj.index = index
+        return obj
+
+    def __array_finalize__(self, obj):
+
+        # called after constructor
+        if obj is None:
+            return
+
+        # called after slice (new-from-template)
+        if isinstance(obj, VariantTable):
+            return
+
+        # called after view - nothing to do
+        # VariantTable._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        print('getitem', args, kwargs)
+        print(repr(s), type(s))
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.dtype.names is not None:
+                return VariantTable(s, copy=False)
+            else:
+                return np.asarray(s)
+        return s
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        print('getitem', args, kwargs)
+        print(repr(s), type(s))
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.dtype.names is not None:
+                return VariantTable(s, copy=False)
+            else:
+                return np.asarray(s)
+        return s
+
+    def __repr__(self):
+        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first dimension)."""
+        return self.shape[0]
+
+    @property
+    def names(self):
+        return self.dtype.names
+
+    def eval(self, expression, vm='numexpr'):
+        """TODO doco
+
+        """
+
+        if vm == 'numexpr':
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            return eval(expression, {}, self)
+
+    def query(self, expression, vm='numexpr'):
+        """TODO doco
+
+        """
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)

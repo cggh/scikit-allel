@@ -10,11 +10,12 @@ from allel.test.tools import assert_array_equal as aeq
 
 
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex, \
-    UniqueIndex, SortedMultiIndex, AlleleCountsArray
+    UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
     SortedMultiIndexInterface, diploid_genotype_data, triploid_genotype_data, \
-    haplotype_data, AlleleCountsArrayInterface, allele_counts_data
+    haplotype_data, AlleleCountsArrayInterface, VariantTableInterface, \
+    allele_counts_data, variant_table_data, variant_table_names
 
 
 class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -569,3 +570,46 @@ class SortedMultiIndexTests(SortedMultiIndexInterface, unittest.TestCase):
         return SortedMultiIndex(chrom, pos)
 
     _class = SortedMultiIndex
+
+
+class VariantTableTests(VariantTableInterface, unittest.TestCase):
+
+    _class = VariantTable
+
+    def setup_instance(self, data, index=None, **kwargs):
+        return VariantTable(data, index=index, **kwargs)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
+            VariantTable()
+
+    def test_get_item_types(self):
+        v = VariantTable(variant_table_data, names=variant_table_names)
+
+        # row slice
+        s = v[1:]
+        assert_is_instance(s, VariantTable)
+
+        # row index
+        s = v[0]
+        assert_is_instance(s, np.record)
+        assert_not_is_instance(s, VariantTable)
+
+        # col access
+        s = v['CHROM']
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, VariantTable)
+        s = v[['CHROM', 'POS']]
+        assert_is_instance(s, VariantTable)
+
+    def test_view(self):
+        a = np.rec.array(variant_table_data,
+                         names=variant_table_names)
+        v = a.view(VariantTable)
+        aeq(a, v)
+        eq(1, v.ndim)
+        eq(5, v.n_variants)
+        eq(variant_table_names, v.names)

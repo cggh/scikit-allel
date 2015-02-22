@@ -19,7 +19,8 @@ import numpy as np
 import bcolz
 
 
-from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray
+from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
+    SortedIndex, SortedMultiIndex
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim
 
@@ -183,6 +184,34 @@ def _block_compress(condition, data, axis, **kwargs):
             out.append(np.compress(condition, block, axis=1))
 
         return out
+
+
+def _block_compress_ctable(condition, data, **kwargs):
+
+    # check inputs
+    condition = asarray_ndim(condition, 1)
+
+    if condition.size != data.shape[0]:
+        raise ValueError('length of condition must match length of '
+                         'table; expected %s, found %s' %
+                         (data.shape[0], condition.size))
+
+    # setup output
+    kwargs.setdefault('expectedlen', np.count_nonzero(condition))
+    out = None
+
+    # build output
+    bs = min(data[col].chunklen for col in data.cols)
+    for i in range(0, data.shape[0], bs):
+        block = data[i:i+bs]
+        vcond = condition[i:i+bs]
+        res = np.compress(vcond, block, axis=0)
+        if out is None:
+            out = bcolz.ctable(res, **kwargs)
+        else:
+            out.append(res)
+
+    return out
 
 
 def _block_take(data, indices, axis, **kwargs):
@@ -1200,3 +1229,37 @@ class AlleleCountsCArray(_CArrayWrapper):
 
     def count_doubleton(self, allele=1):
         return _block_sum(self.is_doubleton(allele=allele))
+
+
+class VariantCTable(object):
+
+    def __init__(self, data=None, copy=True, index=None, **kwargs):
+        if copy or not isinstance(data, bcolz.ctable):
+            data = bcolz.ctable(data, **kwargs)
+        object.__setattr__(self, 'data', data)
+        # initialise index
+        if index is not None:
+            if isinstance(index, str):
+                index = SortedIndex(data[index][:], copy=False)
+            elif isinstance(index, (tuple, list)) and len(index) == 2:
+                index = SortedMultiIndex(data[index[0]][:], data[index[1]][:],
+                                         copy=False)
+            else:
+                raise ValueError('invalid index argument, expected string or '
+                                 'pair of strings, found %s' % repr(index))
+            object.__setattr__(self, 'index', index)
+
+    def __array__(self):
+        return self.data[:]
+
+    @property
+    def n_variants(self):
+        return len(self.data)
+
+    @property
+    def names(self):
+        return tuple(self.data.names)
+
+    def compress(self, condition):
+        data = _block_compress_ctable(condition, self.data)
+        return VariantCTable(data, copy=False)

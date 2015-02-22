@@ -35,6 +35,13 @@ allele_counts_data = [[3, 1, 0],
                       [0, 0, 2],
                       [0, 0, 0]]
 
+variant_table_names = ('CHROM', 'POS', 'DP', 'QD')
+variant_table_data = [[b'chr1', 2, 35, 4.5],
+                      [b'chr1', 7, 12, 6.7],
+                      [b'chr2', 3, 78, 1.2],
+                      [b'chr2', 9, 22, 4.4],
+                      [b'chr3', 6, 99, 2.8]]
+
 
 class GenotypeArrayInterface(object):
 
@@ -1375,3 +1382,109 @@ class SortedMultiIndexInterface(object):
             f(2, 1, 2)
         with assert_raises(KeyError):
             f(3, 2, 4)
+
+
+class VariantTableInterface(object):
+
+    _class = None
+
+    def setup_instance(self, data, **kwargs):
+        pass
+
+    def test_properties(self):
+        vt = self.setup_instance(variant_table_data,
+                                 names=variant_table_names)
+        eq(5, vt.n_variants)
+        eq(variant_table_names, vt.names)
+
+    def test_array_like(self):
+        # Test that an instance is array-like, in that it can be used as
+        # input argument to np.rec.array(). I.e., there is a standard way to
+        # get a vanilla numpy array representation of the data.
+
+        vt = self.setup_instance(np.rec.array(variant_table_data,
+                                              names=variant_table_names))
+        a = np.array(vt, copy=False)
+        aeq(vt, a)
+
+    def test_get_item(self):
+        vt = self.setup_instance(variant_table_data,
+                                 names=variant_table_names)
+
+        # row slice
+        s = vt[1:]
+        eq(4, s.n_variants)
+        eq(variant_table_names, s.names)
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        aeq(a[1:], s)
+
+        # row index
+        s = vt[1]
+        eq(tuple(variant_table_data[1]), tuple(s))
+
+        # column access
+        s = vt['CHROM']
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        aeq(a['CHROM'], s)
+
+        # multi-column access
+        s = vt[['CHROM', 'POS']]
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        eq(5, s.n_variants)
+        eq(('CHROM', 'POS'), s.names)
+        aeq(a[['CHROM', 'POS']], s)
+
+    def test_take(self):
+        vt = self.setup_instance(variant_table_data,
+                                 names=variant_table_names)
+
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        indices = [0, 2]
+        t = vt.take(indices)
+        expect = a.take(indices)
+        aeq(expect, t)
+        eq(2, t.n_variants)
+        eq(variant_table_names, t.names)
+
+    def test_compress(self):
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(a)
+        condition = [True, False, True, False, False]
+        t = vt.compress(condition)
+        expect = a.compress(condition)
+        aeq(expect, t)
+        eq(2, t.n_variants)
+        eq(variant_table_names, t.names)
+
+    def test_eval(self):
+        vt = self.setup_instance(variant_table_data,
+                                 names=variant_table_names)
+
+        expr = '(DP > 30) & (QD < 4)'
+        r = vt.eval(expr)
+        aeq([False, False, True, False, True], r)
+
+    def test_query(self):
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(variant_table_data,
+                                 names=variant_table_names)
+
+        query = '(DP > 30) & (QD < 4)'
+        r = vt.query(query)
+        aeq(a.take([2, 4]), r)
+
+    def test_index(self):
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+
+        # multi chromosome/contig
+        vt = self.setup_instance(variant_table_data,
+                                 names=variant_table_names,
+                                 index=('CHROM', 'POS'))
+        eq(slice(0, 2), vt.index.locate_key(b'chr1'))
+        eq(1, vt.index.locate_key(b'chr1', 7))
+        eq(slice(2, 4), vt.index.locate_range(b'chr2', 3, 9))
+
+        # single chromosome/contig index
+        vt = self.setup_instance(a[2:4][['POS', 'DP', 'QD']], index='POS')
+        eq(0, vt.index.locate_key(3))
+        eq(slice(0, 2), vt.index.locate_range(3, 9))
