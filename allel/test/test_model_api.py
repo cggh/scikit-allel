@@ -1392,8 +1392,8 @@ class VariantTableInterface(object):
         pass
 
     def test_properties(self):
-        vt = self.setup_instance(variant_table_data,
-                                 names=variant_table_names)
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(a)
         eq(5, vt.n_variants)
         eq(variant_table_names, vt.names)
 
@@ -1402,14 +1402,14 @@ class VariantTableInterface(object):
         # input argument to np.rec.array(). I.e., there is a standard way to
         # get a vanilla numpy array representation of the data.
 
-        vt = self.setup_instance(np.rec.array(variant_table_data,
-                                              names=variant_table_names))
-        a = np.array(vt, copy=False)
-        aeq(vt, a)
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(a)
+        b = np.array(vt, copy=False)
+        aeq(a, b)
 
     def test_get_item(self):
-        vt = self.setup_instance(variant_table_data,
-                                 names=variant_table_names)
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(a)
 
         # row slice
         s = vt[1:]
@@ -1435,10 +1435,8 @@ class VariantTableInterface(object):
         aeq(a[['CHROM', 'POS']], s)
 
     def test_take(self):
-        vt = self.setup_instance(variant_table_data,
-                                 names=variant_table_names)
-
         a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(a)
         indices = [0, 2]
         t = vt.take(indices)
         expect = a.take(indices)
@@ -1457,8 +1455,8 @@ class VariantTableInterface(object):
         eq(variant_table_names, t.names)
 
     def test_eval(self):
-        vt = self.setup_instance(variant_table_data,
-                                 names=variant_table_names)
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = self.setup_instance(a)
 
         expr = '(DP > 30) & (QD < 4)'
         r = vt.eval(expr)
@@ -1466,8 +1464,7 @@ class VariantTableInterface(object):
 
     def test_query(self):
         a = np.rec.array(variant_table_data, names=variant_table_names)
-        vt = self.setup_instance(variant_table_data,
-                                 names=variant_table_names)
+        vt = self.setup_instance(a)
 
         query = '(DP > 30) & (QD < 4)'
         r = vt.query(query)
@@ -1477,9 +1474,7 @@ class VariantTableInterface(object):
         a = np.rec.array(variant_table_data, names=variant_table_names)
 
         # multi chromosome/contig
-        vt = self.setup_instance(variant_table_data,
-                                 names=variant_table_names,
-                                 index=('CHROM', 'POS'))
+        vt = self.setup_instance(a, index=('CHROM', 'POS'))
         eq(slice(0, 2), vt.index.locate_key(b'chr1'))
         eq(1, vt.index.locate_key(b'chr1', 7))
         eq(slice(2, 4), vt.index.locate_range(b'chr2', 3, 9))

@@ -20,7 +20,7 @@ import bcolz
 
 
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex
+    SortedIndex, SortedMultiIndex, subset, VariantTable
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim
 
@@ -28,52 +28,63 @@ from allel.util import asarray_ndim
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray']
 
 
-def _block_append(f, data, out, bs=None):
-    if bs is None:
-        bs = data.chunklen
-    for i in range(0, data.shape[0], bs):
-        block = data[i:i+bs]
-        out.append(f(block))
+def carray_block_map(carr, f, out=None, blen=None, **kwargs):
+    kwargs.setdefault('expectedlen', carr.shape[0])
+    if blen is None:
+        blen = carr.chunklen
+    for i in range(0, carr.shape[0], blen):
+        block = carr[i:i+blen]
+        res = f(block)
+        if out is None:
+            out = bcolz.carray(res, **kwargs)
+        else:
+            out.append(res)
+    return out
 
 
-def _block_sum(data, axis=None, f=None):
-    bs = data.chunklen
+def carray_block_sum(carr, axis=None, blen=None, transform=None):
+    if blen is None:
+        blen = carr.chunklen
 
     if axis is None:
         out = 0
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
-            if f:
-                block = f(block)
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            if transform:
+                block = transform(block)
             out += np.sum(block)
         return out
 
-    elif axis == 0:
-        out = np.zeros((data.shape[1],), dtype=int)
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
-            if f:
-                block = f(block)
+    elif axis == 0 or axis == (0, 2):
+        out = np.zeros((carr.shape[1],), dtype=int)
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            if transform:
+                block = transform(block)
             out += np.sum(block, axis=0)
         return out
 
-    elif axis == 1:
-        out = np.zeros((data.shape[0],), dtype=int)
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
-            if f:
-                block = f(block)
-            out[i:i+bs] += np.sum(block, axis=1)
+    elif axis == 1 or axis == (1, 2):
+        out = np.zeros((carr.shape[0],), dtype=int)
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            if transform:
+                block = transform(block)
+            out[i:i+blen] += np.sum(block, axis=1)
         return out
 
+    else:
+        raise NotImplementedError('axis not supported: %s' % axis)
 
-def _block_max(data, axis=None):
-    bs = data.chunklen
+
+def carray_block_max(carr, axis=None, blen=None):
+    if blen is None:
+        blen = carr.chunklen
     out = None
 
     if axis is None:
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
             m = np.max(block)
             if out is None:
                 out = m
@@ -82,8 +93,8 @@ def _block_max(data, axis=None):
         return out
 
     elif axis == 0 or axis == (0, 2):
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
             m = np.max(block, axis=axis)
             if out is None:
                 out = m
@@ -92,23 +103,24 @@ def _block_max(data, axis=None):
         return out
 
     elif axis == 1 or axis == (1, 2):
-        out = np.zeros((data.shape[0],), dtype=int)
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
-            out[i:i+bs] = np.max(block, axis=axis)
+        out = np.zeros((carr.shape[0],), dtype=int)
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            out[i:i+blen] = np.max(block, axis=axis)
         return out
 
     else:
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def _block_min(data, axis=None):
-    bs = data.chunklen
+def carray_block_min(carr, axis=None, blen=None):
+    if blen is None:
+        blen = carr.chunklen
     out = None
 
     if axis is None:
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
             m = np.min(block)
             if out is None:
                 out = m
@@ -117,8 +129,8 @@ def _block_min(data, axis=None):
         return out
 
     elif axis == 0 or axis == (0, 2):
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
             m = np.min(block, axis=axis)
             if out is None:
                 out = m
@@ -127,85 +139,105 @@ def _block_min(data, axis=None):
         return out
 
     elif axis == 1 or axis == (1, 2):
-        out = np.zeros((data.shape[0],), dtype=int)
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
-            out[i:i+bs] = np.min(block, axis=axis)
+        out = np.zeros((carr.shape[0],), dtype=int)
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            out[i:i+blen] = np.min(block, axis=axis)
         return out
 
     else:
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def _block_compress(condition, data, axis, **kwargs):
+def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
+    if blen is None:
+        blen = carr.chunklen
 
     # check inputs
     condition = asarray_ndim(condition, 1)
-    if axis not in {0, 1}:
-        raise NotImplementedError('only axis 0 (variants) or 1 (samples) '
-                                  'supported')
 
     if axis == 0:
-        if condition.size != data.shape[0]:
+        if condition.size != carr.shape[0]:
             raise ValueError('length of condition must match length of '
                              'first dimension; expected %s, found %s' %
-                             (data.shape[0], condition.size))
+                             (carr.shape[0], condition.size))
 
         # setup output
-        kwargs.setdefault('dtype', data.dtype)
+        kwargs.setdefault('dtype', carr.dtype)
         kwargs.setdefault('expectedlen', np.count_nonzero(condition))
-        out = bcolz.zeros((0,) + data.shape[1:], **kwargs)
+        out = bcolz.zeros((0,) + carr.shape[1:], **kwargs)
 
         # build output
-        bs = data.chunklen
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
-            vcond = condition[i:i+bs]
-            out.append(np.compress(vcond, block, axis=0))
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            bcond = condition[i:i+blen]
+            out.append(np.compress(bcond, block, axis=0))
 
         return out
 
     elif axis == 1:
-        if condition.size != data.shape[1]:
+        if condition.size != carr.shape[1]:
             raise ValueError('length of condition must match length of '
                              'second dimension; expected %s, found %s' %
-                             (data.shape[1], condition.size))
+                             (carr.shape[1], condition.size))
 
         # setup output
-        kwargs.setdefault('dtype', data.dtype)
-        kwargs.setdefault('expectedlen', data.shape[0])
-        out = bcolz.zeros((0, np.count_nonzero(condition)) + data.shape[2:],
+        kwargs.setdefault('dtype', carr.dtype)
+        kwargs.setdefault('expectedlen', carr.shape[0])
+        out = bcolz.zeros((0, np.count_nonzero(condition)) + carr.shape[2:],
                           **kwargs)
 
         # build output
-        bs = data.chunklen
-        for i in range(0, data.shape[0], bs):
-            block = data[i:i+bs]
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
             out.append(np.compress(condition, block, axis=1))
 
         return out
 
+    else:
+        raise NotImplementedError('axis not supported: %s' % axis)
 
-def _block_compress_ctable(condition, data, **kwargs):
+
+def carray_block_take(carr, indices, axis, **kwargs):
+
+    # check inputs
+    indices = asarray_ndim(indices, 1)
+
+    if axis == 0:
+        condition = np.zeros((carr.shape[0],), dtype=bool)
+        condition[indices] = True
+        return carray_block_compress(carr, condition, axis=0, **kwargs)
+
+    elif axis == 1:
+        condition = np.zeros((carr.shape[1],), dtype=bool)
+        condition[indices] = True
+        return carray_block_compress(carr, condition, axis=1, **kwargs)
+
+    else:
+        raise NotImplementedError('axis not supported: %s' % axis)
+
+
+def ctable_block_compress(ctbl, condition, blen=None, **kwargs):
+    if blen is None:
+        blen = min(ctbl[col].chunklen for col in ctbl.cols)
 
     # check inputs
     condition = asarray_ndim(condition, 1)
 
-    if condition.size != data.shape[0]:
+    if condition.size != ctbl.shape[0]:
         raise ValueError('length of condition must match length of '
                          'table; expected %s, found %s' %
-                         (data.shape[0], condition.size))
+                         (ctbl.shape[0], condition.size))
 
     # setup output
     kwargs.setdefault('expectedlen', np.count_nonzero(condition))
     out = None
 
     # build output
-    bs = min(data[col].chunklen for col in data.cols)
-    for i in range(0, data.shape[0], bs):
-        block = data[i:i+bs]
-        vcond = condition[i:i+bs]
-        res = np.compress(vcond, block, axis=0)
+    for i in range(0, ctbl.shape[0], blen):
+        block = ctbl[i:i+blen]
+        bcond = condition[i:i+blen]
+        res = np.compress(bcond, block, axis=0)
         if out is None:
             out = bcolz.ctable(res, **kwargs)
         else:
@@ -214,26 +246,16 @@ def _block_compress_ctable(condition, data, **kwargs):
     return out
 
 
-def _block_take(data, indices, axis, **kwargs):
-
-    # check inputs
+def ctable_block_take(ctbl, indices, **kwargs):
     indices = asarray_ndim(indices, 1)
-    if axis not in {0, 1}:
-        raise NotImplementedError('only axis 0 (variants) or 1 (samples) '
-                                  'supported')
-
-    if axis == 0:
-        condition = np.zeros((data.shape[0],), dtype=bool)
-        condition[indices] = True
-        return _block_compress(condition, data, axis=0, **kwargs)
-
-    elif axis == 1:
-        condition = np.zeros((data.shape[1],), dtype=bool)
-        condition[indices] = True
-        return _block_compress(condition, data, axis=1, **kwargs)
+    condition = np.zeros((ctbl.shape[0],), dtype=bool)
+    condition[indices] = True
+    return ctable_block_compress(ctbl, condition, **kwargs)
 
 
-def _block_subset(cls, data, sel0, sel1, **kwargs):
+def carray_block_subset(carr, sel0, sel1, blen=None, **kwargs):
+    if blen is None:
+        blen = carr.chunklen
 
     # check inputs
     sel0 = asarray_ndim(sel0, 1, allow_none=True)
@@ -243,38 +265,36 @@ def _block_subset(cls, data, sel0, sel1, **kwargs):
 
     # if either selection is None, use take/compress
     if sel1 is None:
-        if sel0.size < data.shape[0]:
-            return _block_take(data, sel0, axis=0, **kwargs)
+        if sel0.size < carr.shape[0]:
+            return carray_block_take(carr, sel0, axis=0, **kwargs)
         else:
-            return _block_compress(sel0, data, axis=0, **kwargs)
+            return carray_block_compress(carr, sel0, axis=0, **kwargs)
     elif sel0 is None:
-        if sel1.size < data.shape[1]:
-            return _block_take(data, sel1, axis=1, **kwargs)
+        if sel1.size < carr.shape[1]:
+            return carray_block_take(carr, sel1, axis=1, **kwargs)
         else:
-            return _block_compress(sel1, data, axis=1, **kwargs)
+            return carray_block_compress(carr, sel1, axis=1, **kwargs)
 
-    # ensure boolean array for variants
-    if sel0.size < data.shape[0]:
-        tmp = np.zeros((data.shape[0],), dtype=bool)
+    # ensure boolean array for dim 0
+    if sel0.size < carr.shape[0]:
+        tmp = np.zeros((carr.shape[0],), dtype=bool)
         tmp[sel0] = True
         sel0 = tmp
 
-    # ensure indices for samples/haplotypes
-    if sel1.size == data.shape[1]:
+    # ensure indices for dim 1
+    if sel1.size == carr.shape[1]:
         sel1 = np.nonzero(sel1)[0]
 
     # setup output
-    kwargs.setdefault('dtype', data.dtype)
+    kwargs.setdefault('dtype', carr.dtype)
     kwargs.setdefault('expectedlen', np.count_nonzero(sel0))
-    out = bcolz.zeros((0, sel1.size) + data.shape[2:], **kwargs)
+    out = bcolz.zeros((0, sel1.size) + carr.shape[2:], **kwargs)
 
     # build output
-    bs = data.chunklen
-    for i in range(0, data.shape[0], bs):
-        block = data[i:i+bs]
-        bsel0 = sel0[i:i+bs]
-        x = cls(block, copy=False)
-        out.append(x.subset(bsel0, sel1))
+    for i in range(0, carr.shape[0], blen):
+        block = carr[i:i+blen]
+        bsel0 = sel0[i:i+blen]
+        out.append(subset(block, bsel0, sel1))
 
     return out
 
@@ -412,40 +432,35 @@ def ctable_from_hdf5_group(*args, **kwargs):
 class _CArrayWrapper(object):
 
     def __setitem__(self, key, value):
-        self.data[key] = value
+        self.carr[key] = value
 
     def __getattr__(self, item):
-        return getattr(self.data, item)
+        return getattr(self.carr, item)
 
     def __setattr__(self, key, value):
-        setattr(self.data, key, value)
+        setattr(self.carr, key, value)
 
     def __array__(self):
-        return self.data[:]
+        return self.carr[:]
 
     def __repr__(self):
-        s = repr(self.data)
+        s = repr(self.carr)
         s = type(self).__name__ + s[6:]
         return s
 
     def max(self, axis=None):
-        return _block_max(self.data, axis=axis)
+        return carray_block_max(self.carr, axis=axis)
 
     def min(self, axis=None):
-        return _block_min(self.data, axis=axis)
+        return carray_block_min(self.carr, axis=axis)
 
     def compare_scalar(self, op, other, **kwargs):
         if not np.isscalar(other):
             raise NotImplementedError('only supported for scalars')
 
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.shape[0])
-        out = bcolz.zeros((0,) + self.shape[1:], **kwargs)
-
         # build output
         f = lambda data: op(data, other)
-        _block_append(f, self.data, out)
+        out = carray_block_map(self.carr, f, **kwargs)
 
         return out
 
@@ -589,8 +604,8 @@ class GenotypeCArray(_CArrayWrapper):
          [ 0  1  1  1]
          [ 0  2 -1 -1]]
         >>> g.count_alleles()
-        AlleleCountsCArray((3, 3), int64)
-          nbytes: 72; cbytes: 15.98 KB; ratio: 0.00
+        AlleleCountsCArray((3, 3), int32)
+          nbytes: 36; cbytes: 16.00 KB; ratio: 0.00
           cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
         [[3 1 0]
          [1 3 0]
@@ -619,193 +634,115 @@ class GenotypeCArray(_CArrayWrapper):
 
     def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
-            data = bcolz.carray(data, **kwargs)
+            carr = bcolz.carray(data, **kwargs)
+        else:
+            carr = data
         # check late to avoid creating an intermediate numpy array
-        self.check_input_data(data)
-        object.__setattr__(self, 'data', data)
+        self.check_input_data(carr)
+        object.__setattr__(self, 'carr', carr)
 
     def __getitem__(self, *args):
-        out = self.data.__getitem__(*args)
+        out = self.carr.__getitem__(*args)
         if hasattr(out, 'ndim') and out.ndim == 3:
             out = GenotypeArray(out, copy=False)
         return out
 
     @property
     def n_variants(self):
-        return self.data.shape[0]
+        return self.carr.shape[0]
 
     @property
     def n_samples(self):
-        return self.data.shape[1]
+        return self.carr.shape[1]
 
     @property
     def ploidy(self):
-        return self.data.shape[2]
+        return self.carr.shape[2]
 
     def compress(self, condition, axis, **kwargs):
-        data = _block_compress(condition, self.data, axis, **kwargs)
-        return GenotypeCArray(data, copy=False)
+        carr = carray_block_compress(self.carr, condition, axis, **kwargs)
+        return GenotypeCArray(carr, copy=False)
 
     def take(self, indices, axis, **kwargs):
-        data = _block_take(self.data, indices, axis, **kwargs)
-        return GenotypeCArray(data, copy=False)
+        carr = carray_block_take(self.carr, indices, axis, **kwargs)
+        return GenotypeCArray(carr, copy=False)
 
     def subset(self, variants, samples, **kwargs):
-        data = _block_subset(GenotypeArray, self.data, variants, samples,
-                             **kwargs)
-        return GenotypeCArray(data, copy=False)
+        carr = carray_block_subset(self.carr, variants, samples, **kwargs)
+        return GenotypeCArray(carr, copy=False)
 
     def is_called(self, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_called()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_missing(self, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_missing()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom(self, allele=None, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom(allele=allele)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_ref(self, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom_ref()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_alt(self, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_hom_alt()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_het(self, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_het()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_call(self, call, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', bool)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).is_call(call)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def count_called(self, axis=None):
         f = lambda block: GenotypeArray(block, copy=False).is_called()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_missing(self, axis=None):
         f = lambda block: GenotypeArray(block, copy=False).is_missing()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom(self, allele=None, axis=None):
         def f(block):
             g = GenotypeArray(block, copy=False)
             return g.is_hom(allele=allele)
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom_ref(self, axis=None):
         f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom_alt(self, axis=None):
         f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_het(self, axis=None):
         f = lambda block: GenotypeArray(block, copy=False).is_het()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, call, axis=None):
         def f(block):
             g = GenotypeArray(block, copy=False)
             return g.is_call(call=call)
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def to_haplotypes(self, **kwargs):
         # Unfortunately this cannot be implemented as a lightweight view,
         # so we have to copy.
 
-        # setup output
-        kwargs.setdefault('dtype', self.data.dtype)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples * self.ploidy), **kwargs)
-
         # build output
         f = lambda block: block.reshape((block.shape[0], -1))
-        _block_append(f, self.data, out)
-
-        h = HaplotypeCArray(out, copy=False)
-        return h
+        out = carray_block_map(self.carr, f, **kwargs)
+        return HaplotypeCArray(out, copy=False)
 
     def to_n_alt(self, fill=0, **kwargs):
-
-        # setup output
-        kwargs.setdefault('dtype', 'i1')
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
-        # build output
         f = lambda data: GenotypeArray(data, copy=False).to_n_alt(fill)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def to_allele_counts(self, alleles=None, **kwargs):
 
@@ -814,19 +751,12 @@ class GenotypeCArray(_CArrayWrapper):
             m = self.max()
             alleles = list(range(m+1))
 
-        # set up output
-        kwargs.setdefault('dtype', 'u1')
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples, len(alleles)), **kwargs)
-
         # build output
         def f(block):
             g = GenotypeArray(block, copy=False)
             return g.to_allele_counts(alleles)
 
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def to_packed(self, boundscheck=True, **kwargs):
 
@@ -843,19 +773,12 @@ class GenotypeCArray(_CArrayWrapper):
                 raise ValueError('min allele for packing is -1, found %s'
                                  % amn)
 
-        # set up output
-        kwargs['dtype'] = 'u1'  # force dtype
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, self.n_samples), **kwargs)
-
         # build output
         def f(block):
             g = GenotypeArray(block, copy=False)
             return g.to_packed(boundscheck=False)
 
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     @staticmethod
     def from_packed(packed, **kwargs):
@@ -868,12 +791,12 @@ class GenotypeCArray(_CArrayWrapper):
         kwargs.setdefault('dtype', 'i1')
         kwargs.setdefault('expectedlen', packed.shape[0])
         out = bcolz.zeros((0, packed.shape[1], 2), **kwargs)
-        bs = out.chunklen
+        blen = out.chunklen
 
         # build output
         def f(block):
             return GenotypeArray.from_packed(block)
-        _block_append(f, packed, out, bs)
+        carray_block_map(packed, f, out=out, blen=blen)
 
         return GenotypeCArray(out, copy=False)
 
@@ -883,15 +806,10 @@ class GenotypeCArray(_CArrayWrapper):
         if max_allele is None:
             max_allele = self.max()
 
-        # setup output
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', int)
-        out = bcolz.zeros((0, max_allele + 1), **kwargs)
-
         def f(block):
             g = GenotypeArray(block, copy=False)
             return g.count_alleles(max_allele=max_allele)
-        _block_append(f, self.data, out)
+        out = carray_block_map(self.carr, f, **kwargs)
 
         return AlleleCountsCArray(out, copy=False)
 
@@ -931,13 +849,15 @@ class HaplotypeCArray(_CArrayWrapper):
 
     def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
-            data = bcolz.carray(data, **kwargs)
+            carr = bcolz.carray(data, **kwargs)
+        else:
+            carr = data
         # check late to avoid creating an intermediate numpy array
-        self.check_input_data(data)
-        object.__setattr__(self, 'data', data)
+        self.check_input_data(carr)
+        object.__setattr__(self, 'carr', carr)
 
     def __getitem__(self, *args):
-        out = self.data.__getitem__(*args)
+        out = self.carr.__getitem__(*args)
         if hasattr(out, 'ndim') and out.ndim == 2:
             out = HaplotypeArray(out, copy=False)
         return out
@@ -945,24 +865,23 @@ class HaplotypeCArray(_CArrayWrapper):
     @property
     def n_variants(self):
         """Number of variants (length of first array dimension)."""
-        return self.data.shape[0]
+        return self.carr.shape[0]
 
     @property
     def n_haplotypes(self):
         """Number of haplotypes (length of second array dimension)."""
-        return self.data.shape[1]
+        return self.carr.shape[1]
 
     def compress(self, condition, axis, **kwargs):
-        data = _block_compress(condition, self.data, axis, **kwargs)
-        return HaplotypeCArray(data, copy=False)
+        carr = carray_block_compress(self.carr, condition, axis, **kwargs)
+        return HaplotypeCArray(carr, copy=False)
 
     def take(self, indices, axis, **kwargs):
-        data = _block_take(self.data, indices, axis, **kwargs)
-        return HaplotypeCArray(data, copy=False)
+        carr = carray_block_take(self.carr, indices, axis, **kwargs)
+        return HaplotypeCArray(carr, copy=False)
 
     def subset(self, variants, haplotypes, **kwargs):
-        data = _block_subset(HaplotypeArray, self.data, variants, haplotypes,
-                             **kwargs)
+        data = carray_block_subset(self.carr, variants, haplotypes, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
     def to_genotypes(self, ploidy, **kwargs):
@@ -973,17 +892,11 @@ class HaplotypeCArray(_CArrayWrapper):
         if (self.n_haplotypes % ploidy) > 0:
             raise ValueError('incompatible ploidy')
 
-        # setup output
-        n_samples = self.n_haplotypes / ploidy
-        kwargs.setdefault('dtype', self.data.dtype)
-        kwargs.setdefault('expectedlen', self.n_variants)
-        out = bcolz.zeros((0, n_samples, ploidy), **kwargs)
-
         # build output
         f = lambda block: block.reshape((block.shape[0], -1, ploidy))
-        _block_append(f, self.data, out)
+        carr = carray_block_map(self.carr, f, **kwargs)
 
-        g = GenotypeCArray(out, copy=False)
+        g = GenotypeCArray(carr, copy=False)
         return g
 
     def is_called(self, **kwargs):
@@ -1006,25 +919,25 @@ class HaplotypeCArray(_CArrayWrapper):
 
     def count_called(self, axis=None):
         f = lambda block: HaplotypeArray(block, copy=False).is_called()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_missing(self, axis=None):
         f = lambda block: HaplotypeArray(block, copy=False).is_missing()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_ref(self, axis=None):
         f = lambda block: HaplotypeArray(block, copy=False).is_ref()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_alt(self, axis=None):
         f = lambda block: HaplotypeArray(block, copy=False).is_alt()
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, allele, axis=None):
         def f(block):
             h = HaplotypeArray(block, copy=False)
             return h.is_call(allele=allele)
-        return _block_sum(self.data, axis=axis, f=f)
+        return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_alleles(self, max_allele=None, **kwargs):
 
@@ -1032,17 +945,12 @@ class HaplotypeCArray(_CArrayWrapper):
         if max_allele is None:
             max_allele = self.max()
 
-        # setup output
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', int)
-        out = bcolz.zeros((0, max_allele + 1), **kwargs)
-
         def f(block):
             h = HaplotypeArray(block, copy=False)
             return h.count_alleles(max_allele=max_allele)
-        _block_append(f, self.data, out)
+        carr = carray_block_map(self.carr, f, **kwargs)
 
-        return AlleleCountsCArray(out, copy=False)
+        return AlleleCountsCArray(carr, copy=False)
 
 
 class AlleleCountsCArray(_CArrayWrapper):
@@ -1080,13 +988,15 @@ class AlleleCountsCArray(_CArrayWrapper):
 
     def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
-            data = bcolz.carray(data, **kwargs)
+            carr = bcolz.carray(data, **kwargs)
+        else:
+            carr = data
         # check late to avoid creating an intermediate numpy array
-        self.check_input_data(data)
-        object.__setattr__(self, 'data', data)
+        self.check_input_data(carr)
+        object.__setattr__(self, 'carr', carr)
 
     def __getitem__(self, *args):
-        out = self.data.__getitem__(*args)
+        out = self.carr.__getitem__(*args)
         if hasattr(out, 'ndim') \
                 and out.ndim == 2 \
                 and out.shape[1] == self.n_alleles:
@@ -1097,152 +1007,169 @@ class AlleleCountsCArray(_CArrayWrapper):
     @property
     def n_variants(self):
         """Number of variants (length of first array dimension)."""
-        return self.data.shape[0]
+        return self.carr.shape[0]
 
     @property
     def n_alleles(self):
         """Number of alleles (length of second array dimension)."""
-        return self.data.shape[1]
+        return self.carr.shape[1]
 
     def compress(self, condition, axis, **kwargs):
-        data = _block_compress(condition, self.data, axis, **kwargs)
-        if data.shape[1] == self.shape[1]:
-            return AlleleCountsCArray(data, copy=False)
+        carr = carray_block_compress(self.carr, condition, axis, **kwargs)
+        if carr.shape[1] == self.shape[1]:
+            return AlleleCountsCArray(carr, copy=False)
         else:
-            return data
+            return carr
 
     def take(self, indices, axis, **kwargs):
-        data = _block_take(self.data, indices, axis, **kwargs)
-        if data.shape[1] == self.shape[1]:
-            return AlleleCountsCArray(data, copy=False)
+        carr = carray_block_take(self.carr, indices, axis, **kwargs)
+        if carr.shape[1] == self.shape[1]:
+            # alleles preserved, safe to wrap
+            return AlleleCountsCArray(carr, copy=False)
         else:
-            return data
+            return carr
 
     def to_frequencies(self, fill=np.nan, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', float)
-        out = bcolz.zeros((0, self.n_alleles), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.to_frequencies(fill=fill)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def allelism(self, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', int)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             return AlleleCountsArray(block, copy=False).allelism()
-        _block_append(f, self.data, out)
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_variant(self, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', bool)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_variant()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_non_variant(self, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', bool)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_non_variant()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_segregating(self, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', bool)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_segregating()
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_non_segregating(self, allele=None, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', bool)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_non_segregating(allele=allele)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_singleton(self, allele=1, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', bool)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_singleton(allele=allele)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def is_doubleton(self, allele=1, **kwargs):
-        kwargs.setdefault('expectedlen', self.n_variants)
-        kwargs.setdefault('dtype', bool)
-        out = bcolz.zeros((0,), **kwargs)
-
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_doubleton(allele=allele)
-        _block_append(f, self.data, out)
-
-        return out
+        return carray_block_map(self.carr, f, **kwargs)
 
     def count_variant(self):
-        return _block_sum(self.is_variant())
+        return carray_block_sum(self.is_variant())
 
     def count_non_variant(self):
-        return _block_sum(self.is_non_variant())
+        return carray_block_sum(self.is_non_variant())
 
     def count_segregating(self):
-        return _block_sum(self.is_segregating())
+        return carray_block_sum(self.is_segregating())
 
     def count_non_segregating(self, allele=None):
-        return _block_sum(self.is_non_segregating(allele=allele))
+        return carray_block_sum(self.is_non_segregating(allele=allele))
 
     def count_singleton(self, allele=1):
-        return _block_sum(self.is_singleton(allele=allele))
+        return carray_block_sum(self.is_singleton(allele=allele))
 
     def count_doubleton(self, allele=1):
-        return _block_sum(self.is_doubleton(allele=allele))
+        return carray_block_sum(self.is_doubleton(allele=allele))
 
 
 class VariantCTable(object):
+    """Alternative implementation of the :class:`allel.model.VariantTable`
+    interface, using a :class:`bcolz.ctable` as the backing store.
+
+    Parameters
+    ----------
+
+    data : tuple or list of column objects, optional
+        The list of column data to build the ctable object. This can also be a
+        pure NumPy structured array. May also be a bcolz ctable, which will
+        not be copied if copy=False. May also be None, in which case rootdir
+        must be provided (disk-based array).
+    copy : bool, optional
+        If True, copy the input data into a new bcolz ctable.
+    index : string or pair of strings, optional
+        If a single string, name of column to use for a sorted index. If a
+        pair of strings, name of columns to use for a sorted multi-index.
+    **kwargs : keyword arguments
+        Passed through to the bcolz ctable constructor.
+
+    Examples
+    --------
+
+    Instantiate from existing data::
+
+        >>> import allel
+        >>> chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+        >>> pos = [2, 7, 3, 9, 6]
+        >>> dp = [35, 12, 78, 22, 99]
+        >>> qd = [4.5, 6.7, 1.2, 4.4, 2.8]
+        >>> vt = allel.bcolz.VariantCTable([chrom, pos, dp, qd],
+        ...                                names=['CHROM', 'POS', 'DP', 'QD'],
+        ...                                index=('CHROM', 'POS'))
+        >>> vt
+        VariantCTable((5,), [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8')])
+          nbytes: 140; cbytes: 64.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [(b'chr1', 2, 35, 4.5) (b'chr1', 7, 12, 6.7) (b'chr2', 3, 78, 1.2)
+         (b'chr2', 9, 22, 4.4) (b'chr3', 6, 99, 2.8)]
+
+    Slicing rows returns :class:`allel.model.VariantTable`::
+
+        >>> vt[:2]
+        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8')])
+        [(b'chr1', 2, 35, 4.5) (b'chr1', 7, 12, 6.7)]
+
+    Accessing columns returns :class:`allel.bcolz.VariantCTable`::
+
+        >>> vt[['DP', 'QD']]
+        VariantCTable((5,), [('DP', '<i8'), ('QD', '<f8')])
+          nbytes: 80; cbytes: 32.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+        [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
+
+    Use the index to locate variants:
+
+        >>> loc = vt.index.locate_range(b'chr2', 1, 10)
+        >>> vt[loc]
+        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8')])
+        [(b'chr2', 3, 78, 1.2) (b'chr2', 9, 22, 4.4)]
+
+    """  # noqa
 
     def __init__(self, data=None, copy=True, index=None, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
-            data = bcolz.ctable(data, **kwargs)
-        object.__setattr__(self, 'data', data)
+            ctbl = bcolz.ctable(data, **kwargs)
+        else:
+            ctbl = data
+        object.__setattr__(self, 'ctbl', ctbl)
         # initialise index
         if index is not None:
             if isinstance(index, str):
-                index = SortedIndex(data[index][:], copy=False)
+                index = SortedIndex(ctbl[index][:], copy=False)
             elif isinstance(index, (tuple, list)) and len(index) == 2:
-                index = SortedMultiIndex(data[index[0]][:], data[index[1]][:],
+                index = SortedMultiIndex(ctbl[index[0]][:], ctbl[index[1]][:],
                                          copy=False)
             else:
                 raise ValueError('invalid index argument, expected string or '
@@ -1250,16 +1177,43 @@ class VariantCTable(object):
             object.__setattr__(self, 'index', index)
 
     def __array__(self):
-        return self.data[:]
+        return self.ctbl[:]
+
+    def __getitem__(self, item):
+        res = self.ctbl[item]
+        if isinstance(res, np.ndarray) and res.dtype.names:
+            return VariantTable(res, copy=False)
+        if isinstance(res, bcolz.ctable):
+            return VariantCTable(res, copy=False)
+        return res
+
+    def __getattr__(self, item):
+        return getattr(self.ctbl, item)
+
+    def __repr__(self):
+        s = repr(self.ctbl)
+        s = type(self).__name__ + s[6:]
+        return s
 
     @property
     def n_variants(self):
-        return len(self.data)
+        return len(self.ctbl)
 
     @property
     def names(self):
-        return tuple(self.data.names)
+        return tuple(self.ctbl.names)
 
-    def compress(self, condition):
-        data = _block_compress_ctable(condition, self.data)
-        return VariantCTable(data, copy=False)
+    def compress(self, condition, **kwargs):
+        ctbl = ctable_block_compress(self.ctbl, condition, **kwargs)
+        return VariantCTable(ctbl, copy=False)
+
+    def take(self, indices, **kwargs):
+        ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
+        return VariantCTable(ctbl, copy=False)
+
+    def eval(self, expression, vm='numexpr', **kwargs):
+        return self.ctbl.eval(expression, vm=vm, **kwargs)
+
+    def query(self, expression, vm='numexpr'):
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)

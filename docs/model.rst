@@ -116,3 +116,17 @@ SortedMultiIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_range
+
+VariantTable
+------------
+
+.. autoclass:: VariantTable
+
+    .. autoattribute:: n_variants
+    .. autoattribute:: names
+    .. automethod:: eval
+    .. automethod:: query
+
+
+
+ 

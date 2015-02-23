@@ -25,9 +25,12 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def _subset(cls, data, sel0, sel1):
+def subset(data, sel0, sel1):
 
     # check inputs
+    data = np.asarray(data)
+    if data.ndim < 2:
+        raise ValueError('data must have 2 or more dimensions')
     sel0 = asarray_ndim(sel0, 1, allow_none=True)
     sel1 = asarray_ndim(sel1, 1, allow_none=True)
     if sel0 is None and sel1 is None:
@@ -51,10 +54,10 @@ def _subset(cls, data, sel0, sel1):
     if sel1.size == data.shape[1]:
         sel1 = np.nonzero(sel1)[0]
 
-    # ensure variant indices can be broadcast correctly
+    # ensure leading dimension indices can be broadcast correctly
     sel0 = sel0[:, None]
 
-    return cls(data[sel0, sel1], copy=False)
+    return data[sel0, sel1]
 
 
 class GenotypeArray(np.ndarray):
@@ -276,7 +279,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return _subset(GenotypeArray, self, variants, samples)
+        return GenotypeArray(subset(self, variants, samples), copy=False)
 
     # noinspection PyUnusedLocal
     def is_called(self):
@@ -1214,7 +1217,7 @@ class HaplotypeArray(np.ndarray):
 
         """
 
-        return _subset(HaplotypeArray, self, variants, haplotypes)
+        return HaplotypeArray(subset(self, variants, haplotypes), copy=False)
 
     def is_called(self):
         return self >= 0
@@ -2842,8 +2845,6 @@ class VariantTable(np.recarray):
 
     def __getitem__(self, *args, **kwargs):
         s = np.ndarray.__getitem__(self, *args, **kwargs)
-        print('getitem', args, kwargs)
-        print(repr(s), type(s))
         if hasattr(s, 'ndim') and s.ndim > 0:
             if s.dtype.names is not None:
                 return VariantTable(s, copy=False)

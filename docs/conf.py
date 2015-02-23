@@ -31,13 +31,17 @@ MOCK_MODULES = ['scipy', 'scipy.stats', 'scipy.spatial',
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
-# need to special-case numpy because we are sub-classing ndarray
+# need to special-case numpy because we are sub-classing ndarray and recarray
 class MockNumpy(object):
+
     class ndarray(object):
         pass
+
+    class recarray(object):
+        pass
+
     nan = Mock()
     nan.__repr__ = lambda self: 'nan'
-
 
 sys.modules['numpy'] = MockNumpy()
 

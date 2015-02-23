@@ -324,13 +324,12 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with self.assertRaises(TypeError):
-            # noinspection PyArgumentList
+        with self.assertRaises(ValueError):
             VariantCTable()
 
     def test_slice_types(self):
-
-        vt = VariantCTable(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, names=variant_table_names)
+        vt = VariantCTable(a)
 
         # row slice
         s = vt[1:]
@@ -341,7 +340,7 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
         s = vt[0]
         self.assertNotIsInstance(s, VariantCTable)
         self.assertNotIsInstance(s, VariantTable)
-        self.assertIsInstance(s, np.record)
+        self.assertIsInstance(s, (np.record, np.void))
 
         # col access
         s = vt['CHROM']
