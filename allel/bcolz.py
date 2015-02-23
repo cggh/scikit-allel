@@ -1188,12 +1188,22 @@ class VariantCTable(object):
         return res
 
     def __getattr__(self, item):
-        return getattr(self.ctbl, item)
+        if hasattr(self.ctbl, item):
+            return getattr(self.ctbl, item)
+        elif item in self.names:
+            return self.ctbl[item]
 
     def __repr__(self):
         s = repr(self.ctbl)
         s = type(self).__name__ + s[6:]
         return s
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
 
     @property
     def n_variants(self):
@@ -1217,3 +1227,8 @@ class VariantCTable(object):
     def query(self, expression, vm='numexpr'):
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
+
+    @staticmethod
+    def from_hdf5_group(*args, **kwargs):
+        ctbl = ctable_from_hdf5_group(*args, **kwargs)
+        return VariantCTable(ctbl, copy=False)

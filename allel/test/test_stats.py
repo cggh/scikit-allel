@@ -9,6 +9,7 @@ import numpy as np
 from allel.test.tools import assert_array_equal as aeq, assert_array_close
 
 
+from allel.util import ignore_invalid
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex
 from allel.stats import moving_statistic, windowed_statistic, \
     mean_pairwise_diversity, mean_pairwise_divergence, windowed_diversity, \
@@ -302,7 +303,8 @@ class TestHardyWeinberg(unittest.TestCase):
             r = af[:, 2]
 
             out = 1 - p**ploidy - q**ploidy - r**ploidy
-            out[(af_sum < 1) | np.isnan(af_sum)] = fill
+            with ignore_invalid():
+                out[(af_sum < 1) | np.isnan(af_sum)] = fill
 
             return out
 

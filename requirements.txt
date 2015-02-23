@@ -1,6 +1,7 @@
 numpy
 scipy
 matplotlib
+pandas
 numexpr
 h5py
 bcolz

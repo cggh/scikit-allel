@@ -2812,6 +2812,8 @@ class VariantTable(np.recarray):
                 raise ValueError('invalid index argument, expected string or '
                                  'pair of strings, found %s' % repr(index))
             obj.index = index
+        else:
+            obj.index = None
         return obj
 
     def __array_finalize__(self, obj):
@@ -2822,10 +2824,12 @@ class VariantTable(np.recarray):
 
         # called after slice (new-from-template)
         if isinstance(obj, VariantTable):
+            obj.index = None
             return
 
         # called after view - nothing to do
         # VariantTable._check_input_data(obj)
+        obj.index = None
 
     # noinspection PyUnusedLocal
     def __array_wrap__(self, out_arr, context=None):
@@ -2856,6 +2860,13 @@ class VariantTable(np.recarray):
         s = 'VariantTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
         s += str(self)
         return s
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
 
     @property
     def n_variants(self):
