@@ -1634,7 +1634,7 @@ class AlleleCountsArray(np.ndarray):
         return af
 
     def allelism(self):
-        """Determine the number of distinct alleles for each variant.
+        """Determine the number of distinct alleles observed for each variant.
 
         Returns
         -------
@@ -2867,6 +2867,15 @@ class VariantTable(np.recarray):
         df = pandas.DataFrame(self[:5])
         # noinspection PyProtectedMember
         return df._repr_html_()
+
+    def display(self, n):
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
 
     @property
     def n_variants(self):

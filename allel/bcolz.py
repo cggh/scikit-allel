@@ -448,6 +448,14 @@ class _CArrayWrapper(object):
         s = type(self).__name__ + s[6:]
         return s
 
+    @classmethod
+    def open(cls, rootdir, mode='r'):
+        cobj = bcolz.open(rootdir, mode=mode)
+        if isinstance(cobj, bcolz.carray):
+            return cls(cobj, copy=False)
+        else:
+            raise ValueError('rootdir does not contain a carray')
+
     def max(self, axis=None):
         return carray_block_max(self.carr, axis=axis)
 
@@ -507,7 +515,7 @@ class GenotypeCArray(_CArrayWrapper):
     Examples
     --------
 
-    Instantiate a genotype compressed array from existing data::
+    Instantiate a compressed genotype array from existing data::
 
         >>> import allel
         >>> g = allel.bcolz.GenotypeCArray([[[0, 0], [0, 1]],
@@ -1204,6 +1212,23 @@ class VariantCTable(object):
         df = pandas.DataFrame(self[:5])
         # noinspection PyProtectedMember
         return df._repr_html_()
+
+    @staticmethod
+    def open(rootdir, mode='r'):
+        cobj = bcolz.open(rootdir, mode=mode)
+        if isinstance(cobj, bcolz.ctable):
+            return VariantCTable(cobj, copy=False)
+        else:
+            raise ValueError('rootdir does not contain a ctable')
+
+    def display(self, n):
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
 
     @property
     def n_variants(self):
