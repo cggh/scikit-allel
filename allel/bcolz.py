@@ -329,16 +329,22 @@ def carray_from_hdf5(*args, **kwargs):
         if not isinstance(dataset, h5py.Dataset):
             raise ValueError('expected dataset, found %r' % dataset)
 
+        length = dataset.shape[0]
         start = kwargs.pop('start', 0)
-        stop = kwargs.pop('stop', dataset.shape[0])
+        stop = kwargs.pop('stop', length)
+        step = kwargs.pop('step', 1)
         condition = kwargs.pop('condition', None)
+        condition = asarray_ndim(condition, 1, allow_none=True)
         blen = kwargs.pop('blen', None)
 
         # setup output data
         if condition is None:
-            expectedlen = dataset.shape[0]
+            expectedlen = (stop - start) // step
         else:
-            expectedlen = np.count_nonzero(condition)
+            if condition.size != length:
+                raise ValueError('length of condition does not match length '
+                                 'of dataset')
+            expectedlen = np.count_nonzero(condition[start:stop:step])
         kwargs.setdefault('expectedlen', expectedlen)
         kwargs.setdefault('dtype', dataset.dtype)
         carr = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
@@ -355,9 +361,10 @@ def carray_from_hdf5(*args, **kwargs):
         # load block-wise
         for i in range(start, stop, blen):
             j = min(i + blen, stop)
-            block = dataset[i:j]
+            # N.B., apply step after load because step within h5py is slooow
+            block = dataset[i:j][::step]
             if condition is not None:
-                bcnd = condition[i:j]
+                bcnd = condition[i:j:step]
                 block = np.compress(bcnd, block, axis=0)
             carr.append(block)
 
@@ -419,26 +426,32 @@ def ctable_from_hdf5_group(*args, **kwargs):
         # determine start and stop parameters for load
         start = kwargs.pop('start', 0)
         stop = kwargs.pop('stop', length)
+        step = kwargs.pop('step', 1)
         blen = kwargs.pop('blen', None)
         condition = kwargs.pop('condition', None)
+        condition = asarray_ndim(condition, 1, allow_none=True)
 
         # setup output data
         if condition is None:
-            expectedlen = length
+            expectedlen = (stop - start) // step
         else:
-            expectedlen = np.count_nonzero(condition)
+            if condition.size != length:
+                raise ValueError('length of condition does not match length '
+                                 'of datasets')
+            expectedlen = np.count_nonzero(condition[start:stop:step])
         kwargs.setdefault('expectedlen', expectedlen)
         if blen is None:
-            # use smallest chunk length
+            # use smallest input chunk length
             blen = min([d.chunks[0] for d in datasets if hasattr(d, 'chunks')])
         ctbl = None
 
         # load block-wise
         for i in range(start, stop, blen):
             j = min(i + blen, stop)
-            blocks = [d[i:j] for d in datasets]
+            # N.B., apply step after load because step within h5py is slooow
+            blocks = [d[i:j][::step] for d in datasets]
             if condition is not None:
-                bcnd = condition[i:j]
+                bcnd = condition[i:j:step]
                 blocks = [np.compress(bcnd, block, axis=0) for block in blocks]
             if ctbl is None:
                 ctbl = bcolz.ctable(blocks, names=names, **kwargs)
