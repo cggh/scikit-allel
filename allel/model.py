@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def subset(data, sel0, sel1):
+def subset(data, sel0=None, sel1=None):
 
     # check inputs
     data = np.asarray(data)

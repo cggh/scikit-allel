@@ -253,7 +253,7 @@ def ctable_block_take(ctbl, indices, **kwargs):
     return ctable_block_compress(ctbl, condition, **kwargs)
 
 
-def carray_block_subset(carr, sel0, sel1, blen=None, **kwargs):
+def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
     if blen is None:
         blen = carr.chunklen
 
@@ -331,25 +331,37 @@ def carray_from_hdf5(*args, **kwargs):
 
         start = kwargs.pop('start', 0)
         stop = kwargs.pop('stop', dataset.shape[0])
+        condition = kwargs.pop('condition', None)
+        blen = kwargs.pop('blen', None)
 
         # setup output data
-        kwargs.setdefault('expectedlen', dataset.shape[0])
+        if condition is None:
+            expectedlen = dataset.shape[0]
+        else:
+            expectedlen = np.count_nonzero(condition)
+        kwargs.setdefault('expectedlen', expectedlen)
         kwargs.setdefault('dtype', dataset.dtype)
-        data = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
+        carr = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
+
+        # determine block size
+        if blen is None:
+            if hasattr(dataset, 'chunks'):
+                # use input chunk length
+                blen = dataset.chunks[0]
+            else:
+                # use output chunk length
+                blen = carr.chunklen
 
         # load block-wise
-        if hasattr(dataset, 'chunks'):
-            # use input chunk length
-            bs = dataset.chunks[0]
-        else:
-            # use output chunk length
-            bs = data.chunklen
-        for i in range(start, stop, bs):
-            j = min(i + bs, stop)
-            chunk = dataset[i:j]
-            data.append(chunk)
+        for i in range(start, stop, blen):
+            j = min(i + blen, stop)
+            block = dataset[i:j]
+            if condition is not None:
+                bcnd = condition[i:j]
+                block = np.compress(bcnd, block, axis=0)
+            carr.append(block)
 
-        return data
+        return carr
 
     finally:
         if h5f is not None:
@@ -407,22 +419,33 @@ def ctable_from_hdf5_group(*args, **kwargs):
         # determine start and stop parameters for load
         start = kwargs.pop('start', 0)
         stop = kwargs.pop('stop', length)
+        blen = kwargs.pop('blen', None)
+        condition = kwargs.pop('condition', None)
 
         # setup output data
-        kwargs.setdefault('expectedlen', length)
-        bs = max([d.chunks[0] for d in datasets if hasattr(d, 'chunks')])
-        data = None
+        if condition is None:
+            expectedlen = length
+        else:
+            expectedlen = np.count_nonzero(condition)
+        kwargs.setdefault('expectedlen', expectedlen)
+        if blen is None:
+            # use smallest chunk length
+            blen = min([d.chunks[0] for d in datasets if hasattr(d, 'chunks')])
+        ctbl = None
 
         # load block-wise
-        for i in range(start, stop, bs):
-            j = min(i + bs, stop)
-            columns = [d[i:j] for d in datasets]
-            if data is None:
-                data = bcolz.ctable(columns, names=names, **kwargs)
+        for i in range(start, stop, blen):
+            j = min(i + blen, stop)
+            blocks = [d[i:j] for d in datasets]
+            if condition is not None:
+                bcnd = condition[i:j]
+                blocks = [np.compress(bcnd, block, axis=0) for block in blocks]
+            if ctbl is None:
+                ctbl = bcolz.ctable(blocks, names=names, **kwargs)
             else:
-                data.append(columns)
+                ctbl.append(blocks)
 
-        return data
+        return ctbl
 
     finally:
         if h5f is not None:
@@ -675,7 +698,7 @@ class GenotypeCArray(_CArrayWrapper):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return GenotypeCArray(carr, copy=False)
 
-    def subset(self, variants, samples, **kwargs):
+    def subset(self, variants=None, samples=None, **kwargs):
         carr = carray_block_subset(self.carr, variants, samples, **kwargs)
         return GenotypeCArray(carr, copy=False)
 
@@ -888,7 +911,7 @@ class HaplotypeCArray(_CArrayWrapper):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return HaplotypeCArray(carr, copy=False)
 
-    def subset(self, variants, haplotypes, **kwargs):
+    def subset(self, variants=None, haplotypes=None, **kwargs):
         data = carray_block_subset(self.carr, variants, haplotypes, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
@@ -1200,6 +1223,8 @@ class VariantCTable(object):
             return getattr(self.ctbl, item)
         elif item in self.names:
             return self.ctbl[item]
+        else:
+            raise AttributeError(item)
 
     def __repr__(self):
         s = repr(self.ctbl)

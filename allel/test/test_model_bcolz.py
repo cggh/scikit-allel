@@ -134,6 +134,33 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
             g = GenotypeCArray.from_hdf5(dataset)
             aeq(diploid_genotype_data, g)
 
+    def test_from_hdf5_condition(self):
+
+        # setup HDF5 file
+        node_path = 'test'
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        file_path = tf.name
+        tf.close()
+        with h5py.File(file_path, mode='w') as h5f:
+            h5f.create_dataset(node_path,
+                               data=diploid_genotype_data,
+                               chunks=(2, 3, 2))
+
+        # selection
+        condition = [False, True, False, True, False]
+
+        # file and node path
+        g = GenotypeCArray.from_hdf5(file_path, node_path, condition=condition)
+        expect = GenotypeArray(diploid_genotype_data).compress(condition,
+                                                               axis=0)
+        aeq(expect, g)
+
+        # dataset
+        with h5py.File(file_path, mode='r') as h5f:
+            dataset = h5f[node_path]
+            g = GenotypeCArray.from_hdf5(dataset, condition=condition)
+            aeq(expect, g)
+
 
 class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 

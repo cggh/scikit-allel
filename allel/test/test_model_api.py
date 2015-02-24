@@ -1404,7 +1404,9 @@ class VariantTableInterface(object):
 
         a = np.rec.array(variant_table_data, names=variant_table_names)
         vt = self.setup_instance(a)
-        b = np.array(vt, copy=False)
+        if hasattr(vt, '__array_struct__'):
+            print('__array_struct__', vt.__array_struct__)
+        b = np.asarray(vt)
         aeq(a, b)
 
     def test_get_item(self):
