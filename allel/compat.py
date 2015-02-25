@@ -18,6 +18,7 @@ if PY2:
     binary_type = str
     integer_types = int, long
     zip = itertools.izip
+    zip_longest = itertools.izip_longest
     reduce = reduce
 else:
     range = range
@@ -27,5 +28,6 @@ else:
     binary_type = bytes
     integer_types = int,
     zip = zip
+    zip_longest = itertools.zip_longest
     import functools
     reduce = functools.reduce

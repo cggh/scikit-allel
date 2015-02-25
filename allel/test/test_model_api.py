@@ -7,10 +7,17 @@ tests can be re-used for alternative implementations of the same interfaces.
 from __future__ import absolute_import, print_function, division
 
 
+from datetime import date
+import tempfile
+
+
 import numpy as np
 from nose.tools import eq_ as eq, assert_raises, \
-    assert_is_instance, assert_not_is_instance
+    assert_is_instance, assert_not_is_instance, assert_almost_equal
 from allel.test.tools import assert_array_equal as aeq
+
+
+import allel
 
 
 haplotype_data = [[0, 1, -1],
@@ -35,12 +42,17 @@ allele_counts_data = [[3, 1, 0],
                       [0, 0, 2],
                       [0, 0, 0]]
 
-variant_table_names = ('CHROM', 'POS', 'DP', 'QD')
-variant_table_data = [[b'chr1', 2, 35, 4.5],
-                      [b'chr1', 7, 12, 6.7],
-                      [b'chr2', 3, 78, 1.2],
-                      [b'chr2', 9, 22, 4.4],
-                      [b'chr3', 6, 99, 2.8]]
+variant_table_data = [[b'chr1', 2, 35, 4.5, (1, 2)],
+                      [b'chr1', 7, 12, 6.7, (3, 4)],
+                      [b'chr2', 3, 78, 1.2, (5, 6)],
+                      [b'chr2', 9, 22, 4.4, (7, 8)],
+                      [b'chr3', 6, 99, 2.8, (9, 10)]]
+variant_table_dtype = [('CHROM', 'S4'),
+                       ('POS', 'u4'),
+                       ('DP', int),
+                       ('QD', float),
+                       ('AC', (int, 2))]
+variant_table_names = tuple(t[0] for t in variant_table_dtype)
 
 
 class GenotypeArrayInterface(object):
@@ -1392,7 +1404,7 @@ class VariantTableInterface(object):
         pass
 
     def test_properties(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
         eq(5, vt.n_variants)
         eq(variant_table_names, vt.names)
@@ -1402,42 +1414,48 @@ class VariantTableInterface(object):
         # input argument to np.rec.array(). I.e., there is a standard way to
         # get a vanilla numpy array representation of the data.
 
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
-        if hasattr(vt, '__array_struct__'):
-            print('__array_struct__', vt.__array_struct__)
         b = np.asarray(vt)
         aeq(a, b)
 
     def test_get_item(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
+
+        # total slice
+        s = vt[:]
+        eq(5, s.n_variants)
+        eq(variant_table_names, s.names)
+        aeq(a, s)
 
         # row slice
         s = vt[1:]
         eq(4, s.n_variants)
         eq(variant_table_names, s.names)
-        a = np.rec.array(variant_table_data, names=variant_table_names)
         aeq(a[1:], s)
 
         # row index
         s = vt[1]
-        eq(tuple(variant_table_data[1]), tuple(s))
+        # compare item by item
+        for x, y in zip(variant_table_data[1], s):
+            if np.isscalar(x):
+                assert_almost_equal(x, y)
+            else:
+                eq(tuple(x), tuple(y))
 
         # column access
         s = vt['CHROM']
-        a = np.rec.array(variant_table_data, names=variant_table_names)
         aeq(a['CHROM'], s)
 
         # multi-column access
         s = vt[['CHROM', 'POS']]
-        a = np.rec.array(variant_table_data, names=variant_table_names)
         eq(5, s.n_variants)
         eq(('CHROM', 'POS'), s.names)
         aeq(a[['CHROM', 'POS']], s)
 
     def test_take(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
         indices = [0, 2]
         t = vt.take(indices)
@@ -1447,7 +1465,7 @@ class VariantTableInterface(object):
         eq(variant_table_names, t.names)
 
     def test_compress(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
         condition = [True, False, True, False, False]
         t = vt.compress(condition)
@@ -1457,7 +1475,7 @@ class VariantTableInterface(object):
         eq(variant_table_names, t.names)
 
     def test_eval(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
 
         expr = '(DP > 30) & (QD < 4)'
@@ -1465,7 +1483,7 @@ class VariantTableInterface(object):
         aeq([False, False, True, False, True], r)
 
     def test_query(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
 
         query = '(DP > 30) & (QD < 4)'
@@ -1473,7 +1491,7 @@ class VariantTableInterface(object):
         aeq(a.take([2, 4]), r)
 
     def test_index(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
 
         # multi chromosome/contig
         vt = self.setup_instance(a, index=('CHROM', 'POS'))
@@ -1485,3 +1503,228 @@ class VariantTableInterface(object):
         vt = self.setup_instance(a[2:4][['POS', 'DP', 'QD']], index='POS')
         eq(0, vt.index.locate_key(3))
         eq(slice(0, 2), vt.index.locate_range(3, 9))
+
+    def test_to_vcf(self):
+
+        # define columns
+        chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+        pos = [2, 6, 3, 8, 1]
+        # noinspection PyShadowingBuiltins
+        id = ['a', 'b', 'c', 'd', 'e']
+        ref = [b'A', b'C', b'T', b'G', b'N']
+        alt = [(b'T', b'.'),
+               (b'G', b'.'),
+               (b'A', b'C'),
+               (b'C', b'A'),
+               (b'X', b'.')]
+        qual = [1.2, 2.3, 3.4, 4.5, 5.6]
+        filter_qd = [True, True, True, False, False]
+        filter_dp = [True, False, True, False, False]
+        dp = [12, 23, 34, 45, 56]
+        qd = [12.3, 23.4, 34.5, 45.6, 56.7]
+        flg = [True, False, True, False, True]
+        ac = [(1, -1), (3, -1), (5, 6), (7, 8), (9, -1)]
+        xx = [(1.2, 2.3), (3.4, 4.5), (5.6, 6.7), (7.8, 8.9), (9.0, 9.9)]
+
+        # compile into recarray
+        columns = [chrom, pos, id, ref, alt, qual, filter_dp, filter_qd,
+                   dp, qd, flg, ac, xx]
+        records = list(zip(*columns))
+        dtype = [('chrom', 'S4'),
+                 ('pos', 'u4'),
+                 ('ID', 'S1'),
+                 ('ref', 'S1'),
+                 ('alt', ('S1', 2)),
+                 ('qual', 'f4'),
+                 ('filter_dp', bool),
+                 ('filter_qd', bool),
+                 ('dp', int),
+                 ('qd', float),
+                 ('flg', bool),
+                 ('ac', (int, 2)),
+                 ('xx', (float, 2))]
+        a = np.array(records, dtype=dtype)
+
+        # wrap
+        vt = self.setup_instance(a)
+
+        # check dtype
+        eq(a.dtype, vt.dtype)
+
+        # expectation
+        expect_vcf = """##fileformat=VCFv4.1
+##fileDate={today}
+##source=scikit-allel-{version}
+##INFO=<ID=DP,Number=1,Type=Integer,Description="">
+##INFO=<ID=QD,Number=1,Type=Float,Description="">
+##INFO=<ID=ac,Number=A,Type=Integer,Description="Allele counts">
+##INFO=<ID=flg,Number=0,Type=Flag,Description="">
+##INFO=<ID=xx,Number=2,Type=Float,Description="">
+##FILTER=<ID=QD,Description="">
+##FILTER=<ID=dp,Description="Low depth">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+chr1\t2\ta\tA\tT\t1.2\tQD;dp\tDP=12;QD=12.3;ac=1;flg;xx=1.2,2.3
+chr1\t6\tb\tC\tG\t2.3\tQD\tDP=23;QD=23.4;ac=3;xx=3.4,4.5
+chr2\t3\tc\tT\tA,C\t3.4\tQD;dp\tDP=34;QD=34.5;ac=5,6;flg;xx=5.6,6.7
+chr2\t8\td\tG\tC,A\t4.5\tPASS\tDP=45;QD=45.6;ac=7,8;xx=7.8,8.9
+chr3\t1\te\tN\tX\t5.6\tPASS\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
+""".format(today=date.today().strftime('%Y%m%d'), version=allel.__version__)
+
+        # create a named temp file
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+
+        # write the VCF
+        rename = {'dp': 'DP', 'qd': 'QD', 'filter_qd': 'QD'}
+        fill = {'ALT': b'.', 'ac': -1}
+        number = {'ac': 'A'}
+        description = {'ac': 'Allele counts', 'filter_dp': 'Low depth'}
+        vt.to_vcf(f.name, rename=rename, fill=fill, number=number,
+                  description=description)
+
+        # check the result
+        actual_vcf = open(f.name).read()
+        # compare line-by-line
+        for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
+            print('expect:', l1)
+            print('actual:', l2)
+            eq(l1, l2)
+
+    def test_to_vcf_no_filters(self):
+
+        # define columns
+        chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+        pos = [2, 6, 3, 8, 1]
+        # noinspection PyShadowingBuiltins
+        id = ['a', 'b', 'c', 'd', 'e']
+        ref = [b'A', b'C', b'T', b'G', b'N']
+        alt = [(b'T', b'.'),
+               (b'G', b'.'),
+               (b'A', b'C'),
+               (b'C', b'A'),
+               (b'X', b'.')]
+        qual = [1.2, 2.3, 3.4, 4.5, 5.6]
+        dp = [12, 23, 34, 45, 56]
+        qd = [12.3, 23.4, 34.5, 45.6, 56.7]
+        flg = [True, False, True, False, True]
+        ac = [(1, -1), (3, -1), (5, 6), (7, 8), (9, -1)]
+        xx = [(1.2, 2.3), (3.4, 4.5), (5.6, 6.7), (7.8, 8.9), (9.0, 9.9)]
+
+        # compile into recarray
+        columns = [chrom, pos, id, ref, alt, qual, dp, qd, flg, ac, xx]
+        records = list(zip(*columns))
+        dtype = [('chrom', 'S4'),
+                 ('pos', 'u4'),
+                 ('ID', 'S1'),
+                 ('ref', 'S1'),
+                 ('alt', ('S1', 2)),
+                 ('qual', 'f4'),
+                 ('dp', int),
+                 ('qd', float),
+                 ('flg', bool),
+                 ('ac', (int, 2)),
+                 ('xx', (float, 2))]
+        a = np.array(records, dtype=dtype)
+
+        # wrap
+        vt = self.setup_instance(a)
+
+        # check dtype
+        eq(a.dtype, vt.dtype)
+
+        # expectation
+        expect_vcf = """##fileformat=VCFv4.1
+##fileDate={today}
+##source=scikit-allel-{version}
+##INFO=<ID=DP,Number=1,Type=Integer,Description="">
+##INFO=<ID=QD,Number=1,Type=Float,Description="">
+##INFO=<ID=ac,Number=A,Type=Integer,Description="Allele counts">
+##INFO=<ID=flg,Number=0,Type=Flag,Description="">
+##INFO=<ID=xx,Number=2,Type=Float,Description="">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+chr1\t2\ta\tA\tT\t1.2\t.\tDP=12;QD=12.3;ac=1;flg;xx=1.2,2.3
+chr1\t6\tb\tC\tG\t2.3\t.\tDP=23;QD=23.4;ac=3;xx=3.4,4.5
+chr2\t3\tc\tT\tA,C\t3.4\t.\tDP=34;QD=34.5;ac=5,6;flg;xx=5.6,6.7
+chr2\t8\td\tG\tC,A\t4.5\t.\tDP=45;QD=45.6;ac=7,8;xx=7.8,8.9
+chr3\t1\te\tN\tX\t5.6\t.\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
+""".format(today=date.today().strftime('%Y%m%d'), version=allel.__version__)
+
+        # create a named temp file
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+
+        # write the VCF
+        rename = {'dp': 'DP', 'qd': 'QD'}
+        fill = {'ALT': b'.', 'ac': -1}
+        number = {'ac': 'A'}
+        description = {'ac': 'Allele counts'}
+        vt.to_vcf(f.name, rename=rename, fill=fill, number=number,
+                  description=description)
+
+        # check the result
+        actual_vcf = open(f.name).read()
+        # compare line-by-line
+        for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
+            print('expect:', l1)
+            print('actual:', l2)
+            eq(l1, l2)
+
+    def test_to_vcf_no_info(self):
+
+        # define columns
+        chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+        pos = [2, 6, 3, 8, 1]
+        # noinspection PyShadowingBuiltins
+        id = ['a', 'b', 'c', 'd', 'e']
+        ref = [b'A', b'C', b'T', b'G', b'N']
+        alt = [(b'T', b'.'),
+               (b'G', b'.'),
+               (b'A', b'C'),
+               (b'C', b'A'),
+               (b'X', b'.')]
+        qual = [1.2, 2.3, 3.4, 4.5, 5.6]
+
+        # compile into recarray
+        columns = [chrom, pos, id, ref, alt, qual]
+        records = list(zip(*columns))
+        dtype = [('chrom', 'S4'),
+                 ('pos', 'u4'),
+                 ('ID', 'S1'),
+                 ('ref', 'S1'),
+                 ('alt', ('S1', 2)),
+                 ('qual', 'f4')]
+        a = np.array(records, dtype=dtype)
+
+        # wrap
+        vt = self.setup_instance(a)
+
+        # check dtype
+        eq(a.dtype, vt.dtype)
+
+        # expectation
+        expect_vcf = """##fileformat=VCFv4.1
+##fileDate={today}
+##source=scikit-allel-{version}
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+chr1\t2\ta\tA\tT\t1.2\t.\t.
+chr1\t6\tb\tC\tG\t2.3\t.\t.
+chr2\t3\tc\tT\tA,C\t3.4\t.\t.
+chr2\t8\td\tG\tC,A\t4.5\t.\t.
+chr3\t1\te\tN\tX\t5.6\t.\t.
+""".format(today=date.today().strftime('%Y%m%d'), version=allel.__version__)
+
+        # create a named temp file
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+
+        # write the VCF
+        fill = {'ALT': b'.'}
+        vt.to_vcf(f.name, fill=fill)
+
+        # check the result
+        actual_vcf = open(f.name).read()
+        # compare line-by-line
+        for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
+            print('expect:', l1)
+            print('actual:', l2)
+            eq(l1, l2)

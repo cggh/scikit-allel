@@ -19,7 +19,7 @@ from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, AlleleCountsArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, haplotype_data, \
     allele_counts_data, VariantTableInterface, variant_table_data, \
-    variant_table_names
+    variant_table_dtype
 from allel.bcolz import GenotypeCArray, HaplotypeCArray, AlleleCountsCArray,\
     VariantCTable
 
@@ -355,7 +355,7 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
             VariantCTable()
 
     def test_slice_types(self):
-        a = np.rec.array(variant_table_data, names=variant_table_names)
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = VariantCTable(a)
 
         # row slice

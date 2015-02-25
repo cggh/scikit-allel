@@ -19,10 +19,30 @@ import numpy as np
 import bcolz
 
 
+# monkey-patch bcolz.ctable.dtype property because it's broken for
+# multi-dimensional columns
+
+def _ctable_dtype(self):
+    """The data type of this object (numpy dtype)."""
+    names, cols = self.names, self.cols
+    l = []
+    for name in names:
+        col = cols[name]
+        if col.ndim == 1:
+            t = (name, col.dtype)
+        else:
+            t = (name, (col.dtype, col.shape[1:]))
+        l.append(t)
+    return np.dtype(l)
+
+bcolz.ctable.dtype = property(_ctable_dtype)
+
+
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
     SortedIndex, SortedMultiIndex, subset, VariantTable
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim
+from allel.io import write_vcf_header, write_vcf_data
 
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray']
@@ -300,9 +320,6 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
 
 
 def carray_from_hdf5(*args, **kwargs):
-    """TODO
-
-    """
 
     import h5py
 
@@ -376,9 +393,6 @@ def carray_from_hdf5(*args, **kwargs):
 
 
 def ctable_from_hdf5_group(*args, **kwargs):
-    """TODO
-
-    """
 
     import h5py
 
@@ -1169,21 +1183,23 @@ class VariantCTable(object):
         >>> pos = [2, 7, 3, 9, 6]
         >>> dp = [35, 12, 78, 22, 99]
         >>> qd = [4.5, 6.7, 1.2, 4.4, 2.8]
-        >>> vt = allel.bcolz.VariantCTable([chrom, pos, dp, qd],
-        ...                                names=['CHROM', 'POS', 'DP', 'QD'],
+        >>> ac = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+        >>> vt = allel.bcolz.VariantCTable([chrom, pos, dp, qd, ac],
+        ...                                names=['CHROM', 'POS', 'DP', 'QD', 'AC'],
         ...                                index=('CHROM', 'POS'))
         >>> vt
-        VariantCTable((5,), [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8')])
-          nbytes: 140; cbytes: 64.00 KB; ratio: 0.00
+        VariantCTable((5,), [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+          nbytes: 220; cbytes: 80.00 KB; ratio: 0.00
           cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
-        [(b'chr1', 2, 35, 4.5) (b'chr1', 7, 12, 6.7) (b'chr2', 3, 78, 1.2)
-         (b'chr2', 9, 22, 4.4) (b'chr3', 6, 99, 2.8)]
+        [(b'chr1', 2, 35, 4.5, [1, 2]) (b'chr1', 7, 12, 6.7, [3, 4])
+         (b'chr2', 3, 78, 1.2, [5, 6]) (b'chr2', 9, 22, 4.4, [7, 8])
+         (b'chr3', 6, 99, 2.8, [9, 10])]
 
     Slicing rows returns :class:`allel.model.VariantTable`::
 
         >>> vt[:2]
-        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8')])
-        [(b'chr1', 2, 35, 4.5) (b'chr1', 7, 12, 6.7)]
+        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr1', 7, 12, 6.7, array([3, 4]))]
 
     Accessing columns returns :class:`allel.bcolz.VariantCTable`::
 
@@ -1197,8 +1213,8 @@ class VariantCTable(object):
 
         >>> loc = vt.index.locate_range(b'chr2', 1, 10)
         >>> vt[loc]
-        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8')])
-        [(b'chr2', 3, 78, 1.2) (b'chr2', 9, 22, 4.4)]
+        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
 
     """  # noqa
 
@@ -1295,3 +1311,14 @@ class VariantCTable(object):
     def from_hdf5_group(*args, **kwargs):
         ctbl = ctable_from_hdf5_group(*args, **kwargs)
         return VariantCTable(ctbl, copy=False)
+
+    def to_vcf(self, path, rename=None, number=None, description=None,
+               fill=None, blen=None):
+        with open(path, 'w') as vcf_file:
+            write_vcf_header(vcf_file, self, rename=rename, number=number,
+                             description=description)
+            if blen is None:
+                blen = min(self.ctbl[col].chunklen for col in self.ctbl.cols)
+            for i in range(0, self.ctbl.shape[0], blen):
+                block = self.ctbl[i:i+blen]
+                write_vcf_data(vcf_file, block, rename=rename, fill=fill)

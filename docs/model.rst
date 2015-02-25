@@ -126,7 +126,4 @@ VariantTable
     .. autoattribute:: names
     .. automethod:: eval
     .. automethod:: query
-
-
-
- 
+    .. automethod:: to_vcf

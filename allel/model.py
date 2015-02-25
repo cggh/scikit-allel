@@ -15,6 +15,7 @@ import numexpr as ne
 
 from allel.constants import DIM_PLOIDY, DIPLOID
 from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
+from allel.io import write_vcf
 
 
 __all__ = ['GenotypeArray', 'HaplotypeArray', 'AlleleCountsArray',
@@ -2793,9 +2794,74 @@ class SortedMultiIndex(object):
 
 
 class VariantTable(np.recarray):
-    """TODO
+    """Table (catalogue) of variants.
 
-    """
+    Parameters
+    ----------
+
+    data : array_like, structured, shape (n_variants,)
+        Variant records.
+    index : string or pair of strings, optional
+        Names of columns to use for positional index, e.g., 'POS' if table
+        contains a 'POS' column and records from a single chromosome/contig,
+        or ('CHROM', 'POS') if table contains records from multiple
+        chromosomes/contigs.
+    **kwargs : keyword arguments, optional
+        Further keyword arguments are passed through to :func:`np.rec.array`.
+
+    Examples
+    --------
+
+    Instantiate a table from existing data::
+
+        >>> import allel
+        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
+        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
+        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
+        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
+        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
+        >>> dtype = [('CHROM', 'S4'),
+        ...          ('POS', 'u4'),
+        ...          ('DP', int),
+        ...          ('QD', float),
+        ...          ('AC', (int, 2))]
+        >>> vt = allel.model.VariantTable(records, dtype=dtype,
+        ...                               index=('CHROM', 'POS'))
+        >>> vt.names
+        ('CHROM', 'POS', 'DP', 'QD', 'AC')
+        >>> vt.n_variants
+        5
+
+    Access a column::
+
+        >>> vt['DP']
+        array([35, 12, 78, 22, 99])
+
+    Access multiple columns::
+
+        >>> vt[['DP', 'QD']]
+        VariantTable((5,), dtype=[('DP', '<i8'), ('QD', '<f8')])
+        [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
+
+    Access a row::
+
+        >>> vt[2]
+        (b'chr2', 3, 78, 1.2, array([5, 6]))
+
+    Access multiple rows::
+
+        >>> vt[2:4]
+        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
+
+    Use the index to locate variants:
+
+        >>> loc = vt.index.locate_range(b'chr2', 1, 10)
+        >>> vt[loc]
+        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
+
+    """  # flake8: noqa
 
     def __new__(cls, data, index=None, **kwargs):
         """Constructor."""
@@ -2824,12 +2890,10 @@ class VariantTable(np.recarray):
 
         # called after slice (new-from-template)
         if isinstance(obj, VariantTable):
-            obj.index = None
             return
 
         # called after view - nothing to do
         # VariantTable._check_input_data(obj)
-        obj.index = None
 
     # noinspection PyUnusedLocal
     def __array_wrap__(self, out_arr, context=None):
@@ -2884,10 +2948,46 @@ class VariantTable(np.recarray):
 
     @property
     def names(self):
+        """Column names."""
         return self.dtype.names
 
     def eval(self, expression, vm='numexpr'):
-        """TODO doco
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+
+        result : ndarray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
+        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
+        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
+        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
+        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
+        >>> dtype = [('CHROM', 'S4'),
+        ...          ('POS', 'u4'),
+        ...          ('DP', int),
+        ...          ('QD', float),
+        ...          ('AC', (int, 2))]
+        >>> vt = allel.model.VariantTable(records, dtype=dtype)
+        >>> vt.eval('DP > 30')
+        array([ True, False,  True, False,  True], dtype=bool)
+        >>> vt.eval('(DP > 30) & (QD > 4)')
+        array([ True, False, False, False, False], dtype=bool)
+        >>> vt.eval('DP * 2')
+        array([ 70,  24, 156,  44, 198], dtype=int64)
 
         """
 
@@ -2897,9 +2997,136 @@ class VariantTable(np.recarray):
             return eval(expression, {}, self)
 
     def query(self, expression, vm='numexpr'):
-        """TODO doco
+        """Evaluate expression and then use it to extract rows from the table.
 
-        """
+        Parameters
+        ----------
+
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+
+        result : VariantTable
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
+        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
+        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
+        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
+        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
+        >>> dtype = [('CHROM', 'S4'),
+        ...          ('POS', 'u4'),
+        ...          ('DP', int),
+        ...          ('QD', float),
+        ...          ('AC', (int, 2))]
+        >>> vt = allel.model.VariantTable(records, dtype=dtype)
+        >>> vt.query('DP > 30')
+        VariantTable((3,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([5, 6]))
+         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
+        >>> vt.query('(DP > 30) & (QD > 4)')
+        VariantTable((1,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
+
+        """  # flake8: noqa
 
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
+
+    def to_vcf(self, path, rename=None, number=None, description=None,
+               fill=None):
+        """Write to a variant call format (VCF) file.
+
+        Parameters
+        ----------
+
+        path : string
+            File path.
+        rename : dict, optional
+            Rename these columns in the VCF.
+        number : dict, optional
+            Override the number specified in INFO headers.
+        description : dict, optional
+            Descriptions for the INFO and FILTER headers.
+        fill : dict, optional
+            Fill values used for missing data in the table.
+
+        Examples
+        --------
+
+        Setup a variant table to write out::
+
+            >>> import allel
+            >>> chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+            >>> pos = [2, 6, 3, 8, 1]
+            >>> id = ['a', 'b', 'c', 'd', 'e']
+            >>> ref = [b'A', b'C', b'T', b'G', b'N']
+            >>> alt = [(b'T', b'.'),
+            ...        (b'G', b'.'),
+            ...        (b'A', b'C'),
+            ...        (b'C', b'A'),
+            ...        (b'X', b'.')]
+            >>> qual = [1.2, 2.3, 3.4, 4.5, 5.6]
+            >>> filter_qd = [True, True, True, False, False]
+            >>> filter_dp = [True, False, True, False, False]
+            >>> dp = [12, 23, 34, 45, 56]
+            >>> qd = [12.3, 23.4, 34.5, 45.6, 56.7]
+            >>> flg = [True, False, True, False, True]
+            >>> ac = [(1, -1), (3, -1), (5, 6), (7, 8), (9, -1)]
+            >>> xx = [(1.2, 2.3), (3.4, 4.5), (5.6, 6.7), (7.8, 8.9),
+            ...       (9.0, 9.9)]
+            >>> columns = [chrom, pos, id, ref, alt, qual, filter_dp,
+            ...            filter_qd, dp, qd, flg, ac, xx]
+            >>> records = list(zip(*columns))
+            >>> dtype = [('chrom', 'S4'),
+            ...          ('pos', 'u4'),
+            ...          ('ID', 'S1'),
+            ...          ('ref', 'S1'),
+            ...          ('alt', ('S1', 2)),
+            ...          ('qual', 'f4'),
+            ...          ('filter_dp', bool),
+            ...          ('filter_qd', bool),
+            ...          ('dp', int),
+            ...          ('qd', float),
+            ...          ('flg', bool),
+            ...          ('ac', (int, 2)),
+            ...          ('xx', (float, 2))]
+            >>> vt = allel.model.VariantTable(records, dtype=dtype)
+
+        Now write out to VCF and inspect the result::
+
+            >>> rename = {'dp': 'DP', 'qd': 'QD', 'filter_qd': 'QD'}
+            >>> fill = {'ALT': b'.', 'ac': -1}
+            >>> number = {'ac': 'A'}
+            >>> description = {'ac': 'Allele counts', 'filter_dp': 'Low depth'}
+            >>> vt.to_vcf('example.vcf', rename=rename, fill=fill,
+            ...           number=number, description=description)
+            >>> print(open('example.vcf').read())
+            ##fileformat=VCFv4.1
+            ##fileDate=20150225
+            ##source=scikit-allel-0.6.0.dev2
+            ##INFO=<ID=DP,Number=1,Type=Integer,Description="">
+            ##INFO=<ID=QD,Number=1,Type=Float,Description="">
+            ##INFO=<ID=ac,Number=A,Type=Integer,Description="Allele counts">
+            ##INFO=<ID=flg,Number=0,Type=Flag,Description="">
+            ##INFO=<ID=xx,Number=2,Type=Float,Description="">
+            ##FILTER=<ID=QD,Description="">
+            ##FILTER=<ID=dp,Description="Low depth">
+            #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+            chr1	2	a	A	T	1.2	QD;dp	DP=12;QD=12.3;ac=1;flg;xx=1.2,2.3
+            chr1	6	b	C	G	2.3	QD	DP=23;QD=23.4;ac=3;xx=3.4,4.5
+            chr2	3	c	T	A,C	3.4	QD;dp	DP=34;QD=34.5;ac=5,6;flg;xx=5.6,6.7
+            chr2	8	d	G	C,A	4.5	PASS	DP=45;QD=45.6;ac=7,8;xx=7.8,8.9
+            chr3	1	e	N	X	5.6	PASS	DP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
+
+        """  # flake8: noqa
+
+        write_vcf(path, variants=self, rename=rename, number=number,
+                  description=description, fill=fill)

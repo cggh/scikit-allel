@@ -15,7 +15,8 @@ from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
     SortedMultiIndexInterface, diploid_genotype_data, triploid_genotype_data, \
     haplotype_data, AlleleCountsArrayInterface, VariantTableInterface, \
-    allele_counts_data, variant_table_data, variant_table_names
+    allele_counts_data, variant_table_data, variant_table_names, \
+    variant_table_dtype
 
 
 class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -587,7 +588,7 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
             VariantTable()
 
     def test_get_item_types(self):
-        v = VariantTable(variant_table_data, names=variant_table_names)
+        v = VariantTable(variant_table_data, dtype=variant_table_dtype)
 
         # row slice
         s = v[1:]
@@ -607,7 +608,7 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
 
     def test_view(self):
         a = np.rec.array(variant_table_data,
-                         names=variant_table_names)
+                         dtype=variant_table_dtype)
         v = a.view(VariantTable)
         aeq(a, v)
         eq(1, v.ndim)
