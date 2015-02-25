@@ -11,12 +11,24 @@ are too large to fit uncompressed into main memory.
 from __future__ import absolute_import, print_function, division
 
 
+import os
 import operator
 from allel.compat import range
 
 
 import numpy as np
 import bcolz
+
+
+from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
+    SortedIndex, SortedMultiIndex, subset, VariantTable
+from allel.constants import DIM_PLOIDY
+from allel.util import asarray_ndim
+from allel.io import write_vcf_header, write_vcf_data
+
+
+__all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
+           'VariantCTable']
 
 
 # monkey-patch bcolz.ctable.dtype property because it's broken for
@@ -38,14 +50,25 @@ def _ctable_dtype(self):
 bcolz.ctable.dtype = property(_ctable_dtype)
 
 
-from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex, subset, VariantTable
-from allel.constants import DIM_PLOIDY
-from allel.util import asarray_ndim
-from allel.io import write_vcf_header, write_vcf_data
+# monkey-patch bcolz.ctable.addcol because it's broken for persistent ctables
+
+_ctable_addcol_original = bcolz.ctable.addcol
 
 
-__all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray']
+def _ctable_addcol(self, newcol, name, **kwargs):
+    # require name to simplify monkey-patch
+    if self.rootdir is not None:
+        rootdir = os.path.join(self.rootdir, name)
+        kwargs['rootdir'] = rootdir
+        kwargs['mode'] = 'w'
+        _ctable_addcol_original(self, newcol, name=name, **kwargs)
+        if isinstance(newcol, bcolz.carray):
+            # ensure carrays are actually written to disk
+            newcol.copy(**kwargs)
+    else:
+        _ctable_addcol_original(self, newcol, name=name, **kwargs)
+
+bcolz.ctable.addcol = _ctable_addcol
 
 
 def carray_block_map(carr, f, out=None, blen=None, **kwargs):
