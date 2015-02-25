@@ -521,6 +521,9 @@ class _CArrayWrapper(object):
         s = type(self).__name__ + s[6:]
         return s
 
+    def __len__(self):
+        return len(self.carr)
+
     @classmethod
     def open(cls, rootdir, mode='r'):
         cobj = bcolz.open(rootdir, mode=mode)
@@ -1282,6 +1285,9 @@ class VariantCTable(object):
         s = repr(self.ctbl)
         s = type(self).__name__ + s[6:]
         return s
+
+    def __len__(self):
+        return len(self.ctbl)
 
     def _repr_html_(self):
         # use implementation from pandas
