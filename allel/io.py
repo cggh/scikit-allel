@@ -6,7 +6,7 @@ import csv
 from datetime import date
 import itertools
 from operator import itemgetter
-from allel.compat import zip_longest, PY2
+from allel.compat import zip_longest, PY2, text_type, range
 
 
 import numpy as np
@@ -199,12 +199,12 @@ def write_vcf_data(vcf_file, variants, rename, fill):
 
         # unpack main row
         chrom, pos, id, ref, alt, qual = row
-        chrom = vcf_value_str(chrom)
-        pos = vcf_value_str(pos)
-        id = vcf_value_str(id)
-        ref = vcf_value_str(ref)
-        alt = vcf_value_str(alt, fill=fill.get('ALT', None))
-        qual = vcf_value_str(qual)
+        chrom = _vcf_value_str(chrom)
+        pos = _vcf_value_str(pos)
+        id = _vcf_value_str(id)
+        ref = _vcf_value_str(ref)
+        alt = _vcf_value_str(alt, fill=fill.get('ALT', None))
+        qual = _vcf_value_str(qual)
 
         # construct FILTER value
         if filter_row is not None:
@@ -218,7 +218,7 @@ def write_vcf_data(vcf_file, variants, rename, fill):
 
         # construct INFO value
         if info_row is not None:
-            info_vals = [vcf_info_str(n, i, v, fill)
+            info_vals = [_vcf_info_str(n, i, v, fill)
                          for n, i, v in zip(info_names, info_ids, info_row)]
             info_vals = [x for x in info_vals if x is not None]
             info = ';'.join(info_vals)
@@ -230,24 +230,70 @@ def write_vcf_data(vcf_file, variants, rename, fill):
         writer.writerow(row)
 
 
-def vcf_value_str(o, fill=None):
+def _vcf_value_str(o, fill=None):
     if isinstance(o, bytes) and not PY2:
         return str(o, encoding='ascii')
     elif isinstance(o, (tuple, list, np.ndarray)):
         if fill is None:
-            t = [vcf_value_str(x) for x in o]
+            t = [_vcf_value_str(x) for x in o]
         else:
-            t = [vcf_value_str(x) for x in o if x != fill]
+            t = [_vcf_value_str(x) for x in o if x != fill]
         return ','.join(t)
     else:
         return str(o)
 
 
-def vcf_info_str(name, id, value, fill):
+def _vcf_info_str(name, id, value, fill):
     if isinstance(value, (bool, np.bool_)):
         if bool(value):
             return id
         else:
             return None
     else:
-        return '%s=%s' % (id, vcf_value_str(value, fill=fill.get(name, None)))
+        return '%s=%s' % (id, _vcf_value_str(value, fill=fill.get(name, None)))
+
+
+def write_fasta(path, sequences, names, mode='w', width=80):
+    """Write nucleotide sequences stored as numpy arrays to a FASTA file.
+
+    Parameters
+    ----------
+
+    path : string
+        File path.
+    sequences : sequence of arrays
+        One or more ndarrays of dtype 'S1' containing the sequences.
+    names : sequence of strings
+        Names of the sequences.
+    mode : string, optional
+        Use 'a' to append to an existing file.
+    width : int, optional
+        Maximum line width.
+
+    """
+
+    # check inputs
+    if isinstance(sequences, np.ndarray):
+        # single sequence
+        sequences = [sequences]
+        names = [names]
+    if len(sequences) != len(names):
+        raise ValueError('must provide the same number of sequences and names')
+    for sequence in sequences:
+        if sequence.dtype != np.dtype('S1'):
+            raise ValueError('expected S1 dtype, found %r' % sequence.dtype)
+
+    # force binary mode
+    mode = 'ab' if 'a' in mode else 'wb'
+
+    # write to file
+    with open(path, mode=mode) as fasta:
+        for name, sequence in zip(names, sequences):
+            # force bytes
+            if isinstance(name, text_type):
+                name = name.encode('ascii')
+            header = b'>' + name + b'\n'
+            fasta.write(header)
+            for i in range(0, sequence.size, width):
+                line = sequence[i:i+width].tostring() + b'\n'
+                fasta.write(line)

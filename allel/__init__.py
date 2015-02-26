@@ -3,11 +3,12 @@
 from __future__ import absolute_import, print_function, division
 
 
-__version__ = '0.7.0.dev2'
+__version__ = '0.7.0.dev3'
 
 
 import allel.model as model
 import allel.bcolz as bcolz
 import allel.stats as stats
 import allel.plot as plot
+import allel.io as io
 import allel.constants as constants
