@@ -19,10 +19,11 @@ VCF_FIXED_FIELDS = 'CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'
 
 
 def write_vcf(path, variants, rename=None, number=None, description=None,
-              fill=None):
+              fill=None, write_header=True):
     with open(path, 'w') as vcf_file:
-        write_vcf_header(vcf_file, variants=variants, rename=rename,
-                         number=number, description=description)
+        if write_header:
+            write_vcf_header(vcf_file, variants=variants, rename=rename,
+                             number=number, description=description)
         write_vcf_data(vcf_file, variants=variants, rename=rename, fill=fill)
 
 

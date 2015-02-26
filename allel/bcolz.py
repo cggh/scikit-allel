@@ -1342,10 +1342,11 @@ class VariantCTable(object):
         return VariantCTable(ctbl, copy=False)
 
     def to_vcf(self, path, rename=None, number=None, description=None,
-               fill=None, blen=None):
+               fill=None, blen=None, write_header=True):
         with open(path, 'w') as vcf_file:
-            write_vcf_header(vcf_file, self, rename=rename, number=number,
-                             description=description)
+            if write_header:
+                write_vcf_header(vcf_file, self, rename=rename, number=number,
+                                 description=description)
             if blen is None:
                 blen = min(self.ctbl[col].chunklen for col in self.ctbl.cols)
             for i in range(0, self.ctbl.shape[0], blen):

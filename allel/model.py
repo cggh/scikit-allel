@@ -3041,7 +3041,7 @@ class VariantTable(np.recarray):
         return self.compress(condition)
 
     def to_vcf(self, path, rename=None, number=None, description=None,
-               fill=None):
+               fill=None, write_header=True):
         """Write to a variant call format (VCF) file.
 
         Parameters
@@ -3129,4 +3129,5 @@ class VariantTable(np.recarray):
         """  # flake8: noqa
 
         write_vcf(path, variants=self, rename=rename, number=number,
-                  description=description, fill=fill)
+                  description=description, fill=fill,
+                  write_header=write_header)

@@ -4,5 +4,5 @@ matplotlib
 pandas
 numexpr
 h5py
-bcolz
+bcolz==0.8.0
 nose
