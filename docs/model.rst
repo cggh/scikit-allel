@@ -34,6 +34,7 @@ GenotypeArray
     .. automethod:: from_packed
     .. automethod:: to_sparse
     .. automethod:: from_sparse
+    .. automethod:: to_gt
     .. automethod:: haploidify_samples
 
 

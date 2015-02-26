@@ -1051,6 +1051,70 @@ class GenotypeArray(np.ndarray):
 
         return h
 
+    def to_gt(self, phased=False, max_allele=None):
+        """Convert genotype calls to VCF-style string representation.
+
+        Parameters
+        ----------
+
+        phased : bool, optional
+            Determines separator.
+        max_allele : int, optional
+            Manually specify max allele index.
+
+        Returns
+        -------
+
+        gt : ndarray, string, shape (n_variants, n_samples)
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[1, 2], [2, 1]],
+        ...                                [[2, 2], [-1, -1]]])
+        >>> g.to_gt()
+        chararray([[b'0/0', b'0/1'],
+               [b'0/2', b'1/1'],
+               [b'1/2', b'2/1'],
+               [b'2/2', b'./.']],
+              dtype='|S3')
+        >>> g.to_gt(phased=True)
+        chararray([[b'0|0', b'0|1'],
+               [b'0|2', b'1|1'],
+               [b'1|2', b'2|1'],
+               [b'2|2', b'.|.']],
+              dtype='|S3')
+
+        """
+
+        # determine separator
+        if phased:
+            sep = b'|'
+        else:
+            sep = b'/'
+
+        # how many characters needed?
+        if max_allele is None:
+            max_allele = np.max(self)
+        nchar = int(np.floor(np.log10(max_allele))) + 1
+
+        # convert to string
+        a = self.astype((np.string_, nchar)).view(np.chararray)
+
+        # recode missing alleles
+        a[a.startswith(b'-')] = b'.'
+
+        # join via separator
+        expr = "a[..., 0]"
+        for i in range(1, self.ploidy):
+            expr += " + sep + a[..., %s]" % i
+        gt = eval(expr)
+
+        return gt
+
 
 class HaplotypeArray(np.ndarray):
     """Array of haplotypes.
@@ -3110,8 +3174,8 @@ class VariantTable(np.recarray):
             ...           number=number, description=description)
             >>> print(open('example.vcf').read())
             ##fileformat=VCFv4.1
-            ##fileDate=20150225
-            ##source=scikit-allel-0.6.0.dev2
+            ##fileDate=20150226
+            ##source=scikit-allel-0.7.0.dev2
             ##INFO=<ID=DP,Number=1,Type=Integer,Description="">
             ##INFO=<ID=QD,Number=1,Type=Float,Description="">
             ##INFO=<ID=ac,Number=A,Type=Integer,Description="Allele counts">

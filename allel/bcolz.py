@@ -540,7 +540,7 @@ class _CArrayWrapper(object):
             raise NotImplementedError('only supported for scalars')
 
         # build output
-        f = lambda data: op(data, other)
+        f = lambda block: op(block, other)
         out = carray_block_map(self.carr, f, **kwargs)
 
         return out
@@ -753,31 +753,32 @@ class GenotypeCArray(_CArrayWrapper):
         return GenotypeCArray(carr, copy=False)
 
     def is_called(self, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_called()
+        f = lambda block: GenotypeArray(block, copy=False).is_called()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_missing(self, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_missing()
+        f = lambda block: GenotypeArray(block, copy=False).is_missing()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom(self, allele=None, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_hom(allele=allele)
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom(allele=allele)
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_ref(self, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_hom_ref()
+        f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_alt(self, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_hom_alt()
+        f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_het(self, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_het()
+        f = lambda block: GenotypeArray(block, copy=False).is_het()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_call(self, call, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).is_call(call)
+        f = lambda block: GenotypeArray(block, copy=False).is_call(call)
         return carray_block_map(self.carr, f, **kwargs)
 
     def count_called(self, axis=None):
@@ -822,7 +823,7 @@ class GenotypeCArray(_CArrayWrapper):
         return HaplotypeCArray(out, copy=False)
 
     def to_n_alt(self, fill=0, **kwargs):
-        f = lambda data: GenotypeArray(data, copy=False).to_n_alt(fill)
+        f = lambda block: GenotypeArray(block, copy=False).to_n_alt(fill)
         return carray_block_map(self.carr, f, **kwargs)
 
     def to_allele_counts(self, alleles=None, **kwargs):
@@ -893,6 +894,15 @@ class GenotypeCArray(_CArrayWrapper):
         out = carray_block_map(self.carr, f, **kwargs)
 
         return AlleleCountsCArray(out, copy=False)
+
+    def to_gt(self, phased=False, max_allele=None, **kwargs):
+        if max_allele is None:
+            max_allele = self.max()
+
+        def f(block):
+            g = GenotypeArray(block, copy=False)
+            return g.to_gt(phased=phased, max_allele=max_allele)
+        return carray_block_map(self.carr, f, **kwargs)
 
 
 class HaplotypeCArray(_CArrayWrapper):

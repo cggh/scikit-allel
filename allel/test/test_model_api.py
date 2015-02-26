@@ -603,6 +603,25 @@ class GenotypeArrayInterface(object):
         actual = self._class.from_packed(packed_data)
         aeq(expect, actual)
 
+    def test_to_gt(self):
+
+        # diploid
+        expect = [[b'0/0', b'0/1', b'./.'],
+                  [b'0/2', b'1/1', b'./.'],
+                  [b'1/0', b'2/1', b'./.'],
+                  [b'2/2', b'./.', b'./.'],
+                  [b'./.', b'./.', b'./.']]
+        actual = self.setup_instance(diploid_genotype_data).to_gt()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = [[b'0/0/0', b'0/0/1', b'././.'],
+                  [b'0/1/1', b'1/1/1', b'././.'],
+                  [b'0/1/2', b'././.', b'././.'],
+                  [b'././.', b'././.', b'././.']]
+        actual = self.setup_instance(triploid_genotype_data).to_gt()
+        aeq(expect, actual)
+
     def test_max(self):
 
         # overall
