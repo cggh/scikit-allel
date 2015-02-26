@@ -50,25 +50,22 @@ def _ctable_dtype(self):
 bcolz.ctable.dtype = property(_ctable_dtype)
 
 
-# monkey-patch bcolz.ctable.addcol because it's broken for persistent ctables
+# bcolz.ctable.addcol is broken for persistent ctables
 
-_ctable_addcol_original = bcolz.ctable.addcol
-
-
-def _ctable_addcol(self, newcol, name, **kwargs):
-    # require name to simplify monkey-patch
+def ctable_addcol_persistent(self, newcol, name, **kwargs):
+    # require name to simplify patch
     if self.rootdir is not None and self.mode != 'r':
         rootdir = os.path.join(self.rootdir, name)
         kwargs['rootdir'] = rootdir
         kwargs['mode'] = 'w'
-        _ctable_addcol_original(self, newcol, name=name, **kwargs)
+        self.addcol(newcol, name=name, **kwargs)
         if isinstance(newcol, bcolz.carray):
             # ensure carrays are actually written to disk
             newcol.copy(**kwargs)
     else:
-        _ctable_addcol_original(self, newcol, name=name, **kwargs)
+        self.addcol(newcol, name=name, **kwargs)
 
-bcolz.ctable.addcol = _ctable_addcol
+bcolz.ctable.addcol_persistent = ctable_addcol_persistent
 
 
 def carray_block_map(carr, f, out=None, blen=None, **kwargs):
@@ -1303,6 +1300,10 @@ class VariantCTable(object):
             return VariantCTable(cobj, copy=False)
         else:
             raise ValueError('rootdir does not contain a ctable')
+
+    def addcol(self, newcol, name, **kwargs):
+        # bcolz.ctable.addcol is broken for persistent ctables
+        self.ctbl.addcol_persistent(newcol, **kwargs)
 
     def display(self, n):
         # use implementation from pandas
