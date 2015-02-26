@@ -57,7 +57,7 @@ _ctable_addcol_original = bcolz.ctable.addcol
 
 def _ctable_addcol(self, newcol, name, **kwargs):
     # require name to simplify monkey-patch
-    if self.rootdir is not None:
+    if self.rootdir is not None and self.mode != 'r':
         rootdir = os.path.join(self.rootdir, name)
         kwargs['rootdir'] = rootdir
         kwargs['mode'] = 'w'
