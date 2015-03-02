@@ -3106,7 +3106,7 @@ class VariantTable(np.recarray):
 
     def to_vcf(self, path, rename=None, number=None, description=None,
                fill=None, write_header=True):
-        """Write to a variant call format (VCF) file.
+        r"""Write to a variant call format (VCF) file.
 
         Parameters
         ----------
@@ -3172,10 +3172,10 @@ class VariantTable(np.recarray):
             >>> description = {'ac': 'Allele counts', 'filter_dp': 'Low depth'}
             >>> vt.to_vcf('example.vcf', rename=rename, fill=fill,
             ...           number=number, description=description)
-            >>> print(open('example.vcf').read())
+            >>> print(open('example.vcf').read())  # doctest:+ELLIPSIS
             ##fileformat=VCFv4.1
-            ##fileDate=20150226
-            ##source=scikit-allel-0.7.0.dev2
+            ##fileDate=...
+            ##source=...
             ##INFO=<ID=DP,Number=1,Type=Integer,Description="">
             ##INFO=<ID=QD,Number=1,Type=Float,Description="">
             ##INFO=<ID=ac,Number=A,Type=Integer,Description="Allele counts">
