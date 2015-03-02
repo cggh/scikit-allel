@@ -7,8 +7,10 @@ Diversity & divergence
 ----------------------
 
 .. autofunction:: mean_pairwise_diversity
+.. autofunction:: sequence_diversity
 .. autofunction:: windowed_diversity
 .. autofunction:: mean_pairwise_divergence
+.. autofunction:: sequence_divergence
 .. autofunction:: windowed_divergence
 
 Pairwise distance

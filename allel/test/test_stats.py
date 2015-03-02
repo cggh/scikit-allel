@@ -11,16 +11,17 @@ from allel.test.tools import assert_array_equal as aeq, assert_array_close
 
 from allel.util import ignore_invalid
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex
-from allel.stats import moving_statistic, windowed_statistic, \
-    mean_pairwise_diversity, mean_pairwise_divergence, windowed_diversity, \
-    windowed_divergence, per_base, heterozygosity_observed, \
-    heterozygosity_expected, inbreeding_coefficient
+import allel.stats
+# from allel.stats import moving_statistic, windowed_statistic, \
+#     mean_pairwise_diversity, mean_pairwise_divergence, windowed_diversity, \
+#     windowed_divergence, per_base, heterozygosity_observed, \
+#     heterozygosity_expected, inbreeding_coefficient
 
 
 class TestWindowUtilities(unittest.TestCase):
 
     def test_moving_statistic(self):
-        f = moving_statistic
+        f = allel.stats.moving_statistic
 
         values = [2, 5, 8, 16]
         expect = [7, 24]
@@ -33,7 +34,7 @@ class TestWindowUtilities(unittest.TestCase):
         aeq(expect, actual)
 
     def test_windowed_statistic(self):
-        f = windowed_statistic
+        f = allel.stats.windowed_statistic
         pos = [1, 12, 15, 27]
 
         # boolean array, all true
@@ -101,10 +102,10 @@ class TestWindowUtilities(unittest.TestCase):
         expected_counts = [1, 2, 1]
         expected_densities = [1/10, 2/10, 1/7]
         expected_n_bases = [10, 10, 7]
-        nnz, windows, counts = windowed_statistic(pos, b,
-                                                  statistic=np.count_nonzero,
-                                                  size=10, start=1)
-        densities, n_bases = per_base(nnz, windows)
+        nnz, windows, counts = allel.stats.windowed_statistic(
+            pos, b, statistic=np.count_nonzero, size=10, start=1
+        )
+        densities, n_bases = allel.stats.per_base(nnz, windows)
         aeq(expected_nnz, nnz)
         aeq(expected_windows, windows)
         aeq(expected_counts, counts)
@@ -115,10 +116,10 @@ class TestWindowUtilities(unittest.TestCase):
         b = [False, True, False, True]
         expected_densities = [0/10, 1/10, 1/7]
         expected_n_bases = [10, 10, 7]
-        nnz, windows, counts = windowed_statistic(pos, b,
-                                                  statistic=np.count_nonzero,
-                                                  size=10, start=1)
-        densities, n_bases = per_base(nnz, windows)
+        nnz, windows, counts = allel.stats.windowed_statistic(
+            pos, b, statistic=np.count_nonzero, size=10, start=1
+        )
+        densities, n_bases = allel.stats.per_base(nnz, windows)
         aeq(expected_densities, densities)
         aeq(expected_n_bases, n_bases)
 
@@ -131,10 +132,10 @@ class TestWindowUtilities(unittest.TestCase):
                               [2/10, 1/10],
                               [1/7, 1/7]]
         expected_n_bases = [10, 10, 7]
-        nnz, windows, counts = windowed_statistic(
+        nnz, windows, counts = allel.stats.windowed_statistic(
             pos, b, statistic=lambda x: np.sum(x, axis=0), size=10, start=1
         )
-        densities, n_bases = per_base(nnz, windows)
+        densities, n_bases = allel.stats.per_base(nnz, windows)
         aeq(expected_densities, densities)
         aeq(expected_n_bases, n_bases)
 
@@ -145,12 +146,12 @@ class TestWindowUtilities(unittest.TestCase):
         b = [False, True, False, True]
         expected_densities = [-1, 1/6, 1/7]
         expected_n_bases = [0, 6, 7]
-        nnz, windows, counts = windowed_statistic(pos, b,
-                                                  statistic=np.count_nonzero,
-                                                  size=10, start=1)
-        densities, n_bases = per_base(nnz, windows,
-                                      is_accessible=is_accessible,
-                                      fill=-1)
+        nnz, windows, counts = allel.stats.windowed_statistic(
+            pos, b, statistic=np.count_nonzero, size=10, start=1
+        )
+        densities, n_bases = allel.stats.per_base(nnz, windows,
+                                                  is_accessible=is_accessible,
+                                                  fill=-1)
         aeq(expected_densities, densities)
         aeq(expected_n_bases, n_bases)
 
@@ -168,7 +169,7 @@ class TestDiversityDivergence(unittest.TestCase):
                             [-1, -1]])
         ac = h.count_alleles()
         expect = [0, 0, 1, 1, -1, -1]
-        actual = mean_pairwise_diversity(ac, fill=-1)
+        actual = allel.stats.mean_pairwise_diversity(ac, fill=-1)
         aeq(expect, actual)
 
         # four haplotypes, 6 pairwise comparison
@@ -183,7 +184,7 @@ class TestDiversityDivergence(unittest.TestCase):
                             [-1, -1, -1, -1]])
         ac = h.count_alleles()
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        actual = mean_pairwise_diversity(ac, fill=-1)
+        actual = allel.stats.mean_pairwise_diversity(ac, fill=-1)
         assert_array_close(expect, actual)
 
     def test_windowed_diversity(self):
@@ -203,8 +204,9 @@ class TestDiversityDivergence(unittest.TestCase):
         # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
         expect = [(7/6)/10, (13/6)/10, 1/11]
-        actual, _, _, _ = windowed_diversity(pos, ac, size=10, start=1,
-                                             stop=31)
+        actual, _, _, _ = allel.stats.windowed_diversity(pos, ac, size=10,
+                                                         start=1,
+                                                         stop=31)
         assert_array_close(expect, actual)
 
     def test_mean_pairwise_divergence(self):
@@ -225,7 +227,7 @@ class TestDiversityDivergence(unittest.TestCase):
         ac2 = h2.count_alleles()
 
         expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
-        actual = mean_pairwise_divergence(ac1, ac2, fill=-1)
+        actual = allel.stats.mean_pairwise_divergence(ac1, ac2, fill=-1)
         aeq(expect, actual)
 
     def test_windowed_divergence(self):
@@ -248,8 +250,9 @@ class TestDiversityDivergence(unittest.TestCase):
         # expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
         expect = [(6/4)/10, (9/4)/10, 0/11]
-        actual, _, _, _ = windowed_divergence(pos, ac1, ac2, size=10, start=1,
-                                              stop=31)
+        actual, _, _, _ = allel.stats.windowed_divergence(
+            pos, ac1, ac2, size=10, start=1, stop=31
+        )
         assert_array_close(expect, actual)
 
 
@@ -270,7 +273,7 @@ class TestHardyWeinberg(unittest.TestCase):
                            [[0, 1], [-1, -1]],
                            [[-1, -1], [-1, -1]]], dtype='i1')
         expect = [0, 0, 0, .5, .5, .5, 1, 1, 0, 1, -1]
-        actual = heterozygosity_observed(g, fill=-1)
+        actual = allel.stats.heterozygosity_observed(g, fill=-1)
         aeq(expect, actual)
 
         # polyploid
@@ -286,7 +289,7 @@ class TestHardyWeinberg(unittest.TestCase):
                            [[0, 0, 1], [-1, -1, -1]],
                            [[-1, -1, -1], [-1, -1, -1]]], dtype='i1')
         expect = [0, 0, 0, .5, .5, .5, 1, 1, 0, 1, -1]
-        actual = heterozygosity_observed(g, fill=-1)
+        actual = allel.stats.heterozygosity_observed(g, fill=-1)
         aeq(expect, actual)
 
     def test_heterozygosity_expected(self):
@@ -323,11 +326,13 @@ class TestHardyWeinberg(unittest.TestCase):
         expect1 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, -1]
         af = g.count_alleles().to_frequencies()
         expect2 = refimpl(af, ploidy=g.ploidy, fill=-1)
-        actual = heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
+        actual = allel.stats.heterozygosity_expected(af, ploidy=g.ploidy,
+                                                     fill=-1)
         assert_array_close(expect1, actual)
         assert_array_close(expect2, actual)
         expect3 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, 0]
-        actual = heterozygosity_expected(af, ploidy=g.ploidy, fill=0)
+        actual = allel.stats.heterozygosity_expected(af, ploidy=g.ploidy,
+                                                     fill=0)
         assert_array_close(expect3, actual)
 
         # polyploid
@@ -344,7 +349,8 @@ class TestHardyWeinberg(unittest.TestCase):
                            [[-1, -1, -1], [-1, -1, -1]]], dtype='i1')
         af = g.count_alleles().to_frequencies()
         expect = refimpl(af, ploidy=g.ploidy, fill=-1)
-        actual = heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
+        actual = allel.stats.heterozygosity_expected(af, ploidy=g.ploidy,
+                                                     fill=-1)
         assert_array_close(expect, actual)
 
     def test_inbreeding_coefficient(self):
@@ -366,5 +372,46 @@ class TestHardyWeinberg(unittest.TestCase):
         # expect = 1 - (ho/he)
         expect = [-1, -1, 1-0, 1-(.5/.375), 1-(.5/.375), 1-(.5/.375),
                   1-(1/.5), 1-(1/.625), -1, 1-(1/.5), -1]
-        actual = inbreeding_coefficient(g, fill=-1)
+        actual = allel.stats.inbreeding_coefficient(g, fill=-1)
         assert_array_close(expect, actual)
+
+
+class TestDistance(unittest.TestCase):
+
+    def test_pdist(self):
+        h = HaplotypeArray([[0, 0, 0, 0],
+                            [0, 0, 0, 1],
+                            [0, 0, 1, 1],
+                            [0, 1, 1, 1],
+                            [1, 1, 1, 1],
+                            [0, 0, 1, 2],
+                            [0, 1, 1, 2],
+                            [0, 1, -1, -1],
+                            [-1, -1, -1, -1]])
+        import scipy.spatial
+        d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
+        d2 = allel.stats.pdist(h, 'hamming')
+        aeq(d1, d2)
+
+    def test_pairwise_distance_multidim(self):
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[1, 1], [1, 1]],
+                           [[1, 1], [2, 2]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [0, 2]],
+                           [[1, 1], [1, 2]],
+                           [[0, 1], [0, 1]],
+                           [[0, 1], [1, 2]],
+                           [[0, 0], [-1, -1]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]], dtype='i1')
+        gac = g.to_allele_counts()
+
+        def metric(ac1, ac2):
+            mpd = allel.stats.mean_pairwise_divergence(ac1, ac2, fill=0)
+            return mpd.sum()
+
+        expect = [allel.stats.mean_pairwise_divergence(gac[:, 0], gac[:, 1],
+                                                       fill=0).sum()]
+        actual = allel.stats.pairwise_distance(gac, metric)
+        aeq(expect, actual)

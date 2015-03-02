@@ -6,6 +6,9 @@ This module provides statistical functions for use with variant call data.
 from __future__ import absolute_import, print_function, division
 
 
+import itertools
+
+
 import numpy as np
 
 
@@ -571,6 +574,170 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
     return mpd
 
 
+def sequence_diversity(pos, ac, start=None, stop=None,
+                       is_accessible=None):
+    """Calculate nucleotide diversity within a given region.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array.
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+
+    Returns
+    -------
+
+    pi : ndarray, float, shape (n_windows,)
+        Nucleotide diversity.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+    ...                                [[0, 0], [0, 1]],
+    ...                                [[0, 0], [1, 1]],
+    ...                                [[0, 1], [1, 1]],
+    ...                                [[1, 1], [1, 1]],
+    ...                                [[0, 0], [1, 2]],
+    ...                                [[0, 1], [1, 2]],
+    ...                                [[0, 1], [-1, -1]],
+    ...                                [[-1, -1], [-1, -1]]])
+    >>> ac = g.count_alleles()
+    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+    >>> pi = allel.stats.sequence_diversity(pos, ac, start=1, stop=31)
+    >>> pi
+    0.13978494623655915
+
+    """
+
+    # check inputs
+    pos = SortedIndex(pos, copy=False)
+    if start is not None or stop is not None:
+        loc = pos.locate_range(start, stop)
+        pos = pos[loc]
+        ac = ac[loc]
+    if start is None:
+        start = pos[0]
+    if stop is None:
+        stop = pos[-1]
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+
+    # calculate mean pairwise diversity
+    mpd = mean_pairwise_diversity(ac, fill=0)
+
+    # sum diversity
+    mpd_sum = np.sum(mpd)
+
+    # calculate value per base
+    if is_accessible is None:
+        n_bases = stop - start + 1
+    else:
+        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
+        pos_accessible = SortedIndex(pos_accessible, copy=False)
+        loc = pos_accessible.locate_range(start, stop)
+        n_bases = np.count_nonzero(pos_accessible[loc])
+
+    pi = mpd_sum / n_bases
+    return pi
+
+
+def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
+                        is_accessible=None):
+    """Calculate nucleotide divergence between two populations within a
+    given region.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array for the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array for the second population.
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+
+    Returns
+    -------
+
+    Dxy : ndarray, float, shape (n_windows,)
+        Nucleotide divergence.
+
+    Examples
+    --------
+
+    Simplest case, two haplotypes in each population::
+
+        >>> import allel
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 0],
+        ...                                 [0, 0, 0, 1],
+        ...                                 [0, 0, 1, 1],
+        ...                                 [0, 1, 1, 1],
+        ...                                 [1, 1, 1, 1],
+        ...                                 [0, 0, 1, 2],
+        ...                                 [0, 1, 1, 2],
+        ...                                 [0, 1, -1, -1],
+        ...                                 [-1, -1, -1, -1]])
+        >>> h1 = h.subset(haplotypes=[0, 1])
+        >>> h2 = h.subset(haplotypes=[2, 3])
+        >>> ac1 = h1.count_alleles()
+        >>> ac2 = h2.count_alleles()
+        >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+        >>> dxy = sequence_divergence(pos, ac1, ac2, start=1, stop=31)
+        >>> dxy
+        0.12096774193548387
+
+    """
+
+    # check inputs
+    pos = SortedIndex(pos, copy=False)
+    if start is not None or stop is not None:
+        loc = pos.locate_range(start, stop)
+        pos = pos[loc]
+        ac1 = ac1[loc]
+        ac2 = ac2[loc]
+    if start is None:
+        start = pos[0]
+    if stop is None:
+        stop = pos[-1]
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+
+    # calculate mean pairwise diversity
+    mpd = mean_pairwise_divergence(ac1, ac2, fill=0)
+
+    # sum divergence
+    mpd_sum = np.sum(mpd)
+
+    # calculate value per base
+    if is_accessible is None:
+        n_bases = stop - start + 1
+    else:
+        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
+        pos_accessible = SortedIndex(pos_accessible, copy=False)
+        loc = pos_accessible.locate_range(start, stop)
+        n_bases = np.count_nonzero(pos_accessible[loc])
+
+    dxy = mpd_sum / n_bases
+
+    return dxy
+
+
 def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
                        windows=None, is_accessible=None, fill=np.nan):
     """Calculate nucleotide diversity in windows over a single
@@ -600,7 +767,7 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
         Boolean array indicating accessibility status for all positions in the
         chromosome/contig.
     fill : object, optional
-        The value to use where a window is empty, i.e., contains no items.
+        The value to use where a window is completely inaccessible.
 
     Returns
     -------
@@ -697,7 +864,7 @@ def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
         Boolean array indicating accessibility status for all positions in the
         chromosome/contig.
     fill : object, optional
-        The value to use where a window is empty, i.e., contains no items.
+        The value to use where a window is completely inaccessible.
 
     Returns
     -------
@@ -915,13 +1082,17 @@ def inbreeding_coefficient(g, fill=np.nan):
 
 
 def pairwise_distance(x, metric):
-    """Compute pairwise distance between individuals (samples or haplotypes).
+    """Compute pairwise distance between individuals (e.g., samples or
+    haplotypes).
 
     Parameters
     ----------
 
-    x : array_like, shape (n_variants, n_individuals)
-        Array of genotype data.
+    x : array_like, shape (n, m, ...)
+        Array of m observations (e.g., samples or haplotypes) in a space
+        with n dimensions (e.g., variants). Note that the order of the first
+        two dimensions is **swapped** compared to what is expected by
+        scipy.spatial.distance.pdist.
     metric : string or function
         Distance metric. See documentation for the function
         :func:`scipy.spatial.distance.pdist` for a list of built-in
@@ -971,24 +1142,33 @@ def pairwise_distance(x, metric):
     # check inputs
     if not hasattr(x, 'ndim'):
         x = np.asarray(x)
-    if x.ndim != 2:
-        raise ValueError('expected array with 2 dimensions')
+    if x.ndim < 2:
+        raise ValueError('array with at least 2 dimensions expected')
 
-    def f(b):
+    if x.ndim == 2:
+        # use scipy to calculate distance, it's most efficient
 
-        # transpose as pdist expects (m, n) for m observations in an
-        # n-dimensional space
-        t = b.T
+        def f(b):
 
-        # compute the distance matrix
-        return scipy.spatial.distance.pdist(t, metric=metric)
+            # transpose as pdist expects (m, n) for m observations in an
+            # n-dimensional space
+            t = b.T
+
+            # compute the distance matrix
+            return scipy.spatial.distance.pdist(t, metric=metric)
+
+    else:
+        # use our own implementation, it handles multidimensional observations
+
+        def f(b):
+            return pdist(b, metric=metric)
 
     if hasattr(x, 'chunklen'):
-        # use chunk-wise implementation
-        bs = x.chunklen
+        # use block-wise implementation
+        blen = x.chunklen
         dist = None
-        for i in range(0, x.shape[0], bs):
-            block = x[i:i+bs]
+        for i in range(0, x.shape[0], blen):
+            block = x[i:i+blen]
             if dist is None:
                 dist = f(block)
             else:
@@ -999,3 +1179,47 @@ def pairwise_distance(x, metric):
         dist = f(x)
 
     return dist
+
+
+def pdist(x, metric):
+    """Alternative implementation of :func:`scipy.spatial.distance.pdist`
+    which is slower but more flexible in that arrays with >2 dimensions can be
+    passed, allowing for multidimensional observations, e.g., diploid
+    genotype calls or allele counts.
+
+    Parameters
+    ----------
+
+    x : array_like, shape (n, m, ...)
+        Array of m observations (e.g., samples or haplotypes) in a space
+        with n dimensions (e.g., variants). Note that the order of the first
+        two dimensions is **swapped** compared to what is expected by
+        scipy.spatial.distance.pdist.
+    metric : string or function
+        Distance metric. See documentation for the function
+        :func:`scipy.spatial.distance.pdist` for a list of built-in
+        distance metrics.
+
+    Returns
+    -------
+
+    dist : ndarray
+        Distance matrix in condensed form.
+
+    """
+
+    if isinstance(metric, str):
+        import scipy.spatial
+        if hasattr(scipy.spatial.distance, metric):
+            metric = getattr(scipy.spatial.distance, metric)
+        else:
+            raise ValueError('metric name not found')
+
+    m = x.shape[1]
+    dist = list()
+    for i, j in itertools.combinations(range(m), 2):
+        a = x[:, i, ...]
+        b = x[:, j, ...]
+        d = metric(a, b)
+        dist.append(d)
+    return np.array(dist)
