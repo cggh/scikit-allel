@@ -1,6 +1,6 @@
 tox
-# remove .dev0 from __version__
-sed -i -e 's/.dev0//' allel/__init__.py
+# remove .devn from __version__
+sed -i -e 's/.dev[0-9]*//' allel/__init__.py
 version=`grep __version__ allel/__init__.py | sed -e "s/.*__version__[ ]=[ ]'\(.*\)'/\1/"`
 echo $version
 # git commit and tag
