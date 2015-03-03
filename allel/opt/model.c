@@ -2681,9 +2681,10 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
   Py_ssize_t __pyx_t_10;
   Py_ssize_t __pyx_t_11;
   int __pyx_t_12;
-  Py_ssize_t __pyx_t_13;
-  __pyx_t_5numpy_int8_t __pyx_t_14;
-  PyObject *__pyx_t_15 = NULL;
+  int __pyx_t_13;
+  Py_ssize_t __pyx_t_14;
+  __pyx_t_5numpy_int8_t __pyx_t_15;
+  PyObject *__pyx_t_16 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -2751,7 +2752,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
  *         # iterate over haplotypes
  *         for j in range(h.shape[1]):             # <<<<<<<<<<<<<<
  *             allele = h[i, j]
- *             ac[i, allele] += 1
+ *             if allele >= 0:
  */
     __pyx_t_8 = (__pyx_v_h.shape[1]);
     for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
@@ -2761,8 +2762,8 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
  *         # iterate over haplotypes
  *         for j in range(h.shape[1]):
  *             allele = h[i, j]             # <<<<<<<<<<<<<<
- *             ac[i, allele] += 1
- * 
+ *             if allele >= 0:
+ *                 ac[i, allele] += 1
  */
       __pyx_t_10 = __pyx_v_i;
       __pyx_t_11 = __pyx_v_j;
@@ -2784,43 +2785,56 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
       /* "allel/opt/model.pyx":113
  *         for j in range(h.shape[1]):
  *             allele = h[i, j]
- *             ac[i, allele] += 1             # <<<<<<<<<<<<<<
+ *             if allele >= 0:             # <<<<<<<<<<<<<<
+ *                 ac[i, allele] += 1
+ * 
+ */
+      __pyx_t_13 = ((__pyx_v_allele >= 0) != 0);
+      if (__pyx_t_13) {
+
+        /* "allel/opt/model.pyx":114
+ *             allele = h[i, j]
+ *             if allele >= 0:
+ *                 ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-      __pyx_t_13 = __pyx_v_i;
-      __pyx_t_14 = __pyx_v_allele;
-      __pyx_t_12 = -1;
-      if (__pyx_t_13 < 0) {
-        __pyx_t_13 += __pyx_v_ac.shape[0];
-        if (unlikely(__pyx_t_13 < 0)) __pyx_t_12 = 0;
-      } else if (unlikely(__pyx_t_13 >= __pyx_v_ac.shape[0])) __pyx_t_12 = 0;
-      if (__pyx_t_14 < 0) {
-        __pyx_t_14 += __pyx_v_ac.shape[1];
-        if (unlikely(__pyx_t_14 < 0)) __pyx_t_12 = 1;
-      } else if (unlikely(__pyx_t_14 >= __pyx_v_ac.shape[1])) __pyx_t_12 = 1;
-      if (unlikely(__pyx_t_12 != -1)) {
-        __Pyx_RaiseBufferIndexError(__pyx_t_12);
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 113; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __pyx_t_14 = __pyx_v_i;
+        __pyx_t_15 = __pyx_v_allele;
+        __pyx_t_12 = -1;
+        if (__pyx_t_14 < 0) {
+          __pyx_t_14 += __pyx_v_ac.shape[0];
+          if (unlikely(__pyx_t_14 < 0)) __pyx_t_12 = 0;
+        } else if (unlikely(__pyx_t_14 >= __pyx_v_ac.shape[0])) __pyx_t_12 = 0;
+        if (__pyx_t_15 < 0) {
+          __pyx_t_15 += __pyx_v_ac.shape[1];
+          if (unlikely(__pyx_t_15 < 0)) __pyx_t_12 = 1;
+        } else if (unlikely(__pyx_t_15 >= __pyx_v_ac.shape[1])) __pyx_t_12 = 1;
+        if (unlikely(__pyx_t_12 != -1)) {
+          __Pyx_RaiseBufferIndexError(__pyx_t_12);
+          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 114; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        }
+        *((__pyx_t_5numpy_uint32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_14 * __pyx_v_ac.strides[0]) ) + __pyx_t_15 * __pyx_v_ac.strides[1]) )) += 1;
+        goto __pyx_L7;
       }
-      *((__pyx_t_5numpy_uint32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_13 * __pyx_v_ac.strides[0]) ) + __pyx_t_14 * __pyx_v_ac.strides[1]) )) += 1;
+      __pyx_L7:;
     }
   }
 
-  /* "allel/opt/model.pyx":115
- *             ac[i, allele] += 1
+  /* "allel/opt/model.pyx":116
+ *                 ac[i, allele] += 1
  * 
  *     return np.asarray(ac)             # <<<<<<<<<<<<<<
  * 
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_ac, 2, (PyObject *(*)(char *)) __pyx_memview_get_nn___pyx_t_5numpy_uint32_t, (int (*)(char *, PyObject *)) __pyx_memview_set_nn___pyx_t_5numpy_uint32_t, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_ac, 2, (PyObject *(*)(char *)) __pyx_memview_get_nn___pyx_t_5numpy_uint32_t, (int (*)(char *, PyObject *)) __pyx_memview_set_nn___pyx_t_5numpy_uint32_t, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -2833,19 +2847,19 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_15 = PyTuple_New(1+1); if (unlikely(!__pyx_t_15)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_15);
-    PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
-    PyTuple_SET_ITEM(__pyx_t_15, 0+1, __pyx_t_4);
+    __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_16);
+    PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
+    PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_15, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 115; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_16, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 116; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+    __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
@@ -2867,7 +2881,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_15);
+  __Pyx_XDECREF(__pyx_t_16);
   __Pyx_AddTraceback("allel.opt.model.haplotype_int8_count_alleles", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -2879,7 +2893,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
   return __pyx_r;
 }
 
-/* "allel/opt/model.pyx":118
+/* "allel/opt/model.pyx":119
  * 
  * 
  * def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,             # <<<<<<<<<<<<<<
@@ -2921,16 +2935,16 @@ static PyObject *__pyx_pw_5allel_3opt_5model_7haplotype_int8_count_alleles_subpo
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_allele)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("haplotype_int8_count_alleles_subpop", 1, 3, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("haplotype_int8_count_alleles_subpop", 1, 3, 3, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_subpop)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("haplotype_int8_count_alleles_subpop", 1, 3, 3, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("haplotype_int8_count_alleles_subpop", 1, 3, 3, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "haplotype_int8_count_alleles_subpop") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "haplotype_int8_count_alleles_subpop") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -2939,13 +2953,13 @@ static PyObject *__pyx_pw_5allel_3opt_5model_7haplotype_int8_count_alleles_subpo
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
       values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
     }
-    __pyx_v_h = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_int8_t(values[0]); if (unlikely(!__pyx_v_h.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_max_allele = __Pyx_PyInt_As_npy_int8(values[1]); if (unlikely((__pyx_v_max_allele == (npy_int8)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_subpop = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_int64_t(values[2]); if (unlikely(!__pyx_v_subpop.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 120; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_h = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_int8_t(values[0]); if (unlikely(!__pyx_v_h.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_allele = __Pyx_PyInt_As_npy_int8(values[1]); if (unlikely((__pyx_v_max_allele == (npy_int8)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 120; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_subpop = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_int64_t(values[2]); if (unlikely(!__pyx_v_subpop.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 121; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("haplotype_int8_count_alleles_subpop", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("haplotype_int8_count_alleles_subpop", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.model.haplotype_int8_count_alleles_subpop", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2979,33 +2993,34 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
   int __pyx_t_11;
   Py_ssize_t __pyx_t_12;
   __pyx_t_5numpy_int64_t __pyx_t_13;
-  Py_ssize_t __pyx_t_14;
-  __pyx_t_5numpy_int8_t __pyx_t_15;
-  PyObject *__pyx_t_16 = NULL;
+  int __pyx_t_14;
+  Py_ssize_t __pyx_t_15;
+  __pyx_t_5numpy_int8_t __pyx_t_16;
+  PyObject *__pyx_t_17 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_TraceDeclarations
   __Pyx_RefNannySetupContext("haplotype_int8_count_alleles_subpop", 0);
-  __Pyx_TraceCall("haplotype_int8_count_alleles_subpop", __pyx_f[0], 118);
+  __Pyx_TraceCall("haplotype_int8_count_alleles_subpop", __pyx_f[0], 119);
 
-  /* "allel/opt/model.pyx":127
+  /* "allel/opt/model.pyx":128
  * 
  *     # initialise output array
  *     ac = np.zeros((h.shape[0], max_allele + 1), dtype='u4')             # <<<<<<<<<<<<<<
  * 
  *     # iterate over variants
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromSsize_t((__pyx_v_h.shape[0])); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromSsize_t((__pyx_v_h.shape[0])); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyInt_From_long((__pyx_v_max_allele + 1)); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_long((__pyx_v_max_allele + 1)); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -3013,27 +3028,27 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_n_s_u4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_n_s_u4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_uint32_t(__pyx_t_1);
-  if (unlikely(!__pyx_t_5.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 127; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_5.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 128; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_ac = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/model.pyx":130
+  /* "allel/opt/model.pyx":131
  * 
  *     # iterate over variants
  *     for i in range(h.shape[0]):             # <<<<<<<<<<<<<<
@@ -3044,7 +3059,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
   for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
     __pyx_v_i = __pyx_t_7;
 
-    /* "allel/opt/model.pyx":132
+    /* "allel/opt/model.pyx":133
  *     for i in range(h.shape[0]):
  *         # iterate over haplotypes
  *         for j in range(subpop.shape[0]):             # <<<<<<<<<<<<<<
@@ -3055,12 +3070,12 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
     for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
       __pyx_v_j = __pyx_t_9;
 
-      /* "allel/opt/model.pyx":133
+      /* "allel/opt/model.pyx":134
  *         # iterate over haplotypes
  *         for j in range(subpop.shape[0]):
  *             idx = subpop[j]             # <<<<<<<<<<<<<<
  *             allele = h[i, idx]
- *             ac[i, allele] += 1
+ *             if allele >= 0:
  */
       __pyx_t_10 = __pyx_v_j;
       __pyx_t_11 = -1;
@@ -3070,16 +3085,16 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
       } else if (unlikely(__pyx_t_10 >= __pyx_v_subpop.shape[0])) __pyx_t_11 = 0;
       if (unlikely(__pyx_t_11 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_11);
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 133; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       }
       __pyx_v_idx = (*((__pyx_t_5numpy_int64_t *) ( /* dim=0 */ (__pyx_v_subpop.data + __pyx_t_10 * __pyx_v_subpop.strides[0]) )));
 
-      /* "allel/opt/model.pyx":134
+      /* "allel/opt/model.pyx":135
  *         for j in range(subpop.shape[0]):
  *             idx = subpop[j]
  *             allele = h[i, idx]             # <<<<<<<<<<<<<<
- *             ac[i, allele] += 1
- * 
+ *             if allele >= 0:
+ *                 ac[i, allele] += 1
  */
       __pyx_t_12 = __pyx_v_i;
       __pyx_t_13 = __pyx_v_idx;
@@ -3094,48 +3109,61 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
       } else if (unlikely(__pyx_t_13 >= __pyx_v_h.shape[1])) __pyx_t_11 = 1;
       if (unlikely(__pyx_t_11 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_11);
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 134; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 135; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       }
       __pyx_v_allele = (*((__pyx_t_5numpy_int8_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_h.data + __pyx_t_12 * __pyx_v_h.strides[0]) ) + __pyx_t_13 * __pyx_v_h.strides[1]) )));
 
-      /* "allel/opt/model.pyx":135
+      /* "allel/opt/model.pyx":136
  *             idx = subpop[j]
  *             allele = h[i, idx]
- *             ac[i, allele] += 1             # <<<<<<<<<<<<<<
+ *             if allele >= 0:             # <<<<<<<<<<<<<<
+ *                 ac[i, allele] += 1
+ * 
+ */
+      __pyx_t_14 = ((__pyx_v_allele >= 0) != 0);
+      if (__pyx_t_14) {
+
+        /* "allel/opt/model.pyx":137
+ *             allele = h[i, idx]
+ *             if allele >= 0:
+ *                 ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-      __pyx_t_14 = __pyx_v_i;
-      __pyx_t_15 = __pyx_v_allele;
-      __pyx_t_11 = -1;
-      if (__pyx_t_14 < 0) {
-        __pyx_t_14 += __pyx_v_ac.shape[0];
-        if (unlikely(__pyx_t_14 < 0)) __pyx_t_11 = 0;
-      } else if (unlikely(__pyx_t_14 >= __pyx_v_ac.shape[0])) __pyx_t_11 = 0;
-      if (__pyx_t_15 < 0) {
-        __pyx_t_15 += __pyx_v_ac.shape[1];
-        if (unlikely(__pyx_t_15 < 0)) __pyx_t_11 = 1;
-      } else if (unlikely(__pyx_t_15 >= __pyx_v_ac.shape[1])) __pyx_t_11 = 1;
-      if (unlikely(__pyx_t_11 != -1)) {
-        __Pyx_RaiseBufferIndexError(__pyx_t_11);
-        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 135; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        __pyx_t_15 = __pyx_v_i;
+        __pyx_t_16 = __pyx_v_allele;
+        __pyx_t_11 = -1;
+        if (__pyx_t_15 < 0) {
+          __pyx_t_15 += __pyx_v_ac.shape[0];
+          if (unlikely(__pyx_t_15 < 0)) __pyx_t_11 = 0;
+        } else if (unlikely(__pyx_t_15 >= __pyx_v_ac.shape[0])) __pyx_t_11 = 0;
+        if (__pyx_t_16 < 0) {
+          __pyx_t_16 += __pyx_v_ac.shape[1];
+          if (unlikely(__pyx_t_16 < 0)) __pyx_t_11 = 1;
+        } else if (unlikely(__pyx_t_16 >= __pyx_v_ac.shape[1])) __pyx_t_11 = 1;
+        if (unlikely(__pyx_t_11 != -1)) {
+          __Pyx_RaiseBufferIndexError(__pyx_t_11);
+          {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+        }
+        *((__pyx_t_5numpy_uint32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_15 * __pyx_v_ac.strides[0]) ) + __pyx_t_16 * __pyx_v_ac.strides[1]) )) += 1;
+        goto __pyx_L7;
       }
-      *((__pyx_t_5numpy_uint32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_14 * __pyx_v_ac.strides[0]) ) + __pyx_t_15 * __pyx_v_ac.strides[1]) )) += 1;
+      __pyx_L7:;
     }
   }
 
-  /* "allel/opt/model.pyx":137
- *             ac[i, allele] += 1
+  /* "allel/opt/model.pyx":139
+ *                 ac[i, allele] += 1
  * 
  *     return np.asarray(ac)             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_ac, 2, (PyObject *(*)(char *)) __pyx_memview_get_nn___pyx_t_5numpy_uint32_t, (int (*)(char *, PyObject *)) __pyx_memview_set_nn___pyx_t_5numpy_uint32_t, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_ac, 2, (PyObject *(*)(char *)) __pyx_memview_get_nn___pyx_t_5numpy_uint32_t, (int (*)(char *, PyObject *)) __pyx_memview_set_nn___pyx_t_5numpy_uint32_t, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -3148,26 +3176,26 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_16);
-    PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
-    PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_t_4);
+    __pyx_t_17 = PyTuple_New(1+1); if (unlikely(!__pyx_t_17)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_17);
+    PyTuple_SET_ITEM(__pyx_t_17, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
+    PyTuple_SET_ITEM(__pyx_t_17, 0+1, __pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_16, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 137; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_17, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 139; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+    __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "allel/opt/model.pyx":118
+  /* "allel/opt/model.pyx":119
  * 
  * 
  * def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,             # <<<<<<<<<<<<<<
@@ -3182,7 +3210,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_16);
+  __Pyx_XDECREF(__pyx_t_17);
   __Pyx_AddTraceback("allel.opt.model.haplotype_int8_count_alleles_subpop", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -17056,17 +17084,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__22);
   __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(2, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_haplotype_int8_count_alleles, 100, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 100; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "allel/opt/model.pyx":118
+  /* "allel/opt/model.pyx":119
  * 
  * 
  * def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,             # <<<<<<<<<<<<<<
  *                                         cnp.int8_t max_allele,
  *                                         cnp.int64_t[:] subpop):
  */
-  __pyx_tuple__24 = PyTuple_Pack(8, __pyx_n_s_h, __pyx_n_s_max_allele, __pyx_n_s_subpop, __pyx_n_s_ac, __pyx_n_s_allele, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_idx); if (unlikely(!__pyx_tuple__24)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__24 = PyTuple_Pack(8, __pyx_n_s_h, __pyx_n_s_max_allele, __pyx_n_s_subpop, __pyx_n_s_ac, __pyx_n_s_allele, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_idx); if (unlikely(!__pyx_tuple__24)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__24);
   __Pyx_GIVEREF(__pyx_tuple__24);
-  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_haplotype_int8_count_alleles_sub, 118, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_haplotype_int8_count_alleles_sub, 119, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "View.MemoryView":276
  *         return self.name
@@ -17317,16 +17345,16 @@ PyMODINIT_FUNC PyInit_model(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_haplotype_int8_count_alleles, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 100; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/model.pyx":118
+  /* "allel/opt/model.pyx":119
  * 
  * 
  * def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,             # <<<<<<<<<<<<<<
  *                                         cnp.int8_t max_allele,
  *                                         cnp.int64_t[:] subpop):
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_5model_7haplotype_int8_count_alleles_subpop, NULL, __pyx_n_s_allel_opt_model); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_5model_7haplotype_int8_count_alleles_subpop, NULL, __pyx_n_s_allel_opt_model); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_haplotype_int8_count_alleles_sub, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 118; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_haplotype_int8_count_alleles_sub, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "allel/opt/model.pyx":1

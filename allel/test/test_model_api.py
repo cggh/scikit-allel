@@ -681,6 +681,39 @@ class GenotypeArrayInterface(object):
         eq(4, actual.n_variants)
         eq(3, actual.n_alleles)
 
+    def test_count_alleles_subpop(self):
+        g = self.setup_instance(diploid_genotype_data)
+        expect = np.array([[2, 0, 0],
+                           [1, 0, 1],
+                           [1, 1, 0],
+                           [0, 0, 2],
+                           [0, 0, 0]])
+        actual = g.count_alleles(subpop=[0, 2])
+        aeq(expect, actual)
+        eq(5, actual.n_variants)
+        eq(3, actual.n_alleles)
+
+    def test_count_alleles_subpops(self):
+        g = self.setup_instance(diploid_genotype_data)
+        subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
+        expect_sub1 = np.array([[2, 0, 0],
+                                [1, 0, 1],
+                                [1, 1, 0],
+                                [0, 0, 2],
+                                [0, 0, 0]])
+        expect_sub2 = np.array([[1, 1, 0],
+                                [0, 2, 0],
+                                [0, 1, 1],
+                                [0, 0, 0],
+                                [0, 0, 0]])
+        actual = g.count_alleles_subpops(subpops=subpops)
+        aeq(expect_sub1, actual['sub1'])
+        aeq(expect_sub2, actual['sub2'])
+        eq(5, actual['sub1'].n_variants)
+        eq(3, actual['sub1'].n_alleles)
+        eq(5, actual['sub2'].n_variants)
+        eq(3, actual['sub2'].n_alleles)
+
 
 class HaplotypeArrayInterface(object):
 
@@ -920,6 +953,36 @@ class HaplotypeArrayInterface(object):
         aeq(expect, actual)
         eq(4, actual.n_variants)
         eq(3, actual.n_alleles)
+
+    def test_count_alleles_subpop(self):
+        expect = np.array([[1, 0, 0],
+                           [0, 1, 0],
+                           [0, 0, 1],
+                           [0, 0, 0]])
+        h = self.setup_instance(haplotype_data)
+        actual = h.count_alleles(subpop=[0, 2])
+        aeq(expect, actual)
+        eq(4, actual.n_variants)
+        eq(3, actual.n_alleles)
+
+    def test_count_alleles_subpops(self):
+        expect_sub1 = np.array([[1, 0, 0],
+                                [0, 1, 0],
+                                [0, 0, 1],
+                                [0, 0, 0]])
+        expect_sub2 = np.array([[0, 1, 0],
+                                [0, 1, 0],
+                                [0, 0, 0],
+                                [0, 0, 0]])
+        h = self.setup_instance(haplotype_data)
+        subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
+        actual = h.count_alleles_subpops(subpops=subpops)
+        aeq(expect_sub1, actual['sub1'])
+        aeq(expect_sub2, actual['sub2'])
+        eq(4, actual['sub1'].n_variants)
+        eq(3, actual['sub1'].n_alleles)
+        eq(4, actual['sub2'].n_variants)
+        eq(3, actual['sub2'].n_alleles)
 
 
 class AlleleCountsArrayInterface(object):

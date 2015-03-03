@@ -611,6 +611,8 @@ class GenotypeArray(np.ndarray):
         max_allele : int, optional
             The highest allele index to count. Alleles above this will be
             ignored.
+        subpop : sequence of ints, optional
+            Indices of samples to include in count.
 
         Returns
         -------
@@ -625,12 +627,12 @@ class GenotypeArray(np.ndarray):
         ...                                [[0, 2], [1, 1]],
         ...                                [[2, 2], [-1, -1]]])
         >>> g.count_alleles()
-        AlleleCountsArray((3, 3), dtype=int32)
+        AlleleCountsArray((3, 3), dtype=uint32)
         [[3 1 0]
          [1 2 1]
          [0 0 2]]
         >>> g.count_alleles(max_allele=1)
-        AlleleCountsArray((3, 2), dtype=int32)
+        AlleleCountsArray((3, 2), dtype=uint32)
         [[3 1]
          [1 2]
          [0 0]]
@@ -643,6 +645,34 @@ class GenotypeArray(np.ndarray):
 
         h = self.to_haplotypes()
         return h.count_alleles(max_allele=max_allele, subpop=subpop)
+
+    def count_alleles_subpops(self, subpops, max_allele=None):
+        """Count alleles for multiple subpopulations simultaneously.
+
+        Parameters
+        ----------
+
+        subpops : dict (string -> sequence of ints)
+            Mapping of subpopulation names to sample indices.
+        max_allele : int, optional
+            The highest allele index to count. Alleles above this will be
+            ignored.
+
+        Returns
+        -------
+
+        out : dict (string -> AlleleCountsArray)
+            A mapping of subpopulation names to allele counts arrays.
+
+        """
+
+        if max_allele is None:
+            max_allele = self.max()
+
+        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+               for name, subpop in subpops.items()}
+
+        return out
 
     def to_haplotypes(self, copy=False):
         """Reshape a genotype array to view it as haplotypes by
@@ -1515,7 +1545,7 @@ class HaplotypeArray(np.ndarray):
         ...                                 [0, 2, -1, -1]], dtype='i1')
         >>> ac = h.count_alleles()
         >>> ac
-        AlleleCountsArray((3, 3), dtype=int32)
+        AlleleCountsArray((3, 3), dtype=uint32)
         [[3 1 0]
          [1 3 0]
          [1 0 1]]
@@ -1557,6 +1587,34 @@ class HaplotypeArray(np.ndarray):
 
         return AlleleCountsArray(ac, copy=False)
 
+    def count_alleles_subpops(self, subpops, max_allele=None):
+        """Count alleles for multiple subpopulations simultaneously.
+
+        Parameters
+        ----------
+
+        subpops : dict (string -> sequence of ints)
+            Mapping of subpopulation names to sample indices.
+        max_allele : int, optional
+            The highest allele index to count. Alleles above this will be
+            ignored.
+
+        Returns
+        -------
+
+        out : dict (string -> AlleleCountsArray)
+            A mapping of subpopulation names to allele counts arrays.
+
+        """
+
+        if max_allele is None:
+            max_allele = self.max()
+
+        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+               for name, subpop in subpops.items()}
+
+        return out
+
 
 class AlleleCountsArray(np.ndarray):
     """Array of allele counts.
@@ -1588,12 +1646,12 @@ class AlleleCountsArray(np.ndarray):
         ...                                [[0, 2], [-1, -1]]], dtype='i1')
         >>> ac = g.count_alleles()
         >>> ac
-        AlleleCountsArray((3, 3), dtype=int32)
+        AlleleCountsArray((3, 3), dtype=uint32)
         [[3 1 0]
          [1 3 0]
          [1 0 1]]
         >>> ac.dtype
-        dtype('int32')
+        dtype('uint32')
         >>> ac.shape
         (3, 3)
         >>> ac.n_variants
@@ -1605,20 +1663,20 @@ class AlleleCountsArray(np.ndarray):
     dimension, e.g.::
 
         >>> ac[1]
-        array([1, 3, 0], dtype=int32)
+        array([1, 3, 0], dtype=uint32)
 
     Allele counts for a specific allele can be obtained by indexing the
     second dimension, e.g., reference allele counts:
 
         >>> ac[:, 0]
-        array([3, 1, 1], dtype=int32)
+        array([3, 1, 1], dtype=uint32)
 
     Calculate the total number of alleles called for each variant:
 
         >>> import numpy as np
         >>> n = np.sum(ac, axis=1)
         >>> n
-        array([4, 4, 2])
+        array([4, 4, 2], dtype=uint64)
 
     """
 

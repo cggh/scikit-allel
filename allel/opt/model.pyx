@@ -110,7 +110,8 @@ def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
         # iterate over haplotypes
         for j in range(h.shape[1]):
             allele = h[i, j]
-            ac[i, allele] += 1
+            if allele >= 0:
+                ac[i, allele] += 1
 
     return np.asarray(ac)
 
@@ -132,6 +133,7 @@ def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
         for j in range(subpop.shape[0]):
             idx = subpop[j]
             allele = h[i, idx]
-            ac[i, allele] += 1
+            if allele >= 0:
+                ac[i, allele] += 1
 
     return np.asarray(ac)

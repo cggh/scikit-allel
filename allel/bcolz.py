@@ -686,7 +686,7 @@ class GenotypeCArray(_CArrayWrapper):
          [ 0  1  1  1]
          [ 0  2 -1 -1]]
         >>> g.count_alleles()
-        AlleleCountsCArray((3, 3), int32)
+        AlleleCountsCArray((3, 3), uint32)
           nbytes: 36; cbytes: 16.00 KB; ratio: 0.00
           cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
         [[3 1 0]
@@ -933,7 +933,7 @@ class GenotypeCArray(_CArrayWrapper):
             else:
                 acs_ctbl.append(cols)
 
-        return acs_ctbl
+        return AlleleCountsCTable(acs_ctbl)
 
     def to_gt(self, phased=False, max_allele=None, **kwargs):
         if max_allele is None:
@@ -1092,6 +1092,7 @@ class HaplotypeCArray(_CArrayWrapper):
 
         # setup output table
         names = sorted(subpops.keys())
+        subpops = [subpops[n] for n in names]
         kwargs['names'] = names  # override to ensure correct order
         kwargs.setdefault('expectedlen', self.shape[0])
         acs_ctbl = None
@@ -1112,8 +1113,31 @@ class HaplotypeCArray(_CArrayWrapper):
             else:
                 acs_ctbl.append(cols)
 
-        # TODO wrap as AlleleCountsCArray???
-        return acs_ctbl
+        # wrap for convenience
+        return AlleleCountsCTable(acs_ctbl)
+
+
+class AlleleCountsCTable(object):
+
+    def __init__(self, ctbl):
+        self.ctbl = ctbl
+
+    def __getattr__(self, item):
+        return getattr(self.ctbl, item)
+
+    def __getitem__(self, item):
+        o = self.ctbl[item]
+        if isinstance(o, bcolz.carray):
+            return AlleleCountsCArray(o, copy=False)
+
+    def __repr__(self):
+        return repr(self.ctbl)
+
+    def __str__(self):
+        return str(self.ctbl)
+
+    def __len__(self):
+        return len(self.ctbl)
 
 
 class AlleleCountsCArray(_CArrayWrapper):

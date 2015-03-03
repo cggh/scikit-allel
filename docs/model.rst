@@ -27,6 +27,7 @@ GenotypeArray
     .. automethod:: count_het
     .. automethod:: count_call
     .. automethod:: count_alleles
+    .. automethod:: count_alleles_subpops
     .. automethod:: to_haplotypes
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
@@ -57,6 +58,7 @@ HaplotypeArray
     .. automethod:: count_alt
     .. automethod:: count_call
     .. automethod:: count_alleles
+    .. automethod:: count_alleles_subpops
     .. automethod:: to_genotypes
     .. automethod:: to_sparse
     .. automethod:: from_sparse
