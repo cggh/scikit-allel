@@ -390,9 +390,11 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
     else:
         raise NotImplementedError('only arrays of 1 or 2 dimensions supported')
 
+    # calculate density per-base
     with ignore_invalid():
         y = np.where(n_bases > 0, x / n_bases, fill)
 
+    # restore to 1-dimensional
     if n_bases.ndim > 1:
         n_bases = n_bases.reshape(-1)
 
