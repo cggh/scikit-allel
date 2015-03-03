@@ -21,7 +21,8 @@ import bcolz
 
 
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex, subset, VariantTable
+    SortedIndex, SortedMultiIndex, subset, VariantTable, \
+    sample_to_haplotype_selection
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim
 from allel.io import write_vcf_header, write_vcf_data
@@ -882,18 +883,57 @@ class GenotypeCArray(_CArrayWrapper):
 
         return GenotypeCArray(out, copy=False)
 
-    def count_alleles(self, max_allele=None, **kwargs):
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
             max_allele = self.max()
 
+        if subpop is not None:
+            # convert to a haplotype selection
+            subpop = sample_to_haplotype_selection(subpop, self.ploidy)
+
         def f(block):
-            g = GenotypeArray(block, copy=False)
-            return g.count_alleles(max_allele=max_allele)
+            h = GenotypeArray(block, copy=False).to_haplotypes()
+            return h.count_alleles(max_allele=max_allele, subpop=subpop)
+
         out = carray_block_map(self.carr, f, **kwargs)
 
         return AlleleCountsCArray(out, copy=False)
+
+    def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max()
+
+        # convert to haplotype selections
+        names = sorted(subpops.keys())
+        subpops = [sample_to_haplotype_selection(subpops[n], self.ploidy)
+                   for n in names]
+
+        # setup output table
+        kwargs['names'] = names  # override to ensure correct order
+        kwargs.setdefault('expectedlen', self.shape[0])
+        acs_ctbl = None
+
+        # determine block size for iteration
+        blen = kwargs.pop('blen', None)
+        if blen is None:
+            blen = self.carr.chunklen
+
+        # block iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            h = GenotypeArray(block, copy=False).to_haplotypes()
+            cols = [h.count_alleles(max_allele=max_allele, subpop=subpop)
+                    for subpop in subpops]
+            if acs_ctbl is None:
+                acs_ctbl = bcolz.ctable(cols, **kwargs)
+            else:
+                acs_ctbl.append(cols)
+
+        return acs_ctbl
 
     def to_gt(self, phased=False, max_allele=None, **kwargs):
         if max_allele is None:
@@ -1030,7 +1070,7 @@ class HaplotypeCArray(_CArrayWrapper):
             return h.is_call(allele=allele)
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
-    def count_alleles(self, max_allele=None, **kwargs):
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
@@ -1038,10 +1078,42 @@ class HaplotypeCArray(_CArrayWrapper):
 
         def f(block):
             h = HaplotypeArray(block, copy=False)
-            return h.count_alleles(max_allele=max_allele)
+            return h.count_alleles(max_allele=max_allele, subpop=subpop)
+
         carr = carray_block_map(self.carr, f, **kwargs)
 
         return AlleleCountsCArray(carr, copy=False)
+
+    def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max()
+
+        # setup output table
+        names = sorted(subpops.keys())
+        kwargs['names'] = names  # override to ensure correct order
+        kwargs.setdefault('expectedlen', self.shape[0])
+        acs_ctbl = None
+
+        # determine block size for iteration
+        blen = kwargs.pop('blen', None)
+        if blen is None:
+            blen = self.carr.chunklen
+
+        # block iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            h = HaplotypeArray(block, copy=False)
+            cols = [h.count_alleles(max_allele=max_allele, subpop=subpop)
+                    for subpop in subpops]
+            if acs_ctbl is None:
+                acs_ctbl = bcolz.ctable(cols, **kwargs)
+            else:
+                acs_ctbl.append(cols)
+
+        # TODO wrap as AlleleCountsCArray???
+        return acs_ctbl
 
 
 class AlleleCountsCArray(_CArrayWrapper):

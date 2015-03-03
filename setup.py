@@ -73,15 +73,15 @@ def setup_extensions(metadata):
             # build with cython
             from Cython.Build import cythonize
             ext_modules = cythonize([
-                Extension('allel.opt.gt',
-                          sources=['allel/opt/gt.pyx'],
+                Extension('allel.opt.model',
+                          sources=['allel/opt/model.pyx'],
                           include_dirs=[np.get_include()])
             ])
         except ImportError:
             # build previously cythonized C
             ext_modules = [
-                Extension('allel.opt.gt',
-                          sources=['allel/opt/gt.c'],
+                Extension('allel.opt.model',
+                          sources=['allel/opt/model.c'],
                           include_dirs=[np.get_include()])
             ]
         metadata['ext_modules'] = ext_modules

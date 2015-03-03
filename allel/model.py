@@ -602,7 +602,7 @@ class GenotypeArray(np.ndarray):
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
 
-    def count_alleles(self, max_allele=None):
+    def count_alleles(self, max_allele=None, subpop=None):
         """Count the number of calls of each allele per variant.
 
         Parameters
@@ -637,7 +637,12 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.to_haplotypes().count_alleles(max_allele=max_allele)
+        if subpop is not None:
+            # convert to a haplotype selection
+            subpop = sample_to_haplotype_selection(subpop, self.ploidy)
+
+        h = self.to_haplotypes()
+        return h.count_alleles(max_allele=max_allele, subpop=subpop)
 
     def to_haplotypes(self, copy=False):
         """Reshape a genotype array to view it as haplotypes by
@@ -835,7 +840,7 @@ class GenotypeArray(np.ndarray):
                 raise ValueError('min allele for packing is -1, found %s'
                                  % amn)
 
-        from allel.opt.gt import pack_diploid
+        from allel.opt.model import genotype_pack_diploid
 
         # ensure int8 dtype
         if self.dtype == np.int8:
@@ -844,7 +849,7 @@ class GenotypeArray(np.ndarray):
             data = self.astype(dtype=np.int8)
 
         # pack data
-        packed = pack_diploid(data)
+        packed = genotype_pack_diploid(data)
 
         return packed
 
@@ -891,8 +896,8 @@ class GenotypeArray(np.ndarray):
         if packed.dtype != np.uint8:
             packed = packed.astype(np.uint8)
 
-        from allel.opt.gt import unpack_diploid
-        data = unpack_diploid(packed)
+        from allel.opt.model import genotype_unpack_diploid
+        data = genotype_unpack_diploid(packed)
         return GenotypeArray(data)
 
     def to_sparse(self, format='csr', **kwargs):
@@ -1484,7 +1489,7 @@ class HaplotypeArray(np.ndarray):
 
         return h
 
-    def count_alleles(self, max_allele=None):
+    def count_alleles(self, max_allele=None, subpop=None):
         """Count the number of calls of each allele per variant.
 
         Parameters
@@ -1493,6 +1498,8 @@ class HaplotypeArray(np.ndarray):
         max_allele : int, optional
             The highest allele index to count. Alleles greater than this
             index will be ignored.
+        subpop : array_like, int, optional
+            Indices of haplotypes to include.
 
         Returns
         -------
@@ -1515,17 +1522,38 @@ class HaplotypeArray(np.ndarray):
 
         """
 
+        # check inputs
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+
         # determine alleles to count
         if max_allele is None:
             max_allele = self.max()
-        alleles = list(range(max_allele + 1))
 
-        # set up output array
-        ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+        if self.dtype.type == np.int8:
+            # use optimisations
+            if subpop is None:
+                from allel.opt.model import haplotype_int8_count_alleles
+                ac = haplotype_int8_count_alleles(self, max_allele)
 
-        # count alleles
-        for allele in alleles:
-            np.sum(self == allele, axis=1, out=ac[:, allele])
+            else:
+                from allel.opt.model import haplotype_int8_count_alleles_subpop
+                ac = haplotype_int8_count_alleles_subpop(self, max_allele,
+                                                         subpop)
+
+        else:
+            # set up output array
+            ac = np.zeros((self.n_variants, max_allele + 1), dtype='u4')
+
+            # extract subpop
+            if subpop is not None:
+                h = self.take(subpop, axis=1)
+            else:
+                h = self
+
+            # count alleles
+            alleles = list(range(max_allele + 1))
+            for allele in alleles:
+                np.sum(h == allele, axis=1, out=ac[:, allele])
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -3195,3 +3223,7 @@ class VariantTable(np.recarray):
         write_vcf(path, variants=self, rename=rename, number=number,
                   description=description, fill=fill,
                   write_header=write_header)
+
+
+def sample_to_haplotype_selection(indices, ploidy):
+    return [(i * ploidy) + n for i in indices for n in range(ploidy)]
