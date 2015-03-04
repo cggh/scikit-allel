@@ -3020,15 +3020,6 @@ class VariantTable(np.recarray):
         # initialise index
         if index is not None:
             cls.set_index(obj, index)
-            # if isinstance(index, str):
-            #     index = SortedIndex(obj[index], copy=False)
-            # elif isinstance(index, (tuple, list)) and len(index) == 2:
-            #     index = SortedMultiIndex(obj[index[0]], obj[index[1]],
-            #                              copy=False)
-            # else:
-            #     raise ValueError('invalid index argument, expected string or '
-            #                      'pair of strings, found %s' % repr(index))
-            # obj.index = index
         else:
             obj.index = None
         return obj
@@ -3101,6 +3092,9 @@ class VariantTable(np.recarray):
         return self.dtype.names
 
     def set_index(self, index):
+        """TODO doc
+
+        """
         if isinstance(index, str):
             self.index = SortedIndex(self[index], copy=False)
         elif isinstance(index, (tuple, list)) and len(index) == 2:
@@ -3210,7 +3204,20 @@ class VariantTable(np.recarray):
             loc = self.index.locate_key(position)
         else:
             loc = self.index.locate_key(chrom, position)
-        # TODO finish this
+        return self[loc]
+
+    def query_region(self, chrom=None, start=None, stop=None):
+        """TODO doc
+
+        """
+        if self.index is None:
+            raise ValueError('no index has been set')
+        if isinstance(self.index, SortedIndex):
+            # ignore chrom
+            loc = self.index.locate_range(start, stop)
+        else:
+            loc = self.index.locate_range(chrom, start, stop)
+        return self[loc]
 
     def to_vcf(self, path, rename=None, number=None, description=None,
                fill=None, write_header=True):
@@ -3437,7 +3444,15 @@ class FeatureTable(np.recarray):
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
 
-    def mask(self, expression):
-        # TODO build boolean array for chromosome true if spanned by feature
-        # of type
+    def query_region(self, chrom=None, start=None, stop=None):
+        # TODO use interval index
+        pass
+
+    def mask(self, size, startfield='start', stopfield='end'):
+        # TODO build boolean array for chromosome, true if spanned by feature
+        pass
+
+    @staticmethod
+    def from_gff3(path, attributes=None):
+        # TODO
         pass
