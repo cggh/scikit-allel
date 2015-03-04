@@ -690,7 +690,7 @@ class GenotypeCArray(_CArrayWrapper):
          [ 0  1  1  1]
          [ 0  2 -1 -1]]
         >>> g.count_alleles()
-        AlleleCountsCArray((3, 3), uint32)
+        AlleleCountsCArray((3, 3), int32)
           nbytes: 36; cbytes: 16.00 KB; ratio: 0.00
           cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
         [[3 1 0]

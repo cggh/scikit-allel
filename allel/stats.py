@@ -16,7 +16,8 @@ from allel.model import GenotypeArray, SortedIndex
 from allel.util import asarray_ndim, ignore_invalid, check_arrays_aligned
 
 
-def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
+def moving_statistic(values, statistic, size=None, start=0, stop=None,
+                     step=None):
     """Calculate a statistic in a moving window over `values`.
 
     Parameters
@@ -53,44 +54,40 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
 
     """
 
+    windows = _make_index_windows(values, size, start, stop, step)
+
+    # setup output
+    out = np.array([statistic(values[i:j]) for i, j in windows])
+
+    return out
+
+
+def _make_index_windows(values, size, start, stop, step):
+
     # determine step
     if stop is None:
         stop = len(values)
     if step is None:
+        # non-overlapping
         step = size
 
-    # setup output
-    out = []
-
-    last = False
-
     # iterate over windows
+    last = False
     for window_start in range(start, stop, step):
 
-        # determine window stop
         window_stop = window_start + size
         if window_stop >= stop:
             # last window
             window_stop = stop
             last = True
 
-        # extract values for window
-        window_values = values[window_start:window_stop]
-
-        # compute statistic
-        s = statistic(window_values)
-
-        # store outputs
-        out.append(s)
+        yield (window_start, window_stop)
 
         if last:
-            break
-
-    # convert to arrays for output
-    return np.array(out)
+            raise StopIteration
 
 
-def _make_windows(pos, size, start, stop, step):
+def _make_position_windows(pos, size, start, stop, step):
     last = False
 
     # determine start and stop positions
@@ -196,7 +193,7 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
 
     # setup windows
     if windows is None:
-        windows = _make_windows(pos, size, start, stop, step)
+        windows = _make_position_windows(pos, size, start, stop, step)
 
     # setup output
     counts = []
@@ -316,7 +313,7 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
 
     # setup windows
     if windows is None:
-        windows = _make_windows(pos, size, start, stop, step)
+        windows = _make_position_windows(pos, size, start, stop, step)
 
     # setup outputs
     out = []
@@ -379,8 +376,8 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
         # N.B., window stops are included
         n_bases = np.diff(windows, axis=1).reshape(-1) + 1
     else:
-        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        n_bases, _ = windowed_count(pos_accessible, windows=windows)
+        n_bases = np.array([np.count_nonzero(is_accessible[i-1:j])
+                            for i, j in windows])
 
     # deal with multidimensional x
     if x.ndim == 1:
@@ -458,11 +455,11 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     ac = asarray_ndim(ac, 2)
 
     # total number of haplotypes
-    n = np.sum(ac, axis=1)
+    an = np.sum(ac, axis=1)
 
     # total number of pairwise comparisons for each variant:
     # (an choose 2)
-    n_pairs = n * (n - 1) / 2
+    n_pairs = an * (an - 1) / 2
 
     # number of pairwise comparisons where there is no difference:
     # sum of (ac choose 2) for each allele (i.e., number of ways to
@@ -487,7 +484,7 @@ def _resize_dim2(a, l):
     return b
 
 
-def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
+def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     """Calculate for each variant the mean number of pairwise differences
     between haplotypes from two different populations.
 
@@ -498,6 +495,10 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
         Allele counts array from the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array from the second population.
+    an1 : array_like, int, shape (n_variants,), optional
+        Allele numbers for the first population.
+    an2 : array_like, int, shape (n_variants,), optional
+        Allele numbers for the second population.
     fill : float
         Use this value where there are no pairs to compare (e.g.,
         all allele calls are missing).
@@ -554,11 +555,13 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
         ac2 = _resize_dim2(ac2, ac1.shape[1])
 
     # total number of haplotypes sampled from each population
-    n1 = np.sum(ac1, axis=1)
-    n2 = np.sum(ac2, axis=1)
+    if an1 is None:
+        an1 = np.sum(ac1, axis=1)
+    if an2 is None:
+        an2 = np.sum(ac2, axis=1)
 
     # total number of pairwise comparisons for each variant
-    n_pairs = n1 * n2
+    n_pairs = an1 * an2
 
     # number of pairwise comparisons where there is no difference:
     # sum of (ac1 * ac2) for each allele (i.e., number of ways to
@@ -650,8 +653,8 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     return pi
 
 
-def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
-                        is_accessible=None):
+def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
+                        stop=None, is_accessible=None):
     """Calculate nucleotide divergence between two populations within a
     given region.
 
@@ -705,7 +708,8 @@ def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
     """
 
     # check inputs
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
     if start is not None or stop is not None:
         loc = pos.locate_range(start, stop)
         pos = pos[loc]
@@ -718,7 +722,7 @@ def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise diversity
-    mpd = mean_pairwise_divergence(ac1, ac2, fill=0)
+    mpd = mean_pairwise_divergence(ac1, ac2, an1=an1, an2=an2, fill=0)
 
     # sum divergence
     mpd_sum = np.sum(mpd)
@@ -1217,5 +1221,29 @@ def pdist(x, metric):
         a = x[:, i, ...]
         b = x[:, j, ...]
         d = metric(a, b)
+        dist.append(d)
+    return np.array(dist)
+
+
+def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
+    """TODO doc
+
+    """
+
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
+    gac = asarray_ndim(gac, 3)
+    # compute this once here, to avoid repeated evaluation within the loop
+    gan = np.sum(gac, axis=2)
+    m = gac.shape[1]
+    dist = list()
+    for i, j in itertools.combinations(range(m), 2):
+        ac1 = gac[:, i, ...]
+        an1 = gan[:, i]
+        ac2 = gac[:, j, ...]
+        an2 = gan[:, j]
+        d = sequence_divergence(pos, ac1, ac2, an1=an1, an2=an2,
+                                start=start, stop=stop,
+                                is_accessible=is_accessible)
         dist.append(d)
     return np.array(dist)

@@ -98,12 +98,12 @@ def genotype_unpack_diploid(cnp.uint8_t[:, :] packed):
 
 
 def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
-    cdef cnp.uint32_t[:, :] ac
+    cdef cnp.int32_t[:, :] ac
     cdef cnp.int8_t allele
     cdef Py_ssize_t i, j
 
     # initialise output array
-    ac = np.zeros((h.shape[0], max_allele + 1), dtype='u4')
+    ac = np.zeros((h.shape[0], max_allele + 1), dtype='i4')
 
     # iterate over variants
     for i in range(h.shape[0]):
@@ -119,13 +119,13 @@ def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
 def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
                                         cnp.int8_t max_allele,
                                         cnp.int64_t[:] subpop):
-    cdef cnp.uint32_t[:, :] ac
+    cdef cnp.int32_t[:, :] ac
     cdef cnp.int8_t allele
     cdef Py_ssize_t i, j
     cdef cnp.int64_t idx
 
     # initialise output array
-    ac = np.zeros((h.shape[0], max_allele + 1), dtype='u4')
+    ac = np.zeros((h.shape[0], max_allele + 1), dtype='i4')
 
     # iterate over variants
     for i in range(h.shape[0]):
