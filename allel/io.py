@@ -297,3 +297,8 @@ def write_fasta(path, sequences, names, mode='w', width=80):
             for i in range(0, sequence.size, width):
                 line = sequence[i:i+width].tostring() + b'\n'
                 fasta.write(line)
+
+
+def iter_gff3(path, attributes=None):
+    pass
+    # TODO

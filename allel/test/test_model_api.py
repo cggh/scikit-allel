@@ -20,39 +20,73 @@ from allel.test.tools import assert_array_equal as aeq
 import allel
 
 
-haplotype_data = [[0, 1, -1],
-                  [1, 1, -1],
-                  [2, -1, -1],
-                  [-1, -1, -1]]
+haplotype_data = [
+    [0, 1, -1],
+    [1, 1, -1],
+    [2, -1, -1],
+    [-1, -1, -1]
+]
 
-diploid_genotype_data = [[[0, 0], [0, 1], [-1, -1]],
-                         [[0, 2], [1, 1], [-1, -1]],
-                         [[1, 0], [2, 1], [-1, -1]],
-                         [[2, 2], [-1, -1], [-1, -1]],
-                         [[-1, -1], [-1, -1], [-1, -1]]]
+diploid_genotype_data = [
+    [[0, 0], [0, 1], [-1, -1]],
+    [[0, 2], [1, 1], [-1, -1]],
+    [[1, 0], [2, 1], [-1, -1]],
+    [[2, 2], [-1, -1], [-1, -1]],
+    [[-1, -1], [-1, -1], [-1, -1]]
+]
 
-triploid_genotype_data = [[[0, 0, 0], [0, 0, 1], [-1, -1, -1]],
-                          [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
-                          [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
-                          [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
+triploid_genotype_data = [
+    [[0, 0, 0], [0, 0, 1], [-1, -1, -1]],
+    [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
+    [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
+    [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]
+]
 
-allele_counts_data = [[3, 1, 0],
-                      [1, 2, 1],
-                      [1, 2, 1],
-                      [0, 0, 2],
-                      [0, 0, 0]]
+allele_counts_data = [
+    [3, 1, 0],
+    [1, 2, 1],
+    [1, 2, 1],
+    [0, 0, 2],
+    [0, 0, 0]
+]
 
-variant_table_data = [[b'chr1', 2, 35, 4.5, (1, 2)],
-                      [b'chr1', 7, 12, 6.7, (3, 4)],
-                      [b'chr2', 3, 78, 1.2, (5, 6)],
-                      [b'chr2', 9, 22, 4.4, (7, 8)],
-                      [b'chr3', 6, 99, 2.8, (9, 10)]]
-variant_table_dtype = [('CHROM', 'S4'),
-                       ('POS', 'u4'),
-                       ('DP', int),
-                       ('QD', float),
-                       ('AC', (int, 2))]
+variant_table_data = [
+    [b'chr1', 2, 35, 4.5, (1, 2)],
+    [b'chr1', 7, 12, 6.7, (3, 4)],
+    [b'chr2', 3, 78, 1.2, (5, 6)],
+    [b'chr2', 9, 22, 4.4, (7, 8)],
+    [b'chr3', 6, 99, 2.8, (9, 10)]
+]
+variant_table_dtype = [
+    ('CHROM', 'S4'),
+    ('POS', 'u4'),
+    ('DP', int),
+    ('QD', float),
+    ('AC', (int, 2))
+]
 variant_table_names = tuple(t[0] for t in variant_table_dtype)
+
+feature_table_data = [
+    [b'chr1', b'DB', b'gene', 1000, 2000, -1, b'+', -1, b'gene1', b'.'],
+    [b'chr1', b'DB', b'mRNA', 1000, 2000, -1, b'+', -1, b'rna1', b'gene1'],
+    [b'chr1', b'DB', b'exon', 1100, 1300, -1, b'+', -1, b'exon1', b'rna1'],
+    [b'chr1', b'DB', b'exon', 1500, 1800, -1, b'+', -1, b'exon2', b'rna1'],
+    [b'chr1', b'DB', b'CDS', 1100, 1400, -1, b'+', 0, b'.', b'rna1'],
+    [b'chr1', b'DB', b'CDS', 1431, 1800, -1, b'+', 1, b'.', b'rna1'],
+]
+feature_table_dtype = [
+    ('seqid', 'S4'),
+    ('source', 'S2'),
+    ('type', 'S15'),
+    ('start', int),
+    ('end', int),
+    ('score', float),
+    ('strand', 'S1'),
+    ('phase', int),
+    ('ID', 'S5'),
+    ('Parent', 'S5')
+]
+feature_table_names = tuple(t[0] for t in feature_table_dtype)
 
 
 class GenotypeArrayInterface(object):
@@ -1488,6 +1522,7 @@ class VariantTableInterface(object):
     def test_properties(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
+        eq(5, len(vt))
         eq(5, vt.n_variants)
         eq(variant_table_names, vt.names)
 
@@ -1810,3 +1845,96 @@ chr3\t1\te\tN\tX\t5.6\t.\t.
             print('expect:', l1)
             print('actual:', l2)
             eq(l1, l2)
+
+
+class FeatureTableInterface(object):
+
+    _class = None
+
+    def setup_instance(self, data, **kwargs):
+        pass
+
+    def test_properties(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        eq(6, len(ft))
+        eq(6, ft.n_features)
+        eq(feature_table_names, ft.names)
+
+    def test_array_like(self):
+        # Test that an instance is array-like, in that it can be used as
+        # input argument to np.rec.array(). I.e., there is a standard way to
+        # get a vanilla numpy array representation of the data.
+
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        b = np.asarray(ft)
+        aeq(a, b)
+
+    def test_get_item(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+
+        # total slice
+        s = ft[:]
+        eq(6, s.n_features)
+        eq(feature_table_names, s.names)
+        aeq(a, s)
+
+        # row slice
+        s = ft[1:]
+        eq(5, s.n_features)
+        eq(feature_table_names, s.names)
+        aeq(a[1:], s)
+
+        # row index
+        s = ft[1]
+        # compare item by item
+        for x, y in zip(feature_table_data[1], s):
+            eq(x, y)
+
+        # column access
+        s = ft['seqid']
+        aeq(a['seqid'], s)
+
+        # multi-column access
+        s = ft[['seqid', 'start', 'end']]
+        eq(6, s.n_features)
+        eq(('seqid', 'start', 'end'), s.names)
+        aeq(a[['seqid', 'start', 'end']], s)
+
+    def test_take(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        indices = [0, 2]
+        t = ft.take(indices)
+        expect = a.take(indices)
+        aeq(expect, t)
+        eq(2, t.n_features)
+        eq(feature_table_names, t.names)
+
+    def test_compress(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        condition = [True, False, True, False, False]
+        t = ft.compress(condition)
+        expect = a.compress(condition)
+        aeq(expect, t)
+        eq(2, t.n_features)
+        eq(feature_table_names, t.names)
+
+    def test_eval(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        expr = 'type == b"exon"'
+        r = ft.eval(expr)
+        aeq([False, False, True, True, False, False], r)
+
+    def test_query(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        expr = 'type == b"exon"'
+        r = ft.query(expr)
+        aeq(a.take([2, 3]), r)
+
+    # TODO test index

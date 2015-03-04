@@ -644,10 +644,7 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     if is_accessible is None:
         n_bases = stop - start + 1
     else:
-        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        pos_accessible = SortedIndex(pos_accessible, copy=False)
-        loc = pos_accessible.locate_range(start, stop)
-        n_bases = np.count_nonzero(pos_accessible[loc])
+        n_bases = np.count_nonzero(is_accessible[start-1:stop])
 
     pi = mpd_sum / n_bases
     return pi
@@ -730,10 +727,7 @@ def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
     if is_accessible is None:
         n_bases = stop - start + 1
     else:
-        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        pos_accessible = SortedIndex(pos_accessible, copy=False)
-        loc = pos_accessible.locate_range(start, stop)
-        n_bases = np.count_nonzero(pos_accessible[loc])
+        n_bases = np.count_nonzero(is_accessible[start-1:stop])
 
     dxy = mpd_sum / n_bases
 

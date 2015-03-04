@@ -3019,15 +3019,16 @@ class VariantTable(np.recarray):
         obj = obj.view(cls)
         # initialise index
         if index is not None:
-            if isinstance(index, str):
-                index = SortedIndex(obj[index], copy=False)
-            elif isinstance(index, (tuple, list)) and len(index) == 2:
-                index = SortedMultiIndex(obj[index[0]], obj[index[1]],
-                                         copy=False)
-            else:
-                raise ValueError('invalid index argument, expected string or '
-                                 'pair of strings, found %s' % repr(index))
-            obj.index = index
+            cls.set_index(obj, index)
+            # if isinstance(index, str):
+            #     index = SortedIndex(obj[index], copy=False)
+            # elif isinstance(index, (tuple, list)) and len(index) == 2:
+            #     index = SortedMultiIndex(obj[index[0]], obj[index[1]],
+            #                              copy=False)
+            # else:
+            #     raise ValueError('invalid index argument, expected string or '
+            #                      'pair of strings, found %s' % repr(index))
+            # obj.index = index
         else:
             obj.index = None
         return obj
@@ -3052,8 +3053,6 @@ class VariantTable(np.recarray):
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
-        print('getitem', args, kwargs)
-        print(repr(s), type(s))
         if hasattr(s, 'ndim') and s.ndim > 0:
             if s.dtype.names is not None:
                 return VariantTable(s, copy=False)
@@ -3100,6 +3099,16 @@ class VariantTable(np.recarray):
     def names(self):
         """Column names."""
         return self.dtype.names
+
+    def set_index(self, index):
+        if isinstance(index, str):
+            self.index = SortedIndex(self[index], copy=False)
+        elif isinstance(index, (tuple, list)) and len(index) == 2:
+            self.index = SortedMultiIndex(self[index[0]], self[index[1]],
+                                          copy=False)
+        else:
+            raise ValueError('invalid index argument, expected string or '
+                             'pair of strings, found %s' % repr(index))
 
     def eval(self, expression, vm='numexpr'):
         """Evaluate an expression against the table columns.
@@ -3189,6 +3198,19 @@ class VariantTable(np.recarray):
 
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
+
+    def query_position(self, chrom=None, position=None):
+        """TODO doc
+
+        """
+        if self.index is None:
+            raise ValueError('no index has been set')
+        if isinstance(self.index, SortedIndex):
+            # ignore chrom
+            loc = self.index.locate_key(position)
+        else:
+            loc = self.index.locate_key(chrom, position)
+        # TODO finish this
 
     def to_vcf(self, path, rename=None, number=None, description=None,
                fill=None, write_header=True):
@@ -3285,3 +3307,137 @@ class VariantTable(np.recarray):
 
 def sample_to_haplotype_selection(indices, ploidy):
     return [(i * ploidy) + n for i in indices for n in range(ploidy)]
+
+
+class FeatureTable(np.recarray):
+
+    def __new__(cls, data, index=None, **kwargs):
+        """Constructor."""
+        obj = np.rec.array(data, **kwargs)
+        obj = obj.view(cls)
+        # TODO initialise index
+        return obj
+
+    def __array_finalize__(self, obj):
+
+        # called after constructor
+        if obj is None:
+            return
+
+        # called after slice (new-from-template)
+        if isinstance(obj, FeatureTable):
+            return
+
+        # called after view - nothing to do
+        # VariantTable._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.dtype.names is not None:
+                return FeatureTable(s, copy=False)
+            else:
+                return np.asarray(s)
+        return s
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.dtype.names is not None:
+                return FeatureTable(s, copy=False)
+            else:
+                return np.asarray(s)
+        return s
+
+    def __repr__(self):
+        s = 'FeatureTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
+
+    def display(self, n):
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
+
+    @property
+    def n_features(self):
+        """Number of features (length of first dimension)."""
+        return self.shape[0]
+
+    @property
+    def names(self):
+        """Column names."""
+        return self.dtype.names
+
+    def eval(self, expression, vm='numexpr'):
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+
+        result : ndarray
+
+        Examples
+        --------
+
+        TODO
+
+        """
+
+        if vm == 'numexpr':
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            return eval(expression, {}, self)
+
+    def query(self, expression, vm='numexpr'):
+        """Evaluate expression and then use it to extract rows from the table.
+
+        Parameters
+        ----------
+
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+
+        result : FeatureTable
+
+        Examples
+        --------
+
+        """  # flake8: noqa
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    def mask(self, expression):
+        # TODO build boolean array for chromosome true if spanned by feature
+        # of type
+        pass

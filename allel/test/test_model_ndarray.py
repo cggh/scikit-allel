@@ -10,13 +10,15 @@ from allel.test.tools import assert_array_equal as aeq
 
 
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex, \
-    UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable
+    UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable, \
+    FeatureTable
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
     SortedMultiIndexInterface, diploid_genotype_data, triploid_genotype_data, \
     haplotype_data, AlleleCountsArrayInterface, VariantTableInterface, \
     allele_counts_data, variant_table_data, variant_table_names, \
-    variant_table_dtype
+    variant_table_dtype, FeatureTableInterface, feature_table_data, \
+    feature_table_names, feature_table_dtype
 
 
 class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -614,3 +616,18 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
         eq(1, v.ndim)
         eq(5, v.n_variants)
         eq(variant_table_names, v.names)
+
+
+class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
+
+    _class = FeatureTable
+
+    def setup_instance(self, data, index=None, **kwargs):
+        return FeatureTable(data, index=index, **kwargs)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
+            FeatureTable()

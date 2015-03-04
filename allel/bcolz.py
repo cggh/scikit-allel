@@ -566,6 +566,10 @@ class _CArrayWrapper(object):
 
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
+        """TODO doc me
+
+        """
+
         data = carray_from_hdf5(*args, **kwargs)
         return cls(data, copy=False)
 
@@ -741,11 +745,11 @@ class GenotypeCArray(_CArrayWrapper):
     def ploidy(self):
         return self.carr.shape[2]
 
-    def compress(self, condition, axis, **kwargs):
+    def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         return GenotypeCArray(carr, copy=False)
 
-    def take(self, indices, axis, **kwargs):
+    def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return GenotypeCArray(carr, copy=False)
 
@@ -1003,11 +1007,11 @@ class HaplotypeCArray(_CArrayWrapper):
         """Number of haplotypes (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def compress(self, condition, axis, **kwargs):
+    def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         return HaplotypeCArray(carr, copy=False)
 
-    def take(self, indices, axis, **kwargs):
+    def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return HaplotypeCArray(carr, copy=False)
 
@@ -1201,14 +1205,14 @@ class AlleleCountsCArray(_CArrayWrapper):
         """Number of alleles (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def compress(self, condition, axis, **kwargs):
+    def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         if carr.shape[1] == self.shape[1]:
             return AlleleCountsCArray(carr, copy=False)
         else:
             return carr
 
-    def take(self, indices, axis, **kwargs):
+    def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         if carr.shape[1] == self.shape[1]:
             # alleles preserved, safe to wrap
