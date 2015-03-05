@@ -17,6 +17,7 @@ Pairwise distance
 -----------------
 
 .. autofunction:: pairwise_distance
+.. autofunction:: pairwise_dxy
 
 Hardy-Weinberg equilibrium
 --------------------------

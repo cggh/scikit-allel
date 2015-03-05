@@ -23,6 +23,11 @@ VariantCTable
 
 .. autoclass:: VariantCTable
 
+FeatureCTable
+-------------
+
+.. autoclass:: FeatureCTable
+
 Utility functions
 -----------------
 

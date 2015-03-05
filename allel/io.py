@@ -54,8 +54,8 @@ def write_vcf_header(vcf_file, variants, rename, number, description):
 
     names = variants.dtype.names
     info_names = [n for n in names
-                  if not n.upper().startswith('FILTER_')
-                  and not n.upper() in VCF_FIXED_FIELDS]
+                  if not n.upper().startswith('FILTER_') and
+                  not n.upper() in VCF_FIXED_FIELDS]
     info_ids = [rename[n] if n in rename else n
                 for n in info_names]
 
@@ -183,8 +183,8 @@ def write_vcf_data(vcf_file, variants, rename, fill):
 
     # find INFO columns
     info_names = [n for n in variants.dtype.names
-                  if not n.upper().startswith('FILTER_')
-                  and not n.upper() in VCF_FIXED_FIELDS]
+                  if not n.upper().startswith('FILTER_') and
+                  not n.upper() in VCF_FIXED_FIELDS]
     info_ids = [rename[n] if n in rename else n
                 for n in info_names]
     info_cols = [variants[n] for n in info_names]

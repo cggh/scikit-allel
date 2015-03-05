@@ -63,6 +63,10 @@ def moving_statistic(values, statistic, size=None, start=0, stop=None,
 
 
 def index_windows(values, size, start, stop, step):
+    """Convenience function to construct windows for the
+    :func:`moving_statistic` function.
+
+    """
 
     # determine step
     if stop is None:
@@ -88,6 +92,10 @@ def index_windows(values, size, start, stop, step):
 
 
 def position_windows(pos, size, start, stop, step):
+    """Convenience function to construct windows for the
+    :func:`windowed_statistic` and :func:`windowed_count` functions.
+
+    """
     last = False
 
     # determine start and stop positions
@@ -120,6 +128,10 @@ def position_windows(pos, size, start, stop, step):
 
 
 def window_locations(pos, windows):
+    """Locate indices in `pos` corresponding to the start and stop positions
+    of `windows`.
+
+    """
     start_locs = np.searchsorted(pos, windows[:, 0])
     stop_locs = np.searchsorted(pos, windows[:, 1], side='right')
     locs = np.column_stack((start_locs, stop_locs))
@@ -443,7 +455,7 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     See Also
     --------
 
-    windowed_diversity
+    sequence_diversity, windowed_diversity
 
     """
 
@@ -496,9 +508,11 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array from the second population.
     an1 : array_like, int, shape (n_variants,), optional
-        Allele numbers for the first population.
+        Allele numbers for the first population. If not provided, will be
+        calculated from `ac1`.
     an2 : array_like, int, shape (n_variants,), optional
-        Allele numbers for the second population.
+        Allele numbers for the second population. If not provided, will be
+        calculated from `ac2`.
     fill : float
         Use this value where there are no pairs to compare (e.g.,
         all allele calls are missing).
@@ -535,7 +549,7 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     See Also
     --------
 
-    windowed_divergence
+    sequence_divergence, windowed_divergence
 
     """
 
@@ -626,7 +640,8 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     """
 
     # check inputs
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
     if start is not None or stop is not None:
         loc = pos.locate_range(start, stop)
         pos = pos[loc]
@@ -1227,8 +1242,34 @@ def pdist(x, metric):
 
 
 def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
-    """TODO doc
+    """Convenience function to calculate a pairwise distance matrix using
+    nucleotide divergence (a.k.a. Dxy) as the distance metric.
 
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_variants,)
+        Variant positions.
+    gac : array_like, int, shape (n_variants, n_samples, n_alleles)
+        Per-genotype allele counts.
+    start : int, optional
+        Start position of region to use.
+    stop : int, optional
+        Stop position of region to use.
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+
+    Returns
+    -------
+
+    dist : ndarray
+        Distance matrix in condensed form.
+
+    See Also
+    --------
+
+    allel.model.GenotypeArray.to_allele_counts
     """
 
     if not isinstance(pos, SortedIndex):

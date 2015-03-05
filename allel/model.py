@@ -188,7 +188,6 @@ class GenotypeArray(np.ndarray):
             raise ValueError('use HaplotypeArray for haploid calls')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -1244,7 +1243,6 @@ class HaplotypeArray(np.ndarray):
             raise TypeError('array with 2 dimensions required')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -1694,7 +1692,6 @@ class AlleleCountsArray(np.ndarray):
             raise TypeError('array with 2 dimensions required')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -2059,7 +2056,6 @@ class SortedIndex(np.ndarray):
             raise ValueError('array is not monotonically increasing')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -2406,11 +2402,9 @@ class SortedIndex(np.ndarray):
         """
 
         # check inputs
-        starts = np.asarray(starts)
-        stops = np.asarray(stops)
-        # TODO raise ValueError
-        assert starts.ndim == stops.ndim == 1
-        assert starts.shape[0] == stops.shape[0]
+        starts = asarray_ndim(starts, 1)
+        stops = asarray_ndim(stops, 1)
+        check_arrays_aligned(starts, stops)
 
         # find indices of start and stop values in idx
         start_indices = np.searchsorted(self, starts)
@@ -2555,10 +2549,11 @@ class UniqueIndex(np.ndarray):
             raise ValueError('values are not unique')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
+        lookup = {v: i for i, v in enumerate(obj)}
+        obj.lookup = lookup
         return obj
 
     def __array_finalize__(self, obj):
@@ -2635,12 +2630,7 @@ class UniqueIndex(np.ndarray):
 
         """
 
-        # TODO review implementation for performance with larger arrays
-
-        loc = np.nonzero(self == key)[0]
-        if len(loc) == 0:
-            raise KeyError(key)
-        return loc[0]
+        return self.lookup[key]
 
     def locate_intersection(self, other):
         """Locate the intersection with another array.
@@ -2678,8 +2668,6 @@ class UniqueIndex(np.ndarray):
         ['F' 'C']
 
         """
-
-        # TODO review implementation for performance with larger arrays
 
         # check inputs
         other = UniqueIndex(other)
@@ -2762,10 +2750,6 @@ class UniqueIndex(np.ndarray):
 
         loc = self.locate_keys(other, strict=False)
         return np.compress(loc, self)
-
-
-# TODO VariantTable
-# TODO SortedIndex and SortedMultiIndex support non-arrays (using bisect)
 
 
 class SortedMultiIndex(object):
@@ -3006,17 +2990,15 @@ class VariantTable(np.recarray):
         VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
 
-    Use the index to locate variants:
+    Use the index to query variants:
 
-        >>> loc = vt.index.locate_range(b'chr2', 1, 10)
-        >>> vt[loc]
+        >>> vt.query_region(b'chr2', 1, 10)
         VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
 
     """  # flake8: noqa
 
     def __new__(cls, data, index=None, **kwargs):
-        """Constructor."""
         obj = np.rec.array(data, **kwargs)
         obj = obj.view(cls)
         # initialise index
@@ -3091,7 +3073,16 @@ class VariantTable(np.recarray):
         return self.dtype.names
 
     def set_index(self, index):
-        """TODO doc
+        """Set or reset the index.
+
+        Parameters
+        ----------
+
+        index : string or pair of strings, optional
+            Names of columns to use for positional index, e.g., 'POS' if table
+            contains a 'POS' column and records from a single chromosome/contig,
+            or ('CHROM', 'POS') if table contains records from multiple
+            chromosomes/contigs.
 
         """
         if index is None:
@@ -3196,9 +3187,24 @@ class VariantTable(np.recarray):
         return self.compress(condition)
 
     def query_position(self, chrom=None, position=None):
-        """TODO doc
+        """Query the table, returning row or rows matching the given genomic
+        position.
+
+        Parameters
+        ----------
+
+        chrom : string, optional
+            Chromosome/contig.
+        position : int, optional
+            Position (1-based).
+
+        Returns
+        -------
+
+        result : row or VariantTable
 
         """
+
         if self.index is None:
             raise ValueError('no index has been set')
         if isinstance(self.index, SortedIndex):
@@ -3209,7 +3215,23 @@ class VariantTable(np.recarray):
         return self[loc]
 
     def query_region(self, chrom=None, start=None, stop=None):
-        """TODO doc
+        """Query the table, returning row or rows within the given genomic
+        region.
+
+        Parameters
+        ----------
+
+        chrom : string, optional
+            Chromosome/contig.
+        start : int, optional
+            Region start position (1-based).
+        stop : int, optional
+            Region stop position (1-based).
+
+        Returns
+        -------
+
+        result : VariantTable
 
         """
         if self.index is None:
@@ -3318,13 +3340,31 @@ def sample_to_haplotype_selection(indices, ploidy):
     return [(i * ploidy) + n for i in indices for n in range(ploidy)]
 
 
+# TODO factor out common table code
+
+
 class FeatureTable(np.recarray):
+    """Table of genomic features (e.g., genes, exons, etc.).
+
+    Parameters
+    ----------
+
+    data : array_like, structured, shape (n_variants,)
+        Variant records.
+    index : pair or triplet of strings, optional
+        Names of columns to use for positional index, e.g., ('start',
+        'stop') if table contains 'start' and 'stop' columns and records
+        from a single chromosome/contig, or ('seqid', 'start', 'end') if table
+        contains records from multiple chromosomes/contigs.
+    **kwargs : keyword arguments, optional
+        Further keyword arguments are passed through to :func:`np.rec.array`.
+
+    """
 
     def __new__(cls, data, index=None, **kwargs):
-        """Constructor."""
         obj = np.rec.array(data, **kwargs)
         obj = obj.view(cls)
-        # TODO initialise index
+        # TODO initialise interval index
         return obj
 
     def __array_finalize__(self, obj):
@@ -3375,7 +3415,17 @@ class FeatureTable(np.recarray):
         # noinspection PyProtectedMember
         return df._repr_html_()
 
-    def display(self, n):
+    def display(self, n=5):
+        """Display HTML representation in an IPython notebook.
+
+        Parameters
+        ----------
+
+        n : int, optional
+            Number of rows to display.
+
+        """
+
         # use implementation from pandas
         import pandas
         import IPython.display
@@ -3410,11 +3460,6 @@ class FeatureTable(np.recarray):
 
         result : ndarray
 
-        Examples
-        --------
-
-        TODO
-
         """
 
         if vm == 'numexpr':
@@ -3438,20 +3483,36 @@ class FeatureTable(np.recarray):
 
         result : FeatureTable
 
-        Examples
-        --------
-
         """  # flake8: noqa
 
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
 
     def query_region(self, chrom=None, start=None, stop=None):
+        """TODO
+
+        """
         # TODO use interval index
         pass
 
     def to_mask(self, size, start_name='start', stop_name='end'):
-        """TODO doc
+        """Construct a mask array where elements are True if the fall within
+        features in the table.
+
+        Parameters
+        ----------
+
+        size : int
+            Size of chromosome/contig.
+        start_name : string, optional
+            Name of column with start coordinates.
+        stop_name : string, optional
+            Name of column with stop coordinates.
+
+        Returns
+        -------
+
+        mask : ndarray, bool
 
         """
         m = np.zeros(size, dtype=bool)
@@ -3463,7 +3524,32 @@ class FeatureTable(np.recarray):
     def from_gff3(path, attributes=None, region=None,
                   score_fill=-1, phase_fill=-1, attributes_fill=b'.',
                   dtype=None):
-        """TODO doc
+        """Read a feature table from a GFF3 format file.
+
+        Parameters
+        ----------
+
+        path : string
+            File path.
+        attributes : list of strings, optional
+            List of columns to extract from the "attributes" field.
+        region : string, optional
+            Genome region to extract. If given, file must be position
+            sorted, bgzipped and tabix indexed. Tabix must also be installed
+            and on the system path.
+        score_fill : object, optional
+            Value to use where score field has a missing value.
+        phase_fill : object, optional
+            Value to use where phase field has a missing value.
+        attributes_fill : object or list of objects, optional
+            Value(s) to use where attribute field(s) have a missing value.
+        dtype : numpy dtype, optional
+            Manually specify a dtype.
+
+        Returns
+        -------
+
+        ft : FeatureTable
 
         """
 

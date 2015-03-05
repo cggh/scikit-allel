@@ -542,7 +542,8 @@ class _CArrayWrapper(object):
             raise NotImplementedError('only supported for scalars')
 
         # build output
-        f = lambda block: op(block, other)
+        def f(block):
+            return op(block, other)
         out = carray_block_map(self.carr, f, **kwargs)
 
         return out
@@ -759,11 +760,13 @@ class GenotypeCArray(_CArrayWrapper):
         return GenotypeCArray(carr, copy=False)
 
     def is_called(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_called()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_called()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_missing(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_missing()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_missing()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom(self, allele=None, **kwargs):
@@ -772,27 +775,33 @@ class GenotypeCArray(_CArrayWrapper):
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_ref(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_ref()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_alt(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_het(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_het()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_het()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_call(self, call, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_call(call)
+        def f(block):
+            return GenotypeArray(block, copy=False).is_call(call)
         return carray_block_map(self.carr, f, **kwargs)
 
     def count_called(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_called()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_called()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_missing(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_missing()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_missing()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom(self, allele=None, axis=None):
@@ -802,15 +811,18 @@ class GenotypeCArray(_CArrayWrapper):
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom_ref(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_ref()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom_alt(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_het(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_het()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_het()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, call, axis=None):
@@ -824,12 +836,14 @@ class GenotypeCArray(_CArrayWrapper):
         # so we have to copy.
 
         # build output
-        f = lambda block: block.reshape((block.shape[0], -1))
+        def f(block):
+            return block.reshape((block.shape[0], -1))
         out = carray_block_map(self.carr, f, **kwargs)
         return HaplotypeCArray(out, copy=False)
 
     def to_n_alt(self, fill=0, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).to_n_alt(fill)
+        def f(block):
+            return GenotypeArray(block, copy=False).to_n_alt(fill)
         return carray_block_map(self.carr, f, **kwargs)
 
     def to_allele_counts(self, alleles=None, **kwargs):
@@ -1029,7 +1043,8 @@ class HaplotypeCArray(_CArrayWrapper):
             raise ValueError('incompatible ploidy')
 
         # build output
-        f = lambda block: block.reshape((block.shape[0], -1, ploidy))
+        def f(block):
+            return block.reshape((block.shape[0], -1, ploidy))
         carr = carray_block_map(self.carr, f, **kwargs)
 
         g = GenotypeCArray(carr, copy=False)
@@ -1054,19 +1069,23 @@ class HaplotypeCArray(_CArrayWrapper):
         return self.compare_scalar(operator.eq, allele, **kwargs)
 
     def count_called(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_called()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_called()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_missing(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_missing()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_missing()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_ref(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_ref()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_ref()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_alt(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_alt()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_alt()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, allele, axis=None):
@@ -1419,9 +1438,9 @@ class VariantCTable(object):
 
     def addcol(self, newcol, name, **kwargs):
         # bcolz.ctable.addcol is broken for persistent ctables
-        self.ctbl.addcol_persistent(newcol, **kwargs)
+        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
 
-    def display(self, n):
+    def display(self, n=5):
         # use implementation from pandas
         import pandas
         import IPython.display
@@ -1471,18 +1490,40 @@ class VariantCTable(object):
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
 
 
+# TODO factor out common table code
+
+
 class FeatureCTable(object):
-    """TODO doc
+    """Alternative implementation of the :class:`allel.model.FeatureTable`
+    interface, using a :class:`bcolz.ctable` as the backing store.
 
-    """  # noqa
+    Parameters
+    ----------
 
-    def __init__(self, data=None, copy=True, index=None, **kwargs):
+    data : tuple or list of column objects, optional
+        The list of column data to build the ctable object. This can also be a
+        pure NumPy structured array. May also be a bcolz ctable, which will
+        not be copied if copy=False. May also be None, in which case rootdir
+        must be provided (disk-based array).
+    copy : bool, optional
+        If True, copy the input data into a new bcolz ctable.
+    index : pair or triplet of strings, optional
+        Names of columns to use for positional index, e.g., ('start',
+        'stop') if table contains 'start' and 'stop' columns and records
+        from a single chromosome/contig, or ('seqid', 'start', 'end') if table
+        contains records from multiple chromosomes/contigs.
+    **kwargs : keyword arguments
+        Passed through to the bcolz ctable constructor.
+
+    """
+
+    def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:
             ctbl = data
         object.__setattr__(self, 'ctbl', ctbl)
-        # TODO initialise index
+        # TODO initialise interval index
         # self.set_index(index)
 
     def __array__(self):
@@ -1529,9 +1570,9 @@ class FeatureCTable(object):
 
     def addcol(self, newcol, name, **kwargs):
         # bcolz.ctable.addcol is broken for persistent ctables
-        self.ctbl.addcol_persistent(newcol, **kwargs)
+        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
 
-    def display(self, n):
+    def display(self, n=5):
         # use implementation from pandas
         import pandas
         import IPython.display
@@ -1564,11 +1605,27 @@ class FeatureCTable(object):
         return self.compress(condition)
 
     def to_mask(self, size, start_name='start', stop_name='end'):
-        """TODO doc
+        """Construct a mask array where elements are True if the fall within
+        features in the table.
+
+        Parameters
+        ----------
+
+        size : int
+            Size of chromosome/contig.
+        start_name : string, optional
+            Name of column with start coordinates.
+        stop_name : string, optional
+            Name of column with stop coordinates.
+
+        Returns
+        -------
+
+        mask : ndarray, bool
 
         """
         m = np.zeros(size, dtype=bool)
-        for start, stop in self.ctbl[[start_name, stop_name]]:
+        for start, stop in self[[start_name, stop_name]]:
             m[start-1:stop] = True
         return m
 
@@ -1576,7 +1633,32 @@ class FeatureCTable(object):
     def from_gff3(path, attributes=None, region=None,
                   score_fill=-1, phase_fill=-1, attributes_fill=b'.',
                   dtype=None, **kwargs):
-        """TODO doc
+        """Read a feature table from a GFF3 format file.
+
+        Parameters
+        ----------
+
+        path : string
+            File path.
+        attributes : list of strings, optional
+            List of columns to extract from the "attributes" field.
+        region : string, optional
+            Genome region to extract. If given, file must be position
+            sorted, bgzipped and tabix indexed. Tabix must also be installed
+            and on the system path.
+        score_fill : object, optional
+            Value to use where score field has a missing value.
+        phase_fill : object, optional
+            Value to use where phase field has a missing value.
+        attributes_fill : object or list of objects, optional
+            Value(s) to use where attribute field(s) have a missing value.
+        dtype : numpy dtype, optional
+            Manually specify a dtype.
+
+        Returns
+        -------
+
+        ft : FeatureCTable
 
         """
 

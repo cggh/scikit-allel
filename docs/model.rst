@@ -85,6 +85,31 @@ AlleleCountsArray
     .. automethod:: count_doubleton
     .. automethod:: to_frequencies
 
+VariantTable
+------------
+
+.. autoclass:: VariantTable
+
+    .. autoattribute:: n_variants
+    .. autoattribute:: names
+    .. automethod:: eval
+    .. automethod:: query
+    .. automethod:: query_position
+    .. automethod:: query_region
+    .. automethod:: to_vcf
+
+FeatureTable
+------------
+
+.. autoclass:: FeatureTable
+
+    .. autoattribute:: n_features
+    .. autoattribute:: names
+    .. automethod:: eval
+    .. automethod:: query
+    .. automethod:: from_gff3
+    .. automethod:: to_mask
+
 SortedIndex
 -----------
 
@@ -119,14 +144,3 @@ SortedMultiIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_range
-
-VariantTable
-------------
-
-.. autoclass:: VariantTable
-
-    .. autoattribute:: n_variants
-    .. autoattribute:: names
-    .. automethod:: eval
-    .. automethod:: query
-    .. automethod:: to_vcf

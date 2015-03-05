@@ -1936,5 +1936,3 @@ class FeatureTableInterface(object):
         expr = 'type == b"exon"'
         r = ft.query(expr)
         aeq(a.take([2, 3]), r)
-
-    # TODO test index
