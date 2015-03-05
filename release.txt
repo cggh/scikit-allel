@@ -1,3 +1,5 @@
+git checkout master
+git merge vX.X
 tox
 # remove .devN from __version__
 sed -i -e 's/.dev[0-9]*//' allel/__init__.py
@@ -8,8 +10,6 @@ git commit -a -m v$version
 git tag -a v$version -m v$version
 git push
 git push --tags
-git checkout master
-git merge v0.X
 # update pypi
 python setup.py register sdist
 twine upload dist/scikit-allel-${version}.tar.gz
