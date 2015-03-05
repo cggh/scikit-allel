@@ -54,7 +54,7 @@ def moving_statistic(values, statistic, size=None, start=0, stop=None,
 
     """
 
-    windows = _make_index_windows(values, size, start, stop, step)
+    windows = index_windows(values, size, start, stop, step)
 
     # setup output
     out = np.array([statistic(values[i:j]) for i, j in windows])
@@ -62,7 +62,7 @@ def moving_statistic(values, statistic, size=None, start=0, stop=None,
     return out
 
 
-def _make_index_windows(values, size, start, stop, step):
+def index_windows(values, size, start, stop, step):
 
     # determine step
     if stop is None:
@@ -87,7 +87,7 @@ def _make_index_windows(values, size, start, stop, step):
             raise StopIteration
 
 
-def _make_position_windows(pos, size, start, stop, step):
+def position_windows(pos, size, start, stop, step):
     last = False
 
     # determine start and stop positions
@@ -116,7 +116,14 @@ def _make_position_windows(pos, size, start, stop, step):
         if last:
             break
 
-    return windows
+    return np.asarray(windows)
+
+
+def window_locations(pos, windows):
+    start_locs = np.searchsorted(pos, windows[:, 0])
+    stop_locs = np.searchsorted(pos, windows[:, 1], side='right')
+    locs = np.column_stack((start_locs, stop_locs))
+    return locs
 
 
 def windowed_count(pos, size=None, start=None, stop=None, step=None,
@@ -189,31 +196,22 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
     """
 
     # assume sorted positions
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
 
     # setup windows
     if windows is None:
-        windows = _make_position_windows(pos, size, start, stop, step)
+        windows = position_windows(pos, size, start, stop, step)
+    else:
+        windows = asarray_ndim(windows, 2)
 
-    # setup output
-    counts = []
+    # find window locations
+    locs = window_locations(pos, windows)
 
-    # iterate over windows
-    for window_start, window_stop in windows:
+    # count number of items in each window
+    counts = np.diff(locs, axis=1).reshape(-1)
 
-        # locate window
-        try:
-            loc = pos.locate_range(window_start, window_stop)
-        except KeyError:
-            n = 0
-        else:
-            n = loc.stop - loc.start
-
-        # store outputs
-        counts.append(n)
-
-    # convert to arrays for output
-    return np.asarray(counts), np.asarray(windows)
+    return counts, windows
 
 
 def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
@@ -292,7 +290,7 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
         ...     pos, values, statistic=np.sum, size=10, step=5, fill=0
         ... )
         >>> x
-        array([ 7, 12,  8,  0,  9])
+        array([  7.,  12.,   8.,   0.,   9.])
         >>> windows
         array([[ 1, 10],
                [ 6, 15],
@@ -305,7 +303,8 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
     """
 
     # assume sorted positions
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
 
     # check lengths are equal
     if len(pos) != len(values):
@@ -313,34 +312,35 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
 
     # setup windows
     if windows is None:
-        windows = _make_position_windows(pos, size, start, stop, step)
+        windows = position_windows(pos, size, start, stop, step)
+    else:
+        windows = asarray_ndim(windows, 2)
+
+    # find window locations
+    locs = window_locations(pos, windows)
 
     # setup outputs
     out = []
     counts = []
 
     # iterate over windows
-    for window_start, window_stop in windows:
+    for start_idx, stop_idx in locs:
 
-        # locate window
-        try:
-            loc = pos.locate_range(window_start, window_stop)
-        except KeyError:
-            n = 0
-            s = fill
-        else:
-            n = loc.stop - loc.start
-            # extract values for window
-            window_values = values[loc]
-            # compute statistic
-            s = statistic(window_values)
+        # calculate number of values in window
+        n = stop_idx - start_idx
+
+        # extract values for window
+        window_values = values[start_idx:stop_idx]
+
+        # compute statistic
+        s = statistic(window_values)
 
         # store outputs
         out.append(s)
         counts.append(n)
 
     # convert to arrays for output
-    return np.asarray(out), np.asarray(windows), np.asarray(counts)
+    return np.asarray(out), windows, np.asarray(counts)
 
 
 def per_base(x, windows, is_accessible=None, fill=np.nan):
@@ -814,7 +814,8 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
     """
 
     # check inputs
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise diversity

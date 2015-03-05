@@ -8,6 +8,7 @@ from __future__ import absolute_import, print_function, division
 
 import logging
 import itertools
+import bisect
 
 
 import numpy as np
@@ -2148,7 +2149,7 @@ class SortedIndex(np.ndarray):
         """
 
         left = np.searchsorted(self, key, side='left')
-        right = np.searchsorted(self, key, side='right')
+        right = bisect.bisect_right(self, key)
         diff = right - left
         if diff == 0:
             raise KeyError(key)
@@ -2313,11 +2314,11 @@ class SortedIndex(np.ndarray):
         if start is None:
             start_index = 0
         else:
-            start_index = np.searchsorted(self, start)
+            start_index = bisect.bisect_left(self, start)
         if stop is None:
             stop_index = len(self)
         else:
-            stop_index = np.searchsorted(self, stop, side='right')
+            stop_index = bisect.bisect_right(self, stop)
 
         if stop_index - start_index == 0:
             raise KeyError(start, stop)
