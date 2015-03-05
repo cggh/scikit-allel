@@ -27,6 +27,7 @@ GenotypeArray
     .. automethod:: count_het
     .. automethod:: count_call
     .. automethod:: count_alleles
+    .. automethod:: count_alleles_subpops
     .. automethod:: to_haplotypes
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
@@ -57,6 +58,7 @@ HaplotypeArray
     .. automethod:: count_alt
     .. automethod:: count_call
     .. automethod:: count_alleles
+    .. automethod:: count_alleles_subpops
     .. automethod:: to_genotypes
     .. automethod:: to_sparse
     .. automethod:: from_sparse
@@ -82,6 +84,31 @@ AlleleCountsArray
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
     .. automethod:: to_frequencies
+
+VariantTable
+------------
+
+.. autoclass:: VariantTable
+
+    .. autoattribute:: n_variants
+    .. autoattribute:: names
+    .. automethod:: eval
+    .. automethod:: query
+    .. automethod:: query_position
+    .. automethod:: query_region
+    .. automethod:: to_vcf
+
+FeatureTable
+------------
+
+.. autoclass:: FeatureTable
+
+    .. autoattribute:: n_features
+    .. autoattribute:: names
+    .. automethod:: eval
+    .. automethod:: query
+    .. automethod:: from_gff3
+    .. automethod:: to_mask
 
 SortedIndex
 -----------
@@ -117,14 +144,3 @@ SortedMultiIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_range
-
-VariantTable
-------------
-
-.. autoclass:: VariantTable
-
-    .. autoattribute:: n_variants
-    .. autoattribute:: names
-    .. automethod:: eval
-    .. automethod:: query
-    .. automethod:: to_vcf

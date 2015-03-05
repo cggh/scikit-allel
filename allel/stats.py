@@ -16,7 +16,8 @@ from allel.model import GenotypeArray, SortedIndex
 from allel.util import asarray_ndim, ignore_invalid, check_arrays_aligned
 
 
-def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
+def moving_statistic(values, statistic, size=None, start=0, stop=None,
+                     step=None):
     """Calculate a statistic in a moving window over `values`.
 
     Parameters
@@ -53,44 +54,48 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
 
     """
 
+    windows = index_windows(values, size, start, stop, step)
+
+    # setup output
+    out = np.array([statistic(values[i:j]) for i, j in windows])
+
+    return out
+
+
+def index_windows(values, size, start, stop, step):
+    """Convenience function to construct windows for the
+    :func:`moving_statistic` function.
+
+    """
+
     # determine step
     if stop is None:
         stop = len(values)
     if step is None:
+        # non-overlapping
         step = size
 
-    # setup output
-    out = []
-
-    last = False
-
     # iterate over windows
+    last = False
     for window_start in range(start, stop, step):
 
-        # determine window stop
         window_stop = window_start + size
         if window_stop >= stop:
             # last window
             window_stop = stop
             last = True
 
-        # extract values for window
-        window_values = values[window_start:window_stop]
-
-        # compute statistic
-        s = statistic(window_values)
-
-        # store outputs
-        out.append(s)
+        yield (window_start, window_stop)
 
         if last:
-            break
-
-    # convert to arrays for output
-    return np.array(out)
+            raise StopIteration
 
 
-def _make_windows(pos, size, start, stop, step):
+def position_windows(pos, size, start, stop, step):
+    """Convenience function to construct windows for the
+    :func:`windowed_statistic` and :func:`windowed_count` functions.
+
+    """
     last = False
 
     # determine start and stop positions
@@ -119,7 +124,18 @@ def _make_windows(pos, size, start, stop, step):
         if last:
             break
 
-    return windows
+    return np.asarray(windows)
+
+
+def window_locations(pos, windows):
+    """Locate indices in `pos` corresponding to the start and stop positions
+    of `windows`.
+
+    """
+    start_locs = np.searchsorted(pos, windows[:, 0])
+    stop_locs = np.searchsorted(pos, windows[:, 1], side='right')
+    locs = np.column_stack((start_locs, stop_locs))
+    return locs
 
 
 def windowed_count(pos, size=None, start=None, stop=None, step=None,
@@ -192,31 +208,22 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
     """
 
     # assume sorted positions
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
 
     # setup windows
     if windows is None:
-        windows = _make_windows(pos, size, start, stop, step)
+        windows = position_windows(pos, size, start, stop, step)
+    else:
+        windows = asarray_ndim(windows, 2)
 
-    # setup output
-    counts = []
+    # find window locations
+    locs = window_locations(pos, windows)
 
-    # iterate over windows
-    for window_start, window_stop in windows:
+    # count number of items in each window
+    counts = np.diff(locs, axis=1).reshape(-1)
 
-        # locate window
-        try:
-            loc = pos.locate_range(window_start, window_stop)
-        except KeyError:
-            n = 0
-        else:
-            n = loc.stop - loc.start
-
-        # store outputs
-        counts.append(n)
-
-    # convert to arrays for output
-    return np.asarray(counts), np.asarray(windows)
+    return counts, windows
 
 
 def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
@@ -295,7 +302,7 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
         ...     pos, values, statistic=np.sum, size=10, step=5, fill=0
         ... )
         >>> x
-        array([ 7, 12,  8,  0,  9])
+        array([  7.,  12.,   8.,   0.,   9.])
         >>> windows
         array([[ 1, 10],
                [ 6, 15],
@@ -308,7 +315,8 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
     """
 
     # assume sorted positions
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
 
     # check lengths are equal
     if len(pos) != len(values):
@@ -316,34 +324,35 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
 
     # setup windows
     if windows is None:
-        windows = _make_windows(pos, size, start, stop, step)
+        windows = position_windows(pos, size, start, stop, step)
+    else:
+        windows = asarray_ndim(windows, 2)
+
+    # find window locations
+    locs = window_locations(pos, windows)
 
     # setup outputs
     out = []
     counts = []
 
     # iterate over windows
-    for window_start, window_stop in windows:
+    for start_idx, stop_idx in locs:
 
-        # locate window
-        try:
-            loc = pos.locate_range(window_start, window_stop)
-        except KeyError:
-            n = 0
-            s = fill
-        else:
-            n = loc.stop - loc.start
-            # extract values for window
-            window_values = values[loc]
-            # compute statistic
-            s = statistic(window_values)
+        # calculate number of values in window
+        n = stop_idx - start_idx
+
+        # extract values for window
+        window_values = values[start_idx:stop_idx]
+
+        # compute statistic
+        s = statistic(window_values)
 
         # store outputs
         out.append(s)
         counts.append(n)
 
     # convert to arrays for output
-    return np.asarray(out), np.asarray(windows), np.asarray(counts)
+    return np.asarray(out), windows, np.asarray(counts)
 
 
 def per_base(x, windows, is_accessible=None, fill=np.nan):
@@ -379,8 +388,8 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
         # N.B., window stops are included
         n_bases = np.diff(windows, axis=1).reshape(-1) + 1
     else:
-        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        n_bases, _ = windowed_count(pos_accessible, windows=windows)
+        n_bases = np.array([np.count_nonzero(is_accessible[i-1:j])
+                            for i, j in windows])
 
     # deal with multidimensional x
     if x.ndim == 1:
@@ -390,9 +399,11 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
     else:
         raise NotImplementedError('only arrays of 1 or 2 dimensions supported')
 
+    # calculate density per-base
     with ignore_invalid():
         y = np.where(n_bases > 0, x / n_bases, fill)
 
+    # restore to 1-dimensional
     if n_bases.ndim > 1:
         n_bases = n_bases.reshape(-1)
 
@@ -444,7 +455,7 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     See Also
     --------
 
-    windowed_diversity
+    sequence_diversity, windowed_diversity
 
     """
 
@@ -456,11 +467,11 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     ac = asarray_ndim(ac, 2)
 
     # total number of haplotypes
-    n = np.sum(ac, axis=1)
+    an = np.sum(ac, axis=1)
 
     # total number of pairwise comparisons for each variant:
     # (an choose 2)
-    n_pairs = n * (n - 1) / 2
+    n_pairs = an * (an - 1) / 2
 
     # number of pairwise comparisons where there is no difference:
     # sum of (ac choose 2) for each allele (i.e., number of ways to
@@ -485,7 +496,7 @@ def _resize_dim2(a, l):
     return b
 
 
-def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
+def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     """Calculate for each variant the mean number of pairwise differences
     between haplotypes from two different populations.
 
@@ -496,6 +507,12 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
         Allele counts array from the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array from the second population.
+    an1 : array_like, int, shape (n_variants,), optional
+        Allele numbers for the first population. If not provided, will be
+        calculated from `ac1`.
+    an2 : array_like, int, shape (n_variants,), optional
+        Allele numbers for the second population. If not provided, will be
+        calculated from `ac2`.
     fill : float
         Use this value where there are no pairs to compare (e.g.,
         all allele calls are missing).
@@ -532,7 +549,7 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
     See Also
     --------
 
-    windowed_divergence
+    sequence_divergence, windowed_divergence
 
     """
 
@@ -552,11 +569,13 @@ def mean_pairwise_divergence(ac1, ac2, fill=np.nan):
         ac2 = _resize_dim2(ac2, ac1.shape[1])
 
     # total number of haplotypes sampled from each population
-    n1 = np.sum(ac1, axis=1)
-    n2 = np.sum(ac2, axis=1)
+    if an1 is None:
+        an1 = np.sum(ac1, axis=1)
+    if an2 is None:
+        an2 = np.sum(ac2, axis=1)
 
     # total number of pairwise comparisons for each variant
-    n_pairs = n1 * n2
+    n_pairs = an1 * an2
 
     # number of pairwise comparisons where there is no difference:
     # sum of (ac1 * ac2) for each allele (i.e., number of ways to
@@ -621,7 +640,8 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     """
 
     # check inputs
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
     if start is not None or stop is not None:
         loc = pos.locate_range(start, stop)
         pos = pos[loc]
@@ -642,17 +662,14 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     if is_accessible is None:
         n_bases = stop - start + 1
     else:
-        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        pos_accessible = SortedIndex(pos_accessible, copy=False)
-        loc = pos_accessible.locate_range(start, stop)
-        n_bases = np.count_nonzero(pos_accessible[loc])
+        n_bases = np.count_nonzero(is_accessible[start-1:stop])
 
     pi = mpd_sum / n_bases
     return pi
 
 
-def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
-                        is_accessible=None):
+def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
+                        stop=None, is_accessible=None):
     """Calculate nucleotide divergence between two populations within a
     given region.
 
@@ -706,7 +723,8 @@ def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
     """
 
     # check inputs
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
     if start is not None or stop is not None:
         loc = pos.locate_range(start, stop)
         pos = pos[loc]
@@ -719,7 +737,7 @@ def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise diversity
-    mpd = mean_pairwise_divergence(ac1, ac2, fill=0)
+    mpd = mean_pairwise_divergence(ac1, ac2, an1=an1, an2=an2, fill=0)
 
     # sum divergence
     mpd_sum = np.sum(mpd)
@@ -728,10 +746,7 @@ def sequence_divergence(pos, ac1, ac2, start=None, stop=None,
     if is_accessible is None:
         n_bases = stop - start + 1
     else:
-        pos_accessible = np.nonzero(is_accessible)[0] + 1  # use 1-based coords
-        pos_accessible = SortedIndex(pos_accessible, copy=False)
-        loc = pos_accessible.locate_range(start, stop)
-        n_bases = np.count_nonzero(pos_accessible[loc])
+        n_bases = np.count_nonzero(is_accessible[start-1:stop])
 
     dxy = mpd_sum / n_bases
 
@@ -814,7 +829,8 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
     """
 
     # check inputs
-    pos = SortedIndex(pos, copy=False)
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise diversity
@@ -1221,5 +1237,55 @@ def pdist(x, metric):
         a = x[:, i, ...]
         b = x[:, j, ...]
         d = metric(a, b)
+        dist.append(d)
+    return np.array(dist)
+
+
+def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
+    """Convenience function to calculate a pairwise distance matrix using
+    nucleotide divergence (a.k.a. Dxy) as the distance metric.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_variants,)
+        Variant positions.
+    gac : array_like, int, shape (n_variants, n_samples, n_alleles)
+        Per-genotype allele counts.
+    start : int, optional
+        Start position of region to use.
+    stop : int, optional
+        Stop position of region to use.
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+
+    Returns
+    -------
+
+    dist : ndarray
+        Distance matrix in condensed form.
+
+    See Also
+    --------
+
+    allel.model.GenotypeArray.to_allele_counts
+    """
+
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
+    gac = asarray_ndim(gac, 3)
+    # compute this once here, to avoid repeated evaluation within the loop
+    gan = np.sum(gac, axis=2)
+    m = gac.shape[1]
+    dist = list()
+    for i, j in itertools.combinations(range(m), 2):
+        ac1 = gac[:, i, ...]
+        an1 = gan[:, i]
+        ac2 = gac[:, j, ...]
+        an2 = gan[:, j]
+        d = sequence_divergence(pos, ac1, ac2, an1=an1, an2=an2,
+                                start=start, stop=stop,
+                                is_accessible=is_accessible)
         dist.append(d)
     return np.array(dist)

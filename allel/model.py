@@ -7,6 +7,8 @@ from __future__ import absolute_import, print_function, division
 
 
 import logging
+import itertools
+import bisect
 
 
 import numpy as np
@@ -15,7 +17,7 @@ import numexpr as ne
 
 from allel.constants import DIM_PLOIDY, DIPLOID
 from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
-from allel.io import write_vcf
+from allel.io import write_vcf, iter_gff3
 
 
 __all__ = ['GenotypeArray', 'HaplotypeArray', 'AlleleCountsArray',
@@ -186,7 +188,6 @@ class GenotypeArray(np.ndarray):
             raise ValueError('use HaplotypeArray for haploid calls')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -602,7 +603,7 @@ class GenotypeArray(np.ndarray):
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
 
-    def count_alleles(self, max_allele=None):
+    def count_alleles(self, max_allele=None, subpop=None):
         """Count the number of calls of each allele per variant.
 
         Parameters
@@ -611,6 +612,8 @@ class GenotypeArray(np.ndarray):
         max_allele : int, optional
             The highest allele index to count. Alleles above this will be
             ignored.
+        subpop : sequence of ints, optional
+            Indices of samples to include in count.
 
         Returns
         -------
@@ -637,7 +640,40 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        return self.to_haplotypes().count_alleles(max_allele=max_allele)
+        if subpop is not None:
+            # convert to a haplotype selection
+            subpop = sample_to_haplotype_selection(subpop, self.ploidy)
+
+        h = self.to_haplotypes()
+        return h.count_alleles(max_allele=max_allele, subpop=subpop)
+
+    def count_alleles_subpops(self, subpops, max_allele=None):
+        """Count alleles for multiple subpopulations simultaneously.
+
+        Parameters
+        ----------
+
+        subpops : dict (string -> sequence of ints)
+            Mapping of subpopulation names to sample indices.
+        max_allele : int, optional
+            The highest allele index to count. Alleles above this will be
+            ignored.
+
+        Returns
+        -------
+
+        out : dict (string -> AlleleCountsArray)
+            A mapping of subpopulation names to allele counts arrays.
+
+        """
+
+        if max_allele is None:
+            max_allele = self.max()
+
+        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+               for name, subpop in subpops.items()}
+
+        return out
 
     def to_haplotypes(self, copy=False):
         """Reshape a genotype array to view it as haplotypes by
@@ -835,7 +871,7 @@ class GenotypeArray(np.ndarray):
                 raise ValueError('min allele for packing is -1, found %s'
                                  % amn)
 
-        from allel.opt.gt import pack_diploid
+        from allel.opt.model import genotype_pack_diploid
 
         # ensure int8 dtype
         if self.dtype == np.int8:
@@ -844,7 +880,7 @@ class GenotypeArray(np.ndarray):
             data = self.astype(dtype=np.int8)
 
         # pack data
-        packed = pack_diploid(data)
+        packed = genotype_pack_diploid(data)
 
         return packed
 
@@ -891,8 +927,8 @@ class GenotypeArray(np.ndarray):
         if packed.dtype != np.uint8:
             packed = packed.astype(np.uint8)
 
-        from allel.opt.gt import unpack_diploid
-        data = unpack_diploid(packed)
+        from allel.opt.model import genotype_unpack_diploid
+        data = genotype_unpack_diploid(packed)
         return GenotypeArray(data)
 
     def to_sparse(self, format='csr', **kwargs):
@@ -1207,7 +1243,6 @@ class HaplotypeArray(np.ndarray):
             raise TypeError('array with 2 dimensions required')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -1484,7 +1519,7 @@ class HaplotypeArray(np.ndarray):
 
         return h
 
-    def count_alleles(self, max_allele=None):
+    def count_alleles(self, max_allele=None, subpop=None):
         """Count the number of calls of each allele per variant.
 
         Parameters
@@ -1493,6 +1528,8 @@ class HaplotypeArray(np.ndarray):
         max_allele : int, optional
             The highest allele index to count. Alleles greater than this
             index will be ignored.
+        subpop : array_like, int, optional
+            Indices of haplotypes to include.
 
         Returns
         -------
@@ -1515,19 +1552,68 @@ class HaplotypeArray(np.ndarray):
 
         """
 
+        # check inputs
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+
         # determine alleles to count
         if max_allele is None:
             max_allele = self.max()
-        alleles = list(range(max_allele + 1))
 
-        # set up output array
-        ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+        if self.dtype.type == np.int8:
+            # use optimisations
+            if subpop is None:
+                from allel.opt.model import haplotype_int8_count_alleles
+                ac = haplotype_int8_count_alleles(self, max_allele)
 
-        # count alleles
-        for allele in alleles:
-            np.sum(self == allele, axis=1, out=ac[:, allele])
+            else:
+                from allel.opt.model import haplotype_int8_count_alleles_subpop
+                ac = haplotype_int8_count_alleles_subpop(self, max_allele,
+                                                         subpop)
+
+        else:
+            # set up output array
+            ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+
+            # extract subpop
+            if subpop is not None:
+                h = self.take(subpop, axis=1)
+            else:
+                h = self
+
+            # count alleles
+            alleles = list(range(max_allele + 1))
+            for allele in alleles:
+                np.sum(h == allele, axis=1, out=ac[:, allele])
 
         return AlleleCountsArray(ac, copy=False)
+
+    def count_alleles_subpops(self, subpops, max_allele=None):
+        """Count alleles for multiple subpopulations simultaneously.
+
+        Parameters
+        ----------
+
+        subpops : dict (string -> sequence of ints)
+            Mapping of subpopulation names to sample indices.
+        max_allele : int, optional
+            The highest allele index to count. Alleles above this will be
+            ignored.
+
+        Returns
+        -------
+
+        out : dict (string -> AlleleCountsArray)
+            A mapping of subpopulation names to allele counts arrays.
+
+        """
+
+        if max_allele is None:
+            max_allele = self.max()
+
+        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+               for name, subpop in subpops.items()}
+
+        return out
 
 
 class AlleleCountsArray(np.ndarray):
@@ -1606,7 +1692,6 @@ class AlleleCountsArray(np.ndarray):
             raise TypeError('array with 2 dimensions required')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -1971,7 +2056,6 @@ class SortedIndex(np.ndarray):
             raise ValueError('array is not monotonically increasing')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -2061,7 +2145,7 @@ class SortedIndex(np.ndarray):
         """
 
         left = np.searchsorted(self, key, side='left')
-        right = np.searchsorted(self, key, side='right')
+        right = bisect.bisect_right(self, key)
         diff = right - left
         if diff == 0:
             raise KeyError(key)
@@ -2226,11 +2310,11 @@ class SortedIndex(np.ndarray):
         if start is None:
             start_index = 0
         else:
-            start_index = np.searchsorted(self, start)
+            start_index = bisect.bisect_left(self, start)
         if stop is None:
             stop_index = len(self)
         else:
-            stop_index = np.searchsorted(self, stop, side='right')
+            stop_index = bisect.bisect_right(self, stop)
 
         if stop_index - start_index == 0:
             raise KeyError(start, stop)
@@ -2318,11 +2402,9 @@ class SortedIndex(np.ndarray):
         """
 
         # check inputs
-        starts = np.asarray(starts)
-        stops = np.asarray(stops)
-        # TODO raise ValueError
-        assert starts.ndim == stops.ndim == 1
-        assert starts.shape[0] == stops.shape[0]
+        starts = asarray_ndim(starts, 1)
+        stops = asarray_ndim(stops, 1)
+        check_arrays_aligned(starts, stops)
 
         # find indices of start and stop values in idx
         start_indices = np.searchsorted(self, starts)
@@ -2467,10 +2549,11 @@ class UniqueIndex(np.ndarray):
             raise ValueError('values are not unique')
 
     def __new__(cls, data, **kwargs):
-        """Constructor."""
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
+        lookup = {v: i for i, v in enumerate(obj)}
+        obj.lookup = lookup
         return obj
 
     def __array_finalize__(self, obj):
@@ -2547,12 +2630,7 @@ class UniqueIndex(np.ndarray):
 
         """
 
-        # TODO review implementation for performance with larger arrays
-
-        loc = np.nonzero(self == key)[0]
-        if len(loc) == 0:
-            raise KeyError(key)
-        return loc[0]
+        return self.lookup[key]
 
     def locate_intersection(self, other):
         """Locate the intersection with another array.
@@ -2590,8 +2668,6 @@ class UniqueIndex(np.ndarray):
         ['F' 'C']
 
         """
-
-        # TODO review implementation for performance with larger arrays
 
         # check inputs
         other = UniqueIndex(other)
@@ -2674,10 +2750,6 @@ class UniqueIndex(np.ndarray):
 
         loc = self.locate_keys(other, strict=False)
         return np.compress(loc, self)
-
-
-# TODO VariantTable
-# TODO SortedIndex and SortedMultiIndex support non-arrays (using bisect)
 
 
 class SortedMultiIndex(object):
@@ -2918,32 +2990,19 @@ class VariantTable(np.recarray):
         VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
 
-    Use the index to locate variants:
+    Use the index to query variants:
 
-        >>> loc = vt.index.locate_range(b'chr2', 1, 10)
-        >>> vt[loc]
+        >>> vt.query_region(b'chr2', 1, 10)
         VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
 
     """  # flake8: noqa
 
     def __new__(cls, data, index=None, **kwargs):
-        """Constructor."""
         obj = np.rec.array(data, **kwargs)
         obj = obj.view(cls)
         # initialise index
-        if index is not None:
-            if isinstance(index, str):
-                index = SortedIndex(obj[index], copy=False)
-            elif isinstance(index, (tuple, list)) and len(index) == 2:
-                index = SortedMultiIndex(obj[index[0]], obj[index[1]],
-                                         copy=False)
-            else:
-                raise ValueError('invalid index argument, expected string or '
-                                 'pair of strings, found %s' % repr(index))
-            obj.index = index
-        else:
-            obj.index = None
+        cls.set_index(obj, index)
         return obj
 
     def __array_finalize__(self, obj):
@@ -2966,8 +3025,6 @@ class VariantTable(np.recarray):
 
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
-        print('getitem', args, kwargs)
-        print(repr(s), type(s))
         if hasattr(s, 'ndim') and s.ndim > 0:
             if s.dtype.names is not None:
                 return VariantTable(s, copy=False)
@@ -3014,6 +3071,31 @@ class VariantTable(np.recarray):
     def names(self):
         """Column names."""
         return self.dtype.names
+
+    def set_index(self, index):
+        """Set or reset the index.
+
+        Parameters
+        ----------
+
+        index : string or pair of strings, optional
+            Names of columns to use for positional index, e.g., 'POS' if table
+            contains a 'POS' column and records from a single chromosome/contig,
+            or ('CHROM', 'POS') if table contains records from multiple
+            chromosomes/contigs.
+
+        """
+        if index is None:
+            pass
+        elif isinstance(index, str):
+            index = SortedIndex(self[index], copy=False)
+        elif isinstance(index, (tuple, list)) and len(index) == 2:
+            index = SortedMultiIndex(self[index[0]], self[index[1]],
+                                     copy=False)
+        else:
+            raise ValueError('invalid index argument, expected string or '
+                             'pair of strings, found %s' % repr(index))
+        self.index = index
 
     def eval(self, expression, vm='numexpr'):
         """Evaluate an expression against the table columns.
@@ -3103,6 +3185,63 @@ class VariantTable(np.recarray):
 
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
+
+    def query_position(self, chrom=None, position=None):
+        """Query the table, returning row or rows matching the given genomic
+        position.
+
+        Parameters
+        ----------
+
+        chrom : string, optional
+            Chromosome/contig.
+        position : int, optional
+            Position (1-based).
+
+        Returns
+        -------
+
+        result : row or VariantTable
+
+        """
+
+        if self.index is None:
+            raise ValueError('no index has been set')
+        if isinstance(self.index, SortedIndex):
+            # ignore chrom
+            loc = self.index.locate_key(position)
+        else:
+            loc = self.index.locate_key(chrom, position)
+        return self[loc]
+
+    def query_region(self, chrom=None, start=None, stop=None):
+        """Query the table, returning row or rows within the given genomic
+        region.
+
+        Parameters
+        ----------
+
+        chrom : string, optional
+            Chromosome/contig.
+        start : int, optional
+            Region start position (1-based).
+        stop : int, optional
+            Region stop position (1-based).
+
+        Returns
+        -------
+
+        result : VariantTable
+
+        """
+        if self.index is None:
+            raise ValueError('no index has been set')
+        if isinstance(self.index, SortedIndex):
+            # ignore chrom
+            loc = self.index.locate_range(start, stop)
+        else:
+            loc = self.index.locate_range(chrom, start, stop)
+        return self[loc]
 
     def to_vcf(self, path, rename=None, number=None, description=None,
                fill=None, write_header=True):
@@ -3195,3 +3334,241 @@ class VariantTable(np.recarray):
         write_vcf(path, variants=self, rename=rename, number=number,
                   description=description, fill=fill,
                   write_header=write_header)
+
+
+def sample_to_haplotype_selection(indices, ploidy):
+    return [(i * ploidy) + n for i in indices for n in range(ploidy)]
+
+
+# TODO factor out common table code
+
+
+class FeatureTable(np.recarray):
+    """Table of genomic features (e.g., genes, exons, etc.).
+
+    Parameters
+    ----------
+
+    data : array_like, structured, shape (n_variants,)
+        Variant records.
+    index : pair or triplet of strings, optional
+        Names of columns to use for positional index, e.g., ('start',
+        'stop') if table contains 'start' and 'stop' columns and records
+        from a single chromosome/contig, or ('seqid', 'start', 'end') if table
+        contains records from multiple chromosomes/contigs.
+    **kwargs : keyword arguments, optional
+        Further keyword arguments are passed through to :func:`np.rec.array`.
+
+    """
+
+    def __new__(cls, data, index=None, **kwargs):
+        obj = np.rec.array(data, **kwargs)
+        obj = obj.view(cls)
+        # TODO initialise interval index
+        return obj
+
+    def __array_finalize__(self, obj):
+
+        # called after constructor
+        if obj is None:
+            return
+
+        # called after slice (new-from-template)
+        if isinstance(obj, FeatureTable):
+            return
+
+        # called after view - nothing to do
+        # VariantTable._check_input_data(obj)
+
+    # noinspection PyUnusedLocal
+    def __array_wrap__(self, out_arr, context=None):
+        # don't wrap results of any ufuncs
+        return np.asarray(out_arr)
+
+    def __getslice__(self, *args, **kwargs):
+        s = np.ndarray.__getslice__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.dtype.names is not None:
+                return FeatureTable(s, copy=False)
+            else:
+                return np.asarray(s)
+        return s
+
+    def __getitem__(self, *args, **kwargs):
+        s = np.ndarray.__getitem__(self, *args, **kwargs)
+        if hasattr(s, 'ndim') and s.ndim > 0:
+            if s.dtype.names is not None:
+                return FeatureTable(s, copy=False)
+            else:
+                return np.asarray(s)
+        return s
+
+    def __repr__(self):
+        s = 'FeatureTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s += str(self)
+        return s
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
+
+    def display(self, n=5):
+        """Display HTML representation in an IPython notebook.
+
+        Parameters
+        ----------
+
+        n : int, optional
+            Number of rows to display.
+
+        """
+
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
+
+    @property
+    def n_features(self):
+        """Number of features (length of first dimension)."""
+        return self.shape[0]
+
+    @property
+    def names(self):
+        """Column names."""
+        return self.dtype.names
+
+    def eval(self, expression, vm='numexpr'):
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+
+        result : ndarray
+
+        """
+
+        if vm == 'numexpr':
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            return eval(expression, {}, self)
+
+    def query(self, expression, vm='numexpr'):
+        """Evaluate expression and then use it to extract rows from the table.
+
+        Parameters
+        ----------
+
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+
+        result : FeatureTable
+
+        """  # flake8: noqa
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    def query_region(self, chrom=None, start=None, stop=None):
+        """TODO
+
+        """
+        # TODO use interval index
+        pass
+
+    def to_mask(self, size, start_name='start', stop_name='end'):
+        """Construct a mask array where elements are True if the fall within
+        features in the table.
+
+        Parameters
+        ----------
+
+        size : int
+            Size of chromosome/contig.
+        start_name : string, optional
+            Name of column with start coordinates.
+        stop_name : string, optional
+            Name of column with stop coordinates.
+
+        Returns
+        -------
+
+        mask : ndarray, bool
+
+        """
+        m = np.zeros(size, dtype=bool)
+        for start, stop in self[[start_name, stop_name]]:
+            m[start-1:stop] = True
+        return m
+
+    @staticmethod
+    def from_gff3(path, attributes=None, region=None,
+                  score_fill=-1, phase_fill=-1, attributes_fill=b'.',
+                  dtype=None):
+        """Read a feature table from a GFF3 format file.
+
+        Parameters
+        ----------
+
+        path : string
+            File path.
+        attributes : list of strings, optional
+            List of columns to extract from the "attributes" field.
+        region : string, optional
+            Genome region to extract. If given, file must be position
+            sorted, bgzipped and tabix indexed. Tabix must also be installed
+            and on the system path.
+        score_fill : object, optional
+            Value to use where score field has a missing value.
+        phase_fill : object, optional
+            Value to use where phase field has a missing value.
+        attributes_fill : object or list of objects, optional
+            Value(s) to use where attribute field(s) have a missing value.
+        dtype : numpy dtype, optional
+            Manually specify a dtype.
+
+        Returns
+        -------
+
+        ft : FeatureTable
+
+        """
+
+        # setup iterator
+        recs = iter_gff3(path, attributes=attributes, region=region,
+                         score_fill=score_fill, phase_fill=phase_fill,
+                         attributes_fill=attributes_fill)
+
+        # determine dtype from sample of initial records
+        if dtype is None:
+            names = 'seqid', 'source', 'type', 'start', 'end', 'score', \
+                    'strand', 'phase'
+            if attributes is not None:
+                names += tuple(attributes)
+            recs_sample = list(itertools.islice(recs, 1000))
+            a = np.rec.array(recs_sample, names=names)
+            dtype = a.dtype
+            recs = itertools.chain(recs_sample, recs)
+
+        a = np.fromiter(recs, dtype=dtype)
+        ft = FeatureTable(a, copy=False)
+        return ft

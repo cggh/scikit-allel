@@ -10,13 +10,15 @@ from allel.test.tools import assert_array_equal as aeq
 
 
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex, \
-    UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable
+    UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable, \
+    FeatureTable
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
     SortedMultiIndexInterface, diploid_genotype_data, triploid_genotype_data, \
     haplotype_data, AlleleCountsArrayInterface, VariantTableInterface, \
     allele_counts_data, variant_table_data, variant_table_names, \
-    variant_table_dtype
+    variant_table_dtype, FeatureTableInterface, feature_table_data, \
+    feature_table_dtype, feature_table_names
 
 
 class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -588,29 +590,72 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
             VariantTable()
 
     def test_get_item_types(self):
-        v = VariantTable(variant_table_data, dtype=variant_table_dtype)
+        vt = VariantTable(variant_table_data, dtype=variant_table_dtype)
 
         # row slice
-        s = v[1:]
+        s = vt[1:]
         assert_is_instance(s, VariantTable)
 
         # row index
-        s = v[0]
+        s = vt[0]
         assert_is_instance(s, np.record)
         assert_not_is_instance(s, VariantTable)
 
         # col access
-        s = v['CHROM']
+        s = vt['CHROM']
         assert_is_instance(s, np.ndarray)
         assert_not_is_instance(s, VariantTable)
-        s = v[['CHROM', 'POS']]
+        s = vt[['CHROM', 'POS']]
         assert_is_instance(s, VariantTable)
 
     def test_view(self):
         a = np.rec.array(variant_table_data,
                          dtype=variant_table_dtype)
-        v = a.view(VariantTable)
-        aeq(a, v)
-        eq(1, v.ndim)
-        eq(5, v.n_variants)
-        eq(variant_table_names, v.names)
+        vt = a.view(VariantTable)
+        aeq(a, vt)
+        eq(1, vt.ndim)
+        eq(5, vt.n_variants)
+        eq(variant_table_names, vt.names)
+
+
+class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
+
+    _class = FeatureTable
+
+    def setup_instance(self, data, index=None, **kwargs):
+        return FeatureTable(data, index=index, **kwargs)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            # noinspection PyArgumentList
+            FeatureTable()
+
+    def test_get_item_types(self):
+        ft = FeatureTable(feature_table_data, dtype=feature_table_dtype)
+
+        # row slice
+        s = ft[1:]
+        assert_is_instance(s, FeatureTable)
+
+        # row index
+        s = ft[0]
+        assert_is_instance(s, np.record)
+        assert_not_is_instance(s, FeatureTable)
+
+        # col access
+        s = ft['seqid']
+        assert_is_instance(s, np.ndarray)
+        assert_not_is_instance(s, FeatureTable)
+        s = ft[['seqid', 'start', 'stop']]
+        assert_is_instance(s, FeatureTable)
+
+    def test_view(self):
+        a = np.rec.array(feature_table_data,
+                         dtype=feature_table_dtype)
+        ft = a.view(FeatureTable)
+        aeq(a, ft)
+        eq(1, ft.ndim)
+        eq(6, ft.n_features)
+        eq(feature_table_names, ft.names)

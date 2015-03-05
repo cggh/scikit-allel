@@ -13,15 +13,16 @@ from nose.tools import eq_ as eq, assert_raises
 
 
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    VariantTable
+    VariantTable, FeatureTable
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, AlleleCountsArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, haplotype_data, \
     allele_counts_data, VariantTableInterface, variant_table_data, \
-    variant_table_dtype
+    variant_table_dtype, FeatureTableInterface, feature_table_data, \
+    feature_table_dtype
 from allel.bcolz import GenotypeCArray, HaplotypeCArray, AlleleCountsCArray,\
-    VariantCTable
+    VariantCTable, FeatureCTable
 
 
 class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -373,4 +374,39 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
         s = vt['CHROM']
         self.assertNotIsInstance(s, VariantCTable)
         self.assertNotIsInstance(s, VariantTable)
+        self.assertIsInstance(s, bcolz.carray)
+
+
+class FeatureCTableTests(FeatureTableInterface, unittest.TestCase):
+
+    _class = FeatureCTable
+
+    def setup_instance(self, data, **kwargs):
+        return FeatureCTable(data, **kwargs)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(ValueError):
+            FeatureCTable()
+
+    def test_slice_types(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        vt = FeatureCTable(a)
+
+        # row slice
+        s = vt[1:]
+        self.assertNotIsInstance(s, FeatureCTable)
+        self.assertIsInstance(s, FeatureTable)
+
+        # row index
+        s = vt[0]
+        self.assertNotIsInstance(s, FeatureCTable)
+        self.assertNotIsInstance(s, FeatureTable)
+        self.assertIsInstance(s, (np.record, np.void))
+
+        # col access
+        s = vt['seqid']
+        self.assertNotIsInstance(s, FeatureCTable)
+        self.assertNotIsInstance(s, FeatureTable)
         self.assertIsInstance(s, bcolz.carray)

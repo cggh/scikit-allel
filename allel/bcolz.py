@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function, division
 
 import os
 import operator
+import itertools
 from allel.compat import range
 
 
@@ -21,10 +22,11 @@ import bcolz
 
 
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex, subset, VariantTable
+    SortedIndex, SortedMultiIndex, subset, VariantTable, \
+    sample_to_haplotype_selection, FeatureTable
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim
-from allel.io import write_vcf_header, write_vcf_data
+from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
@@ -540,7 +542,8 @@ class _CArrayWrapper(object):
             raise NotImplementedError('only supported for scalars')
 
         # build output
-        f = lambda block: op(block, other)
+        def f(block):
+            return op(block, other)
         out = carray_block_map(self.carr, f, **kwargs)
 
         return out
@@ -565,6 +568,10 @@ class _CArrayWrapper(object):
 
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
+        """TODO doc me
+
+        """
+
         data = carray_from_hdf5(*args, **kwargs)
         return cls(data, copy=False)
 
@@ -740,11 +747,11 @@ class GenotypeCArray(_CArrayWrapper):
     def ploidy(self):
         return self.carr.shape[2]
 
-    def compress(self, condition, axis, **kwargs):
+    def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         return GenotypeCArray(carr, copy=False)
 
-    def take(self, indices, axis, **kwargs):
+    def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return GenotypeCArray(carr, copy=False)
 
@@ -753,11 +760,13 @@ class GenotypeCArray(_CArrayWrapper):
         return GenotypeCArray(carr, copy=False)
 
     def is_called(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_called()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_called()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_missing(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_missing()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_missing()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom(self, allele=None, **kwargs):
@@ -766,27 +775,33 @@ class GenotypeCArray(_CArrayWrapper):
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_ref(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_ref()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_hom_alt(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_het(self, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_het()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_het()
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_call(self, call, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).is_call(call)
+        def f(block):
+            return GenotypeArray(block, copy=False).is_call(call)
         return carray_block_map(self.carr, f, **kwargs)
 
     def count_called(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_called()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_called()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_missing(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_missing()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_missing()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom(self, allele=None, axis=None):
@@ -796,15 +811,18 @@ class GenotypeCArray(_CArrayWrapper):
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom_ref(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_ref()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_ref()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_hom_alt(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_hom_alt()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_het(self, axis=None):
-        f = lambda block: GenotypeArray(block, copy=False).is_het()
+        def f(block):
+            return GenotypeArray(block, copy=False).is_het()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, call, axis=None):
@@ -818,12 +836,14 @@ class GenotypeCArray(_CArrayWrapper):
         # so we have to copy.
 
         # build output
-        f = lambda block: block.reshape((block.shape[0], -1))
+        def f(block):
+            return block.reshape((block.shape[0], -1))
         out = carray_block_map(self.carr, f, **kwargs)
         return HaplotypeCArray(out, copy=False)
 
     def to_n_alt(self, fill=0, **kwargs):
-        f = lambda block: GenotypeArray(block, copy=False).to_n_alt(fill)
+        def f(block):
+            return GenotypeArray(block, copy=False).to_n_alt(fill)
         return carray_block_map(self.carr, f, **kwargs)
 
     def to_allele_counts(self, alleles=None, **kwargs):
@@ -882,18 +902,57 @@ class GenotypeCArray(_CArrayWrapper):
 
         return GenotypeCArray(out, copy=False)
 
-    def count_alleles(self, max_allele=None, **kwargs):
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
             max_allele = self.max()
 
+        if subpop is not None:
+            # convert to a haplotype selection
+            subpop = sample_to_haplotype_selection(subpop, self.ploidy)
+
         def f(block):
-            g = GenotypeArray(block, copy=False)
-            return g.count_alleles(max_allele=max_allele)
+            h = GenotypeArray(block, copy=False).to_haplotypes()
+            return h.count_alleles(max_allele=max_allele, subpop=subpop)
+
         out = carray_block_map(self.carr, f, **kwargs)
 
         return AlleleCountsCArray(out, copy=False)
+
+    def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max()
+
+        # convert to haplotype selections
+        names = sorted(subpops.keys())
+        subpops = [sample_to_haplotype_selection(subpops[n], self.ploidy)
+                   for n in names]
+
+        # setup output table
+        kwargs['names'] = names  # override to ensure correct order
+        kwargs.setdefault('expectedlen', self.shape[0])
+        acs_ctbl = None
+
+        # determine block size for iteration
+        blen = kwargs.pop('blen', None)
+        if blen is None:
+            blen = self.carr.chunklen
+
+        # block iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            h = GenotypeArray(block, copy=False).to_haplotypes()
+            cols = [h.count_alleles(max_allele=max_allele, subpop=subpop)
+                    for subpop in subpops]
+            if acs_ctbl is None:
+                acs_ctbl = bcolz.ctable(cols, **kwargs)
+            else:
+                acs_ctbl.append(cols)
+
+        return AlleleCountsCTable(acs_ctbl)
 
     def to_gt(self, phased=False, max_allele=None, **kwargs):
         if max_allele is None:
@@ -963,11 +1022,11 @@ class HaplotypeCArray(_CArrayWrapper):
         """Number of haplotypes (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def compress(self, condition, axis, **kwargs):
+    def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         return HaplotypeCArray(carr, copy=False)
 
-    def take(self, indices, axis, **kwargs):
+    def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return HaplotypeCArray(carr, copy=False)
 
@@ -984,7 +1043,8 @@ class HaplotypeCArray(_CArrayWrapper):
             raise ValueError('incompatible ploidy')
 
         # build output
-        f = lambda block: block.reshape((block.shape[0], -1, ploidy))
+        def f(block):
+            return block.reshape((block.shape[0], -1, ploidy))
         carr = carray_block_map(self.carr, f, **kwargs)
 
         g = GenotypeCArray(carr, copy=False)
@@ -1009,19 +1069,23 @@ class HaplotypeCArray(_CArrayWrapper):
         return self.compare_scalar(operator.eq, allele, **kwargs)
 
     def count_called(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_called()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_called()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_missing(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_missing()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_missing()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_ref(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_ref()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_ref()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_alt(self, axis=None):
-        f = lambda block: HaplotypeArray(block, copy=False).is_alt()
+        def f(block):
+            return HaplotypeArray(block, copy=False).is_alt()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, allele, axis=None):
@@ -1030,7 +1094,7 @@ class HaplotypeCArray(_CArrayWrapper):
             return h.is_call(allele=allele)
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
-    def count_alleles(self, max_allele=None, **kwargs):
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
@@ -1038,10 +1102,66 @@ class HaplotypeCArray(_CArrayWrapper):
 
         def f(block):
             h = HaplotypeArray(block, copy=False)
-            return h.count_alleles(max_allele=max_allele)
+            return h.count_alleles(max_allele=max_allele, subpop=subpop)
+
         carr = carray_block_map(self.carr, f, **kwargs)
 
         return AlleleCountsCArray(carr, copy=False)
+
+    def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max()
+
+        # setup output table
+        names = sorted(subpops.keys())
+        subpops = [subpops[n] for n in names]
+        kwargs['names'] = names  # override to ensure correct order
+        kwargs.setdefault('expectedlen', self.shape[0])
+        acs_ctbl = None
+
+        # determine block size for iteration
+        blen = kwargs.pop('blen', None)
+        if blen is None:
+            blen = self.carr.chunklen
+
+        # block iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            h = HaplotypeArray(block, copy=False)
+            cols = [h.count_alleles(max_allele=max_allele, subpop=subpop)
+                    for subpop in subpops]
+            if acs_ctbl is None:
+                acs_ctbl = bcolz.ctable(cols, **kwargs)
+            else:
+                acs_ctbl.append(cols)
+
+        # wrap for convenience
+        return AlleleCountsCTable(acs_ctbl)
+
+
+class AlleleCountsCTable(object):
+
+    def __init__(self, ctbl):
+        self.ctbl = ctbl
+
+    def __getattr__(self, item):
+        return getattr(self.ctbl, item)
+
+    def __getitem__(self, item):
+        o = self.ctbl[item]
+        if isinstance(o, bcolz.carray):
+            return AlleleCountsCArray(o, copy=False)
+
+    def __repr__(self):
+        return repr(self.ctbl)
+
+    def __str__(self):
+        return str(self.ctbl)
+
+    def __len__(self):
+        return len(self.ctbl)
 
 
 class AlleleCountsCArray(_CArrayWrapper):
@@ -1105,14 +1225,14 @@ class AlleleCountsCArray(_CArrayWrapper):
         """Number of alleles (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def compress(self, condition, axis, **kwargs):
+    def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         if carr.shape[1] == self.shape[1]:
             return AlleleCountsCArray(carr, copy=False)
         else:
             return carr
 
-    def take(self, indices, axis, **kwargs):
+    def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         if carr.shape[1] == self.shape[1]:
             # alleles preserved, safe to wrap
@@ -1258,16 +1378,21 @@ class VariantCTable(object):
             ctbl = data
         object.__setattr__(self, 'ctbl', ctbl)
         # initialise index
-        if index is not None:
-            if isinstance(index, str):
-                index = SortedIndex(ctbl[index][:], copy=False)
-            elif isinstance(index, (tuple, list)) and len(index) == 2:
-                index = SortedMultiIndex(ctbl[index[0]][:], ctbl[index[1]][:],
-                                         copy=False)
-            else:
-                raise ValueError('invalid index argument, expected string or '
-                                 'pair of strings, found %s' % repr(index))
-            object.__setattr__(self, 'index', index)
+        self.set_index(index)
+
+    def set_index(self, index):
+        if index is None:
+            pass
+        elif isinstance(index, str):
+            index = SortedIndex(self.ctbl[index][:], copy=False)
+        elif isinstance(index, (tuple, list)) and len(index) == 2:
+            index = SortedMultiIndex(self.ctbl[index[0]][:],
+                                     self.ctbl[index[1]][:],
+                                     copy=False)
+        else:
+            raise ValueError('invalid index argument, expected string or '
+                             'pair of strings, found %s' % repr(index))
+        object.__setattr__(self, 'index', index)
 
     def __array__(self):
         return self.ctbl[:]
@@ -1313,9 +1438,9 @@ class VariantCTable(object):
 
     def addcol(self, newcol, name, **kwargs):
         # bcolz.ctable.addcol is broken for persistent ctables
-        self.ctbl.addcol_persistent(newcol, **kwargs)
+        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
 
-    def display(self, n):
+    def display(self, n=5):
         # use implementation from pandas
         import pandas
         import IPython.display
@@ -1363,3 +1488,211 @@ class VariantCTable(object):
             for i in range(0, self.ctbl.shape[0], blen):
                 block = self.ctbl[i:i+blen]
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
+
+
+# TODO factor out common table code
+
+
+class FeatureCTable(object):
+    """Alternative implementation of the :class:`allel.model.FeatureTable`
+    interface, using a :class:`bcolz.ctable` as the backing store.
+
+    Parameters
+    ----------
+
+    data : tuple or list of column objects, optional
+        The list of column data to build the ctable object. This can also be a
+        pure NumPy structured array. May also be a bcolz ctable, which will
+        not be copied if copy=False. May also be None, in which case rootdir
+        must be provided (disk-based array).
+    copy : bool, optional
+        If True, copy the input data into a new bcolz ctable.
+    index : pair or triplet of strings, optional
+        Names of columns to use for positional index, e.g., ('start',
+        'stop') if table contains 'start' and 'stop' columns and records
+        from a single chromosome/contig, or ('seqid', 'start', 'end') if table
+        contains records from multiple chromosomes/contigs.
+    **kwargs : keyword arguments
+        Passed through to the bcolz ctable constructor.
+
+    """
+
+    def __init__(self, data=None, copy=True, **kwargs):
+        if copy or not isinstance(data, bcolz.ctable):
+            ctbl = bcolz.ctable(data, **kwargs)
+        else:
+            ctbl = data
+        object.__setattr__(self, 'ctbl', ctbl)
+        # TODO initialise interval index
+        # self.set_index(index)
+
+    def __array__(self):
+        return self.ctbl[:]
+
+    def __getitem__(self, item):
+        res = self.ctbl[item]
+        if isinstance(res, np.ndarray) and res.dtype.names:
+            return FeatureTable(res, copy=False)
+        if isinstance(res, bcolz.ctable):
+            return FeatureCTable(res, copy=False)
+        return res
+
+    def __getattr__(self, item):
+        if hasattr(self.ctbl, item):
+            return getattr(self.ctbl, item)
+        elif item in self.names:
+            return self.ctbl[item]
+        else:
+            raise AttributeError(item)
+
+    def __repr__(self):
+        s = repr(self.ctbl)
+        s = type(self).__name__ + s[6:]
+        return s
+
+    def __len__(self):
+        return len(self.ctbl)
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
+
+    @staticmethod
+    def open(rootdir, mode='r'):
+        cobj = bcolz.open(rootdir, mode=mode)
+        if isinstance(cobj, bcolz.ctable):
+            return FeatureCTable(cobj, copy=False)
+        else:
+            raise ValueError('rootdir does not contain a ctable')
+
+    def addcol(self, newcol, name, **kwargs):
+        # bcolz.ctable.addcol is broken for persistent ctables
+        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
+
+    def display(self, n=5):
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
+
+    @property
+    def n_features(self):
+        return len(self.ctbl)
+
+    @property
+    def names(self):
+        return tuple(self.ctbl.names)
+
+    def compress(self, condition, **kwargs):
+        ctbl = ctable_block_compress(self.ctbl, condition, **kwargs)
+        return FeatureCTable(ctbl, copy=False)
+
+    def take(self, indices, **kwargs):
+        ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
+        return FeatureCTable(ctbl, copy=False)
+
+    def eval(self, expression, vm='numexpr', **kwargs):
+        return self.ctbl.eval(expression, vm=vm, **kwargs)
+
+    def query(self, expression, vm='numexpr'):
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    def to_mask(self, size, start_name='start', stop_name='end'):
+        """Construct a mask array where elements are True if the fall within
+        features in the table.
+
+        Parameters
+        ----------
+
+        size : int
+            Size of chromosome/contig.
+        start_name : string, optional
+            Name of column with start coordinates.
+        stop_name : string, optional
+            Name of column with stop coordinates.
+
+        Returns
+        -------
+
+        mask : ndarray, bool
+
+        """
+        m = np.zeros(size, dtype=bool)
+        for start, stop in self[[start_name, stop_name]]:
+            m[start-1:stop] = True
+        return m
+
+    @staticmethod
+    def from_gff3(path, attributes=None, region=None,
+                  score_fill=-1, phase_fill=-1, attributes_fill=b'.',
+                  dtype=None, **kwargs):
+        """Read a feature table from a GFF3 format file.
+
+        Parameters
+        ----------
+
+        path : string
+            File path.
+        attributes : list of strings, optional
+            List of columns to extract from the "attributes" field.
+        region : string, optional
+            Genome region to extract. If given, file must be position
+            sorted, bgzipped and tabix indexed. Tabix must also be installed
+            and on the system path.
+        score_fill : object, optional
+            Value to use where score field has a missing value.
+        phase_fill : object, optional
+            Value to use where phase field has a missing value.
+        attributes_fill : object or list of objects, optional
+            Value(s) to use where attribute field(s) have a missing value.
+        dtype : numpy dtype, optional
+            Manually specify a dtype.
+
+        Returns
+        -------
+
+        ft : FeatureCTable
+
+        """
+
+        # setup iterator
+        recs = iter_gff3(path, attributes=attributes, region=region,
+                         score_fill=score_fill, phase_fill=phase_fill,
+                         attributes_fill=attributes_fill)
+
+        # determine dtype from sample of initial records
+        if dtype is None:
+            names = 'seqid', 'source', 'type', 'start', 'end', 'score', \
+                    'strand', 'phase'
+            if attributes is not None:
+                names += tuple(attributes)
+            recs_sample = list(itertools.islice(recs, 1000))
+            a = np.rec.array(recs_sample, names=names)
+            dtype = a.dtype
+            recs = itertools.chain(recs_sample, recs)
+
+        # set ctable defaults
+        kwargs.setdefault('expectedlen', 200000)
+
+        # initialise ctable
+        ctbl = bcolz.ctable(np.array([], dtype=dtype), **kwargs)
+
+        # determine block size to read
+        blen = min(ctbl[col].chunklen for col in ctbl.cols)
+
+        # read block-wise
+        block = list(itertools.islice(recs, 0, blen))
+        while block:
+            a = np.array(block, dtype=dtype)
+            ctbl.append(a)
+            block = list(itertools.islice(recs, 0, blen))
+
+        ft = FeatureCTable(ctbl, copy=False)
+        return ft
