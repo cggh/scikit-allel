@@ -7,6 +7,7 @@ from __future__ import absolute_import, print_function, division
 
 
 import logging
+import itertools
 
 
 import numpy as np
@@ -15,7 +16,7 @@ import numexpr as ne
 
 from allel.constants import DIM_PLOIDY, DIPLOID
 from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
-from allel.io import write_vcf
+from allel.io import write_vcf, iter_gff3
 
 
 __all__ = ['GenotypeArray', 'HaplotypeArray', 'AlleleCountsArray',
@@ -3018,10 +3019,7 @@ class VariantTable(np.recarray):
         obj = np.rec.array(data, **kwargs)
         obj = obj.view(cls)
         # initialise index
-        if index is not None:
-            cls.set_index(obj, index)
-        else:
-            obj.index = None
+        cls.set_index(obj, index)
         return obj
 
     def __array_finalize__(self, obj):
@@ -3095,14 +3093,17 @@ class VariantTable(np.recarray):
         """TODO doc
 
         """
-        if isinstance(index, str):
-            self.index = SortedIndex(self[index], copy=False)
+        if index is None:
+            pass
+        elif isinstance(index, str):
+            index = SortedIndex(self[index], copy=False)
         elif isinstance(index, (tuple, list)) and len(index) == 2:
-            self.index = SortedMultiIndex(self[index[0]], self[index[1]],
-                                          copy=False)
+            index = SortedMultiIndex(self[index[0]], self[index[1]],
+                                     copy=False)
         else:
             raise ValueError('invalid index argument, expected string or '
                              'pair of strings, found %s' % repr(index))
+        self.index = index
 
     def eval(self, expression, vm='numexpr'):
         """Evaluate an expression against the table columns.
@@ -3448,11 +3449,39 @@ class FeatureTable(np.recarray):
         # TODO use interval index
         pass
 
-    def mask(self, size, startfield='start', stopfield='end'):
-        # TODO build boolean array for chromosome, true if spanned by feature
-        pass
+    def to_mask(self, size, start_name='start', stop_name='end'):
+        """TODO doc
+
+        """
+        m = np.zeros(size, dtype=bool)
+        for start, stop in self[[start_name, stop_name]]:
+            m[start-1:stop] = True
+        return m
 
     @staticmethod
-    def from_gff3(path, attributes=None):
-        # TODO
-        pass
+    def from_gff3(path, attributes=None, region=None,
+                  score_fill=-1, phase_fill=-1, attributes_fill=b'.',
+                  dtype=None):
+        """TODO doc
+
+        """
+
+        # setup iterator
+        recs = iter_gff3(path, attributes=attributes, region=region,
+                         score_fill=score_fill, phase_fill=phase_fill,
+                         attributes_fill=attributes_fill)
+
+        # determine dtype from sample of initial records
+        if dtype is None:
+            names = 'seqid', 'source', 'type', 'start', 'end', 'score', \
+                    'strand', 'phase'
+            if attributes is not None:
+                names += tuple(attributes)
+            recs_sample = list(itertools.islice(recs, 1000))
+            a = np.rec.array(recs_sample, names=names)
+            dtype = a.dtype
+            recs = itertools.chain(recs_sample, recs)
+
+        a = np.fromiter(recs, dtype=dtype)
+        ft = FeatureTable(a, copy=False)
+        return ft

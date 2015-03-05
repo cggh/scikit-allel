@@ -1916,7 +1916,7 @@ class FeatureTableInterface(object):
     def test_compress(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
         ft = self.setup_instance(a)
-        condition = [True, False, True, False, False]
+        condition = [True, False, True, False, False, False]
         t = ft.compress(condition)
         expect = a.compress(condition)
         aeq(expect, t)

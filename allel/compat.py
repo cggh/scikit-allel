@@ -20,6 +20,7 @@ if PY2:
     zip = itertools.izip
     zip_longest = itertools.izip_longest
     reduce = reduce
+    from urllib import unquote_plus
 else:
     range = range
     map = map
@@ -31,3 +32,4 @@ else:
     zip_longest = itertools.zip_longest
     import functools
     reduce = functools.reduce
+    from urllib.parse import unquote_plus

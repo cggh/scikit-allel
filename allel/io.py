@@ -6,13 +6,20 @@ import csv
 from datetime import date
 import itertools
 from operator import itemgetter
-from allel.compat import zip_longest, PY2, text_type, range
+import subprocess
+import gzip
+import logging
+from allel.compat import zip_longest, PY2, text_type, range, unquote_plus
 
 
 import numpy as np
 
 
 import allel
+
+
+logger = logging.getLogger(__name__)
+debug = logger.debug
 
 
 VCF_FIXED_FIELDS = 'CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'
@@ -299,6 +306,91 @@ def write_fasta(path, sequences, names, mode='w', width=80):
                 fasta.write(line)
 
 
-def iter_gff3(path, attributes=None):
-    pass
-    # TODO
+def gff3_parse_attributes(attributes_string):
+    """Parse a string of GFF3 attributes ('key=value' pairs delimited by ';')
+    and return a dictionary.
+
+    """
+
+    attributes = dict()
+    if not PY2:
+        # convert to ascii string to enable conversion of escaped characters
+        attributes_string = str(attributes_string, encoding='ascii')
+    fields = attributes_string.split(';')
+    for f in fields:
+        if '=' in f:
+            key, value = f.split('=')
+            key = unquote_plus(key).strip()
+            value = unquote_plus(value.strip())
+            if not PY2:
+                # convert back to bytes
+                value = value.encode('ascii')
+            attributes[key] = value
+        elif len(f) > 0:
+            # not strictly kosher
+            attributes[unquote_plus(f).strip()] = True
+    return attributes
+
+
+def iter_gff3(path, attributes=None, region=None, score_fill=-1,
+              phase_fill=-1, attributes_fill=b'.'):
+
+    # prepare fill values for attributes
+    if attributes is not None:
+        if isinstance(attributes_fill, (list, tuple)):
+            if len(attributes != len(attributes_fill)):
+                raise ValueError('number of fills does not match attributes')
+        else:
+            attributes_fill = [attributes_fill] * len(attributes)
+
+    # open input stream
+    needs_closing = False
+    if region is not None:
+        cmd = ['tabix', path, region]
+        buffer = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout
+    elif path.endswith('.gz') or path.endswith('.bgz'):
+        buffer = gzip.open(path, mode='rb')
+        needs_closing = True
+    else:
+        buffer = open(path, mode='rb')
+        needs_closing = True
+    debug(buffer)
+
+    try:
+        for line in buffer:
+            if line[0] == b'>':
+                # assume begin embedded FASTA
+                raise StopIteration
+            if line[0] == b'#':
+                # skip comment lines
+                continue
+            vals = line.split(b'\t')
+            if len(vals) == 9:
+                # unpack for processing
+                fseqid, fsource, ftype, fstart, fend, fscore, fstrand, \
+                    fphase, fattrs = vals
+                # convert numerics
+                fstart = int(fstart)
+                fend = int(fend)
+                if fscore == b'.':
+                    fscore = score_fill
+                else:
+                    fscore = float(fscore)
+                if fphase == b'.':
+                    fphase = phase_fill
+                else:
+                    fphase = int(fphase)
+                rec = (fseqid, fsource, ftype, fstart, fend, fscore,
+                       fstrand, fphase)
+                if attributes is not None:
+                    dattrs = gff3_parse_attributes(fattrs)
+                    vattrs = tuple(
+                        dattrs.get(k, f)
+                        for k, f in zip(attributes, attributes_fill)
+                    )
+                    rec += vattrs
+                yield rec
+
+    finally:
+        if needs_closing:
+            buffer.close()

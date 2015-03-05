@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function, division
 
 import os
 import operator
+import itertools
 from allel.compat import range
 
 
@@ -22,10 +23,10 @@ import bcolz
 
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
     SortedIndex, SortedMultiIndex, subset, VariantTable, \
-    sample_to_haplotype_selection
+    sample_to_haplotype_selection, FeatureTable
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim
-from allel.io import write_vcf_header, write_vcf_data
+from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
@@ -1358,16 +1359,21 @@ class VariantCTable(object):
             ctbl = data
         object.__setattr__(self, 'ctbl', ctbl)
         # initialise index
-        if index is not None:
-            if isinstance(index, str):
-                index = SortedIndex(ctbl[index][:], copy=False)
-            elif isinstance(index, (tuple, list)) and len(index) == 2:
-                index = SortedMultiIndex(ctbl[index[0]][:], ctbl[index[1]][:],
-                                         copy=False)
-            else:
-                raise ValueError('invalid index argument, expected string or '
-                                 'pair of strings, found %s' % repr(index))
-            object.__setattr__(self, 'index', index)
+        self.set_index(index)
+
+    def set_index(self, index):
+        if index is None:
+            pass
+        elif isinstance(index, str):
+            index = SortedIndex(self.ctbl[index][:], copy=False)
+        elif isinstance(index, (tuple, list)) and len(index) == 2:
+            index = SortedMultiIndex(self.ctbl[index[0]][:],
+                                     self.ctbl[index[1]][:],
+                                     copy=False)
+        else:
+            raise ValueError('invalid index argument, expected string or '
+                             'pair of strings, found %s' % repr(index))
+        object.__setattr__(self, 'index', index)
 
     def __array__(self):
         return self.ctbl[:]
@@ -1463,3 +1469,148 @@ class VariantCTable(object):
             for i in range(0, self.ctbl.shape[0], blen):
                 block = self.ctbl[i:i+blen]
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
+
+
+class FeatureCTable(object):
+    """TODO doc
+
+    """  # noqa
+
+    def __init__(self, data=None, copy=True, index=None, **kwargs):
+        if copy or not isinstance(data, bcolz.ctable):
+            ctbl = bcolz.ctable(data, **kwargs)
+        else:
+            ctbl = data
+        object.__setattr__(self, 'ctbl', ctbl)
+        # TODO initialise index
+        # self.set_index(index)
+
+    def __array__(self):
+        return self.ctbl[:]
+
+    def __getitem__(self, item):
+        res = self.ctbl[item]
+        if isinstance(res, np.ndarray) and res.dtype.names:
+            return FeatureTable(res, copy=False)
+        if isinstance(res, bcolz.ctable):
+            return FeatureCTable(res, copy=False)
+        return res
+
+    def __getattr__(self, item):
+        if hasattr(self.ctbl, item):
+            return getattr(self.ctbl, item)
+        elif item in self.names:
+            return self.ctbl[item]
+        else:
+            raise AttributeError(item)
+
+    def __repr__(self):
+        s = repr(self.ctbl)
+        s = type(self).__name__ + s[6:]
+        return s
+
+    def __len__(self):
+        return len(self.ctbl)
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
+
+    @staticmethod
+    def open(rootdir, mode='r'):
+        cobj = bcolz.open(rootdir, mode=mode)
+        if isinstance(cobj, bcolz.ctable):
+            return FeatureCTable(cobj, copy=False)
+        else:
+            raise ValueError('rootdir does not contain a ctable')
+
+    def addcol(self, newcol, name, **kwargs):
+        # bcolz.ctable.addcol is broken for persistent ctables
+        self.ctbl.addcol_persistent(newcol, **kwargs)
+
+    def display(self, n):
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
+
+    @property
+    def n_features(self):
+        return len(self.ctbl)
+
+    @property
+    def names(self):
+        return tuple(self.ctbl.names)
+
+    def compress(self, condition, **kwargs):
+        ctbl = ctable_block_compress(self.ctbl, condition, **kwargs)
+        return FeatureCTable(ctbl, copy=False)
+
+    def take(self, indices, **kwargs):
+        ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
+        return FeatureCTable(ctbl, copy=False)
+
+    def eval(self, expression, vm='numexpr', **kwargs):
+        return self.ctbl.eval(expression, vm=vm, **kwargs)
+
+    def query(self, expression, vm='numexpr'):
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    def to_mask(self, size, start_name='start', stop_name='end'):
+        """TODO doc
+
+        """
+        m = np.zeros(size, dtype=bool)
+        for start, stop in self.ctbl[[start_name, stop_name]]:
+            m[start-1:stop] = True
+        return m
+
+    @staticmethod
+    def from_gff3(path, attributes=None, region=None,
+                  score_fill=-1, phase_fill=-1, attributes_fill=b'.',
+                  dtype=None, **kwargs):
+        """TODO doc
+
+        """
+
+        # setup iterator
+        recs = iter_gff3(path, attributes=attributes, region=region,
+                         score_fill=score_fill, phase_fill=phase_fill,
+                         attributes_fill=attributes_fill)
+
+        # determine dtype from sample of initial records
+        if dtype is None:
+            names = 'seqid', 'source', 'type', 'start', 'end', 'score', \
+                    'strand', 'phase'
+            if attributes is not None:
+                names += tuple(attributes)
+            recs_sample = list(itertools.islice(recs, 1000))
+            a = np.rec.array(recs_sample, names=names)
+            dtype = a.dtype
+            recs = itertools.chain(recs_sample, recs)
+
+        # set ctable defaults
+        kwargs.setdefault('expectedlen', 200000)
+
+        # initialise ctable
+        ctbl = bcolz.ctable(np.array([], dtype=dtype), **kwargs)
+
+        # determine block size to read
+        blen = min(ctbl[col].chunklen for col in ctbl.cols)
+
+        # read block-wise
+        block = list(itertools.islice(recs, 0, blen))
+        while block:
+            a = np.array(block, dtype=dtype)
+            ctbl.append(a)
+            block = list(itertools.islice(recs, 0, blen))
+
+        ft = FeatureCTable(ctbl, copy=False)
+        return ft
