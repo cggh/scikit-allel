@@ -437,7 +437,7 @@ def carray_to_hdf5(carr, parent, name, **kwargs):
     name : string
         Name or path of dataset to write data into.
     kwargs : keyword arguments
-        Passed through to h5py create_dataset() function.
+        Passed through to h5py require_dataset() function.
 
     Returns
     -------
@@ -459,7 +459,7 @@ def carray_to_hdf5(carr, parent, name, **kwargs):
         kwargs.setdefault('chunks', True)  # auto-chunking
         kwargs.setdefault('dtype', carr.dtype)
         kwargs.setdefault('compression', 'gzip')
-        h5d = parent.create_dataset(name, shape=carr.shape, **kwargs)
+        h5d = parent.require_dataset(name, shape=carr.shape, **kwargs)
 
         blen = carr.chunklen
         for i in range(0, carr.shape[0], blen):
@@ -581,7 +581,7 @@ def ctable_to_hdf5_group(ctbl, parent, name, **kwargs):
     name : string
         Name or path of group to write data into.
     kwargs : keyword arguments
-        Passed through to h5py create_dataset() function.
+        Passed through to h5py require_dataset() function.
 
     Returns
     -------
@@ -705,7 +705,7 @@ class _CArrayWrapper(object):
         name : string
             Name or path of dataset to write data into.
         kwargs : keyword arguments
-            Passed through to h5py create_dataset() function.
+            Passed through to h5py require_dataset() function.
 
         Returns
         -------
@@ -1531,7 +1531,7 @@ class _CTableWrapper(object):
         name : string
             Name or path of group to write data into.
         kwargs : keyword arguments
-            Passed through to h5py create_dataset() function.
+            Passed through to h5py require_dataset() function.
 
         Returns
         -------
