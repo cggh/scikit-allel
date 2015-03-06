@@ -1092,7 +1092,7 @@ class GenotypeCArray(_CArrayWrapper):
             else:
                 acs_ctbl.append(cols)
 
-        return AlleleCountsCTable(acs_ctbl)
+        return AlleleCountsCTable(acs_ctbl, copy=False)
 
     def to_gt(self, phased=False, max_allele=None, **kwargs):
         if max_allele is None:
@@ -1278,7 +1278,7 @@ class HaplotypeCArray(_CArrayWrapper):
                 acs_ctbl.append(cols)
 
         # wrap for convenience
-        return AlleleCountsCTable(acs_ctbl)
+        return AlleleCountsCTable(acs_ctbl, copy=False)
 
 
 class AlleleCountsCArray(_CArrayWrapper):
@@ -1784,8 +1784,12 @@ class FeatureCTable(_CTableWrapper):
 
 class AlleleCountsCTable(_CTableWrapper):
 
-    def __init__(self, ctbl):
-        self.ctbl = ctbl
+    def __init__(self, data=None, copy=True, index=None, **kwargs):
+        if copy or not isinstance(data, bcolz.ctable):
+            ctbl = bcolz.ctable(data, **kwargs)
+        else:
+            ctbl = data
+        object.__setattr__(self, 'ctbl', ctbl)
 
     def __getitem__(self, item):
         o = super(AlleleCountsCTable, self).__getitem__(item)
