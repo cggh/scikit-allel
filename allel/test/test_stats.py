@@ -390,7 +390,8 @@ class TestDistance(unittest.TestCase):
                             [-1, -1, -1, -1]])
         import scipy.spatial
         d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
-        d2 = allel.stats.pdist(h, 'hamming')
+        import allel.stats.distance
+        d2 = allel.stats.distance.pdist(h, 'hamming')
         aeq(d1, d2)
 
     def test_pairwise_distance_multidim(self):
