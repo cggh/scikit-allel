@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 """
 This sub-package provides statistical functions for use with variant call data.
 
