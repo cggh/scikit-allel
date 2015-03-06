@@ -342,6 +342,15 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
 
 
 def carray_from_hdf5(*args, **kwargs):
+    """Load a bcolz carray from an HDF5 dataset.
+
+    Either provide an h5py dataset as a single positional argument,
+    or provide two positional arguments giving the HDF5 file path and the
+    dataset node path within the file.
+
+    All keyword arguments are passed through to the bcolz.carray constructor.
+
+    """
 
     import h5py
 
@@ -414,7 +423,66 @@ def carray_from_hdf5(*args, **kwargs):
             h5f.close()
 
 
+def carray_to_hdf5(carr, parent, name, **kwargs):
+    """Write a bcolz carray to an HDF5 dataset.
+
+    Parameters
+    ----------
+
+    carr : bcolz.carray
+        Data to write.
+    parent : string or h5py group
+        Parent HDF5 file or group. If a string, will be treated as HDF5 file
+        name.
+    name : string
+        Name or path of dataset to write data into.
+    kwargs : keyword arguments
+        Passed through to h5py create_dataset() function.
+
+    Returns
+    -------
+
+    h5d : h5py dataset
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if isinstance(parent, str):
+        h5f = h5py.File(parent, mode='a')
+        parent = h5f
+
+    try:
+
+        kwargs.setdefault('chunks', True)  # auto-chunking
+        kwargs.setdefault('dtype', carr.dtype)
+        kwargs.setdefault('compression', 'gzip')
+        h5d = parent.create_dataset(name, shape=carr.shape, **kwargs)
+
+        blen = carr.chunklen
+        for i in range(0, carr.shape[0], blen):
+            h5d[i:i+blen] = carr[i:i+blen]
+
+        return h5d
+
+    finally:
+        if h5f is not None:
+            h5f.close()
+
+
 def ctable_from_hdf5_group(*args, **kwargs):
+    """Load a bcolz ctable from columns stored as separate datasets with an
+    HDF5 group.
+
+    Either provide an h5py group as a single positional argument,
+    or provide two positional arguments giving the HDF5 file path and the
+    group node path within the file.
+
+    All keyword arguments are passed through to the bcolz.ctable constructor.
+
+    """
 
     import h5py
 
@@ -501,6 +569,48 @@ def ctable_from_hdf5_group(*args, **kwargs):
             h5f.close()
 
 
+def ctable_to_hdf5_group(ctbl, parent, name, **kwargs):
+    """Write each column in a bcolz ctable to a dataset in an HDF5 group.
+
+    Parameters
+    ----------
+
+    parent : string or h5py group
+        Parent HDF5 file or group. If a string, will be treated as HDF5 file
+        name.
+    name : string
+        Name or path of group to write data into.
+    kwargs : keyword arguments
+        Passed through to h5py create_dataset() function.
+
+    Returns
+    -------
+
+    h5g : h5py group
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if isinstance(parent, str):
+        h5f = h5py.File(parent, mode='a')
+        parent = h5f
+
+    try:
+
+        h5g = parent.require_group(name)
+        for col in ctbl.cols:
+            carray_to_hdf5(ctbl[col], h5g, col, **kwargs)
+
+        return h5g
+
+    finally:
+        if h5f is not None:
+            h5f.close()
+
+
 class _CArrayWrapper(object):
 
     def __setitem__(self, key, value):
@@ -568,12 +678,42 @@ class _CArrayWrapper(object):
 
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
-        """TODO doc me
+        """Load a bcolz carray from an HDF5 dataset.
+
+        Either provide an h5py dataset as a single positional argument,
+        or provide two positional arguments giving the HDF5 file path and the
+        dataset node path within the file.
+
+        All keyword arguments are passed through to the bcolz.carray
+        constructor.
 
         """
+        carr = carray_from_hdf5(*args, **kwargs)
+        return cls(carr, copy=False)
 
-        data = carray_from_hdf5(*args, **kwargs)
-        return cls(data, copy=False)
+    def to_hdf5(self, parent, name, **kwargs):
+        """Write a bcolz carray to an HDF5 dataset.
+
+        Parameters
+        ----------
+
+        carr : bcolz.carray
+            Data to write.
+        parent : string or h5py group
+            Parent HDF5 file or group. If a string, will be treated as HDF5
+            file name.
+        name : string
+            Name or path of dataset to write data into.
+        kwargs : keyword arguments
+            Passed through to h5py create_dataset() function.
+
+        Returns
+        -------
+
+        h5d : h5py dataset
+
+        """
+        return carray_to_hdf5(self.carr, parent, name, **kwargs)
 
 
 class GenotypeCArray(_CArrayWrapper):
@@ -1141,29 +1281,6 @@ class HaplotypeCArray(_CArrayWrapper):
         return AlleleCountsCTable(acs_ctbl)
 
 
-class AlleleCountsCTable(object):
-
-    def __init__(self, ctbl):
-        self.ctbl = ctbl
-
-    def __getattr__(self, item):
-        return getattr(self.ctbl, item)
-
-    def __getitem__(self, item):
-        o = self.ctbl[item]
-        if isinstance(o, bcolz.carray):
-            return AlleleCountsCArray(o, copy=False)
-
-    def __repr__(self):
-        return repr(self.ctbl)
-
-    def __str__(self):
-        return str(self.ctbl)
-
-    def __len__(self):
-        return len(self.ctbl)
-
-
 class AlleleCountsCArray(_CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.AlleleCountsArray`
     interface, using a :class:`bcolz.carray` as the backing store.
@@ -1306,7 +1423,126 @@ class AlleleCountsCArray(_CArrayWrapper):
         return carray_block_sum(self.is_doubleton(allele=allele))
 
 
-class VariantCTable(object):
+class _CTableWrapper(object):
+
+    ndarray_cls = None
+
+    def __array__(self):
+        return self.ctbl[:]
+
+    def __getitem__(self, item):
+        res = self.ctbl[item]
+        if isinstance(res, np.ndarray) \
+                and res.dtype.names \
+                and self.ndarray_cls is not None:
+            return self.ndarray_cls(res, copy=False)
+        if isinstance(res, bcolz.ctable):
+            return type(self)(res, copy=False)
+        return res
+
+    def __getattr__(self, item):
+        if hasattr(self.ctbl, item):
+            return getattr(self.ctbl, item)
+        elif item in self.names:
+            return self.ctbl[item]
+        else:
+            raise AttributeError(item)
+
+    def __repr__(self):
+        s = repr(self.ctbl)
+        s = type(self).__name__ + s[6:]
+        return s
+
+    def __len__(self):
+        return len(self.ctbl)
+
+    def _repr_html_(self):
+        # use implementation from pandas
+        import pandas
+        df = pandas.DataFrame(self[:5])
+        # noinspection PyProtectedMember
+        return df._repr_html_()
+
+    @classmethod
+    def open(cls, rootdir, mode='r'):
+        cobj = bcolz.open(rootdir, mode=mode)
+        if isinstance(cobj, bcolz.ctable):
+            return cls(cobj, copy=False)
+        else:
+            raise ValueError('rootdir does not contain a ctable')
+
+    def addcol(self, newcol, name, **kwargs):
+        # bcolz.ctable.addcol is broken for persistent ctables
+        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
+
+    def display(self, n=5):
+        # use implementation from pandas
+        import pandas
+        import IPython.display
+        df = pandas.DataFrame(self[:n])
+        # noinspection PyProtectedMember
+        html = df._repr_html_()
+        IPython.display.display_html(html, raw=True)
+
+    @property
+    def names(self):
+        return tuple(self.ctbl.names)
+
+    def compress(self, condition, **kwargs):
+        ctbl = ctable_block_compress(self.ctbl, condition, **kwargs)
+        return type(self)(ctbl, copy=False)
+
+    def take(self, indices, **kwargs):
+        ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
+        return type(self)(ctbl, copy=False)
+
+    def eval(self, expression, vm='numexpr', **kwargs):
+        return self.ctbl.eval(expression, vm=vm, **kwargs)
+
+    def query(self, expression, vm='numexpr'):
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    @classmethod
+    def from_hdf5_group(cls, *args, **kwargs):
+        """Load a bcolz ctable from columns stored as separate datasets with an
+        HDF5 group.
+
+        Either provide an h5py group as a single positional argument,
+        or provide two positional arguments giving the HDF5 file path and the
+        group node path within the file.
+
+        All keyword arguments are passed through to the bcolz.ctable
+        constructor.
+
+        """
+        ctbl = ctable_from_hdf5_group(*args, **kwargs)
+        return cls(ctbl, copy=False)
+
+    def to_hdf5_group(self, parent, name, **kwargs):
+        """Write each column in a bcolz ctable to a dataset in an HDF5 group.
+
+        Parameters
+        ----------
+
+        parent : string or h5py group
+            Parent HDF5 file or group. If a string, will be treated as HDF5
+            file name.
+        name : string
+            Name or path of group to write data into.
+        kwargs : keyword arguments
+            Passed through to h5py create_dataset() function.
+
+        Returns
+        -------
+
+        h5g : h5py group
+
+        """
+        return ctable_to_hdf5_group(self.ctbl, parent, name, **kwargs)
+
+
+class VariantCTable(_CTableWrapper):
     """Alternative implementation of the :class:`allel.model.VariantTable`
     interface, using a :class:`bcolz.ctable` as the backing store.
 
@@ -1371,6 +1607,8 @@ class VariantCTable(object):
 
     """  # noqa
 
+    ndarray_cls = VariantTable
+
     def __init__(self, data=None, copy=True, index=None, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
@@ -1394,88 +1632,9 @@ class VariantCTable(object):
                              'pair of strings, found %s' % repr(index))
         object.__setattr__(self, 'index', index)
 
-    def __array__(self):
-        return self.ctbl[:]
-
-    def __getitem__(self, item):
-        res = self.ctbl[item]
-        if isinstance(res, np.ndarray) and res.dtype.names:
-            return VariantTable(res, copy=False)
-        if isinstance(res, bcolz.ctable):
-            return VariantCTable(res, copy=False)
-        return res
-
-    def __getattr__(self, item):
-        if hasattr(self.ctbl, item):
-            return getattr(self.ctbl, item)
-        elif item in self.names:
-            return self.ctbl[item]
-        else:
-            raise AttributeError(item)
-
-    def __repr__(self):
-        s = repr(self.ctbl)
-        s = type(self).__name__ + s[6:]
-        return s
-
-    def __len__(self):
-        return len(self.ctbl)
-
-    def _repr_html_(self):
-        # use implementation from pandas
-        import pandas
-        df = pandas.DataFrame(self[:5])
-        # noinspection PyProtectedMember
-        return df._repr_html_()
-
-    @staticmethod
-    def open(rootdir, mode='r'):
-        cobj = bcolz.open(rootdir, mode=mode)
-        if isinstance(cobj, bcolz.ctable):
-            return VariantCTable(cobj, copy=False)
-        else:
-            raise ValueError('rootdir does not contain a ctable')
-
-    def addcol(self, newcol, name, **kwargs):
-        # bcolz.ctable.addcol is broken for persistent ctables
-        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
-
-    def display(self, n=5):
-        # use implementation from pandas
-        import pandas
-        import IPython.display
-        df = pandas.DataFrame(self[:n])
-        # noinspection PyProtectedMember
-        html = df._repr_html_()
-        IPython.display.display_html(html, raw=True)
-
     @property
     def n_variants(self):
         return len(self.ctbl)
-
-    @property
-    def names(self):
-        return tuple(self.ctbl.names)
-
-    def compress(self, condition, **kwargs):
-        ctbl = ctable_block_compress(self.ctbl, condition, **kwargs)
-        return VariantCTable(ctbl, copy=False)
-
-    def take(self, indices, **kwargs):
-        ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
-        return VariantCTable(ctbl, copy=False)
-
-    def eval(self, expression, vm='numexpr', **kwargs):
-        return self.ctbl.eval(expression, vm=vm, **kwargs)
-
-    def query(self, expression, vm='numexpr'):
-        condition = self.eval(expression, vm=vm)
-        return self.compress(condition)
-
-    @staticmethod
-    def from_hdf5_group(*args, **kwargs):
-        ctbl = ctable_from_hdf5_group(*args, **kwargs)
-        return VariantCTable(ctbl, copy=False)
 
     def to_vcf(self, path, rename=None, number=None, description=None,
                fill=None, blen=None, write_header=True):
@@ -1490,10 +1649,7 @@ class VariantCTable(object):
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
 
 
-# TODO factor out common table code
-
-
-class FeatureCTable(object):
+class FeatureCTable(_CTableWrapper):
     """Alternative implementation of the :class:`allel.model.FeatureTable`
     interface, using a :class:`bcolz.ctable` as the backing store.
 
@@ -1517,6 +1673,8 @@ class FeatureCTable(object):
 
     """
 
+    ndarray_cls = FeatureTable
+
     def __init__(self, data=None, copy=True, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
@@ -1526,83 +1684,9 @@ class FeatureCTable(object):
         # TODO initialise interval index
         # self.set_index(index)
 
-    def __array__(self):
-        return self.ctbl[:]
-
-    def __getitem__(self, item):
-        res = self.ctbl[item]
-        if isinstance(res, np.ndarray) and res.dtype.names:
-            return FeatureTable(res, copy=False)
-        if isinstance(res, bcolz.ctable):
-            return FeatureCTable(res, copy=False)
-        return res
-
-    def __getattr__(self, item):
-        if hasattr(self.ctbl, item):
-            return getattr(self.ctbl, item)
-        elif item in self.names:
-            return self.ctbl[item]
-        else:
-            raise AttributeError(item)
-
-    def __repr__(self):
-        s = repr(self.ctbl)
-        s = type(self).__name__ + s[6:]
-        return s
-
-    def __len__(self):
-        return len(self.ctbl)
-
-    def _repr_html_(self):
-        # use implementation from pandas
-        import pandas
-        df = pandas.DataFrame(self[:5])
-        # noinspection PyProtectedMember
-        return df._repr_html_()
-
-    @staticmethod
-    def open(rootdir, mode='r'):
-        cobj = bcolz.open(rootdir, mode=mode)
-        if isinstance(cobj, bcolz.ctable):
-            return FeatureCTable(cobj, copy=False)
-        else:
-            raise ValueError('rootdir does not contain a ctable')
-
-    def addcol(self, newcol, name, **kwargs):
-        # bcolz.ctable.addcol is broken for persistent ctables
-        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
-
-    def display(self, n=5):
-        # use implementation from pandas
-        import pandas
-        import IPython.display
-        df = pandas.DataFrame(self[:n])
-        # noinspection PyProtectedMember
-        html = df._repr_html_()
-        IPython.display.display_html(html, raw=True)
-
     @property
     def n_features(self):
         return len(self.ctbl)
-
-    @property
-    def names(self):
-        return tuple(self.ctbl.names)
-
-    def compress(self, condition, **kwargs):
-        ctbl = ctable_block_compress(self.ctbl, condition, **kwargs)
-        return FeatureCTable(ctbl, copy=False)
-
-    def take(self, indices, **kwargs):
-        ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
-        return FeatureCTable(ctbl, copy=False)
-
-    def eval(self, expression, vm='numexpr', **kwargs):
-        return self.ctbl.eval(expression, vm=vm, **kwargs)
-
-    def query(self, expression, vm='numexpr'):
-        condition = self.eval(expression, vm=vm)
-        return self.compress(condition)
 
     def to_mask(self, size, start_name='start', stop_name='end'):
         """Construct a mask array where elements are True if the fall within
@@ -1696,3 +1780,15 @@ class FeatureCTable(object):
 
         ft = FeatureCTable(ctbl, copy=False)
         return ft
+
+
+class AlleleCountsCTable(_CTableWrapper):
+
+    def __init__(self, ctbl):
+        self.ctbl = ctbl
+
+    def __getitem__(self, item):
+        o = super(AlleleCountsCTable, self).__getitem__(item)
+        if isinstance(o, bcolz.carray):
+            return AlleleCountsCArray(o, copy=False)
+        return o
