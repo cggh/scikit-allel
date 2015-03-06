@@ -3,7 +3,6 @@
 This sub-package provides statistical functions for use with variant call data.
 
 """
-from __future__ import absolute_import, print_function, division
 
 
 from allel.stats.window import moving_statistic, windowed_count, \

@@ -141,8 +141,8 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     ...                                 [0, 0, 1, 2],
     ...                                 [0, 1, 1, 2],
     ...                                 [0, 1, -1, -1]])
-    >>> ac1 = h.take([0, 1], axis=1).count_alleles()
-    >>> ac2 = h.take([2, 3], axis=1).count_alleles()
+    >>> ac1 = h.count_alleles(subpop=[0, 1])
+    >>> ac2 = h.count_alleles(subpop=[2, 3])
     >>> allel.stats.mean_pairwise_divergence(ac1, ac2)
     array([ 0.  ,  0.5 ,  1.  ,  0.5 ,  0.  ,  1.  ,  0.75,   nan])
 
@@ -311,10 +311,8 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
         ...                                 [0, 1, 1, 2],
         ...                                 [0, 1, -1, -1],
         ...                                 [-1, -1, -1, -1]])
-        >>> h1 = h.subset(haplotypes=[0, 1])
-        >>> h2 = h.subset(haplotypes=[2, 3])
-        >>> ac1 = h1.count_alleles()
-        >>> ac2 = h2.count_alleles()
+        >>> ac1 = h.count_alleles(subpop=[0, 1])
+        >>> ac2 = h.count_alleles(subpop=[2, 3])
         >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
         >>> dxy = sequence_divergence(pos, ac1, ac2, start=1, stop=31)
         >>> dxy
@@ -510,10 +508,8 @@ def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
         ...                                 [0, 1, 1, 2],
         ...                                 [0, 1, -1, -1],
         ...                                 [-1, -1, -1, -1]])
-        >>> h1 = h.subset(haplotypes=[0, 1])
-        >>> h2 = h.subset(haplotypes=[2, 3])
-        >>> ac1 = h1.count_alleles()
-        >>> ac2 = h2.count_alleles()
+        >>> ac1 = h.count_alleles(subpop=[0, 1])
+        >>> ac2 = h.count_alleles(subpop=[2, 3])
         >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
         >>> dxy, windows, n_bases, counts = windowed_divergence(
         ...     pos, ac1, ac2, size=10, start=1, stop=31
