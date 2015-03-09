@@ -93,17 +93,6 @@ class GenotypeArray(np.ndarray):
     within the genome of an organism are stored in separate arrays,
     discussed elsewhere.
 
-    In many cases the number of distinct alleles for each variant is
-    small, e.g., less than 10, or even 2 (all variants are
-    biallelic). In these cases a genotype array is not the most
-    compact way of storing genotype data in memory. This class defines
-    functions for bit-packing diploid genotype calls into single
-    bytes, and for transforming genotype arrays into sparse matrices,
-    which can assist in cases where memory usage needs to be
-    minimised. Note however that these more compact representations do
-    not allow the same flexibility in terms of using numpy universal
-    functions to access and manipulate data.
-
     Arrays of this class can store either **phased or unphased**
     genotype calls. If the genotypes are phased (i.e., haplotypes have
     been resolved) then individual haplotypes can be extracted by
@@ -117,6 +106,14 @@ class GenotypeArray(np.ndarray):
     haploid calls, use a :class:`HaplotypeArray`. Note that genotype
     arrays are not capable of storing calls for samples with differing
     or variable ploidy.
+
+    With genotype data on large numbers of variants and/or samples,
+    storing the genotype calls in memory as an uncompressed numpy
+    array if integers may be impractical. For working with large
+    arrays of genotype data, see the
+    :class:`allel.bcolz.GenotypeCArray` class, which provides an
+    alternative implementation of this interface using compressed
+    arrays.
 
     Examples
     --------
