@@ -27,7 +27,7 @@ def asarray_ndim(a, *ndims, **kwargs):
     return a
 
 
-def check_arrays_aligned(a, b):
+def check_dim0_aligned(a, b):
     if a.shape[0] != b.shape[0]:
         raise ValueError(
             'arrays do not have matching length for first dimension: %s, %s'

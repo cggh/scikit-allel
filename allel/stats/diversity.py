@@ -6,7 +6,7 @@ import numpy as np
 
 
 from allel.model import SortedIndex
-from allel.util import asarray_ndim, ignore_invalid, check_arrays_aligned
+from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned
 from allel.stats.window import windowed_statistic, per_base
 
 
@@ -161,7 +161,7 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     ac1 = asarray_ndim(ac1, 2)
     ac2 = asarray_ndim(ac2, 2)
     # check lengths match
-    check_arrays_aligned(ac1, ac2)
+    check_dim0_aligned(ac1, ac2)
     # ensure same number of alleles in both pops
     if ac1.shape[1] < ac2.shape[1]:
         ac1 = _resize_dim2(ac1, ac2.shape[1])

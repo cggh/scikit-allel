@@ -25,7 +25,7 @@ from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
     SortedIndex, SortedMultiIndex, subset, VariantTable, \
     sample_to_haplotype_selection, FeatureTable
 from allel.constants import DIM_PLOIDY
-from allel.util import asarray_ndim
+from allel.util import asarray_ndim, check_dim0_aligned
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
@@ -1103,6 +1103,34 @@ class GenotypeCArray(_CArrayWrapper):
             return g.to_gt(phased=phased, max_allele=max_allele)
         return carray_block_map(self.carr, f, **kwargs)
 
+    def map_alleles(self, mapping, **kwargs):
+
+        # check inputs
+        if self.dtype.type != np.int8:
+            raise NotImplementedError('only implemented for dtype int8')
+        mapping = asarray_ndim(mapping, 2)
+        mapping = mapping.astype('i1', casting='safe', copy=False)
+        check_dim0_aligned(self, mapping)
+
+        # setup output
+        out = None
+        blen = kwargs.pop('blen', self.carr.chunklen)
+        kwargs.setdefault('expectedlen', self.carr.shape[0])
+        kwargs.setdefault('dtype', self.carr.dtype)
+
+        # block-wise iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            bmapping = mapping[i:i+blen]
+            g = GenotypeArray(block, copy=False)
+            gm = g.map_alleles(bmapping, copy=False)
+            if out is None:
+                out = bcolz.carray(gm, **kwargs)
+            else:
+                out.append(gm)
+
+        return GenotypeCArray(out, copy=False)
+
 
 class HaplotypeCArray(_CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.HaplotypeArray`
@@ -1279,6 +1307,34 @@ class HaplotypeCArray(_CArrayWrapper):
 
         # wrap for convenience
         return AlleleCountsCTable(acs_ctbl, copy=False)
+
+    def map_alleles(self, mapping, **kwargs):
+
+        # check inputs
+        if self.dtype.type != np.int8:
+            raise NotImplementedError('only implemented for dtype int8')
+        mapping = asarray_ndim(mapping, 2)
+        mapping = mapping.astype('i1', casting='safe', copy=False)
+        check_dim0_aligned(self, mapping)
+
+        # setup output
+        out = None
+        blen = kwargs.pop('blen', self.carr.chunklen)
+        kwargs.setdefault('expectedlen', self.carr.shape[0])
+        kwargs.setdefault('dtype', self.carr.dtype)
+
+        # block-wise iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            bmapping = mapping[i:i+blen]
+            h = HaplotypeArray(block, copy=False)
+            hm = h.map_alleles(bmapping, copy=False)
+            if out is None:
+                out = bcolz.carray(hm, **kwargs)
+            else:
+                out.append(hm)
+
+        return HaplotypeCArray(out, copy=False)
 
 
 class AlleleCountsCArray(_CArrayWrapper):

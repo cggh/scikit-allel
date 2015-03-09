@@ -137,3 +137,26 @@ def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
                 ac[i, allele] += 1
 
     return np.asarray(ac)
+
+
+def haplotype_int8_map_alleles(cnp.int8_t[:, :] h,
+                               cnp.int8_t[:, :] mapping,
+                               copy=True):
+    cdef Py_ssize_t i, j, m
+    cdef cnp.int8_t allele
+    cdef cnp.int8_t[:, :] ho
+    if copy:
+        ho = h.copy()
+    else:
+        ho = h
+    m = mapping.shape[1]
+
+    for i in range(h.shape[0]):
+        for j in range(h.shape[1]):
+            allele = h[i, j]
+            if 0 <= allele < m:
+                ho[i, j] = mapping[i, allele]
+            else:
+                ho[i, j] = -1
+
+    return ho

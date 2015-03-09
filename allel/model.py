@@ -16,7 +16,7 @@ import numexpr as ne
 
 
 from allel.constants import DIM_PLOIDY, DIPLOID
-from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
+from allel.util import ignore_invalid, asarray_ndim, check_dim0_aligned
 from allel.io import write_vcf, iter_gff3
 
 
@@ -871,7 +871,7 @@ class GenotypeArray(np.ndarray):
         from allel.opt.model import genotype_pack_diploid
 
         # ensure int8 dtype
-        if self.dtype == np.int8:
+        if self.dtype.type == np.int8:
             data = self
         else:
             data = self.astype(dtype=np.int8)
@@ -1147,6 +1147,58 @@ class GenotypeArray(np.ndarray):
         gt = eval(expr)
 
         return gt
+
+    def map_alleles(self, mapping, copy=True):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+        copy : bool, optional
+            If True, return a new array; if False, apply mapping in place.
+
+        Returns
+        -------
+
+        gm : GenotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[1, 2], [2, 1]],
+        ...                                [[2, 2], [-1, -1]]], dtype='i1')
+        >>> mapping = np.array([[1, 2, 0],
+        ...                     [2, 0, 1],
+        ...                     [2, 1, 0],
+        ...                     [0, 2, 1]], dtype='i1')
+        >>> g.map_alleles(mapping)
+        GenotypeArray((4, 2, 2), dtype=int8)
+        [[[ 1  1]
+          [ 1  2]]
+         [[ 2  1]
+          [ 0  0]]
+         [[ 1  0]
+          [ 0  1]]
+         [[ 1  1]
+          [-1 -1]]]
+
+        Notes
+        -----
+
+        Currently only implemented for arrays with dtype int8.
+
+        """
+
+        h = self.to_haplotypes()
+        hm = h.map_alleles(mapping, copy=copy)
+        gm = hm.to_genotypes(ploidy=self.ploidy)
+        return gm
 
 
 class HaplotypeArray(np.ndarray):
@@ -1611,6 +1663,59 @@ class HaplotypeArray(np.ndarray):
                for name, subpop in subpops.items()}
 
         return out
+
+    def map_alleles(self, mapping, copy=True):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+        copy : bool, optional
+            If True, return a new array; if False, apply mapping in place.
+
+        Returns
+        -------
+
+        hm : HaplotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 1],
+        ...                                 [0, 1, 1, 1],
+        ...                                 [0, 2, -1, -1]], dtype='i1')
+        >>> mapping = np.array([[1, 2, 0],
+        ...                     [2, 0, 1],
+        ...                     [2, 1, 0]], dtype='i1')
+        >>> h.map_alleles(mapping)
+        HaplotypeArray((3, 4), dtype=int8)
+        [[ 1  1  1  2]
+         [ 2  0  0  0]
+         [ 2  0 -1 -1]]
+
+        Notes
+        -----
+
+        Currently only implemented for arrays with dtype int8.
+
+        """
+
+        # check inputs
+        if self.dtype.type != np.int8:
+            raise NotImplementedError('only implemented for dtype int8')
+        mapping = asarray_ndim(mapping, 2)
+        mapping = mapping.astype('i1', casting='safe', copy=False)
+        check_dim0_aligned(self, mapping)
+
+        # use optimisaton
+        from allel.opt.model import haplotype_int8_map_alleles
+        data = haplotype_int8_map_alleles(self, mapping, copy=copy)
+
+        return HaplotypeArray(data, copy=False)
 
 
 class AlleleCountsArray(np.ndarray):
@@ -2401,7 +2506,7 @@ class SortedIndex(np.ndarray):
         # check inputs
         starts = asarray_ndim(starts, 1)
         stops = asarray_ndim(stops, 1)
-        check_arrays_aligned(starts, stops)
+        check_dim0_aligned(starts, stops)
 
         # find indices of start and stop values in idx
         start_indices = np.searchsorted(self, starts)
@@ -2779,7 +2884,7 @@ class SortedMultiIndex(object):
         l1 = SortedIndex(l1, copy=copy)
         l2 = np.array(l2, copy=copy)
         l2 = asarray_ndim(l2, 1)
-        check_arrays_aligned(l1, l2)
+        check_dim0_aligned(l1, l2)
         self.l1 = l1
         self.l2 = l2
 

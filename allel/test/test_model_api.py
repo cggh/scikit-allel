@@ -748,6 +748,22 @@ class GenotypeArrayInterface(object):
         eq(5, actual['sub2'].n_variants)
         eq(3, actual['sub2'].n_alleles)
 
+    def test_map_alleles(self):
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g = self.setup_instance(a)
+        mapping = np.array([[0, 1, 2],
+                            [2, 0, 1],
+                            [1, 2, 0],
+                            [2, 1, 0],
+                            [2, 0, 1]], dtype=np.int8)
+        expect = [[[0, 0], [0, 1], [-1, -1]],
+                  [[2, 1], [0, 0], [-1, -1]],
+                  [[2, 1], [0, 2], [-1, -1]],
+                  [[0, 0], [-1, -1], [-1, -1]],
+                  [[-1, -1], [-1, -1], [-1, -1]]]
+        actual = g.map_alleles(mapping)
+        aeq(expect, actual)
+
 
 class HaplotypeArrayInterface(object):
 
@@ -1017,6 +1033,20 @@ class HaplotypeArrayInterface(object):
         eq(3, actual['sub1'].n_alleles)
         eq(4, actual['sub2'].n_variants)
         eq(3, actual['sub2'].n_alleles)
+
+    def test_map_alleles(self):
+        a = np.array(haplotype_data, dtype=np.int8)
+        h = self.setup_instance(a)
+        mapping = np.array([[0, 1, 2],
+                            [2, 0, 1],
+                            [1, 2, 0],
+                            [2, 1, 0]], dtype=np.int8)
+        expect = [[0, 1, -1],
+                  [0, 0, -1],
+                  [0, -1, -1],
+                  [-1, -1, -1]]
+        actual = h.map_alleles(mapping)
+        aeq(expect, actual)
 
 
 class AlleleCountsArrayInterface(object):
