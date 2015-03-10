@@ -638,6 +638,8 @@ class GenotypeArray(np.ndarray):
         """
 
         if subpop is not None:
+            if np.any(subpop >= self.shape[1]):
+                raise ValueError('index out of bounds')
             # convert to a haplotype selection
             subpop = sample_to_haplotype_selection(subpop, self.ploidy)
 
@@ -1603,6 +1605,9 @@ class HaplotypeArray(np.ndarray):
 
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
+            if np.any(subpop >= self.shape[1]):
+                raise ValueError('index out of bounds')
 
         # determine alleles to count
         if max_allele is None:
@@ -1707,8 +1712,7 @@ class HaplotypeArray(np.ndarray):
         # check inputs
         if self.dtype.type != np.int8:
             raise NotImplementedError('only implemented for dtype int8')
-        mapping = asarray_ndim(mapping, 2)
-        mapping = mapping.astype('i1', casting='safe', copy=False)
+        mapping = asarray_ndim(mapping, 2, dtype='i1')
         check_dim0_aligned(self, mapping)
 
         # use optimisaton

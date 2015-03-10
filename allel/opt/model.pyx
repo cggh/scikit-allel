@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-# cython: profile=True
-# cython: boundscheck=True
+# cython: profile=False
 from __future__ import absolute_import, print_function, division
 
 
 import numpy as np
 cimport numpy as cnp
+cimport cython
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def genotype_pack_diploid(cnp.int8_t[:, :, :] g):
 
     n_variants = g.shape[0]
@@ -55,6 +57,8 @@ def genotype_pack_diploid(cnp.int8_t[:, :, :] g):
     return np.asarray(packed)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def genotype_unpack_diploid(cnp.uint8_t[:, :] packed):
 
     n_variants = packed.shape[0]
@@ -97,6 +101,8 @@ def genotype_unpack_diploid(cnp.uint8_t[:, :] packed):
     return np.asarray(g)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
     cdef cnp.int32_t[:, :] ac
     cdef cnp.int8_t allele
@@ -116,6 +122,8 @@ def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
     return np.asarray(ac)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
                                         cnp.int8_t max_allele,
                                         cnp.int64_t[:] subpop):
@@ -139,6 +147,8 @@ def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
     return np.asarray(ac)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def haplotype_int8_map_alleles(cnp.int8_t[:, :] h,
                                cnp.int8_t[:, :] mapping,
                                copy=True):
@@ -159,4 +169,4 @@ def haplotype_int8_map_alleles(cnp.int8_t[:, :] h,
             else:
                 ho[i, j] = -1
 
-    return ho
+    return np.asarray(ho)

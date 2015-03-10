@@ -1108,8 +1108,7 @@ class GenotypeCArray(_CArrayWrapper):
         # check inputs
         if self.dtype.type != np.int8:
             raise NotImplementedError('only implemented for dtype int8')
-        mapping = asarray_ndim(mapping, 2)
-        mapping = mapping.astype('i1', casting='safe', copy=False)
+        mapping = asarray_ndim(mapping, 2, dtype='i1')
         check_dim0_aligned(self, mapping)
 
         # setup output
@@ -1313,8 +1312,7 @@ class HaplotypeCArray(_CArrayWrapper):
         # check inputs
         if self.dtype.type != np.int8:
             raise NotImplementedError('only implemented for dtype int8')
-        mapping = asarray_ndim(mapping, 2)
-        mapping = mapping.astype('i1', casting='safe', copy=False)
+        mapping = asarray_ndim(mapping, 2, dtype='i1')
         check_dim0_aligned(self, mapping)
 
         # setup output
