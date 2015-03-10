@@ -6,6 +6,7 @@ import unittest
 
 
 import numpy as np
+from nose.tools import assert_raises, eq_ as eq
 from allel.test.tools import assert_array_equal as aeq, assert_array_close
 
 
@@ -72,7 +73,7 @@ class TestWindowUtilities(unittest.TestCase):
 
         # boolean array, bad length
         b = [False, True, False]
-        with self.assertRaises(ValueError):
+        with assert_raises(ValueError):
             f(pos, b, np.count_nonzero, 10)
 
         # 2D, 4 variants, 2 samples
@@ -416,3 +417,44 @@ class TestDistance(unittest.TestCase):
                                                        fill=0).sum()]
         actual = allel.stats.pairwise_distance(gac, metric)
         aeq(expect, actual)
+
+
+class TestLinkageDisequilibrium(unittest.TestCase):
+    
+    def test_rogers_huff_r(self):
+
+        gn = [[0, 1, 2],
+              [0, 1, 2]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2],
+              [2, 1, 0]]
+        expect = -1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 0, 0],
+              [1, 1, 1]]
+        actual = allel.stats.rogers_huff_r(gn)
+        print(actual)
+        assert np.isnan(actual)
+
+        gn = [[0, 1, 0, 1],
+              [0, 1, 1, 0]]
+        expect = 0
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2, -1],
+              [0, 1, 2, 2]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2, 2],
+              [0, 1, 2, -1]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
