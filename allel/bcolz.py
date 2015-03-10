@@ -1106,9 +1106,7 @@ class GenotypeCArray(_CArrayWrapper):
     def map_alleles(self, mapping, **kwargs):
 
         # check inputs
-        if self.dtype.type != np.int8:
-            raise NotImplementedError('only implemented for dtype int8')
-        mapping = asarray_ndim(mapping, 2, dtype='i1')
+        mapping = asarray_ndim(mapping, 2)
         check_dim0_aligned(self, mapping)
 
         # setup output
@@ -1310,9 +1308,7 @@ class HaplotypeCArray(_CArrayWrapper):
     def map_alleles(self, mapping, **kwargs):
 
         # check inputs
-        if self.dtype.type != np.int8:
-            raise NotImplementedError('only implemented for dtype int8')
-        mapping = asarray_ndim(mapping, 2, dtype='i1')
+        mapping = asarray_ndim(mapping, 2)
         check_dim0_aligned(self, mapping)
 
         # setup output
@@ -1475,6 +1471,31 @@ class AlleleCountsCArray(_CArrayWrapper):
 
     def count_doubleton(self, allele=1):
         return carray_block_sum(self.is_doubleton(allele=allele))
+
+    def map_alleles(self, mapping, **kwargs):
+
+        # check inputs
+        mapping = asarray_ndim(mapping, 2)
+        check_dim0_aligned(self, mapping)
+
+        # setup output
+        out = None
+        blen = kwargs.pop('blen', self.carr.chunklen)
+        kwargs.setdefault('expectedlen', self.carr.shape[0])
+        kwargs.setdefault('dtype', self.carr.dtype)
+
+        # block-wise iteration
+        for i in range(0, self.carr.shape[0], blen):
+            block = self.carr[i:i+blen]
+            bmapping = mapping[i:i+blen]
+            ac = AlleleCountsArray(block, copy=False)
+            acm = ac.map_alleles(bmapping)
+            if out is None:
+                out = bcolz.carray(acm, **kwargs)
+            else:
+                out.append(acm)
+
+        return AlleleCountsCArray(out, copy=False)
 
 
 class _CTableWrapper(object):

@@ -86,6 +86,7 @@ AlleleCountsArray
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
     .. automethod:: to_frequencies
+    .. automethod:: map_alleles
 
 VariantTable
 ------------
@@ -146,3 +147,8 @@ SortedMultiIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_range
+
+Utility functions
+-----------------
+
+.. autofunction:: create_allele_mapping
