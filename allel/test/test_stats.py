@@ -420,7 +420,7 @@ class TestDistance(unittest.TestCase):
 
 
 class TestLinkageDisequilibrium(unittest.TestCase):
-    
+
     def test_rogers_huff_r(self):
 
         gn = [[0, 1, 2],
@@ -458,3 +458,24 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         expect = 1.
         actual = allel.stats.rogers_huff_r(gn)
         eq(expect, actual)
+
+        gn = [[0, 1, 2],
+              [0, 1, -1]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 2],
+              [2, 0],
+              [0, 1]]
+        expect = [-1, 1, -1]
+        actual = allel.stats.rogers_huff_r(gn)
+        assert_array_close(expect, actual)
+
+        gn = [[0, 2, 0],
+              [0, 2, 0],
+              [2, 0, 2],
+              [0, 2, -1]]
+        expect = [1, -1, 1, -1, 1, -1]
+        actual = allel.stats.rogers_huff_r(gn)
+        assert_array_close(expect, actual)

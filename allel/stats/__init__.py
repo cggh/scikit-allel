@@ -18,4 +18,4 @@ from allel.stats.distance import pairwise_distance, pairwise_dxy
 from allel.stats.hw import heterozygosity_observed, heterozygosity_expected, \
     inbreeding_coefficient
 
-from allel.stats.ld import rogers_huff_r
+from allel.stats.ld import rogers_huff_r, locate_unlinked
