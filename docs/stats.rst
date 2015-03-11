@@ -13,7 +13,8 @@ Diversity & divergence
 .. autofunction:: mean_pairwise_divergence
 .. autofunction:: sequence_divergence
 .. autofunction:: windowed_divergence
-.. autofunction:: weir_cockerham_anova
+.. autofunction:: weir_cockerham_fst
+.. autofunction:: hudson_fst
 
 Pairwise distance
 -----------------

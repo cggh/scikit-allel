@@ -12,7 +12,7 @@ from allel.stats.window import moving_statistic, windowed_count, \
 from allel.stats.diversity import mean_pairwise_diversity, \
     sequence_diversity, windowed_diversity, mean_pairwise_divergence, \
     sequence_divergence, windowed_divergence, \
-    weir_cockerham_anova
+    weir_cockerham_fst, hudson_fst
 
 from allel.stats.distance import pairwise_distance, pairwise_dxy
 

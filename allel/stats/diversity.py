@@ -3,8 +3,6 @@ from __future__ import absolute_import, print_function, division
 
 
 import logging
-logger = logging.getLogger(__name__)
-debug = logger.debug
 
 
 import numpy as np
@@ -15,7 +13,11 @@ from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned
 from allel.stats.window import windowed_statistic, per_base
 
 
-def mean_pairwise_diversity(ac, fill=np.nan):
+logger = logging.getLogger(__name__)
+debug = logger.debug
+
+
+def mean_pairwise_diversity(ac, an=None, fill=np.nan):
     """Calculate for each variant the mean number of pairwise differences
     between haplotypes within a single population.
 
@@ -24,6 +26,8 @@ def mean_pairwise_diversity(ac, fill=np.nan):
 
     ac : array_like, int, shape (n_variants, n_alleles)
         Allele counts array.
+    an : array_like, int, shape (n_variants,), optional
+        Allele numbers. If not provided, will be calculated from `ac`.
     fill : float
         Use this value where there are no pairs to compare (e.g.,
         all allele calls are missing).
@@ -72,7 +76,8 @@ def mean_pairwise_diversity(ac, fill=np.nan):
     ac = asarray_ndim(ac, 2)
 
     # total number of haplotypes
-    an = np.sum(ac, axis=1)
+    if an is None:
+        an = np.sum(ac, axis=1)
 
     # total number of pairwise comparisons for each variant:
     # (an choose 2)
@@ -552,7 +557,7 @@ def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
     return dxy, windows, n_bases, counts
 
 
-def weir_cockerham_anova(g, subpops, max_allele=None):
+def weir_cockerham_fst(g, subpops, max_allele=None):
     """Compute the variance components from the analyses of variance of
     allele frequencies according to Weir and Cockerham (1984).
 
@@ -594,7 +599,7 @@ def weir_cockerham_anova(g, subpops, max_allele=None):
         ...      [[0, 1], [1, 2], [1, 1], [2, 2]],
         ...      [[0, 0], [1, 1], [0, 1], [-1, -1]]]
         >>> subpops = [[0, 1], [2, 3]]
-        >>> a, b, c = allel.stats.weir_cockerham_anova(g, subpops)
+        >>> a, b, c = allel.stats.weir_cockerham_fst(g, subpops)
         >>> a
         array([[ 0.5  ,  0.5  ,  0.   ],
                [ 0.   ,  0.   ,  0.   ],
@@ -638,6 +643,8 @@ def weir_cockerham_anova(g, subpops, max_allele=None):
         >>> fst
         -4.3680905886891398e-17
 
+    Note that estimated Fst values may be negative.
+
     """
 
     # check inputs
@@ -662,20 +669,19 @@ def weir_cockerham_anova(g, subpops, max_allele=None):
         c = np.zeros(shape, dtype='f8')
         for i in range(0, n_variants, blen):
             gb = g[i:i+blen]
-            ab, bb, cb = _weir_cockerham_variance_components(gb, subpops,
-                                                             max_allele)
+            ab, bb, cb = _weir_cockerham_fst(gb, subpops, max_allele)
             a[i:i+blen] = ab
             b[i:i+blen] = bb
             c[i:i+blen] = cb
 
     else:
-        a, b, c = _weir_cockerham_variance_components(g, subpops, max_allele)
+        a, b, c = _weir_cockerham_fst(g, subpops, max_allele)
 
     return a, b, c
 
 
 # noinspection PyPep8Naming
-def _weir_cockerham_variance_components(g, subpops, max_allele):
+def _weir_cockerham_fst(g, subpops, max_allele):
 
     # check inputs
     g = GenotypeArray(g, copy=False)
@@ -741,8 +747,8 @@ def _weir_cockerham_variance_components(g, subpops, max_allele):
     # compute the sample variance of allele frequencies over populations
     s_squared = (
         np.sum(n[:, np.newaxis, :] * ((p - p_bar[:, :, np.newaxis]) ** 2),
-               axis=2)
-        / (n_bar * (r - 1))
+               axis=2) /
+        (n_bar * (r - 1))
     )
     assert s_squared.shape == (n_variants, n_alleles)
     debug('s_squared: %s, %r', s_squared.shape, s_squared)
@@ -758,19 +764,19 @@ def _weir_cockerham_variance_components(g, subpops, max_allele):
 
     # component of variance between populations
     p_bar = p_bar[:, :]
-    a = ((n_bar / n_C)
-         * (s_squared -
-            ((1 / (n_bar - 1))
-             * ((p_bar * (1 - p_bar))
-                - ((r - 1) * s_squared / r)
-                - (h_bar / 4)))))
+    a = ((n_bar / n_C) *
+         (s_squared -
+          ((1 / (n_bar - 1)) *
+           ((p_bar * (1 - p_bar)) -
+            ((r - 1) * s_squared / r) -
+            (h_bar / 4)))))
     assert a.shape == (n_variants, n_alleles)
 
     # component of variance between individuals within populations
-    b = ((n_bar / (n_bar - 1))
-         * ((p_bar * (1 - p_bar))
-            - ((r - 1) * s_squared / r)
-            - (((2 * n_bar) - 1) * h_bar / (4 * n_bar))))
+    b = ((n_bar / (n_bar - 1)) *
+         ((p_bar * (1 - p_bar)) -
+          ((r - 1) * s_squared / r) -
+           (((2 * n_bar) - 1) * h_bar / (4 * n_bar))))
     assert b.shape == (n_variants, n_alleles)
 
     # component of variance between gametes within individuals
@@ -778,3 +784,87 @@ def _weir_cockerham_variance_components(g, subpops, max_allele):
     assert c.shape == (n_variants, n_alleles)
 
     return a, b, c
+
+
+def hudson_fst(ac1, ac2, fill=np.nan):
+    """Calculate the numerator and denominator for Fst estimation using the
+    method of Hudson (1992).
+
+    Parameters
+    ----------
+
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    fill : float
+        Use this value where there are no pairs to compare (e.g.,
+        all allele calls are missing).
+
+    Returns
+    -------
+
+    num : ndarray, float, shape (n_variants,)
+        Heterozygosity between the two populations minus average
+        of heterozygosity within each population.
+    den : ndarray, float, shape (n_variants,)
+        Heterozygosity between the two populations.
+
+    Examples
+    --------
+
+    Calculate numerator and denominator for Fst estimation::
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+        ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
+        ...                                [[0, 0], [0, 0], [0, 0], [0, 0]],
+        ...                                [[0, 1], [1, 2], [1, 1], [2, 2]],
+        ...                                [[0, 0], [1, 1], [0, 1], [-1, -1]]])
+        >>> subpops = [[0, 1], [2, 3]]
+        >>> ac1 = g.count_alleles(subpop=subpops[0])
+        >>> ac2 = g.count_alleles(subpop=subpops[1])
+        >>> num, den = allel.stats.hudson_fst(ac1, ac2)
+        >>> num
+        array([ 1.        , -0.16666667,  0.        , -0.125     , -0.33333333])
+        >>> den
+        array([ 1.   ,  0.5  ,  0.   ,  0.625,  0.5  ])
+
+    Estimate Fst for each variant individually::
+
+        >>> fst = num / den
+        >>> fst
+        array([ 1.        , -0.33333333,         nan, -0.2       , -0.66666667])
+
+    Estimate Fst averaging over variants::
+
+        >>> fst = np.sum(num) / np.sum(den)
+        >>> fst
+        0.1428571428571429
+
+    """  # flake8: noqa
+
+    # calculate these once only
+    an1 = np.sum(ac1, axis=1)
+    an2 = np.sum(ac2, axis=1)
+
+    # calculate average diversity (a.k.a. heterozygosity) within each
+    # population
+    within = (mean_pairwise_diversity(ac1, an1, fill=fill) +
+              mean_pairwise_diversity(ac2, an2, fill=fill)) / 2
+
+    # calculate divergence (a.k.a. heterozygosity) between each population
+    between = mean_pairwise_divergence(ac1, ac2, an1, an2, fill=fill)
+
+    # define numerator and denominator for Fst calculations
+    num = between - within
+    den = between
+
+    return num, den
+
+
+# TODO windowed_weir_cockerham_fst
+# TODO windowed_hudson_fst
+# TODO pairwise_weir_cockerham_fst
+# TODO pairwise_hudson_fst
+# TODO fixed_differences
