@@ -295,7 +295,7 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
         ...     pos, values, statistic=np.sum, size=10, step=5, fill=0
         ... )
         >>> x
-        array([  7.,  12.,   8.,   0.,   9.])
+        array([ 7, 12,  8,  0,  9])
         >>> windows
         array([[ 1, 10],
                [ 6, 15],
@@ -334,11 +334,16 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
         # calculate number of values in window
         n = stop_idx - start_idx
 
-        # extract values for window
-        window_values = values[start_idx:stop_idx]
+        if n == 0:
+            # window is empty
+            s = fill
 
-        # compute statistic
-        s = statistic(window_values)
+        else:
+            # extract values for window
+            window_values = values[start_idx:stop_idx]
+
+            # compute statistic
+            s = statistic(window_values)
 
         # store outputs
         out.append(s)

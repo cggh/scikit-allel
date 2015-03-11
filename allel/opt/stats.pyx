@@ -14,10 +14,11 @@ from libc.math cimport sqrt
 @cython.nonecheck(False)
 @cython.cdivision(True)
 @cython.initializedcheck(False)
-cpdef inline double gn_corrcoef_int8(cnp.int8_t[:] gn0,
-                                     cnp.int8_t[:] gn1,
-                                     cnp.int8_t[:] gn0_sq,
-                                     cnp.int8_t[:] gn1_sq):
+cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
+                                            cnp.int8_t[:] gn1,
+                                            cnp.int8_t[:] gn0_sq,
+                                            cnp.int8_t[:] gn1_sq,
+                                            cnp.float32_t fill=np.nan):
     cdef cnp.int8_t x, y, xsq, ysq
     cdef int n
     cdef cnp.float32_t m0, m1, v0, v1, cov, r
@@ -52,7 +53,7 @@ cpdef inline double gn_corrcoef_int8(cnp.int8_t[:] gn0,
 
     # compute correlation coeficient
     if v0 == 0 or v1 == 0:
-        r = np.nan
+        r = fill
     else:
         r = cov / sqrt(v0 * v1)
 
@@ -63,7 +64,7 @@ cpdef inline double gn_corrcoef_int8(cnp.int8_t[:] gn0,
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.initializedcheck(False)
-def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn):
+def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn, cnp.float32_t fill=np.nan):
     cdef int i, j, k
     cdef cnp.float32_t r
     # correlation matrix in condensed form
@@ -88,9 +89,45 @@ def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn):
             gn1 = gn[j]
             gn0_sq = gn_sq[i]
             gn1_sq = gn_sq[j]
-            r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq)
+            r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
             out[k] = r
             k += 1
+
+    return np.asarray(out)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna,
+                               cnp.int8_t[:, :] gnb,
+                               cnp.float32_t fill=np.nan):
+    cdef int i, j, k
+    cdef cnp.float32_t r
+    # correlation matrix in condensed form
+    cdef cnp.float32_t[:, :] out
+    cdef cnp.int8_t[:, :] gna_sq, gnb_sq
+    cdef cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+
+    # cache square calculation to improve performance
+    gna_sq = np.power(gna, 2)
+    gnb_sq = np.power(gnb, 2)
+
+    # setup output array
+    m = gna.shape[0]
+    n = gnb.shape[0]
+    out = np.zeros((m, n), dtype=np.float32)
+
+    # iterate over distinct pairs
+    for i in range(gna.shape[0]):
+        for j in range(gnb.shape[0]):
+            gn0 = gna[i]
+            gn1 = gnb[j]
+            gn0_sq = gna_sq[i]
+            gn1_sq = gnb_sq[j]
+            r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
+            out[i, j] = r
 
     return np.asarray(out)
 

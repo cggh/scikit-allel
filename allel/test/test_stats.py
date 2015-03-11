@@ -438,7 +438,6 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         gn = [[0, 0, 0],
               [1, 1, 1]]
         actual = allel.stats.rogers_huff_r(gn)
-        print(actual)
         assert np.isnan(actual)
 
         gn = [[0, 1, 0, 1],
@@ -479,3 +478,22 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         expect = [1, -1, 1, -1, 1, -1]
         actual = allel.stats.rogers_huff_r(gn)
         assert_array_close(expect, actual)
+
+    def test_rogers_huff_r_between(self):
+
+        gna = [[0, 1, 2]]
+        gnb = [[0, 1, 2]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r_between(gna, gnb)
+        eq(expect, actual)
+
+        gna = [[0, 1, 2]]
+        gnb = [[2, 1, 0]]
+        expect = -1.
+        actual = allel.stats.rogers_huff_r_between(gna, gnb)
+        eq(expect, actual)
+
+        gna = [[0, 0, 0]]
+        gnb = [[1, 1, 1]]
+        actual = allel.stats.rogers_huff_r_between(gna, gnb)
+        assert np.isnan(actual)
