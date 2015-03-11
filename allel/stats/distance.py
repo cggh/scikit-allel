@@ -96,7 +96,7 @@ def pairwise_distance(x, metric):
             return pdist(b, metric=metric)
 
     if hasattr(x, 'chunklen'):
-        # use block-wise implementation
+        # use chunk-wise implementation
         blen = x.chunklen
         dist = None
         for i in range(0, x.shape[0], blen):

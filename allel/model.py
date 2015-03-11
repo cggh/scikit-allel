@@ -484,7 +484,7 @@ class GenotypeArray(np.ndarray):
         return out
 
     # noinspection PyUnusedLocal
-    def is_het(self):
+    def is_het(self, allele=None):
         """Find genotype calls that are heterozygous.
 
         Returns
@@ -493,6 +493,8 @@ class GenotypeArray(np.ndarray):
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
+        allele : int, optional
+            Heterozygous allele.
 
         Examples
         --------
@@ -505,6 +507,10 @@ class GenotypeArray(np.ndarray):
         array([[False,  True],
                [ True, False],
                [ True, False]], dtype=bool)
+        >>> g.is_het(2)
+        array([[False, False],
+               [False, False],
+               [ True, False]], dtype=bool)
 
         """
 
@@ -513,6 +519,9 @@ class GenotypeArray(np.ndarray):
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 >= 0) & (allele2  >= 0) & (allele1 != allele2)'
+            if allele is not None:
+                ex += ' & ((allele1 == {0}) | (allele2 == {0}))' \
+                    .format(allele)
             out = ne.evaluate(ex)
 
         # general ploidy case
@@ -521,6 +530,8 @@ class GenotypeArray(np.ndarray):
             other_alleles = self[..., 1:]  # noqa
             out = np.all(self >= 0, axis=-1) \
                 & np.any(allele1 != other_alleles, axis=-1)
+            if allele is not None:
+                out &= np.any(self == allele, axis=-1)
 
         return out
 
@@ -592,8 +603,8 @@ class GenotypeArray(np.ndarray):
         b = self.is_hom_alt()
         return np.sum(b, axis=axis)
 
-    def count_het(self, axis=None):
-        b = self.is_het()
+    def count_het(self, allele=None, axis=None):
+        b = self.is_het(allele=allele)
         return np.sum(b, axis=axis)
 
     def count_call(self, call, axis=None):

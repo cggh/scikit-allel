@@ -924,9 +924,9 @@ class GenotypeCArray(_CArrayWrapper):
             return GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_map(self.carr, f, **kwargs)
 
-    def is_het(self, **kwargs):
+    def is_het(self, allele=None, **kwargs):
         def f(block):
-            return GenotypeArray(block, copy=False).is_het()
+            return GenotypeArray(block, copy=False).is_het(allele=allele)
         return carray_block_map(self.carr, f, **kwargs)
 
     def is_call(self, call, **kwargs):
@@ -960,9 +960,9 @@ class GenotypeCArray(_CArrayWrapper):
             return GenotypeArray(block, copy=False).is_hom_alt()
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
-    def count_het(self, axis=None):
+    def count_het(self, allele=None, axis=None):
         def f(block):
-            return GenotypeArray(block, copy=False).is_het()
+            return GenotypeArray(block, copy=False).is_het(allele=allele)
         return carray_block_sum(self.carr, axis=axis, transform=f)
 
     def count_call(self, call, axis=None):

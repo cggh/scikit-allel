@@ -13,6 +13,7 @@ Diversity & divergence
 .. autofunction:: mean_pairwise_divergence
 .. autofunction:: sequence_divergence
 .. autofunction:: windowed_divergence
+.. autofunction:: weir_cockerham_anova
 
 Pairwise distance
 -----------------

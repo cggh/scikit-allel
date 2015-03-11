@@ -2,10 +2,15 @@
 from __future__ import absolute_import, print_function, division
 
 
+import logging
+logger = logging.getLogger(__name__)
+debug = logger.debug
+
+
 import numpy as np
 
 
-from allel.model import SortedIndex
+from allel.model import SortedIndex, GenotypeArray
 from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned
 from allel.stats.window import windowed_statistic, per_base
 
@@ -545,3 +550,231 @@ def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
                             fill=fill)
 
     return dxy, windows, n_bases, counts
+
+
+def weir_cockerham_anova(g, subpops, max_allele=None):
+    """Compute the variance components from the analyses of variance of
+    allele frequencies according to Weir and Cockerham (1984).
+
+    Parameters
+    ----------
+
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    subpops : sequence of sequences of ints
+        Sample indices for each subpopulation.
+    max_allele : int, optional
+        The highest allele index to consider.
+
+    Returns
+    -------
+
+    a : ndarray, float, shape (n_variants, n_alleles)
+        Component of variance between populations.
+    b : ndarray, float, shape (n_variants, n_alleles)
+        Component of variance between individuals within populations.
+    c : ndarray, float, shape (n_variants, n_alleles)
+        Component of variance between gametes within individuals.
+
+    Notes
+    -----
+
+    Please consider this implementation experimental, it has not been
+    rigorously tested.
+
+    Examples
+    --------
+
+    Calculate variance components from some genotype data::
+
+        >>> import allel
+        >>> g = [[[0, 0], [0, 0], [1, 1], [1, 1]],
+        ...      [[0, 1], [0, 1], [0, 1], [0, 1]],
+        ...      [[0, 0], [0, 0], [0, 0], [0, 0]],
+        ...      [[0, 1], [1, 2], [1, 1], [2, 2]],
+        ...      [[0, 0], [1, 1], [0, 1], [-1, -1]]]
+        >>> subpops = [[0, 1], [2, 3]]
+        >>> a, b, c = allel.stats.weir_cockerham_anova(g, subpops)
+        >>> a
+        array([[ 0.5  ,  0.5  ,  0.   ],
+               [ 0.   ,  0.   ,  0.   ],
+               [ 0.   ,  0.   ,  0.   ],
+               [ 0.   , -0.125, -0.125],
+               [-0.375, -0.375,  0.   ]])
+        >>> b
+        array([[ 0.        ,  0.        ,  0.        ],
+               [-0.25      , -0.25      ,  0.        ],
+               [ 0.        ,  0.        ,  0.        ],
+               [ 0.        ,  0.125     ,  0.25      ],
+               [ 0.41666667,  0.41666667,  0.        ]])
+        >>> c
+        array([[ 0.        ,  0.        ,  0.        ],
+               [ 0.5       ,  0.5       ,  0.        ],
+               [ 0.        ,  0.        ,  0.        ],
+               [ 0.125     ,  0.25      ,  0.125     ],
+               [ 0.16666667,  0.16666667,  0.        ]])
+
+    Estimate the parameter theta (a.k.a., Fst) for each variant
+    and each allele individually::
+
+        >>> fst = a / (a + b + c)
+        >>> fst
+        array([[ 1. ,  1. ,  nan],
+               [ 0. ,  0. ,  nan],
+               [ nan,  nan,  nan],
+               [ 0. , -0.5, -0.5],
+               [-1.8, -1.8,  nan]])
+
+    Estimate Fst for each variant individually (averaging over alleles)::
+
+        >>> fst = (np.sum(a, axis=1) /
+        ...        (np.sum(a, axis=1) + np.sum(b, axis=1) + np.sum(c, axis=1)))
+        >>> fst
+        array([ 1. ,  0. ,  nan, -0.4, -1.8])
+
+    Estimate Fst averaging over all variants and alleles::
+
+        >>> fst = np.sum(a) / (np.sum(a) + np.sum(b) + np.sum(c))
+        >>> fst
+        -4.3680905886891398e-17
+
+    """
+
+    # check inputs
+    if not hasattr(g, 'shape') or not hasattr(g, 'ndim'):
+        g = GenotypeArray(g, copy=False)
+    if g.ndim != 3:
+        raise ValueError('g must have three dimensions')
+    if g.shape[2] != 2:
+        raise NotImplementedError('only diploid genotypes are supported')
+
+    # determine highest allele index
+    if max_allele is None:
+        max_allele = g.max()
+
+    if hasattr(g, 'chunklen'):
+        # use a chunk-wise implementation
+        blen = g.chunklen
+        n_variants = g.shape[0]
+        shape = (n_variants, max_allele + 1)
+        a = np.zeros(shape, dtype='f8')
+        b = np.zeros(shape, dtype='f8')
+        c = np.zeros(shape, dtype='f8')
+        for i in range(0, n_variants, blen):
+            gb = g[i:i+blen]
+            ab, bb, cb = _weir_cockerham_variance_components(gb, subpops,
+                                                             max_allele)
+            a[i:i+blen] = ab
+            b[i:i+blen] = bb
+            c[i:i+blen] = cb
+
+    else:
+        a, b, c = _weir_cockerham_variance_components(g, subpops, max_allele)
+
+    return a, b, c
+
+
+# noinspection PyPep8Naming
+def _weir_cockerham_variance_components(g, subpops, max_allele):
+
+    # check inputs
+    g = GenotypeArray(g, copy=False)
+    n_variants, n_samples, ploidy = g.shape
+    n_alleles = max_allele + 1
+
+    # number of populations sampled
+    r = len(subpops)
+    n_populations = r
+    debug('r: %r', r)
+
+    # count alleles within each subpopulation
+    ac = [g.count_alleles(subpop=s, max_allele=max_allele) for s in subpops]
+
+    # stack allele counts from each sub-population into a single array
+    ac = np.dstack(ac)
+    assert ac.shape == (n_variants, n_alleles, n_populations)
+    debug('ac: %s, %r', ac.shape, ac)
+
+    # count number of alleles called within each population by summing
+    # allele counts along the alleles dimension
+    an = np.sum(ac, axis=1)
+    assert an.shape == (n_variants, n_populations)
+    debug('an: %s, %r', an.shape, an)
+
+    # compute number of individuals sampled from each population
+    n = an // 2
+    assert n.shape == (n_variants, n_populations)
+    debug('n: %s, %r', n.shape, n)
+
+    # compute the total number of individuals sampled across all populations
+    n_total = np.sum(n, axis=1)
+    assert n_total.shape == (n_variants,)
+    debug('n_total: %s, %r', n_total.shape, n_total)
+
+    # compute the average sample size across populations
+    n_bar = np.mean(n, axis=1)
+    assert n_bar.shape == (n_variants,)
+    debug('n_bar: %s, %r', n_bar.shape, n_bar)
+
+    # compute the term n sub C incorporating the coefficient of variation in
+    # sample sizes
+    n_C = (n_total - (np.sum(n**2, axis=1) / n_total)) / (r - 1)
+    assert n_C.shape == (n_variants,)
+    debug('n_C: %s, %r', n_C.shape, n_C)
+
+    # compute allele frequencies within each population
+    p = ac / an[:, np.newaxis, :]
+    assert p.shape == (n_variants, n_alleles, n_populations)
+    debug('p: %s, %r', p.shape, p)
+
+    # compute the average sample frequency of each allele
+    ac_total = np.sum(ac, axis=2)
+    an_total = np.sum(an, axis=1)
+    p_bar = ac_total / an_total[:, np.newaxis]
+    assert p_bar.shape == (n_variants, n_alleles)
+    debug('p_bar: %s, %r', p_bar.shape, p_bar)
+
+    # add in some extra dimensions to enable broadcasting
+    n_bar = n_bar[:, np.newaxis]
+    n_C = n_C[:, np.newaxis]
+
+    # compute the sample variance of allele frequencies over populations
+    s_squared = (
+        np.sum(n[:, np.newaxis, :] * ((p - p_bar[:, :, np.newaxis]) ** 2),
+               axis=2)
+        / (n_bar * (r - 1))
+    )
+    assert s_squared.shape == (n_variants, n_alleles)
+    debug('s_squared: %s, %r', s_squared.shape, s_squared)
+
+    # compute the average heterozygosity over all populations
+    h_bar = [g.count_het(allele=allele, axis=1) / n_total
+             for allele in range(n_alleles)]
+    h_bar = np.column_stack(h_bar)
+    assert h_bar.shape == (n_variants, n_alleles)
+    debug('h_bar: %s, %r', h_bar.shape, h_bar)
+
+    # now comes the tricky bit...
+
+    # component of variance between populations
+    p_bar = p_bar[:, :]
+    a = ((n_bar / n_C)
+         * (s_squared -
+            ((1 / (n_bar - 1))
+             * ((p_bar * (1 - p_bar))
+                - ((r - 1) * s_squared / r)
+                - (h_bar / 4)))))
+    assert a.shape == (n_variants, n_alleles)
+
+    # component of variance between individuals within populations
+    b = ((n_bar / (n_bar - 1))
+         * ((p_bar * (1 - p_bar))
+            - ((r - 1) * s_squared / r)
+            - (((2 * n_bar) - 1) * h_bar / (4 * n_bar))))
+    assert b.shape == (n_variants, n_alleles)
+
+    # component of variance between gametes within individuals
+    c = h_bar / 2
+    assert c.shape == (n_variants, n_alleles)
+
+    return a, b, c
