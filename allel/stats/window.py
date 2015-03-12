@@ -9,8 +9,7 @@ from allel.model import SortedIndex
 from allel.util import asarray_ndim, ignore_invalid, check_equal_length
 
 
-def moving_statistic(values, statistic, size=None, start=0, stop=None,
-                     step=None):
+def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     """Calculate a statistic in a moving window over `values`.
 
     Parameters
@@ -140,7 +139,7 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
 
     pos : array_like, int, shape (n_items,)
         The item positions in ascending order, using 1-based coordinates..
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).
@@ -219,8 +218,8 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
     return counts, windows
 
 
-def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
-                       step=None, windows=None, fill=np.nan):
+def windowed_statistic(pos, values, statistic, size=None, start=None,
+                       stop=None, step=None, windows=None, fill=np.nan):
     """Calculate a statistic from items in windows over a single
     chromosome/contig.
 
@@ -235,7 +234,7 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
         statistic function as separate arguments.
     statistic : function
         The statistic to compute.
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).

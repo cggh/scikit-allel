@@ -144,7 +144,7 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1):
     return loc
 
 
-def windowed_r_squared(pos, gn, size, start=None, stop=None, step=None,
+def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
                        windows=None, fill=np.nan, percentile=50):
     """Summarise linkage disequilibrium in windows over a single
     chromosome/contig.
@@ -157,7 +157,7 @@ def windowed_r_squared(pos, gn, size, start=None, stop=None, step=None,
     gn : array_like, int8, shape (n_variants, n_samples)
         Diploid genotypes at biallelic variants, coded as the number of
         alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).

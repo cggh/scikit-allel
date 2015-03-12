@@ -360,7 +360,7 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
     return dxy
 
 
-def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
+def windowed_diversity(pos, ac, size=None, start=None, stop=None, step=None,
                        windows=None, is_accessible=None, fill=np.nan):
     """Estimate nucleotide diversity in windows over a single
     chromosome/contig.
@@ -372,7 +372,7 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
         Variant positions, using 1-based coordinates, in ascending order.
     ac : array_like, int, shape (n_variants, n_alleles)
         Allele counts array.
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).
@@ -456,8 +456,9 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
     return pi, windows, n_bases, counts
 
 
-def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
-                        windows=None, is_accessible=None, fill=np.nan):
+def windowed_divergence(pos, ac1, ac2, size=None, start=None, stop=None,
+                        step=None, windows=None, is_accessible=None,
+                        fill=np.nan):
     """Estimate nucleotide divergence between two populations in windows
     over a single chromosome/contig.
 
@@ -470,7 +471,7 @@ def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
         Allele counts array for the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array for the second population.
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).
@@ -861,9 +862,9 @@ def hudson_fst(ac1, ac2, fill=np.nan):
     return num, den
 
 
-def windowed_weir_cockerham_fst(pos, g, subpops, size, start=None, stop=None,
-                                step=None, windows=None, fill=np.nan,
-                                max_allele=None):
+def windowed_weir_cockerham_fst(pos, g, subpops, size=None, start=None,
+                                stop=None, step=None, windows=None,
+                                fill=np.nan, max_allele=None):
     """Estimate average Fst in windows over a single chromosome/contig,
     following the method of Weir and Cockerham (1984).
 
@@ -935,7 +936,7 @@ def windowed_weir_cockerham_fst(pos, g, subpops, size, start=None, stop=None,
     return fst, windows, counts
 
 
-def windowed_hudson_fst(pos, ac1, ac2, size, start=None, stop=None,
+def windowed_hudson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
                         step=None, windows=None, fill=np.nan):
     """Estimate average Fst in windows over a single chromosome/contig,
     following the method of Hudson (1992) elaborated by Bhatia et al. (2013).
@@ -949,7 +950,7 @@ def windowed_hudson_fst(pos, ac1, ac2, size, start=None, stop=None,
         Allele counts array from the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array from the second population.
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).
@@ -999,9 +1000,8 @@ def windowed_hudson_fst(pos, ac1, ac2, size, start=None, stop=None,
     return fst, windows, counts
 
 
-def windowed_df(pos, ac1, ac2, size, start=None, stop=None,
-                               step=None, windows=None, is_accessible=None,
-                               fill=np.nan):
+def windowed_df(pos, ac1, ac2, size=None, start=None, stop=None, step=None,
+                windows=None, is_accessible=None, fill=np.nan):
     """Calculate the density of fixed differences between two populations in
     windows over a single chromosome/contig.
 
@@ -1014,7 +1014,7 @@ def windowed_df(pos, ac1, ac2, size, start=None, stop=None,
         Allele counts array for the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array for the second population.
-    size : int
+    size : int, optional
         The window size (number of bases).
     start : int, optional
         The position at which to start (1-based).
