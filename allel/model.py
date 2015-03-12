@@ -16,7 +16,8 @@ import numexpr as ne
 
 
 from allel.constants import DIM_PLOIDY, DIPLOID
-from allel.util import ignore_invalid, asarray_ndim, check_dim0_aligned
+from allel.util import ignore_invalid, asarray_ndim, check_dim0_aligned, \
+    ensure_dim1_aligned
 from allel.io import write_vcf, iter_gff3
 
 
@@ -3838,8 +3839,7 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
     ref = asarray_ndim(ref, 1)
     alt = asarray_ndim(alt, 1, 2)
     alleles = asarray_ndim(alleles, 1, 2)
-    check_dim0_aligned(ref, alt)
-    check_dim0_aligned(ref, alleles)
+    check_dim0_aligned(ref, alt, alleles)
 
     # reshape for convenience
     ref = ref[:, None]
@@ -3860,3 +3860,127 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
         out[match_i, ai] = match_j
 
     return out
+
+
+def locate_fixed_differences(ac1, ac2):
+    """Locate variants with no shared alleles between two populations.
+
+    Parameters
+    ----------
+
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+
+    Returns
+    -------
+
+    loc : ndarray, bool, shape (n_variants,)
+
+    See Also
+    --------
+
+    allel.stats.diversity.windowed_df
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+    ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
+    ...                                [[0, 1], [0, 1], [1, 1], [1, 1]],
+    ...                                [[0, 0], [0, 0], [1, 1], [2, 2]],
+    ...                                [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
+    >>> ac1 = g.count_alleles(subpop=[0, 1])
+    >>> ac2 = g.count_alleles(subpop=[2, 3])
+    >>> loc_df = allel.model.locate_fixed_differences(ac1, ac2)
+    >>> loc_df
+    array([ True, False, False,  True,  True], dtype=bool)
+
+    """
+
+    # check inputs
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
+    check_dim0_aligned(ac1, ac2)
+    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
+
+    # stack allele counts for convenience
+    pac = np.dstack([ac1, ac2])
+
+    # count numbers of alleles called in each population
+    pan = np.sum(pac, axis=1)
+
+    # count the numbers of populations with each allele
+    npa = np.sum(pac > 0, axis=2)
+
+    # locate variants with allele calls in both populations
+    non_missing = np.all(pan > 0, axis=1)
+
+    # locate variants where all alleles are only found in a single population
+    no_shared_alleles = np.all(npa <= 1, axis=1)
+
+    return non_missing & no_shared_alleles
+
+
+def locate_private_alleles(*acs):
+    """Locate alleles that are found only in a single population.
+
+    Parameters
+    ----------
+
+    *acs : array_like, int, shape (n_variants, n_alleles)
+        Allele counts arrays from each population.
+
+    Returns
+    -------
+
+    loc : ndarray, bool, shape (n_variants, n_alleles)
+        Boolean array where elements are True if allele is private to a
+        single population.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+    ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
+    ...                                [[0, 1], [0, 1], [1, 1], [1, 1]],
+    ...                                [[0, 0], [0, 0], [1, 1], [2, 2]],
+    ...                                [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
+    >>> ac1 = g.count_alleles(subpop=[0, 1])
+    >>> ac2 = g.count_alleles(subpop=[2])
+    >>> ac3 = g.count_alleles(subpop=[3])
+    >>> loc_private_alleles = allel.model.locate_private_alleles(ac1, ac2, ac3)
+    >>> loc_private_alleles
+    array([[ True, False, False],
+           [False, False, False],
+           [ True, False, False],
+           [ True,  True,  True],
+           [ True,  True, False]], dtype=bool)
+    >>> loc_private_variants = np.any(loc_private_alleles, axis=1)
+    >>> loc_private_variants
+    array([ True, False,  True,  True,  True], dtype=bool)
+
+    """
+
+    # check inputs
+    acs = [asarray_ndim(ac, 2) for ac in acs]
+    debug([ac.shape for ac in acs])
+    check_dim0_aligned(*acs)
+    debug([ac.shape for ac in acs])
+    acs = ensure_dim1_aligned(*acs)
+    debug([ac.shape for ac in acs])
+
+    # stack allele counts for convenience
+    pac = np.dstack(acs)
+    debug(pac.shape)
+
+    # count the numbers of populations with each allele
+    npa = np.sum(pac > 0, axis=2)
+
+    # locate alleles found only in a single population
+    loc_pa = npa == 1
+
+    return loc_pa

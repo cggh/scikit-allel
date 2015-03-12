@@ -6,7 +6,7 @@ import numpy as np
 
 
 from allel.model import SortedIndex
-from allel.util import asarray_ndim, ignore_invalid
+from allel.util import asarray_ndim, ignore_invalid, check_equal_length
 
 
 def moving_statistic(values, statistic, size=None, start=0, stop=None,
@@ -230,7 +230,9 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
     pos : array_like, int, shape (n_items,)
         The item positions in ascending order, using 1-based coordinates..
     values : array_like, int, shape (n_items,)
-        The values to summarise.
+        The values to summarise. May also be a tuple of values arrays,
+        in which case each array will be sliced and passed through to the
+        statistic function as separate arguments.
     statistic : function
         The statistic to compute.
     size : int
@@ -312,8 +314,12 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
         pos = SortedIndex(pos, copy=False)
 
     # check lengths are equal
-    if len(pos) != len(values):
-        raise ValueError('arrays must be of equal length')
+    if isinstance(values, tuple):
+        # assume multiple values arrays
+        check_equal_length(pos, *values)
+    else:
+        # assume a single values array
+        check_equal_length(pos, values)
 
     # setup windows
     if windows is None:
@@ -339,11 +345,16 @@ def windowed_statistic(pos, values, statistic, size, start=None, stop=None,
             s = fill
 
         else:
-            # extract values for window
-            window_values = values[start_idx:stop_idx]
 
-            # compute statistic
-            s = statistic(window_values)
+            if isinstance(values, tuple):
+                # assume multiple values arrays
+                wv = [v[start_idx:stop_idx] for v in values]
+                s = statistic(*wv)
+
+            else:
+                # assume a single values array
+                wv = values[start_idx:stop_idx]
+                s = statistic(wv)
 
         # store outputs
         out.append(s)

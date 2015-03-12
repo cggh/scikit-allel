@@ -152,3 +152,5 @@ Utility functions
 -----------------
 
 .. autofunction:: create_allele_mapping
+.. autofunction:: locate_fixed_differences
+.. autofunction:: locate_private_alleles

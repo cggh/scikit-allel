@@ -170,7 +170,7 @@ class TestDiversityDivergence(unittest.TestCase):
                             [-1, -1]])
         ac = h.count_alleles()
         expect = [0, 0, 1, 1, -1, -1]
-        actual = allel.stats.mean_pairwise_diversity(ac, fill=-1)
+        actual = allel.stats.mean_pairwise_difference(ac, fill=-1)
         aeq(expect, actual)
 
         # four haplotypes, 6 pairwise comparison
@@ -185,7 +185,7 @@ class TestDiversityDivergence(unittest.TestCase):
                             [-1, -1, -1, -1]])
         ac = h.count_alleles()
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        actual = allel.stats.mean_pairwise_diversity(ac, fill=-1)
+        actual = allel.stats.mean_pairwise_difference(ac, fill=-1)
         assert_array_close(expect, actual)
 
     def test_windowed_diversity(self):
@@ -228,7 +228,8 @@ class TestDiversityDivergence(unittest.TestCase):
         ac2 = h2.count_alleles()
 
         expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
-        actual = allel.stats.mean_pairwise_divergence(ac1, ac2, fill=-1)
+        actual = allel.stats.mean_pairwise_difference_between(ac1, ac2,
+                                                              fill=-1)
         aeq(expect, actual)
 
     def test_windowed_divergence(self):
@@ -410,11 +411,13 @@ class TestDistance(unittest.TestCase):
         gac = g.to_allele_counts()
 
         def metric(ac1, ac2):
-            mpd = allel.stats.mean_pairwise_divergence(ac1, ac2, fill=0)
+            mpd = allel.stats.mean_pairwise_difference_between(ac1, ac2,
+                                                               fill=0)
             return mpd.sum()
 
-        expect = [allel.stats.mean_pairwise_divergence(gac[:, 0], gac[:, 1],
-                                                       fill=0).sum()]
+        expect = [
+            allel.stats.mean_pairwise_difference_between(gac[:, 0], gac[:, 1],
+                                                         fill=0).sum()]
         actual = allel.stats.pairwise_distance(gac, metric)
         aeq(expect, actual)
 

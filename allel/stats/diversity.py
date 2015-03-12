@@ -8,8 +8,9 @@ import logging
 import numpy as np
 
 
-from allel.model import SortedIndex, GenotypeArray
-from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned
+from allel.model import SortedIndex, GenotypeArray, locate_fixed_differences
+from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned, \
+    ensure_dim1_aligned
 from allel.stats.window import windowed_statistic, per_base
 
 
@@ -17,9 +18,9 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def mean_pairwise_diversity(ac, an=None, fill=np.nan):
+def mean_pairwise_difference(ac, an=None, fill=np.nan):
     """Calculate for each variant the mean number of pairwise differences
-    between haplotypes within a single population.
+    between chromosomes sampled from within a single population.
 
     Parameters
     ----------
@@ -57,7 +58,7 @@ def mean_pairwise_diversity(ac, an=None, fill=np.nan):
     ...                                 [0, 1, 1, 2],
     ...                                 [0, 1, -1, -1]])
     >>> ac = h.count_alleles()
-    >>> allel.stats.mean_pairwise_diversity(ac)
+    >>> allel.stats.mean_pairwise_difference(ac)
     array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
             0.83333333,  0.83333333,  1.        ])
 
@@ -78,6 +79,9 @@ def mean_pairwise_diversity(ac, an=None, fill=np.nan):
     # total number of haplotypes
     if an is None:
         an = np.sum(ac, axis=1)
+    else:
+        an = asarray_ndim(an, 1)
+        check_dim0_aligned(ac, an)
 
     # total number of pairwise comparisons for each variant:
     # (an choose 2)
@@ -99,16 +103,10 @@ def mean_pairwise_diversity(ac, an=None, fill=np.nan):
     return mpd
 
 
-def _resize_dim2(a, l):
-    newshape = a.shape[0], l
-    b = np.zeros(newshape, dtype=a.dtype)
-    b[:, :a.shape[1]] = a
-    return b
-
-
-def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
+def mean_pairwise_difference_between(ac1, ac2, an1=None, an2=None,
+                                     fill=np.nan):
     """Calculate for each variant the mean number of pairwise differences
-    between haplotypes from two different populations.
+    between chromosomes sampled from two different populations.
 
     Parameters
     ----------
@@ -153,7 +151,7 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     ...                                 [0, 1, -1, -1]])
     >>> ac1 = h.count_alleles(subpop=[0, 1])
     >>> ac2 = h.count_alleles(subpop=[2, 3])
-    >>> allel.stats.mean_pairwise_divergence(ac1, ac2)
+    >>> allel.stats.mean_pairwise_difference_between(ac1, ac2)
     array([ 0.  ,  0.5 ,  1.  ,  0.5 ,  0.  ,  1.  ,  0.75,   nan])
 
     See Also
@@ -170,19 +168,20 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
     # check inputs
     ac1 = asarray_ndim(ac1, 2)
     ac2 = asarray_ndim(ac2, 2)
-    # check lengths match
     check_dim0_aligned(ac1, ac2)
-    # ensure same number of alleles in both pops
-    if ac1.shape[1] < ac2.shape[1]:
-        ac1 = _resize_dim2(ac1, ac2.shape[1])
-    elif ac2.shape[1] < ac1.shape[1]:
-        ac2 = _resize_dim2(ac2, ac1.shape[1])
+    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
 
     # total number of haplotypes sampled from each population
     if an1 is None:
         an1 = np.sum(ac1, axis=1)
+    else:
+        an1 = asarray_ndim(an1, 1)
+        check_dim0_aligned(ac1, an1)
     if an2 is None:
         an2 = np.sum(ac2, axis=1)
+    else:
+        an2 = asarray_ndim(an2, 1)
+        check_dim0_aligned(ac2, an2)
 
     # total number of pairwise comparisons for each variant
     n_pairs = an1 * an2
@@ -205,7 +204,7 @@ def mean_pairwise_divergence(ac1, ac2, an1=None, an2=None, fill=np.nan):
 
 def sequence_diversity(pos, ac, start=None, stop=None,
                        is_accessible=None):
-    """Calculate nucleotide diversity within a given region.
+    """Estimate nucleotide diversity within a given region.
 
     Parameters
     ----------
@@ -262,10 +261,10 @@ def sequence_diversity(pos, ac, start=None, stop=None,
         stop = pos[-1]
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
-    # calculate mean pairwise diversity
-    mpd = mean_pairwise_diversity(ac, fill=0)
+    # calculate mean pairwise difference
+    mpd = mean_pairwise_difference(ac, fill=0)
 
-    # sum diversity
+    # sum differences over variants
     mpd_sum = np.sum(mpd)
 
     # calculate value per base
@@ -280,7 +279,7 @@ def sequence_diversity(pos, ac, start=None, stop=None,
 
 def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
                         stop=None, is_accessible=None):
-    """Calculate nucleotide divergence between two populations within a
+    """Estimate nucleotide divergence between two populations within a
     given region.
 
     Parameters
@@ -344,10 +343,10 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
         stop = pos[-1]
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
-    # calculate mean pairwise diversity
-    mpd = mean_pairwise_divergence(ac1, ac2, an1=an1, an2=an2, fill=0)
+    # calculate mean pairwise difference between the two populations
+    mpd = mean_pairwise_difference_between(ac1, ac2, an1=an1, an2=an2, fill=0)
 
-    # sum divergence
+    # sum differences over variants
     mpd_sum = np.sum(mpd)
 
     # calculate value per base
@@ -363,7 +362,7 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
 
 def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
                        windows=None, is_accessible=None, fill=np.nan):
-    """Calculate nucleotide diversity in windows over a single
+    """Estimate nucleotide diversity in windows over a single
     chromosome/contig.
 
     Parameters
@@ -441,10 +440,10 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
         pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
-    # calculate mean pairwise diversity
-    mpd = mean_pairwise_diversity(ac, fill=0)
+    # calculate mean pairwise difference
+    mpd = mean_pairwise_difference(ac, fill=0)
 
-    # sum in windows
+    # sum differences in windows
     mpd_sum, windows, counts = windowed_statistic(
         pos, values=mpd, statistic=np.sum, size=size, start=start, stop=stop,
         step=step, windows=windows, fill=0
@@ -458,8 +457,8 @@ def windowed_diversity(pos, ac, size, start=None, stop=None, step=None,
 
 
 def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
-                        is_accessible=None, fill=np.nan):
-    """Calculate nucleotide divergence between two populations in windows
+                        windows=None, is_accessible=None, fill=np.nan):
+    """Estimate nucleotide divergence between two populations in windows
     over a single chromosome/contig.
 
     Parameters
@@ -542,12 +541,12 @@ def windowed_divergence(pos, ac1, ac2, size, start=None, stop=None, step=None,
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise divergence
-    mpd = mean_pairwise_divergence(ac1, ac2, fill=0)
+    mpd = mean_pairwise_difference_between(ac1, ac2, fill=0)
 
     # sum in windows
     mpd_sum, windows, counts = windowed_statistic(
         pos, values=mpd, statistic=np.sum, size=size, start=start,
-        stop=stop, step=step, fill=0
+        stop=stop, step=step, windows=windows, fill=0
     )
 
     # calculate value per base
@@ -580,12 +579,6 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
         Component of variance between individuals within populations.
     c : ndarray, float, shape (n_variants, n_alleles)
         Component of variance between gametes within individuals.
-
-    Notes
-    -----
-
-    Please consider this implementation experimental, it has not been
-    rigorously tested.
 
     Examples
     --------
@@ -763,7 +756,6 @@ def _weir_cockerham_fst(g, subpops, max_allele):
     # now comes the tricky bit...
 
     # component of variance between populations
-    p_bar = p_bar[:, :]
     a = ((n_bar / n_C) *
          (s_squared -
           ((1 / (n_bar - 1)) *
@@ -788,7 +780,7 @@ def _weir_cockerham_fst(g, subpops, max_allele):
 
 def hudson_fst(ac1, ac2, fill=np.nan):
     """Calculate the numerator and denominator for Fst estimation using the
-    method of Hudson (1992).
+    method of Hudson (1992) elaborated by Bhatia et al. (2013).
 
     Parameters
     ----------
@@ -844,17 +836,23 @@ def hudson_fst(ac1, ac2, fill=np.nan):
 
     """  # flake8: noqa
 
+    # check inputs
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
+    check_dim0_aligned(ac1, ac2)
+    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
+
     # calculate these once only
     an1 = np.sum(ac1, axis=1)
     an2 = np.sum(ac2, axis=1)
 
     # calculate average diversity (a.k.a. heterozygosity) within each
     # population
-    within = (mean_pairwise_diversity(ac1, an1, fill=fill) +
-              mean_pairwise_diversity(ac2, an2, fill=fill)) / 2
+    within = (mean_pairwise_difference(ac1, an1, fill=fill) +
+              mean_pairwise_difference(ac2, an2, fill=fill)) / 2
 
     # calculate divergence (a.k.a. heterozygosity) between each population
-    between = mean_pairwise_divergence(ac1, ac2, an1, an2, fill=fill)
+    between = mean_pairwise_difference_between(ac1, ac2, an1, an2, fill=fill)
 
     # define numerator and denominator for Fst calculations
     num = between - within
@@ -863,8 +861,213 @@ def hudson_fst(ac1, ac2, fill=np.nan):
     return num, den
 
 
-# TODO windowed_weir_cockerham_fst
-# TODO windowed_hudson_fst
-# TODO pairwise_weir_cockerham_fst
-# TODO pairwise_hudson_fst
-# TODO fixed_differences
+def windowed_weir_cockerham_fst(pos, g, subpops, size, start=None, stop=None,
+                                step=None, windows=None, fill=np.nan,
+                                max_allele=None):
+    """Estimate average Fst in windows over a single chromosome/contig,
+    following the method of Weir and Cockerham (1984).
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    subpops : sequence of sequences of ints
+        Sample indices for each subpopulation.
+    size : int
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    fill : object, optional
+        The value to use where there are no variants within a window.
+    max_allele : int, optional
+        The highest allele index to consider.
+
+    Returns
+    -------
+
+    fst : ndarray, float, shape (n_windows,)
+        Average Fst in each window.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    """
+
+    # check inputs
+    if not hasattr(g, 'shape') or not hasattr(g, 'ndim'):
+        g = GenotypeArray(g, copy=False)
+    if g.ndim != 3:
+        raise ValueError('g must have three dimensions')
+    if g.shape[2] != 2:
+        raise NotImplementedError('only diploid genotypes are supported')
+
+    # determine highest allele index
+    if max_allele is None:
+        max_allele = g.max()
+
+    # define the statistic to compute within each window
+    def average_fst(wg):
+        a, b, c = _weir_cockerham_fst(wg, subpops=subpops,
+                                      max_allele=max_allele)
+        return np.sum(a) / (np.sum(a) + np.sum(b) + np.sum(c))
+
+    # calculate average Fst in windows
+    fst, windows, counts = windowed_statistic(pos, values=g,
+                                              statistic=average_fst,
+                                              size=size, start=start,
+                                              stop=stop, step=step,
+                                              windows=windows, fill=fill)
+
+    return fst, windows, counts
+
+
+def windowed_hudson_fst(pos, ac1, ac2, size, start=None, stop=None,
+                        step=None, windows=None, fill=np.nan):
+    """Estimate average Fst in windows over a single chromosome/contig,
+    following the method of Hudson (1992) elaborated by Bhatia et al. (2013).
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    size : int
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    fill : object, optional
+        The value to use where there are no variants within a window.
+
+    Returns
+    -------
+
+    fst : ndarray, float, shape (n_windows,)
+        Average Fst in each window.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    """
+
+    # check inputs
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
+    check_dim0_aligned(ac1, ac2)
+    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
+
+    # define the statistic to compute within each window
+    def average_fst(wac1, wac2):
+        num, den = hudson_fst(wac1, wac2, fill=fill)
+        return np.sum(num) / np.sum(den)
+
+    # calculate average Fst in windows
+    fst, windows, counts = windowed_statistic(pos, values=(ac1, ac2),
+                                              statistic=average_fst,
+                                              size=size, start=start,
+                                              stop=stop, step=step,
+                                              windows=windows, fill=fill)
+
+    return fst, windows, counts
+
+
+def windowed_df(pos, ac1, ac2, size, start=None, stop=None,
+                               step=None, windows=None, is_accessible=None,
+                               fill=np.nan):
+    """Calculate the density of fixed differences between two populations in
+    windows over a single chromosome/contig.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array for the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array for the second population.
+    size : int
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+    fill : object, optional
+        The value to use where a window is completely inaccessible.
+
+    Returns
+    -------
+
+    df : ndarray, float, shape (n_windows,)
+        Per-base density of fixed differences in each window.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    n_bases : ndarray, int, shape (n_windows,)
+        Number of (accessible) bases in each window.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    See Also
+    --------
+
+    allel.model.locate_fixed_differences
+
+    """
+
+    # check inputs
+    pos = SortedIndex(pos, copy=False)
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+
+    # locate fixed differences
+    loc_df = locate_fixed_differences(ac1, ac2)
+
+    # count number of fixed differences in windows
+    n_df, windows, counts = windowed_statistic(
+        pos, values=loc_df, statistic=np.count_nonzero, size=size, start=start,
+        stop=stop, step=step, windows=windows, fill=0
+    )
+
+    # calculate value per base
+    df, n_bases = per_base(n_df, windows, is_accessible=is_accessible,
+                           fill=fill)
+
+    return df, windows, n_bases, counts
