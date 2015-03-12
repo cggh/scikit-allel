@@ -6,6 +6,7 @@ import unittest
 
 
 import numpy as np
+from nose.tools import assert_raises, eq_ as eq
 from allel.test.tools import assert_array_equal as aeq, assert_array_close
 
 
@@ -72,7 +73,7 @@ class TestWindowUtilities(unittest.TestCase):
 
         # boolean array, bad length
         b = [False, True, False]
-        with self.assertRaises(ValueError):
+        with assert_raises(ValueError):
             f(pos, b, np.count_nonzero, 10)
 
         # 2D, 4 variants, 2 samples
@@ -169,7 +170,7 @@ class TestDiversityDivergence(unittest.TestCase):
                             [-1, -1]])
         ac = h.count_alleles()
         expect = [0, 0, 1, 1, -1, -1]
-        actual = allel.stats.mean_pairwise_diversity(ac, fill=-1)
+        actual = allel.stats.mean_pairwise_difference(ac, fill=-1)
         aeq(expect, actual)
 
         # four haplotypes, 6 pairwise comparison
@@ -184,7 +185,7 @@ class TestDiversityDivergence(unittest.TestCase):
                             [-1, -1, -1, -1]])
         ac = h.count_alleles()
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
-        actual = allel.stats.mean_pairwise_diversity(ac, fill=-1)
+        actual = allel.stats.mean_pairwise_difference(ac, fill=-1)
         assert_array_close(expect, actual)
 
     def test_windowed_diversity(self):
@@ -227,7 +228,8 @@ class TestDiversityDivergence(unittest.TestCase):
         ac2 = h2.count_alleles()
 
         expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
-        actual = allel.stats.mean_pairwise_divergence(ac1, ac2, fill=-1)
+        actual = allel.stats.mean_pairwise_difference_between(ac1, ac2,
+                                                              fill=-1)
         aeq(expect, actual)
 
     def test_windowed_divergence(self):
@@ -390,7 +392,8 @@ class TestDistance(unittest.TestCase):
                             [-1, -1, -1, -1]])
         import scipy.spatial
         d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
-        d2 = allel.stats.pdist(h, 'hamming')
+        import allel.stats.distance
+        d2 = allel.stats.distance.pdist(h, 'hamming')
         aeq(d1, d2)
 
     def test_pairwise_distance_multidim(self):
@@ -408,10 +411,92 @@ class TestDistance(unittest.TestCase):
         gac = g.to_allele_counts()
 
         def metric(ac1, ac2):
-            mpd = allel.stats.mean_pairwise_divergence(ac1, ac2, fill=0)
+            mpd = allel.stats.mean_pairwise_difference_between(ac1, ac2,
+                                                               fill=0)
             return mpd.sum()
 
-        expect = [allel.stats.mean_pairwise_divergence(gac[:, 0], gac[:, 1],
-                                                       fill=0).sum()]
+        expect = [
+            allel.stats.mean_pairwise_difference_between(gac[:, 0], gac[:, 1],
+                                                         fill=0).sum()]
         actual = allel.stats.pairwise_distance(gac, metric)
         aeq(expect, actual)
+
+
+class TestLinkageDisequilibrium(unittest.TestCase):
+
+    def test_rogers_huff_r(self):
+
+        gn = [[0, 1, 2],
+              [0, 1, 2]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2],
+              [2, 1, 0]]
+        expect = -1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 0, 0],
+              [1, 1, 1]]
+        actual = allel.stats.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[0, 1, 0, 1],
+              [0, 1, 1, 0]]
+        expect = 0
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2, -1],
+              [0, 1, 2, 2]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2, 2],
+              [0, 1, 2, -1]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 1, 2],
+              [0, 1, -1]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r(gn)
+        eq(expect, actual)
+
+        gn = [[0, 2],
+              [2, 0],
+              [0, 1]]
+        expect = [-1, 1, -1]
+        actual = allel.stats.rogers_huff_r(gn)
+        assert_array_close(expect, actual)
+
+        gn = [[0, 2, 0],
+              [0, 2, 0],
+              [2, 0, 2],
+              [0, 2, -1]]
+        expect = [1, -1, 1, -1, 1, -1]
+        actual = allel.stats.rogers_huff_r(gn)
+        assert_array_close(expect, actual)
+
+    def test_rogers_huff_r_between(self):
+
+        gna = [[0, 1, 2]]
+        gnb = [[0, 1, 2]]
+        expect = 1.
+        actual = allel.stats.rogers_huff_r_between(gna, gnb)
+        eq(expect, actual)
+
+        gna = [[0, 1, 2]]
+        gnb = [[2, 1, 0]]
+        expect = -1.
+        actual = allel.stats.rogers_huff_r_between(gna, gnb)
+        eq(expect, actual)
+
+        gna = [[0, 0, 0]]
+        gnb = [[1, 1, 1]]
+        actual = allel.stats.rogers_huff_r_between(gna, gnb)
+        assert np.isnan(actual)

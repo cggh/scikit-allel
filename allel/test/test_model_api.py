@@ -748,6 +748,22 @@ class GenotypeArrayInterface(object):
         eq(5, actual['sub2'].n_variants)
         eq(3, actual['sub2'].n_alleles)
 
+    def test_map_alleles(self):
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g = self.setup_instance(a)
+        mapping = np.array([[0, 1, 2],
+                            [2, 0, 1],
+                            [1, 2, 0],
+                            [2, 1, 0],
+                            [2, 0, 1]], dtype=np.int8)
+        expect = [[[0, 0], [0, 1], [-1, -1]],
+                  [[2, 1], [0, 0], [-1, -1]],
+                  [[2, 1], [0, 2], [-1, -1]],
+                  [[0, 0], [-1, -1], [-1, -1]],
+                  [[-1, -1], [-1, -1], [-1, -1]]]
+        actual = g.map_alleles(mapping)
+        aeq(expect, actual)
+
 
 class HaplotypeArrayInterface(object):
 
@@ -1018,6 +1034,29 @@ class HaplotypeArrayInterface(object):
         eq(4, actual['sub2'].n_variants)
         eq(3, actual['sub2'].n_alleles)
 
+    def test_map_alleles(self):
+
+        # generalised implementation
+        a = np.array(haplotype_data)
+        h = self.setup_instance(a)
+        mapping = np.array([[0, 1, 2],
+                            [2, 0, 1],
+                            [1, 2, 0],
+                            [2, 1, 0]])
+        expect = [[0, 1, -1],
+                  [0, 0, -1],
+                  [0, -1, -1],
+                  [-1, -1, -1]]
+        actual = h.map_alleles(mapping)
+        aeq(expect, actual)
+
+        # optimised implementation
+        a = np.array(haplotype_data, dtype='i1')
+        h = self.setup_instance(a)
+        mapping = np.array(mapping, dtype='i1')
+        actual = h.map_alleles(mapping)
+        aeq(expect, actual)
+
 
 class AlleleCountsArrayInterface(object):
 
@@ -1175,6 +1214,21 @@ class AlleleCountsArrayInterface(object):
         actual = ac.is_doubleton(allele=2)
         aeq(expect, actual)
         eq(np.sum(expect), ac.count_doubleton(allele=2))
+
+    def test_map_alleles(self):
+        ac = self.setup_instance(allele_counts_data)
+        mapping = np.array([[0, 1, 2],
+                            [2, 0, 1],
+                            [1, 2, 0],
+                            [2, 1, 0],
+                            [2, 0, 1]])
+        expect = [[3, 1, 0],
+                  [2, 1, 1],
+                  [1, 1, 2],
+                  [2, 0, 0],
+                  [0, 0, 0]]
+        actual = ac.map_alleles(mapping)
+        aeq(expect, actual)
 
 
 class SortedIndexInterface(object):
@@ -1936,3 +1990,34 @@ class FeatureTableInterface(object):
         expr = 'type == b"exon"'
         r = ft.query(expr)
         aeq(a.take([2, 3]), r)
+
+
+def test_create_allele_mapping():
+
+    # biallelic case
+    ref = [b'A', b'C', b'T', b'G']
+    alt = [b'T', b'G', b'C', b'A']
+    alleles = [[b'A', b'T'],  # no transformation
+               [b'G', b'C'],  # swap
+               [b'T', b'A'],  # 1 missing
+               [b'A', b'C']]  # 1 missing
+    expect = [[0, 1],
+              [1, 0],
+              [0, -1],
+              [-1, 0]]
+    actual = allel.model.create_allele_mapping(ref, alt, alleles)
+    aeq(expect, actual)
+
+    # multiallelic case
+    ref = [b'A', b'C', b'T']
+    alt = [[b'T', b'G'],
+           [b'A', b'T'],
+           [b'G', b'.']]
+    alleles = [[b'A', b'T'],
+               [b'C', b'T'],
+               [b'G', b'A']]
+    expect = [[0, 1, -1],
+              [0, -1, 1],
+              [-1, 0, -1]]
+    actual = allel.model.create_allele_mapping(ref, alt, alleles)
+    aeq(expect, actual)

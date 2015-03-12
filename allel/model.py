@@ -16,7 +16,8 @@ import numexpr as ne
 
 
 from allel.constants import DIM_PLOIDY, DIPLOID
-from allel.util import ignore_invalid, asarray_ndim, check_arrays_aligned
+from allel.util import ignore_invalid, asarray_ndim, check_dim0_aligned, \
+    ensure_dim1_aligned
 from allel.io import write_vcf, iter_gff3
 
 
@@ -93,17 +94,6 @@ class GenotypeArray(np.ndarray):
     within the genome of an organism are stored in separate arrays,
     discussed elsewhere.
 
-    In many cases the number of distinct alleles for each variant is
-    small, e.g., less than 10, or even 2 (all variants are
-    biallelic). In these cases a genotype array is not the most
-    compact way of storing genotype data in memory. This class defines
-    functions for bit-packing diploid genotype calls into single
-    bytes, and for transforming genotype arrays into sparse matrices,
-    which can assist in cases where memory usage needs to be
-    minimised. Note however that these more compact representations do
-    not allow the same flexibility in terms of using numpy universal
-    functions to access and manipulate data.
-
     Arrays of this class can store either **phased or unphased**
     genotype calls. If the genotypes are phased (i.e., haplotypes have
     been resolved) then individual haplotypes can be extracted by
@@ -117,6 +107,14 @@ class GenotypeArray(np.ndarray):
     haploid calls, use a :class:`HaplotypeArray`. Note that genotype
     arrays are not capable of storing calls for samples with differing
     or variable ploidy.
+
+    With genotype data on large numbers of variants and/or samples,
+    storing the genotype calls in memory as an uncompressed numpy
+    array if integers may be impractical. For working with large
+    arrays of genotype data, see the
+    :class:`allel.bcolz.GenotypeCArray` class, which provides an
+    alternative implementation of this interface using compressed
+    arrays.
 
     Examples
     --------
@@ -487,7 +485,7 @@ class GenotypeArray(np.ndarray):
         return out
 
     # noinspection PyUnusedLocal
-    def is_het(self):
+    def is_het(self, allele=None):
         """Find genotype calls that are heterozygous.
 
         Returns
@@ -496,6 +494,8 @@ class GenotypeArray(np.ndarray):
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
+        allele : int, optional
+            Heterozygous allele.
 
         Examples
         --------
@@ -508,6 +508,10 @@ class GenotypeArray(np.ndarray):
         array([[False,  True],
                [ True, False],
                [ True, False]], dtype=bool)
+        >>> g.is_het(2)
+        array([[False, False],
+               [False, False],
+               [ True, False]], dtype=bool)
 
         """
 
@@ -516,6 +520,9 @@ class GenotypeArray(np.ndarray):
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 >= 0) & (allele2  >= 0) & (allele1 != allele2)'
+            if allele is not None:
+                ex += ' & ((allele1 == {0}) | (allele2 == {0}))' \
+                    .format(allele)
             out = ne.evaluate(ex)
 
         # general ploidy case
@@ -524,6 +531,8 @@ class GenotypeArray(np.ndarray):
             other_alleles = self[..., 1:]  # noqa
             out = np.all(self >= 0, axis=-1) \
                 & np.any(allele1 != other_alleles, axis=-1)
+            if allele is not None:
+                out &= np.any(self == allele, axis=-1)
 
         return out
 
@@ -595,8 +604,8 @@ class GenotypeArray(np.ndarray):
         b = self.is_hom_alt()
         return np.sum(b, axis=axis)
 
-    def count_het(self, axis=None):
-        b = self.is_het()
+    def count_het(self, allele=None, axis=None):
+        b = self.is_het(allele=allele)
         return np.sum(b, axis=axis)
 
     def count_call(self, call, axis=None):
@@ -641,6 +650,8 @@ class GenotypeArray(np.ndarray):
         """
 
         if subpop is not None:
+            if np.any(np.array(subpop) >= self.shape[1]):
+                raise ValueError('index out of bounds')
             # convert to a haplotype selection
             subpop = sample_to_haplotype_selection(subpop, self.ploidy)
 
@@ -874,7 +885,7 @@ class GenotypeArray(np.ndarray):
         from allel.opt.model import genotype_pack_diploid
 
         # ensure int8 dtype
-        if self.dtype == np.int8:
+        if self.dtype.type == np.int8:
             data = self
         else:
             data = self.astype(dtype=np.int8)
@@ -1150,6 +1161,67 @@ class GenotypeArray(np.ndarray):
         gt = eval(expr)
 
         return gt
+
+    def map_alleles(self, mapping, copy=True):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+        copy : bool, optional
+            If True, return a new array; if False, apply mapping in place
+            (only applies for arrays with dtype int8; all other dtypes
+            require a copy).
+
+        Returns
+        -------
+
+        gm : GenotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[1, 2], [2, 1]],
+        ...                                [[2, 2], [-1, -1]]], dtype='i1')
+        >>> mapping = np.array([[1, 2, 0],
+        ...                     [2, 0, 1],
+        ...                     [2, 1, 0],
+        ...                     [0, 2, 1]], dtype='i1')
+        >>> g.map_alleles(mapping)
+        GenotypeArray((4, 2, 2), dtype=int8)
+        [[[ 1  1]
+          [ 1  2]]
+         [[ 2  1]
+          [ 0  0]]
+         [[ 1  0]
+          [ 0  1]]
+         [[ 1  1]
+          [-1 -1]]]
+
+        Notes
+        -----
+
+        For arrays with dtype int8 an optimised implementation is used which is
+        faster and uses far less memory. It is recommended to convert arrays to
+        dtype int8 where possible before calling this method.
+
+        See Also
+        --------
+
+        create_allele_mapping
+
+        """
+
+        h = self.to_haplotypes()
+        hm = h.map_alleles(mapping, copy=copy)
+        gm = hm.to_genotypes(ploidy=self.ploidy)
+        return gm
 
 
 class HaplotypeArray(np.ndarray):
@@ -1554,6 +1626,9 @@ class HaplotypeArray(np.ndarray):
 
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
+            if np.any(subpop >= self.shape[1]):
+                raise ValueError('index out of bounds')
 
         # determine alleles to count
         if max_allele is None:
@@ -1614,6 +1689,73 @@ class HaplotypeArray(np.ndarray):
                for name, subpop in subpops.items()}
 
         return out
+
+    def map_alleles(self, mapping, copy=True):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+        copy : bool, optional
+            If True, return a new array; if False, apply mapping in place
+            (only applies for arrays with dtype int8; all other dtypes
+            require a copy).
+
+        Returns
+        -------
+
+        hm : HaplotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> h = allel.model.HaplotypeArray([[0, 0, 0, 1],
+        ...                                 [0, 1, 1, 1],
+        ...                                 [0, 2, -1, -1]], dtype='i1')
+        >>> mapping = np.array([[1, 2, 0],
+        ...                     [2, 0, 1],
+        ...                     [2, 1, 0]], dtype='i1')
+        >>> h.map_alleles(mapping)
+        HaplotypeArray((3, 4), dtype=int8)
+        [[ 1  1  1  2]
+         [ 2  0  0  0]
+         [ 2  0 -1 -1]]
+
+        Notes
+        -----
+
+        For arrays with dtype int8 an optimised implementation is used which is
+        faster and uses far less memory. It is recommended to convert arrays to
+        dtype int8 where possible before calling this method.
+
+        See Also
+        --------
+
+        create_allele_mapping
+
+        """
+
+        # check inputs
+        mapping = asarray_ndim(mapping, 2)
+        check_dim0_aligned(self, mapping)
+
+        if self.dtype.type == np.int8:
+            # use optimisation
+            mapping = np.asarray(mapping, dtype='i1')
+            from allel.opt.model import haplotype_int8_map_alleles
+            data = haplotype_int8_map_alleles(self, mapping, copy=copy)
+
+        else:
+            # use numpy indexing
+            i = np.arange(self.shape[0]).reshape((-1, 1))
+            data = mapping[i, self]
+            data[self < 0] = -1
+
+        return HaplotypeArray(data, copy=False)
 
 
 class AlleleCountsArray(np.ndarray):
@@ -2008,6 +2150,65 @@ class AlleleCountsArray(np.ndarray):
 
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
+
+    def map_alleles(self, mapping):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+
+        Returns
+        -------
+
+        ac : AlleleCountsArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+        ...                                [[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
+        >>> ac = g.count_alleles()
+        >>> ac
+        AlleleCountsArray((4, 3), dtype=int32)
+        [[4 0 0]
+         [3 1 0]
+         [1 2 1]
+         [0 0 2]]
+        >>> mapping = [[1, 0, 2],
+        ...            [1, 0, 2],
+        ...            [2, 1, 0],
+        ...            [1, 2, 0]]
+        >>> ac.map_alleles(mapping)
+        AlleleCountsArray((4, 3), dtype=int64)
+        [[0 4 0]
+         [1 3 0]
+         [1 2 1]
+         [2 0 0]]
+
+        See Also
+        --------
+
+        create_allele_mapping
+
+        """
+
+        mapping = asarray_ndim(mapping, 2)
+        check_dim0_aligned(self, mapping)
+
+        # setup output array
+        out = np.empty_like(mapping)
+
+        # apply transformation
+        i = np.arange(self.shape[0]).reshape((-1, 1))
+        out[i, mapping] = self
+
+        return AlleleCountsArray(out)
 
 
 class SortedIndex(np.ndarray):
@@ -2404,7 +2605,7 @@ class SortedIndex(np.ndarray):
         # check inputs
         starts = asarray_ndim(starts, 1)
         stops = asarray_ndim(stops, 1)
-        check_arrays_aligned(starts, stops)
+        check_dim0_aligned(starts, stops)
 
         # find indices of start and stop values in idx
         start_indices = np.searchsorted(self, starts)
@@ -2782,7 +2983,7 @@ class SortedMultiIndex(object):
         l1 = SortedIndex(l1, copy=copy)
         l2 = np.array(l2, copy=copy)
         l2 = asarray_ndim(l2, 1)
-        check_arrays_aligned(l1, l2)
+        check_dim0_aligned(l1, l2)
         self.l1 = l1
         self.l2 = l2
 
@@ -3572,3 +3773,214 @@ class FeatureTable(np.recarray):
         a = np.fromiter(recs, dtype=dtype)
         ft = FeatureTable(a, copy=False)
         return ft
+
+
+def create_allele_mapping(ref, alt, alleles, dtype='i1'):
+    """Create an array mapping variant alleles into a different allele index
+    system.
+
+    Parameters
+    ----------
+
+    ref : array_like, S1, shape (n_variants,)
+        Reference alleles.
+    alt : array_like, S1, shape (n_variants, n_alt_alleles)
+        Alternate alleles.
+    alleles : array_like, S1, shape (n_variants, n_alleles)
+        Alleles defining the new allele indexing.
+
+    Returns
+    -------
+
+    mapping : ndarray, int8, shape (n_variants, n_alt_alleles + 1)
+
+    Examples
+    --------
+
+    Example with biallelic variants::
+
+        >>> import allel
+        >>> ref = [b'A', b'C', b'T', b'G']
+        >>> alt = [b'T', b'G', b'C', b'A']
+        >>> alleles = [[b'A', b'T'],  # no transformation
+        ...            [b'G', b'C'],  # swap
+        ...            [b'T', b'A'],  # 1 missing
+        ...            [b'A', b'C']]  # 1 missing
+        >>> mapping = allel.model.create_allele_mapping(ref, alt, alleles)
+        >>> mapping
+        array([[ 0,  1],
+               [ 1,  0],
+               [ 0, -1],
+               [-1,  0]], dtype=int8)
+
+    Example with multiallelic variants::
+
+        >>> ref = [b'A', b'C', b'T']
+        >>> alt = [[b'T', b'G'],
+        ...        [b'A', b'T'],
+        ...        [b'G', b'.']]
+        >>> alleles = [[b'A', b'T'],
+        ...            [b'C', b'T'],
+        ...            [b'G', b'A']]
+        >>> mapping = allel.model.create_allele_mapping(ref, alt, alleles)
+        >>> mapping
+        array([[ 0,  1, -1],
+               [ 0, -1,  1],
+               [-1,  0, -1]], dtype=int8)
+
+    See Also
+    --------
+
+    GenotypeArray.map_alleles, HaplotypeArray.map_alleles,
+    AlleleCountsArray.map_alleles
+
+    """
+
+    ref = asarray_ndim(ref, 1)
+    alt = asarray_ndim(alt, 1, 2)
+    alleles = asarray_ndim(alleles, 1, 2)
+    check_dim0_aligned(ref, alt, alleles)
+
+    # reshape for convenience
+    ref = ref[:, None]
+    if alt.ndim == 1:
+        alt = alt[:, None]
+    if alleles.ndim == 1:
+        alleles = alleles[:, None]
+    source_alleles = np.append(ref, alt, axis=1)
+
+    # setup output array
+    out = np.empty(source_alleles.shape, dtype=dtype)
+    out.fill(-1)
+
+    # find matches
+    for ai in range(source_alleles.shape[1]):
+        match = source_alleles[:, ai, None] == alleles
+        match_i, match_j = match.nonzero()
+        out[match_i, ai] = match_j
+
+    return out
+
+
+def locate_fixed_differences(ac1, ac2):
+    """Locate variants with no shared alleles between two populations.
+
+    Parameters
+    ----------
+
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+
+    Returns
+    -------
+
+    loc : ndarray, bool, shape (n_variants,)
+
+    See Also
+    --------
+
+    allel.stats.diversity.windowed_df
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+    ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
+    ...                                [[0, 1], [0, 1], [1, 1], [1, 1]],
+    ...                                [[0, 0], [0, 0], [1, 1], [2, 2]],
+    ...                                [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
+    >>> ac1 = g.count_alleles(subpop=[0, 1])
+    >>> ac2 = g.count_alleles(subpop=[2, 3])
+    >>> loc_df = allel.model.locate_fixed_differences(ac1, ac2)
+    >>> loc_df
+    array([ True, False, False,  True,  True], dtype=bool)
+
+    """
+
+    # check inputs
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
+    check_dim0_aligned(ac1, ac2)
+    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
+
+    # stack allele counts for convenience
+    pac = np.dstack([ac1, ac2])
+
+    # count numbers of alleles called in each population
+    pan = np.sum(pac, axis=1)
+
+    # count the numbers of populations with each allele
+    npa = np.sum(pac > 0, axis=2)
+
+    # locate variants with allele calls in both populations
+    non_missing = np.all(pan > 0, axis=1)
+
+    # locate variants where all alleles are only found in a single population
+    no_shared_alleles = np.all(npa <= 1, axis=1)
+
+    return non_missing & no_shared_alleles
+
+
+def locate_private_alleles(*acs):
+    """Locate alleles that are found only in a single population.
+
+    Parameters
+    ----------
+
+    *acs : array_like, int, shape (n_variants, n_alleles)
+        Allele counts arrays from each population.
+
+    Returns
+    -------
+
+    loc : ndarray, bool, shape (n_variants, n_alleles)
+        Boolean array where elements are True if allele is private to a
+        single population.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+    ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
+    ...                                [[0, 1], [0, 1], [1, 1], [1, 1]],
+    ...                                [[0, 0], [0, 0], [1, 1], [2, 2]],
+    ...                                [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
+    >>> ac1 = g.count_alleles(subpop=[0, 1])
+    >>> ac2 = g.count_alleles(subpop=[2])
+    >>> ac3 = g.count_alleles(subpop=[3])
+    >>> loc_private_alleles = allel.model.locate_private_alleles(ac1, ac2, ac3)
+    >>> loc_private_alleles
+    array([[ True, False, False],
+           [False, False, False],
+           [ True, False, False],
+           [ True,  True,  True],
+           [ True,  True, False]], dtype=bool)
+    >>> loc_private_variants = np.any(loc_private_alleles, axis=1)
+    >>> loc_private_variants
+    array([ True, False,  True,  True,  True], dtype=bool)
+
+    """
+
+    # check inputs
+    acs = [asarray_ndim(ac, 2) for ac in acs]
+    debug([ac.shape for ac in acs])
+    check_dim0_aligned(*acs)
+    debug([ac.shape for ac in acs])
+    acs = ensure_dim1_aligned(*acs)
+    debug([ac.shape for ac in acs])
+
+    # stack allele counts for convenience
+    pac = np.dstack(acs)
+    debug(pac.shape)
+
+    # count the numbers of populations with each allele
+    npa = np.sum(pac > 0, axis=2)
+
+    # locate alleles found only in a single population
+    loc_pa = npa == 1
+
+    return loc_pa

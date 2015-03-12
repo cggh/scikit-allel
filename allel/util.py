@@ -27,9 +27,35 @@ def asarray_ndim(a, *ndims, **kwargs):
     return a
 
 
-def check_arrays_aligned(a, b):
-    if a.shape[0] != b.shape[0]:
-        raise ValueError(
-            'arrays do not have matching length for first dimension: %s, %s'
-            % (a.shape[0], b.shape[0])
-        )
+def check_dim0_aligned(a, *others):
+    for b in others:
+        if b.shape[0] != a.shape[0]:
+            raise ValueError(
+                'arrays do not have matching length for first dimension'
+            )
+
+
+def check_equal_length(a, *others):
+    l = len(a)
+    for b in others:
+        if len(b) != l:
+            raise ValueError('sequences do not have matching length')
+
+
+def resize_dim1(a, l, fill=0):
+    if a.shape[1] < l:
+        newshape = a.shape[0], l
+        b = np.zeros(newshape, dtype=a.dtype)
+        if fill != 0:
+            b.fill(fill)
+        b[:, :a.shape[1]] = a
+        return b
+    else:
+        return a
+
+
+def ensure_dim1_aligned(*arrays, **kwargs):
+    fill = kwargs.get('fill', 0)
+    l = max(a.shape[1] for a in arrays)
+    arrays = [resize_dim1(a, l, fill=fill) for a in arrays]
+    return arrays

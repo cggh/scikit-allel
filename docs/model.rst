@@ -28,6 +28,7 @@ GenotypeArray
     .. automethod:: count_call
     .. automethod:: count_alleles
     .. automethod:: count_alleles_subpops
+    .. automethod:: map_alleles
     .. automethod:: to_haplotypes
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
@@ -59,6 +60,7 @@ HaplotypeArray
     .. automethod:: count_call
     .. automethod:: count_alleles
     .. automethod:: count_alleles_subpops
+    .. automethod:: map_alleles
     .. automethod:: to_genotypes
     .. automethod:: to_sparse
     .. automethod:: from_sparse
@@ -84,6 +86,7 @@ AlleleCountsArray
     .. automethod:: count_singleton
     .. automethod:: count_doubleton
     .. automethod:: to_frequencies
+    .. automethod:: map_alleles
 
 VariantTable
 ------------
@@ -144,3 +147,10 @@ SortedMultiIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_range
+
+Utility functions
+-----------------
+
+.. autofunction:: create_allele_mapping
+.. autofunction:: locate_fixed_differences
+.. autofunction:: locate_private_alleles
