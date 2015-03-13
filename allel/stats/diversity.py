@@ -1422,7 +1422,7 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> D
-    array([-6.24424711, -3.2793528 , -6.73839617])
+    array([ 0.59158014,  2.93397641,  6.12372436])
     >>> windows
     array([[ 1, 10],
            [11, 20],
