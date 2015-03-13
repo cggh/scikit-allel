@@ -1100,7 +1100,7 @@ def watterson_theta(pos, ac, start=None, stop=None,
     Returns
     -------
 
-    theta_hat_w : ndarray, float, shape (n_windows,)
+    theta_hat_w : float
         Watterson's estimator (theta hat per base).
 
     Examples
@@ -1253,7 +1253,8 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
     S, windows, counts = windowed_statistic(pos, is_seg,
                                             statistic=np.count_nonzero,
                                             size=size, start=start,
-                                            stop=stop, windows=windows, fill=0)
+                                            stop=stop, step=step,
+                                            windows=windows, fill=0)
 
     # assume number of chromosomes sampled is constant for all variants
     n = ac.sum(axis=1).max()
@@ -1271,5 +1272,209 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
     return theta_hat_w, windows, n_bases, counts
 
 
-# TODO tajima_d
-# TODO windowed_tajima_d
+# noinspection PyPep8Naming
+def tajima_d(pos, ac, start=None, stop=None):
+    """Calculate the value of Tajima's D over a given region.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array.
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+
+    Returns
+    -------
+
+    D : float
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+    ...                                [[0, 0], [0, 1]],
+    ...                                [[0, 0], [1, 1]],
+    ...                                [[0, 1], [1, 1]],
+    ...                                [[1, 1], [1, 1]],
+    ...                                [[0, 0], [1, 2]],
+    ...                                [[0, 1], [1, 2]],
+    ...                                [[0, 1], [-1, -1]],
+    ...                                [[-1, -1], [-1, -1]]])
+    >>> ac = g.count_alleles()
+    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+    >>> D = allel.stats.tajima_d(pos, ac, start=1, stop=31)
+    >>> D
+    3.1445848780213814
+
+    """
+
+    # check inputs
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
+    if not hasattr(ac, 'count_segregating'):
+        ac = AlleleCountsArray(ac, copy=False)
+
+    # deal with subregion
+    if start is not None or stop is not None:
+        loc = pos.locate_range(start, stop)
+        ac = ac[loc]
+
+    # assume number of chromosomes sampled is constant for all variants
+    n = ac.sum(axis=1).max()
+
+    # count segregating variants
+    S = ac.count_segregating()
+
+    # (n-1)th harmonic number
+    a1 = np.sum(1 / np.arange(1, n))
+
+    # calculate Watterson's theta (absolute value)
+    theta_hat_w_abs = S / a1
+
+    # calculate mean pairwise difference
+    mpd = mean_pairwise_difference(ac, fill=0)
+
+    # calculate theta_hat pi (sum differences over variants)
+    theta_hat_pi_abs = np.sum(mpd)
+
+    # N.B., both theta estimates are usually divided by the number of
+    # (accessible) bases but here we want the absolute difference
+    d = theta_hat_pi_abs - theta_hat_w_abs
+
+    # calculate the denominator (standard deviation)
+    a2 = np.sum(1 / (np.arange(1, n)**2))
+    b1 = (n + 1) / (3 * (n - 1))
+    b2 = 2 * (n**2 + n + 3) / (9 * n * (n - 1))
+    c1 = b1 - (1 / a1)
+    c2 = b2 - ((n + 2) / (a1 * n)) + (a2 / (a1**2))
+    e1 = c1 / a1
+    e2 = c2 / (a1**2 + a2)
+    d_stdev = np.sqrt((e1 * S) + (e2 * S * (S - 1)))
+
+    # finally calculate Tajima's D
+    D = d / d_stdev
+
+    return D
+
+
+# noinspection PyPep8Naming
+def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
+                      step=None, windows=None, fill=np.nan):
+    """Calculate the value of Tajima's D in windows over a single
+    chromosome/contig.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array.
+    size : int, optional
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    fill : object, optional
+        The value to use where a window is completely inaccessible.
+
+    Returns
+    -------
+
+    D : ndarray, float, shape (n_windows,)
+        Tajima's D.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+    ...                                [[0, 0], [0, 1]],
+    ...                                [[0, 0], [1, 1]],
+    ...                                [[0, 1], [1, 1]],
+    ...                                [[1, 1], [1, 1]],
+    ...                                [[0, 0], [1, 2]],
+    ...                                [[0, 1], [1, 2]],
+    ...                                [[0, 1], [-1, -1]],
+    ...                                [[-1, -1], [-1, -1]]])
+    >>> ac = g.count_alleles()
+    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+    >>> D, windows, counts = allel.stats.windowed_tajima_d(
+    ...     pos, ac, size=10, start=1, stop=31
+    ... )
+    >>> D
+    array([-6.24424711, -3.2793528 , -6.73839617])
+    >>> windows
+    array([[ 1, 10],
+           [11, 20],
+           [21, 31]])
+    >>> counts
+    array([3, 4, 2])
+
+    """
+
+    # check inputs
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
+    if not hasattr(ac, 'count_segregating'):
+        ac = AlleleCountsArray(ac, copy=False)
+
+    # assume number of chromosomes sampled is constant for all variants
+    n = ac.sum(axis=1).max()
+
+    # calculate constants
+    a1 = np.sum(1 / np.arange(1, n))
+    a2 = np.sum(1 / (np.arange(1, n)**2))
+    b1 = (n + 1) / (3 * (n - 1))
+    b2 = 2 * (n**2 + n + 3) / (9 * n * (n - 1))
+    c1 = b1 - (1 / a1)
+    c2 = b2 - ((n + 2) / (a1 * n)) + (a2 / (a1**2))
+    e1 = c1 / a1
+    e2 = c2 / (a1**2 + a2)
+
+    # locate segregating variants
+    is_seg = ac.is_segregating()
+
+    # calculate mean pairwise difference
+    mpd = mean_pairwise_difference(ac, fill=0)
+
+    # define statistic to compute for each window
+    # noinspection PyPep8Naming
+    def statistic(w_is_seg, w_mpd):
+        S = np.count_nonzero(is_seg)
+        pi = np.sum(w_mpd)
+        d = pi - (S / a1)
+        d_stdev = np.sqrt((e1 * S) + (e2 * S * (S - 1)))
+        wD = d / d_stdev
+        return wD
+
+    D, windows, counts = windowed_statistic(pos, values=(is_seg, mpd),
+                                            statistic=statistic, size=size,
+                                            start=start, stop=stop,
+                                            windows=windows, fill=fill)
+
+    return D, windows, counts
+
+
+# TODO moving_tajima_d
+# TODO moving_weir_cockerham_fst
+# TODO moving_hudson_fst
