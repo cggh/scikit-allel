@@ -1460,7 +1460,7 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     # define statistic to compute for each window
     # noinspection PyPep8Naming
     def statistic(w_is_seg, w_mpd):
-        S = np.count_nonzero(is_seg)
+        S = np.count_nonzero(w_is_seg)
         pi = np.sum(w_mpd)
         d = pi - (S / a1)
         d_stdev = np.sqrt((e1 * S) + (e2 * S * (S - 1)))
