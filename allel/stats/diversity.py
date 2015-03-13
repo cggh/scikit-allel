@@ -8,7 +8,8 @@ import logging
 import numpy as np
 
 
-from allel.model import SortedIndex, GenotypeArray, locate_fixed_differences
+from allel.model import SortedIndex, GenotypeArray, \
+    locate_fixed_differences, AlleleCountsArray
 from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned, \
     ensure_dim1_aligned
 from allel.stats.window import windowed_statistic, per_base
@@ -251,6 +252,10 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     # check inputs
     if not isinstance(pos, SortedIndex):
         pos = SortedIndex(pos, copy=False)
+    ac = asarray_ndim(ac, 2)
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+
+    # deal with subregion
     if start is not None or stop is not None:
         loc = pos.locate_range(start, stop)
         pos = pos[loc]
@@ -259,7 +264,6 @@ def sequence_diversity(pos, ac, start=None, stop=None,
         start = pos[0]
     if stop is None:
         stop = pos[-1]
-    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise difference
     mpd = mean_pairwise_difference(ac, fill=0)
@@ -1071,3 +1075,201 @@ def windowed_df(pos, ac1, ac2, size=None, start=None, stop=None, step=None,
                            fill=fill)
 
     return df, windows, n_bases, counts
+
+
+# noinspection PyPep8Naming
+def watterson_theta(pos, ac, start=None, stop=None,
+                    is_accessible=None):
+    """Calculate the value of Watterson's estimator over a given region.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array.
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+
+    Returns
+    -------
+
+    theta_hat_w : ndarray, float, shape (n_windows,)
+        Watterson's estimator (theta hat per base).
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+    ...                                [[0, 0], [0, 1]],
+    ...                                [[0, 0], [1, 1]],
+    ...                                [[0, 1], [1, 1]],
+    ...                                [[1, 1], [1, 1]],
+    ...                                [[0, 0], [1, 2]],
+    ...                                [[0, 1], [1, 2]],
+    ...                                [[0, 1], [-1, -1]],
+    ...                                [[-1, -1], [-1, -1]]])
+    >>> ac = g.count_alleles()
+    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+    >>> theta_hat_w = allel.stats.watterson_theta(pos, ac, start=1, stop=31)
+    >>> theta_hat_w
+    0.10557184750733138
+
+    """
+
+    # check inputs
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    if not hasattr(ac, 'count_segregating'):
+        ac = AlleleCountsArray(ac, copy=False)
+
+    # deal with subregion
+    if start is not None or stop is not None:
+        loc = pos.locate_range(start, stop)
+        pos = pos[loc]
+        ac = ac[loc]
+    if start is None:
+        start = pos[0]
+    if stop is None:
+        stop = pos[-1]
+
+    # count segregating variants
+    S = ac.count_segregating()
+
+    # assume number of chromosomes sampled is constant for all variants
+    n = ac.sum(axis=1).max()
+
+    # (n-1)th harmonic number
+    a1 = np.sum(1 / np.arange(1, n))
+
+    # calculate absolute value
+    theta_hat_w_abs = S / a1
+
+    # calculate value per base
+    if is_accessible is None:
+        n_bases = stop - start + 1
+    else:
+        n_bases = np.count_nonzero(is_accessible[start-1:stop])
+    theta_hat_w = theta_hat_w_abs / n_bases
+
+    return theta_hat_w
+
+
+def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
+                             step=None, windows=None, is_accessible=None,
+                             fill=np.nan):
+    """Calculate the value of Watterson's estimator in windows over a single
+    chromosome/contig.
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array.
+    size : int, optional
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    is_accessible : array_like, bool, shape (len(contig),), optional
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+    fill : object, optional
+        The value to use where a window is completely inaccessible.
+
+    Returns
+    -------
+
+    theta_hat_w : ndarray, float, shape (n_windows,)
+        Watterson's estimator (theta hat per base).
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    n_bases : ndarray, int, shape (n_windows,)
+        Number of (accessible) bases in each window.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0]],
+    ...                                [[0, 0], [0, 1]],
+    ...                                [[0, 0], [1, 1]],
+    ...                                [[0, 1], [1, 1]],
+    ...                                [[1, 1], [1, 1]],
+    ...                                [[0, 0], [1, 2]],
+    ...                                [[0, 1], [1, 2]],
+    ...                                [[0, 1], [-1, -1]],
+    ...                                [[-1, -1], [-1, -1]]])
+    >>> ac = g.count_alleles()
+    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+    >>> theta_hat_w, windows, n_bases, counts = allel.stats.windowed_watterson_theta(
+    ...     pos, ac, size=10, start=1, stop=31
+    ... )
+    >>> theta_hat_w
+    array([ 0.10909091,  0.16363636,  0.04958678])
+    >>> windows
+    array([[ 1, 10],
+           [11, 20],
+           [21, 31]])
+    >>> n_bases
+    array([10, 10, 11])
+    >>> counts
+    array([3, 4, 2])
+
+    """
+
+    # check inputs
+    if not isinstance(pos, SortedIndex):
+        pos = SortedIndex(pos, copy=False)
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    if not hasattr(ac, 'count_segregating'):
+        ac = AlleleCountsArray(ac, copy=False)
+
+    # locate segregating variants
+    is_seg = ac.is_segregating()
+
+    # count segregating variants in windows
+    S, windows, counts = windowed_statistic(pos, is_seg,
+                                            statistic=np.count_nonzero,
+                                            size=size, start=start,
+                                            stop=stop, windows=windows, fill=0)
+
+    # assume number of chromosomes sampled is constant for all variants
+    n = ac.sum(axis=1).max()
+
+    # (n-1)th harmonic number
+    a1 = np.sum(1 / np.arange(1, n))
+
+    # absolute value of Watterson's theta
+    theta_hat_w_abs = S / a1
+
+    # theta per base
+    theta_hat_w, n_bases = per_base(theta_hat_w_abs, windows=windows,
+                                    is_accessible=is_accessible, fill=fill)
+
+    return theta_hat_w, windows, n_bases, counts
+
+
+# TODO tajima_d
+# TODO windowed_tajima_d

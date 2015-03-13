@@ -420,3 +420,4 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
 
 # TODO windowed_nnz
 # TODO windowed_nnz_per_base
+# TODO equally_accessible_windows
