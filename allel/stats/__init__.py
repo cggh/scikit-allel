@@ -11,9 +11,11 @@ from allel.stats.window import moving_statistic, windowed_count, \
 
 from allel.stats.diversity import mean_pairwise_difference, \
     sequence_diversity, windowed_diversity, mean_pairwise_difference_between, \
-    sequence_divergence, windowed_divergence, \
-    weir_cockerham_fst, hudson_fst, windowed_weir_cockerham_fst, \
-    windowed_hudson_fst, windowed_df
+    sequence_divergence, windowed_divergence, windowed_df, watterson_theta, \
+    windowed_watterson_theta, tajima_d, windowed_tajima_d
+
+from allel.stats.fst import weir_cockerham_fst, hudson_fst, \
+    windowed_weir_cockerham_fst, windowed_hudson_fst
 
 from allel.stats.distance import pairwise_distance, pairwise_dxy
 
