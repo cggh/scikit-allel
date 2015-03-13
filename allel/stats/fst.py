@@ -265,10 +265,10 @@ def hudson_fst(ac1, ac2, fill=np.nan):
     -------
 
     num : ndarray, float, shape (n_variants,)
-        Heterozygosity between the two populations minus average
-        of heterozygosity within each population.
+        Divergence between the two populations minus average
+        of diversity within each population.
     den : ndarray, float, shape (n_variants,)
-        Heterozygosity between the two populations.
+        Divergence between the two populations.
 
     Examples
     --------

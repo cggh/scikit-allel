@@ -2,6 +2,10 @@
 """
 This module defines NumPy array classes for variant call data.
 
+Please note, functions and command line utilities for converting variant call
+data from the VCF file format into NumPy arrays and HDF5 files are available
+from the `vcfnp <https://github.com/alimanfoo/vcfnp>`_ package.
+
 """
 from __future__ import absolute_import, print_function, division
 
