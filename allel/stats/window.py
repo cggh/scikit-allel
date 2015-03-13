@@ -416,3 +416,7 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
         n_bases = n_bases.reshape(-1)
 
     return y, n_bases
+
+
+# TODO windowed_nnz
+# TODO windowed_nnz_per_base
