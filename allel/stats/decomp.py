@@ -224,8 +224,9 @@ class GenotypeRandomizedPCA(object):
 
     def fit_transform(self, gn):
         x = prepare_gn_array(gn)
-        x = self._fit(x)
-        return np.dot(x, self.components_.T)
+        u, s, v = self._fit(x)
+        u *= s
+        return u
 
     def _fit(self, x):
         from sklearn.utils.validation import check_random_state
@@ -251,7 +252,7 @@ class GenotypeRandomizedPCA(object):
         # store components
         self.components_ = v
 
-        return x
+        return u, s, v
 
     def transform(self, gn, copy=None):
         if not hasattr(self, 'components_'):
