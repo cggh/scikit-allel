@@ -271,6 +271,8 @@ class StandardScaler(object):
 
     def __init__(self, copy=True):
         self.copy = copy
+        self.mean_ = None
+        self.std_ = None
 
     def fit(self, x):
 
@@ -306,6 +308,8 @@ class CenterScaler(object):
 
     def __init__(self, copy=True):
         self.copy = copy
+        self.mean_ = None
+        self.std_ = None
 
     def fit(self, x):
 
@@ -336,6 +340,8 @@ class PattersonScaler(object):
     def __init__(self, copy=True, ploidy=2):
         self.copy = copy
         self.ploidy = ploidy
+        self.mean_ = None
+        self.std_ = None
 
     def fit(self, x):
 
