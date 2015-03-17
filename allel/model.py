@@ -729,7 +729,59 @@ class GenotypeArray(np.ndarray):
         h = HaplotypeArray(data, copy=copy)
         return h
 
-    def to_n_alt(self, fill=0):
+    def to_n_ref(self, fill=0, dtype='i1'):
+        """Transform each genotype call into the number of
+        reference alleles.
+
+        Parameters
+        ----------
+
+        fill : int, optional
+            Use this value to represent missing calls.
+
+        Returns
+        -------
+
+        out : ndarray, int, shape (n_variants, n_samples)
+            Array of ref alleles per genotype call.
+
+        Notes
+        -----
+
+        By default this function returns 0 for missing genotype calls
+        **and** for homozygous non-reference genotype calls. Use the
+        `fill` argument to change how missing calls are represented.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 2], [1, 1]],
+        ...                                [[2, 2], [-1, -1]]])
+        >>> g.to_n_ref()
+        array([[2, 1],
+               [1, 0],
+               [0, 0]], dtype=int8)
+        >>> g.to_n_ref(fill=-1)
+        array([[ 2,  1],
+               [ 1,  0],
+               [ 0, -1]], dtype=int8)
+
+        """
+
+        # count number of alternate alleles
+        out = np.empty((self.n_variants, self.n_samples), dtype=dtype)
+        np.sum(self == 0, axis=-1, out=out)
+
+        # fill missing calls
+        if fill != 0:
+            m = self.is_missing()
+            out[m] = fill
+
+        return out
+
+    def to_n_alt(self, fill=0, dtype='i1'):
         """Transform each genotype call into the number of
         non-reference alleles.
 
@@ -775,7 +827,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # count number of alternate alleles
-        out = np.empty((self.n_variants, self.n_samples), dtype='i1')
+        out = np.empty((self.n_variants, self.n_samples), dtype=dtype)
         np.sum(self > 0, axis=-1, out=out)
 
         # fill missing calls

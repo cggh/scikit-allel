@@ -30,6 +30,7 @@ GenotypeArray
     .. automethod:: count_alleles_subpops
     .. automethod:: map_alleles
     .. automethod:: to_haplotypes
+    .. automethod:: to_n_ref
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
     .. automethod:: to_packed

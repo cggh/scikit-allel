@@ -981,10 +981,17 @@ class GenotypeCArray(_CArrayWrapper):
         out = carray_block_map(self.carr, f, **kwargs)
         return HaplotypeCArray(out, copy=False)
 
-    def to_n_alt(self, fill=0, **kwargs):
+    def to_n_ref(self, fill=0, dtype='i1', **kwargs):
         def f(block):
-            return GenotypeArray(block, copy=False).to_n_alt(fill)
-        return carray_block_map(self.carr, f, **kwargs)
+            return GenotypeArray(block, copy=False).to_n_ref(fill=fill,
+                                                             dtype=dtype)
+        return carray_block_map(self.carr, f, dtype=dtype, **kwargs)
+
+    def to_n_alt(self, fill=0, dtype='i1', **kwargs):
+        def f(block):
+            return GenotypeArray(block, copy=False).to_n_alt(fill=fill,
+                                                             dtype=dtype)
+        return carray_block_map(self.carr, f, dtype=dtype, **kwargs)
 
     def to_allele_counts(self, alleles=None, **kwargs):
 

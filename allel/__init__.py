@@ -2,7 +2,7 @@
 # flake8: noqa
 
 
-__version__ = '0.12.0.dev10'
+__version__ = '0.12.0.dev11'
 
 
 import allel.model as model

@@ -562,6 +562,42 @@ class GenotypeArrayInterface(object):
         actual = self.setup_instance(triploid_genotype_data).to_haplotypes()
         aeq(expect, actual)
 
+    def test_to_n_ref(self):
+
+        # diploid
+        expect = np.array([[2, 1, 0],
+                           [1, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='i1')
+        actual = self.setup_instance(diploid_genotype_data).to_n_ref()
+        aeq(expect, actual)
+
+        # polyploid
+        expect = np.array([[3, 2, 0],
+                           [1, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0]], dtype='i1')
+        actual = self.setup_instance(triploid_genotype_data).to_n_ref()
+        aeq(expect, actual)
+
+        # diploid with fill
+        expect = np.array([[2, 1, -1],
+                           [1, 0, -1],
+                           [1, 0, -1],
+                           [0, -1, -1],
+                           [-1, -1, -1]], dtype='i1')
+        actual = self.setup_instance(diploid_genotype_data).to_n_ref(fill=-1)
+        aeq(expect, actual)
+
+        # polyploid with fill
+        expect = np.array([[3, 2, -1],
+                           [1, 0, -1],
+                           [1, -1, -1],
+                           [-1, -1, -1]], dtype='i1')
+        actual = self.setup_instance(triploid_genotype_data).to_n_ref(fill=-1)
+        aeq(expect, actual)
+
     def test_to_n_alt(self):
 
         # diploid
