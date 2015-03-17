@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: profile=False
+# cython: profile=True
 from __future__ import absolute_import, print_function, division
 
 

@@ -22,7 +22,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['scipy', 'scipy.stats', 'scipy.spatial',
+MOCK_MODULES = ['scipy', 'scipy.stats', 'scipy.spatial', 'scipy.linalg',
                 'scipy.spatial.distance', 'matplotlib', 'matplotlib.pyplot',
                 'matplotlib.image', 'ipython', 'numexpr', 'sklearn',
                 'sklearn.decomposition', 'h5py', 'rpy2', 'rpy2.robjects',

@@ -19,9 +19,10 @@ def ignore_invalid():
 
 def asarray_ndim(a, *ndims, **kwargs):
     allow_none = kwargs.pop('allow_none', False)
+    kwargs.setdefault('copy', False)
     if a is None and allow_none:
         return None
-    a = np.asarray(a, **kwargs)
+    a = np.array(a, **kwargs)
     if a.ndim not in ndims:
         raise ValueError('invalid number of dimensions: %s' % a.ndim)
     return a

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: profile=False
+# cython: profile=True
 from __future__ import absolute_import, print_function, division
 
 
@@ -142,7 +142,9 @@ def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn, int size, int step,
     cdef int window_start, window_stop, i, j
     cdef cnp.float32_t r_squared
     cdef cnp.int8_t[:, :] gn_sq
+    cdef cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
     cdef int overlap = size - step
+    cdef bint last
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)

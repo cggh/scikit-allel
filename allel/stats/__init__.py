@@ -24,3 +24,5 @@ from allel.stats.hw import heterozygosity_observed, heterozygosity_expected, \
 
 from allel.stats.ld import rogers_huff_r, rogers_huff_r_between, \
     locate_unlinked
+
+from allel.stats.decomposition import pca, randomized_pca

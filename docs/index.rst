@@ -3,9 +3,9 @@
 scikit-allel - Explore and analyse genetic variation
 ====================================================
 
-This package provides utility functions for working with large scale
-genetic variation data using numpy_, scipy_ and other established
-Python scientific libraries.
+This package provides utilities for working with large scale genetic
+variation data using numpy_, scipy_ and other established Python scientific
+libraries.
 
 * GitHub repository: https://github.com/cggh/scikit-allel
 * Documentation: http://scikit-allel.readthedocs.org/
@@ -17,8 +17,8 @@ questions please email Alistair Miles <alimanfoo@googlemail.com>.
 Installation
 ------------
 
-This package requires numpy_, scipy_, matplotlib_, pandas_, h5py_,
-numexpr_ and bcolz_. Install these dependencies first, then use pip to
+This package requires numpy_, scipy_, matplotlib_, pandas_, scikit-learn_,
+h5py_, numexpr_ and bcolz_. Install these dependencies first, then use pip to
 install scikit-allel::
 
     $ pip install -U scikit-allel
@@ -51,6 +51,7 @@ Indices and tables
 .. _scipy: http://www.scipy.org/
 .. _matplotlib: http://matplotlib.org/
 .. _pandas: http://pandas.pydata.org/
+.. _scikit-learn: http://scikit-learn.org/
 .. _h5py: http://www.h5py.org/
 .. _numexpr: https://github.com/pydata/numexpr
 .. _bcolz: http://bcolz.blosc.org/

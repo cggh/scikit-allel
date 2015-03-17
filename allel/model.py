@@ -3988,3 +3988,6 @@ def locate_private_alleles(*acs):
     loc_pa = npa == 1
 
     return loc_pa
+
+
+# TODO to_n_ref
