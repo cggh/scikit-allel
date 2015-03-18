@@ -800,6 +800,31 @@ class GenotypeArrayInterface(object):
         actual = g.map_alleles(mapping)
         aeq(expect, actual)
 
+    def test_set_mask(self):
+
+        # diploid case
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g = self.setup_instance(a)
+        eq(7, g.count_called())
+        m = [[True, False, False],
+             [False, False, False],
+             [False, True, False],
+             [False, False, True],
+             [True, False, True]]
+        g.mask = m
+        eq(5, g.count_called())
+
+        # polyploid
+        a = np.array(triploid_genotype_data, dtype=np.int8)
+        g = self.setup_instance(a)
+        eq(5, g.count_called())
+        m = [[True, False, False],
+             [False, False, False],
+             [False, True, False],
+             [False, False, True]]
+        g.mask = m
+        eq(4, g.count_called())
+
 
 class HaplotypeArrayInterface(object):
 

@@ -18,6 +18,14 @@ def ignore_invalid():
         np.seterr(**err)
 
 
+def check_array_like(a, *ndims, **kwargs):
+    if not hasattr(a, 'ndim'):
+        cls = kwargs.pop('default', np.asarray)
+        a = cls(a, **kwargs)
+    if a.ndim not in ndims:
+        raise ValueError('invalid number of dimensions: %s' % a.ndim)
+
+
 def asarray_ndim(a, *ndims, **kwargs):
     allow_none = kwargs.pop('allow_none', False)
     kwargs.setdefault('copy', False)

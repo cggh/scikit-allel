@@ -18,8 +18,8 @@ Installation
 ------------
 
 This package requires numpy_, scipy_, matplotlib_, pandas_, scikit-learn_,
-h5py_, numexpr_ and bcolz_. Install these dependencies first, then use pip to
-install scikit-allel::
+h5py_, numexpr_, bcolz_ and petl_. Install these dependencies first, then use
+pip to install scikit-allel::
 
     $ pip install -U scikit-allel
 
@@ -57,3 +57,4 @@ Indices and tables
 .. _h5py: http://www.h5py.org/
 .. _numexpr: https://github.com/pydata/numexpr
 .. _bcolz: http://bcolz.blosc.org/
+.. _petl: http://petl.readthedocs.org/

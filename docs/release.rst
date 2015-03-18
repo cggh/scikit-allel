@@ -32,6 +32,11 @@ v0.12
   direct output as float arrays, which can be convenient if these
   arrays are then going to be scaled for use in PCA or PCoA.
 
+* Added :attr:`allel.model.GenotypeArray.mask` property which can be
+  set with a Boolean mask to filter genotype calls from genotype and
+  allele counting operations. A similar property is available on the
+  :class:`allel.bcolz.GenotypeCArray` class.
+
 v0.11
 -----
 

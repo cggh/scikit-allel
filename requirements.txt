@@ -7,3 +7,4 @@ numexpr
 h5py
 bcolz==0.8.0
 nose
+petl>=1.0.6

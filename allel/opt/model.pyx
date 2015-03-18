@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# cython: profile=True
+# cython: profile=False
 from __future__ import absolute_import, print_function, division
 
 
@@ -10,6 +10,8 @@ cimport cython
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
 def genotype_pack_diploid(cnp.int8_t[:, :, :] g):
 
     n_variants = g.shape[0]
@@ -59,6 +61,8 @@ def genotype_pack_diploid(cnp.int8_t[:, :, :] g):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
 def genotype_unpack_diploid(cnp.uint8_t[:, :] packed):
 
     n_variants = packed.shape[0]
@@ -103,6 +107,8 @@ def genotype_unpack_diploid(cnp.uint8_t[:, :] packed):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
 def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
     cdef cnp.int32_t[:, :] ac
     cdef cnp.int8_t allele
@@ -124,6 +130,8 @@ def haplotype_int8_count_alleles(cnp.int8_t[:, :] h, max_allele):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
 def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
                                         cnp.int8_t max_allele,
                                         cnp.int64_t[:] subpop):
@@ -149,6 +157,121 @@ def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+def genotype_int8_count_alleles(cnp.int8_t[:, :, :] g, int max_allele):
+    cdef cnp.int32_t[:, :] ac
+    cdef cnp.int8_t allele
+    cdef Py_ssize_t i, j, k
+
+    # initialise output array
+    ac = np.zeros((g.shape[0], max_allele + 1), dtype='i4')
+
+    # iterate over variants
+    for i in range(g.shape[0]):
+        # iterate over samples
+        for j in range(g.shape[1]):
+            # iterate over alleles
+            for k in range(g.shape[2]):
+                allele = g[i, j, k]
+                if allele >= 0:
+                    ac[i, allele] += 1
+
+    return np.asarray(ac)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+def genotype_int8_count_alleles_masked(cnp.int8_t[:, :, :] g,
+                                       cnp.uint8_t[:, :] mask,
+                                       int max_allele):
+    cdef cnp.int32_t[:, :] ac
+    cdef cnp.int8_t allele
+    cdef Py_ssize_t i, j, k
+
+    # initialise output array
+    ac = np.zeros((g.shape[0], max_allele + 1), dtype='i4')
+
+    # iterate over variants
+    for i in range(g.shape[0]):
+        # iterate over samples
+        for j in range(g.shape[1]):
+            # deal with mask
+            if not mask[i, j]:
+                # iterate over alleles
+                for k in range(g.shape[2]):
+                    allele = g[i, j, k]
+                    if allele >= 0:
+                        ac[i, allele] += 1
+
+    return np.asarray(ac)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+def genotype_int8_count_alleles_subpop(cnp.int8_t[:, :, :] g,
+                                       cnp.int8_t max_allele,
+                                       cnp.int64_t[:] subpop):
+    cdef cnp.int32_t[:, :] ac
+    cdef cnp.int8_t allele
+    cdef Py_ssize_t i, j, k
+    cdef cnp.int64_t idx
+
+    # initialise output array
+    ac = np.zeros((g.shape[0], max_allele + 1), dtype='i4')
+
+    # iterate over variants
+    for i in range(g.shape[0]):
+        # iterate over samples
+        for j in range(subpop.shape[0]):
+            idx = subpop[j]
+            for k in range(g.shape[2]):
+                allele = g[i, idx, k]
+                if allele >= 0:
+                    ac[i, allele] += 1
+
+    return np.asarray(ac)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+def genotype_int8_count_alleles_subpop_masked(cnp.int8_t[:, :, :] g,
+                                              cnp.uint8_t[:, :] mask,
+                                              cnp.int8_t max_allele,
+                                              cnp.int64_t[:] subpop):
+    cdef cnp.int32_t[:, :] ac
+    cdef cnp.int8_t allele
+    cdef Py_ssize_t i, j, k
+    cdef cnp.int64_t idx
+
+    # initialise output array
+    ac = np.zeros((g.shape[0], max_allele + 1), dtype='i4')
+
+    # iterate over variants
+    for i in range(g.shape[0]):
+        # iterate over samples
+        for j in range(subpop.shape[0]):
+            idx = subpop[j]
+            # deal with mask
+            if not mask[i, idx]:
+                for k in range(g.shape[2]):
+                    allele = g[i, idx, k]
+                    if allele >= 0:
+                        ac[i, allele] += 1
+
+    return np.asarray(ac)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
 def haplotype_int8_map_alleles(cnp.int8_t[:, :] h,
                                cnp.int8_t[:, :] mapping,
                                copy=True):
