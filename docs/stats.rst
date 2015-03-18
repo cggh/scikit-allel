@@ -8,9 +8,9 @@ Statistical functions for use with variant call data.
 
     stats/diversity
     stats/fst
-    stats/distance
     stats/hw
     stats/ld
+    stats/distance
     stats/decomposition
     stats/window
     stats/preprocessing
