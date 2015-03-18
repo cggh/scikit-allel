@@ -1,5 +1,5 @@
-Pairwise distance
-=================
+Pairwise distance and ordination
+================================
 
 .. automodule:: allel.stats.distance
 .. autofunction:: pairwise_distance

@@ -13,3 +13,4 @@ Statistical functions for use with variant call data.
     stats/ld
     stats/decomposition
     stats/window
+    stats/preprocessing

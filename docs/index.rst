@@ -33,6 +33,7 @@ Contents
     bcolz
     stats
     plot
+    release
 
 Acknowledgments
 ---------------
