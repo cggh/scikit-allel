@@ -12,6 +12,7 @@ GenotypeArray
     .. autoattribute:: n_samples
     .. autoattribute:: ploidy
     .. autoattribute:: mask
+    .. automethod:: fill_masked
     .. automethod:: subset
     .. automethod:: is_called
     .. automethod:: is_missing

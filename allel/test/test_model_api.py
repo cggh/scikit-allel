@@ -825,6 +825,40 @@ class GenotypeArrayInterface(object):
         g.mask = m
         eq(4, g.count_called())
 
+    def test_fill_masked(self):
+
+        # diploid case
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g = self.setup_instance(a)
+        m = [[True, False, False],
+             [False, False, False],
+             [False, True, False],
+             [False, False, True],
+             [True, False, True]]
+        g.mask = m
+        g.fill_masked(copy=False)
+        expect = [[[-1, -1], [0, 1], [-1, -1]],
+                  [[0, 2], [1, 1], [-1, -1]],
+                  [[1, 0], [-1, -1], [-1, -1]],
+                  [[2, 2], [-1, -1], [-1, -1]],
+                  [[-1, -1], [-1, -1], [-1, -1]]]
+        aeq(expect, g)
+
+        # polyploid
+        a = np.array(triploid_genotype_data, dtype=np.int8)
+        g = self.setup_instance(a)
+        m = [[True, False, False],
+             [False, False, False],
+             [False, True, False],
+             [False, False, True]]
+        g.mask = m
+        g.fill_masked(copy=False)
+        expect = [[[-1, -1, -1], [0, 0, 1], [-1, -1, -1]],
+                  [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
+                  [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
+                  [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
+        aeq(expect, g)
+
 
 class HaplotypeArrayInterface(object):
 

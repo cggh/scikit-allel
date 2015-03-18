@@ -328,12 +328,71 @@ class GenotypeArray(np.ndarray):
     def mask(self, mask):
 
         # check input
+        if mask is not None:
+            mask = asarray_ndim(mask, 2)
+            if mask.shape != self.shape[:2]:
+                raise ValueError('mask has incorrect shape')
+
+        # store
+        self._mask = mask
+
+    def fill_masked(self, value=-1, mask=None, copy=True):
+        """Fill masked genotype calls with a given value.
+
+        Parameters
+        ----------
+
+        value : int, optional
+            The fill value.
+        mask : array_like, bool, shape (n_variants, n_samples), optional
+            A boolean array where True elements indicate genotype calls to be
+            filled. If not provided, value of the `mask` property will be used.
+        copy : bool, optional
+            If False, modify the array in place.
+
+        Returns
+        -------
+
+        g : GenotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1]],
+        ...                                [[0, 1], [1, 1]],
+        ...                                [[0, 2], [-1, -1]]], dtype='i1')
+        >>> mask = [[True, False], [False, True], [False, False]]
+        >>> g.mask = mask
+        >>> g.fill_masked()
+        GenotypeArray((3, 2, 2), dtype=int8)
+        [[[-1 -1]
+          [ 0  1]]
+         [[ 0  1]
+          [-1 -1]]
+         [[ 0  2]
+          [-1 -1]]]
+
+        """
+
+        # determine mask
+        if mask is None and self.mask is None:
+            raise ValueError('no mask found')
+        mask = mask if mask is not None else self.mask
         mask = asarray_ndim(mask, 2)
         if mask.shape != self.shape[:2]:
             raise ValueError('mask has incorrect shape')
 
-        # store
-        self._mask = mask
+        # decide whether to copy
+        if copy:
+            a = self.copy()
+        else:
+            a = self
+
+        # apply the mask
+        a[mask, ...] = value
+
+        return a.view(GenotypeArray)
 
     def subset(self, variants=None, samples=None):
         """Make a sub-selection of variants and/or samples.
@@ -1022,11 +1081,6 @@ class GenotypeArray(np.ndarray):
         out : ndarray, uint8, shape (n_variants, n_samples, len(alleles))
             Array of allele counts per call.
 
-        Notes
-        -----
-
-        If a mask has been set, it is ignored by this function.
-
         Examples
         --------
 
@@ -1062,7 +1116,10 @@ class GenotypeArray(np.ndarray):
 
         for i, allele in enumerate(alleles):
             # count alleles along ploidy dimension
-            np.sum(self == allele, axis=-1, out=out[..., i])
+            allele_match = self == allele
+            if self.mask is not None:
+                allele_match &= ~self.mask[:, :, None]
+            np.sum(allele_match, axis=-1, out=out[..., i])
 
         return out
 

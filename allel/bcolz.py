@@ -1045,6 +1045,41 @@ class GenotypeCArray(CArrayWrapper):
         # store
         self._mask = mask
 
+    def fill_masked(self, value=-1, mask=None, copy=True, **kwargs):
+
+        # determine mask
+        if mask is None and self.mask is None:
+            raise ValueError('no mask found')
+        mask = mask if mask is not None else self.mask
+        mask = asarray_ndim(mask, 2)
+        if mask.shape != self.shape[:2]:
+            raise ValueError('mask has incorrect shape')
+
+        # setup output
+        if copy:
+            out = None
+            kwargs.setdefault('expectedlen', self.shape[0])
+        else:
+            out = self.carr
+
+        # determine block length for iteration
+        blen = kwargs.pop('blen', self.carr.chunklen)
+
+        # block-wise iteration
+        for i in range(0, self.shape[0], blen):
+            block = self[i:i+blen]
+            bmask = mask[i:i+blen]
+            block.fill_masked(value=value, mask=bmask, copy=False)
+            if copy:
+                if out is None:
+                    out = bcolz.carray(block, **kwargs)
+                else:
+                    out.append(block)
+            else:
+                out[i:i+blen] = block
+
+        return GenotypeCArray(out, copy=False)
+
     def subset(self, variants=None, samples=None, **kwargs):
         carr = carray_block_subset(self.carr, variants, samples, **kwargs)
         g = GenotypeCArray(carr, copy=False)
