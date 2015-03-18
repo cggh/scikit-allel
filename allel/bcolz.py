@@ -70,7 +70,7 @@ def ctable_addcol_persistent(self, newcol, name, **kwargs):
 bcolz.ctable.addcol_persistent = ctable_addcol_persistent
 
 
-def carray_block_map(carr, f, out=None, blen=None, **kwargs):
+def carray_block_map(carr, f, out=None, blen=None, wrap=None, **kwargs):
     kwargs.setdefault('expectedlen', carr.shape[0])
     if blen is None:
         blen = carr.chunklen
@@ -81,6 +81,8 @@ def carray_block_map(carr, f, out=None, blen=None, **kwargs):
             out = bcolz.carray(res, **kwargs)
         else:
             out.append(res)
+    if wrap is not None:
+        out = wrap(out, copy=False)
     return out
 
 
@@ -611,16 +613,26 @@ def ctable_to_hdf5_group(ctbl, parent, name, **kwargs):
             h5f.close()
 
 
-class _CArrayWrapper(object):
+class CArrayWrapper(object):
+
+    def __init__(self, data=None, copy=True, **kwargs):
+        if copy or not isinstance(data, bcolz.carray):
+            carr = bcolz.carray(data, **kwargs)
+        else:
+            carr = data
+        object.__setattr__(self, 'carr', carr)
+
+    def __getitem__(self, *args):
+        return self.carr.__getitem__(*args)
 
     def __setitem__(self, key, value):
-        self.carr[key] = value
+        return self.carr.__setitem__(key, value)
 
     def __getattr__(self, item):
         return getattr(self.carr, item)
 
     def __setattr__(self, key, value):
-        setattr(self.carr, key, value)
+        return setattr(self.carr, key, value)
 
     def __array__(self):
         return self.carr[:]
@@ -647,7 +659,7 @@ class _CArrayWrapper(object):
     def min(self, axis=None):
         return carray_block_min(self.carr, axis=axis)
 
-    def compare_scalar(self, op, other, **kwargs):
+    def op_scalar(self, op, other, **kwargs):
         if not np.isscalar(other):
             raise NotImplementedError('only supported for scalars')
 
@@ -656,25 +668,54 @@ class _CArrayWrapper(object):
             return op(block, other)
         out = carray_block_map(self.carr, f, **kwargs)
 
-        return out
+        return CArrayWrapper(out)
 
     def __eq__(self, other):
-        return self.compare_scalar(operator.eq, other)
+        return self.op_scalar(operator.eq, other)
 
     def __ne__(self, other):
-        return self.compare_scalar(operator.ne, other)
+        return self.op_scalar(operator.ne, other)
 
     def __lt__(self, other):
-        return self.compare_scalar(operator.lt, other)
+        return self.op_scalar(operator.lt, other)
 
     def __gt__(self, other):
-        return self.compare_scalar(operator.gt, other)
+        return self.op_scalar(operator.gt, other)
 
     def __le__(self, other):
-        return self.compare_scalar(operator.le, other)
+        return self.op_scalar(operator.le, other)
 
     def __ge__(self, other):
-        return self.compare_scalar(operator.ge, other)
+        return self.op_scalar(operator.ge, other)
+
+    def __add__(self, other):
+        return self.op_scalar(operator.add, other)
+
+    def __floordiv__(self, other):
+        return self.op_scalar(operator.floordiv, other)
+
+    def __mod__(self, other):
+        return self.op_scalar(operator.mod, other)
+
+    def __mul__(self, other):
+        return self.op_scalar(operator.mul, other)
+
+    def __pow__(self, other):
+        return self.op_scalar(operator.pow, other)
+
+    def __sub__(self, other):
+        return self.op_scalar(operator.sub, other)
+
+    def __truediv__(self, other):
+        return self.op_scalar(operator.truediv, other)
+
+    def compress(self, condition, axis=0, **kwargs):
+        carr = carray_block_compress(self.carr, condition, axis, **kwargs)
+        return type(self)(carr, copy=False)
+
+    def take(self, indices, axis=0, **kwargs):
+        carr = carray_block_take(self.carr, indices, axis, **kwargs)
+        return type(self)(carr, copy=False)
 
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
@@ -716,7 +757,7 @@ class _CArrayWrapper(object):
         return carray_to_hdf5(self.carr, parent, name, **kwargs)
 
 
-class GenotypeCArray(_CArrayWrapper):
+class GenotypeCArray(CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.GenotypeArray`
     interface, using a :class:`bcolz.carray` as the backing store.
 
@@ -818,7 +859,7 @@ class GenotypeCArray(_CArrayWrapper):
          [[ 0  2]
           [-1 -1]]]
         >>> g.is_called()
-        carray((3, 2), bool)
+        CArrayWrapper((3, 2), bool)
           nbytes: 6; cbytes: 16.00 KB; ratio: 0.00
           cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
         [[ True  True]
@@ -861,13 +902,9 @@ class GenotypeCArray(_CArrayWrapper):
             raise ValueError('use HaplotypeCArray for haploid calls')
 
     def __init__(self, data=None, copy=True, **kwargs):
-        if copy or not isinstance(data, bcolz.carray):
-            carr = bcolz.carray(data, **kwargs)
-        else:
-            carr = data
+        super(GenotypeCArray, self).__init__(data=data, copy=copy, **kwargs)
         # check late to avoid creating an intermediate numpy array
-        self.check_input_data(carr)
-        object.__setattr__(self, 'carr', carr)
+        self.check_input_data(self.carr)
 
     def __getitem__(self, *args):
         out = self.carr.__getitem__(*args)
@@ -887,14 +924,6 @@ class GenotypeCArray(_CArrayWrapper):
     def ploidy(self):
         return self.carr.shape[2]
 
-    def compress(self, condition, axis=0, **kwargs):
-        carr = carray_block_compress(self.carr, condition, axis, **kwargs)
-        return GenotypeCArray(carr, copy=False)
-
-    def take(self, indices, axis=0, **kwargs):
-        carr = carray_block_take(self.carr, indices, axis, **kwargs)
-        return GenotypeCArray(carr, copy=False)
-
     def subset(self, variants=None, samples=None, **kwargs):
         carr = carray_block_subset(self.carr, variants, samples, **kwargs)
         return GenotypeCArray(carr, copy=False)
@@ -902,37 +931,37 @@ class GenotypeCArray(_CArrayWrapper):
     def is_called(self, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_called()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_missing(self, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_missing()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_hom(self, allele=None, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_hom(allele=allele)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_hom_ref(self, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_hom_ref()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_hom_alt(self, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_hom_alt()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_het(self, allele=None, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_het(allele=allele)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_call(self, call, **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).is_call(call)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def count_called(self, axis=None):
         def f(block):
@@ -978,20 +1007,22 @@ class GenotypeCArray(_CArrayWrapper):
         # build output
         def f(block):
             return block.reshape((block.shape[0], -1))
-        out = carray_block_map(self.carr, f, **kwargs)
-        return HaplotypeCArray(out, copy=False)
+        out = carray_block_map(self.carr, f, wrap=HaplotypeCArray, **kwargs)
+        return out
 
     def to_n_ref(self, fill=0, dtype='i1', **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).to_n_ref(fill=fill,
                                                              dtype=dtype)
-        return carray_block_map(self.carr, f, dtype=dtype, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, dtype=dtype,
+                                **kwargs)
 
     def to_n_alt(self, fill=0, dtype='i1', **kwargs):
         def f(block):
             return GenotypeArray(block, copy=False).to_n_alt(fill=fill,
                                                              dtype=dtype)
-        return carray_block_map(self.carr, f, dtype=dtype, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, dtype=dtype,
+                                **kwargs)
 
     def to_allele_counts(self, alleles=None, **kwargs):
 
@@ -1005,7 +1036,7 @@ class GenotypeCArray(_CArrayWrapper):
             g = GenotypeArray(block, copy=False)
             return g.to_allele_counts(alleles)
 
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def to_packed(self, boundscheck=True, **kwargs):
 
@@ -1027,7 +1058,7 @@ class GenotypeCArray(_CArrayWrapper):
             g = GenotypeArray(block, copy=False)
             return g.to_packed(boundscheck=False)
 
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     @staticmethod
     def from_packed(packed, **kwargs):
@@ -1045,9 +1076,10 @@ class GenotypeCArray(_CArrayWrapper):
         # build output
         def f(block):
             return GenotypeArray.from_packed(block)
-        carray_block_map(packed, f, out=out, blen=blen)
+        out = carray_block_map(packed, f, out=out, blen=blen,
+                               wrap=GenotypeCArray)
 
-        return GenotypeCArray(out, copy=False)
+        return out
 
     def count_alleles(self, max_allele=None, subpop=None, **kwargs):
 
@@ -1063,9 +1095,9 @@ class GenotypeCArray(_CArrayWrapper):
             h = GenotypeArray(block, copy=False).to_haplotypes()
             return h.count_alleles(max_allele=max_allele, subpop=subpop)
 
-        out = carray_block_map(self.carr, f, **kwargs)
+        out = carray_block_map(self.carr, f, wrap=AlleleCountsCArray, **kwargs)
 
-        return AlleleCountsCArray(out, copy=False)
+        return out
 
     def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
 
@@ -1108,7 +1140,7 @@ class GenotypeCArray(_CArrayWrapper):
         def f(block):
             g = GenotypeArray(block, copy=False)
             return g.to_gt(phased=phased, max_allele=max_allele)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def map_alleles(self, mapping, **kwargs):
 
@@ -1136,7 +1168,7 @@ class GenotypeCArray(_CArrayWrapper):
         return GenotypeCArray(out, copy=False)
 
 
-class HaplotypeCArray(_CArrayWrapper):
+class HaplotypeCArray(CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.HaplotypeArray`
     interface, using a :class:`bcolz.carray` as the backing store.
 
@@ -1170,13 +1202,8 @@ class HaplotypeCArray(_CArrayWrapper):
             raise TypeError('array with 2 dimensions required')
 
     def __init__(self, data=None, copy=True, **kwargs):
-        if copy or not isinstance(data, bcolz.carray):
-            carr = bcolz.carray(data, **kwargs)
-        else:
-            carr = data
-        # check late to avoid creating an intermediate numpy array
-        self.check_input_data(carr)
-        object.__setattr__(self, 'carr', carr)
+        super(HaplotypeCArray, self).__init__(data=data, copy=copy, **kwargs)
+        self.check_input_data(self.carr)
 
     def __getitem__(self, *args):
         out = self.carr.__getitem__(*args)
@@ -1194,20 +1221,12 @@ class HaplotypeCArray(_CArrayWrapper):
         """Number of haplotypes (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def compress(self, condition, axis=0, **kwargs):
-        carr = carray_block_compress(self.carr, condition, axis, **kwargs)
-        return HaplotypeCArray(carr, copy=False)
-
-    def take(self, indices, axis=0, **kwargs):
-        carr = carray_block_take(self.carr, indices, axis, **kwargs)
-        return HaplotypeCArray(carr, copy=False)
-
     def subset(self, variants=None, haplotypes=None, **kwargs):
         data = carray_block_subset(self.carr, variants, haplotypes, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
     def to_genotypes(self, ploidy, **kwargs):
-        # Unfortunately this cannot be implemented as a lightweight view,
+        # This cannot be implemented as a lightweight view,
         # so we have to copy.
 
         # check ploidy is compatible
@@ -1223,22 +1242,22 @@ class HaplotypeCArray(_CArrayWrapper):
         return g
 
     def is_called(self, **kwargs):
-        return self.compare_scalar(operator.ge, 0, **kwargs)
+        return self.op_scalar(operator.ge, 0, **kwargs)
 
     def is_missing(self, **kwargs):
-        return self.compare_scalar(operator.lt, 0, **kwargs)
+        return self.op_scalar(operator.lt, 0, **kwargs)
 
     def is_ref(self, **kwargs):
-        return self.compare_scalar(operator.eq, 0, **kwargs)
+        return self.op_scalar(operator.eq, 0, **kwargs)
 
     def is_alt(self, allele=None, **kwargs):
         if allele is None:
-            return self.compare_scalar(operator.gt, 0, **kwargs)
+            return self.op_scalar(operator.gt, 0, **kwargs)
         else:
-            return self.compare_scalar(operator.eq, allele, **kwargs)
+            return self.op_scalar(operator.eq, allele, **kwargs)
 
     def is_call(self, allele, **kwargs):
-        return self.compare_scalar(operator.eq, allele, **kwargs)
+        return self.op_scalar(operator.eq, allele, **kwargs)
 
     def count_called(self, axis=None):
         def f(block):
@@ -1338,7 +1357,7 @@ class HaplotypeCArray(_CArrayWrapper):
         return HaplotypeCArray(out, copy=False)
 
 
-class AlleleCountsCArray(_CArrayWrapper):
+class AlleleCountsCArray(CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.AlleleCountsArray`
     interface, using a :class:`bcolz.carray` as the backing store.
 
@@ -1372,13 +1391,10 @@ class AlleleCountsCArray(_CArrayWrapper):
             raise TypeError('array with 2 dimensions required')
 
     def __init__(self, data=None, copy=True, **kwargs):
-        if copy or not isinstance(data, bcolz.carray):
-            carr = bcolz.carray(data, **kwargs)
-        else:
-            carr = data
+        super(AlleleCountsCArray, self).__init__(data=data, copy=copy,
+                                                 **kwargs)
         # check late to avoid creating an intermediate numpy array
-        self.check_input_data(carr)
-        object.__setattr__(self, 'carr', carr)
+        self.check_input_data(self.carr)
 
     def __getitem__(self, *args):
         out = self.carr.__getitem__(*args)
@@ -1402,9 +1418,10 @@ class AlleleCountsCArray(_CArrayWrapper):
     def compress(self, condition, axis=0, **kwargs):
         carr = carray_block_compress(self.carr, condition, axis, **kwargs)
         if carr.shape[1] == self.shape[1]:
+            # alleles preserved, safe to wrap
             return AlleleCountsCArray(carr, copy=False)
         else:
-            return carr
+            return CArrayWrapper(carr)
 
     def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
@@ -1412,54 +1429,54 @@ class AlleleCountsCArray(_CArrayWrapper):
             # alleles preserved, safe to wrap
             return AlleleCountsCArray(carr, copy=False)
         else:
-            return carr
+            return CArrayWrapper(carr)
 
     def to_frequencies(self, fill=np.nan, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.to_frequencies(fill=fill)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def allelism(self, **kwargs):
         def f(block):
             return AlleleCountsArray(block, copy=False).allelism()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_variant(self, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_variant()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_non_variant(self, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_non_variant()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_segregating(self, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_segregating()
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_non_segregating(self, allele=None, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_non_segregating(allele=allele)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_singleton(self, allele=1, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_singleton(allele=allele)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def is_doubleton(self, allele=1, **kwargs):
         def f(block):
             ac = AlleleCountsArray(block, copy=False)
             return ac.is_doubleton(allele=allele)
-        return carray_block_map(self.carr, f, **kwargs)
+        return carray_block_map(self.carr, f, wrap=CArrayWrapper, **kwargs)
 
     def count_variant(self):
         return carray_block_sum(self.is_variant())
@@ -1505,7 +1522,7 @@ class AlleleCountsCArray(_CArrayWrapper):
         return AlleleCountsCArray(out, copy=False)
 
 
-class _CTableWrapper(object):
+class CTableWrapper(object):
 
     ndarray_cls = None
 
@@ -1517,6 +1534,7 @@ class _CTableWrapper(object):
         if isinstance(res, np.ndarray) \
                 and res.dtype.names \
                 and self.ndarray_cls is not None:
+            # noinspection PyCallingNonCallable
             return self.ndarray_cls(res, copy=False)
         if isinstance(res, bcolz.ctable):
             return type(self)(res, copy=False)
@@ -1624,7 +1642,7 @@ class _CTableWrapper(object):
         return ctable_to_hdf5_group(self.ctbl, parent, name, **kwargs)
 
 
-class VariantCTable(_CTableWrapper):
+class VariantCTable(CTableWrapper):
     """Alternative implementation of the :class:`allel.model.VariantTable`
     interface, using a :class:`bcolz.ctable` as the backing store.
 
@@ -1731,7 +1749,7 @@ class VariantCTable(_CTableWrapper):
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
 
 
-class FeatureCTable(_CTableWrapper):
+class FeatureCTable(CTableWrapper):
     """Alternative implementation of the :class:`allel.model.FeatureTable`
     interface, using a :class:`bcolz.ctable` as the backing store.
 
@@ -1864,7 +1882,7 @@ class FeatureCTable(_CTableWrapper):
         return ft
 
 
-class AlleleCountsCTable(_CTableWrapper):
+class AlleleCountsCTable(CTableWrapper):
 
     def __init__(self, data=None, copy=True, index=None, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
