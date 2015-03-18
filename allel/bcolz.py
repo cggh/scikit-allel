@@ -747,6 +747,10 @@ class CArrayWrapper(object):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return type(self)(carr, copy=False)
 
+    def copy(self, *args, **kwargs):
+        carr = self.carr.copy(*args, **kwargs)
+        return type(self)(carr, copy=False)
+
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
         """Load a bcolz carray from an HDF5 dataset.
