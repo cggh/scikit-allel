@@ -10,7 +10,7 @@ import numpy as np
 
 
 import allel.model
-from allel.util import asarray_ndim
+from allel.util import ensure_square
 
 
 def variant_locator(pos, step=None, ax=None, start=None,
@@ -130,11 +130,9 @@ def pairwise_distance(dist, labels=None, colorbar=True, ax=None,
     """
 
     import matplotlib.pyplot as plt
-    from scipy.spatial.distance import squareform
 
-    # normalise inputs
-    dist = asarray_ndim(dist, 1)
-    dist_square = squareform(dist, force='tomatrix')
+    # check inputs
+    dist_square = ensure_square(dist)
 
     # set up axes
     if ax is None:
@@ -196,11 +194,9 @@ def pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
     """
 
     import matplotlib.pyplot as plt
-    from scipy.spatial.distance import squareform
 
-    # normalise inputs
-    m = asarray_ndim(m, 1)
-    m_square = squareform(m, force='tomatrix')
+    # check inputs
+    m_square = ensure_square(m)
 
     # blank out lower triangle and flip up/down
     m_square = np.tril(m_square)[::-1, :]

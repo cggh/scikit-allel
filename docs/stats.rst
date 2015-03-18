@@ -11,5 +11,5 @@ Statistical functions for use with variant call data.
     stats/distance
     stats/hw
     stats/ld
-    stats/decomp
+    stats/decomposition
     stats/window

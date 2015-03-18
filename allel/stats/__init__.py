@@ -17,7 +17,7 @@ from allel.stats.diversity import mean_pairwise_difference, \
 from allel.stats.fst import weir_cockerham_fst, hudson_fst, \
     windowed_weir_cockerham_fst, windowed_hudson_fst
 
-from allel.stats.distance import pairwise_distance, pairwise_dxy
+from allel.stats.distance import pairwise_distance, pairwise_dxy, pcoa
 
 from allel.stats.hw import heterozygosity_observed, heterozygosity_expected, \
     inbreeding_coefficient
@@ -25,4 +25,7 @@ from allel.stats.hw import heterozygosity_observed, heterozygosity_expected, \
 from allel.stats.ld import rogers_huff_r, rogers_huff_r_between, \
     locate_unlinked
 
-from allel.stats.decomp import pca, randomized_pca
+from allel.stats.decomposition import pca, randomized_pca
+
+from allel.stats.preprocessing import StandardScaler, CenterScaler, \
+    PattersonScaler

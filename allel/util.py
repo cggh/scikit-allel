@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 
 import numpy as np
+from scipy.spatial.distance import squareform
 
 
 @contextmanager
@@ -60,3 +61,13 @@ def ensure_dim1_aligned(*arrays, **kwargs):
     l = max(a.shape[1] for a in arrays)
     arrays = [resize_dim1(a, l, fill=fill) for a in arrays]
     return arrays
+
+
+def ensure_square(dist):
+    dist = asarray_ndim(dist, 1, 2)
+    if dist.ndim == 1:
+        dist = squareform(dist)
+    else:
+        if dist.shape[0] != dist.shape[1]:
+            raise ValueError('distance matrix is not square')
+    return dist

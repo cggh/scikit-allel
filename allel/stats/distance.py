@@ -6,10 +6,11 @@ import itertools
 
 
 import numpy as np
+import scipy.linalg
 
 
 from allel.model import SortedIndex
-from allel.util import asarray_ndim
+from allel.util import asarray_ndim, ensure_square
 from allel.stats.diversity import sequence_divergence
 
 
@@ -205,3 +206,60 @@ def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
                                 is_accessible=is_accessible)
         dist.append(d)
     return np.array(dist)
+
+
+def pcoa(dist):
+    """Perform principal coordinate analysis of a distance matrix, a.k.a.
+    classical multi-dimensional scaling.
+
+    Parameters
+    ----------
+
+    dist : array_like
+        Distance matrix in condensed form.
+
+    Returns
+    -------
+
+    coords : ndarray, shape (n_samples, n_dimensions)
+        Transformed coordinates for the samples.
+    explained_ratio : ndarray, shape (n_dimensions)
+        Variance explained by each dimension.
+
+    """
+
+    # This implementation is based on the skbio.math.stats.ordination.PCoA
+    # implementation, with some minor adjustments.
+
+    # check inputs
+    dist = ensure_square(dist)
+
+    # perform scaling
+    e_matrix = (dist ** 2) / -2
+    row_means = e_matrix.mean(axis=1, keepdims=True)
+    col_means = e_matrix.mean(axis=0, keepdims=True)
+    matrix_mean = e_matrix.mean()
+    f_matrix = e_matrix - row_means - col_means + matrix_mean
+    eigvals, eigvecs = scipy.linalg.eigh(f_matrix)
+
+    # deal with eigvals close to zero
+    close_to_zero = np.isclose(eigvals, 0)
+    eigvals[close_to_zero] = 0
+
+    # sort descending
+    idxs = eigvals.argsort()[::-1]
+    eigvals = eigvals[idxs]
+    eigvecs = eigvecs[:, idxs]
+
+    # keep only positive eigenvalues
+    keep = eigvals >= 0
+    eigvecs = eigvecs[:, keep]
+    eigvals = eigvals[keep]
+
+    # compute coordinates
+    coords = eigvecs * np.sqrt(eigvals)
+
+    # compute ratio explained
+    explained_ratio = eigvals / eigvals.sum()
+
+    return coords, explained_ratio

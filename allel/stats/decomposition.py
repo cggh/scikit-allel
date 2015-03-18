@@ -6,7 +6,7 @@ import numpy as np
 import scipy.linalg
 
 
-from allel.util import asarray_ndim
+from allel.stats.preprocessing import get_scaler
 
 
 def pca(gn, n_components=10, copy=True, scaler='patterson', ploidy=2):
@@ -61,27 +61,6 @@ def pca(gn, n_components=10, copy=True, scaler='patterson', ploidy=2):
     return coords, model
 
 
-def prepare_gn_array(gn, dtype='f2'):
-    gn = asarray_ndim(gn, 2)
-    if gn.dtype.kind != 'f':
-        x = np.array(gn.T, dtype=dtype)
-    else:
-        x = gn.T
-    return x
-
-
-def setup_scaler(scaler, copy, ploidy):
-    if scaler == 'patterson':
-        scaler = PattersonScaler(copy=copy, ploidy=ploidy)
-    elif scaler == 'standard':
-        scaler = StandardScaler(copy=copy)
-    elif hasattr(scaler, 'fit'):
-        pass
-    else:
-        scaler = CenterScaler(copy=copy)
-    return scaler
-
-
 class GenotypePCA(object):
 
     def __init__(self, n_components=10, copy=True, scaler='patterson',
@@ -89,25 +68,27 @@ class GenotypePCA(object):
         self.n_components = n_components
         self.copy = copy
         self.scaler = scaler
-        self.scaler_ = setup_scaler(scaler, copy, ploidy)
+        self.scaler_ = get_scaler(scaler, copy, ploidy)
 
     def fit(self, gn):
-        x = prepare_gn_array(gn)
-        self._fit(x)
+        self._fit(gn)
         return self
 
     def fit_transform(self, gn):
-        x = prepare_gn_array(gn)
-        u, s, v = self._fit(x)
+        u, s, v = self._fit(gn)
         u = u[:, :self.n_components]
         u *= s[:self.n_components]
         return u
 
-    def _fit(self, x):
-        n_samples, n_features = x.shape
+    def _fit(self, gn):
 
         # apply scaling
-        x = self.scaler_.fit(x).transform(x)
+        gn = self.scaler_.fit(gn).transform(gn)
+
+        # transpose for svd
+        # TODO eliminate need for transposition
+        x = gn.T
+        n_samples, n_features = x.shape
 
         # singular value decomposition
         u, s, v = scipy.linalg.svd(x, full_matrices=False)
@@ -130,11 +111,12 @@ class GenotypePCA(object):
         if not hasattr(self, 'components_'):
             raise ValueError('model has not been not fitted')
 
-        # check inputs
-        x = prepare_gn_array(gn)
-
         # scaling
-        x = self.scaler_.transform(x, copy=copy)
+        gn = self.scaler_.transform(gn, copy=copy)
+
+        # transpose for transformation
+        # TODO eliminate need for transposition
+        x = gn.T
 
         # apply transformation
         x_transformed = np.dot(x, self.components_.T)
@@ -215,29 +197,33 @@ class GenotypeRandomizedPCA(object):
         self.iterated_power = iterated_power
         self.random_state = random_state
         self.scaler = scaler
-        self.scaler_ = setup_scaler(scaler, copy, ploidy)
+        self.scaler_ = get_scaler(scaler, copy, ploidy)
 
     def fit(self, gn):
-        x = prepare_gn_array(gn)
-        self._fit(x)
+        self._fit(gn)
         return self
 
     def fit_transform(self, gn):
-        x = prepare_gn_array(gn)
-        u, s, v = self._fit(x)
+        u, s, v = self._fit(gn)
         u *= s
         return u
 
-    def _fit(self, x):
+    def _fit(self, gn):
         from sklearn.utils.validation import check_random_state
         from sklearn.utils.extmath import randomized_svd
 
+        # apply scaling
+        gn = self.scaler_.fit(gn).transform(gn)
+
+        # transpose for svd
+        # TODO eliminate need for transposition
+        x = gn.T
+        n_samples, n_features = x.shape
+
+        # intermediates
         random_state = check_random_state(self.random_state)
         n_components = self.n_components
         n_samples, n_features = x.shape
-
-        # apply scaling
-        x = self.scaler_.fit(x).transform(x)
 
         # singular value decomposition
         u, s, v = randomized_svd(x, n_components,
@@ -258,118 +244,14 @@ class GenotypeRandomizedPCA(object):
         if not hasattr(self, 'components_'):
             raise ValueError('model has not been not fitted')
 
-        # check inputs
-        x = prepare_gn_array(gn)
-
         # scaling
-        x = self.scaler_.transform(x, copy=copy)
+        gn = self.scaler_.transform(gn, copy=copy)
+
+        # transpose for transformation
+        # TODO eliminate need for transposition
+        x = gn.T
 
         # apply transformation
-        return np.dot(x, self.components_.T)
+        x_transformed = np.dot(x, self.components_.T)
 
-
-class StandardScaler(object):
-
-    def __init__(self, copy=True):
-        self.copy = copy
-        self.mean_ = None
-        self.std_ = None
-
-    def fit(self, x):
-
-        # check input
-        x = asarray_ndim(x, 2)
-
-        # find mean
-        self.mean_ = np.mean(x, axis=0)
-
-        # find scaling factor
-        self.std_ = np.std(x, axis=0)
-
-        return self
-
-    def transform(self, x, copy=None):
-
-        # check inputs
-        copy = copy if copy is not None else self.copy
-        x = asarray_ndim(x, 2, copy=copy)
-        if not x.dtype.kind == 'f':
-            raise ValueError('expected array with float dtype')
-
-        # center
-        x -= self.mean_
-
-        # scale
-        x /= self.std_
-
-        return x
-
-
-class CenterScaler(object):
-
-    def __init__(self, copy=True):
-        self.copy = copy
-        self.mean_ = None
-        self.std_ = None
-
-    def fit(self, x):
-
-        # check input
-        x = asarray_ndim(x, 2)
-
-        # find mean
-        self.mean_ = np.mean(x, axis=0)
-
-        return self
-
-    def transform(self, x, copy=None):
-
-        # check inputs
-        copy = copy if copy is not None else self.copy
-        x = asarray_ndim(x, 2, copy=copy)
-        if not x.dtype.kind == 'f':
-            raise ValueError('expected array with float dtype')
-
-        # center
-        x -= self.mean_
-
-        return x
-
-
-class PattersonScaler(object):
-
-    def __init__(self, copy=True, ploidy=2):
-        self.copy = copy
-        self.ploidy = ploidy
-        self.mean_ = None
-        self.std_ = None
-
-    def fit(self, x):
-
-        # check input
-        x = asarray_ndim(x, 2)
-
-        # find mean
-        self.mean_ = np.mean(x, axis=0)
-
-        # find scaling factor
-        p = self.mean_ / self.ploidy
-        self.std_ = np.sqrt(p * (1 - p))
-
-        return self
-
-    def transform(self, x, copy=None):
-
-        # check inputs
-        copy = copy if copy is not None else self.copy
-        x = asarray_ndim(x, 2, copy=copy)
-        if not x.dtype.kind == 'f':
-            raise ValueError('expected array with float dtype')
-
-        # center
-        x -= self.mean_
-
-        # scale
-        x /= self.std_
-
-        return x
+        return x_transformed
