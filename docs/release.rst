@@ -36,7 +36,7 @@ v0.12
   set with a Boolean mask to filter genotype calls from genotype and
   allele counting operations. A similar property is available on the
   :class:`allel.bcolz.GenotypeCArray` class. Also added method
-  :func:`allel.model.GenotypeArray.fill_masked` and similar property
+  :func:`allel.model.GenotypeArray.fill_masked` and similar method
   on the :class:`allel.bcolz.GenotypeCArray` class to fill masked
   genotype calls with a value (e.g., -1).
 
