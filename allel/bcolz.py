@@ -445,6 +445,7 @@ def carray_from_hdf5(*args, **kwargs):
         for i in range(start, stop, blen):
             j = min(i + blen, stop)
             # N.B., apply step after load because step within h5py is slooow
+            # TODO adjust block start to honour step across blocks
             block = dataset[i:j][::step]
             if condition is not None:
                 bcnd = condition[i:j:step]
