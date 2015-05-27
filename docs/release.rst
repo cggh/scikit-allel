@@ -1,6 +1,17 @@
 Release notes
 =============
 
+v0.14
+-----
+
+* Added a new module :mod:`allel.stats.admixture` with statistical
+  tests for admixture between populations, implementing the f2, f3 and
+  D statistics from Patterson (2012). Functions include
+  :func:`allel.stats.admixture.blockwise_patterson_f3` and
+  :func:`allel.stats.admixture.blockwise_patterson_d` which compute
+  the f3 and D statistics respectively in blocks of a given size and
+  also perform a block-jackknife to estimate the standard error.
+
 v0.12
 -----
 
