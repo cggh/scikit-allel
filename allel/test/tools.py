@@ -17,3 +17,14 @@ def assert_array_close(expect, actual):
     actual = np.asarray(actual)
     assert np.allclose(expect, actual), \
         '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)
+
+
+def assert_array_nanclose(expect, actual):
+    expect = np.asarray(expect)
+    actual = np.asarray(actual)
+    ein = np.isnan(expect)
+    ain = np.isnan(actual)
+    assert np.array_equal(ein, ain), \
+        '\nExpect:\n%r\nActual:\n%r\n' % (ein, ain)
+    assert np.allclose(expect[~ein], actual[~ain]), \
+        '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)

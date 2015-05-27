@@ -7,16 +7,13 @@ import unittest
 
 import numpy as np
 from nose.tools import assert_raises, eq_ as eq
-from allel.test.tools import assert_array_equal as aeq, assert_array_close
+from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
+    assert_array_nanclose
 
 
 from allel.util import ignore_invalid
 from allel.model import GenotypeArray, HaplotypeArray, SortedIndex
 import allel.stats
-# from allel.stats import moving_statistic, windowed_statistic, \
-#     mean_pairwise_diversity, mean_pairwise_divergence, windowed_diversity, \
-#     windowed_divergence, per_base, heterozygosity_observed, \
-#     heterozygosity_expected, inbreeding_coefficient
 
 
 class TestWindowUtilities(unittest.TestCase):
@@ -500,3 +497,68 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         gnb = [[1, 1, 1]]
         actual = allel.stats.rogers_huff_r_between(gna, gnb)
         assert np.isnan(actual)
+
+
+class TestAdmixture(unittest.TestCase):
+
+    def test_patterson_f2(self):
+        aca = [[0, 2],
+               [2, 0],
+               [1, 1],
+               [0, 0]]
+        acb = [[0, 2],
+               [0, 2],
+               [0, 2],
+               [0, 2]]
+        expect = [0., 1., 0., np.nan]
+        actual = allel.stats.patterson_f2(aca, acb)
+        assert_array_nanclose(expect, actual)
+
+    def test_patterson_f3(self):
+        aca = [[0, 2],
+               [2, 0],
+               [0, 2],
+               [0, 2],
+               [0, 0]]
+        acb = [[2, 0],
+               [0, 2],
+               [0, 2],
+               [0, 2],
+               [0, 2]]
+        acc = [[1, 1],
+               [1, 1],
+               [0, 2],
+               [2, 0],
+               [1, 1]]
+        expect_f3 = [-.5, -.5, 0., 1., np.nan]
+        actual_f3, actual_hzc = allel.stats.patterson_f3(acc, aca, acb)
+        assert_array_nanclose(expect_f3, actual_f3)
+        expect_hzc = [1., 1., 0., 0., 1.]
+        assert_array_nanclose(expect_hzc, actual_hzc)
+
+    def test_patterson_d(self):
+        aca = [[0, 2],
+               [2, 0],
+               [2, 0],
+               [1, 1],
+               [0, 0]]
+        acb = [[0, 2],
+               [0, 2],
+               [0, 2],
+               [1, 1],
+               [0, 2]]
+        acc = [[2, 0],
+               [2, 0],
+               [0, 2],
+               [1, 1],
+               [0, 2]]
+        acd = [[2, 0],
+               [0, 2],
+               [2, 0],
+               [1, 1],
+               [0, 2]]
+        num, den = allel.stats.patterson_d(aca, acb, acc, acd)
+        expect_num = [0., 1., -1., 0., np.nan]
+        expect_den = [0., 1., 1., 0.25, np.nan]
+        assert_array_nanclose(expect_num, num)
+        assert_array_nanclose(expect_den, den)

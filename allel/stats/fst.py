@@ -469,3 +469,102 @@ def windowed_hudson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
 
 # TODO moving_weir_cockerham_fst
 # TODO moving_hudson_fst
+# TODO moving_patterson_fst
+
+
+def patterson_fst(aca, acb):
+    """Estimator of differentiation between populations A and B based on the
+    F2 parameter.
+
+    Parameters
+    ----------
+    aca : array_like, int, shape (n_variants, 2)
+        Allele counts for population A.
+    acb : array_like, int, shape (n_variants, 2)
+        Allele counts for population B.
+
+    Returns
+    -------
+    num : ndarray, shape (n_variants,), float
+        Numerator.
+    den : ndarray, shape (n_variants,), float
+        Denominator.
+
+    Notes
+    -----
+
+    See Patterson (2012), Appendix A.
+
+    TODO check if this is  numerically equivalent to Hudson's estimator.
+
+    """
+
+    from allel.stats.admixture import patterson_f2, h_hat
+    num = patterson_f2(aca, acb)
+    den = num + h_hat(aca) + h_hat(acb)
+
+    return num, den
+
+
+def windowed_patterson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
+                           step=None, windows=None, fill=np.nan):
+    """Estimate average Fst in windows over a single chromosome/contig,
+    following the method of Patterson (2012).
+
+    Parameters
+    ----------
+
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    size : int, optional
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    fill : object, optional
+        The value to use where there are no variants within a window.
+
+    Returns
+    -------
+
+    fst : ndarray, float, shape (n_windows,)
+        Average Fst in each window.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    """
+
+    # check inputs
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
+    check_dim0_aligned(ac1, ac2)
+    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
+
+    # define the statistic to compute within each window
+    def average_fst(wac1, wac2):
+        num, den = patterson_fst(wac1, wac2)
+        return np.sum(num) / np.sum(den)
+
+    # calculate average Fst in windows
+    fst, windows, counts = windowed_statistic(pos, values=(ac1, ac2),
+                                              statistic=average_fst,
+                                              size=size, start=start,
+                                              stop=stop, step=step,
+                                              windows=windows, fill=fill)
+
+    return fst, windows, counts

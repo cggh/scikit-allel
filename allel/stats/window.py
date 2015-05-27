@@ -73,14 +73,10 @@ def index_windows(values, size, start, stop, step):
 
         window_stop = window_start + size
         if window_stop >= stop:
-            # last window
-            window_stop = stop
-            last = True
+            # ensure all windows are equal sized
+            raise StopIteration
 
         yield (window_start, window_stop)
-
-        if last:
-            raise StopIteration
 
 
 def position_windows(pos, size, start, stop, step):

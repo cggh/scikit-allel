@@ -15,7 +15,7 @@ from allel.stats.diversity import mean_pairwise_difference, \
     windowed_watterson_theta, tajima_d, windowed_tajima_d
 
 from allel.stats.fst import weir_cockerham_fst, hudson_fst, \
-    windowed_weir_cockerham_fst, windowed_hudson_fst
+    windowed_weir_cockerham_fst, windowed_hudson_fst, patterson_fst
 
 from allel.stats.distance import pairwise_distance, pairwise_dxy, pcoa
 
@@ -29,3 +29,5 @@ from allel.stats.decomposition import pca, randomized_pca
 
 from allel.stats.preprocessing import StandardScaler, CenterScaler, \
     PattersonScaler
+
+from allel.stats.admixture import patterson_f2, patterson_f3, patterson_d
