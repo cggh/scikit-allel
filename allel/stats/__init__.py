@@ -30,4 +30,5 @@ from allel.stats.decomposition import pca, randomized_pca
 from allel.stats.preprocessing import StandardScaler, CenterScaler, \
     PattersonScaler
 
-from allel.stats.admixture import patterson_f2, patterson_f3, patterson_d
+from allel.stats.admixture import patterson_f2, patterson_f3, patterson_d, \
+    blockwise_patterson_f3, blockwise_patterson_d
