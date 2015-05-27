@@ -203,7 +203,38 @@ def patterson_d(aca, acb, acc, acd):
 
 # noinspection PyPep8Naming
 def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
-    """TODO
+    """Estimate F3(C; A, B) in blocks of size `blen` and standard error
+    using the block-jackknife.
+
+    Parameters
+    ----------
+    acc : array_like, int, shape (n_variants, 2)
+        Allele counts for the test population (C).
+    aca : array_like, int, shape (n_variants, 2)
+        Allele counts for the first source population (A).
+    acb : array_like, int, shape (n_variants, 2)
+        Allele counts for the second source population (B).
+
+    Returns
+    -------
+    m : float
+        Estimated value of the statistic.
+    se : float
+        Estimated standard error.
+    z : float
+        Z-score (number of standard errors from zero).
+    vb : ndarray, float, shape (n_blocks,)
+        Value of the statistic in each block.
+    vj : ndarray, float, shape (n_blocks,)
+        Values of the statistic from block-jackknife resampling.
+
+    Notes
+    -----
+    See Patterson (2012), main text and Appendix A.
+
+    See Also
+    --------
+    allel.stats.admixture.patterson_f3
 
     """
 
@@ -230,7 +261,40 @@ def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
 
 
 def blockwise_patterson_d(aca, acb, acc, acd, blen):
-    """TODO
+    """Estimate D(A, B; C, D) in blocks of size `blen` and standard error
+    using the block-jackknife.
+
+    Parameters
+    ----------
+    aca : array_like, int, shape (n_variants, 2),
+        Allele counts for population A.
+    acb : array_like, int, shape (n_variants, 2)
+        Allele counts for population B.
+    acc : array_like, int, shape (n_variants, 2)
+        Allele counts for population C.
+    acd : array_like, int, shape (n_variants, 2)
+        Allele counts for population D.
+
+    Returns
+    -------
+    m : float
+        Estimated value of the statistic.
+    se : float
+        Estimated standard error.
+    z : float
+        Z-score (number of standard errors from zero).
+    vb : ndarray, float, shape (n_blocks,)
+        Value of the statistic in each block.
+    vj : ndarray, float, shape (n_blocks,)
+        Values of the statistic from block-jackknife resampling.
+
+    Notes
+    -----
+    See Patterson (2012), main text and Appendix A.
+
+    See Also
+    --------
+    allel.stats.admixture.patterson_d
 
     """
 
