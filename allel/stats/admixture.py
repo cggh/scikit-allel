@@ -210,15 +210,19 @@ def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
     # calculate per-variant values
     T, B = patterson_f3(acc, aca, acb)
 
+    # N.B., nans can occur if any of the populations have completely missing
+    # genotype calls at a variant (i.e., allele number is zero). Here we
+    # assume that is rare enough to be negligible.
+
     if normed:
-        T_bsum = moving_statistic(T, statistic=np.sum, size=blen)
-        B_bsum = moving_statistic(B, statistic=np.sum, size=blen)
+        T_bsum = moving_statistic(T, statistic=np.nansum, size=blen)
+        B_bsum = moving_statistic(B, statistic=np.nansum, size=blen)
         vb = T_bsum / B_bsum
         m, se, vj = jackknife((T_bsum, B_bsum),
                               statistic=lambda t, b: np.sum(t) / np.sum(b))
 
     else:
-        vb = moving_statistic(T, statistic=np.mean, size=blen)
+        vb = moving_statistic(T, statistic=np.nanmean, size=blen)
         m, se, vj = jackknife(vb, statistic=np.mean)
 
     z = m / se
@@ -233,8 +237,12 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
     # calculate per-variant values
     num, den = patterson_d(aca, acb, acc, acd)
 
-    num_bsum = moving_statistic(num, statistic=np.sum, size=blen)
-    den_bsum = moving_statistic(den, statistic=np.sum, size=blen)
+    # N.B., nans can occur if any of the populations have completely missing
+    # genotype calls at a variant (i.e., allele number is zero). Here we
+    # assume that is rare enough to be negligible.
+
+    num_bsum = moving_statistic(num, statistic=np.nansum, size=blen)
+    den_bsum = moving_statistic(den, statistic=np.nansum, size=blen)
     vb = num_bsum / den_bsum
     m, se, vj = jackknife((num_bsum, den_bsum),
                           statistic=lambda n, d: np.sum(n) / np.sum(d))
