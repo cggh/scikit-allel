@@ -71,7 +71,7 @@ def index_windows(values, size, start, stop, step):
     for window_start in range(start, stop, step):
 
         window_stop = window_start + size
-        if window_stop >= stop:
+        if window_stop > stop:
             # ensure all windows are equal sized
             raise StopIteration
 
