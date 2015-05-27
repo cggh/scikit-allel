@@ -68,7 +68,6 @@ def index_windows(values, size, start, stop, step):
         step = size
 
     # iterate over windows
-    last = False
     for window_start in range(start, stop, step):
 
         window_stop = window_start + size
