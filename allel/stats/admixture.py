@@ -214,6 +214,10 @@ def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
         Allele counts for the first source population (A).
     acb : array_like, int, shape (n_variants, 2)
         Allele counts for the second source population (B).
+    blen : int
+        Block size.
+    normed : bool, optional
+        If False, use un-normalised f3 values.
 
     Returns
     -------
@@ -274,6 +278,8 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
         Allele counts for population C.
     acd : array_like, int, shape (n_variants, 2)
         Allele counts for population D.
+    blen : int
+        Block size.
 
     Returns
     -------
