@@ -453,6 +453,7 @@ def windowed_hudson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
     ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
 
     # define the statistic to compute within each window
+    # TODO consider using nansum
     def average_fst(wac1, wac2):
         num, den = hudson_fst(wac1, wac2, fill=fill)
         return np.sum(num) / np.sum(den)
