@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, division
 from allel.model import AlleleCountsArray
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.stats.window import moving_statistic
+from allel.stats.misc import jackknife
 
 
 import numpy as np
@@ -318,41 +319,3 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
                           statistic=lambda n, d: np.sum(n) / np.sum(d))
     z = m / se
     return m, se, z, vb, vj
-
-
-def jackknife(values, statistic):
-
-    if isinstance(values, tuple):
-        # multiple input arrays
-        n = len(values[0])
-        masked_values = [np.ma.asarray(v) for v in values]
-        for m in masked_values:
-            m.mask = np.zeros(m.shape, dtype=bool)
-    else:
-        n = len(values)
-        masked_values = np.ma.asarray(values)
-        masked_values.mask = np.zeros(values.shape, dtype=bool)
-
-    vj = list()
-
-    for i in range(n):
-
-        if isinstance(values, tuple):
-            # multiple input arrays
-            for m in masked_values:
-                m.mask[i] = True
-            x = statistic(*masked_values)
-            for m in masked_values:
-                m.mask[i] = False
-        else:
-            masked_values.mask[i] = True
-            x = statistic(masked_values)
-            masked_values.mask[i] = False
-
-        vj.append(x)
-
-    vj = np.array(vj)
-    m = vj.mean()
-    sv = ((n - 1) / n) * np.sum((vj - m) ** 2)
-    se = np.sqrt(sv)
-    return m, se, vj
