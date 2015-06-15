@@ -312,10 +312,18 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
     # genotype calls at a variant (i.e., allele number is zero). Here we
     # assume that is rare enough to be negligible.
 
+    # compute the numerator and denominator within each block
     num_bsum = moving_statistic(num, statistic=np.nansum, size=blen)
     den_bsum = moving_statistic(den, statistic=np.nansum, size=blen)
+
+    # calculate the statistic values in each block
     vb = num_bsum / den_bsum
+
+    # estimate standard error
     m, se, vj = jackknife((num_bsum, den_bsum),
                           statistic=lambda n, d: np.sum(n) / np.sum(d))
+
+    # compute Z score
     z = m / se
+    
     return m, se, z, vb, vj
