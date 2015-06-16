@@ -10,9 +10,10 @@ import numpy as np
 
 from allel.util import asarray_ndim, check_dim0_aligned, ensure_dim1_aligned
 from allel.model import GenotypeArray
-from allel.stats.window import windowed_statistic
+from allel.stats.window import windowed_statistic, moving_statistic
 from allel.stats.diversity import mean_pairwise_difference, \
     mean_pairwise_difference_between
+from allel.stats.misc import jackknife
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,6 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
 
     Parameters
     ----------
-
     g : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype array.
     subpops : sequence of sequences of ints
@@ -35,7 +35,6 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
 
     Returns
     -------
-
     a : ndarray, float, shape (n_variants, n_alleles)
         Component of variance between populations.
     b : ndarray, float, shape (n_variants, n_alleles)
@@ -45,7 +44,6 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
 
     Examples
     --------
-
     Calculate variance components from some genotype data::
 
         >>> import allel
@@ -252,7 +250,6 @@ def hudson_fst(ac1, ac2, fill=np.nan):
 
     Parameters
     ----------
-
     ac1 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array from the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
@@ -263,7 +260,6 @@ def hudson_fst(ac1, ac2, fill=np.nan):
 
     Returns
     -------
-
     num : ndarray, float, shape (n_variants,)
         Divergence between the two populations minus average
         of diversity within each population.
@@ -272,7 +268,6 @@ def hudson_fst(ac1, ac2, fill=np.nan):
 
     Examples
     --------
-
     Calculate numerator and denominator for Fst estimation::
 
         >>> import allel
@@ -329,150 +324,6 @@ def hudson_fst(ac1, ac2, fill=np.nan):
     return num, den
 
 
-def windowed_weir_cockerham_fst(pos, g, subpops, size=None, start=None,
-                                stop=None, step=None, windows=None,
-                                fill=np.nan, max_allele=None):
-    """Estimate average Fst in windows over a single chromosome/contig,
-    following the method of Weir and Cockerham (1984).
-
-    Parameters
-    ----------
-
-    pos : array_like, int, shape (n_items,)
-        Variant positions, using 1-based coordinates, in ascending order.
-    g : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype array.
-    subpops : sequence of sequences of ints
-        Sample indices for each subpopulation.
-    size : int
-        The window size (number of bases).
-    start : int, optional
-        The position at which to start (1-based).
-    stop : int, optional
-        The position at which to stop (1-based).
-    step : int, optional
-        The distance between start positions of windows. If not given,
-        defaults to the window size, i.e., non-overlapping windows.
-    windows : array_like, int, shape (n_windows, 2), optional
-        Manually specify the windows to use as a sequence of (window_start,
-        window_stop) positions, using 1-based coordinates. Overrides the
-        size/start/stop/step parameters.
-    fill : object, optional
-        The value to use where there are no variants within a window.
-    max_allele : int, optional
-        The highest allele index to consider.
-
-    Returns
-    -------
-
-    fst : ndarray, float, shape (n_windows,)
-        Average Fst in each window.
-    windows : ndarray, int, shape (n_windows, 2)
-        The windows used, as an array of (window_start, window_stop) positions,
-        using 1-based coordinates.
-    counts : ndarray, int, shape (n_windows,)
-        Number of variants in each window.
-
-    """
-
-    # check inputs
-    if not hasattr(g, 'shape') or not hasattr(g, 'ndim'):
-        g = GenotypeArray(g, copy=False)
-    if g.ndim != 3:
-        raise ValueError('g must have three dimensions')
-    if g.shape[2] != 2:
-        raise NotImplementedError('only diploid genotypes are supported')
-
-    # determine highest allele index
-    if max_allele is None:
-        max_allele = g.max()
-
-    # define the statistic to compute within each window
-    def average_fst(wg):
-        a, b, c = _weir_cockerham_fst(wg, subpops=subpops,
-                                      max_allele=max_allele)
-        return np.sum(a) / (np.sum(a) + np.sum(b) + np.sum(c))
-
-    # calculate average Fst in windows
-    fst, windows, counts = windowed_statistic(pos, values=g,
-                                              statistic=average_fst,
-                                              size=size, start=start,
-                                              stop=stop, step=step,
-                                              windows=windows, fill=fill)
-
-    return fst, windows, counts
-
-
-def windowed_hudson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
-                        step=None, windows=None, fill=np.nan):
-    """Estimate average Fst in windows over a single chromosome/contig,
-    following the method of Hudson (1992) elaborated by Bhatia et al. (2013).
-
-    Parameters
-    ----------
-
-    pos : array_like, int, shape (n_items,)
-        Variant positions, using 1-based coordinates, in ascending order.
-    ac1 : array_like, int, shape (n_variants, n_alleles)
-        Allele counts array from the first population.
-    ac2 : array_like, int, shape (n_variants, n_alleles)
-        Allele counts array from the second population.
-    size : int, optional
-        The window size (number of bases).
-    start : int, optional
-        The position at which to start (1-based).
-    stop : int, optional
-        The position at which to stop (1-based).
-    step : int, optional
-        The distance between start positions of windows. If not given,
-        defaults to the window size, i.e., non-overlapping windows.
-    windows : array_like, int, shape (n_windows, 2), optional
-        Manually specify the windows to use as a sequence of (window_start,
-        window_stop) positions, using 1-based coordinates. Overrides the
-        size/start/stop/step parameters.
-    fill : object, optional
-        The value to use where there are no variants within a window.
-
-    Returns
-    -------
-
-    fst : ndarray, float, shape (n_windows,)
-        Average Fst in each window.
-    windows : ndarray, int, shape (n_windows, 2)
-        The windows used, as an array of (window_start, window_stop) positions,
-        using 1-based coordinates.
-    counts : ndarray, int, shape (n_windows,)
-        Number of variants in each window.
-
-    """
-
-    # check inputs
-    ac1 = asarray_ndim(ac1, 2)
-    ac2 = asarray_ndim(ac2, 2)
-    check_dim0_aligned(ac1, ac2)
-    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
-
-    # define the statistic to compute within each window
-    # TODO consider using nansum
-    def average_fst(wac1, wac2):
-        num, den = hudson_fst(wac1, wac2, fill=fill)
-        return np.sum(num) / np.sum(den)
-
-    # calculate average Fst in windows
-    fst, windows, counts = windowed_statistic(pos, values=(ac1, ac2),
-                                              statistic=average_fst,
-                                              size=size, start=start,
-                                              stop=stop, step=step,
-                                              windows=windows, fill=fill)
-
-    return fst, windows, counts
-
-
-# TODO moving_weir_cockerham_fst
-# TODO moving_hudson_fst
-# TODO moving_patterson_fst
-
-
 def patterson_fst(aca, acb):
     """Estimator of differentiation between populations A and B based on the
     F2 parameter.
@@ -505,6 +356,125 @@ def patterson_fst(aca, acb):
     den = num + h_hat(aca) + h_hat(acb)
 
     return num, den
+
+
+def windowed_weir_cockerham_fst(pos, g, subpops, size=None, start=None,
+                                stop=None, step=None, windows=None,
+                                fill=np.nan, max_allele=None):
+    """Estimate average Fst in windows over a single chromosome/contig,
+    following the method of Weir and Cockerham (1984).
+
+    Parameters
+    ----------
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    subpops : sequence of sequences of ints
+        Sample indices for each subpopulation.
+    size : int
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    fill : object, optional
+        The value to use where there are no variants within a window.
+    max_allele : int, optional
+        The highest allele index to consider.
+
+    Returns
+    -------
+    fst : ndarray, float, shape (n_windows,)
+        Average Fst in each window.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    """
+
+    # compute values per-variant
+    a, b, c = weir_cockerham_fst(g, subpops, max_allele=max_allele)
+
+    # define the statistic to compute within each window
+    def average_fst(wa, wb, wc):
+        return np.nansum(wa) / (np.nansum(wa) + np.nansum(wb) + np.nansum(wc))
+
+    # calculate average Fst in windows
+    fst, windows, counts = windowed_statistic(pos, values=(a, b, c),
+                                              statistic=average_fst,
+                                              size=size, start=start,
+                                              stop=stop, step=step,
+                                              windows=windows, fill=fill)
+
+    return fst, windows, counts
+
+
+def windowed_hudson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
+                        step=None, windows=None, fill=np.nan):
+    """Estimate average Fst in windows over a single chromosome/contig,
+    following the method of Hudson (1992) elaborated by Bhatia et al. (2013).
+
+    Parameters
+    ----------
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    size : int, optional
+        The window size (number of bases).
+    start : int, optional
+        The position at which to start (1-based).
+    stop : int, optional
+        The position at which to stop (1-based).
+    step : int, optional
+        The distance between start positions of windows. If not given,
+        defaults to the window size, i.e., non-overlapping windows.
+    windows : array_like, int, shape (n_windows, 2), optional
+        Manually specify the windows to use as a sequence of (window_start,
+        window_stop) positions, using 1-based coordinates. Overrides the
+        size/start/stop/step parameters.
+    fill : object, optional
+        The value to use where there are no variants within a window.
+
+    Returns
+    -------
+    fst : ndarray, float, shape (n_windows,)
+        Average Fst in each window.
+    windows : ndarray, int, shape (n_windows, 2)
+        The windows used, as an array of (window_start, window_stop) positions,
+        using 1-based coordinates.
+    counts : ndarray, int, shape (n_windows,)
+        Number of variants in each window.
+
+    """
+
+    # compute values per-variants
+    num, den = hudson_fst(ac1, ac2)
+
+    # define the statistic to compute within each window
+    def average_fst(wn, wd):
+        return np.nansum(wn) / np.nansum(wd)
+
+    # calculate average Fst in windows
+    fst, windows, counts = windowed_statistic(pos, values=(num, den),
+                                              statistic=average_fst,
+                                              size=size, start=start,
+                                              stop=stop, step=step,
+                                              windows=windows, fill=fill)
+
+    return fst, windows, counts
 
 
 def windowed_patterson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
@@ -550,22 +520,162 @@ def windowed_patterson_fst(pos, ac1, ac2, size=None, start=None, stop=None,
 
     """
 
-    # check inputs
-    ac1 = asarray_ndim(ac1, 2)
-    ac2 = asarray_ndim(ac2, 2)
-    check_dim0_aligned(ac1, ac2)
-    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
+    # compute values per-variants
+    num, den = patterson_fst(ac1, ac2)
 
     # define the statistic to compute within each window
-    def average_fst(wac1, wac2):
-        num, den = patterson_fst(wac1, wac2)
-        return np.sum(num) / np.sum(den)
+    def average_fst(wn, wd):
+        return np.nansum(wn) / np.nansum(wd)
 
     # calculate average Fst in windows
-    fst, windows, counts = windowed_statistic(pos, values=(ac1, ac2),
+    fst, windows, counts = windowed_statistic(pos, values=(num, den),
                                               statistic=average_fst,
                                               size=size, start=start,
                                               stop=stop, step=step,
                                               windows=windows, fill=fill)
 
     return fst, windows, counts
+
+
+def blockwise_weir_cockerham_fst(g, subpops, blen, max_allele=None):
+    """Estimate average Fst and standard error using the block-jackknife.
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    subpops : sequence of sequences of ints
+        Sample indices for each subpopulation.
+    blen : int
+        Block size (number of variants).
+    max_allele : int, optional
+        The highest allele index to consider.
+
+    Returns
+    -------
+    fst : float
+        Estimated value of the statistic using all data.
+    se : float
+        Estimated standard error.
+    vb : ndarray, float, shape (n_blocks,)
+        Value of the statistic in each block.
+    vj : ndarray, float, shape (n_blocks,)
+        Values of the statistic from block-jackknife resampling.
+
+    """
+
+    # calculate per-variant values
+    a, b, c = weir_cockerham_fst(g, subpops, max_allele=max_allele)
+
+    # calculate overall estimate
+    fst = np.nansum(a) / (np.nansum(a) + np.nansum(b) + np.nansum(c))
+
+    # compute the numerator and denominator within each block
+    num_bsum = moving_statistic(a, statistic=np.nansum, size=blen)
+    den_bsum = moving_statistic(
+        (a, b, c),
+        statistic=lambda wa, wb, wc: (np.nansum(wa) + np.nansum(wb) +
+                                      np.nansum(wc)),
+        size=blen
+    )
+
+    # calculate the statistic values in each block
+    vb = num_bsum / den_bsum
+
+    # estimate standard error
+    _, se, vj = jackknife((num_bsum, den_bsum),
+                          statistic=lambda n, d: np.sum(n) / np.sum(d))
+
+    return fst, se, vb, vj
+
+
+def blockwise_hudson_fst(ac1, ac2, blen):
+    """Estimate average Fst between two populations and standard error using
+    the block-jackknife.
+
+    Parameters
+    ----------
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    blen : int
+        Block size (number of variants).
+
+    Returns
+    -------
+    fst : float
+        Estimated value of the statistic using all data.
+    se : float
+        Estimated standard error.
+    vb : ndarray, float, shape (n_blocks,)
+        Value of the statistic in each block.
+    vj : ndarray, float, shape (n_blocks,)
+        Values of the statistic from block-jackknife resampling.
+
+    """
+
+    # calculate per-variant values
+    num, den = hudson_fst(ac1, ac2, fill=np.nan)
+
+    # calculate overall estimate
+    fst = np.nansum(num) / np.nansum(den)
+
+    # compute the numerator and denominator within each block
+    num_bsum = moving_statistic(num, statistic=np.nansum, size=blen)
+    den_bsum = moving_statistic(den, statistic=np.nansum, size=blen)
+
+    # calculate the statistic values in each block
+    vb = num_bsum / den_bsum
+
+    # estimate standard error
+    _, se, vj = jackknife((num_bsum, den_bsum),
+                          statistic=lambda n, d: np.sum(n) / np.sum(d))
+
+    return fst, se, vb, vj
+
+
+def blockwise_patterson_fst(ac1, ac2, blen):
+    """Estimate average Fst between two populations and standard error using
+    the block-jackknife.
+
+    Parameters
+    ----------
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array from the second population.
+    blen : int
+        Block size (number of variants).
+
+    Returns
+    -------
+    fst : float
+        Estimated value of the statistic using all data.
+    se : float
+        Estimated standard error.
+    vb : ndarray, float, shape (n_blocks,)
+        Value of the statistic in each block.
+    vj : ndarray, float, shape (n_blocks,)
+        Values of the statistic from block-jackknife resampling.
+
+    """
+
+    # calculate per-variant values
+    num, den = patterson_fst(ac1, ac2)
+
+    # calculate overall estimate
+    fst = np.nansum(num) / np.nansum(den)
+
+    # compute the numerator and denominator within each block
+    num_bsum = moving_statistic(num, statistic=np.nansum, size=blen)
+    den_bsum = moving_statistic(den, statistic=np.nansum, size=blen)
+
+    # calculate the statistic values in each block
+    vb = num_bsum / den_bsum
+
+    # estimate standard error
+    _, se, vj = jackknife((num_bsum, den_bsum),
+                          statistic=lambda n, d: np.sum(n) / np.sum(d))
+
+    return fst, se, vb, vj

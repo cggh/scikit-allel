@@ -204,8 +204,7 @@ def patterson_d(aca, acb, acc, acd):
 
 # noinspection PyPep8Naming
 def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
-    """Estimate F3(C; A, B) in blocks of size `blen` and standard error
-    using the block-jackknife.
+    """Estimate F3(C; A, B) and standard error using the block-jackknife.
 
     Parameters
     ----------
@@ -216,14 +215,14 @@ def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
     acb : array_like, int, shape (n_variants, 2)
         Allele counts for the second source population (B).
     blen : int
-        Block size.
+        Block size (number of variants).
     normed : bool, optional
         If False, use un-normalised f3 values.
 
     Returns
     -------
-    m : float
-        Estimated value of the statistic.
+    f3 : float
+        Estimated value of the statistic using all data.
     se : float
         Estimated standard error.
     z : float
@@ -250,24 +249,32 @@ def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
     # genotype calls at a variant (i.e., allele number is zero). Here we
     # assume that is rare enough to be negligible.
 
+    # calculate overall value of statistic
+    if normed:
+        f3 = np.nansum(T) / np.nansum(B)
+    else:
+        f3 = np.nanmean(T)
+
+    # calculate value of statistic within each block
     if normed:
         T_bsum = moving_statistic(T, statistic=np.nansum, size=blen)
         B_bsum = moving_statistic(B, statistic=np.nansum, size=blen)
         vb = T_bsum / B_bsum
-        m, se, vj = jackknife((T_bsum, B_bsum),
+        _, se, vj = jackknife((T_bsum, B_bsum),
                               statistic=lambda t, b: np.sum(t) / np.sum(b))
 
     else:
         vb = moving_statistic(T, statistic=np.nanmean, size=blen)
-        m, se, vj = jackknife(vb, statistic=np.mean)
+        _, se, vj = jackknife(vb, statistic=np.mean)
 
-    z = m / se
-    return m, se, z, vb, vj
+    # compute Z score
+    z = f3 / se
+
+    return f3, se, z, vb, vj
 
 
 def blockwise_patterson_d(aca, acb, acc, acd, blen):
-    """Estimate D(A, B; C, D) in blocks of size `blen` and standard error
-    using the block-jackknife.
+    """Estimate D(A, B; C, D) and standard error using the block-jackknife.
 
     Parameters
     ----------
@@ -280,12 +287,12 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
     acd : array_like, int, shape (n_variants, 2)
         Allele counts for population D.
     blen : int
-        Block size.
+        Block size (number of variants).
 
     Returns
     -------
-    m : float
-        Estimated value of the statistic.
+    d : float
+        Estimated value of the statistic using all data.
     se : float
         Estimated standard error.
     z : float
@@ -312,6 +319,9 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
     # genotype calls at a variant (i.e., allele number is zero). Here we
     # assume that is rare enough to be negligible.
 
+    # calculate overall estimate
+    d = np.nansum(num) / np.nansum(den)
+
     # compute the numerator and denominator within each block
     num_bsum = moving_statistic(num, statistic=np.nansum, size=blen)
     den_bsum = moving_statistic(den, statistic=np.nansum, size=blen)
@@ -320,10 +330,10 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
     vb = num_bsum / den_bsum
 
     # estimate standard error
-    m, se, vj = jackknife((num_bsum, den_bsum),
+    _, se, vj = jackknife((num_bsum, den_bsum),
                           statistic=lambda n, d: np.sum(n) / np.sum(d))
 
     # compute Z score
-    z = m / se
-    
-    return m, se, z, vb, vj
+    z = d / se
+
+    return d, se, z, vb, vj
