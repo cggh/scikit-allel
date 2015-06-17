@@ -192,6 +192,7 @@ class GenotypeArray(np.ndarray):
             raise ValueError('use HaplotypeArray for haploid calls')
 
     def __new__(cls, data, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -1680,6 +1681,7 @@ class HaplotypeArray(np.ndarray):
             raise TypeError('array with 2 dimensions required')
 
     def __new__(cls, data, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -2250,6 +2252,7 @@ class AlleleCountsArray(np.ndarray):
             raise TypeError('array with 2 dimensions required')
 
     def __new__(cls, data, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -2723,6 +2726,7 @@ class SortedIndex(np.ndarray):
             raise ValueError('array is not monotonically increasing')
 
     def __new__(cls, data, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -3216,6 +3220,7 @@ class UniqueIndex(np.ndarray):
             raise ValueError('values are not unique')
 
     def __new__(cls, data, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.array(data, **kwargs)
         cls._check_input_data(obj)
         obj = obj.view(cls)
@@ -3445,7 +3450,7 @@ class SortedMultiIndex(object):
 
     """
 
-    def __init__(self, l1, l2, copy=True):
+    def __init__(self, l1, l2, copy=False):
         l1 = SortedIndex(l1, copy=copy)
         l2 = np.array(l2, copy=copy)
         l2 = asarray_ndim(l2, 1)
@@ -3666,6 +3671,7 @@ class VariantTable(np.recarray):
     """
 
     def __new__(cls, data, index=None, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.rec.array(data, **kwargs)
         obj = obj.view(cls)
         # initialise index
@@ -4039,6 +4045,7 @@ class FeatureTable(np.recarray):
     """
 
     def __new__(cls, data, index=None, **kwargs):
+        kwargs.setdefault('copy', False)
         obj = np.rec.array(data, **kwargs)
         obj = obj.view(cls)
         # TODO initialise interval index

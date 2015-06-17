@@ -655,7 +655,7 @@ def ctable_to_hdf5_group(ctbl, parent, name, **kwargs):
 
 class CArrayWrapper(object):
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
             carr = bcolz.carray(data, **kwargs)
         else:
@@ -852,7 +852,7 @@ class GenotypeCArray(CArrayWrapper):
         >>> data.append([[0, 0], [0, 1]])
         >>> data.append([[0, 1], [1, 1]])
         >>> data.append([[0, 2], [-1, -1]])
-        >>> g = allel.GenotypeCArray(data, copy=False)
+        >>> g = allel.GenotypeCArray(data)
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -942,7 +942,7 @@ class GenotypeCArray(CArrayWrapper):
         if obj.shape[DIM_PLOIDY] == 1:
             raise ValueError('use HaplotypeCArray for haploid calls')
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         super(GenotypeCArray, self).__init__(data=data, copy=copy, **kwargs)
         # check late to avoid creating an intermediate numpy array
         self.check_input_data(self.carr)
@@ -1382,7 +1382,7 @@ class HaplotypeCArray(CArrayWrapper):
         if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         super(HaplotypeCArray, self).__init__(data=data, copy=copy, **kwargs)
         self.check_input_data(self.carr)
 
@@ -1576,7 +1576,7 @@ class AlleleCountsCArray(CArrayWrapper):
         if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         super(AlleleCountsCArray, self).__init__(data=data, copy=copy,
                                                  **kwargs)
         # check late to avoid creating an intermediate numpy array
@@ -1920,7 +1920,7 @@ class VariantCTable(CTableWrapper):
 
     ndarray_cls = VariantTable
 
-    def __init__(self, data=None, copy=True, index=None, **kwargs):
+    def __init__(self, data=None, copy=False, index=None, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:
@@ -1986,7 +1986,7 @@ class FeatureCTable(CTableWrapper):
 
     ndarray_cls = FeatureTable
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:
@@ -2095,7 +2095,7 @@ class FeatureCTable(CTableWrapper):
 
 class AlleleCountsCTable(CTableWrapper):
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:

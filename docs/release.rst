@@ -25,6 +25,11 @@ v0.15
   input carray as default for output carray (convenient if you, e.g.,
   want to use zlib level 1 throughout).
 
+* All classes in the :mod:`allel.model` and :mod:`allel.bcolz` modules
+  have changed the default value for the `copy` keyword argument to
+  `False`. This means that **not** copying the input data, just
+  wrapping it, is now the default behaviour.
+
 v0.14
 -----
 
