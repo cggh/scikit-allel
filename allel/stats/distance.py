@@ -34,7 +34,7 @@ def pairwise_distance(x, metric):
     Returns
     -------
 
-    dist : ndarray, shape (n_individuals * (n_individuals - 1) / 2,)
+    dist : ndarray, shape (m * (m - 1) / 2,)
         Distance matrix in condensed form.
 
     See Also
