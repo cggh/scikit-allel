@@ -21,7 +21,6 @@ import numpy as np
 import bcolz
 
 
-from allel.compat import PY2
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
     SortedIndex, SortedMultiIndex, subset, VariantTable, FeatureTable
 from allel.constants import DIM_PLOIDY
@@ -86,8 +85,10 @@ def carray_block_map(domain, f, out=None, blen=None, wrap=None, **kwargs):
     # determine expected output length
     if isinstance(domain, tuple):
         dim0len = domain[0].shape[0]
+        kwargs.setdefault('cparams', getattr(domain[0], 'cparams', None))
     else:
         dim0len = domain.shape[0]
+        kwargs.setdefault('cparams', getattr(domain, 'cparams', None))
     kwargs.setdefault('expectedlen', dim0len)
 
     # determine block size for iteration
@@ -234,6 +235,10 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
     # check inputs
     condition = asarray_ndim(condition, 1)
 
+    # output defaults
+    kwargs.setdefault('dtype', carr.dtype)
+    kwargs.setdefault('cparams', getattr(carr, 'cparams', None))
+
     if axis == 0:
         if condition.size != carr.shape[0]:
             raise ValueError('length of condition must match length of '
@@ -241,7 +246,6 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
                              (carr.shape[0], condition.size))
 
         # setup output
-        kwargs.setdefault('dtype', carr.dtype)
         kwargs.setdefault('expectedlen', np.count_nonzero(condition))
         out = bcolz.zeros((0,) + carr.shape[1:], **kwargs)
 
@@ -260,7 +264,6 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
                              (carr.shape[1], condition.size))
 
         # setup output
-        kwargs.setdefault('dtype', carr.dtype)
         kwargs.setdefault('expectedlen', carr.shape[0])
         out = bcolz.zeros((0, np.count_nonzero(condition)) + carr.shape[2:],
                           **kwargs)
@@ -309,6 +312,7 @@ def ctable_block_compress(ctbl, condition, blen=None, **kwargs):
 
     # setup output
     kwargs.setdefault('expectedlen', np.count_nonzero(condition))
+    kwargs.setdefault('cparams', getattr(ctbl, 'cparams', None))
     out = None
 
     # build output
@@ -366,6 +370,7 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
     # setup output
     kwargs.setdefault('dtype', carr.dtype)
     kwargs.setdefault('expectedlen', np.count_nonzero(sel0))
+    kwargs.setdefault('cparams', getattr(carr, 'cparams', None))
     out = bcolz.zeros((0, sel1.size) + carr.shape[2:], **kwargs)
 
     # build output
@@ -1712,8 +1717,10 @@ copy_method_doc(AlleleCountsCArray.is_segregating,
                 AlleleCountsArray.is_segregating)
 copy_method_doc(AlleleCountsCArray.is_non_segregating,
                 AlleleCountsArray.is_non_segregating)
-copy_method_doc(AlleleCountsCArray.is_singleton, AlleleCountsArray.is_singleton)
-copy_method_doc(AlleleCountsCArray.is_doubleton, AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsCArray.is_singleton,
+                AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsCArray.is_doubleton,
+                AlleleCountsArray.is_doubleton)
 copy_method_doc(AlleleCountsCArray.map_alleles, AlleleCountsArray.map_alleles)
 
 

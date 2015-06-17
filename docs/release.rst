@@ -5,7 +5,7 @@ v0.15
 -----
 
 * Added functions to estimate Fst with standard error via a
-  block-jackknife, see
+  block-jackknife:
   :func:`allel.stats.fst.blockwise_weir_cockerham_fst`,
   :func:`allel.stats.fst.blockwise_hudson_fst`,
   :func:`allel.stats.fst.blockwise_patterson_fst`.
@@ -20,6 +20,10 @@ v0.15
 
 * Classes from the :mod:`allel.model` and :mod:`allel.bcolz` modules
   are now aliased from the root :mod:`allel` module for convenience.
+
+* All functions in the :mod:`allel.bcolz` module use cparams from
+  input carray as default for output carray (convenient if you, e.g.,
+  want to use zlib level 1 throughout).
 
 v0.14
 -----
