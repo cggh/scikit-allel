@@ -1164,6 +1164,7 @@ class GenotypeCArray(CArrayWrapper):
         return carray_block_sum(self, axis=axis, transform=f)
 
     def to_haplotypes(self, **kwargs):
+
         # Unfortunately this cannot be implemented as a lightweight view,
         # so we have to copy.
 
@@ -1517,6 +1518,15 @@ class HaplotypeCArray(CArrayWrapper):
         return out
 
 
+# copy docstrings
+HaplotypeCArray.subset.__doc__ = HaplotypeArray.subset.__doc__
+HaplotypeCArray.to_genotypes.__doc__ = HaplotypeArray.to_genotypes.__doc__
+HaplotypeCArray.count_alleles.__doc__ = HaplotypeArray.count_alleles.__doc__
+HaplotypeCArray.count_alleles_subpops.__doc__ = \
+    HaplotypeArray.count_alleles_subpops.__doc__
+HaplotypeCArray.map_alleles.__doc__ = HaplotypeArray.map_alleles.__doc__
+
+
 class AlleleCountsCArray(CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.AlleleCountsArray`
     interface, using a :class:`bcolz.carray` as the backing store.
@@ -1667,6 +1677,24 @@ class AlleleCountsCArray(CArrayWrapper):
         out = carray_block_map(domain, f, wrap=AlleleCountsCArray, **kwargs)
 
         return out
+
+
+# copy docstrings
+AlleleCountsCArray.to_frequencies.__doc__ = \
+    AlleleCountsArray.to_frequencies.__doc__
+AlleleCountsCArray.allelism.__doc__ = AlleleCountsArray.allelism.__doc__
+AlleleCountsCArray.is_variant.__doc__ = AlleleCountsArray.is_variant.__doc__
+AlleleCountsCArray.is_non_variant.__doc__ = \
+    AlleleCountsArray.is_non_variant.__doc__
+AlleleCountsCArray.is_segregating.__doc__ = \
+    AlleleCountsArray.is_segregating.__doc__
+AlleleCountsCArray.is_non_segregating.__doc__ = \
+    AlleleCountsArray.is_non_segregating.__doc__
+AlleleCountsCArray.is_singleton.__doc__ = \
+    AlleleCountsArray.is_singleton.__doc__
+AlleleCountsCArray.is_doubleton.__doc__ = \
+    AlleleCountsArray.is_doubleton.__doc__
+AlleleCountsCArray.map_alleles.__doc__ = AlleleCountsArray.map_alleles.__doc__
 
 
 class CTableWrapper(object):
