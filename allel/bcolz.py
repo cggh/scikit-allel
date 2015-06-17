@@ -14,7 +14,7 @@ from __future__ import absolute_import, print_function, division
 import os
 import operator
 import itertools
-from allel.compat import range
+from allel.compat import range, copy_method_doc
 
 
 import numpy as np
@@ -1315,27 +1315,27 @@ class GenotypeCArray(CArrayWrapper):
 
 
 # copy docstrings
-GenotypeCArray.fill_masked.__doc__ = GenotypeArray.fill_masked.__doc__
-GenotypeCArray.subset.__doc__ = GenotypeArray.subset.__doc__
-GenotypeCArray.is_called.__doc__ = GenotypeArray.is_called.__doc__
-GenotypeCArray.is_missing.__doc__ = GenotypeArray.is_missing.__doc__
-GenotypeCArray.is_hom.__doc__ = GenotypeArray.is_hom.__doc__
-GenotypeCArray.is_hom_ref.__doc__ = GenotypeArray.is_hom_ref.__doc__
-GenotypeCArray.is_hom_alt.__doc__ = GenotypeArray.is_hom_alt.__doc__
-GenotypeCArray.is_het.__doc__ = GenotypeArray.is_het.__doc__
-GenotypeCArray.is_call.__doc__ = GenotypeArray.is_call.__doc__
-GenotypeCArray.to_haplotypes.__doc__ = GenotypeArray.to_haplotypes.__doc__
-GenotypeCArray.to_n_ref.__doc__ = GenotypeArray.to_n_ref.__doc__
-GenotypeCArray.to_n_alt.__doc__ = GenotypeArray.to_n_alt.__doc__
-GenotypeCArray.to_allele_counts.__doc__ = \
-    GenotypeArray.to_allele_counts.__doc__
-GenotypeCArray.to_packed.__doc__ = GenotypeArray.to_packed.__doc__
+copy_method_doc(GenotypeCArray.fill_masked, GenotypeArray.fill_masked)
+copy_method_doc(GenotypeCArray.subset, GenotypeArray.subset)
+copy_method_doc(GenotypeCArray.is_called, GenotypeArray.is_called)
+copy_method_doc(GenotypeCArray.is_missing, GenotypeArray.is_missing)
+copy_method_doc(GenotypeCArray.is_hom, GenotypeArray.is_hom)
+copy_method_doc(GenotypeCArray.is_hom_ref, GenotypeArray.is_hom_ref)
+copy_method_doc(GenotypeCArray.is_hom_alt, GenotypeArray.is_hom_alt)
+copy_method_doc(GenotypeCArray.is_het, GenotypeArray.is_het)
+copy_method_doc(GenotypeCArray.is_call, GenotypeArray.is_call)
+copy_method_doc(GenotypeCArray.to_haplotypes, GenotypeArray.to_haplotypes)
+copy_method_doc(GenotypeCArray.to_n_ref, GenotypeArray.to_n_ref)
+copy_method_doc(GenotypeCArray.to_n_alt, GenotypeArray.to_n_alt)
+copy_method_doc(GenotypeCArray.to_allele_counts,
+                GenotypeArray.to_allele_counts)
+copy_method_doc(GenotypeCArray.to_packed, GenotypeArray.to_packed)
 GenotypeCArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
-GenotypeCArray.count_alleles.__doc__ = GenotypeArray.count_alleles.__doc__
-GenotypeCArray.count_alleles_subpops.__doc__ = \
-    GenotypeArray.count_alleles_subpops.__doc__
-GenotypeCArray.to_gt.__doc__ = GenotypeArray.to_gt.__doc__
-GenotypeCArray.map_alleles.__doc__ = GenotypeArray.map_alleles.__doc__
+copy_method_doc(GenotypeCArray.count_alleles, GenotypeArray.count_alleles)
+copy_method_doc(GenotypeCArray.count_alleles_subpops,
+                GenotypeArray.count_alleles_subpops)
+copy_method_doc(GenotypeCArray.to_gt, GenotypeArray.to_gt)
+copy_method_doc(GenotypeCArray.map_alleles, GenotypeArray.map_alleles)
 
 
 class HaplotypeCArray(CArrayWrapper):
@@ -1519,12 +1519,12 @@ class HaplotypeCArray(CArrayWrapper):
 
 
 # copy docstrings
-HaplotypeCArray.subset.__doc__ = HaplotypeArray.subset.__doc__
-HaplotypeCArray.to_genotypes.__doc__ = HaplotypeArray.to_genotypes.__doc__
-HaplotypeCArray.count_alleles.__doc__ = HaplotypeArray.count_alleles.__doc__
-HaplotypeCArray.count_alleles_subpops.__doc__ = \
-    HaplotypeArray.count_alleles_subpops.__doc__
-HaplotypeCArray.map_alleles.__doc__ = HaplotypeArray.map_alleles.__doc__
+copy_method_doc(HaplotypeCArray.subset, HaplotypeArray.subset)
+copy_method_doc(HaplotypeCArray.to_genotypes, HaplotypeArray.to_genotypes)
+copy_method_doc(HaplotypeCArray.count_alleles, HaplotypeArray.count_alleles)
+copy_method_doc(HaplotypeCArray.count_alleles_subpops,
+                HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeCArray.map_alleles, HaplotypeArray.map_alleles)
 
 
 class AlleleCountsCArray(CArrayWrapper):
@@ -1611,6 +1611,11 @@ class AlleleCountsCArray(CArrayWrapper):
             return block.allelism()
         return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
 
+    def max_allele(self, **kwargs):
+        def f(block):
+            return block.max_allele()
+        return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
+
     def is_variant(self, **kwargs):
         def f(block):
             return block.is_variant()
@@ -1680,21 +1685,20 @@ class AlleleCountsCArray(CArrayWrapper):
 
 
 # copy docstrings
-AlleleCountsCArray.to_frequencies.__doc__ = \
-    AlleleCountsArray.to_frequencies.__doc__
-AlleleCountsCArray.allelism.__doc__ = AlleleCountsArray.allelism.__doc__
-AlleleCountsCArray.is_variant.__doc__ = AlleleCountsArray.is_variant.__doc__
-AlleleCountsCArray.is_non_variant.__doc__ = \
-    AlleleCountsArray.is_non_variant.__doc__
-AlleleCountsCArray.is_segregating.__doc__ = \
-    AlleleCountsArray.is_segregating.__doc__
-AlleleCountsCArray.is_non_segregating.__doc__ = \
-    AlleleCountsArray.is_non_segregating.__doc__
-AlleleCountsCArray.is_singleton.__doc__ = \
-    AlleleCountsArray.is_singleton.__doc__
-AlleleCountsCArray.is_doubleton.__doc__ = \
-    AlleleCountsArray.is_doubleton.__doc__
-AlleleCountsCArray.map_alleles.__doc__ = AlleleCountsArray.map_alleles.__doc__
+copy_method_doc(AlleleCountsCArray.to_frequencies,
+                AlleleCountsArray.to_frequencies)
+copy_method_doc(AlleleCountsCArray.allelism, AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsCArray.max_allele, AlleleCountsArray.max_allele)
+copy_method_doc(AlleleCountsCArray.is_variant, AlleleCountsArray.is_variant)
+copy_method_doc(AlleleCountsCArray.is_non_variant,
+                AlleleCountsArray.is_non_variant)
+copy_method_doc(AlleleCountsCArray.is_segregating,
+                AlleleCountsArray.is_segregating)
+copy_method_doc(AlleleCountsCArray.is_non_segregating,
+                AlleleCountsArray.is_non_segregating)
+copy_method_doc(AlleleCountsCArray.is_singleton, AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsCArray.is_doubleton, AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsCArray.map_alleles, AlleleCountsArray.map_alleles)
 
 
 class CTableWrapper(object):

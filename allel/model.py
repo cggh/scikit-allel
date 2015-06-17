@@ -2210,13 +2210,11 @@ class AlleleCountsArray(np.ndarray):
 
         Parameters
         ----------
-
         fill : float, optional
             Value to use when number of allele calls is 0.
 
         Returns
         -------
-
         af : ndarray, float, shape (n_variants, n_alleles)
 
         Examples
@@ -2245,7 +2243,6 @@ class AlleleCountsArray(np.ndarray):
 
         Returns
         -------
-
         n : ndarray, int, shape (n_variants,)
             Allelism array.
 
@@ -2263,6 +2260,34 @@ class AlleleCountsArray(np.ndarray):
         """
 
         return np.sum(self > 0, axis=1)
+
+    def max_allele(self):
+        """Return the highest allele index for each variant.
+
+        Returns
+        -------
+        n : ndarray, int, shape (n_variants,)
+            Allele index array.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> ac = g.count_alleles()
+        >>> ac.max_allele()
+        array([1, 2, 2], dtype=int8)
+
+        """
+
+        out = np.empty(self.shape[0], dtype='i1')
+        out.fill(-1)
+        for i in range(self.shape[1]):
+            d = self[:, i] > 0
+            out[d] = i
+        return out
 
     def is_variant(self):
         """Find variants with at least one non-reference allele call.

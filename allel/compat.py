@@ -21,6 +21,10 @@ if PY2:
     zip_longest = itertools.izip_longest
     reduce = reduce
     from urllib import unquote_plus
+
+    def copy_method_doc(m, n):
+        m.__func__.__doc__ = n.__doc__
+
 else:
     range = range
     map = map
@@ -33,3 +37,6 @@ else:
     import functools
     reduce = functools.reduce
     from urllib.parse import unquote_plus
+
+    def copy_method_doc(m, n):
+        m.__doc__ = n.__doc__

@@ -1256,6 +1256,12 @@ class AlleleCountsArrayInterface(object):
         actual = self.setup_instance(allele_counts_data).allelism()
         aeq(expect, actual)
 
+    def test_max_allele(self):
+
+        expect = np.array([1, 2, 2, 2, -1])
+        actual = self.setup_instance(allele_counts_data).max_allele()
+        aeq(expect, actual)
+
     def test_is_count_variant(self):
         ac = self.setup_instance(allele_counts_data)
         expect = np.array([1, 1, 1, 1, 0], dtype='b1')
