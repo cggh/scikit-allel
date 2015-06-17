@@ -248,29 +248,56 @@ class GenotypeArray(np.ndarray):
         s += str(self)
         return s
 
-    def _repr_html_(self):
+    def to_html_str(self, limit=5, caption=None, cols=None):
         import petl as etl
-        n_variants, n_samples, _ = self.shape
-        idx_variants = list(range(6))
-        idx_samples = [0, 1, 2, 3, 4, n_samples-5, n_samples-4, n_samples-3,
-                       n_samples-2, n_samples-1]
-        gt = self[:6][:, idx_samples].to_gt()
+        n, m, _ = self.shape
+
+        # choose how many variants to display
+        limit = min(n, limit)
+
+        # choose which columns to display
+        if cols is None:
+            if m <= 10:
+                # display all
+                cidx = list(range(m))
+            else:
+                # display subset
+                cidx = [0, 1, 2, 3, 4, m-5, m-4, m-3, m-2, m-1]
+        else:
+            cidx = cols
+
+        # prepare data for display
+        gt = self[:limit+1][:, cidx].to_gt()
         if not PY2:
             gt = [[str(v, 'ascii') for v in row] for row in gt]
+
+        # prepare table
         tbl = (
             etl
             .wrap(gt)
-            .pushheader(idx_samples)
-            .addcolumn('', idx_variants, index=0)
-            .addcolumn('...', ['...'] * 6, index=6)
+            .pushheader(cidx)
+            .addrownumbers(start=0)
+            .rename('row', '')
         )
-        s = 'GenotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
+
+        if cols is None and m > 10:
+            # insert a spacer column
+            tbl = tbl.addcolumn('...', ['...'] * limit, index=6)
+
+        # construct caption
+        if caption is None:
+            caption = 'GenotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
+
+        # build HTML
         # noinspection PyProtectedMember
         html = etl.util.vis._display_html(tbl,
-                                          caption=s,
-                                          limit=5,
+                                          caption=caption,
+                                          limit=limit,
                                           td_styles={'': 'font-weight: bold'})
         return html
+
+    def _repr_html_(self):
+        return self.to_html_str()
 
     @property
     def n_variants(self):
@@ -1699,29 +1726,54 @@ class HaplotypeArray(np.ndarray):
         s += str(self)
         return s
 
-    def _repr_html_(self):
+    def to_html_str(self, limit=5, caption=None, cols=None):
         import petl as etl
-        n_variants, n_haplotypes = self.shape
-        idx_variants = list(range(6))
-        idx_haplotypes = [0, 1, 2, 3, 4, n_haplotypes-5,
-                          n_haplotypes-4, n_haplotypes-3, n_haplotypes-2,
-                          n_haplotypes-1]
-        h = self[:6][:, idx_haplotypes]
+        n, m = self.shape
+
+        # choose how many variants to display
+        limit = min(n, limit)
+
+        # choose which columns to display
+        if cols is None:
+            if m <= 10:
+                # display all
+                cidx = list(range(m))
+            else:
+                # display subset
+                cidx = [0, 1, 2, 3, 4, m-5, m-4, m-3, m-2, m-1]
+        else:
+            cidx = cols
+
+        # prepare data for display
+        h = self[:limit+1][:, cidx]
+
+        # prepare table
         tbl = (
             etl
             .wrap(h)
-            .pushheader(idx_haplotypes)
-            .addcolumn('', idx_variants, index=0)
-            .addcolumn('...', ['...'] * 6, index=6)
+            .pushheader(cidx)
+            .addrownumbers(start=0)
+            .rename('row', '')
         )
-        # noinspection PyProtectedMember
-        s = 'HaplotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
+
+        if cols is None and m > 10:
+            # insert a spacer column
+            tbl = tbl.addcolumn('...', ['...'] * limit, index=6)
+
+        # construct caption
+        if caption is None:
+            caption = 'HaplotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
+
+        # build HTML
         # noinspection PyProtectedMember
         html = etl.util.vis._display_html(tbl,
-                                          caption=s,
-                                          limit=5,
+                                          caption=caption,
+                                          limit=limit,
                                           td_styles={'': 'font-weight: bold'})
         return html
+
+    def _repr_html_(self):
+        return self.to_html_str()
 
     @property
     def n_variants(self):
@@ -2244,24 +2296,30 @@ class AlleleCountsArray(np.ndarray):
         s += str(self)
         return s
 
-    def _repr_html_(self):
+    def to_html_str(self, limit=5, caption=None):
         import petl as etl
-        idx_variants = list(range(6))
-        ac = self[:6]
+        ac = self[:limit+1]
         tbl = (
             etl
             .wrap(ac)
             .pushheader(list(range(ac.shape[1])))
-            .addcolumn('', idx_variants, index=0)
+            .addrownumbers(start=0)
+            .rename('row', '')
         )
-        # noinspection PyProtectedMember
-        s = 'AlleleCountsArray(%s, dtype=%s)' % (self.shape, self.dtype)
+
+        if caption is None:
+            caption = 'AlleleCountsArray(%s, dtype=%s)' \
+                      % (self.shape, self.dtype)
+
         # noinspection PyProtectedMember
         html = etl.util.vis._display_html(tbl,
-                                          caption=s,
-                                          limit=5,
+                                          caption=caption,
+                                          limit=limit,
                                           td_styles={'': 'font-weight: bold'})
         return html
+
+    def _repr_html_(self):
+        return self.to_html_str()
 
     @property
     def n_variants(self):

@@ -956,28 +956,9 @@ class GenotypeCArray(CArrayWrapper):
         return out
 
     def _repr_html_(self):
-        import petl as etl
-        n_variants, n_samples, _ = self.shape
-        idx_variants = list(range(6))
-        idx_samples = [0, 1, 2, 3, 4, n_samples-5, n_samples-4, n_samples-3,
-                       n_samples-2, n_samples-1]
-        gt = self[:6][:, idx_samples].to_gt()
-        if not PY2:
-            gt = [[str(v, 'ascii') for v in row] for row in gt]
-        tbl = (
-            etl
-            .wrap(gt)
-            .pushheader(idx_samples)
-            .addcolumn('', idx_variants, index=0)
-            .addcolumn('...', ['...'] * 6, index=6)
-        )
-        s = '<br/>'.join(repr(self).split('\n')[:3])
-        # noinspection PyProtectedMember
-        html = etl.util.vis._display_html(tbl,
-                                          caption=s,
-                                          limit=5,
-                                          td_styles={'': 'font-weight: bold'})
-        return html
+        g = self[:6]
+        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        return g.to_html_str(caption=caption)
 
     @property
     def n_variants(self):
@@ -1407,26 +1388,9 @@ class HaplotypeCArray(CArrayWrapper):
         return out
 
     def _repr_html_(self):
-        import petl as etl
-        n_variants, n_haplotypes = self.shape
-        idx_variants = list(range(6))
-        idx_haplotypes = [0, 1, 2, 3, 4, n_haplotypes-5, n_haplotypes-4,
-                          n_haplotypes-3, n_haplotypes-2, n_haplotypes-1]
-        h = self[:6][:, idx_haplotypes]
-        tbl = (
-            etl
-            .wrap(h)
-            .pushheader(idx_haplotypes)
-            .addcolumn('', idx_variants, index=0)
-            .addcolumn('...', ['...'] * 6, index=6)
-        )
-        s = '<br/>'.join(repr(self).split('\n')[:3])
-        # noinspection PyProtectedMember
-        html = etl.util.vis._display_html(tbl,
-                                          caption=s,
-                                          limit=5,
-                                          td_styles={'': 'font-weight: bold'})
-        return html
+        h = self[:6]
+        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        return h.to_html_str(caption=caption)
 
     @property
     def n_variants(self):
@@ -1623,22 +1587,9 @@ class AlleleCountsCArray(CArrayWrapper):
         return out
 
     def _repr_html_(self):
-        import petl as etl
-        idx_variants = list(range(6))
         ac = self[:6]
-        tbl = (
-            etl
-            .wrap(ac)
-            .pushheader(list(range(ac.shape[1])))
-            .addcolumn('', idx_variants, index=0)
-        )
-        s = '<br/>'.join(repr(self).split('\n')[:3])
-        # noinspection PyProtectedMember
-        html = etl.util.vis._display_html(tbl,
-                                          caption=s,
-                                          limit=5,
-                                          td_styles={'': 'font-weight: bold'})
-        return html
+        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        return ac.to_html_str(caption=caption)
 
     @property
     def n_variants(self):
