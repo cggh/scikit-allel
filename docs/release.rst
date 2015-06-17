@@ -1,6 +1,26 @@
 Release notes
 =============
 
+v0.15
+-----
+
+* Added functions to estimate Fst with standard error via a
+  block-jackknife, see
+  :func:`allel.stats.fst.blockwise_weir_cockerham_fst`,
+  :func:`allel.stats.fst.blockwise_hudson_fst`,
+  :func:`allel.stats.fst.blockwise_patterson_fst`.
+
+* Added method :func:`allel.model.AlleleCountsArray.max_allele` to
+  determine highest allele index for each variant.
+
+* Changed first return value from admixture functions
+  :func:`allel.stats.admixture.blockwise_patterson_f3` and
+  :func:`allel.stats.admixture.blockwise_patterson_d` to return the
+  estimator from the whole dataset.
+
+* Classes from the :mod:`allel.model` and :mod:`allel.bcolz` modules
+  are now aliased from the root :mod:`allel` module for convenience.
+
 v0.14
 -----
 
