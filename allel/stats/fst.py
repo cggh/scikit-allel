@@ -568,16 +568,14 @@ def blockwise_weir_cockerham_fst(g, subpops, blen, max_allele=None):
     a, b, c = weir_cockerham_fst(g, subpops, max_allele=max_allele)
 
     # calculate overall estimate
-    fst = np.nansum(a) / (np.nansum(a) + np.nansum(b) + np.nansum(c))
+    a_sum = np.nansum(a)
+    b_sum = np.nansum(b)
+    c_sum = np.nansum(c)
+    fst = a_sum / (a_sum + b_sum + c_sum)
 
     # compute the numerator and denominator within each block
     num_bsum = moving_statistic(a, statistic=np.nansum, size=blen)
-    den_bsum = moving_statistic(
-        (a, b, c),
-        statistic=lambda wa, wb, wc: (np.nansum(wa) + np.nansum(wb) +
-                                      np.nansum(wc)),
-        size=blen
-    )
+    den_bsum = moving_statistic(a + b + c, statistic=np.nansum, size=blen)
 
     # calculate the statistic values in each block
     vb = num_bsum / den_bsum

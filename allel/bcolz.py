@@ -814,9 +814,9 @@ class GenotypeCArray(CArrayWrapper):
     Instantiate a compressed genotype array from existing data::
 
         >>> import allel
-        >>> g = allel.bcolz.GenotypeCArray([[[0, 0], [0, 1]],
-        ...                                 [[0, 1], [1, 1]],
-        ...                                 [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.GenotypeCArray([[[0, 0], [0, 1]],
+        ...                           [[0, 1], [1, 1]],
+        ...                           [[0, 2], [-1, -1]]], dtype='i1')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -846,7 +846,7 @@ class GenotypeCArray(CArrayWrapper):
         >>> data.append([[0, 0], [0, 1]])
         >>> data.append([[0, 1], [1, 1]])
         >>> data.append([[0, 2], [-1, -1]])
-        >>> g = allel.bcolz.GenotypeCArray(data, copy=False)
+        >>> g = allel.GenotypeCArray(data, copy=False)
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -870,7 +870,7 @@ class GenotypeCArray(CArrayWrapper):
         ...                        chunks=(2, 2, 2))
         ...
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
-        >>> g = allel.bcolz.GenotypeCArray.from_hdf5('example.h5', 'genotype')
+        >>> g = allel.GenotypeCArray.from_hdf5('example.h5', 'genotype')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -986,9 +986,9 @@ class GenotypeCArray(CArrayWrapper):
         --------
 
         >>> import allel
-        >>> g = allel.bcolz.GenotypeCArray([[[0, 0], [0, 1]],
-        ...                                 [[0, 1], [1, 1]],
-        ...                                 [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.GenotypeCArray([[[0, 0], [0, 1]],
+        ...                           [[0, 1], [1, 1]],
+        ...                           [[0, 2], [-1, -1]]], dtype='i1')
         >>> g.count_called()
         5
         >>> g.count_alleles()
@@ -1311,6 +1311,30 @@ class GenotypeCArray(CArrayWrapper):
         out = carray_block_map(domain, f, wrap=GenotypeCArray, **kwargs)
 
         return out
+
+
+# copy docstrings
+GenotypeCArray.fill_masked.__doc__ = GenotypeArray.fill_masked.__doc__
+GenotypeCArray.subset.__doc__ = GenotypeArray.subset.__doc__
+GenotypeCArray.is_called.__doc__ = GenotypeArray.is_called.__doc__
+GenotypeCArray.is_missing.__doc__ = GenotypeArray.is_missing.__doc__
+GenotypeCArray.is_hom.__doc__ = GenotypeArray.is_hom.__doc__
+GenotypeCArray.is_hom_ref.__doc__ = GenotypeArray.is_hom_ref.__doc__
+GenotypeCArray.is_hom_alt.__doc__ = GenotypeArray.is_hom_alt.__doc__
+GenotypeCArray.is_het.__doc__ = GenotypeArray.is_het.__doc__
+GenotypeCArray.is_call.__doc__ = GenotypeArray.is_call.__doc__
+GenotypeCArray.to_haplotypes.__doc__ = GenotypeArray.to_haplotypes.__doc__
+GenotypeCArray.to_n_ref.__doc__ = GenotypeArray.to_n_ref.__doc__
+GenotypeCArray.to_n_alt.__doc__ = GenotypeArray.to_n_alt.__doc__
+GenotypeCArray.to_allele_counts.__doc__ = \
+    GenotypeArray.to_allele_counts.__doc__
+GenotypeCArray.to_packed.__doc__ = GenotypeArray.to_packed.__doc__
+GenotypeCArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
+GenotypeCArray.count_alleles.__doc__ = GenotypeArray.count_alleles.__doc__
+GenotypeCArray.count_alleles_subpops.__doc__ = \
+    GenotypeArray.count_alleles_subpops.__doc__
+GenotypeCArray.to_gt.__doc__ = GenotypeArray.to_gt.__doc__
+GenotypeCArray.map_alleles.__doc__ = GenotypeArray.map_alleles.__doc__
 
 
 class HaplotypeCArray(CArrayWrapper):
