@@ -30,6 +30,9 @@ v0.15
   `False`. This means that **not** copying the input data, just
   wrapping it, is now the default behaviour.
 
+* Fixed bug in :func:`GenotypeArray.to_gt` where maximum allele index
+  is zero.
+
 v0.14
 -----
 

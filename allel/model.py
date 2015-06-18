@@ -1507,6 +1507,8 @@ class GenotypeArray(np.ndarray):
         # how many characters needed?
         if max_allele is None:
             max_allele = np.max(self)
+        if max_allele <= 0:
+            max_allele = 1
         nchar = int(np.floor(np.log10(max_allele))) + 1
 
         # convert to string

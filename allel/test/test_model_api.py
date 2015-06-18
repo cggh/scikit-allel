@@ -692,6 +692,12 @@ class GenotypeArrayInterface(object):
         actual = self.setup_instance(triploid_genotype_data).to_gt()
         aeq(expect, actual)
 
+        # all zeroes
+        data = [[[0, 0]]]
+        expect = [[b'0/0']]
+        actual = self.setup_instance(data).to_gt()
+        aeq(expect, actual)
+
     def test_max(self):
 
         # overall
