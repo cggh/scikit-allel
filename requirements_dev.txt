@@ -1,7 +1,5 @@
 cython
 numpydoc
-sphinx
-tox
 flake8
 ipython[all]
 runipy
