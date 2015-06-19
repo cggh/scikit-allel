@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-from allel.model import SortedIndex
+from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, ignore_invalid, check_equal_length
 
 

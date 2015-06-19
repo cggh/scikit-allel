@@ -9,7 +9,7 @@ from nose.tools import eq_ as eq, assert_raises, assert_is_instance, \
 from allel.test.tools import assert_array_equal as aeq
 
 
-from allel.model import GenotypeArray, HaplotypeArray, SortedIndex, \
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, SortedIndex, \
     UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable, \
     FeatureTable
 from allel.test.test_model_api import GenotypeArrayInterface, \

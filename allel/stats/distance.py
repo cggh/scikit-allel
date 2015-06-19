@@ -9,7 +9,7 @@ import numpy as np
 import scipy.linalg
 
 
-from allel.model import SortedIndex
+from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, ensure_square
 from allel.stats.diversity import sequence_divergence
 
@@ -34,7 +34,7 @@ def pairwise_distance(x, metric):
     Returns
     -------
 
-    dist : ndarray, shape (n_individuals * (n_individuals - 1) / 2,)
+    dist : ndarray, shape (m * (m - 1) / 2,)
         Distance matrix in condensed form.
 
     See Also
@@ -263,3 +263,75 @@ def pcoa(dist):
     explained_ratio = eigvals / eigvals.sum()
 
     return coords, explained_ratio
+
+
+def condensed_coords(i, j, n):
+    """Transform square distance matrix coordinates to the corresponding
+    index into a condensed, 1D form of the matrix.
+
+    Parameters
+    ----------
+    i : int
+        Row index.
+    j : int
+        Column index.
+    n : int
+        Size of the square matrix (length of first or second dimension).
+
+    Returns
+    -------
+    ix : int
+
+    """
+
+    i, j = sorted([i, j])
+    # calculate number of items in rows before this one (sum of arithmetic
+    # progression)
+    x = i * ((2 * n) - i - 1) / 2
+    # add on previous items in current row
+    ix = x + j - i - 1
+    return int(ix)
+
+
+def condensed_coords_within(pop, n):
+    """Return indices into a condensed distance matrix for all
+    pairwise comparisons within the given population.
+
+    Parameters
+    ----------
+    pop : array_like, int
+        Indices of samples or haplotypes within the population.
+    n : int
+        Size of the square matrix (length of first or second dimension).
+
+    Returns
+    -------
+    indices : ndarray, int
+
+    """
+
+    return [condensed_coords(i, j, n)
+            for i, j in itertools.combinations(sorted(pop), 2)]
+
+
+def condensed_coords_between(pop1, pop2, n):
+    """Return indices into a condensed distance matrix for all pairwise
+    comparisons between two populations.
+
+    Parameters
+    ----------
+    pop1 : array_like, int
+        Indices of samples or haplotypes within the first population.
+    pop2 : array_like, int
+        Indices of samples or haplotypes within the second population.
+    n : int
+        Size of the square matrix (length of first or second dimension).
+
+    Returns
+    -------
+    indices : ndarray, int
+
+    """
+
+    return [condensed_coords(i, j, n)
+            for i, j in itertools.product(sorted(pop1), sorted(pop2))]

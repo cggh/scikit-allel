@@ -1,7 +1,7 @@
 Compressed arrays (bcolz)
 =========================
 
-.. automodule:: allel.bcolz
+.. automodule:: allel.model.bcolz
 
 GenotypeCArray
 --------------

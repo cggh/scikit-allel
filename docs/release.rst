@@ -1,6 +1,53 @@
 Release notes
 =============
 
+v0.15
+-----
+
+* Added functions to estimate Fst with standard error via a
+  block-jackknife:
+  :func:`allel.stats.fst.blockwise_weir_cockerham_fst`,
+  :func:`allel.stats.fst.blockwise_hudson_fst`,
+  :func:`allel.stats.fst.blockwise_patterson_fst`.
+
+* Fixed a serious bug in :func:`allel.stats.fst.weir_cockerham_fst`
+  related to incorrect estimation of heterozygosity, which manifested
+  if the subpopulations being compared were not a partition of the
+  total population (i.e., there were one or more samples in the
+  genotype array that were not included in the subpopulations to
+  compare).
+
+* Added method :func:`allel.model.AlleleCountsArray.max_allele` to
+  determine highest allele index for each variant.
+
+* Changed first return value from admixture functions
+  :func:`allel.stats.admixture.blockwise_patterson_f3` and
+  :func:`allel.stats.admixture.blockwise_patterson_d` to return the
+  estimator from the whole dataset.
+
+* Added utility functions to the :mod:`allel.stats.distance` module
+  for transforming coordinates between condensed and uncondensed
+  forms of a distance matrix.
+
+* Classes previously available from the `allel.model` and
+  `allel.bcolz` modules are now aliased from the root :mod:`allel`
+  module for convenience. These modules have been reorganised into an
+  :mod:`allel.model` package with sub-modules
+  :mod:`allel.model.ndarray` and :mod:`allel.model.bcolz`.
+
+* All functions in the :mod:`allel.model.bcolz` module use cparams from
+  input carray as default for output carray (convenient if you, e.g.,
+  want to use zlib level 1 throughout).
+
+* All classes in the :mod:`allel.model.ndarray` and
+  :mod:`allel.model.bcolz` modules have changed the default value for
+  the `copy` keyword argument to `False`. This means that **not**
+  copying the input data, just wrapping it, is now the default
+  behaviour.
+
+* Fixed bug in :func:`GenotypeArray.to_gt` where maximum allele index
+  is zero.
+
 v0.14
 -----
 

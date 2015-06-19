@@ -692,6 +692,12 @@ class GenotypeArrayInterface(object):
         actual = self.setup_instance(triploid_genotype_data).to_gt()
         aeq(expect, actual)
 
+        # all zeroes
+        data = [[[0, 0]]]
+        expect = [[b'0/0']]
+        actual = self.setup_instance(data).to_gt()
+        aeq(expect, actual)
+
     def test_max(self):
 
         # overall
@@ -1254,6 +1260,12 @@ class AlleleCountsArrayInterface(object):
 
         expect = np.array([2, 3, 3, 1, 0])
         actual = self.setup_instance(allele_counts_data).allelism()
+        aeq(expect, actual)
+
+    def test_max_allele(self):
+
+        expect = np.array([1, 2, 2, 2, -1])
+        actual = self.setup_instance(allele_counts_data).max_allele()
         aeq(expect, actual)
 
     def test_is_count_variant(self):
@@ -2100,7 +2112,7 @@ def test_create_allele_mapping():
               [1, 0],
               [0, -1],
               [-1, 0]]
-    actual = allel.model.create_allele_mapping(ref, alt, alleles)
+    actual = allel.model.ndarray.create_allele_mapping(ref, alt, alleles)
     aeq(expect, actual)
 
     # multiallelic case
@@ -2114,5 +2126,5 @@ def test_create_allele_mapping():
     expect = [[0, 1, -1],
               [0, -1, 1],
               [-1, 0, -1]]
-    actual = allel.model.create_allele_mapping(ref, alt, alleles)
+    actual = allel.model.ndarray.create_allele_mapping(ref, alt, alleles)
     aeq(expect, actual)

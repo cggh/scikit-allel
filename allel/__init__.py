@@ -2,11 +2,11 @@
 # flake8: noqa
 
 
-__version__ = '0.14.0'
+__version__ = '0.15.0'
 
 
 import allel.model as model
-import allel.bcolz as bcolz
+from allel.model import *
 import allel.stats as stats
 import allel.plot as plot
 import allel.io as io

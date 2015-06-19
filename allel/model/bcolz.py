@@ -11,18 +11,18 @@ are too large to fit uncompressed into main memory.
 from __future__ import absolute_import, print_function, division
 
 
-import os
 import operator
 import itertools
-from allel.compat import range
+from allel.compat import range, copy_method_doc
 
 
 import numpy as np
 import bcolz
 
 
-from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex, subset, VariantTable, FeatureTable
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
+    AlleleCountsArray, SortedIndex, SortedMultiIndex, subset, VariantTable, \
+    FeatureTable, recarray_to_html_str, recarray_display
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
@@ -30,44 +30,6 @@ from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
            'VariantCTable']
-
-
-# monkey-patch bcolz.ctable.dtype property because it's broken for
-# multi-dimensional columns
-
-def _ctable_dtype(self):
-    """The data type of this object (numpy dtype)."""
-    names, cols = self.names, self.cols
-    l = []
-    for name in names:
-        col = cols[name]
-        if col.ndim == 1:
-            t = (name, col.dtype)
-        else:
-            t = (name, (col.dtype, col.shape[1:]))
-        l.append(t)
-    return np.dtype(l)
-
-# noinspection PyPropertyAccess
-bcolz.ctable.dtype = property(_ctable_dtype)
-
-
-# bcolz.ctable.addcol is broken for persistent ctables
-
-def ctable_addcol_persistent(self, newcol, name, **kwargs):
-    # require name to simplify patch
-    if self.rootdir is not None and self.mode != 'r':
-        rootdir = os.path.join(self.rootdir, name)
-        kwargs['rootdir'] = rootdir
-        kwargs['mode'] = 'w'
-        self.addcol(newcol, name=name, **kwargs)
-        if isinstance(newcol, bcolz.carray):
-            # ensure carrays are actually written to disk
-            newcol.copy(**kwargs)
-    else:
-        self.addcol(newcol, name=name, **kwargs)
-
-bcolz.ctable.addcol_persistent = ctable_addcol_persistent
 
 
 def ensure_carray(a, *ndims, **kwargs):
@@ -85,8 +47,10 @@ def carray_block_map(domain, f, out=None, blen=None, wrap=None, **kwargs):
     # determine expected output length
     if isinstance(domain, tuple):
         dim0len = domain[0].shape[0]
+        kwargs.setdefault('cparams', getattr(domain[0], 'cparams', None))
     else:
         dim0len = domain.shape[0]
+        kwargs.setdefault('cparams', getattr(domain, 'cparams', None))
     kwargs.setdefault('expectedlen', dim0len)
 
     # determine block size for iteration
@@ -233,6 +197,10 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
     # check inputs
     condition = asarray_ndim(condition, 1)
 
+    # output defaults
+    kwargs.setdefault('dtype', carr.dtype)
+    kwargs.setdefault('cparams', getattr(carr, 'cparams', None))
+
     if axis == 0:
         if condition.size != carr.shape[0]:
             raise ValueError('length of condition must match length of '
@@ -240,7 +208,6 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
                              (carr.shape[0], condition.size))
 
         # setup output
-        kwargs.setdefault('dtype', carr.dtype)
         kwargs.setdefault('expectedlen', np.count_nonzero(condition))
         out = bcolz.zeros((0,) + carr.shape[1:], **kwargs)
 
@@ -259,7 +226,6 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
                              (carr.shape[1], condition.size))
 
         # setup output
-        kwargs.setdefault('dtype', carr.dtype)
         kwargs.setdefault('expectedlen', carr.shape[0])
         out = bcolz.zeros((0, np.count_nonzero(condition)) + carr.shape[2:],
                           **kwargs)
@@ -308,6 +274,7 @@ def ctable_block_compress(ctbl, condition, blen=None, **kwargs):
 
     # setup output
     kwargs.setdefault('expectedlen', np.count_nonzero(condition))
+    kwargs.setdefault('cparams', getattr(ctbl, 'cparams', None))
     out = None
 
     # build output
@@ -365,6 +332,7 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
     # setup output
     kwargs.setdefault('dtype', carr.dtype)
     kwargs.setdefault('expectedlen', np.count_nonzero(sel0))
+    kwargs.setdefault('cparams', getattr(carr, 'cparams', None))
     out = bcolz.zeros((0, sel1.size) + carr.shape[2:], **kwargs)
 
     # build output
@@ -649,7 +617,7 @@ def ctable_to_hdf5_group(ctbl, parent, name, **kwargs):
 
 class CArrayWrapper(object):
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         if copy or not isinstance(data, bcolz.carray):
             carr = bcolz.carray(data, **kwargs)
         else:
@@ -814,9 +782,9 @@ class GenotypeCArray(CArrayWrapper):
     Instantiate a compressed genotype array from existing data::
 
         >>> import allel
-        >>> g = allel.bcolz.GenotypeCArray([[[0, 0], [0, 1]],
-        ...                                 [[0, 1], [1, 1]],
-        ...                                 [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.GenotypeCArray([[[0, 0], [0, 1]],
+        ...                           [[0, 1], [1, 1]],
+        ...                           [[0, 2], [-1, -1]]], dtype='i1')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -846,7 +814,7 @@ class GenotypeCArray(CArrayWrapper):
         >>> data.append([[0, 0], [0, 1]])
         >>> data.append([[0, 1], [1, 1]])
         >>> data.append([[0, 2], [-1, -1]])
-        >>> g = allel.bcolz.GenotypeCArray(data, copy=False)
+        >>> g = allel.GenotypeCArray(data)
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -870,7 +838,7 @@ class GenotypeCArray(CArrayWrapper):
         ...                        chunks=(2, 2, 2))
         ...
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
-        >>> g = allel.bcolz.GenotypeCArray.from_hdf5('example.h5', 'genotype')
+        >>> g = allel.GenotypeCArray.from_hdf5('example.h5', 'genotype')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -936,7 +904,7 @@ class GenotypeCArray(CArrayWrapper):
         if obj.shape[DIM_PLOIDY] == 1:
             raise ValueError('use HaplotypeCArray for haploid calls')
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         super(GenotypeCArray, self).__init__(data=data, copy=copy, **kwargs)
         # check late to avoid creating an intermediate numpy array
         self.check_input_data(self.carr)
@@ -953,6 +921,11 @@ class GenotypeCArray(CArrayWrapper):
                 m = self.mask.__getitem__(*args)
                 out.mask = m
         return out
+
+    def _repr_html_(self):
+        g = self[:6]
+        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        return g.to_html_str(caption=caption)
 
     @property
     def n_variants(self):
@@ -986,9 +959,9 @@ class GenotypeCArray(CArrayWrapper):
         --------
 
         >>> import allel
-        >>> g = allel.bcolz.GenotypeCArray([[[0, 0], [0, 1]],
-        ...                                 [[0, 1], [1, 1]],
-        ...                                 [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g = allel.GenotypeCArray([[[0, 0], [0, 1]],
+        ...                           [[0, 1], [1, 1]],
+        ...                           [[0, 2], [-1, -1]]], dtype='i1')
         >>> g.count_called()
         5
         >>> g.count_alleles()
@@ -1164,6 +1137,7 @@ class GenotypeCArray(CArrayWrapper):
         return carray_block_sum(self, axis=axis, transform=f)
 
     def to_haplotypes(self, **kwargs):
+
         # Unfortunately this cannot be implemented as a lightweight view,
         # so we have to copy.
 
@@ -1313,6 +1287,30 @@ class GenotypeCArray(CArrayWrapper):
         return out
 
 
+# copy docstrings
+copy_method_doc(GenotypeCArray.fill_masked, GenotypeArray.fill_masked)
+copy_method_doc(GenotypeCArray.subset, GenotypeArray.subset)
+copy_method_doc(GenotypeCArray.is_called, GenotypeArray.is_called)
+copy_method_doc(GenotypeCArray.is_missing, GenotypeArray.is_missing)
+copy_method_doc(GenotypeCArray.is_hom, GenotypeArray.is_hom)
+copy_method_doc(GenotypeCArray.is_hom_ref, GenotypeArray.is_hom_ref)
+copy_method_doc(GenotypeCArray.is_hom_alt, GenotypeArray.is_hom_alt)
+copy_method_doc(GenotypeCArray.is_het, GenotypeArray.is_het)
+copy_method_doc(GenotypeCArray.is_call, GenotypeArray.is_call)
+copy_method_doc(GenotypeCArray.to_haplotypes, GenotypeArray.to_haplotypes)
+copy_method_doc(GenotypeCArray.to_n_ref, GenotypeArray.to_n_ref)
+copy_method_doc(GenotypeCArray.to_n_alt, GenotypeArray.to_n_alt)
+copy_method_doc(GenotypeCArray.to_allele_counts,
+                GenotypeArray.to_allele_counts)
+copy_method_doc(GenotypeCArray.to_packed, GenotypeArray.to_packed)
+GenotypeCArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
+copy_method_doc(GenotypeCArray.count_alleles, GenotypeArray.count_alleles)
+copy_method_doc(GenotypeCArray.count_alleles_subpops,
+                GenotypeArray.count_alleles_subpops)
+copy_method_doc(GenotypeCArray.to_gt, GenotypeArray.to_gt)
+copy_method_doc(GenotypeCArray.map_alleles, GenotypeArray.map_alleles)
+
+
 class HaplotypeCArray(CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.HaplotypeArray`
     interface, using a :class:`bcolz.carray` as the backing store.
@@ -1346,7 +1344,7 @@ class HaplotypeCArray(CArrayWrapper):
         if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         super(HaplotypeCArray, self).__init__(data=data, copy=copy, **kwargs)
         self.check_input_data(self.carr)
 
@@ -1355,6 +1353,11 @@ class HaplotypeCArray(CArrayWrapper):
         if hasattr(out, 'ndim') and out.ndim == 2:
             out = HaplotypeArray(out, copy=False)
         return out
+
+    def _repr_html_(self):
+        h = self[:6]
+        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        return h.to_html_str(caption=caption)
 
     @property
     def n_variants(self):
@@ -1493,6 +1496,15 @@ class HaplotypeCArray(CArrayWrapper):
         return out
 
 
+# copy docstrings
+copy_method_doc(HaplotypeCArray.subset, HaplotypeArray.subset)
+copy_method_doc(HaplotypeCArray.to_genotypes, HaplotypeArray.to_genotypes)
+copy_method_doc(HaplotypeCArray.count_alleles, HaplotypeArray.count_alleles)
+copy_method_doc(HaplotypeCArray.count_alleles_subpops,
+                HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeCArray.map_alleles, HaplotypeArray.map_alleles)
+
+
 class AlleleCountsCArray(CArrayWrapper):
     """Alternative implementation of the :class:`allel.model.AlleleCountsArray`
     interface, using a :class:`bcolz.carray` as the backing store.
@@ -1526,7 +1538,7 @@ class AlleleCountsCArray(CArrayWrapper):
         if ndim != 2:
             raise TypeError('array with 2 dimensions required')
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         super(AlleleCountsCArray, self).__init__(data=data, copy=copy,
                                                  **kwargs)
         # check late to avoid creating an intermediate numpy array
@@ -1540,6 +1552,11 @@ class AlleleCountsCArray(CArrayWrapper):
             # wrap only if number of alleles is preserved
             out = AlleleCountsArray(out, copy=False)
         return out
+
+    def _repr_html_(self):
+        ac = self[:6]
+        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        return ac.to_html_str(caption=caption)
 
     @property
     def n_variants(self):
@@ -1575,6 +1592,11 @@ class AlleleCountsCArray(CArrayWrapper):
     def allelism(self, **kwargs):
         def f(block):
             return block.allelism()
+        return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
+
+    def max_allele(self, **kwargs):
+        def f(block):
+            return block.max_allele()
         return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
 
     def is_variant(self, **kwargs):
@@ -1645,6 +1667,25 @@ class AlleleCountsCArray(CArrayWrapper):
         return out
 
 
+# copy docstrings
+copy_method_doc(AlleleCountsCArray.to_frequencies,
+                AlleleCountsArray.to_frequencies)
+copy_method_doc(AlleleCountsCArray.allelism, AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsCArray.max_allele, AlleleCountsArray.max_allele)
+copy_method_doc(AlleleCountsCArray.is_variant, AlleleCountsArray.is_variant)
+copy_method_doc(AlleleCountsCArray.is_non_variant,
+                AlleleCountsArray.is_non_variant)
+copy_method_doc(AlleleCountsCArray.is_segregating,
+                AlleleCountsArray.is_segregating)
+copy_method_doc(AlleleCountsCArray.is_non_segregating,
+                AlleleCountsArray.is_non_segregating)
+copy_method_doc(AlleleCountsCArray.is_singleton,
+                AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsCArray.is_doubleton,
+                AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsCArray.map_alleles, AlleleCountsArray.map_alleles)
+
+
 class CTableWrapper(object):
 
     ndarray_cls = None
@@ -1680,12 +1721,10 @@ class CTableWrapper(object):
         return len(self.ctbl)
 
     def _repr_html_(self):
-        # use implementation from petl
-        import petl as etl
-        head = self[:5]
-        tbl = etl.fromarray(head)
-        # noinspection PyProtectedMember
-        return tbl._repr_html_()
+        return ctable_to_html_str(self, limit=5)
+
+    def display(self, limit, **kwargs):
+        return ctable_display(self, limit=limit, **kwargs)
 
     @classmethod
     def open(cls, rootdir, mode='r'):
@@ -1698,23 +1737,6 @@ class CTableWrapper(object):
     def addcol(self, newcol, name, **kwargs):
         # bcolz.ctable.addcol is broken for persistent ctables
         self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
-
-    def display(self, limit, **kwargs):
-        """Display HTML representation in an IPython notebook.
-
-        Parameters
-        ----------
-
-        limit : int, optional
-            Number of rows to display.
-
-        """
-
-        # use implementation from petl
-        import petl as etl
-        head = self[:limit]
-        tbl = etl.fromarray(head)
-        return tbl.display(limit=limit, **kwargs)
 
     @property
     def names(self):
@@ -1841,7 +1863,7 @@ class VariantCTable(CTableWrapper):
 
     ndarray_cls = VariantTable
 
-    def __init__(self, data=None, copy=True, index=None, **kwargs):
+    def __init__(self, data=None, copy=False, index=None, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:
@@ -1907,7 +1929,7 @@ class FeatureCTable(CTableWrapper):
 
     ndarray_cls = FeatureTable
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:
@@ -2016,7 +2038,7 @@ class FeatureCTable(CTableWrapper):
 
 class AlleleCountsCTable(CTableWrapper):
 
-    def __init__(self, data=None, copy=True, **kwargs):
+    def __init__(self, data=None, copy=False, **kwargs):
         if copy or not isinstance(data, bcolz.ctable):
             ctbl = bcolz.ctable(data, **kwargs)
         else:
@@ -2028,3 +2050,19 @@ class AlleleCountsCTable(CTableWrapper):
         if isinstance(o, bcolz.carray):
             return AlleleCountsCArray(o, copy=False)
         return o
+
+
+def ctable_to_html_str(ctbl, limit=5, caption=None):
+    ra = ctbl[:limit+1]
+    if caption is None:
+        caption = '%s(%s, dtype=%s)' \
+                  % (type(ctbl).__name__, ctbl.shape[0], ctbl.dtype)
+    return recarray_to_html_str(ra, limit=limit, caption=caption)
+
+
+def ctable_display(ctbl, limit=5, caption=None, **kwargs):
+    ra = ctbl[:limit+1]
+    if caption is None:
+        caption = '%s(%s, dtype=%s)' \
+                  % (type(ctbl).__name__, ctbl.shape[0], ctbl.dtype)
+    return recarray_display(ra, limit=limit, caption=caption, **kwargs)
