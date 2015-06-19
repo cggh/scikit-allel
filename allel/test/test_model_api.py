@@ -2112,7 +2112,7 @@ def test_create_allele_mapping():
               [1, 0],
               [0, -1],
               [-1, 0]]
-    actual = allel.model.create_allele_mapping(ref, alt, alleles)
+    actual = allel.model.ndarray.create_allele_mapping(ref, alt, alleles)
     aeq(expect, actual)
 
     # multiallelic case
@@ -2126,5 +2126,5 @@ def test_create_allele_mapping():
     expect = [[0, 1, -1],
               [0, -1, 1],
               [-1, 0, -1]]
-    actual = allel.model.create_allele_mapping(ref, alt, alleles)
+    actual = allel.model.ndarray.create_allele_mapping(ref, alt, alleles)
     aeq(expect, actual)

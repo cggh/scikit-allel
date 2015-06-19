@@ -30,7 +30,6 @@ Contents
     :maxdepth: 3
 
     model
-    bcolz
     stats
     plot
     io

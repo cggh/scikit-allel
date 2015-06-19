@@ -25,17 +25,25 @@ v0.15
   :func:`allel.stats.admixture.blockwise_patterson_d` to return the
   estimator from the whole dataset.
 
-* Classes from the :mod:`allel.model` and :mod:`allel.bcolz` modules
-  are now aliased from the root :mod:`allel` module for convenience.
+* Added utility functions to the :mod:`allel.stats.distance` module
+  for transforming coordinates between condensed and uncondensed
+  forms of a distance matrix.
 
-* All functions in the :mod:`allel.bcolz` module use cparams from
+* Classes previously available from the `allel.model` and
+  `allel.bcolz` modules are now aliased from the root :mod:`allel`
+  module for convenience. These modules have been reorganised into an
+  :mod:`allel.model` package with sub-modules
+  :mod:`allel.model.ndarray` and :mod:`allel.model.bcolz`.
+
+* All functions in the :mod:`allel.model.bcolz` module use cparams from
   input carray as default for output carray (convenient if you, e.g.,
   want to use zlib level 1 throughout).
 
-* All classes in the :mod:`allel.model` and :mod:`allel.bcolz` modules
-  have changed the default value for the `copy` keyword argument to
-  `False`. This means that **not** copying the input data, just
-  wrapping it, is now the default behaviour.
+* All classes in the :mod:`allel.model.ndarray` and
+  :mod:`allel.model.bcolz` modules have changed the default value for
+  the `copy` keyword argument to `False`. This means that **not**
+  copying the input data, just wrapping it, is now the default
+  behaviour.
 
 * Fixed bug in :func:`GenotypeArray.to_gt` where maximum allele index
   is zero.

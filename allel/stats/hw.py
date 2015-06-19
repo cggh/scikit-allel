@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-from allel.model import GenotypeArray
+from allel.model.ndarray import GenotypeArray
 from allel.util import ignore_invalid, asarray_ndim
 
 

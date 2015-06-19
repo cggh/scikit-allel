@@ -20,9 +20,9 @@ import numpy as np
 import bcolz
 
 
-from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex, subset, VariantTable, FeatureTable, \
-    recarray_to_html_str
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
+    AlleleCountsArray, SortedIndex, SortedMultiIndex, subset, VariantTable, \
+    FeatureTable, recarray_to_html_str, recarray_display
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
@@ -1723,6 +1723,9 @@ class CTableWrapper(object):
     def _repr_html_(self):
         return ctable_to_html_str(self, limit=5)
 
+    def display(self, limit, **kwargs):
+        return ctable_display(self, limit=limit, **kwargs)
+
     @classmethod
     def open(cls, rootdir, mode='r'):
         cobj = bcolz.open(rootdir, mode=mode)
@@ -1734,23 +1737,6 @@ class CTableWrapper(object):
     def addcol(self, newcol, name, **kwargs):
         # bcolz.ctable.addcol is broken for persistent ctables
         self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
-
-    def display(self, limit, **kwargs):
-        """Display HTML representation in an IPython notebook.
-
-        Parameters
-        ----------
-
-        limit : int, optional
-            Number of rows to display.
-
-        """
-
-        # use implementation from petl
-        import petl as etl
-        head = self[:limit]
-        tbl = etl.fromarray(head)
-        return tbl.display(limit=limit, **kwargs)
 
     @property
     def names(self):
@@ -2070,5 +2056,13 @@ def ctable_to_html_str(ctbl, limit=5, caption=None):
     ra = ctbl[:limit+1]
     if caption is None:
         caption = '%s(%s, dtype=%s)' \
-                  % (type(ctbl), ctbl.shape[0], ctbl.dtype)
+                  % (type(ctbl).__name__, ctbl.shape[0], ctbl.dtype)
     return recarray_to_html_str(ra, limit=limit, caption=caption)
+
+
+def ctable_display(ctbl, limit=5, caption=None, **kwargs):
+    ra = ctbl[:limit+1]
+    if caption is None:
+        caption = '%s(%s, dtype=%s)' \
+                  % (type(ctbl).__name__, ctbl.shape[0], ctbl.dtype)
+    return recarray_display(ra, limit=limit, caption=caption, **kwargs)

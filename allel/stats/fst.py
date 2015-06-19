@@ -10,7 +10,7 @@ import numpy as np
 
 
 from allel.util import asarray_ndim, check_dim0_aligned, ensure_dim1_aligned
-from allel.model import GenotypeArray
+from allel.model.ndarray import GenotypeArray
 from allel.stats.window import windowed_statistic, moving_statistic
 from allel.stats.diversity import mean_pairwise_difference, \
     mean_pairwise_difference_between

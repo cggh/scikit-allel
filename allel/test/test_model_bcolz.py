@@ -12,8 +12,8 @@ import h5py
 from nose.tools import eq_ as eq, assert_raises
 
 
-from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    VariantTable, FeatureTable
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
+    AlleleCountsArray, VariantTable, FeatureTable
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, AlleleCountsArrayInterface, \
@@ -21,8 +21,8 @@ from allel.test.test_model_api import GenotypeArrayInterface, \
     allele_counts_data, VariantTableInterface, variant_table_data, \
     variant_table_dtype, FeatureTableInterface, feature_table_data, \
     feature_table_dtype
-from allel.bcolz import GenotypeCArray, HaplotypeCArray, AlleleCountsCArray,\
-    VariantCTable, FeatureCTable
+from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
+    AlleleCountsCArray, VariantCTable, FeatureCTable
 
 
 class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):

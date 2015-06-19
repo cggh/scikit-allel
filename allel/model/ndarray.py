@@ -288,6 +288,7 @@ class GenotypeArray(np.ndarray):
         # construct caption
         if caption is None:
             caption = 'GenotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
+        caption = caption.replace('<', '&lt;')
 
         # build HTML
         # noinspection PyProtectedMember
@@ -1768,6 +1769,7 @@ class HaplotypeArray(np.ndarray):
         # construct caption
         if caption is None:
             caption = 'HaplotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
+        caption = caption.replace('<', '&lt;')
 
         # build HTML
         # noinspection PyProtectedMember
@@ -2317,6 +2319,7 @@ class AlleleCountsArray(np.ndarray):
         if caption is None:
             caption = 'AlleleCountsArray(%s, dtype=%s)' \
                       % (self.shape, self.dtype)
+        caption = caption.replace('<', '&lt;')
 
         # noinspection PyProtectedMember
         html = etl.util.vis._display_html(tbl,
@@ -2774,7 +2777,7 @@ class SortedIndex(np.ndarray):
         return s
 
     def __repr__(self):
-        s = 'SortedIndex(%s, dtype=%s)\n' % (self.shape[0], self.dtype)
+        s = 'SortedIndex(%s, dtype=%s)\n' % (self.shape, self.dtype)
         s += str(self)
         return s
 
@@ -2859,10 +2862,10 @@ class SortedIndex(np.ndarray):
         >>> loc2
         array([False,  True,  True, False], dtype=bool)
         >>> idx1[loc1]
-        SortedIndex(2, dtype=int64)
+        SortedIndex((2,), dtype=int64)
         [ 6 20]
         >>> idx2[loc2]
-        SortedIndex(2, dtype=int64)
+        SortedIndex((2,), dtype=int64)
         [ 6 20]
 
         """
@@ -2904,7 +2907,7 @@ class SortedIndex(np.ndarray):
         >>> loc
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc]
-        SortedIndex(2, dtype=int64)
+        SortedIndex((2,), dtype=int64)
         [ 6 20]
 
         """
@@ -2942,7 +2945,7 @@ class SortedIndex(np.ndarray):
         >>> idx1 = allel.SortedIndex([3, 6, 11, 20, 35])
         >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
         >>> idx1.intersect(idx2)
-        SortedIndex(2, dtype=int64)
+        SortedIndex((2,), dtype=int64)
         [ 6 20]
 
         """
@@ -2977,7 +2980,7 @@ class SortedIndex(np.ndarray):
         >>> loc
         slice(1, 4, None)
         >>> idx[loc]
-        SortedIndex(3, dtype=int64)
+        SortedIndex((3,), dtype=int64)
         [ 6 11 20]
 
         """
@@ -3021,7 +3024,7 @@ class SortedIndex(np.ndarray):
         >>> import allel
         >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
         >>> idx.intersect_range(4, 32)
-        SortedIndex(3, dtype=int64)
+        SortedIndex((3,), dtype=int64)
         [ 6 11 20]
 
         """
@@ -3069,7 +3072,7 @@ class SortedIndex(np.ndarray):
         >>> loc_ranges
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx[loc]
-        SortedIndex(3, dtype=int64)
+        SortedIndex((3,), dtype=int64)
         [ 6 11 35]
         >>> ranges[loc_ranges]
         array([[ 6, 17],
@@ -3129,7 +3132,7 @@ class SortedIndex(np.ndarray):
         >>> loc
         array([False,  True,  True, False,  True], dtype=bool)
         >>> idx[loc]
-        SortedIndex(3, dtype=int64)
+        SortedIndex((3,), dtype=int64)
         [ 6 11 35]
 
         """
@@ -3168,7 +3171,7 @@ class SortedIndex(np.ndarray):
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
         >>> idx.intersect_ranges(starts, stops)
-        SortedIndex(3, dtype=int64)
+        SortedIndex((3,), dtype=int64)
         [ 6 11 35]
 
         """
@@ -3270,7 +3273,7 @@ class UniqueIndex(np.ndarray):
         return s
 
     def __repr__(self):
-        s = 'UniqueIndex(%s, dtype=%s)\n' % (self.shape[0], self.dtype)
+        s = 'UniqueIndex(%s, dtype=%s)\n' % (self.shape, self.dtype)
         s += str(self)
         return s
 
@@ -3338,10 +3341,10 @@ class UniqueIndex(np.ndarray):
         >>> loc2
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc1]
-        UniqueIndex(2, dtype=<U1)
+        UniqueIndex((2,), dtype=<U1)
         ['C' 'F']
         >>> idx2[loc2]
-        UniqueIndex(2, dtype=<U1)
+        UniqueIndex((2,), dtype=<U1)
         ['F' 'C']
 
         """
@@ -3417,10 +3420,10 @@ class UniqueIndex(np.ndarray):
         >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'])
         >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
         >>> idx1.intersect(idx2)
-        UniqueIndex(2, dtype=<U1)
+        UniqueIndex((2,), dtype=<U1)
         ['C' 'F']
         >>> idx2.intersect(idx1)
-        UniqueIndex(2, dtype=<U1)
+        UniqueIndex((2,), dtype=<U1)
         ['F' 'C']
 
         """
@@ -3721,7 +3724,7 @@ class VariantTable(np.recarray):
         return s
 
     def __repr__(self):
-        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape[0], self.dtype)
+        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
         s += str(self)
         return s
 
@@ -3729,23 +3732,7 @@ class VariantTable(np.recarray):
         return recarray_to_html_str(self)
 
     def display(self, limit=5, **kwargs):
-        """Display HTML representation in an IPython notebook.
-
-        Parameters
-        ----------
-
-        limit : int, optional
-            Number of rows to display.
-
-        """
-
-        # use implementation from petl
-        import petl as etl
-        tbl = etl.fromarray(self)
-        kwargs.setdefault('index_header', False)
-        caption = 'VariantTable(%s, dtype=%s)' % (self.shape[0], self.dtype)
-        kwargs.setdefault('caption', caption)
-        return tbl.display(limit=limit, **kwargs)
+        return recarray_display(self, limit=limit, **kwargs)
 
     @property
     def n_variants(self):
@@ -4097,25 +4084,8 @@ class FeatureTable(np.recarray):
     def _repr_html_(self):
         return recarray_to_html_str(self)
 
-
     def display(self, limit=5, **kwargs):
-        """Display HTML representation in an IPython notebook.
-
-        Parameters
-        ----------
-
-        limit : int, optional
-            Number of rows to display.
-
-        """
-
-        # use implementation from petl
-        import petl as etl
-        tbl = etl.fromarray(self)
-        kwargs.setdefault('index_header', False)
-        caption = 'FeatureTable(%s, dtype=%s)' % (self.shape[0], self.dtype)
-        kwargs.setdefault('caption', caption)
-        return tbl.display(limit=limit, **kwargs)
+        return recarray_display(self, limit=limit, **kwargs)
 
     @property
     def n_features(self):
@@ -4474,10 +4444,23 @@ def recarray_to_html_str(ra, limit=5, caption=None):
     tbl = etl.fromarray(ra)
     if caption is None:
         caption = '%s(%s, dtype=%s)' \
-                  % (type(ra), ra.shape[0], ra.dtype)
+                  % (type(ra).__name__, ra.shape, ra.dtype)
+    caption = caption.replace('<', '&lt;')
     # noinspection PyProtectedMember
     html = etl.util.vis._display_html(tbl,
                                       caption=caption,
                                       limit=limit,
                                       index_header=False)
     return html
+
+
+def recarray_display(ra, limit=5, caption=None, **kwargs):
+    # use implementation from petl
+    import petl as etl
+    tbl = etl.fromarray(ra)
+    kwargs.setdefault('index_header', False)
+    if caption is None:
+        caption = '%s(%s, dtype=%s)' \
+                  % (type(ra).__name__, ra.shape, ra.dtype)
+    caption = caption.replace('<', '&lt;')
+    return tbl.display(limit=limit, caption=caption, **kwargs)
