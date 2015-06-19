@@ -294,7 +294,8 @@ class GenotypeArray(np.ndarray):
         html = etl.util.vis._display_html(tbl,
                                           caption=caption,
                                           limit=limit,
-                                          td_styles={'': 'font-weight: bold'})
+                                          td_styles={'': 'font-weight: bold'},
+                                          index_header=False)
         return html
 
     def _repr_html_(self):
@@ -1773,7 +1774,8 @@ class HaplotypeArray(np.ndarray):
         html = etl.util.vis._display_html(tbl,
                                           caption=caption,
                                           limit=limit,
-                                          td_styles={'': 'font-weight: bold'})
+                                          td_styles={'': 'font-weight: bold'},
+                                          index_header=False)
         return html
 
     def _repr_html_(self):
@@ -2320,7 +2322,8 @@ class AlleleCountsArray(np.ndarray):
         html = etl.util.vis._display_html(tbl,
                                           caption=caption,
                                           limit=limit,
-                                          td_styles={'': 'font-weight: bold'})
+                                          td_styles={'': 'font-weight: bold'},
+                                          index_header=False)
         return html
 
     def _repr_html_(self):
@@ -3718,19 +3721,14 @@ class VariantTable(np.recarray):
         return s
 
     def __repr__(self):
-        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
+        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape[0], self.dtype)
         s += str(self)
         return s
 
     def _repr_html_(self):
-        # use implementation from petl
-        import petl as etl
-        head = self[:5]
-        tbl = etl.fromarray(head)
-        # noinspection PyProtectedMember
-        return tbl._repr_html_()
+        return recarray_to_html_str(self)
 
-    def display(self, limit, **kwargs):
+    def display(self, limit=5, **kwargs):
         """Display HTML representation in an IPython notebook.
 
         Parameters
@@ -3743,8 +3741,10 @@ class VariantTable(np.recarray):
 
         # use implementation from petl
         import petl as etl
-        head = self[:limit]
-        tbl = etl.fromarray(head)
+        tbl = etl.fromarray(self)
+        kwargs.setdefault('index_header', False)
+        caption = 'VariantTable(%s, dtype=%s)' % (self.shape[0], self.dtype)
+        kwargs.setdefault('caption', caption)
         return tbl.display(limit=limit, **kwargs)
 
     @property
@@ -4095,14 +4095,10 @@ class FeatureTable(np.recarray):
         return s
 
     def _repr_html_(self):
-        # use implementation from petl
-        import petl as etl
-        head = self[:5]
-        tbl = etl.fromarray(head)
-        # noinspection PyProtectedMember
-        return tbl._repr_html_()
+        return recarray_to_html_str(self)
 
-    def display(self, limit, **kwargs):
+
+    def display(self, limit=5, **kwargs):
         """Display HTML representation in an IPython notebook.
 
         Parameters
@@ -4115,8 +4111,10 @@ class FeatureTable(np.recarray):
 
         # use implementation from petl
         import petl as etl
-        head = self[:limit]
-        tbl = etl.fromarray(head)
+        tbl = etl.fromarray(self)
+        kwargs.setdefault('index_header', False)
+        caption = 'FeatureTable(%s, dtype=%s)' % (self.shape[0], self.dtype)
+        kwargs.setdefault('caption', caption)
         return tbl.display(limit=limit, **kwargs)
 
     @property
@@ -4468,3 +4466,18 @@ def locate_private_alleles(*acs):
     loc_pa = npa == 1
 
     return loc_pa
+
+
+def recarray_to_html_str(ra, limit=5, caption=None):
+    # use implementation from petl
+    import petl as etl
+    tbl = etl.fromarray(ra)
+    if caption is None:
+        caption = '%s(%s, dtype=%s)' \
+                  % (type(ra), ra.shape[0], ra.dtype)
+    # noinspection PyProtectedMember
+    html = etl.util.vis._display_html(tbl,
+                                      caption=caption,
+                                      limit=limit,
+                                      index_header=False)
+    return html

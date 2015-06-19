@@ -10,6 +10,13 @@ v0.15
   :func:`allel.stats.fst.blockwise_hudson_fst`,
   :func:`allel.stats.fst.blockwise_patterson_fst`.
 
+* Fixed a serious bug in :func:`allel.stats.fst.weir_cockerham_fst`
+  related to incorrect estimation of heterozygosity, which manifested
+  if the subpopulations being compared were not a partition of the
+  total population (i.e., there were one or more samples in the
+  genotype array that were not included in the subpopulations to
+  compare).
+
 * Added method :func:`allel.model.AlleleCountsArray.max_allele` to
   determine highest allele index for each variant.
 

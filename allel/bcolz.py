@@ -11,7 +11,6 @@ are too large to fit uncompressed into main memory.
 from __future__ import absolute_import, print_function, division
 
 
-import os
 import operator
 import itertools
 from allel.compat import range, copy_method_doc
@@ -22,7 +21,8 @@ import bcolz
 
 
 from allel.model import GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    SortedIndex, SortedMultiIndex, subset, VariantTable, FeatureTable
+    SortedIndex, SortedMultiIndex, subset, VariantTable, FeatureTable, \
+    recarray_to_html_str
 from allel.constants import DIM_PLOIDY
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
@@ -30,44 +30,6 @@ from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
            'VariantCTable']
-
-
-# monkey-patch bcolz.ctable.dtype property because it's broken for
-# multi-dimensional columns
-
-def _ctable_dtype(self):
-    """The data type of this object (numpy dtype)."""
-    names, cols = self.names, self.cols
-    l = []
-    for name in names:
-        col = cols[name]
-        if col.ndim == 1:
-            t = (name, col.dtype)
-        else:
-            t = (name, (col.dtype, col.shape[1:]))
-        l.append(t)
-    return np.dtype(l)
-
-# noinspection PyPropertyAccess
-bcolz.ctable.dtype = property(_ctable_dtype)
-
-
-# bcolz.ctable.addcol is broken for persistent ctables
-
-def ctable_addcol_persistent(self, newcol, name, **kwargs):
-    # require name to simplify patch
-    if self.rootdir is not None and self.mode != 'r':
-        rootdir = os.path.join(self.rootdir, name)
-        kwargs['rootdir'] = rootdir
-        kwargs['mode'] = 'w'
-        self.addcol(newcol, name=name, **kwargs)
-        if isinstance(newcol, bcolz.carray):
-            # ensure carrays are actually written to disk
-            newcol.copy(**kwargs)
-    else:
-        self.addcol(newcol, name=name, **kwargs)
-
-bcolz.ctable.addcol_persistent = ctable_addcol_persistent
 
 
 def ensure_carray(a, *ndims, **kwargs):
@@ -1759,12 +1721,7 @@ class CTableWrapper(object):
         return len(self.ctbl)
 
     def _repr_html_(self):
-        # use implementation from petl
-        import petl as etl
-        head = self[:5]
-        tbl = etl.fromarray(head)
-        # noinspection PyProtectedMember
-        return tbl._repr_html_()
+        return ctable_to_html_str(self, limit=5)
 
     @classmethod
     def open(cls, rootdir, mode='r'):
@@ -2107,3 +2064,11 @@ class AlleleCountsCTable(CTableWrapper):
         if isinstance(o, bcolz.carray):
             return AlleleCountsCArray(o, copy=False)
         return o
+
+
+def ctable_to_html_str(ctbl, limit=5, caption=None):
+    ra = ctbl[:limit+1]
+    if caption is None:
+        caption = '%s(%s, dtype=%s)' \
+                  % (type(ctbl), ctbl.shape[0], ctbl.dtype)
+    return recarray_to_html_str(ra, limit=limit, caption=caption)

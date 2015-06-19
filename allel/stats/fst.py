@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, division
 
 
 import logging
+import itertools
 
 
 import numpy as np
@@ -213,7 +214,9 @@ def _weir_cockerham_fst(g, subpops, max_allele):
     p_bar = p_bar[:, :, 0]
 
     # compute the average heterozygosity over all populations
-    h_bar = [g.count_het(allele=allele, axis=1) / n_total
+    # N.B., take only samples in subpops of interest
+    gs = g.take(list(itertools.chain(*subpops)), axis=1)
+    h_bar = [gs.count_het(allele=allele, axis=1) / n_total
              for allele in range(n_alleles)]
     h_bar = np.column_stack(h_bar)
     assert h_bar.shape == (n_variants, n_alleles)
