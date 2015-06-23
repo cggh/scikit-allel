@@ -106,7 +106,7 @@ def setup_package():
         download_url=DOWNLOAD_URL,
         version=VERSION,
         package_dir={'': '.'},
-        packages=['allel', 'allel.stats', 'allel.opt', 'allel.test'],
+        packages=['allel', 'allel.model', 'allel.stats', 'allel.opt', 'allel.test'],
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
     )
