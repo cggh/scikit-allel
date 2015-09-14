@@ -41,7 +41,7 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(NotImplementedError):
+        with assert_raises(TypeError):
             GenotypeCArray(data)
 
         # data has wrong dtype
@@ -207,7 +207,7 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(NotImplementedError):
+        with assert_raises(TypeError):
             HaplotypeCArray(data)
 
         # data has wrong dtype
@@ -307,13 +307,13 @@ class AlleleCountsCArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(NotImplementedError):
+        with assert_raises(TypeError):
             AlleleCountsCArray(data)
 
         # data has wrong dtype
         data = [4., 5., 3.7]
         with assert_raises(TypeError):
-            GenotypeCArray(data)
+            AlleleCountsCArray(data)
 
         # data has wrong dimensions
         data = [1, 2, 3]

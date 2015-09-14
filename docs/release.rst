@@ -1,6 +1,20 @@
 Release notes
 =============
 
+v0.15.2
+-------
+
+* Improved performance of :func:`allel.model.bcolz.carray_block_compress`,
+  :func:`allel.model.bcolz.ctable_block_compress` and
+  :func:`allel.model.bcolz.carray_block_subset` for very sparse selections.
+* Fix bug in IPython HTML table captions.
+* Fix bug in addcol() method on bcolz ctable wrappers.
+
+v0.15.1
+-------
+
+* Fix missing package in setup.py.
+
 v0.15
 -----
 
