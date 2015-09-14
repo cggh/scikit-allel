@@ -213,9 +213,11 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
 
         # build output
         for i in range(0, carr.shape[0], blen):
-            block = carr[i:i+blen]
             bcond = condition[i:i+blen]
-            out.append(np.compress(bcond, block, axis=0))
+            # don't bother decompressing the block unless we have to
+            if np.any(bcond):
+                block = carr[i:i+blen]
+                out.append(np.compress(bcond, block, axis=0))
 
         return out
 
@@ -279,13 +281,15 @@ def ctable_block_compress(ctbl, condition, blen=None, **kwargs):
 
     # build output
     for i in range(0, ctbl.shape[0], blen):
-        block = ctbl[i:i+blen]
         bcond = condition[i:i+blen]
-        res = np.compress(bcond, block, axis=0)
-        if out is None:
-            out = bcolz.ctable(res, **kwargs)
-        else:
-            out.append(res)
+        # don't bother decompressing the block unless we have to
+        if np.any(bcond):
+            block = ctbl[i:i+blen]
+            res = np.compress(bcond, block, axis=0)
+            if out is None:
+                out = bcolz.ctable(res, **kwargs)
+            else:
+                out.append(res)
 
     return out
 
@@ -339,7 +343,9 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
     for i in range(0, carr.shape[0], blen):
         block = carr[i:i+blen]
         bsel0 = sel0[i:i+blen]
-        out.append(subset(block, bsel0, sel1))
+        # don't bother decompressing the block unless we have to
+        if np.any(bsel0):
+            out.append(subset(block, bsel0, sel1))
 
     return out
 
@@ -924,7 +930,7 @@ class GenotypeCArray(CArrayWrapper):
 
     def _repr_html_(self):
         g = self[:6]
-        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        caption = ' '.join(repr(self).split('\n')[:3])
         return g.to_html_str(caption=caption)
 
     @property
@@ -1356,7 +1362,7 @@ class HaplotypeCArray(CArrayWrapper):
 
     def _repr_html_(self):
         h = self[:6]
-        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        caption = ' '.join(repr(self).split('\n')[:3])
         return h.to_html_str(caption=caption)
 
     @property
@@ -1555,7 +1561,7 @@ class AlleleCountsCArray(CArrayWrapper):
 
     def _repr_html_(self):
         ac = self[:6]
-        caption = '<br/>'.join(repr(self).split('\n')[:3])
+        caption = ' '.join(repr(self).split('\n')[:3])
         return ac.to_html_str(caption=caption)
 
     @property
@@ -1721,9 +1727,12 @@ class CTableWrapper(object):
         return len(self.ctbl)
 
     def _repr_html_(self):
-        return ctable_to_html_str(self, limit=5)
+        caption = ' '.join(repr(self).split('\n')[:3])
+        return ctable_to_html_str(self, limit=5, caption=caption)
 
     def display(self, limit, **kwargs):
+        caption = ' '.join(repr(self).split('\n')[:3])
+        kwargs.setdefault('caption', caption)
         return ctable_display(self, limit=limit, **kwargs)
 
     @classmethod
@@ -1733,10 +1742,6 @@ class CTableWrapper(object):
             return cls(cobj, copy=False)
         else:
             raise ValueError('rootdir does not contain a ctable')
-
-    def addcol(self, newcol, name, **kwargs):
-        # bcolz.ctable.addcol is broken for persistent ctables
-        self.ctbl.addcol_persistent(newcol, name=name, **kwargs)
 
     @property
     def names(self):
@@ -2054,15 +2059,9 @@ class AlleleCountsCTable(CTableWrapper):
 
 def ctable_to_html_str(ctbl, limit=5, caption=None):
     ra = ctbl[:limit+1]
-    if caption is None:
-        caption = '%s(%s, dtype=%s)' \
-                  % (type(ctbl).__name__, ctbl.shape[0], ctbl.dtype)
     return recarray_to_html_str(ra, limit=limit, caption=caption)
 
 
 def ctable_display(ctbl, limit=5, caption=None, **kwargs):
     ra = ctbl[:limit+1]
-    if caption is None:
-        caption = '%s(%s, dtype=%s)' \
-                  % (type(ctbl).__name__, ctbl.shape[0], ctbl.dtype)
     return recarray_display(ra, limit=limit, caption=caption, **kwargs)
