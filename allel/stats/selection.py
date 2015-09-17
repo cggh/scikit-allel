@@ -41,13 +41,13 @@ def ehh_decay(h, truncate=False):
     n_haplotypes = h.n_haplotypes  # number of columns, i.e., haplotypes
     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
 
-    # compute the common prefix length between all pairs of haplotypes
-    cpl = pairwise_shared_prefix_lengths_int8(h)
+    # compute the shared prefix length between all pairs of haplotypes
+    spl = pairwise_shared_prefix_lengths_int8(h)
 
-    # compute EHH by counting the number of common prefixes extending beyond
+    # compute EHH by counting the number of shared prefixes extending beyond
     # each variant
     minlength = None if truncate else n_variants + 1
-    b = np.bincount(cpl, minlength=minlength)
+    b = np.bincount(spl, minlength=minlength)
     c = np.cumsum(b[::-1])[:-1]
     ehh = (c / n_pairs)[::-1]
 
