@@ -6,14 +6,19 @@ Plotting functions
 Variant location
 ----------------
 
-.. autofunction:: allel.plot.variant_locator
+.. autofunction:: variant_locator
 
 Pairwise distance
 -----------------
 
-.. autofunction:: allel.plot.pairwise_distance
+.. autofunction:: pairwise_distance
 
 Linkage disequilibrium
 ----------------------
 
-.. autofunction:: allel.plot.pairwise_ld
+.. autofunction:: pairwise_ld
+
+Selection
+---------
+
+.. autofunction:: voight_painting
