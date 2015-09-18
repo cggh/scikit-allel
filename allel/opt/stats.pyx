@@ -379,3 +379,172 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h):
                 next_color += 1
 
     return np.asarray(painting)
+
+
+from bisect import bisect_right
+
+
+cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
+    """Compute integrated haplotype homozygosity from shared suffix lengths."""
+
+    n_pairs = ssl.shape[0]
+    if n_pairs > 0:
+
+        # compute EHH
+        b = np.bincount(ssl)
+        c = np.cumsum(b[::-1])[:-1]
+        ehh = c / n_pairs
+
+        # deal with minimum EHH
+        if min_ehh > 0:
+            ix = bisect_right(ehh, min_ehh)
+            ehh = ehh[ix:]
+
+        # compute variant spacing
+        s = ehh.shape[0]
+        # take absolute value because this might be a reverse scan
+        g = np.abs(np.diff(pos[i-s+1:i+1]))
+
+        # compute IHH via trapezoid rule
+        ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
+
+    else:
+        ihh = 0
+
+    return ihh
+
+
+def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+    """Scan forwards over haplotypes, computing the integrated haplotype
+    homozygosity backwards for each variant."""
+
+    cdef:
+        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, p, s
+        np.int32_t[:] ssl
+        np.int8_t a1, a2
+        np.float64_t[:] vihh
+        np.float64_t ihh
+
+    # initialise
+    n_variants = h.shape[0]
+    n_haplotypes = h.shape[1]
+    n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
+
+    # shared suffix lengths between all pairs of haplotypes
+    ssl = np.zeros(n_pairs, dtype='i4')
+
+    # integrated haplotype homozygosity values for each variant
+    vihh = np.empty(n_variants, dtype='f8')
+
+    # iterate forward over variants
+    for i in range(n_variants):
+
+        # pairwise comparison of alleles between haplotypes to determine
+        # shared suffix lengths
+        # N.B., this is the critical performance section
+        p = 0  # pair index
+        for j in range(n_haplotypes):
+            a1 = h[i, j]  # allele on first haplotype in pair
+            for k in range(j+1, n_haplotypes):
+                a2 = h[i, k]  # allele on second haplotype in pair
+                # test for non-equal and non-missing alleles
+                if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                    # break shared suffix, reset length to zero
+                    ssl[p] = 0
+                else:
+                    # extend shared suffix
+                    ssl[p] += 1
+                # increment pair index
+                p += 1
+
+        # compute IHH from shared suffix lengths
+        ihh = ssl2ihh(ssl, pos, i, min_ehh)
+        vihh[i] = ihh
+
+    return np.asarray(vihh)
+
+
+cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
+    cdef:
+        Py_ssize_t n, n_pairs, i, j, k
+        np.int32_t[:] v
+    n = m.shape[0]
+    n_pairs = (n * (n - 1)) // 2
+    v = np.empty(n_pairs, dtype='i4')
+    k = 0
+    for i in range(n):
+        for j in range(i+1, n):
+            v[k] = m[i, j]
+            k += 1
+    return v
+
+
+def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+    """Scan forwards over haplotypes, computing the integrated haplotype
+    homozygosity backwards for each variant for the reference (0) and
+    alternate (1) alleles separately."""
+
+    cdef:
+        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, p, s
+        np.int32_t[:, :] ssl
+        np.int8_t a1, a2
+        np.float64_t[:] vihh0, vihh1
+        np.float64_t ihh0, ihh1
+        np.uint8_t[:] loc0, loc1
+
+    # initialise
+    n_variants = h.shape[0]
+    n_haplotypes = h.shape[1]
+    # location of haplotypes carrying reference (0) allele
+    loc0 = np.zeros(n_haplotypes, dtype='u1')
+    # location of haplotypes carrying alternate (1) allele
+    loc1 = np.zeros(n_haplotypes, dtype='u1')
+
+    # shared suffix lengths between all pairs of haplotypes
+    # N.B., this time we'll use a square matrix, because this makes
+    # subsetting to ref-ref and alt-alt pairs easier and quicker further
+    # down the line
+    ssl = np.zeros((n_haplotypes, n_haplotypes), dtype='i4')
+
+    # integrated haplotype homozygosity values for each variant
+    vihh0 = np.empty(n_variants, dtype='f8')
+    vihh1 = np.empty(n_variants, dtype='f8')
+
+    # iterate forward over variants
+    for i in range(n_variants):
+
+        # pairwise comparison of alleles between haplotypes to determine
+        # shared suffix lengths
+        # N.B., this is the critical performance section
+        loc0[:] = 0
+        loc1[:] = 0
+        for j in range(n_haplotypes):
+            a1 = h[i, j]
+            # keep track of which haplotypes carry which alleles
+            if a1 == 0:
+                loc0[j] = 1
+            elif a1 == 1:
+                loc1[j] = 1
+            for k in range(j+1, n_haplotypes):
+                a2 = h[i, k]
+                # test for non-equal and non-missing alleles
+                if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                    # break shared suffix, reset to zero
+                    ssl[j, k] = 0
+                else:
+                    # extend shared suffix
+                    ssl[j, k] += 1
+
+        # locate 00 and 11 pairs
+        l0 = np.asarray(loc0, dtype='b1')
+        l1 = np.asarray(loc1, dtype='b1')
+        ssl00 = tovector_int32(np.asarray(ssl).compress(l0, axis=0).compress(l0, axis=1))
+        ssl11 = tovector_int32(np.asarray(ssl).compress(l1, axis=0).compress(l1, axis=1))
+
+        # compute IHH from shared suffix lengths
+        ihh0 = ssl2ihh(ssl00, pos, i, min_ehh)
+        ihh1 = ssl2ihh(ssl11, pos, i, min_ehh)
+        vihh0[i] = ihh0
+        vihh1[i] = ihh1
+
+    return np.asarray(vihh0), np.asarray(vihh1)

@@ -6,8 +6,6 @@ import numpy as np
 
 
 from allel.model.ndarray import HaplotypeArray
-from allel.opt.stats import pairwise_shared_prefix_lengths_int8, \
-    paint_shared_prefixes_int8
 
 
 def ehh_decay(h, truncate=False):
@@ -27,6 +25,8 @@ def ehh_decay(h, truncate=False):
         EHH at successive variants from the first variant.
 
     """
+
+    from allel.opt.stats import pairwise_shared_prefix_lengths_int8
 
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
@@ -70,6 +70,8 @@ def voight_painting(h):
 
     """
 
+    from allel.opt.stats import paint_shared_prefixes_int8
+
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
     h = HaplotypeArray(np.asarray(h, dtype='i1'), copy=False)
@@ -79,3 +81,125 @@ def voight_painting(h):
         raise NotImplementedError('missing calls are not supported')
 
     return paint_shared_prefixes_int8(h)
+
+
+def xpehh(h1, h2, pos, min_ehh=0):
+    """Compute the unstandardized cross-population extended haplotype
+    homozygosity score (XPEHH) for each variant.
+
+    Parameters
+    ----------
+    h1 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the first population.
+    h2 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the second population.
+    pos : array_like, int, shape (n_variants,)
+        Variant positions on physical or genetic map.
+    min_ehh: float, optional
+        Minimum EHH beyond which to truncate integrated haplotype
+        homozygosity calculation.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized XPEHH scores.
+
+    Notes
+    -----
+
+    This function will calculate XPEHH for all variants. To exclude variants
+    below a given minor allele frequency, filter the input haplotype arrays
+    before passing to this function.
+
+    This function does nothing about XPEHH calculations where haplotype
+    homozygosity extends up to the first or last variant. There will be edge
+    effects.
+
+    This function currently does nothing to account for large gaps between
+    variants. There will be edge effects near any large gaps.
+
+    Note that the unstandardized score is returned. Usually these scores are
+    then normalised in different allele frequency bins.
+
+    Haplotype arrays from the two populations may have different numbers of
+    haplotypes.
+
+    """
+
+    from allel.opt.stats import ihh_scan_int8
+
+    # scan forward
+    ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh)
+    ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh)
+
+    # scan backward
+    ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh)[::-1]
+    ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh)[::-1]
+
+    # compute unstandardized score
+    ihh1 = ihh1_fwd + ihh1_rev
+    ihh2 = ihh2_fwd + ihh2_rev
+    score = np.log(ihh1 / ihh2)
+
+    return score
+
+
+def ihs(h, pos, min_ehh=0):
+    """Compute the unstandardized integrated haplotype score (IHS) for each
+    variant, comparing integrated haplotype homozygosity between the
+    reference and alternate alleles.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    pos : array_like, int, shape (n_variants,)
+        Variant positions on physical or genetic map.
+    min_ehh: float, optional
+        Minimum EHH beyond which to truncate integrated haplotype
+        homozygosity calculation.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized IHS scores.
+
+    Notes
+    -----
+
+    This function will calculate IHS for all variants. To exclude variants
+    below a given minor allele frequency, filter the input haplotype array
+    before passing to this function.
+
+    This function computes IHS compare the reference and alternate alleles.
+    These can be polarised by switching the sign for any variant where the
+    reference allele is derived.
+
+    This function does nothing about IHS calculations where haplotype
+    homozygosity extends up to the first or last variant. There will be edge
+    effects.
+
+    This function currently does nothing to account for large gaps between
+    variants. There will be edge effects near any large gaps.
+
+    Note that the unstandardized score is returned. Usually these scores are
+    then normalised in different allele frequency bins.
+
+    """
+
+    from allel.opt.stats import ihh01_scan_int8
+
+    # scan forward
+    ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh)
+
+    # scan backward
+    ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh)
+    ihh0_rev = ihh0_rev[::-1]
+    ihh1_rev = ihh1_rev[::-1]
+
+    # compute unstandardized score
+    ihh0 = ihh0_fwd + ihh0_rev
+    ihh1 = ihh1_fwd + ihh1_rev
+    score = np.log(ihh1 / ihh0)
+
+    return score
