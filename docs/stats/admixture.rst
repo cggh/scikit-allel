@@ -1,5 +1,5 @@
-Admixture tests
-===============
+Admixture
+=========
 
 .. automodule:: allel.stats.admixture
 .. autofunction:: patterson_f2

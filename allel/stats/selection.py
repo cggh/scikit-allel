@@ -68,6 +68,10 @@ def voight_painting(h):
     painting : ndarray, int, shape (n_variants, n_haplotypes)
         Painting array.
 
+    See Also
+    --------
+    allel.plot.voight_painting
+
     """
 
     from allel.opt.stats import paint_shared_prefixes_int8
