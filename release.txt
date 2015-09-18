@@ -10,7 +10,7 @@ git push
 git push --tags
 # merge into master
 git checkout master
-git merge vX.X
+git merge v$version
 git push
 # update pypi
 python setup.py register sdist
