@@ -171,7 +171,7 @@ def ihs(h, pos, min_ehh=0):
     below a given minor allele frequency, filter the input haplotype array
     before passing to this function.
 
-    This function computes IHS compare the reference and alternate alleles.
+    This function computes IHS comparing the reference and alternate alleles.
     These can be polarised by switching the sign for any variant where the
     reference allele is derived.
 
