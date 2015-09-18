@@ -13,5 +13,6 @@ Statistical functions for use with variant call data.
     stats/distance
     stats/decomposition
     stats/admixture
+    stats/selection
     stats/window
     stats/preprocessing

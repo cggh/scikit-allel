@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.16.0
+-------
+
+* Added new selection module with functions for haplotype-based analyses of
+  recent selection, see :mod:`allel.stats.selection`.
+
 v0.15.2
 -------
 

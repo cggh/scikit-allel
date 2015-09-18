@@ -228,3 +228,54 @@ def pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
         plt.gcf().colorbar(im, shrink=.5, pad=0)
 
     return ax
+
+
+def voight_painting(painting, palette='colorblind', flank='right', ax=None,
+                    height_factor=0.01):
+    """Plot a painting of shared haplotype prefixes.
+
+    Parameters
+    ----------
+    painting : array_like, int, shape (n_variants, n_haplotypes)
+        Painting array.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+    palette : string, optional
+        A Seaborn palette name.
+    flank : {'right', 'left'}, optional
+        If left, painting will be reversed along first axis.
+    height_factor : float, optional
+        If no axes provided, determine height of figure by multiplying
+        height of painting array by this number.
+
+    See Also
+    --------
+    allel.stats.selection.voight_painting
+
+    """
+
+    import seaborn as sns
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
+    if flank == 'left':
+        painting = painting[::-1]
+
+    n_colors = painting.max()
+    palette = sns.color_palette(palette, n_colors)
+    # use white for singleton haplotypes
+    cmap = mpl.colors.ListedColormap(['white'] + palette)
+
+    # setup axes
+    if ax is None:
+        x = plt.rcParams['figure.figsize'][0]
+        y = height_factor*painting.shape[1]
+        fig, ax = plt.subplots(figsize=(x, y))
+        sns.despine(ax=ax, bottom=True, left=True)
+
+    ax.pcolormesh(painting.T, cmap=cmap)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim(0, painting.shape[0])
+    ax.set_ylim(0, painting.shape[1])

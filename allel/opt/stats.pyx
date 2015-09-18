@@ -4,7 +4,7 @@ from __future__ import absolute_import, print_function, division
 
 
 import numpy as np
-cimport numpy as cnp
+cimport numpy as np
 cimport cython
 from libc.math cimport sqrt
 
@@ -14,14 +14,16 @@ from libc.math cimport sqrt
 @cython.nonecheck(False)
 @cython.cdivision(True)
 @cython.initializedcheck(False)
-cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
-                                            cnp.int8_t[:] gn1,
-                                            cnp.int8_t[:] gn0_sq,
-                                            cnp.int8_t[:] gn1_sq,
-                                            cnp.float32_t fill=np.nan):
-    cdef cnp.int8_t x, y, xsq, ysq
-    cdef int n
-    cdef cnp.float32_t m0, m1, v0, v1, cov, r
+cpdef inline np.float32_t gn_corrcoef_int8(np.int8_t[:] gn0,
+                                           np.int8_t[:] gn1,
+                                           np.int8_t[:] gn0_sq,
+                                           np.int8_t[:] gn1_sq,
+                                           np.float32_t fill=np.nan):
+    cdef:
+        np.int8_t x, y, xsq, ysq
+        Py_ssize_t i
+        int n
+        np.float32_t m0, m1, v0, v1, cov, r
 
     # initialise variables
     m0 = m1 = v0 = v1 = cov = n = 0
@@ -64,13 +66,14 @@ cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.initializedcheck(False)
-def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn, cnp.float32_t fill=np.nan):
-    cdef int i, j, k
-    cdef cnp.float32_t r
-    # correlation matrix in condensed form
-    cdef cnp.float32_t[:] out
-    cdef cnp.int8_t[:, :] gn_sq
-    cdef cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn, np.float32_t fill=np.nan):
+    cdef:
+        Py_ssize_t i, j, k, n
+        np.float32_t r
+        # correlation matrix in condensed form
+        np.float32_t[:] out
+        np.int8_t[:, :] gn_sq
+        np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
@@ -79,12 +82,12 @@ def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn, cnp.float32_t fill=np.nan):
     n = gn.shape[0]
     # number of distinct pairs
     n_pairs = n * (n - 1) // 2
-    out = np.zeros((n_pairs,), dtype=np.float32)
+    out = np.zeros(n_pairs, dtype=np.float32)
 
     # iterate over distinct pairs
     k = 0
-    for i in range(gn.shape[0]):
-        for j in range(i+1, gn.shape[0]):
+    for i in range(n):
+        for j in range(i+1, n):
             gn0 = gn[i]
             gn1 = gn[j]
             gn0_sq = gn_sq[i]
@@ -100,15 +103,16 @@ def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn, cnp.float32_t fill=np.nan):
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.initializedcheck(False)
-def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna,
-                               cnp.int8_t[:, :] gnb,
-                               cnp.float32_t fill=np.nan):
-    cdef int i, j, k
-    cdef cnp.float32_t r
-    # correlation matrix in condensed form
-    cdef cnp.float32_t[:, :] out
-    cdef cnp.int8_t[:, :] gna_sq, gnb_sq
-    cdef cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna,
+                               np.int8_t[:, :] gnb,
+                               np.float32_t fill=np.nan):
+    cdef:
+        Py_ssize_t i, j, k, m, n
+        np.float32_t r
+        # correlation matrix in condensed form
+        np.float32_t[:, :] out
+        np.int8_t[:, :] gna_sq, gnb_sq
+        np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
 
     # cache square calculation to improve performance
     gna_sq = np.power(gna, 2)
@@ -120,8 +124,8 @@ def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna,
     out = np.zeros((m, n), dtype=np.float32)
 
     # iterate over distinct pairs
-    for i in range(gna.shape[0]):
-        for j in range(gnb.shape[0]):
+    for i in range(m):
+        for j in range(n):
             gn0 = gna[i]
             gn1 = gnb[j]
             gn0_sq = gna_sq[i]
@@ -136,15 +140,16 @@ def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna,
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.initializedcheck(False)
-def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn, int size, int step,
-                            cnp.float32_t threshold):
-    cdef cnp.uint8_t[:] loc
-    cdef int window_start, window_stop, i, j
-    cdef cnp.float32_t r_squared
-    cdef cnp.int8_t[:, :] gn_sq
-    cdef cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
-    cdef int overlap = size - step
-    cdef bint last
+def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
+                            Py_ssize_t step, np.float32_t threshold):
+    cdef:
+        np.uint8_t[:] loc
+        Py_ssize_t window_start, window_stop, i, j
+        np.float32_t r_squared
+        np.int8_t[:, :] gn_sq
+        np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+        int overlap = size - step
+        bint last
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
@@ -203,3 +208,343 @@ def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn, int size, int step,
             break
 
     return np.asarray(loc).view(dtype='b1')
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+cpdef Py_ssize_t shared_prefix_length_int8(np.int8_t[:] a, np.int8_t[:] b):
+    """Compute the length of the shared prefix between two arrays."""
+
+    cdef:
+        Py_ssize_t i, n
+
+    # count up to the length of the shortest array
+    n = min(a.shape[0], b.shape[0])
+
+    # iterate until we find a difference
+    for i in range(n):
+        if a[i] != b[i]:
+            return i
+
+    # arrays are equal up to shared length
+    return n
+
+
+cpdef pairwise_shared_prefix_lengths_int8(np.int8_t[:, :] h):
+    """Compute the length of the shared prefix between all pairs of
+    columns in a 2-dimensional array."""
+
+    cdef:
+        Py_ssize_t i, j, k, n, n_pairs
+        np.int32_t[:] lengths
+
+    # initialise variables
+    n = h.shape[1]
+    n_pairs = (n * (n - 1)) // 2
+    lengths = np.empty(n_pairs, dtype='i4')
+    k = 0
+
+    # iterate over pairs
+    for i in range(n):
+        for j in range(i+1, n):
+            lengths[k] = shared_prefix_length_int8(h[:, i], h[:, j])
+            k += 1
+
+    return np.asarray(lengths)
+
+
+cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
+    """Compute the length of the shared prefix between neighbouring
+    columns in a 2-dimensional array."""
+
+    cdef:
+        Py_ssize_t i, n
+        np.int32_t[:] lengths
+
+    # initialise variables
+    n = h.shape[1]
+    lengths = np.empty(n-1, dtype='i4')
+
+    # iterate over columns
+    for i in range(n-1):
+        lengths[i] = shared_prefix_length_int8(h[:, i], h[:, i+1])
+
+    return np.asarray(lengths)
+
+
+cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
+    """Optimized implementation of bisect_left."""
+    cdef:
+        Py_ssize_t l, u, m, v
+
+    # initialise
+    l = 0  # lower index
+    u = s.shape[0]  # upper index
+
+    # bisect
+    while (u - l) > 1:
+        m = (u + l) // 2
+        v = s[m]
+        if v >= x:
+            u = m
+        else:
+            l = m
+
+    # check boundary condition
+    if s[l] >= x:
+        return l
+
+    return u
+
+
+def prefix_sort(h):
+    """Sort columns in the input array by prefix, i.e., lexical sort,
+    using the first variant as the first key, then the second variant, etc."""
+    lex = np.lexsort(h[::-1])
+    h = np.take(h, lex, axis=1)
+    return h
+
+
+def paint_shared_prefixes_int8(np.int8_t[:, :] h):
+
+    cdef:
+        Py_ssize_t n_variants, n_haplotypes, pp_start, pp_stop, pp_size, n0, n1
+        np.int32_t pp_color, next_color
+        np.int32_t[:, :] painting
+        np.int8_t[:] s
+
+    # first sort columns in the input array by prefix
+    h = prefix_sort(h)
+
+    # initialise variables
+    n_variants = h.shape[0]
+    n_haplotypes = h.shape[1]
+    prefixes = [(0, n_haplotypes, 1)]
+    next_color = 2
+    painting = np.zeros((n_variants, n_haplotypes), dtype='i4')
+
+    # iterate over variants
+    for i in range(n_variants):
+
+        # setup for this iteration
+        parent_prefixes = prefixes
+        prefixes = list()
+
+        if not parent_prefixes:
+            # no more shared prefixes
+            break
+
+        # iterate over parent prefixes
+        for pp_start, pp_stop, pp_color in parent_prefixes:
+            pp_size = pp_stop - pp_start
+
+            # find the split point
+            s = h[i, pp_start:pp_stop]
+            # number of reference alleles
+            n0 = bisect_left_int8(s, 1)
+            # number of alternate alleles
+            n1 = pp_size - n0
+
+            if n0 == 0 or n1 == 0:
+                # no split, continue parent prefix
+                painting[i, pp_start:pp_stop] = pp_color
+                prefixes.append((pp_start, pp_stop, pp_color))
+
+            elif n0 > n1:
+                # ref is major, alt is minor
+                painting[i, pp_start:pp_start+n0] = pp_color
+                prefixes.append((pp_start, pp_start+n0, pp_color))
+                if n1 > 1:
+                    painting[i, pp_start+n0:pp_stop] = next_color
+                    prefixes.append((pp_start+n0, pp_stop, next_color))
+                    next_color += 1
+
+            elif n1 > n0:
+                # ref is minor, alt is major
+                if n0 > 1:
+                    painting[i, pp_start:pp_start+n0] = next_color
+                    prefixes.append((pp_start, pp_start+n0, next_color))
+                    next_color += 1
+                painting[i, pp_start+n0:pp_stop] = pp_color
+                prefixes.append((pp_start+n0, pp_stop, pp_color))
+
+            elif n0 == n1 and n0 > 1:
+                # same number of ref and alt alleles, arbitrarily pick ref as major
+                painting[i, pp_start:pp_start+n0] = pp_color
+                prefixes.append((pp_start, pp_start+n0, pp_color))
+                painting[i, pp_start+n0:pp_stop] = next_color
+                prefixes.append((pp_start+n0, pp_stop, next_color))
+                next_color += 1
+
+    return np.asarray(painting)
+
+
+from bisect import bisect_right
+
+
+cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
+    """Compute integrated haplotype homozygosity from shared suffix lengths."""
+
+    n_pairs = ssl.shape[0]
+    if n_pairs > 0:
+
+        # compute EHH
+        b = np.bincount(ssl)
+        c = np.cumsum(b[::-1])[:-1]
+        ehh = c / n_pairs
+
+        # deal with minimum EHH
+        if min_ehh > 0:
+            ix = bisect_right(ehh, min_ehh)
+            ehh = ehh[ix:]
+
+        # compute variant spacing
+        s = ehh.shape[0]
+        # take absolute value because this might be a reverse scan
+        g = np.abs(np.diff(pos[i-s+1:i+1]))
+
+        # compute IHH via trapezoid rule
+        ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
+
+    else:
+        ihh = 0
+
+    return ihh
+
+
+def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+    """Scan forwards over haplotypes, computing the integrated haplotype
+    homozygosity backwards for each variant."""
+
+    cdef:
+        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, p, s
+        np.int32_t[:] ssl
+        np.int8_t a1, a2
+        np.float64_t[:] vihh
+        np.float64_t ihh
+
+    # initialise
+    n_variants = h.shape[0]
+    n_haplotypes = h.shape[1]
+    n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
+
+    # shared suffix lengths between all pairs of haplotypes
+    ssl = np.zeros(n_pairs, dtype='i4')
+
+    # integrated haplotype homozygosity values for each variant
+    vihh = np.empty(n_variants, dtype='f8')
+
+    # iterate forward over variants
+    for i in range(n_variants):
+
+        # pairwise comparison of alleles between haplotypes to determine
+        # shared suffix lengths
+        # N.B., this is the critical performance section
+        p = 0  # pair index
+        for j in range(n_haplotypes):
+            a1 = h[i, j]  # allele on first haplotype in pair
+            for k in range(j+1, n_haplotypes):
+                a2 = h[i, k]  # allele on second haplotype in pair
+                # test for non-equal and non-missing alleles
+                if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                    # break shared suffix, reset length to zero
+                    ssl[p] = 0
+                else:
+                    # extend shared suffix
+                    ssl[p] += 1
+                # increment pair index
+                p += 1
+
+        # compute IHH from shared suffix lengths
+        ihh = ssl2ihh(ssl, pos, i, min_ehh)
+        vihh[i] = ihh
+
+    return np.asarray(vihh)
+
+
+cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
+    cdef:
+        Py_ssize_t n, n_pairs, i, j, k
+        np.int32_t[:] v
+    n = m.shape[0]
+    n_pairs = (n * (n - 1)) // 2
+    v = np.empty(n_pairs, dtype='i4')
+    k = 0
+    for i in range(n):
+        for j in range(i+1, n):
+            v[k] = m[i, j]
+            k += 1
+    return v
+
+
+def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+    """Scan forwards over haplotypes, computing the integrated haplotype
+    homozygosity backwards for each variant for the reference (0) and
+    alternate (1) alleles separately."""
+
+    cdef:
+        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, p, s
+        np.int32_t[:, :] ssl
+        np.int8_t a1, a2
+        np.float64_t[:] vihh0, vihh1
+        np.float64_t ihh0, ihh1
+        np.uint8_t[:] loc0, loc1
+
+    # initialise
+    n_variants = h.shape[0]
+    n_haplotypes = h.shape[1]
+    # location of haplotypes carrying reference (0) allele
+    loc0 = np.zeros(n_haplotypes, dtype='u1')
+    # location of haplotypes carrying alternate (1) allele
+    loc1 = np.zeros(n_haplotypes, dtype='u1')
+
+    # shared suffix lengths between all pairs of haplotypes
+    # N.B., this time we'll use a square matrix, because this makes
+    # subsetting to ref-ref and alt-alt pairs easier and quicker further
+    # down the line
+    ssl = np.zeros((n_haplotypes, n_haplotypes), dtype='i4')
+
+    # integrated haplotype homozygosity values for each variant
+    vihh0 = np.empty(n_variants, dtype='f8')
+    vihh1 = np.empty(n_variants, dtype='f8')
+
+    # iterate forward over variants
+    for i in range(n_variants):
+
+        # pairwise comparison of alleles between haplotypes to determine
+        # shared suffix lengths
+        # N.B., this is the critical performance section
+        loc0[:] = 0
+        loc1[:] = 0
+        for j in range(n_haplotypes):
+            a1 = h[i, j]
+            # keep track of which haplotypes carry which alleles
+            if a1 == 0:
+                loc0[j] = 1
+            elif a1 == 1:
+                loc1[j] = 1
+            for k in range(j+1, n_haplotypes):
+                a2 = h[i, k]
+                # test for non-equal and non-missing alleles
+                if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                    # break shared suffix, reset to zero
+                    ssl[j, k] = 0
+                else:
+                    # extend shared suffix
+                    ssl[j, k] += 1
+
+        # locate 00 and 11 pairs
+        l0 = np.asarray(loc0, dtype='b1')
+        l1 = np.asarray(loc1, dtype='b1')
+        ssl00 = tovector_int32(np.asarray(ssl).compress(l0, axis=0).compress(l0, axis=1))
+        ssl11 = tovector_int32(np.asarray(ssl).compress(l1, axis=0).compress(l1, axis=1))
+
+        # compute IHH from shared suffix lengths
+        ihh0 = ssl2ihh(ssl00, pos, i, min_ehh)
+        ihh1 = ssl2ihh(ssl11, pos, i, min_ehh)
+        vihh0[i] = ihh0
+        vihh1[i] = ihh1
+
+    return np.asarray(vihh0), np.asarray(vihh1)
