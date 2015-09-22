@@ -115,7 +115,7 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
         max_allele = g.max()
 
     if hasattr(g, 'chunklen'):
-        # use a chunk-wise implementation
+        # use a block-wise implementation
         blen = g.chunklen
         n_variants = g.shape[0]
         shape = (n_variants, max_allele + 1)

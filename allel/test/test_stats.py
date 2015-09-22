@@ -498,6 +498,41 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         actual = allel.stats.rogers_huff_r_between(gna, gnb)
         assert np.isnan(actual)
 
+    def test_locate_unlinked(self):
+
+        gn = [[0, 1, 2],
+              [0, 1, 2]]
+        expect = [True, False]
+        actual = allel.stats.locate_unlinked(gn, size=2, step=2, threshold=.5)
+        aeq(expect, actual)
+
+        gn = [[0, 1, 1, 2],
+              [0, 1, 1, 2],
+              [1, 1, 0, 2],
+              [1, 1, 0, 2]]
+        actual = allel.stats.locate_unlinked(gn, size=2, step=1, threshold=.5)
+        expect = [True, False, True, False]
+        aeq(expect, actual)
+
+        gn = [[0, 1, 1, 2],
+              [0, 1, 1, 2],
+              [0, 1, 1, 2],
+              [1, 1, 0, 2],
+              [1, 1, 0, 2]]
+        actual = allel.stats.locate_unlinked(gn, size=2, step=1, threshold=.5)
+        expect = [True, False, True, True, False]
+        aeq(expect, actual)
+        actual = allel.stats.locate_unlinked(gn, size=3, step=1, threshold=.5)
+        expect = [True, False, False, True, False]
+        aeq(expect, actual)
+
+        # test with bcolz carray
+        import bcolz
+        gnz = bcolz.carray(gn, chunklen=2)
+        actual = allel.stats.locate_unlinked(gnz, size=2, step=1, threshold=.5)
+        expect = [True, False, True, True, False]
+        aeq(expect, actual)
+
 
 class TestAdmixture(unittest.TestCase):
 

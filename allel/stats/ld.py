@@ -135,13 +135,31 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1):
 
     """
 
-    # check inputs
-    gn = asarray_ndim(gn, 2, dtype='i1')
-
     from allel.opt.stats import gn_locate_unlinked_int8
-    loc = gn_locate_unlinked_int8(gn, size, step, threshold)
 
-    return loc
+    # check inputs
+    if not hasattr(gn, 'shape') or not hasattr(gn, 'ndim'):
+        gn = np.asarray(gn, dtype='i1')
+    if gn.ndim != 2:
+        raise ValueError('gn must have two dimensions')
+
+    # setup output
+    loc = np.ones(gn.shape[0], dtype='u1')
+
+    if hasattr(gn, 'chunklen'):
+        # use block-wise implementation
+        blen = gn.chunklen
+        n_variants = gn.shape[0]
+        for i in range(0, n_variants, blen):
+            # N.B., ensure overlap with next window
+            gnb = np.asarray(gn[i:i+blen+size], dtype='i1')
+            locb = loc[i:i+blen+size]
+            gn_locate_unlinked_int8(gnb, locb, size, step, threshold)
+
+    else:
+        gn_locate_unlinked_int8(gn, loc, size, step, threshold)
+
+    return loc.astype('b1')
 
 
 def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
