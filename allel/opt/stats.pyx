@@ -140,10 +140,10 @@ def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna,
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.initializedcheck(False)
-def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
-                            Py_ssize_t step, np.float32_t threshold):
+def gn_locate_unlinked_int8(np.int8_t[:, :] gn, np.uint8_t[:] loc,
+                            Py_ssize_t size, Py_ssize_t step,
+                            np.float32_t threshold):
     cdef:
-        np.uint8_t[:] loc
         Py_ssize_t window_start, window_stop, i, j
         np.float32_t r_squared
         np.int8_t[:, :] gn_sq
@@ -153,9 +153,6 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
-
-    # setup output
-    loc = np.ones(gn.shape[0], dtype='u1')
 
     # setup intermediates
     last = False
@@ -206,8 +203,6 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
 
         if last:
             break
-
-    return np.asarray(loc).view(dtype='b1')
 
 
 @cython.boundscheck(False)
