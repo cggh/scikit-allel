@@ -1,7 +1,7 @@
 Release notes
 =============
 
-v0.17.0
+v0.16.1
 -------
 
 * Added block-wise implementation to :func:`allel.stats.ld.locate_unlinked` so
