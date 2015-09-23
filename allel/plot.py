@@ -9,7 +9,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-import allel.model
+from allel.model import SortedIndex
 from allel.util import ensure_square
 
 
@@ -51,7 +51,7 @@ def variant_locator(pos, step=None, ax=None, start=None,
     import matplotlib.pyplot as plt
 
     # check inputs
-    pos = allel.model.SortedIndex(pos, copy=False)
+    pos = SortedIndex(pos, copy=False)
 
     # set up axes
     if ax is None:
@@ -168,14 +168,13 @@ def pairwise_distance(dist, labels=None, colorbar=True, ax=None,
 
 
 def pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
-    """Plot a matrix of linkage disequilibrium values between pairs of
-    variants.
+    """Plot a matrix of genotype linkage disequilibrium values between
+    all pairs of variants.
 
     Parameters
     ----------
-
     m : array_like
-        LD matrix in condensed form.
+        Array of linkage disequilibrium values in condensed form.
     colorbar : bool, optional
         If True, add a colorbar to the current figure.
     ax : axes, optional
@@ -187,9 +186,8 @@ def pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
 
     Returns
     -------
-
     ax : axes
-        The axes on which the plot was drawn
+        The axes on which the plot was drawn.
 
     """
 
@@ -203,8 +201,9 @@ def pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
 
     # set up axes
     if ax is None:
-        # make a square figure
-        x = plt.rcParams['figure.figsize'][0]
+        # make a square figure with enough pixels to represent each variant
+        x = m_square.shape[0] / plt.rcParams['savefig.dpi']
+        x = max(x, plt.rcParams['figure.figsize'][0])
         fig, ax = plt.subplots(figsize=(x, x))
         fig.tight_layout(pad=0)
 

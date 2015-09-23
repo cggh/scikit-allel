@@ -154,9 +154,6 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn, np.uint8_t[:] loc,
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
 
-    # # setup output
-    # loc = np.ones(gn.shape[0], dtype='u1')
-
     # setup intermediates
     last = False
 

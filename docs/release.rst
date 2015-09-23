@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.17.0
+-------
+
+* Added block-wise implementation to :func:`allel.stats.ld.locate_unlinked` so
+  it can be used with compressed arrays as input.
+
 v0.16.0
 -------
 
