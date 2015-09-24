@@ -190,6 +190,14 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
             h5d = h5f[node_path]
             aeq(g[:], h5d[:])
 
+    def test_take(self):
+        g = self.setup_instance(diploid_genotype_data)
+        # take variants not in original order
+        # not supported for carrays
+        indices = [2, 0]
+        with assert_raises(ValueError):
+            t = g.take(indices, axis=0)
+
 
 class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
@@ -462,6 +470,15 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
             eq(sorted(a.dtype.names), sorted(h5g.keys()))
             for n in a.dtype.names:
                 aeq(a[n], h5g[n][:])
+
+    def test_take(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = VariantCTable(a)
+        # take variants not in original order
+        # not supported for carrays
+        indices = [2, 0]
+        with assert_raises(ValueError):
+            t = vt.take(indices)
 
 
 class FeatureCTableTests(FeatureTableInterface, unittest.TestCase):

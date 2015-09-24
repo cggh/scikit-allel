@@ -198,6 +198,15 @@ class GenotypeArrayInterface(object):
         expect = np.array(diploid_genotype_data).take(indices, axis=1)
         aeq(expect, t)
 
+        # take samples not in original order
+        indices = [2, 0]
+        t = g.take(indices, axis=1)
+        eq(g.n_variants, t.n_variants)
+        eq(2, t.n_samples)
+        eq(g.ploidy, t.ploidy)
+        expect = np.array(diploid_genotype_data).take(indices, axis=1)
+        aeq(expect, t)
+
     def test_compress(self):
         # Test the compress() method.
 

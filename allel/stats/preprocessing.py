@@ -5,19 +5,24 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
+from allel.compat import text_type
 from allel.util import asarray_ndim
 
 
 def get_scaler(scaler, copy, ploidy):
+    # normalise strings to lower case
+    if isinstance(scaler, text_type):
+        scaler = scaler.lower()
     if scaler == 'patterson':
-        scaler = PattersonScaler(copy=copy, ploidy=ploidy)
+        return PattersonScaler(copy=copy, ploidy=ploidy)
     elif scaler == 'standard':
-        scaler = StandardScaler(copy=copy)
+        return StandardScaler(copy=copy)
     elif hasattr(scaler, 'fit'):
-        pass
+        return scaler
+    elif scaler in ['center', 'centre'] or scaler is None:
+        return CenterScaler(copy=copy)
     else:
-        scaler = CenterScaler(copy=copy)
-    return scaler
+        raise ValueError('unrecognised scaler: %s' % scaler)
 
 
 class StandardScaler(object):

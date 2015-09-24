@@ -243,20 +243,37 @@ def carray_block_compress(carr, condition, axis, blen=None, **kwargs):
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def carray_block_take(carr, indices, axis, **kwargs):
+def carray_block_take(carr, indices, axis, blen=None, **kwargs):
+    if blen is None:
+        blen = carr.chunklen
 
     # check inputs
     indices = asarray_ndim(indices, 1)
 
     if axis == 0:
+        # check if indices are ordered
+        if np.any(indices[1:] <= indices[:-1]):
+            raise ValueError('indices must be strictly increasing')
         condition = np.zeros((carr.shape[0],), dtype=bool)
         condition[indices] = True
-        return carray_block_compress(carr, condition, axis=0, **kwargs)
+        return carray_block_compress(carr, condition, axis=0,
+                                     blen=blen, **kwargs)
 
     elif axis == 1:
-        condition = np.zeros((carr.shape[1],), dtype=bool)
-        condition[indices] = True
-        return carray_block_compress(carr, condition, axis=1, **kwargs)
+
+        # setup output
+        kwargs.setdefault('dtype', carr.dtype)
+        kwargs.setdefault('cparams', getattr(carr, 'cparams', None))
+        kwargs.setdefault('expectedlen', carr.shape[0])
+        out = bcolz.zeros((0, len(indices)) + carr.shape[2:],
+                          **kwargs)
+
+        # build output
+        for i in range(0, carr.shape[0], blen):
+            block = carr[i:i+blen]
+            out.append(np.take(block, indices, axis=1))
+
+        return out
 
     else:
         raise NotImplementedError('axis not supported: %s' % axis)
@@ -296,6 +313,9 @@ def ctable_block_compress(ctbl, condition, blen=None, **kwargs):
 
 def ctable_block_take(ctbl, indices, **kwargs):
     indices = asarray_ndim(indices, 1)
+    # check if indices are ordered
+    if np.any(indices[1:] <= indices[:-1]):
+        raise ValueError('indices must be strictly increasing')
     condition = np.zeros((ctbl.shape[0],), dtype=bool)
     condition[indices] = True
     return ctable_block_compress(ctbl, condition, **kwargs)

@@ -166,6 +166,17 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
             for j in range(g.n_samples):
                 self.assertIn(h[i, j], set(g[i, j]))
 
+    def test_take(self):
+        g = self.setup_instance(diploid_genotype_data)
+        # take variants not in original order
+        indices = [2, 0]
+        t = g.take(indices, axis=0)
+        eq(2, t.n_variants)
+        eq(g.n_samples, t.n_samples)
+        eq(g.ploidy, t.ploidy)
+        expect = np.array(diploid_genotype_data).take(indices, axis=0)
+        aeq(expect, t)
+
 
 class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
@@ -616,6 +627,17 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
         eq(1, vt.ndim)
         eq(5, vt.n_variants)
         eq(variant_table_names, vt.names)
+
+    def test_take(self):
+        a = np.rec.array(variant_table_data,
+                         dtype=variant_table_dtype)
+        vt = VariantTable(a)
+        # take variants not in original order
+        indices = [2, 0]
+        t = vt.take(indices)
+        eq(2, t.n_variants)
+        expect = a.take(indices)
+        aeq(expect, t)
 
 
 class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
