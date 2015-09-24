@@ -4,11 +4,13 @@ Release notes
 v0.16.2
 -------
 
+* Fixed behaviour of take() method on compressed arrays when indices are not
+  in increasing order
+  (`#6 <https://github.com/cggh/scikit-allel/issues/6>`_).
 * Minor change to scaler argument to PCA functions in
   :mod:`allel.stats.decomposition` to avoid confusion about when to fall
-  back to default scaler.
-* Fixed behaviour of take() method on compressed arrays when indices are not
-  in increasing order.
+  back to default scaler
+  (`#7 <https://github.com/cggh/scikit-allel/issues/7>`_).
 
 v0.16.1
 -------
