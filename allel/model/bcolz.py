@@ -377,7 +377,21 @@ def carray_from_hdf5(*args, **kwargs):
     or provide two positional arguments giving the HDF5 file path and the
     dataset node path within the file.
 
-    All keyword arguments are passed through to the bcolz.carray constructor.
+    The following optional parameters may be given. Any other keyword
+    arguments are passed through to the bcolz.carray constructor.
+
+    Parameters
+    ----------
+    start : int, optional
+        Index to start loading from.
+    stop : int, optional
+        Index to finish loading at.
+    condition : array_like, bool, optional
+        A 1-dimensional boolean array of the same length as the first
+        dimension of the dataset to load, indicating a selection of rows to
+        load.
+    blen : int, optional
+        Block size to use when loading.
 
     """
 
@@ -409,19 +423,18 @@ def carray_from_hdf5(*args, **kwargs):
         length = dataset.shape[0]
         start = kwargs.pop('start', 0)
         stop = kwargs.pop('stop', length)
-        step = kwargs.pop('step', 1)
         condition = kwargs.pop('condition', None)
         condition = asarray_ndim(condition, 1, allow_none=True)
         blen = kwargs.pop('blen', None)
 
         # setup output data
         if condition is None:
-            expectedlen = (stop - start) // step
+            expectedlen = (stop - start)
         else:
             if condition.size != length:
                 raise ValueError('length of condition does not match length '
                                  'of dataset')
-            expectedlen = np.count_nonzero(condition[start:stop:step])
+            expectedlen = np.count_nonzero(condition[start:stop])
         kwargs.setdefault('expectedlen', expectedlen)
         kwargs.setdefault('dtype', dataset.dtype)
         carr = bcolz.zeros((0,) + dataset.shape[1:], **kwargs)
@@ -438,13 +451,16 @@ def carray_from_hdf5(*args, **kwargs):
         # load block-wise
         for i in range(start, stop, blen):
             j = min(i + blen, stop)
-            # N.B., apply step after load because step within h5py is slooow
-            # TODO adjust block start to honour step across blocks
-            block = dataset[i:j][::step]
             if condition is not None:
-                bcnd = condition[i:j:step]
-                block = np.compress(bcnd, block, axis=0)
-            carr.append(block)
+                bcnd = condition[i:j]
+                # only decompress block if necessary
+                if np.any(bcnd):
+                    block = dataset[i:j]
+                    block = np.compress(bcnd, block, axis=0)
+                    carr.append(block)
+            else:
+                block = dataset[i:j]
+                carr.append(block)
 
         return carr
 
@@ -458,7 +474,6 @@ def carray_to_hdf5(carr, parent, name, **kwargs):
 
     Parameters
     ----------
-
     carr : bcolz.carray
         Data to write.
     parent : string or h5py group
@@ -471,7 +486,6 @@ def carray_to_hdf5(carr, parent, name, **kwargs):
 
     Returns
     -------
-
     h5d : h5py dataset
 
     """
@@ -510,7 +524,20 @@ def ctable_from_hdf5_group(*args, **kwargs):
     or provide two positional arguments giving the HDF5 file path and the
     group node path within the file.
 
-    All keyword arguments are passed through to the bcolz.ctable constructor.
+    The following optional parameters may be given. Any other keyword
+    arguments are passed through to the bcolz.carray constructor.
+
+    Parameters
+    ----------
+    start : int, optional
+        Index to start loading from.
+    stop : int, optional
+        Index to finish loading at.
+    condition : array_like, bool, optional
+        A 1-dimensional boolean array of the same length as the columns of the
+        table to load, indicating a selection of rows to load.
+    blen : int, optional
+        Block size to use when loading.
 
     """
 
@@ -560,19 +587,18 @@ def ctable_from_hdf5_group(*args, **kwargs):
         # determine start and stop parameters for load
         start = kwargs.pop('start', 0)
         stop = kwargs.pop('stop', length)
-        step = kwargs.pop('step', 1)
         blen = kwargs.pop('blen', None)
         condition = kwargs.pop('condition', None)
         condition = asarray_ndim(condition, 1, allow_none=True)
 
         # setup output data
         if condition is None:
-            expectedlen = (stop - start) // step
+            expectedlen = (stop - start)
         else:
             if condition.size != length:
                 raise ValueError('length of condition does not match length '
                                  'of datasets')
-            expectedlen = np.count_nonzero(condition[start:stop:step])
+            expectedlen = np.count_nonzero(condition[start:stop])
         kwargs.setdefault('expectedlen', expectedlen)
         if blen is None:
             # use smallest input chunk length
@@ -582,15 +608,24 @@ def ctable_from_hdf5_group(*args, **kwargs):
         # load block-wise
         for i in range(start, stop, blen):
             j = min(i + blen, stop)
-            # N.B., apply step after load because step within h5py is slooow
-            blocks = [d[i:j][::step] for d in datasets]
+
             if condition is not None:
-                bcnd = condition[i:j:step]
-                blocks = [np.compress(bcnd, block, axis=0) for block in blocks]
-            if ctbl is None:
-                ctbl = bcolz.ctable(blocks, names=names, **kwargs)
+                bcnd = condition[i:j]
+                # only decompress block if necessary
+                if np.any(bcnd):
+                    blocks = [d[i:j] for d in datasets]
+                    blocks = [np.compress(bcnd, block, axis=0)
+                              for block in blocks]
+                else:
+                    blocks = None
             else:
-                ctbl.append(blocks)
+                blocks = [d[i:j] for d in datasets]
+
+            if blocks:
+                if ctbl is None:
+                    ctbl = bcolz.ctable(blocks, names=names, **kwargs)
+                else:
+                    ctbl.append(blocks)
 
         return ctbl
 
@@ -748,42 +783,16 @@ class CArrayWrapper(object):
 
     @classmethod
     def from_hdf5(cls, *args, **kwargs):
-        """Load a bcolz carray from an HDF5 dataset.
-
-        Either provide an h5py dataset as a single positional argument,
-        or provide two positional arguments giving the HDF5 file path and the
-        dataset node path within the file.
-
-        All keyword arguments are passed through to the bcolz.carray
-        constructor.
-
-        """
         carr = carray_from_hdf5(*args, **kwargs)
         return cls(carr, copy=False)
 
     def to_hdf5(self, parent, name, **kwargs):
-        """Write a bcolz carray to an HDF5 dataset.
-
-        Parameters
-        ----------
-
-        carr : bcolz.carray
-            Data to write.
-        parent : string or h5py group
-            Parent HDF5 file or group. If a string, will be treated as HDF5
-            file name.
-        name : string
-            Name or path of dataset to write data into.
-        kwargs : keyword arguments
-            Passed through to h5py require_dataset() function.
-
-        Returns
-        -------
-
-        h5d : h5py dataset
-
-        """
         return carray_to_hdf5(self.carr, parent, name, **kwargs)
+
+
+# N.B., class method
+CArrayWrapper.from_hdf5.__func__.__doc__ = carray_from_hdf5.__doc__
+copy_method_doc(CArrayWrapper.to_hdf5, carray_to_hdf5)
 
 
 class GenotypeCArray(CArrayWrapper):
@@ -1784,41 +1793,16 @@ class CTableWrapper(object):
 
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
-        """Load a bcolz ctable from columns stored as separate datasets with an
-        HDF5 group.
-
-        Either provide an h5py group as a single positional argument,
-        or provide two positional arguments giving the HDF5 file path and the
-        group node path within the file.
-
-        All keyword arguments are passed through to the bcolz.ctable
-        constructor.
-
-        """
         ctbl = ctable_from_hdf5_group(*args, **kwargs)
         return cls(ctbl, copy=False)
 
     def to_hdf5_group(self, parent, name, **kwargs):
-        """Write each column in a bcolz ctable to a dataset in an HDF5 group.
-
-        Parameters
-        ----------
-
-        parent : string or h5py group
-            Parent HDF5 file or group. If a string, will be treated as HDF5
-            file name.
-        name : string
-            Name or path of group to write data into.
-        kwargs : keyword arguments
-            Passed through to h5py require_dataset() function.
-
-        Returns
-        -------
-
-        h5g : h5py group
-
-        """
         return ctable_to_hdf5_group(self.ctbl, parent, name, **kwargs)
+
+
+# N.B., class method
+CTableWrapper.from_hdf5_group.__func__.__doc__ = ctable_from_hdf5_group.__doc__
+copy_method_doc(CTableWrapper.to_hdf5_group, ctable_to_hdf5_group)
 
 
 class VariantCTable(CTableWrapper):
