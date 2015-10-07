@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.17.0
+-------
+
+* Improved performance of carray and ctable loading from HDF5 with a
+  condition (`#11 <https://github.com/cggh/scikit-allel/issues/11>`_).
+
 v0.16.2
 -------
 
