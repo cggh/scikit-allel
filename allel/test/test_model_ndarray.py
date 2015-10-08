@@ -670,7 +670,7 @@ class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
         s = ft['seqid']
         assert_is_instance(s, np.ndarray)
         assert_not_is_instance(s, FeatureTable)
-        s = ft[['seqid', 'start', 'stop']]
+        s = ft[['seqid', 'start', 'end']]
         assert_is_instance(s, FeatureTable)
 
     def test_view(self):

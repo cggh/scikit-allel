@@ -1850,7 +1850,7 @@ class VariantCTable(CTableWrapper):
     Slicing rows returns :class:`allel.model.VariantTable`::
 
         >>> vt[:2]
-        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))]))
         [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr1', 7, 12, 6.7, array([3, 4]))]
 
     Accessing columns returns :class:`allel.bcolz.VariantCTable`::
@@ -1865,7 +1865,7 @@ class VariantCTable(CTableWrapper):
 
         >>> loc = vt.index.locate_range(b'chr2', 1, 10)
         >>> vt[loc]
-        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
+        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))]))
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([7, 8]))]
 
     """  # noqa
