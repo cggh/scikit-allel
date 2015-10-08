@@ -454,7 +454,7 @@ def fold_joint_sfs(s, m, n):
     return o
 
 
-def plot_sfs(s, yscale='log', bins=None, m=None,
+def plot_sfs(s, yscale='log', bins=None, n=None,
              clip_endpoints=True, label=None, plot_kwargs=None,
              ax=None):
     import matplotlib.pyplot as plt
@@ -491,9 +491,9 @@ def plot_sfs(s, yscale='log', bins=None, m=None,
         # use bin midpoints for plotting
         x = (b[:-1] + b[1:]) / 2
 
-    if m:
+    if n:
         # convert allele counts to allele frequencies
-        x = x / m
+        x = x / n
         ax.set_xlabel('derived allele frequency')
     else:
         ax.set_xlabel('derived allele count')
