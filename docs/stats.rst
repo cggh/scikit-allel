@@ -7,6 +7,7 @@ Statistical functions for use with variant call data.
     :maxdepth: 3
 
     stats/diversity
+    stats/sf
     stats/fst
     stats/hw
     stats/ld
