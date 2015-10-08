@@ -20,7 +20,6 @@ def pairwise_distance(x, metric):
 
     Parameters
     ----------
-
     x : array_like, shape (n, m, ...)
         Array of m observations (e.g., samples or haplotypes) in a space
         with n dimensions (e.g., variants). Note that the order of the first
@@ -33,14 +32,8 @@ def pairwise_distance(x, metric):
 
     Returns
     -------
-
     dist : ndarray, shape (m * (m - 1) / 2,)
         Distance matrix in condensed form.
-
-    See Also
-    --------
-
-    allel.plot.pairwise_distance
 
     Notes
     -----
@@ -122,7 +115,6 @@ def pdist(x, metric):
 
     Parameters
     ----------
-
     x : array_like, shape (n, m, ...)
         Array of m observations (e.g., samples or haplotypes) in a space
         with n dimensions (e.g., variants). Note that the order of the first
@@ -135,7 +127,6 @@ def pdist(x, metric):
 
     Returns
     -------
-
     dist : ndarray
         Distance matrix in condensed form.
 
@@ -164,7 +155,6 @@ def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
 
     Parameters
     ----------
-
     pos : array_like, int, shape (n_variants,)
         Variant positions.
     gac : array_like, int, shape (n_variants, n_samples, n_alleles)
@@ -179,14 +169,13 @@ def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
 
     Returns
     -------
-
     dist : ndarray
         Distance matrix in condensed form.
 
     See Also
     --------
-
     allel.model.GenotypeArray.to_allele_counts
+
     """
 
     if not isinstance(pos, SortedIndex):
@@ -214,13 +203,11 @@ def pcoa(dist):
 
     Parameters
     ----------
-
     dist : array_like
         Distance matrix in condensed form.
 
     Returns
     -------
-
     coords : ndarray, shape (n_samples, n_dimensions)
         Transformed coordinates for the samples.
     explained_ratio : ndarray, shape (n_dimensions)
@@ -343,7 +330,6 @@ def plot_pairwise_distance(dist, labels=None, colorbar=True, ax=None,
 
     Parameters
     ----------
-
     dist : array_like
         The distance matrix in condensed form.
     labels : sequence of strings, optional
@@ -359,7 +345,6 @@ def plot_pairwise_distance(dist, labels=None, colorbar=True, ax=None,
 
     Returns
     -------
-
     ax : axes
         The axes on which the plot was drawn
 
