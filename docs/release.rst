@@ -1,6 +1,18 @@
 Release notes
 =============
 
+v0.17.0
+-------
+
+* Added new module for computing and plotting site frequency spectra, see
+  :mod:`allel.stats.sf`
+  (`#12 <https://github.com/cggh/scikit-allel/issues/12>`_).
+* All plotting functions have been moved into the appropriate stats module
+  that they naturally correspond to. The :mod:`allel.plot` module is
+  deprecated (`#13 <https://github.com/cggh/scikit-allel/issues/13>`_).
+* Improved performance of carray and ctable loading from HDF5 with a
+  condition (`#11 <https://github.com/cggh/scikit-allel/issues/11>`_).
+
 v0.16.2
 -------
 

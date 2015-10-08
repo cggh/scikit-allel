@@ -36,3 +36,12 @@ from allel.stats.admixture import patterson_f2, patterson_f3, patterson_d, \
     blockwise_patterson_f3, blockwise_patterson_d
 
 from allel.stats.selection import ehh_decay, voight_painting, xpehh, ihs
+
+from allel.stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
+    joint_sfs, joint_sfs_folded, joint_sfs_scaled, joint_sfs_folded_scaled, \
+    fold_sfs, fold_joint_sfs, scale_sfs, scale_sfs_folded, scale_joint_sfs, \
+    scale_joint_sfs_folded, plot_sfs, plot_sfs_folded, plot_sfs_scaled, \
+    plot_sfs_folded_scaled, plot_joint_sfs, plot_joint_sfs_folded, \
+    plot_joint_sfs_scaled, plot_joint_sfs_folded_scaled
+
+from allel.stats.misc import plot_variant_locator

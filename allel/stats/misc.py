@@ -5,6 +5,9 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
+from allel.model.ndarray import SortedIndex
+
+
 def jackknife(values, statistic):
     """Estimate standard error for `statistic` computed over `values` using
     the jackknife.
@@ -73,3 +76,92 @@ def jackknife(values, statistic):
     se = np.sqrt(sv)
 
     return m, se, vj
+
+
+def plot_variant_locator(pos, step=None, ax=None, start=None,
+                         stop=None, flip=False,
+                         line_kwargs=None):
+    """
+    Plot lines indicating the physical genome location of variants from a
+    single chromosome/contig. By default the top x axis is in variant index
+    space, and the bottom x axis is in genome position space.
+
+    Parameters
+    ----------
+
+    pos : array_like
+        A sorted 1-dimensional array of genomic positions from a single
+        chromosome/contig.
+    step : int, optional
+        Plot a line for every `step` variants.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+    start : int, optional
+        The start position for the region to draw.
+    stop : int, optional
+        The stop position for the region to draw.
+    flip : bool, optional
+        Flip the plot upside down.
+    line_kwargs : dict-like
+        Additional keyword arguments passed through to `plt.Line2D`.
+
+    Returns
+    -------
+
+    ax : axes
+        The axes on which the plot was drawn
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    # check inputs
+    pos = SortedIndex(pos, copy=False)
+
+    # set up axes
+    if ax is None:
+        x = plt.rcParams['figure.figsize'][0]
+        y = x / 7
+        fig, ax = plt.subplots(figsize=(x, y))
+        fig.tight_layout()
+
+    # determine x axis limits
+    if start is None:
+        start = np.min(pos)
+    if stop is None:
+        stop = np.max(pos)
+    loc = pos.locate_range(start, stop)
+    pos = pos[loc]
+    if step is None:
+        step = len(pos) // 100
+    ax.set_xlim(start, stop)
+
+    # plot the lines
+    if line_kwargs is None:
+        line_kwargs = dict()
+    # line_kwargs.setdefault('linewidth', .5)
+    n_variants = len(pos)
+    for i, p in enumerate(pos[::step]):
+        xfrom = p
+        xto = (
+            start +
+            ((i * step / n_variants) * (stop-start))
+        )
+        l = plt.Line2D([xfrom, xto], [0, 1], **line_kwargs)
+        ax.add_line(l)
+
+    # invert?
+    if flip:
+        ax.invert_yaxis()
+        ax.xaxis.tick_top()
+    else:
+        ax.xaxis.tick_bottom()
+
+    # tidy up
+    ax.set_yticks([])
+    ax.xaxis.set_tick_params(direction='out')
+    for l in 'left', 'right':
+        ax.spines[l].set_visible(False)
+
+    return ax

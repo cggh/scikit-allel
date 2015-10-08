@@ -597,3 +597,24 @@ class TestAdmixture(unittest.TestCase):
         expect_den = [0., 1., 1., 0.25, np.nan]
         assert_array_nanclose(expect_num, num)
         assert_array_nanclose(expect_den, den)
+
+
+class TestSF(unittest.TestCase):
+
+    def test_sfs(self):
+        dac = [0, 1, 2, 1]
+        expect = [1, 2, 1]
+        actual = allel.stats.sfs(dac)
+        aeq(expect, actual)
+
+    def test_sfs_folded(self):
+        ac = [[0, 3], [1, 2], [2, 1]]
+        expect = [1, 2]
+        actual = allel.stats.sfs_folded(ac)
+        aeq(expect, actual)
+
+    def test_sfs_scaled(self):
+        dac = [0, 1, 2, 1]
+        expect = [0, 2, 2]
+        actual = allel.stats.sfs_scaled(dac)
+        aeq(expect, actual)
