@@ -43,7 +43,6 @@ Contents
 
     model
     stats
-    plot
     io
     release
 

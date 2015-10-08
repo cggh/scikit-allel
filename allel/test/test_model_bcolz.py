@@ -196,7 +196,7 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
         # not supported for carrays
         indices = [2, 0]
         with assert_raises(ValueError):
-            t = g.take(indices, axis=0)
+            g.take(indices, axis=0)
 
 
 class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
@@ -478,7 +478,7 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
         # not supported for carrays
         indices = [2, 0]
         with assert_raises(ValueError):
-            t = vt.take(indices)
+            vt.take(indices)
 
 
 class FeatureCTableTests(FeatureTableInterface, unittest.TestCase):

@@ -618,4 +618,3 @@ class TestSF(unittest.TestCase):
         expect = [0, 2, 2]
         actual = allel.stats.sfs_scaled(dac)
         aeq(expect, actual)
-

@@ -335,3 +335,69 @@ def condensed_coords_between(pop1, pop2, n):
 
     return [condensed_coords(i, j, n)
             for i, j in itertools.product(sorted(pop1), sorted(pop2))]
+
+
+def plot_pairwise_distance(dist, labels=None, colorbar=True, ax=None,
+                           imshow_kwargs=None):
+    """Plot a pairwise distance matrix.
+
+    Parameters
+    ----------
+
+    dist : array_like
+        The distance matrix in condensed form.
+    labels : sequence of strings, optional
+        Sample labels for the axes.
+    colorbar : bool, optional
+        If True, add a colorbar to the current figure.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+    imshow_kwargs : dict-like, optional
+        Additional keyword arguments passed through to
+        :func:`matplotlib.pyplot.imshow`.
+
+    Returns
+    -------
+
+    ax : axes
+        The axes on which the plot was drawn
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    # check inputs
+    dist_square = ensure_square(dist)
+
+    # set up axes
+    if ax is None:
+        # make a square figure
+        x = plt.rcParams['figure.figsize'][0]
+        fig, ax = plt.subplots(figsize=(x, x))
+        fig.tight_layout()
+
+    # setup imshow arguments
+    if imshow_kwargs is None:
+        imshow_kwargs = dict()
+    imshow_kwargs.setdefault('interpolation', 'none')
+    imshow_kwargs.setdefault('cmap', 'jet')
+    imshow_kwargs.setdefault('vmin', np.min(dist))
+    imshow_kwargs.setdefault('vmax', np.max(dist))
+
+    # plot as image
+    im = ax.imshow(dist_square, **imshow_kwargs)
+
+    # tidy up
+    if labels:
+        ax.set_xticks(range(len(labels)))
+        ax.set_yticks(range(len(labels)))
+        ax.set_xticklabels(labels, rotation=90)
+        ax.set_yticklabels(labels, rotation=0)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    if colorbar:
+        plt.gcf().colorbar(im, shrink=.5)
+
+    return ax
