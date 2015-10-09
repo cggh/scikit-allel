@@ -1,5 +1,5 @@
-scikit-allel
-============
+``scikit-allel``
+==============
 
 A Python package for exploratory analysis of large scale genetic variation data. 
 
