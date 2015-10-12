@@ -4,11 +4,17 @@ Release notes
 v0.18.0
 -------
 
-* Added new function :func:`allel.stats.selection.fig_voight_painting` to paint
+* Added functions for computing H statistics for detecting signatures of soft
+  sweeps, see :func:`allel.stats.selection.garud_h`,
+  :func:`allel.stats.selection.moving_garud_h`,
+  :func:`allel.stats.selection.plot_haplotype_frequencies`
+  (`#19 <https://github.com/cggh/scikit-allel/issues/19>`_).
+* Added function :func:`allel.stats.selection.fig_voight_painting` to paint
   both flanks either side of some variant under selection in a single figure
   (`#17 <https://github.com/cggh/scikit-allel/issues/17>`_).
 * Changed return values from :func:`allel.stats.selection.voight_painting` to
-  also return the indices used for sorting haplotypes by prefix.
+  also return the indices used for sorting haplotypes by prefix
+  (`#18 <https://github.com/cggh/scikit-allel/issues/18>`_).
 
 v0.17.0
 -------

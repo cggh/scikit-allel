@@ -7,6 +7,7 @@ import numpy as np
 
 from allel.util import asarray_ndim
 from allel.model.ndarray import HaplotypeArray
+from allel.stats.window import moving_statistic
 
 
 def ehh_decay(h, truncate=False):
@@ -55,11 +56,6 @@ def ehh_decay(h, truncate=False):
     return ehh
 
 
-def prefix_argsort(h):
-    lex = np.lexsort(h[::-1])
-    return lex
-
-
 def voight_painting(h):
     """Paint haplotypes, assigning a unique integer to each shared haplotype
     prefix.
@@ -89,7 +85,7 @@ def voight_painting(h):
         raise NotImplementedError('missing calls are not supported')
 
     # sort by prefix
-    indices = prefix_argsort(h)
+    indices = h.prefix_argsort()
     h = np.take(h, indices, axis=1)
 
     # paint
@@ -116,6 +112,10 @@ def plot_voight_painting(painting, palette='colorblind', flank='right',
     height_factor : float, optional
         If no axes provided, determine height of figure by multiplying
         height of painting array by this number.
+
+    Returns
+    -------
+    ax : axes
 
     """
 
@@ -368,3 +368,151 @@ def ihs(h, pos, min_ehh=0):
     score = np.log(ihh1 / ihh0)
 
     return score
+
+
+def plot_haplotype_frequencies(h, palette='Set1', singleton_color='#dddddd',
+                               ax=None):
+    """Plot haplotype frequencies.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    palette : string, optional
+        A Seaborn palette name.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+
+    Returns
+    -------
+    ax : axes
+
+    """
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # check inputs
+    h = HaplotypeArray(h, copy=False)
+
+    # setup figure
+    if ax is None:
+        width = plt.rcParams['figure.figsize'][0]
+        height = width / 10
+        fig, ax = plt.subplots(figsize=(width, height))
+        sns.despine(ax=ax, left=True)
+
+    # count distinct haplotypes
+    hc = h.distinct_counts()
+
+    # setup palette
+    n_colors = np.count_nonzero(hc > 1)
+    palette = sns.color_palette(palette, n_colors)
+
+    # paint frequencies
+    x1 = 0
+    for i, c in enumerate(hc):
+        x2 = x1 + c
+        if c > 1:
+            color = palette[i]
+        else:
+            color = singleton_color
+        ax.axvspan(x1, x2, color=color)
+        x1 = x2
+
+    # tidy up
+    ax.set_xlim(0, h.shape[1])
+    ax.set_yticks([])
+
+    return ax
+
+
+def garud_h(h):
+    """Compute the H1, H12, H123 and H2/H1 statistics for detecting signatures
+    of soft sweeps, as defined in Garud et al. (2015).
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+
+    Returns
+    -------
+    h1 : float
+        H1 statistic (sum of squares of haplotype frequencies).
+    h12 : float
+        H12 statistic (sum of squares of haplotype frequencies, combining
+        the two most common haplotypes into a single frequency).
+    h123 : float
+        H123 statistic (sum of squares of haplotype frequencies, combining
+        the three most common haplotypes into a single frequency).
+    h2_h1 : float
+        H2/H1 statistic, indicating the "softness" of a sweep.
+
+    """
+
+    # check inputs
+    h = HaplotypeArray(h, copy=False)
+
+    # compute haplotype frequencies
+    f = h.distinct_frequencies()
+
+    # compute H1
+    h1 = np.sum(f**2)
+
+    # compute H12
+    h12 = (f[0] + f[1])**2 + np.sum(f[2:]**2)
+
+    # compute H123
+    h123 = (f[0] + f[1] + f[2])**2 + np.sum(f[3:]**2)
+
+    # compute H2/H1
+    h2 = h1 - f[0]**2
+    h2_h1 = h2 / h1
+
+    return h1, h12, h123, h2_h1
+
+
+def moving_garud_h(h, size, start=0, stop=None, step=None):
+    """Compute the H1, H12, H123 and H2/H1 statistics for detecting signatures
+    of soft sweeps, as defined in Garud et al. (2015), in moving windows,
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    h1 : ndarray, float, shape (n_windows,)
+        H1 statistics (sum of squares of haplotype frequencies).
+    h12 : ndarray, float, shape (n_windows,)
+        H12 statistics (sum of squares of haplotype frequencies, combining
+        the two most common haplotypes into a single frequency).
+    h123 : ndarray, float, shape (n_windows,)
+        H123 statistics (sum of squares of haplotype frequencies, combining
+        the three most common haplotypes into a single frequency).
+    h2_h1 : ndarray, float, shape (n_windows,)
+        H2/H1 statistics, indicating the "softness" of a sweep.
+
+    """
+
+    h = moving_statistic(values=h, statistic=garud_h, size=size, start=start,
+                         stop=stop, step=step)
+
+    h1 = h[:, 0]
+    h12 = h[:, 1]
+    h123 = h[:, 2]
+    h2_h1 = h[:, 3]
+
+    return h1, h12, h123, h2_h1

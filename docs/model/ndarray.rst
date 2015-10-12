@@ -67,6 +67,11 @@ HaplotypeArray
     .. automethod:: to_genotypes
     .. automethod:: to_sparse
     .. automethod:: from_sparse
+    .. automethod:: prefix_argsort
+    .. automethod:: distinct
+    .. automethod:: distinct_counts
+    .. automethod:: distinct_frequencies
+
 
 AlleleCountsArray
 -----------------

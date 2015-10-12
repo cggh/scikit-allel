@@ -37,7 +37,8 @@ from allel.stats.admixture import patterson_f2, patterson_f3, patterson_d, \
     blockwise_patterson_f3, blockwise_patterson_d
 
 from allel.stats.selection import ehh_decay, voight_painting, xpehh, ihs, \
-    plot_voight_painting, fig_voight_painting
+    plot_voight_painting, fig_voight_painting, plot_haplotype_frequencies, \
+    garud_h, moving_garud_h
 
 from allel.stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
     joint_sfs, joint_sfs_folded, joint_sfs_scaled, joint_sfs_folded_scaled, \

@@ -269,6 +269,28 @@ cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     return np.asarray(lengths)
 
 
+cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
+                                                    np.int64_t[:] indices):
+    """Compute the length of the shared prefix between neighbouring
+    columns in a 2-dimensional array."""
+
+    cdef:
+        Py_ssize_t i, n, ix, jx
+        np.int32_t[:] lengths
+
+    # initialise variables
+    n = h.shape[1]
+    lengths = np.empty(n-1, dtype='i4')
+
+    # iterate over columns
+    for i in range(n-1):
+        ix = indices[i]
+        jx = indices[i+1]
+        lengths[i] = shared_prefix_length_int8(h[:, ix], h[:, jx])
+
+    return np.asarray(lengths)
+
+
 cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
     """Optimized implementation of bisect_left."""
     cdef:
