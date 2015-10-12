@@ -294,24 +294,17 @@ cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
     return u
 
 
-def prefix_sort(h):
-    """Sort columns in the input array by prefix, i.e., lexical sort,
-    using the first variant as the first key, then the second variant, etc."""
-    lex = np.lexsort(h[::-1])
-    h = np.take(h, lex, axis=1)
-    return h
-
-
 def paint_shared_prefixes_int8(np.int8_t[:, :] h):
+    """Paint each shared prefix with a different number. N.B., `h` must be
+    already sorted by prefix.
+
+    """
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, pp_start, pp_stop, pp_size, n0, n1
         np.int32_t pp_color, next_color
         np.int32_t[:, :] painting
         np.int8_t[:] s
-
-    # first sort columns in the input array by prefix
-    h = prefix_sort(h)
 
     # initialise variables
     n_variants = h.shape[0]

@@ -1,6 +1,15 @@
 Release notes
 =============
 
+v0.18.0
+-------
+
+* Added new function :func:`allel.stats.selection.fig_voight_painting` to paint
+  both flanks either side of some variant under selection in a single figure
+  (`#17 <https://github.com/cggh/scikit-allel/issues/17>`_).
+* Changed return values from :func:`allel.stats.selection.voight_painting` to
+  also return the indices used for sorting haplotypes by prefix.
+
 v0.17.0
 -------
 
