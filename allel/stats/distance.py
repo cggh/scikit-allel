@@ -20,7 +20,6 @@ def pairwise_distance(x, metric):
 
     Parameters
     ----------
-
     x : array_like, shape (n, m, ...)
         Array of m observations (e.g., samples or haplotypes) in a space
         with n dimensions (e.g., variants). Note that the order of the first
@@ -33,14 +32,8 @@ def pairwise_distance(x, metric):
 
     Returns
     -------
-
     dist : ndarray, shape (m * (m - 1) / 2,)
         Distance matrix in condensed form.
-
-    See Also
-    --------
-
-    allel.plot.pairwise_distance
 
     Notes
     -----
@@ -122,7 +115,6 @@ def pdist(x, metric):
 
     Parameters
     ----------
-
     x : array_like, shape (n, m, ...)
         Array of m observations (e.g., samples or haplotypes) in a space
         with n dimensions (e.g., variants). Note that the order of the first
@@ -135,7 +127,6 @@ def pdist(x, metric):
 
     Returns
     -------
-
     dist : ndarray
         Distance matrix in condensed form.
 
@@ -164,7 +155,6 @@ def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
 
     Parameters
     ----------
-
     pos : array_like, int, shape (n_variants,)
         Variant positions.
     gac : array_like, int, shape (n_variants, n_samples, n_alleles)
@@ -179,14 +169,13 @@ def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
 
     Returns
     -------
-
     dist : ndarray
         Distance matrix in condensed form.
 
     See Also
     --------
-
     allel.model.GenotypeArray.to_allele_counts
+
     """
 
     if not isinstance(pos, SortedIndex):
@@ -214,13 +203,11 @@ def pcoa(dist):
 
     Parameters
     ----------
-
     dist : array_like
         Distance matrix in condensed form.
 
     Returns
     -------
-
     coords : ndarray, shape (n_samples, n_dimensions)
         Transformed coordinates for the samples.
     explained_ratio : ndarray, shape (n_dimensions)
@@ -335,3 +322,67 @@ def condensed_coords_between(pop1, pop2, n):
 
     return [condensed_coords(i, j, n)
             for i, j in itertools.product(sorted(pop1), sorted(pop2))]
+
+
+def plot_pairwise_distance(dist, labels=None, colorbar=True, ax=None,
+                           imshow_kwargs=None):
+    """Plot a pairwise distance matrix.
+
+    Parameters
+    ----------
+    dist : array_like
+        The distance matrix in condensed form.
+    labels : sequence of strings, optional
+        Sample labels for the axes.
+    colorbar : bool, optional
+        If True, add a colorbar to the current figure.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+    imshow_kwargs : dict-like, optional
+        Additional keyword arguments passed through to
+        :func:`matplotlib.pyplot.imshow`.
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    # check inputs
+    dist_square = ensure_square(dist)
+
+    # set up axes
+    if ax is None:
+        # make a square figure
+        x = plt.rcParams['figure.figsize'][0]
+        fig, ax = plt.subplots(figsize=(x, x))
+        fig.tight_layout()
+
+    # setup imshow arguments
+    if imshow_kwargs is None:
+        imshow_kwargs = dict()
+    imshow_kwargs.setdefault('interpolation', 'none')
+    imshow_kwargs.setdefault('cmap', 'jet')
+    imshow_kwargs.setdefault('vmin', np.min(dist))
+    imshow_kwargs.setdefault('vmax', np.max(dist))
+
+    # plot as image
+    im = ax.imshow(dist_square, **imshow_kwargs)
+
+    # tidy up
+    if labels:
+        ax.set_xticks(range(len(labels)))
+        ax.set_yticks(range(len(labels)))
+        ax.set_xticklabels(labels, rotation=90)
+        ax.set_yticklabels(labels, rotation=0)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
+    if colorbar:
+        plt.gcf().colorbar(im, shrink=.5)
+
+    return ax

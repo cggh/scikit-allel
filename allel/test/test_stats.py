@@ -498,6 +498,41 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         actual = allel.stats.rogers_huff_r_between(gna, gnb)
         assert np.isnan(actual)
 
+    def test_locate_unlinked(self):
+
+        gn = [[0, 1, 2],
+              [0, 1, 2]]
+        expect = [True, False]
+        actual = allel.stats.locate_unlinked(gn, size=2, step=2, threshold=.5)
+        aeq(expect, actual)
+
+        gn = [[0, 1, 1, 2],
+              [0, 1, 1, 2],
+              [1, 1, 0, 2],
+              [1, 1, 0, 2]]
+        actual = allel.stats.locate_unlinked(gn, size=2, step=1, threshold=.5)
+        expect = [True, False, True, False]
+        aeq(expect, actual)
+
+        gn = [[0, 1, 1, 2],
+              [0, 1, 1, 2],
+              [0, 1, 1, 2],
+              [1, 1, 0, 2],
+              [1, 1, 0, 2]]
+        actual = allel.stats.locate_unlinked(gn, size=2, step=1, threshold=.5)
+        expect = [True, False, True, True, False]
+        aeq(expect, actual)
+        actual = allel.stats.locate_unlinked(gn, size=3, step=1, threshold=.5)
+        expect = [True, False, False, True, False]
+        aeq(expect, actual)
+
+        # test with bcolz carray
+        import bcolz
+        gnz = bcolz.carray(gn, chunklen=2)
+        actual = allel.stats.locate_unlinked(gnz, size=2, step=1, threshold=.5)
+        expect = [True, False, True, True, False]
+        aeq(expect, actual)
+
 
 class TestAdmixture(unittest.TestCase):
 
@@ -562,3 +597,24 @@ class TestAdmixture(unittest.TestCase):
         expect_den = [0., 1., 1., 0.25, np.nan]
         assert_array_nanclose(expect_num, num)
         assert_array_nanclose(expect_den, den)
+
+
+class TestSF(unittest.TestCase):
+
+    def test_sfs(self):
+        dac = [0, 1, 2, 1]
+        expect = [1, 2, 1]
+        actual = allel.stats.sfs(dac)
+        aeq(expect, actual)
+
+    def test_sfs_folded(self):
+        ac = [[0, 3], [1, 2], [2, 1]]
+        expect = [1, 2]
+        actual = allel.stats.sfs_folded(ac)
+        aeq(expect, actual)
+
+    def test_sfs_scaled(self):
+        dac = [0, 1, 2, 1]
+        expect = [0, 2, 2]
+        actual = allel.stats.sfs_scaled(dac)
+        aeq(expect, actual)

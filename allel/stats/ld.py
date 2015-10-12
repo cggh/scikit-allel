@@ -6,7 +6,7 @@ import numpy as np
 
 
 from allel.stats.window import windowed_statistic
-from allel.util import asarray_ndim
+from allel.util import asarray_ndim, ensure_square
 
 
 def rogers_huff_r(gn, fill=np.nan):
@@ -135,13 +135,31 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1):
 
     """
 
-    # check inputs
-    gn = asarray_ndim(gn, 2, dtype='i1')
-
     from allel.opt.stats import gn_locate_unlinked_int8
-    loc = gn_locate_unlinked_int8(gn, size, step, threshold)
 
-    return loc
+    # check inputs
+    if not hasattr(gn, 'shape') or not hasattr(gn, 'ndim'):
+        gn = np.asarray(gn, dtype='i1')
+    if gn.ndim != 2:
+        raise ValueError('gn must have two dimensions')
+
+    # setup output
+    loc = np.ones(gn.shape[0], dtype='u1')
+
+    if hasattr(gn, 'chunklen'):
+        # use block-wise implementation
+        blen = gn.chunklen
+        n_variants = gn.shape[0]
+        for i in range(0, n_variants, blen):
+            # N.B., ensure overlap with next window
+            gnb = np.asarray(gn[i:i+blen+size], dtype='i1')
+            locb = loc[i:i+blen+size]
+            gn_locate_unlinked_int8(gnb, locb, size, step, threshold)
+
+    else:
+        gn_locate_unlinked_int8(gn, loc, size, step, threshold)
+
+    return loc.astype('b1')
 
 
 def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
@@ -214,3 +232,65 @@ def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
 
     return windowed_statistic(pos, gn, statistic, size, start=start,
                               stop=stop, step=step, windows=windows, fill=fill)
+
+
+def plot_pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
+    """Plot a matrix of genotype linkage disequilibrium values between
+    all pairs of variants.
+
+    Parameters
+    ----------
+    m : array_like
+        Array of linkage disequilibrium values in condensed form.
+    colorbar : bool, optional
+        If True, add a colorbar to the current figure.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+    imshow_kwargs : dict-like, optional
+        Additional keyword arguments passed through to
+        :func:`matplotlib.pyplot.imshow`.
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    # check inputs
+    m_square = ensure_square(m)
+
+    # blank out lower triangle and flip up/down
+    m_square = np.tril(m_square)[::-1, :]
+
+    # set up axes
+    if ax is None:
+        # make a square figure with enough pixels to represent each variant
+        x = m_square.shape[0] / plt.rcParams['savefig.dpi']
+        x = max(x, plt.rcParams['figure.figsize'][0])
+        fig, ax = plt.subplots(figsize=(x, x))
+        fig.tight_layout(pad=0)
+
+    # setup imshow arguments
+    if imshow_kwargs is None:
+        imshow_kwargs = dict()
+    imshow_kwargs.setdefault('interpolation', 'none')
+    imshow_kwargs.setdefault('cmap', 'Greys')
+    imshow_kwargs.setdefault('vmin', 0)
+    imshow_kwargs.setdefault('vmax', 1)
+
+    # plot as image
+    im = ax.imshow(m_square, **imshow_kwargs)
+
+    # tidy up
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for s in 'bottom', 'right':
+        ax.spines[s].set_visible(False)
+    if colorbar:
+        plt.gcf().colorbar(im, shrink=.5, pad=0)
+
+    return ax

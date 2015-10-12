@@ -1,6 +1,50 @@
 Release notes
 =============
 
+v0.18.0
+-------
+
+* Added functions for computing H statistics for detecting signatures of soft
+  sweeps, see :func:`allel.stats.selection.garud_h`,
+  :func:`allel.stats.selection.moving_garud_h`,
+  :func:`allel.stats.selection.plot_haplotype_frequencies`
+  (`#19 <https://github.com/cggh/scikit-allel/issues/19>`_).
+* Added function :func:`allel.stats.selection.fig_voight_painting` to paint
+  both flanks either side of some variant under selection in a single figure
+  (`#17 <https://github.com/cggh/scikit-allel/issues/17>`_).
+* Changed return values from :func:`allel.stats.selection.voight_painting` to
+  also return the indices used for sorting haplotypes by prefix
+  (`#18 <https://github.com/cggh/scikit-allel/issues/18>`_).
+
+v0.17.0
+-------
+
+* Added new module for computing and plotting site frequency spectra, see
+  :mod:`allel.stats.sf`
+  (`#12 <https://github.com/cggh/scikit-allel/issues/12>`_).
+* All plotting functions have been moved into the appropriate stats module
+  that they naturally correspond to. The :mod:`allel.plot` module is
+  deprecated (`#13 <https://github.com/cggh/scikit-allel/issues/13>`_).
+* Improved performance of carray and ctable loading from HDF5 with a
+  condition (`#11 <https://github.com/cggh/scikit-allel/issues/11>`_).
+
+v0.16.2
+-------
+
+* Fixed behaviour of take() method on compressed arrays when indices are not
+  in increasing order
+  (`#6 <https://github.com/cggh/scikit-allel/issues/6>`_).
+* Minor change to scaler argument to PCA functions in
+  :mod:`allel.stats.decomposition` to avoid confusion about when to fall
+  back to default scaler
+  (`#7 <https://github.com/cggh/scikit-allel/issues/7>`_).
+
+v0.16.1
+-------
+
+* Added block-wise implementation to :func:`allel.stats.ld.locate_unlinked` so
+  it can be used with compressed arrays as input.
+
 v0.16.0
 -------
 

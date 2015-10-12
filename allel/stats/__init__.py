@@ -19,13 +19,14 @@ from allel.stats.fst import weir_cockerham_fst, hudson_fst, \
     windowed_patterson_fst, blockwise_weir_cockerham_fst, \
     blockwise_hudson_fst, blockwise_patterson_fst
 
-from allel.stats.distance import pairwise_distance, pairwise_dxy, pcoa
+from allel.stats.distance import pairwise_distance, pairwise_dxy, pcoa, \
+    plot_pairwise_distance
 
 from allel.stats.hw import heterozygosity_observed, heterozygosity_expected, \
     inbreeding_coefficient
 
 from allel.stats.ld import rogers_huff_r, rogers_huff_r_between, \
-    locate_unlinked
+    locate_unlinked, plot_pairwise_ld
 
 from allel.stats.decomposition import pca, randomized_pca
 
@@ -35,4 +36,15 @@ from allel.stats.preprocessing import StandardScaler, CenterScaler, \
 from allel.stats.admixture import patterson_f2, patterson_f3, patterson_d, \
     blockwise_patterson_f3, blockwise_patterson_d
 
-from allel.stats.selection import ehh_decay, voight_painting, xpehh, ihs
+from allel.stats.selection import ehh_decay, voight_painting, xpehh, ihs, \
+    plot_voight_painting, fig_voight_painting, plot_haplotype_frequencies, \
+    garud_h, moving_garud_h
+
+from allel.stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
+    joint_sfs, joint_sfs_folded, joint_sfs_scaled, joint_sfs_folded_scaled, \
+    fold_sfs, fold_joint_sfs, scale_sfs, scale_sfs_folded, scale_joint_sfs, \
+    scale_joint_sfs_folded, plot_sfs, plot_sfs_folded, plot_sfs_scaled, \
+    plot_sfs_folded_scaled, plot_joint_sfs, plot_joint_sfs_folded, \
+    plot_joint_sfs_scaled, plot_joint_sfs_folded_scaled
+
+from allel.stats.misc import plot_variant_locator

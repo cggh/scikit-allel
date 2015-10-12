@@ -140,10 +140,10 @@ def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna,
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.initializedcheck(False)
-def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
-                            Py_ssize_t step, np.float32_t threshold):
+def gn_locate_unlinked_int8(np.int8_t[:, :] gn, np.uint8_t[:] loc,
+                            Py_ssize_t size, Py_ssize_t step,
+                            np.float32_t threshold):
     cdef:
-        np.uint8_t[:] loc
         Py_ssize_t window_start, window_stop, i, j
         np.float32_t r_squared
         np.int8_t[:, :] gn_sq
@@ -153,9 +153,6 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
-
-    # setup output
-    loc = np.ones(gn.shape[0], dtype='u1')
 
     # setup intermediates
     last = False
@@ -206,8 +203,6 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn, Py_ssize_t size,
 
         if last:
             break
-
-    return np.asarray(loc).view(dtype='b1')
 
 
 @cython.boundscheck(False)
@@ -274,6 +269,28 @@ cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     return np.asarray(lengths)
 
 
+cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
+                                                    np.int64_t[:] indices):
+    """Compute the length of the shared prefix between neighbouring
+    columns in a 2-dimensional array."""
+
+    cdef:
+        Py_ssize_t i, n, ix, jx
+        np.int32_t[:] lengths
+
+    # initialise variables
+    n = h.shape[1]
+    lengths = np.empty(n-1, dtype='i4')
+
+    # iterate over columns
+    for i in range(n-1):
+        ix = indices[i]
+        jx = indices[i+1]
+        lengths[i] = shared_prefix_length_int8(h[:, ix], h[:, jx])
+
+    return np.asarray(lengths)
+
+
 cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
     """Optimized implementation of bisect_left."""
     cdef:
@@ -299,24 +316,17 @@ cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
     return u
 
 
-def prefix_sort(h):
-    """Sort columns in the input array by prefix, i.e., lexical sort,
-    using the first variant as the first key, then the second variant, etc."""
-    lex = np.lexsort(h[::-1])
-    h = np.take(h, lex, axis=1)
-    return h
-
-
 def paint_shared_prefixes_int8(np.int8_t[:, :] h):
+    """Paint each shared prefix with a different number. N.B., `h` must be
+    already sorted by prefix.
+
+    """
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, pp_start, pp_stop, pp_size, n0, n1
         np.int32_t pp_color, next_color
         np.int32_t[:, :] painting
         np.int8_t[:] s
-
-    # first sort columns in the input array by prefix
-    h = prefix_sort(h)
 
     # initialise variables
     n_variants = h.shape[0]

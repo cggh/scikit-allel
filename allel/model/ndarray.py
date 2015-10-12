@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function, division
 import logging
 import itertools
 import bisect
+import collections
 
 
 import numpy as np
@@ -2181,6 +2182,46 @@ class HaplotypeArray(np.ndarray):
 
         return HaplotypeArray(data, copy=False)
 
+    def prefix_argsort(self):
+        """Return indices that would sort the haplotypes by prefix."""
+        return np.lexsort(self[::-1])
+
+    def distinct(self):
+        """Return sets of indices for each distinct haplotype."""
+
+        # setup collection
+        d = collections.defaultdict(set)
+
+        # iterate over haplotypes
+        for i in range(self.shape[1]):
+
+            # hash the haplotype
+            k = hash(self[:, i].tobytes())
+
+            # collect
+            d[k].add(i)
+
+        # extract sets, sorted by most common
+        return sorted(d.values(), key=len, reverse=True)
+
+    def distinct_counts(self):
+        """Return counts for each distinct haplotype."""
+
+        # hash the haplotypes
+        k = [hash(self[:, i].tobytes()) for i in range(self.shape[1])]
+
+        # count and sort
+        counts = sorted(collections.Counter(k).values(), reverse=True)
+
+        return np.asarray(counts)
+
+    def distinct_frequencies(self):
+        """Return frequencies for each distinct haplotype."""
+
+        c = self.distinct_counts()
+        n = self.shape[1]
+        return c / n
+
 
 class AlleleCountsArray(np.ndarray):
     """Array of allele counts.
@@ -3655,8 +3696,8 @@ class VariantTable(np.recarray):
 
     Access multiple columns::
 
-        >>> vt[['DP', 'QD']]
-        VariantTable((5,), dtype=[('DP', '<i8'), ('QD', '<f8')])
+        >>> vt[['DP', 'QD']]  # doctest: +ELLIPSIS
+        VariantTable((5,), dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8...
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
     Access a row::
@@ -3667,13 +3708,13 @@ class VariantTable(np.recarray):
     Access multiple rows::
 
         >>> vt[2:4]  # doctest: +ELLIPSIS
-        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '...
+        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
 
     Use the index to query variants:
 
         >>> vt.query_region(b'chr2', 1, 10)  # doctest: +ELLIPSIS
-        VariantTable((2,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '...
+        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
 
     """
@@ -3846,11 +3887,11 @@ class VariantTable(np.recarray):
         ...          ('AC', (int, 2))]
         >>> vt = allel.VariantTable(records, dtype=dtype)
         >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
-        VariantTable((3,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '...
+        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
         [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
          (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
         >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
-        VariantTable((1,), dtype=[('CHROM', 'S4'), ('POS', '<u4'), ('DP', '...
+        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
         [(b'chr1', 2, 35, 4.5, array([1, 2]))]
 
         """
