@@ -1,6 +1,13 @@
 Release notes
 =============
 
+v0.18.1
+-------
+
+* Minor change to the Garud H statistics to avoid raising an exception when
+  the number of distinct haplotypes is very low
+  (`#20 <https://github.com/cggh/scikit-allel/issues/20>`_).
+
 v0.18.0
 -------
 

@@ -462,10 +462,10 @@ def garud_h(h):
     h1 = np.sum(f**2)
 
     # compute H12
-    h12 = (f[0] + f[1])**2 + np.sum(f[2:]**2)
+    h12 = np.sum(f[:2])**2 + np.sum(f[2:]**2)
 
     # compute H123
-    h123 = (f[0] + f[1] + f[2])**2 + np.sum(f[3:]**2)
+    h123 = np.sum(f[:3])**2 + np.sum(f[3:]**2)
 
     # compute H2/H1
     h2 = h1 - f[0]**2
