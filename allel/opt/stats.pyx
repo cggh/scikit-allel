@@ -405,21 +405,26 @@ cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
         c = np.cumsum(b[::-1])[:-1]
         ehh = c / n_pairs
 
-        # deal with minimum EHH
-        if min_ehh > 0:
-            ix = bisect_right(ehh, min_ehh)
-            ehh = ehh[ix:]
+        # if ehh does not break down set ihh as nan
+        if ehh[0] > min_ehh:
+            ihh = np.nan
 
-        # compute variant spacing
-        s = ehh.shape[0]
-        # take absolute value because this might be a reverse scan
-        g = np.abs(np.diff(pos[i-s+1:i+1]))
+        else:
+            # trim ehh array at minimum EHH value
+            if min_ehh > 0:
+                ix = bisect_right(ehh, min_ehh)
+                ehh = ehh[ix:]
 
-        # compute IHH via trapezoid rule
-        ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
+            # compute variant spacing
+            s = ehh.shape[0]
+            # take absolute value because this might be a reverse scan
+            g = np.abs(np.diff(pos[i-s+1:i+1]))
+
+            # compute IHH via trapezoid rule
+            ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
 
     else:
-        ihh = 0
+        ihh = np.nan
 
     return ihh
 
