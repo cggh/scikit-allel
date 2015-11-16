@@ -1594,6 +1594,20 @@ class GenotypeArray(np.ndarray):
         gm = hm.to_genotypes(ploidy=self.ploidy)
         return gm
 
+    def hstack(self, *others):
+        """Stack arrays horizontally, i.e., combine data for
+        different sample sets called at the same variants."""
+        tup = (self,) + others
+        a = np.hstack(tup)
+        return GenotypeArray(a, copy=False)
+
+    def vstack(self, *others):
+        """Stack arrays vertically, i.e., concatenate data for
+        the same samples called at different sets of variants."""
+        tup = (self,) + others
+        a = np.vstack(tup)
+        return GenotypeArray(a, copy=False)
+
 
 class HaplotypeArray(np.ndarray):
     """Array of haplotypes.
@@ -2222,6 +2236,20 @@ class HaplotypeArray(np.ndarray):
         n = self.shape[1]
         return c / n
 
+    def hstack(self, *others):
+        """Stack arrays horizontally, i.e., combine data for
+        different sample sets called at the same variants."""
+        tup = (self,) + others
+        a = np.hstack(tup)
+        return HaplotypeArray(a, copy=False)
+
+    def vstack(self, *others):
+        """Stack arrays vertically, i.e., concatenate data for
+        the same samples called at different sets of variants."""
+        tup = (self,) + others
+        a = np.vstack(tup)
+        return HaplotypeArray(a, copy=False)
+
 
 class AlleleCountsArray(np.ndarray):
     """Array of allele counts.
@@ -2727,6 +2755,20 @@ class AlleleCountsArray(np.ndarray):
         out[i, mapping] = self
 
         return AlleleCountsArray(out)
+
+    def hstack(self, *others):
+        """Stack arrays horizontally, i.e., combine data for
+        different sample sets called at the same variants."""
+        tup = (self,) + others
+        a = np.hstack(tup)
+        return AlleleCountsArray(a, copy=False)
+
+    def vstack(self, *others):
+        """Stack arrays vertically, i.e., concatenate data for
+        the same samples called at different sets of variants."""
+        tup = (self,) + others
+        a = np.vstack(tup)
+        return AlleleCountsArray(a, copy=False)
 
 
 class SortedIndex(np.ndarray):

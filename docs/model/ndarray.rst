@@ -41,6 +41,8 @@ GenotypeArray
     .. automethod:: from_sparse
     .. automethod:: to_gt
     .. automethod:: haploidify_samples
+    .. automethod:: vstack
+    .. automethod:: hstack
 
 
 HaplotypeArray
@@ -71,6 +73,8 @@ HaplotypeArray
     .. automethod:: distinct
     .. automethod:: distinct_counts
     .. automethod:: distinct_frequencies
+    .. automethod:: vstack
+    .. automethod:: hstack
 
 
 AlleleCountsArray
@@ -96,6 +100,8 @@ AlleleCountsArray
     .. automethod:: count_doubleton
     .. automethod:: to_frequencies
     .. automethod:: map_alleles
+    .. automethod:: vstack
+    .. automethod:: hstack
 
 VariantTable
 ------------

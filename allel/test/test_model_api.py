@@ -874,6 +874,22 @@ class GenotypeArrayInterface(object):
                   [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
         aeq(expect, g)
 
+    def test_hstack(self):
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g1 = self.setup_instance(a)
+        g2 = self.setup_instance(a)
+        actual = g1.hstack(g2)
+        expect = np.hstack([a, a])
+        aeq(expect, actual)
+
+    def test_vstack(self):
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g1 = self.setup_instance(a)
+        g2 = self.setup_instance(a)
+        actual = g1.vstack(g2)
+        expect = np.vstack([a, a])
+        aeq(expect, actual)
+
 
 class HaplotypeArrayInterface(object):
 
@@ -1167,6 +1183,22 @@ class HaplotypeArrayInterface(object):
         actual = h.map_alleles(mapping)
         aeq(expect, actual)
 
+    def test_hstack(self):
+        a = np.array(haplotype_data, dtype=np.int8)
+        h1 = self.setup_instance(a)
+        h2 = self.setup_instance(a)
+        actual = h1.hstack(h2)
+        expect = np.hstack([a, a])
+        aeq(expect, actual)
+
+    def test_vstack(self):
+        a = np.array(haplotype_data, dtype=np.int8)
+        h1 = self.setup_instance(a)
+        h2 = self.setup_instance(a)
+        actual = h1.vstack(h2)
+        expect = np.vstack([a, a])
+        aeq(expect, actual)
+
 
 class AlleleCountsArrayInterface(object):
 
@@ -1344,6 +1376,22 @@ class AlleleCountsArrayInterface(object):
                   [2, 0, 0],
                   [0, 0, 0]]
         actual = ac.map_alleles(mapping)
+        aeq(expect, actual)
+
+    def test_hstack(self):
+        a = np.array(allele_counts_data, dtype=np.int8)
+        ac1 = self.setup_instance(a)
+        ac2 = self.setup_instance(a)
+        actual = ac1.hstack(ac2)
+        expect = np.hstack([a, a])
+        aeq(expect, actual)
+
+    def test_vstack(self):
+        a = np.array(allele_counts_data, dtype=np.int8)
+        ac1 = self.setup_instance(a)
+        ac2 = self.setup_instance(a)
+        actual = ac1.vstack(ac2)
+        expect = np.vstack([a, a])
         aeq(expect, actual)
 
 

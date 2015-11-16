@@ -370,6 +370,75 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
     return out
 
 
+def carray_block_hstack(tup, blen=None, **kwargs):
+    assert isinstance(tup, (tuple, list)), \
+        'first argument must be tuple or list'
+    assert len(tup) > 1, 'provide two or more arrays to stack'
+    a = tup[0]
+    for x in tup[1:]:
+        assert x.shape[0] == a.shape[0], \
+            'arrays must have equal size for first dimension'
+        assert len(x.shape) == len(a.shape), \
+            'arrays must have same dimensionality'
+
+    # set block size to use
+    if blen is None:
+        blen = min([x.chunklen for x in tup])
+
+    # output defaults
+    kwargs.setdefault('dtype', a.dtype)
+    kwargs.setdefault('cparams', getattr(a, 'cparams', None))
+    kwargs.setdefault('expectedlen', a.shape[0])
+
+    # setup output
+    out = None
+
+    # build output
+    for i in range(0, a.shape[0], blen):
+        block = np.hstack(tuple(x[i:i+blen] for x in tup))
+        if out is None:
+            out = bcolz.carray(block, **kwargs)
+        else:
+            out.append(block)
+
+    return out
+
+
+def carray_block_vstack(tup, blen=None, **kwargs):
+    assert isinstance(tup, (tuple, list)), \
+        'first argument must be tuple or list'
+    assert len(tup) > 1, 'provide two or more arrays to stack'
+    a = tup[0]
+    for x in tup[1:]:
+        assert x.shape[1:] == a.shape[1:], \
+            'arrays must have equal size for trailing dimensions'
+        assert len(x.shape) == len(a.shape), \
+            'arrays must have same dimensionality'
+
+    # set block size to use
+    if blen is None:
+        blen = min([x.chunklen for x in tup])
+
+    # output defaults
+    kwargs.setdefault('dtype', a.dtype)
+    kwargs.setdefault('cparams', getattr(a, 'cparams', None))
+    kwargs.setdefault('expectedlen', sum(x.shape[0] for x in tup))
+
+    # setup output
+    out = None
+
+    # build output
+    for a in tup:
+        for i in range(0, a.shape[0], blen):
+            block = a[i:i+blen]
+            if out is None:
+                out = bcolz.carray(block, **kwargs)
+            else:
+                out.append(block)
+
+    return out
+
+
 def carray_from_hdf5(*args, **kwargs):
     """Load a bcolz carray from an HDF5 dataset.
 
@@ -775,6 +844,16 @@ class CArrayWrapper(object):
 
     def take(self, indices, axis=0, **kwargs):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
+        return type(self)(carr, copy=False)
+
+    def hstack(self, *others, **kwargs):
+        tup = (self,) + others
+        carr = carray_block_hstack(tup, **kwargs)
+        return type(self)(carr, copy=False)
+
+    def vstack(self, *others, **kwargs):
+        tup = (self,) + others
+        carr = carray_block_vstack(tup, **kwargs)
         return type(self)(carr, copy=False)
 
     def copy(self, *args, **kwargs):
@@ -1344,6 +1423,8 @@ copy_method_doc(GenotypeCArray.count_alleles_subpops,
                 GenotypeArray.count_alleles_subpops)
 copy_method_doc(GenotypeCArray.to_gt, GenotypeArray.to_gt)
 copy_method_doc(GenotypeCArray.map_alleles, GenotypeArray.map_alleles)
+copy_method_doc(GenotypeCArray.hstack, GenotypeArray.hstack)
+copy_method_doc(GenotypeCArray.vstack, GenotypeArray.vstack)
 
 
 class HaplotypeCArray(CArrayWrapper):
@@ -1538,6 +1619,8 @@ copy_method_doc(HaplotypeCArray.count_alleles, HaplotypeArray.count_alleles)
 copy_method_doc(HaplotypeCArray.count_alleles_subpops,
                 HaplotypeArray.count_alleles_subpops)
 copy_method_doc(HaplotypeCArray.map_alleles, HaplotypeArray.map_alleles)
+copy_method_doc(GenotypeCArray.hstack, GenotypeArray.hstack)
+copy_method_doc(GenotypeCArray.vstack, GenotypeArray.vstack)
 
 
 class AlleleCountsCArray(CArrayWrapper):
