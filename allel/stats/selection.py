@@ -144,6 +144,8 @@ def plot_voight_painting(painting, palette='colorblind', flank='right',
     ax.set_xlim(0, painting.shape[0])
     ax.set_ylim(0, painting.shape[1])
 
+    return ax
+
 
 def fig_voight_painting(h, index=None, palette='colorblind',
                         height_factor=0.01, fig=None):
