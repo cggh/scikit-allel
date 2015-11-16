@@ -12,6 +12,7 @@ import tempfile
 
 
 import numpy as np
+import h5py
 from nose.tools import eq_ as eq, assert_raises, \
     assert_is_instance, assert_not_is_instance, assert_almost_equal
 from allel.test.tools import assert_array_equal as aeq
@@ -2063,6 +2064,65 @@ chr3\t1\te\tN\tX\t5.6\t.\t.
             print('expect:', l1)
             print('actual:', l2)
             eq(l1, l2)
+
+    def test_from_hdf5_group(self):
+
+        # setup HDF5 file
+        node_path = 'test'
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        file_path = tf.name
+        tf.close()
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        # reorder columns because will come back out in sorted order
+        a = a[sorted(a.dtype.names)]
+        with h5py.File(file_path, mode='w') as h5f:
+            h5g = h5f.create_group(node_path)
+            for n in a.dtype.names:
+                h5g.create_dataset(n, data=a[n], chunks=True,
+                                   compression='gzip')
+
+        # file and node path
+        vt = self._class.from_hdf5_group(file_path, node_path)
+        self.assertIsInstance(vt, self._class)
+        aeq(a, vt[:])
+
+        # dataset
+        with h5py.File(file_path, mode='r') as h5f:
+            h5g = h5f[node_path]
+            vt = self._class.from_hdf5_group(h5g)
+            self.assertIsInstance(vt, self._class)
+            aeq(a, vt[:])
+
+    def test_to_hdf5_group(self):
+
+        # setup HDF5 file
+        node_path = 'test'
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        file_path = tf.name
+        tf.close()
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        # reorder columns because will come back out in sorted order
+        a = a[sorted(a.dtype.names)]
+        vt = self.setup_instance(a)
+
+        # write using file path and node path
+        vt.to_hdf5_group(file_path, node_path)
+
+        with h5py.File(file_path, mode='r') as h5f:
+            h5g = h5f[node_path]
+            eq(sorted(a.dtype.names), sorted(h5g.keys()))
+            for n in a.dtype.names:
+                aeq(a[n], h5g[n][:])
+
+        # write using group and node path
+        with h5py.File(file_path, mode='w') as h5f:
+            vt.to_hdf5_group(h5f, node_path)
+
+        with h5py.File(file_path, mode='r') as h5f:
+            h5g = h5f[node_path]
+            eq(sorted(a.dtype.names), sorted(h5g.keys()))
+            for n in a.dtype.names:
+                aeq(a[n], h5g[n][:])
 
 
 class FeatureTableInterface(object):

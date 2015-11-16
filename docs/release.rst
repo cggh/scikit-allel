@@ -18,6 +18,9 @@ v0.19.0
 * Added convenience function
   :func:`allel.stats.window.equally_accessible_windows`
   (`#16 <https://github.com/cggh/scikit-allel/issues/16>`_).
+* Added methods `from_hdf5_group()` and `to_hdf5_group()` to
+  :class:`allel.model.ndarray.VariantTable`
+  (`#26 <https://github.com/cggh/scikit-allel/issues/26>`_).
 * Fixed missing return value in
   :func:`allel.stats.selection.plot_voight_painting`
   (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).

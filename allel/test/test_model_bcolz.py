@@ -412,65 +412,6 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
         self.assertNotIsInstance(s, VariantTable)
         self.assertIsInstance(s, bcolz.carray)
 
-    def test_from_hdf5_group(self):
-
-        # setup HDF5 file
-        node_path = 'test'
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        file_path = tf.name
-        tf.close()
-        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
-        # reorder columns because will come back out in sorted order
-        a = a[sorted(a.dtype.names)]
-        with h5py.File(file_path, mode='w') as h5f:
-            h5g = h5f.create_group(node_path)
-            for n in a.dtype.names:
-                h5g.create_dataset(n, data=a[n], chunks=True,
-                                   compression='gzip')
-
-        # file and node path
-        vt = VariantCTable.from_hdf5_group(file_path, node_path)
-        self.assertIsInstance(vt, VariantCTable)
-        aeq(a, vt[:])
-
-        # dataset
-        with h5py.File(file_path, mode='r') as h5f:
-            h5g = h5f[node_path]
-            vt = VariantCTable.from_hdf5_group(h5g)
-            self.assertIsInstance(vt, VariantCTable)
-            aeq(a, vt[:])
-
-    def test_to_hdf5_group(self):
-
-        # setup HDF5 file
-        node_path = 'test'
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        file_path = tf.name
-        tf.close()
-        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
-        # reorder columns because will come back out in sorted order
-        a = a[sorted(a.dtype.names)]
-        vt = VariantCTable(a)
-
-        # write using file path and node path
-        vt.to_hdf5_group(file_path, node_path)
-
-        with h5py.File(file_path, mode='r') as h5f:
-            h5g = h5f[node_path]
-            eq(sorted(a.dtype.names), sorted(h5g.keys()))
-            for n in a.dtype.names:
-                aeq(a[n], h5g[n][:])
-
-        # write using group and node path
-        with h5py.File(file_path, mode='w') as h5f:
-            vt.to_hdf5_group(h5f, node_path)
-
-        with h5py.File(file_path, mode='r') as h5f:
-            h5g = h5f[node_path]
-            eq(sorted(a.dtype.names), sorted(h5g.keys()))
-            for n in a.dtype.names:
-                aeq(a[n], h5g[n][:])
-
     def test_take(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = VariantCTable(a)
