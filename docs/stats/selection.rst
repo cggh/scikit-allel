@@ -13,3 +13,4 @@ Selection
 .. autofunction:: garud_h
 .. autofunction:: moving_garud_h
 .. autofunction:: plot_haplotype_frequencies
+.. autofunction:: plot_moving_haplotype_frequencies
