@@ -1,6 +1,14 @@
 Release notes
 =============
 
+v0.19.0
+-------
+
+* Added functions for computing haplotype diversity, see
+  :func:`allel.stats.selection.haplotype_diversity` and
+  :func:`allel.stats.selection.moving_haplotype_diversity`
+  (`#29 <https://github.com/cggh/scikit-allel/issues/29>`_).
+
 v0.18.1
 -------
 

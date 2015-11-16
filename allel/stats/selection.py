@@ -428,6 +428,65 @@ def plot_haplotype_frequencies(h, palette='Set1', singleton_color='#dddddd',
     return ax
 
 
+def haplotype_diversity(h):
+    """Estimate haplotype diversity.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+
+    Returns
+    -------
+    hd : float
+        Haplotype diversity.
+
+    """
+
+    # check inputs
+    h = HaplotypeArray(h, copy=False)
+
+    # number of haplotypes
+    n = h.n_haplotypes
+
+    # compute haplotype frequencies
+    f = h.distinct_frequencies()
+
+    # estimate haplotype diversity
+    hd = (1 - np.sum(f**2)) * n / (n - 1)
+
+    return hd
+
+
+def moving_haplotype_diversity(h, size, start=0, stop=None, step=None):
+    """Estimate haplotype diversity in moving windows.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    hd : ndarray, float, shape (n_windows,)
+        Haplotype diversity.
+
+    """
+
+    hd = moving_statistic(values=h, statistic=haplotype_diversity, size=size,
+                          start=start, stop=stop, step=step)
+    return hd
+
+
 def garud_h(h):
     """Compute the H1, H12, H123 and H2/H1 statistics for detecting signatures
     of soft sweeps, as defined in Garud et al. (2015).
@@ -507,12 +566,12 @@ def moving_garud_h(h, size, start=0, stop=None, step=None):
 
     """
 
-    h = moving_statistic(values=h, statistic=garud_h, size=size, start=start,
-                         stop=stop, step=step)
+    gh = moving_statistic(values=h, statistic=garud_h, size=size, start=start,
+                          stop=stop, step=step)
 
-    h1 = h[:, 0]
-    h12 = h[:, 1]
-    h123 = h[:, 2]
-    h2_h1 = h[:, 3]
+    h1 = gh[:, 0]
+    h12 = gh[:, 1]
+    h123 = gh[:, 2]
+    h2_h1 = gh[:, 3]
 
     return h1, h12, h123, h2_h1

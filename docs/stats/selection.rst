@@ -8,6 +8,8 @@ Selection
 .. autofunction:: fig_voight_painting
 .. autofunction:: xpehh
 .. autofunction:: ihs
+.. autofunction:: haplotype_diversity
+.. autofunction:: moving_haplotype_diversity
 .. autofunction:: garud_h
 .. autofunction:: moving_garud_h
 .. autofunction:: plot_haplotype_frequencies
