@@ -12,6 +12,9 @@ v0.19.0
   :func:`allel.stats.selection.plot_moving_haplotype_frequencies` for
   visualising haplotype frequency spectra in moving windows over the genome
   (`#30 <https://github.com/cggh/scikit-allel/issues/30>`_).
+* Added `vstack()` and `hstack()` methods to genotype and haplotype arrays to
+  enable combining data from multiple arrays
+  (`#21 <https://github.com/cggh/scikit-allel/issues/21>`_).
 * Added convenience function
   :func:`allel.stats.window.equally_accessible_windows`
   (`#16 <https://github.com/cggh/scikit-allel/issues/16>`_).
