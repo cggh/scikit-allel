@@ -7,7 +7,7 @@ This package provides utilities for exploratory analysis of large
 scale genetic variation data. It is based on numpy_, scipy_ and other
 established Python scientific libraries.
 
-* GitHub repository: https://github.com/cggh/scikit-allel
+* Source: https://github.com/cggh/scikit-allel
 * Documentation: http://scikit-allel.readthedocs.org/
 * Download: https://pypi.python.org/pypi/scikit-allel
 
@@ -25,7 +25,12 @@ worked examples with real data, see the following articles:
 .. |Estimating FST| raw:: HTML
 
     <a href="http://alimanfoo.github.io/2015/09/21/estimating-fst.html">Estimating F<sub>ST</sub></a>	       
-		     
+
+If you would like to cite `scikit-allel` please use the DOI below.
+
+.. image:: https://zenodo.org/badge/7890/cggh/scikit-allel.svg
+   :target: https://zenodo.org/badge/latestdoi/7890/cggh/scikit-allel
+
 Installation
 ------------
 
