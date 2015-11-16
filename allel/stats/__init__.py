@@ -7,7 +7,7 @@ This sub-package provides statistical functions for use with variant call data.
 
 
 from allel.stats.window import moving_statistic, windowed_count, \
-    windowed_statistic, per_base
+    windowed_statistic, per_base, equally_accessible_windows
 
 from allel.stats.diversity import mean_pairwise_difference, \
     sequence_diversity, windowed_diversity, mean_pairwise_difference_between, \

@@ -12,6 +12,9 @@ v0.19.0
   :func:`allel.stats.selection.plot_moving_haplotype_frequencies` for
   visualising haplotype frequency spectra in moving windows over the genome
   (`#30 <https://github.com/cggh/scikit-allel/issues/30>`_).
+* Added convenience function
+  :func:`allel.stats.window.equally_accessible_windows`
+  (`#16 <https://github.com/cggh/scikit-allel/issues/16>`_).
 * Fixed missing return value in
   :func:`allel.stats.selection.plot_voight_painting`
   (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
