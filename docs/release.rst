@@ -8,6 +8,9 @@ v0.19.0
   :func:`allel.stats.selection.haplotype_diversity` and
   :func:`allel.stats.selection.moving_haplotype_diversity`
   (`#29 <https://github.com/cggh/scikit-allel/issues/29>`_).
+* Fixed missing return value in
+  :func:`allel.stats.selection.plot_voight_painting`
+  (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
 
 v0.18.1
 -------
