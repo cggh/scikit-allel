@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, division
 
 
 from contextlib import contextmanager
+from functools import update_wrapper
 
 
 import numpy as np
@@ -79,3 +80,230 @@ def ensure_square(dist):
         if dist.shape[0] != dist.shape[1]:
             raise ValueError('distance matrix is not square')
     return dist
+
+
+class _HashedSeq(list):
+
+    __slots__ = 'hashvalue'
+
+    # noinspection PyShadowingBuiltins,PyMissingConstructor
+    def __init__(self, tup, hash=hash):
+        self[:] = tup
+        self.hashvalue = hash(tup)
+
+    def __hash__(self):
+        return self.hashvalue
+
+
+# noinspection PyShadowingBuiltins
+def _make_key(args, kwds, typed,
+              kwd_mark=('__kwargs__',),
+              fasttypes={int, str, frozenset, type(None)},
+              sorted=sorted, tuple=tuple, type=type, len=len):
+    key = args
+    if kwds:
+        sorted_items = sorted(kwds.items())
+        key += kwd_mark
+        for item in sorted_items:
+            key += item
+    if typed:
+        key += tuple(type(v) for v in args)
+        if kwds:
+            key += tuple(type(v) for k, v in sorted_items)
+    elif len(key) == 1 and type(key[0]) in fasttypes:
+        return key[0]
+    return _HashedSeq(key)
+
+
+def _hdf5_cache_act(filepath, parent, container, key, names, no_cache,
+                    user_function, args, kwargs, h5dcreate_kwargs):
+    import h5py
+
+    # open the HDF5 file
+    with h5py.File(filepath, mode='a') as h5f:
+
+        # find parent group
+        if parent is None:
+            # use root group
+            h5g_parent = h5f
+        else:
+            h5g_parent = h5f.require_group(parent)
+
+        # find cache container group
+        h5g_container = h5g_parent.require_group(container)
+
+        # find cache group
+        h5g = h5g_container.require_group(key)
+
+        # call user function and (re)build cache
+        if no_cache or '__success__' not in h5g.attrs:
+
+            # reset success mark if present
+            if '__success__' in h5g.attrs:
+                del h5g.attrs['__success__']
+
+            # compute result
+            result = user_function(*args, **kwargs)
+
+            # handle tuple of return values
+            if isinstance(result, tuple):
+
+                # determine dataset names
+                if names is None:
+                    names = ['f%02d' % i for i in range(len(result))]
+                elif len(names) < len(result):
+                    names = list(names) + ['f%02d' % i
+                                           for i in range(len(names),
+                                                          len(result))]
+
+                # save data
+                for n, r in zip(names, result):
+                    if n in h5g:
+                        del h5g[n]
+                    if np.isscalar(r):
+                        h5g.create_dataset(n, data=r)
+                    else:
+                        h5g.create_dataset(n, data=r, **h5dcreate_kwargs)
+
+            # handle single return value
+            else:
+
+                # determine dataset name
+                if names is None:
+                    n = 'data'
+                elif isinstance(names, str):
+                    n = names
+                elif len(names) > 0:
+                    n = names[0]
+                else:
+                    n = 'data'
+
+                # save data
+                if n in h5g:
+                    del h5g[n]
+                if np.isscalar(result):
+                    h5g.create_dataset(n, data=result)
+                else:
+                    h5g.create_dataset(n, data=result,
+                                       **h5dcreate_kwargs)
+
+            # mark success
+            h5g.attrs['__success__'] = True
+
+        # load from cache
+        else:
+
+            names = sorted(h5g.keys())
+            if len(names) == 1:
+                result = h5g[names[0]]
+                result = result[:] if len(result.shape) > 0 else result[()]
+            else:
+                result = tuple(h5g[n] for n in names)
+                result = tuple(r[:] if len(r.shape) > 0 else r[()]
+                               for r in result)
+
+        return result
+
+
+def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
+               hashed_key=True, **h5dcreate_kwargs):
+    """HDF5 cache decorator.
+
+    Parameters
+    ----------
+    filepath : string, optional
+        Path to HDF5 file. If None a temporary file name will be used.
+    parent : string, optional
+        Path to group within HDF5 file to use as parent. If None the root
+        group will be used.
+    group : string, optional
+        Path to group within HDF5 file, relative to parent, to use as
+        container for cached data. If None the name of the wrapped function
+        will be used.
+    names : sequence of strings, optional
+        Name(s) of dataset(s). If None, default names will be 'f00', 'f01',
+        etc.
+    typed : bool, optional
+        If True, arguments of different types will be cached separately.
+        For example, f(3.0) and f(3) will be treated as distinct calls with
+        distinct results.
+    hashed_key : bool, optional
+        If False, the key will not be hashed, which makes for readable cache
+        group names, but may cause problems if key contains '/' characters.
+
+    Returns
+    -------
+    decorator : function
+
+    Examples
+    --------
+
+    Without any arguments, will cache using a temporary HDF5 file::
+
+        >>> import allel
+        >>> @allel.util.hdf5_cache()
+        ... def foo(n):
+        ...     print('executing foo')
+        ...     return np.arange(n)
+        ...
+        >>> foo(3)
+        executing foo
+        array([0, 1, 2])
+        >>> foo(3)
+        array([0, 1, 2])
+        >>> foo.cache_filepath # doctest: +SKIP
+        '/tmp/tmp_jwtwgjz'
+
+    Supports multiple return values, including scalars, e.g.::
+
+        >>> @allel.util.hdf5_cache()
+        ... def bar(n):
+        ...     print('executing bar')
+        ...     a = np.arange(n)
+        ...     return a, a**2, n**2
+        ...
+        >>> bar(3)
+        executing bar
+        (array([0, 1, 2]), array([0, 1, 4]), 9)
+        >>> bar(3)
+        (array([0, 1, 2]), array([0, 1, 4]), 9)
+
+    """
+
+    # initialise HDF5 file path
+    if filepath is None:
+        import tempfile
+        filepath = tempfile.mktemp()
+
+    # initialise defaults for dataset creation
+    h5dcreate_kwargs.setdefault('chunks', True)
+    h5dcreate_kwargs.setdefault('compression', 'gzip')
+
+    def decorator(user_function):
+
+        # setup the name for the cache container group
+        if group is None:
+            container = user_function.__name__
+        else:
+            container = group
+
+        def wrapper(*args, **kwargs):
+
+            # load from cache or not
+            no_cache = kwargs.pop('no_cache', False)
+
+            # compute a key from the function arguments
+            key = _make_key(args, kwargs, typed)
+            if hashed_key:
+                key = str(hash(key))
+            else:
+                key = str(key)
+
+            return _hdf5_cache_act(filepath, parent, container, key, names,
+                                   no_cache, user_function, args, kwargs,
+                                   h5dcreate_kwargs)
+
+        wrapper.cache_filepath = filepath
+        return update_wrapper(wrapper, user_function)
+
+    return decorator

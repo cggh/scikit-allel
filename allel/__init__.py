@@ -8,6 +8,6 @@ import allel.stats as stats
 import allel.plot as plot
 import allel.io as io
 import allel.constants as constants
+import allel.util as util
 
-
-__version__ = '0.19.0.dev7'
+__version__ = '0.19.0.dev8'

@@ -24,6 +24,7 @@ v0.19.0
 * Fixed missing return value in
   :func:`allel.stats.selection.plot_voight_painting`
   (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
+* Added :func:`allel.util.hdf5_cache` utility function.
 
 v0.18.1
 -------

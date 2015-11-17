@@ -49,6 +49,7 @@ Contents
     model
     stats
     io
+    util
     release
 
 Acknowledgments
