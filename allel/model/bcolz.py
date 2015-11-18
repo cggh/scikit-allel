@@ -1161,7 +1161,7 @@ class GenotypeCArray(CArrayWrapper):
         for i in range(0, self.shape[0], blen):
             block = self[i:i+blen]
             bmask = mask[i:i+blen]
-            block.fill_masked(value=value, mask=bmask, copy=False)
+            block = block.fill_masked(value=value, mask=bmask, copy=True)
             if copy:
                 if out is None:
                     out = bcolz.carray(block, **kwargs)

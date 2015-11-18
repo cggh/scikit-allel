@@ -10,4 +10,4 @@ import allel.io as io
 import allel.constants as constants
 import allel.util as util
 
-__version__ = '0.19.0.dev8'
+__version__ = '1.0.0.dev0'

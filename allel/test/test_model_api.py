@@ -852,13 +852,13 @@ class GenotypeArrayInterface(object):
              [False, False, True],
              [True, False, True]]
         g.mask = m
-        g.fill_masked(copy=False)
+        gm = g.fill_masked()
         expect = [[[-1, -1], [0, 1], [-1, -1]],
                   [[0, 2], [1, 1], [-1, -1]],
                   [[1, 0], [-1, -1], [-1, -1]],
                   [[2, 2], [-1, -1], [-1, -1]],
                   [[-1, -1], [-1, -1], [-1, -1]]]
-        aeq(expect, g)
+        aeq(expect, gm)
 
         # polyploid
         a = np.array(triploid_genotype_data, dtype=np.int8)
@@ -868,12 +868,12 @@ class GenotypeArrayInterface(object):
              [False, True, False],
              [False, False, True]]
         g.mask = m
-        g.fill_masked(copy=False)
+        gm = g.fill_masked()
         expect = [[[-1, -1, -1], [0, 0, 1], [-1, -1, -1]],
                   [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
                   [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
                   [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
-        aeq(expect, g)
+        aeq(expect, gm)
 
     def test_hstack(self):
         a = np.array(diploid_genotype_data, dtype=np.int8)

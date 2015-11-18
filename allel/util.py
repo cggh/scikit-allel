@@ -38,11 +38,25 @@ def asarray_ndim(a, *ndims, **kwargs):
     return a
 
 
-def check_dim0_aligned(a, *others):
-    for b in others:
-        if b.shape[0] != a.shape[0]:
+def check_dim0_aligned(*arrays):
+    check_dim_aligned(0, *arrays)
+
+
+def check_dim_aligned(dim, *arrays):
+    a = arrays[0]
+    for b in arrays[1:]:
+        if b.shape[dim] != a.shape[dim]:
             raise ValueError(
-                'arrays do not have matching length for first dimension'
+                'arrays do not have matching length for dimension %s' % dim
+            )
+
+
+def check_same_ndim(*arrays):
+    a = arrays[0]
+    for b in arrays[1:]:
+        if len(b.shape) != len(a.shape):
+            raise ValueError(
+                'arrays do not have same number of dimensions'
             )
 
 
