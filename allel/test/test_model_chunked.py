@@ -15,7 +15,8 @@ from allel.test.test_model_api import GenotypeArrayInterface, \
     diploid_genotype_data, triploid_genotype_data
 import allel.model.chunked
 from allel.model.chunked import GenotypeChunkedArray, numpy_backend, \
-    bcolz_backend, h5dmem_backend, h5dtmp_backend
+    bcolz_backend, h5mem_backend, h5tmp_backend, bcolz_gzip1_backend, \
+    bcolztmp_backend
 
 
 class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -125,15 +126,13 @@ class GenotypeChunkedArrayTestsBColzBackend(GenotypeChunkedArrayTests):
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, bcolz.carray)
+        assert g.data.rootdir is None
 
 
-class GenotypeChunkedArrayTestsBColzBackendCustom(GenotypeChunkedArrayTests):
+class GenotypeChunkedArrayTestsBColzGzipBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = \
-            allel.model.chunked.BColzBackend(
-                cparams=bcolz.cparams(cname='zlib', clevel=1)
-            )
+        allel.model.chunked.default_backend = bcolz_gzip1_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -142,20 +141,31 @@ class GenotypeChunkedArrayTestsBColzBackendCustom(GenotypeChunkedArrayTests):
         eq(1, g.data.cparams.clevel)
 
 
-class GenotypeChunkedArrayTestsH5dtmpBackend(GenotypeChunkedArrayTests):
+class GenotypeChunkedArrayTestsBColzTmpBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = h5dtmp_backend
+        allel.model.chunked.default_backend = bcolztmp_backend
+
+    def test_backend(self):
+        g = self.setup_instance(np.array(diploid_genotype_data))
+        assert isinstance(g.data, bcolz.carray)
+        assert g.data.rootdir is not None
+
+
+class GenotypeChunkedArrayTestsH5tmpBackend(GenotypeChunkedArrayTests):
+
+    def setUp(self):
+        allel.model.chunked.default_backend = h5tmp_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, h5py.Dataset)
 
 
-class GenotypeChunkedArrayTestsH5dmemBackend(GenotypeChunkedArrayTests):
+class GenotypeChunkedArrayTestsH5memBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = h5dmem_backend
+        allel.model.chunked.default_backend = h5mem_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))

@@ -2,6 +2,9 @@
 from __future__ import absolute_import, print_function, division
 
 
+import shutil
+import atexit
+import os
 import numpy as np
 import bcolz
 import h5py
@@ -14,6 +17,7 @@ from allel.util import check_dim0_aligned, asarray_ndim, check_same_ndim, \
 from allel.model.ndarray import GenotypeArray, subset
 
 
+# noinspection PyShadowingBuiltins
 def h5dmem(*args, **kwargs):
     """Create an in-memory HDF5 dataset, by default chunked and gzip
     compressed.
@@ -35,9 +39,6 @@ def h5dmem(*args, **kwargs):
 
     # defaults for dataset creation
     kwargs.setdefault('chunks', True)
-    if kwargs['chunks']:
-        kwargs.setdefault('compression', 'gzip')
-        kwargs.setdefault('shuffle', False)
     if len(args) == 0 and 'name' not in kwargs:
         # default dataset name
         args = ('data',)
@@ -58,19 +59,17 @@ def h5dtmp(*args, **kwargs):
     """
 
     # create temporary file name
-    suffix = kwargs.pop('suffix', '')
-    prefix = kwargs.pop('prefix', 'tmp')
+    suffix = kwargs.pop('suffix', '.h5')
+    prefix = kwargs.pop('prefix', 'scikit_allel_')
     dir = kwargs.pop('dir', None)
     fn = tempfile.mktemp(suffix=suffix, prefix=prefix, dir=dir)
+    atexit.register(os.remove, fn)
 
     # open HDF5 file
     h5f = h5py.File(fn, mode='w')
 
     # defaults for dataset creation
     kwargs.setdefault('chunks', True)
-    if kwargs['chunks']:
-        kwargs.setdefault('compression', 'gzip')
-        kwargs.setdefault('shuffle', False)
     if len(args) == 0 and 'name' not in kwargs:
         # default dataset name
         args = ('data',)
@@ -120,15 +119,23 @@ class Backend(object):
     def empty(self, shape, **kwargs):
         pass
 
-    def create(self, data, *args, **kwargs):
+    def create(self, data, expectedlen=None, **kwargs):
         pass
 
-    def store(self, source, sink, offset=0, blen=None):
-        
+    def append(self, charr, data):
+        pass
+
+    def store(self, source, sink, start=0, stop=None, offset=0, blen=None):
+
         # check arguments
         check_array_like(source)
         check_array_like(sink)
-        if sink.shape[0] < (offset + source.shape[0]):
+        if stop is None:
+            stop = source.shape[0]
+        length = stop - start
+        if length < 0:
+            raise ValueError('invalid start/stop indices')
+        if sink.shape[0] < (offset + length):
             raise ValueError('sink is too short')
 
         # determine block size
@@ -136,21 +143,42 @@ class Backend(object):
             blen = get_chunklen(sink)
 
         # copy block-wise
-        for i in range(0, source.shape[0], blen):
-            j = min(i+blen, source.shape[0])
-            sink[offset+i:offset+j] = source[i:j]
+        for i in range(start, stop, blen):
+            j = min(i+blen, stop)
+            l = j-i
+            sink[offset:offset+l] = source[i:j]
+            offset += l
             
-    def copy(self, charr, blen=None, **kwargs):
+    def copy(self, charr, start=0, stop=None, blen=None, **kwargs):
+
+        # check arguments
         check_array_like(charr)
-        kwargs.setdefault('dtype', charr.dtype)
-        sink = self.empty(charr.shape, **kwargs)
-        self.store(charr, sink, blen=blen)
-        return sink
+        if stop is None:
+            stop = charr.shape[0]
+        length = stop - start
+
+        # initialise block size for iteration
+        if blen is None:
+            blen = get_chunklen(charr)
+
+        # copy block-wise
+        out = None
+        for i in range(start, stop, blen):
+            j = min(i+blen, stop)
+            block = charr[i:j]
+            if out is None:
+                out = self.create(block, expectedlen=length, **kwargs)
+            else:
+                out = self.append(out, block)
+
+        return out
 
     def reduce_axis(self, charr, reducer, block_reducer, mapper=None, 
                     axis=None, **kwargs):
+
+        # check arguments
         check_array_like(charr)
-        print(axis, reducer, block_reducer, mapper)
+        length = charr.shape[0]
 
         # determine block size for iteration
         blen = kwargs.pop('blen', get_chunklen(charr))
@@ -161,19 +189,16 @@ class Backend(object):
             
         if axis is None or 0 in axis:
             out = None
-            for i in range(0, charr.shape[0], blen):
-                j = min(i+blen, charr.shape[0])
+            for i in range(0, length, blen):
+                j = min(i+blen, length)
                 block = charr[i:j]
-                print(i, repr(block))
                 if mapper:
                     block = mapper(block)
                 r = reducer(block, axis=axis)
-                print(i, repr(r))
                 if i == 0:
                     out = r
                 else:
                     out = block_reducer(out, r)
-                print(i, repr(out))
             if np.isscalar(out):
                 return out
             elif len(out.shape) == 0:
@@ -188,17 +213,16 @@ class Backend(object):
             out = None
 
             # block iteration
-            for i in range(0, charr.shape[0], blen):
-                j = min(i+blen, charr.shape[0])
+            for i in range(0, length, blen):
+                j = min(i+blen, length)
                 block = charr[i:j]
                 if mapper:
                     block = mapper(block)
                 r = reducer(block, axis=axis)
-                if i == 0:
-                    outshape = (charr.shape[0],) + r.shape[1:]
-                    kwargs.setdefault('dtype', r.dtype)
-                    out = self.empty(outshape, **kwargs)
-                out[i:j] = r
+                if out is None:
+                    out = self.create(r, expectedlen=length, **kwargs)
+                else:
+                    out = self.append(out, r)
                 # no need for block_reducer
 
             return out
@@ -252,16 +276,13 @@ class Backend(object):
                 
             # map
             res = mapper(*blocks)
-            
-            # create
-            if i == 0:
-                outshape = (length,) + res.shape[1:]
-                kwargs.setdefault('dtype', res.dtype)
-                out = self.empty(outshape, **kwargs)
-    
+
             # store
-            out[i:j] = res
-            
+            if out is None:
+                out = self.create(res, expectedlen=length, **kwargs)
+            else:
+                out = self.append(out, res)
+
         return out
             
     def dict_map_blocks(self, domain, mapper, blen=None, **kwargs):
@@ -297,17 +318,14 @@ class Backend(object):
             res = mapper(*blocks)
             
             # create
-            if i == 0:
+            if out is None:
                 out = dict()
                 for k, v in res.items():
-                    outshape = (length,) + v.shape[1:]
-                    kwargs.setdefault('dtype', v.dtype)
-                    out[k] = self.empty(outshape, **kwargs)
-    
-            # store
-            for k, v in res.items():
-                out[k][i:j] = v
-            
+                    out[k] = self.create(v, expectedlen=length, **kwargs)
+            else:
+                for k, v in res.items():
+                    out = self.append(out[k], v)
+
         return out
 
     def compress(self, charr, condition, axis, **kwargs):
@@ -318,22 +336,16 @@ class Backend(object):
         if not is_array_like(condition):
             condition = np.asarray(condition)
         check_array_like(condition, 1)
+        cond_nnz = self.count_nonzero(condition)
 
         # determine block size for iteration
         blen = kwargs.pop('blen', get_chunklen(charr))
 
-        # output defaults
-        kwargs.setdefault('dtype', charr.dtype)
-
         if axis == 0:
             check_dim0_aligned(charr, condition)
 
-            # setup output
-            outshape = (self.count_nonzero(condition),) + charr.shape[1:]
-            out = self.empty(outshape, **kwargs)
-            offset = 0
-
             # block iteration
+            out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
                 bcond = condition[i:j]
@@ -341,9 +353,11 @@ class Backend(object):
                 n = np.count_nonzero(bcond)
                 if n:
                     block = charr[i:j]
-                    out[offset:offset+n] = np.compress(bcond, block, axis=0)
-                    offset += n
-
+                    res = np.compress(bcond, block, axis=0)
+                    if out is None:
+                        out = self.create(res, expectedlen=cond_nnz, **kwargs)
+                    else:
+                        out = self.append(out, res)
             return out
 
         elif axis == 1:
@@ -352,15 +366,16 @@ class Backend(object):
                                  'second dimension; expected %s, found %s' %
                                  (charr.shape[1], condition.size))
 
-            # setup output
-            outshape = (length, self.count_nonzero(condition)) + charr.shape[2:]
-            out = self.empty(outshape, **kwargs)
-
             # block iteration
+            out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
                 block = charr[i:j]
-                out[i:j] = np.compress(condition, block, axis=1)
+                res = np.compress(condition, block, axis=1)
+                if out is None:
+                    out = self.create(res, expectedlen=length, **kwargs)
+                else:
+                    out = self.append(out, res)
 
             return out
 
@@ -377,9 +392,6 @@ class Backend(object):
         # determine block size for iteration
         blen = kwargs.pop('blen', get_chunklen(charr))
 
-        # output defaults
-        kwargs.setdefault('dtype', charr.dtype)
-
         if axis == 0:
 
             # check that indices are strictly increasing
@@ -394,15 +406,16 @@ class Backend(object):
 
         elif axis == 1:
 
-            # setup output
-            outshape = (length, len(indices)) + charr.shape[2:]
-            out = self.empty(outshape, **kwargs)
-
             # block iteration
+            out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
                 block = charr[i:j]
-                out[i:j] = np.take(block, indices, axis=1)
+                res = np.take(block, indices, axis=1)
+                if out is None:
+                    out = self.create(res, expectedlen=length, **kwargs)
+                else:
+                    out = self.append(out, res)
 
             return out
 
@@ -416,40 +429,39 @@ class Backend(object):
         if len(charr.shape) < 2:
             raise ValueError('expected array-like with at least 2 dimensions')
         length = charr.shape[0]
-        sel0 = asarray_ndim(sel0, 1, allow_none=True)
-        sel1 = asarray_ndim(sel1, 1, allow_none=True)
-        if sel0 is None and sel1 is None:
-            raise ValueError('missing selection')
+        sel0 = asarray_ndim(sel0, 1)
+        sel1 = asarray_ndim(sel1, 1)
 
         # determine block size for iteration
         blen = kwargs.pop('blen', get_chunklen(charr))
 
         # ensure boolean array for dim 0
         if sel0.shape[0] < length:
+            # assume indices, convert to boolean condition
             tmp = np.zeros(length, dtype=bool)
             tmp[sel0] = True
             sel0 = tmp
 
         # ensure indices for dim 1
         if sel1.shape[0] == charr.shape[1]:
+            # assume boolean condition, convert to indices
             sel1 = np.nonzero(sel1)[0]
 
-        # setup output
-        kwargs.setdefault('dtype', charr.dtype)
-        outshape = (self.count_nonzero(sel0), len(sel1)) + charr.shape[2:]
-        out = self.empty(outshape, **kwargs)
-        offset = 0
-
         # build output
+        sel0_nnz = self.count_nonzero(sel0)
+        out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            bsel0= sel0[i:j]
+            bsel0 = sel0[i:j]
             # don't bother doing anything unless we have to
             n = np.count_nonzero(bsel0)
             if n:
                 block = charr[i:j]
-                out[offset:offset+n] = subset(block, bsel0, sel1)
-                offset += n
+                res = subset(block, bsel0, sel1)
+                if out is None:
+                    out = self.create(res, expectedlen=sel0_nnz, **kwargs)
+                else:
+                    out = self.append(out, res)
 
         return out
 
@@ -483,20 +495,17 @@ class Backend(object):
         if blen is None:
             blen = min([get_chunklen(a) for a in tup])
 
-        # setup output
-        kwargs.setdefault('dtype', tup[0].dtype)
-        outshape = (sum(a.shape[0] for a in tup),) + tup[0].shape[1:]
-        out = self.empty(outshape, **kwargs)
-        offset = 0
-
         # build output
+        expectedlen = sum(a.shape[0] for a in tup)
+        out = None
         for a in tup:
             for i in range(0, a.shape[0], blen):
                 j = min(i+blen, a.shape[0])
                 block = a[i:j]
-                out[offset:offset+block.shape[0]] = block
-                offset += block.shape[0]
-
+                if out is None:
+                    out = self.create(block, expectedlen=expectedlen, **kwargs)
+                else:
+                    out = self.append(out, block)
         return out
 
     def op_scalar(self, charr, op, other, **kwargs):
@@ -513,12 +522,19 @@ class Backend(object):
 
 
 class NumpyBackend(Backend):
+    """Reference implementation, will not be efficient."""
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
 
     def empty(self, shape, **kwargs):
         return np.empty(shape, **kwargs)
 
-    def create(self, data, **kwargs):
-        return np.asarray(data, **kwargs)
+    def create(self, data, expectedlen=None, **kwargs):
+        return np.array(data, **kwargs)
+
+    def append(self, arr, data):
+        return np.append(arr, data, axis=0)
 
 
 # singleton instance
@@ -535,17 +551,76 @@ class BColzBackend(Backend):
             kwargs.setdefault(k, v)
         return bcolz.zeros(shape, **kwargs)
 
-    def create(self, data, **kwargs):
+    def create(self, data, expectedlen=None, **kwargs):
         for k, v in self.kwargs.items():
             kwargs.setdefault(k, v)
-        return bcolz.carray(data, **kwargs)
+        return bcolz.carray(data, expectedlen=expectedlen, **kwargs)
+
+    def append(self, carr, data):
+        carr.append(data)
+        return carr
 
 
 # singleton instance
 bcolz_backend = BColzBackend()
+bcolz_gzip1_backend = BColzBackend(cparams=bcolz.cparams(cname='zlib',
+                                                         clevel=1))
 
 
-class H5dtmpBackend(Backend):
+class BColzTmpBackend(Backend):
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    # noinspection PyShadowingBuiltins
+    def empty(self, shape, **kwargs):
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
+        suffix = kwargs.pop('suffix', '.bcolz')
+        prefix = kwargs.pop('prefix', 'scikit_allel_')
+        dir = kwargs.pop('dir', None)
+        rootdir = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+        atexit.register(shutil.rmtree, rootdir)
+        kwargs['rootdir'] = rootdir
+        kwargs['mode'] = 'w'
+        return bcolz.zeros(shape, **kwargs)
+
+    # noinspection PyShadowingBuiltins
+    def create(self, data, expectedlen=None, **kwargs):
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
+        suffix = kwargs.pop('suffix', '.bcolz')
+        prefix = kwargs.pop('prefix', 'scikit_allel_')
+        dir = kwargs.pop('dir', None)
+        rootdir = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+        atexit.register(shutil.rmtree, rootdir)
+        kwargs['rootdir'] = rootdir
+        kwargs['mode'] = 'w'
+        return bcolz.carray(data, expectedlen=expectedlen, **kwargs)
+
+    def append(self, carr, data):
+        carr.append(data)
+        return carr
+
+
+# singleton instance
+bcolztmp_backend = BColzTmpBackend()
+bcolztmp_gzip1_backend = BColzTmpBackend(cparams=bcolz.cparams(cname='zlib',
+                                                               clevel=1))
+
+
+class H5Backend(Backend):
+
+    def append(self, h5d, data):
+        hl = h5d.shape[0]
+        dl = data.shape[0]
+        hln = hl + dl
+        h5d.resize(hln, axis=0)
+        h5d[hl:hln] = data
+        return h5d
+
+
+class H5tmpBackend(H5Backend):
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -555,17 +630,22 @@ class H5dtmpBackend(Backend):
             kwargs.setdefault(k, v)
         return h5dtmp(shape=shape, **kwargs)
 
-    def create(self, data, **kwargs):
+    def create(self, data, expectedlen=None, **kwargs):
+        # ignore expectedlen argument
         for k, v in self.kwargs.items():
             kwargs.setdefault(k, v)
-        return h5dtmp(data=data, **kwargs)
+        if not is_array_like(data):
+            data = np.asarray(data)
+        maxshape = (None,) + data.shape[1:]
+        return h5dtmp(data=data, maxshape=maxshape, **kwargs)
 
 
 # singleton instance
-h5dtmp_backend = H5dtmpBackend()
+h5tmp_backend = H5tmpBackend()
+h5tmp_gzip1_backend = H5tmpBackend(compression='gzip', compression_opts=1)
 
 
-class H5dmemBackend(Backend):
+class H5memBackend(H5Backend):
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -575,14 +655,19 @@ class H5dmemBackend(Backend):
             kwargs.setdefault(k, v)
         return h5dmem(shape=shape, **kwargs)
 
-    def create(self, data, **kwargs):
+    def create(self, data, expectedlen=None, **kwargs):
+        # ignore expectedlen argument
         for k, v in self.kwargs.items():
             kwargs.setdefault(k, v)
-        return h5dmem(data=data, **kwargs)
+        if not is_array_like(data):
+            data = np.asarray(data)
+        maxshape = (None,) + data.shape[1:]
+        return h5dmem(data=data, maxshape=maxshape, **kwargs)
 
 
 # singleton instance
-h5dmem_backend = H5dmemBackend()
+h5mem_backend = H5memBackend()
+h5mem_gzip1_backend = H5memBackend(compression='gzip', compression_opts=1)
 
 
 # set default
@@ -599,10 +684,24 @@ def get_backend(backend=None):
             return numpy_backend
         elif backend in ['bcolz', 'carray']:
             return bcolz_backend
-        elif backend in ['hdf5', 'h5py', 'h5dtmp']:
-            return h5dtmp_backend
-        elif backend in ['h5dmem']:
-            return h5dmem_backend
+        elif backend in ['bcolztmp', 'carraytmp']:
+            return bcolztmp_backend
+        elif backend in ['bcolz_gzip1', 'bcolz_zlib1', 'carray_gzip1',
+                         'carray_zlib1']:
+            return bcolz_gzip1_backend
+        elif backend in ['bcolztmp_gzip1', 'bcolztmp_zlib1',
+                         'carraytmp_gzip1', 'carraytmp_zlib1']:
+            return bcolztmp_gzip1_backend
+        elif backend in ['hdf5', 'h5py', 'h5dtmp', 'h5tmp']:
+            return h5tmp_backend
+        elif backend in ['h5dmem', 'h5mem']:
+            return h5mem_backend
+        elif backend in ['h5tmp_gzip1', 'h5dtmp_gzip1', 'h5tmp_zlib1',
+                         'h5dtmp_gzip1']:
+            return h5tmp_gzip1_backend
+        elif backend in ['h5mem_gzip1', 'h5dmem_gzip1', 'h5mem_zlib1',
+                         'h5mem_gzip1']:
+            return h5mem_gzip1_backend
         else:
             raise ValueError('unknown backend: %s' % backend)
     elif isinstance(backend, Backend):
@@ -632,8 +731,9 @@ class ChunkedArray(object):
         return self.data[:]
 
     def __repr__(self):
-        return '<%s: shape %s, type %s, data %s>' % \
-               (type(self), str(self.shape), str(self.dtype), type(self.data))
+        return '%s(%s, %s, %s.%s)' % \
+               (type(self).__name__, str(self.shape), str(self.dtype),
+                type(self.data).__module__, type(self.data).__name__)
     
     def __str__(self):
         return str(self.data)
