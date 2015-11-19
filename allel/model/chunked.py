@@ -22,6 +22,21 @@ from allel.model.ndarray import GenotypeArray, subset, HaplotypeArray, \
     AlleleCountsArray, recarray_to_html_str, recarray_display
 
 
+def h5fmem(**kwargs):
+
+    # need a file name even tho nothing is ever written
+    fn = tempfile.mktemp()
+
+    # default file creation args (allow user to override)
+    kwargs.setdefault('block_size', 2**16)
+
+    # open HDF5 file
+    h5f = h5py.File(fn, mode='w', driver='core', backing_store=True,
+                    **kwargs)
+
+    return h5f
+
+
 # noinspection PyShadowingBuiltins
 def h5dmem(*args, **kwargs):
     """Create an in-memory HDF5 dataset, by default chunked and gzip
@@ -35,12 +50,10 @@ def h5dmem(*args, **kwargs):
     fn = tempfile.mktemp()
 
     # default file creation args (allow user to override)
-    backing_store = kwargs.pop('backing_store', False)
     block_size = kwargs.pop('block_size', 2**16)
 
     # open HDF5 file
-    h5f = h5py.File(fn, mode='w', driver='core', backing_store=backing_store,
-                    block_size=block_size)
+    h5f = h5fmem(block_size=block_size)
 
     # defaults for dataset creation
     kwargs.setdefault('chunks', True)
@@ -55,13 +68,7 @@ def h5dmem(*args, **kwargs):
 
 
 # noinspection PyShadowingBuiltins
-def h5dtmp(*args, **kwargs):
-    """Create an HDF5 dataset backed by a temporary file, by default chunked
-    and gzip compressed.
-
-    All arguments are passed through to the h5py create_dataset() function.
-
-    """
+def h5ftmp(**kwargs):
 
     # create temporary file name
     suffix = kwargs.pop('suffix', '.h5')
@@ -71,7 +78,25 @@ def h5dtmp(*args, **kwargs):
     atexit.register(os.remove, fn)
 
     # open HDF5 file
-    h5f = h5py.File(fn, mode='w')
+    h5f = h5py.File(fn, mode='w', **kwargs)
+
+    return h5f
+
+
+# noinspection PyShadowingBuiltins
+def h5dtmp(*args, **kwargs):
+    """Create an HDF5 dataset backed by a temporary file, by default chunked
+    and gzip compressed.
+
+    All arguments are passed through to the h5py create_dataset() function.
+
+    """
+
+    # create HDF5 file
+    suffix = kwargs.pop('suffix', '.h5')
+    prefix = kwargs.pop('prefix', 'scikit_allel_')
+    dir = kwargs.pop('dir', None)
+    h5f = h5ftmp(suffix=suffix, prefix=prefix, dir=dir)
 
     # defaults for dataset creation
     kwargs.setdefault('chunks', True)
@@ -119,15 +144,22 @@ def get_chunklen(a):
         return max(1, (2**16) // rowsize)
 
 
-class Backend(object):
+def get_chunklen_table(chtbl):
+    return min(get_chunklen(chtbl[n]) for n in chtbl.names)
 
-    def empty(self, shape, **kwargs):
-        pass
+
+class Backend(object):
 
     def create(self, data, expectedlen=None, **kwargs):
         pass
 
     def append(self, charr, data):
+        pass
+
+    def create_table(self, data, expectedlen=None, **kwargs):
+        pass
+
+    def append_table(self, chtbl, data):
         pass
 
     # noinspection PyMethodMayBeStatic
@@ -388,6 +420,33 @@ class Backend(object):
         else:
             raise NotImplementedError('axis not supported: %s' % axis)
 
+    def compress_table(self, chtbl, condition, **kwargs):
+
+        # check inputs
+        length = len(chtbl)
+        if not is_array_like(condition):
+            condition = np.asarray(condition)
+        check_array_like(condition, 1)
+        check_dim0_aligned(chtbl, condition)
+        cond_nnz = self.count_nonzero(condition)
+
+        # block iteration
+        blen = kwargs.pop('blen', get_chunklen_table(chtbl))
+        out = None
+        for i in range(0, length, blen):
+            j = min(i+blen, length)
+            bcond = condition[i:j]
+            # don't bother doing anything unless we have to
+            n = np.count_nonzero(bcond)
+            if n:
+                block = chtbl[i:j]
+                res = np.compress(bcond, block, axis=0)
+                if out is None:
+                    out = self.create_table(res, expectedlen=cond_nnz, **kwargs)
+                else:
+                    out = self.append_table(out, res)
+        return out
+
     # noinspection PyTypeChecker
     def take(self, charr, indices, axis=0, **kwargs):
 
@@ -428,6 +487,24 @@ class Backend(object):
 
         else:
             raise NotImplementedError('axis not supported: %s' % axis)
+
+    # noinspection PyTypeChecker
+    def take_table(self, chtbl, indices, **kwargs):
+
+        # check inputs
+        length = len(chtbl)
+        indices = asarray_ndim(indices, 1)
+
+        # check that indices are strictly increasing
+        if np.any(indices[1:] <= indices[:-1]):
+            raise NotImplementedError(
+                'indices must be strictly increasing'
+            )
+
+        # implement via compress()
+        condition = np.zeros((length,), dtype=bool)
+        condition[indices] = True
+        return self.compress_table(chtbl, condition, **kwargs)
 
     # noinspection PyUnresolvedReferences
     def subset(self, charr, sel0, sel1, **kwargs):
@@ -516,6 +593,40 @@ class Backend(object):
                     out = self.append(out, block)
         return out
 
+    def vstack_table(self, tup, blen=None, **kwargs):
+
+        # check inputs
+        if not isinstance(tup, (tuple, list)):
+            raise ValueError('expected tuple or list, found %r' % tup)
+        if len(tup) < 2:
+            raise ValueError('expected two or more tables to stack')
+        # normalise
+        tup = tuple(t if isinstance(t, ChunkedTable) else ChunkedTable(t)
+                    for t in tup)
+        # check same columns
+        t = tup[0]
+        for u in tup[1:]
+            if u.names != t.names:
+                raise ValueError('columns do not match')
+
+        # set block size to use
+        if blen is None:
+            blen = min([get_chunklen_table(t) for t in tup])
+
+        # build output
+        expectedlen = sum(t.shape[0] for t in tup)
+        out = None
+        for t in tup:
+            for i in range(0, len(t), blen):
+                j = min(i+blen, len(t))
+                block = t[i:j]
+                if out is None:
+                    out = self.create_table(block, expectedlen=expectedlen,
+                                            **kwargs)
+                else:
+                    out = self.append_table(out, block)
+        return out
+
     def op_scalar(self, charr, op, other, **kwargs):
 
         # check inputs
@@ -535,14 +646,21 @@ class NumpyBackend(Backend):
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
-    def empty(self, shape, **kwargs):
-        return np.empty(shape, **kwargs)
-
     def create(self, data, expectedlen=None, **kwargs):
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
         return np.array(data, **kwargs)
 
     def append(self, arr, data):
         return np.append(arr, data, axis=0)
+
+    def create_table(self, data, expectedlen=None, **kwargs):
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
+        return np.rec.array(data, **kwargs)
+
+    def append_table(self, arr, data):
+        return np.append(arr, data)
 
 
 # singleton instance
@@ -554,11 +672,6 @@ class BColzBackend(Backend):
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
-    def empty(self, shape, **kwargs):
-        for k, v in self.kwargs.items():
-            kwargs.setdefault(k, v)
-        return bcolz.zeros(shape, **kwargs)
-
     def create(self, data, expectedlen=None, **kwargs):
         for k, v in self.kwargs.items():
             kwargs.setdefault(k, v)
@@ -567,6 +680,15 @@ class BColzBackend(Backend):
     def append(self, carr, data):
         carr.append(data)
         return carr
+
+    def create_table(self, data, expectedlen=None, **kwargs):
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
+        return bcolz.ctable(data, expectedlen=expectedlen, **kwargs)
+
+    def append_table(self, ctbl, data):
+        ctbl.append(data)
+        return ctbl
 
 
 # singleton instance
@@ -575,13 +697,10 @@ bcolz_gzip1_backend = BColzBackend(cparams=bcolz.cparams(cname='zlib',
                                                          clevel=1))
 
 
-class BColzTmpBackend(Backend):
-
-    def __init__(self, **kwargs):
-        self.kwargs = kwargs
+class BColzTmpBackend(BColzBackend):
 
     # noinspection PyShadowingBuiltins
-    def empty(self, shape, **kwargs):
+    def _mkrootdir(self, **kwargs):
         for k, v in self.kwargs.items():
             kwargs.setdefault(k, v)
         suffix = kwargs.pop('suffix', '.bcolz')
@@ -591,24 +710,16 @@ class BColzTmpBackend(Backend):
         atexit.register(shutil.rmtree, rootdir)
         kwargs['rootdir'] = rootdir
         kwargs['mode'] = 'w'
-        return bcolz.zeros(shape, **kwargs)
+        return kwargs
 
-    # noinspection PyShadowingBuiltins
     def create(self, data, expectedlen=None, **kwargs):
-        for k, v in self.kwargs.items():
-            kwargs.setdefault(k, v)
-        suffix = kwargs.pop('suffix', '.bcolz')
-        prefix = kwargs.pop('prefix', 'scikit_allel_')
-        dir = kwargs.pop('dir', None)
-        rootdir = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
-        atexit.register(shutil.rmtree, rootdir)
-        kwargs['rootdir'] = rootdir
-        kwargs['mode'] = 'w'
+        kwargs = self._mkrootdir(**kwargs)
         return bcolz.carray(data, expectedlen=expectedlen, **kwargs)
 
-    def append(self, carr, data):
-        carr.append(data)
-        return carr
+    # noinspection PyShadowingBuiltins
+    def create_table(self, data, expectedlen=None, **kwargs):
+        kwargs = self._mkrootdir(**kwargs)
+        return bcolz.ctable(data, expectedlen=expectedlen, **kwargs)
 
 
 # singleton instance
@@ -627,16 +738,16 @@ class H5Backend(Backend):
         h5d[hl:hln] = data
         return h5d
 
+    def append_table(self, h5g, data):
+        for n in h5g.keys():
+            h5d = h5g[n]
+        return h5g
+
 
 class H5tmpBackend(H5Backend):
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
-
-    def empty(self, shape, **kwargs):
-        for k, v in self.kwargs.items():
-            kwargs.setdefault(k, v)
-        return h5dtmp(shape=shape, **kwargs)
 
     def create(self, data, expectedlen=None, **kwargs):
         # ignore expectedlen argument
@@ -646,6 +757,20 @@ class H5tmpBackend(H5Backend):
             data = np.asarray(data)
         maxshape = (None,) + data.shape[1:]
         return h5dtmp(data=data, maxshape=maxshape, **kwargs)
+
+    def create_table(self, data, expectedlen=None, **kwargs):
+        # ignore expectedlen argument
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
+        suffix = kwargs.pop('suffix', '.h5')
+        prefix = kwargs.pop('prefix', 'scikit_allel_')
+        dir = kwargs.pop('dir', None)
+        h5f = h5ftmp(suffix=suffix, prefix=prefix, dir=dir)
+        for n in data.dtype.names:
+            a = data[n]
+            maxshape = (None,) + a.shape[1:]
+            h5f.create_dataset(n, data=a, maxshape=maxshape, **kwargs)
+        return h5f
 
 
 # singleton instance
@@ -658,11 +783,6 @@ class H5memBackend(H5Backend):
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
-    def empty(self, shape, **kwargs):
-        for k, v in self.kwargs.items():
-            kwargs.setdefault(k, v)
-        return h5dmem(shape=shape, **kwargs)
-
     def create(self, data, expectedlen=None, **kwargs):
         # ignore expectedlen argument
         for k, v in self.kwargs.items():
@@ -671,6 +791,17 @@ class H5memBackend(H5Backend):
             data = np.asarray(data)
         maxshape = (None,) + data.shape[1:]
         return h5dmem(data=data, maxshape=maxshape, **kwargs)
+
+    def create_table(self, data, expectedlen=None, **kwargs):
+        # ignore expectedlen argument
+        for k, v in self.kwargs.items():
+            kwargs.setdefault(k, v)
+        h5f = h5fmem()
+        for n in data.dtype.names:
+            a = data[n]
+            maxshape = (None,) + a.shape[1:]
+            h5f.create_dataset(n, data=a, maxshape=maxshape, **kwargs)
+        return h5f
 
 
 # singleton instance
@@ -747,7 +878,11 @@ class ChunkedArray(object):
         return str(self.data)
 
     def __len__(self):
-        return len(self.data)
+        return self.shape[0]
+
+    @property
+    def ndim(self):
+        return len(self.shape)
 
     @property
     def ndim(self):
@@ -1681,6 +1816,13 @@ class ChunkedTable(object):
     def shape(self):
         return self.data[self.names[0]].shape[:1]
 
+    def __len__(self):
+        return self.shape[0]
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
     @property
     def dtype(self):
         l = []
@@ -1692,12 +1834,24 @@ class ChunkedTable(object):
             l.append(t)
         return np.dtype(l)
 
-    # TODO compress
-    # TODO take
+    def compress(self, condition, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        out = backend.compress_table(self, condition, **kwargs)
+        return type(self)(out)
+
+    def take(self, indices, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        out = backend.take_table(self, indices, **kwargs)
+        return type(self)(out)
+
+    def vstack(self, *others, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        tup = (self,) + others
+        out = backend.vstack_table(tup, **kwargs)
+        return type(self)(out)
+
     # TODO eval
     # TODO query
-    # TODO __len__
-    # TODO ndim
     # TODO addcol (and __setitem__?)
     # TODO delcol (and __delitem__?)
     # TODO store
