@@ -4,6 +4,8 @@ from __future__ import absolute_import, print_function, division
 
 from contextlib import contextmanager
 from functools import update_wrapper
+import atexit
+import os
 
 
 import numpy as np
@@ -287,11 +289,11 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
     # initialise HDF5 file path
     if filepath is None:
         import tempfile
-        filepath = tempfile.mktemp()
+        filepath = tempfile.mktemp(prefix='scikit_allel_', suffix='.h5')
+        atexit.register(os.remove, filepath)
 
     # initialise defaults for dataset creation
     h5dcreate_kwargs.setdefault('chunks', True)
-    h5dcreate_kwargs.setdefault('compression', 'gzip')
 
     def decorator(user_function):
 
