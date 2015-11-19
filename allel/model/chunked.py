@@ -17,7 +17,8 @@ from allel.compat import reduce, string_types, copy_method_doc
 from allel.util import check_dim0_aligned, asarray_ndim, check_same_ndim, \
     check_dim_aligned
 
-from allel.model.ndarray import GenotypeArray, subset
+from allel.model.ndarray import GenotypeArray, subset, HaplotypeArray, \
+    AlleleCountsArray
 
 
 # noinspection PyShadowingBuiltins
@@ -826,6 +827,11 @@ class ChunkedArray(object):
         out = backend.take(self.data, indices, axis=axis, **kwargs)
         return type(self)(out)
 
+    def subset(self, sel0, sel1, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        out = backend.subset(self.data, sel0, sel1, **kwargs)
+        return type(self)(out)
+
     def hstack(self, *others, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
         tup = (self,) + others
@@ -851,9 +857,10 @@ class GenotypeChunkedArray(ChunkedArray):
 
     @staticmethod
     def check_input_data(data):
-        check_array_like(data)
-        if len(data.shape) != 3:
-            raise ValueError('expected array-like with 3 dimensions')
+        check_array_like(data, 3)
+        # check dtype
+        if data.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
 
     def __getitem__(self, *args):
         out = self.data.__getitem__(*args)
@@ -924,12 +931,12 @@ class GenotypeChunkedArray(ChunkedArray):
         return GenotypeChunkedArray(out)
 
     # noinspection PyTypeChecker
-    def subset(self, variants=None, samples=None, **kwargs):
+    def subset(self, sel0, sel1, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-        out = backend.subset(self, variants, samples, **kwargs)
+        out = backend.subset(self, sel0, sel1, **kwargs)
         g = GenotypeChunkedArray(out)
         if self.mask is not None:
-            mask = backend.subset(self.mask, variants, samples, **kwargs)
+            mask = backend.subset(self.mask, sel0, sel1, **kwargs)
             g.mask = mask
         return g
 
@@ -1184,17 +1191,16 @@ class GenotypeChunkedArray(ChunkedArray):
         check_array_like(mapping)
         check_dim0_aligned(self, mapping)
 
-        # setup output
-        kwargs.setdefault('dtype', self.dtype)
-
         # define mapping function
         def mapper(block, bmapping):
             return block.map_alleles(bmapping, copy=False)
 
         # execute map
         domain = (self, mapping)
+        kwargs.setdefault('dtype', self.dtype)  # TODO needed?
         out = backend.map_blocks(domain, mapper, **kwargs)
         return GenotypeChunkedArray(out)
+
 
 # copy docstrings
 copy_method_doc(GenotypeChunkedArray.fill_masked, GenotypeArray.fill_masked)
@@ -1224,7 +1230,196 @@ copy_method_doc(GenotypeChunkedArray.hstack, GenotypeArray.hstack)
 copy_method_doc(GenotypeChunkedArray.vstack, GenotypeArray.vstack)
 
 
+class HaplotypeChunkedArray(ChunkedArray):
+    """TODO
+
+    """
+
+    def __init__(self, data):
+        self.check_input_data(data)
+        super(HaplotypeChunkedArray, self).__init__(data)
+
+    @staticmethod
+    def check_input_data(data):
+        check_array_like(data, 2)
+        if data.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+    def __getitem__(self, *args):
+        out = self.data.__getitem__(*args)
+        if is_array_like(out) and len(self.shape) == len(out.shape):
+            out = HaplotypeArray(out)
+        return out
+
+    def _repr_html_(self):
+        return self[:6].to_html_str(caption=repr(self))
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.data.shape[0]
+
+    @property
+    def n_haplotypes(self):
+        """Number of haplotypes (length of second array dimension)."""
+        return self.data.shape[1]
+
+    def to_genotypes(self, ploidy, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        # check ploidy is compatible
+        if (self.n_haplotypes % ploidy) > 0:
+            raise ValueError('incompatible ploidy')
+
+        # build output
+        def mapper(block):
+            return block.to_genotypes(ploidy)
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return GenotypeChunkedArray(out)
+
+    def is_called(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        return backend.op_scalar(self, operator.ge, 0, **kwargs)
+
+    def is_missing(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        return backend.op_scalar(self, operator.lt, 0, **kwargs)
+
+    def is_ref(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        return backend.op_scalar(self, operator.eq, 0, **kwargs)
+
+    def is_alt(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        return backend.op_scalar(self, operator.gt, 0, **kwargs)
+
+    def is_call(self, allele, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+        return backend.op_scalar(self, operator.eq, allele, **kwargs)
+
+    def count_called(self, axis=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_called()
+
+        out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
+        return out
+
+    def count_missing(self, axis=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_missing()
+
+        out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
+        return out
+
+    def count_ref(self, axis=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_ref()
+
+        out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
+        return out
+
+    def count_alt(self, axis=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_alt()
+
+        out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
+        return out
+
+    def count_call(self, allele, axis=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_call(allele)
+
+        out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
+        return out
+
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max()
+
+        def mapper(block):
+            return block.count_alleles(max_allele=max_allele, subpop=subpop)
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return AlleleCountsChunkedArray(out)
+
+    def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        if max_allele is None:
+            max_allele = self.max()
+
+        def mapper(block):
+            return block.count_alleles_subpops(subpops, max_allele=max_allele)
+
+        out = backend.dict_map_blocks(self, mapper, **kwargs)
+        for k, v in out.items():
+            out[k] = AlleleCountsChunkedArray(v)
+        return out
+
+    # noinspection PyTypeChecker
+    def map_alleles(self, mapping, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        # check inputs
+        check_array_like(mapping)
+        check_dim0_aligned(self, mapping)
+
+        # define mapping function
+        def mapper(block, bmapping):
+            return block.map_alleles(bmapping, copy=False)
+
+        # execute map
+        domain = (self, mapping)
+        kwargs.setdefault('dtype', self.dtype)  # TODO needed?
+        out = backend.map_blocks(domain, mapper, **kwargs)
+        return HaplotypeChunkedArray(out)
+
+
+# copy docstrings
+copy_method_doc(HaplotypeChunkedArray.to_genotypes,
+                HaplotypeArray.to_genotypes)
+copy_method_doc(HaplotypeChunkedArray.count_alleles,
+                HaplotypeArray.count_alleles)
+copy_method_doc(HaplotypeChunkedArray.count_alleles_subpops,
+                HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeChunkedArray.map_alleles, HaplotypeArray.map_alleles)
+
+
 class AlleleCountsChunkedArray(ChunkedArray):
+
+    def __init__(self, data):
+        self.check_input_data(data)
+        super(AlleleCountsChunkedArray, self).__init__(data)
+
+    @staticmethod
+    def check_input_data(data):
+        check_array_like(data, 2)
+        if data.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+    def __getitem__(self, *args):
+        out = self.data.__getitem__(*args)
+        if is_array_like(out) and len(self.shape) == len(out.shape) and \
+                out.shape[1] == self.shape[1]:
+            out = AlleleCountsArray(out)
+        return out
+
+    def _repr_html_(self):
+        return self[:6].to_html_str(caption=repr(self))
 
     @property
     def n_variants(self):
@@ -1236,10 +1431,166 @@ class AlleleCountsChunkedArray(ChunkedArray):
         """Number of alleles (length of second array dimension)."""
         return self.shape[1]
 
+    def to_frequencies(self, fill=np.nan, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
 
-# TODO finish array classes
-## HaplotypeChunkedArray
-## AlleleCountsChunkedArray
+        def mapper(block):
+            return block.to_frequencies(fill=fill)
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def allelism(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.allelism()
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def max_allele(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.max_allele()
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def is_variant(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_variant()
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def is_non_variant(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_non_variant()
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def is_segregating(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_segregating()
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def is_non_segregating(self, allele=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_non_segregating(allele=allele)
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def is_singleton(self, allele=1, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_singleton(allele=allele)
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def is_doubleton(self, allele=1, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_doubleton(allele=allele)
+
+        out = backend.map_blocks(self, mapper, **kwargs)
+        return ChunkedArray(out)
+
+    def count_variant(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_variant()
+
+        out = backend.sum(self, mapper=mapper, **kwargs)
+        return out
+
+    def count_non_variant(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_non_variant()
+
+        out = backend.sum(self, mapper=mapper, **kwargs)
+        return out
+
+    def count_segregating(self, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_segregating()
+
+        out = backend.sum(self, mapper=mapper, **kwargs)
+        return out
+
+    def count_non_segregating(self, allele=None, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_non_segregating(allele=allele)
+
+        out = backend.sum(self, mapper=mapper, **kwargs)
+        return out
+
+    def count_singleton(self, allele=1, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_singleton(allele=allele)
+
+        out = backend.sum(self, mapper=mapper, **kwargs)
+        return out
+
+    def count_doubleton(self, allele=1, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        def mapper(block):
+            return block.is_doubleton(allele=allele)
+
+        out = backend.sum(self, mapper=mapper, **kwargs)
+        return out
+
+    def map_alleles(self, mapping, **kwargs):
+        backend = get_backend(kwargs.pop('backend', None))
+
+        # check inputs
+        check_array_like(mapping)
+        check_dim0_aligned(self, mapping)
+
+        # define mapping function
+        def mapper(block, bmapping):
+            return block.map_alleles(bmapping)
+
+        # execute map
+        domain = (self, mapping)
+        kwargs.setdefault('dtype', self.dtype)  # TODO needed?
+        out = backend.map_blocks(domain, mapper, **kwargs)
+        return AlleleCountsChunkedArray(out)
+
+
+copy_method_doc(AlleleCountsChunkedArray.allelism, AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsChunkedArray.max_allele,
+                AlleleCountsArray.max_allele)
+copy_method_doc(AlleleCountsChunkedArray.map_alleles,
+                AlleleCountsArray.map_alleles)
+
+
 # TODO write table classes
 ## ChunkedTable
 ## VariantChunkedTable

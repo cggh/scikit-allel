@@ -237,39 +237,39 @@ class GenotypeArrayInterface(object):
         g = self.setup_instance(diploid_genotype_data)
 
         # test with indices
-        variants = [0, 2]
-        samples = [0, 2]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [0, 2]
+        sel1 = [0, 2]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .take(variants, axis=0)\
-            .take(samples, axis=1)
+            .take(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
         # test with condition
-        variants = [True, False, True, False, False]
-        samples = [True, False, True]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [True, False, True, False, False]
+        sel1 = [True, False, True]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .compress(variants, axis=0)\
-            .compress(samples, axis=1)
+            .compress(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [0, 2]
-        samples = [True, False, True]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [0, 2]
+        sel1 = [True, False, True]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .take(variants, axis=0)\
-            .compress(samples, axis=1)
+            .take(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [True, False, True, False, False]
-        samples = [0, 2]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [True, False, True, False, False]
+        sel1 = [0, 2]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .compress(variants, axis=0)\
-            .take(samples, axis=1)
+            .compress(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
     # genotype counting methods
@@ -1000,39 +1000,39 @@ class HaplotypeArrayInterface(object):
         h = self.setup_instance(haplotype_data)
 
         # test with indices
-        variants = [0, 2]
-        haplotypes = [0, 2]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [0, 2]
+        sel1 = [0, 2]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .take(variants, axis=0)\
-            .take(haplotypes, axis=1)
+            .take(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
         # test with condition
-        variants = [True, False, True, False]
-        haplotypes = [True, False, True]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [True, False, True, False]
+        sel1 = [True, False, True]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .compress(variants, axis=0)\
-            .compress(haplotypes, axis=1)
+            .compress(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [0, 2]
-        haplotypes = [True, False, True]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [0, 2]
+        sel1 = [True, False, True]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .take(variants, axis=0)\
-            .compress(haplotypes, axis=1)
+            .take(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [True, False, True, False]
-        haplotypes = [0, 2]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [True, False, True, False]
+        sel1 = [0, 2]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .compress(variants, axis=0)\
-            .take(haplotypes, axis=1)
+            .compress(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
     def test_is_called(self):

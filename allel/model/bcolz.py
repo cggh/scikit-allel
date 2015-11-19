@@ -1513,11 +1513,8 @@ class HaplotypeCArray(CArrayWrapper):
     def is_ref(self, **kwargs):
         return self.op_scalar(operator.eq, 0, **kwargs)
 
-    def is_alt(self, allele=None, **kwargs):
-        if allele is None:
-            return self.op_scalar(operator.gt, 0, **kwargs)
-        else:
-            return self.op_scalar(operator.eq, allele, **kwargs)
+    def is_alt(self, **kwargs):
+        return self.op_scalar(operator.gt, 0, **kwargs)
 
     def is_call(self, allele, **kwargs):
         return self.op_scalar(operator.eq, allele, **kwargs)
@@ -1619,8 +1616,8 @@ copy_method_doc(HaplotypeCArray.count_alleles, HaplotypeArray.count_alleles)
 copy_method_doc(HaplotypeCArray.count_alleles_subpops,
                 HaplotypeArray.count_alleles_subpops)
 copy_method_doc(HaplotypeCArray.map_alleles, HaplotypeArray.map_alleles)
-copy_method_doc(GenotypeCArray.hstack, GenotypeArray.hstack)
-copy_method_doc(GenotypeCArray.vstack, GenotypeArray.vstack)
+copy_method_doc(HaplotypeCArray.hstack, HaplotypeArray.hstack)
+copy_method_doc(HaplotypeCArray.vstack, HaplotypeArray.vstack)
 
 
 class AlleleCountsCArray(CArrayWrapper):

@@ -9,14 +9,16 @@ import h5py
 from nose.tools import assert_raises, eq_ as eq
 
 
-from allel.model.ndarray import GenotypeArray
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
+    AlleleCountsArray
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
-    diploid_genotype_data, triploid_genotype_data
+    diploid_genotype_data, triploid_genotype_data, HaplotypeArrayInterface, \
+    haplotype_data, allele_counts_data, AlleleCountsArrayInterface
 import allel.model.chunked
 from allel.model.chunked import GenotypeChunkedArray, numpy_backend, \
     bcolz_backend, h5mem_backend, h5tmp_backend, bcolz_gzip1_backend, \
-    bcolztmp_backend
+    bcolztmp_backend, HaplotypeChunkedArray, AlleleCountsChunkedArray
 
 
 class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -170,3 +172,151 @@ class GenotypeChunkedArrayTestsH5memBackend(GenotypeChunkedArrayTests):
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, h5py.Dataset)
+
+
+class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
+
+    _class = HaplotypeChunkedArray
+
+    def setup_instance(self, data):
+        data = allel.model.chunked.default_backend.create(data)
+        return HaplotypeChunkedArray(data)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with assert_raises(TypeError):
+            # noinspection PyArgumentList
+            HaplotypeChunkedArray()
+
+        # data has wrong dtype
+        data = 'foo bar'
+        with assert_raises(ValueError):
+            HaplotypeChunkedArray(data)
+
+        # data has wrong dtype
+        data = np.array([4., 5., 3.7])
+        with assert_raises(ValueError):
+            HaplotypeChunkedArray(data)
+
+        # data has wrong dimensions
+        data = np.array([1, 2, 3])
+        with assert_raises(ValueError):
+            HaplotypeChunkedArray(data)
+
+        # data has wrong dimensions
+        data = np.array([[[1, 2], [3, 4]]])  # use GenotypeCArray instead
+        with assert_raises(ValueError):
+            HaplotypeChunkedArray(data)
+
+        # typed data (typed)
+        h = HaplotypeChunkedArray(np.array(haplotype_data, dtype='i1'))
+        aeq(haplotype_data, h)
+        eq(np.int8, h.dtype)
+
+    def test_slice_types(self):
+
+        h = self.setup_instance(np.array(haplotype_data, dtype='i1'))
+
+        # row slice
+        s = h[1:]
+        self.assertNotIsInstance(s, HaplotypeChunkedArray)
+        self.assertIsInstance(s, HaplotypeArray)
+
+        # col slice
+        s = h[:, 1:]
+        self.assertNotIsInstance(s, HaplotypeChunkedArray)
+        self.assertIsInstance(s, HaplotypeArray)
+
+        # row index
+        s = h[0]
+        self.assertNotIsInstance(s, HaplotypeChunkedArray)
+        self.assertNotIsInstance(s, HaplotypeArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # col index
+        s = h[:, 0]
+        self.assertNotIsInstance(s, HaplotypeChunkedArray)
+        self.assertNotIsInstance(s, HaplotypeArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # item
+        s = h[0, 0]
+        self.assertNotIsInstance(s, HaplotypeChunkedArray)
+        self.assertNotIsInstance(s, HaplotypeArray)
+        self.assertIsInstance(s, np.int8)
+
+
+class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
+                                    unittest.TestCase):
+
+    _class = AlleleCountsChunkedArray
+
+    def setup_instance(self, data):
+        data = allel.model.chunked.default_backend.create(data)
+        return AlleleCountsChunkedArray(data)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with assert_raises(TypeError):
+            # noinspection PyArgumentList
+            AlleleCountsChunkedArray()
+
+        # data has wrong dtype
+        data = 'foo bar'
+        with assert_raises(ValueError):
+            AlleleCountsChunkedArray(data)
+
+        # data has wrong dtype
+        data = np.array([4., 5., 3.7])
+        with assert_raises(ValueError):
+            AlleleCountsChunkedArray(data)
+
+        # data has wrong dimensions
+        data = np.array([1, 2, 3])
+        with assert_raises(ValueError):
+            AlleleCountsChunkedArray(data)
+
+        # data has wrong dimensions
+        data = np.array([[[1, 2], [3, 4]]])
+        with assert_raises(ValueError):
+            AlleleCountsChunkedArray(data)
+
+        # typed data (typed)
+        ac = AlleleCountsChunkedArray(np.array(allele_counts_data, dtype='u1'))
+        aeq(allele_counts_data, ac)
+        eq(np.uint8, ac.dtype)
+
+    def test_slice_types(self):
+
+        h = self.setup_instance(np.array(allele_counts_data, dtype='u2'))
+
+        # row slice
+        s = h[1:]
+        self.assertNotIsInstance(s, AlleleCountsChunkedArray)
+        self.assertIsInstance(s, AlleleCountsArray)
+
+        # col slice
+        s = h[:, 1:]
+        self.assertNotIsInstance(s, AlleleCountsChunkedArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # row index
+        s = h[0]
+        self.assertNotIsInstance(s, AlleleCountsChunkedArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # col index
+        s = h[:, 0]
+        self.assertNotIsInstance(s, AlleleCountsChunkedArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.ndarray)
+
+        # item
+        s = h[0, 0]
+        self.assertNotIsInstance(s, AlleleCountsChunkedArray)
+        self.assertNotIsInstance(s, AlleleCountsArray)
+        self.assertIsInstance(s, np.uint16)

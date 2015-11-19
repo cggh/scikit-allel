@@ -221,7 +221,7 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         # data has wrong dtype
         data = [4., 5., 3.7]
         with assert_raises(TypeError):
-            GenotypeCArray(data)
+            HaplotypeCArray(data)
 
         # data has wrong dimensions
         data = [1, 2, 3]
