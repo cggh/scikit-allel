@@ -13,12 +13,13 @@ import bcolz
 import h5py
 import tempfile
 import operator
-from allel.compat import reduce, string_types, copy_method_doc
+from collections import namedtuple
+from allel.compat import reduce, string_types, copy_method_doc, integer_types
 from allel.util import check_dim0_aligned, asarray_ndim, check_same_ndim, \
     check_dim_aligned
 
 from allel.model.ndarray import GenotypeArray, subset, HaplotypeArray, \
-    AlleleCountsArray
+    AlleleCountsArray, recarray_to_html_str, recarray_display
 
 
 # noinspection PyShadowingBuiltins
@@ -89,7 +90,7 @@ def is_array_like(a):
 
 
 def check_array_like(a, ndim=None):
-    if isinstance(a, tuple):
+    if isinstance(a, (tuple, list)):
         for x in a:
             check_array_like(x)
     else:
@@ -1589,6 +1590,118 @@ copy_method_doc(AlleleCountsChunkedArray.max_allele,
                 AlleleCountsArray.max_allele)
 copy_method_doc(AlleleCountsChunkedArray.map_alleles,
                 AlleleCountsArray.map_alleles)
+
+
+def check_table_like(data, names=None):
+    if names is None:
+        if hasattr(data, 'keys'):
+            # h5py group, pandas dataframe, or dictionary
+            names = list(data.keys())
+        elif hasattr(data, 'names'):
+            # bcolz ctable
+            names = list(data.names)
+        else:
+            raise ValueError('could not determine column names')
+    if len(names) < 1:
+        raise ValueError('at least one column name is required')
+    # should raise KeyError if name not present
+    cols = [data[n] for n in names]
+    check_array_like(cols)
+    check_dim0_aligned(*cols)
+    return names
+
+
+class ChunkedTable(object):
+
+    def __init__(self, data, names=None):
+        self.data = data
+        self.names = check_table_like(data, names)
+        self.rowcls = namedtuple('row', self.names)
+
+    def __getitem__(self, item):
+
+        if isinstance(item, string_types):
+            # return column
+            return ChunkedArray(self.data[item])
+
+        elif isinstance(item, integer_types):
+            # return row as tuple
+            return self.rowcls(*(self.data[n][item] for n in self.names))
+
+        elif isinstance(item, slice):
+            # load into numpy structured array
+            if item.start is None:
+                start = 0
+            else:
+                start = item.start
+            if item.stop is None:
+                stop = self.shape[0]
+            else:
+                stop = item.stop
+            if item.step is None:
+                step = 1
+            else:
+                step = item.step
+            outshape = (stop - start) // step
+            out = np.empty(outshape, dtype=self.dtype)
+            for n in self.names:
+                out[n] = self.data[n][item]
+            return out.view(np.recarray)
+
+        elif isinstance(item, (list, tuple)) and \
+                all([isinstance(i, string_types) for i in item]):
+            # assume names of columns, return table
+            return ChunkedTable(self.data, names=item)
+
+        else:
+            raise NotImplementedError('unsupported item: %r' % item)
+
+    def __getattr__(self, item):
+        if item in self.names:
+            return self.data[item]
+        else:
+            raise AttributeError(item)
+
+    def __repr__(self):
+        return '%s(%s, %s.%s)' % \
+               (type(self).__name__, self.shape[0],
+                type(self.data).__module__, type(self.data).__name__)
+
+    def _repr_html_(self):
+        caption = repr(self)
+        ra = self[:6]
+        return recarray_to_html_str(ra, limit=5, caption=caption)
+
+    def display(self, limit, **kwargs):
+        kwargs.setdefault('caption', repr(self))
+        ra = self[:limit+1]
+        return recarray_display(ra, limit=limit, **kwargs)
+
+    @property
+    def shape(self):
+        return self.data[self.names[0]].shape[:1]
+
+    @property
+    def dtype(self):
+        l = []
+        for n in self.names:
+            c = self.data[n]
+            # Need to account for multidimensional columns
+            t = (n, c.dtype) if len(c.shape) == 1 else \
+                (n, c.dtype, c.shape[1:])
+            l.append(t)
+        return np.dtype(l)
+
+    # TODO compress
+    # TODO take
+    # TODO eval
+    # TODO query
+    # TODO __len__
+    # TODO ndim
+    # TODO addcol (and __setitem__?)
+    # TODO delcol (and __delitem__?)
+    # TODO store
+    # TODO copy
 
 
 # TODO write table classes
