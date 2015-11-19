@@ -5,4 +5,7 @@ Data structures
     :maxdepth: 3
 
     model/ndarray
+    model/chunked
     model/bcolz
+
+TODO remove bcolz from toctree

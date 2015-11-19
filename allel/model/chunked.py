@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""TODO
+
+"""
 from __future__ import absolute_import, print_function, division
 
 
@@ -125,6 +128,7 @@ class Backend(object):
     def append(self, charr, data):
         pass
 
+    # noinspection PyMethodMayBeStatic
     def store(self, source, sink, start=0, stop=None, offset=0, blen=None):
 
         # check arguments
@@ -148,7 +152,7 @@ class Backend(object):
             l = j-i
             sink[offset:offset+l] = source[i:j]
             offset += l
-            
+
     def copy(self, charr, start=0, stop=None, blen=None, **kwargs):
 
         # check arguments
@@ -173,7 +177,7 @@ class Backend(object):
 
         return out
 
-    def reduce_axis(self, charr, reducer, block_reducer, mapper=None, 
+    def reduce_axis(self, charr, reducer, block_reducer, mapper=None,
                     axis=None, **kwargs):
 
         # check arguments
@@ -186,7 +190,7 @@ class Backend(object):
         # normalise axis argument
         if isinstance(axis, int):
             axis = (axis,)
-            
+
         if axis is None or 0 in axis:
             out = None
             for i in range(0, length, blen):
@@ -226,28 +230,28 @@ class Backend(object):
                 # no need for block_reducer
 
             return out
-        
+
     def amax(self, charr, axis=None, mapper=None, **kwargs):
-        return self.reduce_axis(charr, axis=axis, reducer=np.amax, 
-                                block_reducer=np.maximum, mapper=mapper, 
+        return self.reduce_axis(charr, axis=axis, reducer=np.amax,
+                                block_reducer=np.maximum, mapper=mapper,
                                 **kwargs)
 
     def amin(self, charr, axis=None, mapper=None, **kwargs):
-        return self.reduce_axis(charr, axis=axis, reducer=np.amin, 
+        return self.reduce_axis(charr, axis=axis, reducer=np.amin,
                                 block_reducer=np.minimum, mapper=mapper,
                                 **kwargs)
-    
+
     def sum(self, charr, axis=None, mapper=None, **kwargs):
-        return self.reduce_axis(charr, axis=axis, reducer=np.sum, 
+        return self.reduce_axis(charr, axis=axis, reducer=np.sum,
                                 block_reducer=np.add, mapper=mapper, **kwargs)
 
     def count_nonzero(self, charr, mapper=None, **kwargs):
-        return self.reduce_axis(charr, axis=None, reducer=np.count_nonzero,
+        return self.reduce_axis(charr, reducer=np.count_nonzero,
                                 block_reducer=np.add, mapper=mapper, **kwargs)
-    
+
     def map_blocks(self, domain, mapper, blen=None, **kwargs):
         """N.B., assumes mapper will preserve leading dimension."""
-        
+
         # check inputs
         check_array_like(domain)
         if isinstance(domain, tuple):
@@ -255,25 +259,25 @@ class Backend(object):
             length = domain[0].shape[0]
         else:
             length = domain.shape[0]
-        
+
         # determine block size for iteration
         if blen is None:
             if isinstance(domain, tuple):
                 blen = min(get_chunklen(a) for a in domain)
             else:
                 blen = get_chunklen(domain)
-                
+
         # block-wise iteration
         out = None
-        for i in range(0, length, blen):        
+        for i in range(0, length, blen):
             j = min(i+blen, length)
-            
+
             # slice domain
             if isinstance(domain, tuple):
                 blocks = [a[i:j] for a in domain]
             else:
                 blocks = domain[i:j],
-                
+
             # map
             res = mapper(*blocks)
 
@@ -284,10 +288,10 @@ class Backend(object):
                 out = self.append(out, res)
 
         return out
-            
+
     def dict_map_blocks(self, domain, mapper, blen=None, **kwargs):
         """N.B., assumes mapper will preserve leading dimension."""
-        
+
         # check inputs
         check_array_like(domain)
         if isinstance(domain, tuple):
@@ -295,28 +299,28 @@ class Backend(object):
             length = domain[0].shape[0]
         else:
             length = domain.shape[0]
-        
+
         # determine block size for iteration
         if blen is None:
             if isinstance(domain, tuple):
                 blen = min(get_chunklen(a) for a in domain)
             else:
                 blen = get_chunklen(domain)
-                
+
         # block-wise iteration
         out = None
-        for i in range(0, length, blen):        
+        for i in range(0, length, blen):
             j = min(i+blen, length)
-            
+
             # slice domain
             if isinstance(domain, tuple):
                 blocks = [a[i:j] for a in domain]
             else:
                 blocks = domain[i:j],
-                
+
             # map
             res = mapper(*blocks)
-            
+
             # create
             if out is None:
                 out = dict()
@@ -328,7 +332,7 @@ class Backend(object):
 
         return out
 
-    def compress(self, charr, condition, axis, **kwargs):
+    def compress(self, charr, condition, axis=0, **kwargs):
 
         # check inputs
         check_array_like(charr)
@@ -382,7 +386,8 @@ class Backend(object):
         else:
             raise NotImplementedError('axis not supported: %s' % axis)
 
-    def take(self, charr, indices, axis, blen=None, **kwargs):
+    # noinspection PyTypeChecker
+    def take(self, charr, indices, axis=0, **kwargs):
 
         # check inputs
         check_array_like(charr)
@@ -422,6 +427,7 @@ class Backend(object):
         else:
             raise NotImplementedError('axis not supported: %s' % axis)
 
+    # noinspection PyUnresolvedReferences
     def subset(self, charr, sel0, sel1, **kwargs):
 
         # check inputs
@@ -542,7 +548,7 @@ numpy_backend = NumpyBackend()
 
 
 class BColzBackend(Backend):
-    
+
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
@@ -734,7 +740,7 @@ class ChunkedArray(object):
         return '%s(%s, %s, %s.%s)' % \
                (type(self).__name__, str(self.shape), str(self.dtype),
                 type(self.data).__module__, type(self.data).__name__)
-    
+
     def __str__(self):
         return str(self.data)
 
@@ -744,7 +750,7 @@ class ChunkedArray(object):
     @property
     def ndim(self):
         return len(self.shape)
-    
+
     def store(self, sink, offset=0, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
         backend.store(self, sink, offset=offset, **kwargs)
@@ -753,15 +759,15 @@ class ChunkedArray(object):
         backend = get_backend(kwargs.pop('backend', None))
         out = backend.copy(self, **kwargs)
         return type(self)(out)
-        
+
     def max(self, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
         return backend.amax(self, axis=axis, **kwargs)
-    
+
     def min(self, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
         return backend.amin(self, axis=axis, **kwargs)
-    
+
     def sum(self, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
         return backend.sum(self, axis=axis, **kwargs)
@@ -770,7 +776,7 @@ class ChunkedArray(object):
         backend = get_backend(kwargs.pop('backend', None))
         out = backend.op_scalar(self, op, other, **kwargs)
         return ChunkedArray(out)
-        
+
     def __eq__(self, other, **kwargs):
         return self.op_scalar(operator.eq, other, **kwargs)
 
@@ -841,6 +847,7 @@ class GenotypeChunkedArray(ChunkedArray):
     def __init__(self, data):
         self.check_input_data(data)
         super(GenotypeChunkedArray, self).__init__(data)
+        self._mask = None
 
     @staticmethod
     def check_input_data(data):
@@ -906,15 +913,17 @@ class GenotypeChunkedArray(ChunkedArray):
         # store
         self._mask = mask
 
+    # noinspection PyTypeChecker
     def fill_masked(self, value=-1, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-        
+
         def mapper(block):
             return block.fill_masked(value=value)
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return GenotypeChunkedArray(out)
-    
+
+    # noinspection PyTypeChecker
     def subset(self, variants=None, samples=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
         out = backend.subset(self, variants, samples, **kwargs)
@@ -923,13 +932,13 @@ class GenotypeChunkedArray(ChunkedArray):
             mask = backend.subset(self.mask, variants, samples, **kwargs)
             g.mask = mask
         return g
-    
+
     def is_called(self, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.is_called()
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -938,7 +947,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_missing()
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -947,7 +956,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_hom(allele=allele)
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -956,7 +965,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_hom_ref()
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -965,7 +974,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_hom_alt()
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -974,7 +983,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_het(allele=allele)
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -983,7 +992,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_call(call)
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
@@ -992,25 +1001,25 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_called()
-        
+
         out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
         return out
-    
+
     def count_missing(self, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.is_missing()
-        
+
         out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
         return out
-    
+
     def count_hom(self, allele=None, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.is_hom(allele=allele)
-        
+
         out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
         return out
 
@@ -1019,28 +1028,28 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.is_hom_ref()
-        
+
         out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
         return out
-    
+
     def count_hom_alt(self, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.is_hom_alt()
-        
+
         out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
         return out
-    
+
     def count_het(self, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.is_het()
-        
+
         out = backend.sum(self, axis=axis, mapper=mapper, **kwargs)
         return out
-        
+
     def count_call(self, call, axis=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
@@ -1055,43 +1064,43 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.to_haplotypes()
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         # TODO wrap with HaplotypeChunkedArray
         return ChunkedArray(out)
-        
+
     def to_n_ref(self, fill=0, dtype='i1', **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.to_n_ref(fill=fill, dtype=dtype)
-        
+
         out = backend.map_blocks(self, mapper, dtype=dtype, **kwargs)
         return ChunkedArray(out)
-        
+
     def to_n_alt(self, fill=0, dtype='i1', **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
         def mapper(block):
             return block.to_n_alt(fill=fill, dtype=dtype)
-        
+
         out = backend.map_blocks(self, mapper, dtype=dtype, **kwargs)
         return ChunkedArray(out)
-        
+
     def to_allele_counts(self, alleles=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-    
+
         # determine alleles to count
         if alleles is None:
             m = self.max()
             alleles = list(range(m+1))
-            
+
         def mapper(block):
             return block.to_allele_counts(alleles)
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
-    
+
     def to_packed(self, boundscheck=True, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
@@ -1114,32 +1123,33 @@ class GenotypeChunkedArray(ChunkedArray):
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
+    # noinspection PyTypeChecker
     @staticmethod
     def from_packed(packed, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-        
+
         # check input
         check_array_like(packed)
-        
+
         def mapper(block):
             return GenotypeArray.from_packed(block)
-        
+
         out = backend.map_blocks(packed, mapper, **kwargs)
         return GenotypeChunkedArray(out)
-        
+
     def count_alleles(self, max_allele=None, subpop=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-        
+
         # if max_allele not specified, count all alleles
         if max_allele is None:
             max_allele = self.max()
 
         def mapper(block):
             return block.count_alleles(max_allele=max_allele, subpop=subpop)
-        
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return AlleleCountsChunkedArray(out)
-        
+
     def count_alleles_subpops(self, subpops, max_allele=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
 
@@ -1148,7 +1158,7 @@ class GenotypeChunkedArray(ChunkedArray):
 
         def mapper(block):
             return block.count_alleles_subpops(subpops, max_allele=max_allele)
-            
+
         out = backend.dict_map_blocks(self, mapper, **kwargs)
         for k, v in out.items():
             out[k] = AlleleCountsChunkedArray(v)
@@ -1156,23 +1166,24 @@ class GenotypeChunkedArray(ChunkedArray):
 
     def to_gt(self, phased=False, max_allele=None, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-        
+
         if max_allele is None:
             max_allele = self.max()
 
         def mapper(block):
             return block.to_gt(phased=phased, max_allele=max_allele)
-            
+
         out = backend.map_blocks(self, mapper, **kwargs)
         return ChunkedArray(out)
 
+    # noinspection PyTypeChecker
     def map_alleles(self, mapping, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
-        
+
         # check inputs
         check_array_like(mapping)
         check_dim0_aligned(self, mapping)
-        
+
         # setup output
         kwargs.setdefault('dtype', self.dtype)
 
@@ -1184,7 +1195,7 @@ class GenotypeChunkedArray(ChunkedArray):
         domain = (self, mapping)
         out = backend.map_blocks(domain, mapper, **kwargs)
         return GenotypeChunkedArray(out)
-        
+
 # copy docstrings
 copy_method_doc(GenotypeChunkedArray.fill_masked, GenotypeArray.fill_masked)
 copy_method_doc(GenotypeChunkedArray.subset, GenotypeArray.subset)
@@ -1195,7 +1206,8 @@ copy_method_doc(GenotypeChunkedArray.is_hom_ref, GenotypeArray.is_hom_ref)
 copy_method_doc(GenotypeChunkedArray.is_hom_alt, GenotypeArray.is_hom_alt)
 copy_method_doc(GenotypeChunkedArray.is_het, GenotypeArray.is_het)
 copy_method_doc(GenotypeChunkedArray.is_call, GenotypeArray.is_call)
-copy_method_doc(GenotypeChunkedArray.to_haplotypes, GenotypeArray.to_haplotypes)
+copy_method_doc(GenotypeChunkedArray.to_haplotypes,
+                GenotypeArray.to_haplotypes)
 copy_method_doc(GenotypeChunkedArray.to_n_ref, GenotypeArray.to_n_ref)
 copy_method_doc(GenotypeChunkedArray.to_n_alt, GenotypeArray.to_n_alt)
 copy_method_doc(GenotypeChunkedArray.to_allele_counts,
@@ -1223,3 +1235,12 @@ class AlleleCountsChunkedArray(ChunkedArray):
     def n_alleles(self):
         """Number of alleles (length of second array dimension)."""
         return self.shape[1]
+
+
+# TODO finish array classes
+## HaplotypeChunkedArray
+## AlleleCountsChunkedArray
+# TODO write table classes
+## ChunkedTable
+## VariantChunkedTable
+## FeatureChunkedTable

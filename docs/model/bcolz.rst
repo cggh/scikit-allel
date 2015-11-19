@@ -1,6 +1,8 @@
 Compressed arrays (bcolz)
 =========================
 
+TODO delete me
+
 .. automodule:: allel.model.bcolz
 
 GenotypeCArray

@@ -22,10 +22,10 @@ from allel.model.chunked import GenotypeChunkedArray, numpy_backend, \
 class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     _class = GenotypeChunkedArray
-    
+
     def setUp(self):
         allel.model.chunked.default_backend = numpy_backend
-        
+
     def setup_instance(self, data):
         data = allel.model.chunked.default_backend.create(data)
         return GenotypeChunkedArray(data)
