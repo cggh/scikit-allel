@@ -2,10 +2,6 @@
 from __future__ import absolute_import, print_function, division
 
 
-import operator
-import sys
-
-
 import numpy as np
 
 
@@ -38,11 +34,14 @@ def get_chunklen(data):
         return max(1, (2**16) // row.nbytes)
 
 
-def get_column_names(data):
-    if hasattr(data, 'names'):
-        return data.names
-    elif hasattr(data, 'keys'):
-        return list(data.keys())
+def get_column_names(tbl):
+    if hasattr(tbl, 'names'):
+        return tbl.names
+    elif hasattr(tbl, 'keys'):
+        return list(tbl.keys())
+    elif hasattr(tbl, 'dtype') and hasattr(tbl.dtype, 'names') and \
+            tbl.dtype.names:
+        return tbl.dtype.names
     else:
         raise ValueError('could not get column names')
 
@@ -56,13 +55,13 @@ class Backend(object):
     def create(self, data, expectedlen=None, **kwargs):
         pass
 
-    def append(self, charr, data):
+    def append(self, arr, data):
         pass
 
     def create_table(self, data, expectedlen=None, **kwargs):
         pass
 
-    def append_table(self, chtbl, data):
+    def append_table(self, tbl, data):
         pass
 
     def copy(self, data, start=0, stop=None, blen=None, **kwargs):
@@ -93,8 +92,8 @@ class Backend(object):
 
         return out
 
-    def store(self, data, sink, start=0, stop=None, offset=0, blen=None):
-        """Copy `data` block-wise into `sink`."""
+    def store(self, data, arr, start=0, stop=None, offset=0, blen=None):
+        """Copy `data` block-wise into `arr`."""
 
         # check arguments
         if stop is None:
@@ -107,13 +106,13 @@ class Backend(object):
 
         # block size for iteration
         if blen is None:
-            blen = get_chunklen(sink)
+            blen = get_chunklen(arr)
 
         # copy block-wise
         for i in range(start, stop, blen):
             j = min(i+blen, stop)
             l = j-i
-            sink[offset:offset+l] = data[i:j]
+            arr[offset:offset+l] = data[i:j]
             offset += l
 
     def reduce_axis(self, data, reducer, block_reducer, mapper=None,
@@ -223,7 +222,7 @@ class Backend(object):
 
         return out
 
-    def map_blocks_into_table(self, data, mapper, blen=None, **kwargs):
+    def dict_map_blocks(self, data, mapper, blen=None, **kwargs):
 
         # check inputs
         if isinstance(data, tuple):
@@ -255,9 +254,12 @@ class Backend(object):
 
             # store
             if out is None:
-                out = self.create_table(res, expectedlen=length, **kwargs)
+                out = dict()
+                for k, v in res.items():
+                    out[k] = self.create(v, expectedlen=length, **kwargs)
             else:
-                out = self.append_table(out, res)
+                for k, v in res.items():
+                    out[k] = self.append(out[k], v)
 
         return out
 
@@ -434,3 +436,79 @@ class Backend(object):
                     out = self.append(out, res)
 
         return out
+
+    def hstack(self, tup, blen=None, **kwargs):
+
+        # check inputs
+        if not isinstance(tup, (tuple, list)):
+            raise ValueError('expected tuple or list, found %r' % tup)
+        if len(tup) < 2:
+            raise ValueError('expected two or more arrays to stack')
+
+        def mapper(*blocks):
+            return np.hstack(blocks)
+
+        return self.map_blocks(tup, mapper, blen=blen, **kwargs)
+
+    def vstack(self, tup, blen=None, **kwargs):
+
+        # check inputs
+        if not isinstance(tup, (tuple, list)):
+            raise ValueError('expected tuple or list, found %r' % tup)
+        if len(tup) < 2:
+            raise ValueError('expected two or more arrays to stack')
+
+        # set block size to use
+        if blen is None:
+            blen = min([get_chunklen(a) for a in tup])
+
+        # build output
+        expectedlen = sum(len(a) for a in tup)
+        out = None
+        for a in tup:
+            for i in range(0, len(a), blen):
+                j = min(i+blen, len(a))
+                block = np.asarray(a[i:j])
+                if out is None:
+                    out = self.create(block, expectedlen=expectedlen, **kwargs)
+                else:
+                    out = self.append(out, block)
+        return out
+
+    def vstack_table(self, tup, blen=None, **kwargs):
+
+        # check inputs
+        if not isinstance(tup, (tuple, list)):
+            raise ValueError('expected tuple or list, found %r' % tup)
+        if len(tup) < 2:
+            raise ValueError('expected two or more tables to stack')
+
+        # set block size to use
+        if blen is None:
+            blen = min([get_chunklen_table(t) for t in tup])
+
+        # build output
+        expectedlen = sum(len(t) for t in tup)
+        out = None
+        for t in tup:
+            for i in range(0, len(t), blen):
+                j = min(i+blen, len(t))
+                block = np.asarray(t[i:j])
+                if out is None:
+                    out = self.create_table(block, expectedlen=expectedlen,
+                                            **kwargs)
+                else:
+                    out = self.append_table(out, block)
+        return out
+
+    def op_scalar(self, data, op, other, blen=None, **kwargs):
+
+        # check inputs
+        if not np.isscalar(other):
+            raise ValueError('expected scalar')
+
+        def mapper(block):
+            return op(block, other)
+
+        return self.map_blocks(data, mapper, blen=blen, **kwargs)
+
