@@ -15,7 +15,7 @@ from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, HaplotypeArrayInterface, \
     haplotype_data, allele_counts_data, AlleleCountsArrayInterface
-import allel.model.chunked
+import allel.model.chunked.model
 from allel.model.chunked import GenotypeChunkedArray, numpy_backend, \
     bcolz_backend, h5mem_backend, h5tmp_backend, bcolz_gzip1_backend, \
     bcolztmp_backend, HaplotypeChunkedArray, AlleleCountsChunkedArray
@@ -26,10 +26,10 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
     _class = GenotypeChunkedArray
 
     def setUp(self):
-        allel.model.chunked.default_backend = numpy_backend
+        allel.model.chunked.model.default_backend = numpy_backend
 
     def setup_instance(self, data):
-        data = allel.model.chunked.default_backend.create(data)
+        data = allel.model.chunked.model.default_backend.create(data)
         return GenotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -123,7 +123,7 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
 class GenotypeChunkedArrayTestsBColzBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = bcolz_backend
+        allel.model.chunked.model.default_backend = bcolz_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -134,7 +134,7 @@ class GenotypeChunkedArrayTestsBColzBackend(GenotypeChunkedArrayTests):
 class GenotypeChunkedArrayTestsBColzGzipBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = bcolz_gzip1_backend
+        allel.model.chunked.model.default_backend = bcolz_gzip1_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -146,7 +146,7 @@ class GenotypeChunkedArrayTestsBColzGzipBackend(GenotypeChunkedArrayTests):
 class GenotypeChunkedArrayTestsBColzTmpBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = bcolztmp_backend
+        allel.model.chunked.model.default_backend = bcolztmp_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -157,7 +157,7 @@ class GenotypeChunkedArrayTestsBColzTmpBackend(GenotypeChunkedArrayTests):
 class GenotypeChunkedArrayTestsH5tmpBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = h5tmp_backend
+        allel.model.chunked.model.default_backend = h5tmp_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -167,7 +167,7 @@ class GenotypeChunkedArrayTestsH5tmpBackend(GenotypeChunkedArrayTests):
 class GenotypeChunkedArrayTestsH5memBackend(GenotypeChunkedArrayTests):
 
     def setUp(self):
-        allel.model.chunked.default_backend = h5mem_backend
+        allel.model.chunked.model.default_backend = h5mem_backend
 
     def test_backend(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -179,7 +179,7 @@ class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
     _class = HaplotypeChunkedArray
 
     def setup_instance(self, data):
-        data = allel.model.chunked.default_backend.create(data)
+        data = allel.model.chunked.model.default_backend.create(data)
         return HaplotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -253,7 +253,7 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
     _class = AlleleCountsChunkedArray
 
     def setup_instance(self, data):
-        data = allel.model.chunked.default_backend.create(data)
+        data = allel.model.chunked.model.default_backend.create(data)
         return AlleleCountsChunkedArray(data)
 
     def test_constructor(self):

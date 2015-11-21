@@ -89,6 +89,9 @@ def h5dtmp(*args, **kwargs):
 
 class H5Backend(Backend):
 
+    def __init(self, **kwargs):
+        self.defaults = kwargs
+
     def create_h5f(self):
         pass
 
@@ -101,7 +104,7 @@ class H5Backend(Backend):
 
         # by default, simple chunking across rows
         data = np.asarray(data)
-        rowsize = data.dtype.itemsize * reduce(operator.mul(data.shape[1:]))
+        rowsize = data.dtype.itemsize * reduce(operator.mul, data.shape[1:], 1)
         chunklen = max(1, (2**16) // rowsize)
         chunks = (chunklen,) + data.shape[1:]
         kwargs.setdefault('chunks', chunks)

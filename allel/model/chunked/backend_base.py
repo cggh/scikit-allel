@@ -30,7 +30,7 @@ def get_chunklen(data):
 
     else:
         # fall back to something simple, ~64k chunks
-        row = np.asarray(data[0])
+        row = np.asanyarray(data[0])
         return max(1, (2**16) // row.nbytes)
 
 
@@ -84,7 +84,7 @@ class Backend(object):
         out = None
         for i in range(start, stop, blen):
             j = min(i+blen, stop)
-            block = np.asarray(data[i:j])
+            block = np.asanyarray(data[i:j])
             if out is None:
                 out = self.create(block, expectedlen=length, **kwargs)
             else:
@@ -134,7 +134,7 @@ class Backend(object):
             out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
-                block = np.asarray(data[i:j])
+                block = np.asanyarray(data[i:j])
                 if mapper:
                     block = mapper(block)
                 res = reducer(block, axis=axis)
@@ -154,7 +154,7 @@ class Backend(object):
             out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
-                block = np.asarray(data[i:j])
+                block = np.asanyarray(data[i:j])
                 if mapper:
                     block = mapper(block)
                 r = reducer(block, axis=axis)
@@ -207,9 +207,9 @@ class Backend(object):
 
             # obtain blocks
             if isinstance(data, tuple):
-                blocks = [np.asarray(a[i:j]) for a in data]
+                blocks = [np.asanyarray(a[i:j]) for a in data]
             else:
-                blocks = np.asarray(data[i:j]),
+                blocks = np.asanyarray(data[i:j]),
 
             # map
             res = mapper(*blocks)
@@ -245,9 +245,9 @@ class Backend(object):
 
             # obtain blocks
             if isinstance(data, tuple):
-                blocks = [np.asarray(a[i:j]) for a in data]
+                blocks = [np.asanyarray(a[i:j]) for a in data]
             else:
-                blocks = np.asarray(data[i:j]),
+                blocks = np.asanyarray(data[i:j]),
 
             # map
             res = mapper(*blocks)
@@ -280,11 +280,11 @@ class Backend(object):
             out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
-                bcond = np.asarray(condition[i:j])
+                bcond = np.asanyarray(condition[i:j])
                 # don't bother doing anything unless we have to
                 n = np.count_nonzero(bcond)
                 if n:
-                    block = np.asarray(data[i:j])
+                    block = np.asanyarray(data[i:j])
                     res = np.compress(bcond, block, axis=0)
                     if out is None:
                         out = self.create(res, expectedlen=cond_nnz, **kwargs)
@@ -296,10 +296,10 @@ class Backend(object):
 
             # block iteration
             out = None
-            condition = np.asarray(condition)
+            condition = np.asanyarray(condition)
             for i in range(0, length, blen):
                 j = min(i+blen, length)
-                block = np.asarray(data[i:j])
+                block = np.asanyarray(data[i:j])
                 res = np.compress(condition, block, axis=1)
                 if out is None:
                     out = self.create(res, expectedlen=length, **kwargs)
@@ -326,11 +326,11 @@ class Backend(object):
         out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            bcond = np.asarray(condition[i:j])
+            bcond = np.asanyarray(condition[i:j])
             # don't bother doing anything unless we have to
             n = np.count_nonzero(bcond)
             if n:
-                block = np.asarray(data[i:j])
+                block = np.asanyarray(data[i:j])
                 res = np.compress(bcond, block, axis=0)
                 if out is None:
                     out = self.create_table(res, expectedlen=cond_nnz,
@@ -343,7 +343,7 @@ class Backend(object):
 
         # check inputs
         length = len(data)
-        indices = np.asarray(indices)
+        indices = np.asanyarray(indices)
 
         # block size for iteration
         if blen is None:
@@ -368,7 +368,7 @@ class Backend(object):
             out = None
             for i in range(0, length, blen):
                 j = min(i+blen, length)
-                block = np.asarray(data[i:j])
+                block = np.asanyarray(data[i:j])
                 res = np.take(block, indices, axis=1)
                 if out is None:
                     out = self.create(res, expectedlen=length, **kwargs)
@@ -383,7 +383,7 @@ class Backend(object):
 
         # check inputs
         length = len(data)
-        indices = np.asarray(indices)
+        indices = np.asanyarray(indices)
 
         # check that indices are strictly increasing
         if np.any(indices[1:] <= indices[:-1]):
@@ -400,8 +400,8 @@ class Backend(object):
 
         # check inputs
         length = len(data)
-        sel0 = np.asarray(sel0)
-        sel1 = np.asarray(sel1)
+        sel0 = np.asanyarray(sel0)
+        sel1 = np.asanyarray(sel1)
 
         # ensure boolean array for dim 0
         if sel0.shape[0] < length:
@@ -428,7 +428,7 @@ class Backend(object):
             # don't bother doing anything unless we have to
             n = np.count_nonzero(bsel0)
             if n:
-                block = np.asarray(data[i:j])
+                block = np.asanyarray(data[i:j])
                 res = subset(block, bsel0, sel1)
                 if out is None:
                     out = self.create(res, expectedlen=sel0_nnz, **kwargs)
@@ -468,7 +468,7 @@ class Backend(object):
         for a in tup:
             for i in range(0, len(a), blen):
                 j = min(i+blen, len(a))
-                block = np.asarray(a[i:j])
+                block = np.asanyarray(a[i:j])
                 if out is None:
                     out = self.create(block, expectedlen=expectedlen, **kwargs)
                 else:
@@ -493,7 +493,7 @@ class Backend(object):
         for t in tup:
             for i in range(0, len(t), blen):
                 j = min(i+blen, len(t))
-                block = np.asarray(t[i:j])
+                block = np.asanyarray(t[i:j])
                 if out is None:
                     out = self.create_table(block, expectedlen=expectedlen,
                                             **kwargs)
