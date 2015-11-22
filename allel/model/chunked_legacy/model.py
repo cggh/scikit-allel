@@ -59,79 +59,8 @@ def get_backend(backend=None):
                          % backend)
 
 
-def is_array_like(a):
-    return hasattr(a, 'shape') and hasattr(a, 'dtype')
-
-
-def check_array_like(a, ndim=None):
-    if isinstance(a, tuple):
-        for x in a:
-            check_array_like(x)
-    else:
-        if not is_array_like(a):
-            raise ValueError(
-                'expected array-like with shape and dtype, found %r' % a
-            )
-        if ndim is not None and len(a.shape) != ndim:
-            raise ValueError(
-                'expected array-like with %s dimensions, found %s' %
-                (ndim, len(a.shape))
-            )
-
 
 class ChunkedArray(object):
-
-    def __init__(self, data):
-        check_array_like(data)
-        self.data = data
-
-    def __getitem__(self, *args):
-        return self.data.__getitem__(*args)
-
-    def __setitem__(self, key, value):
-        return self.data.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        return getattr(self.data, item)
-
-    def __array__(self):
-        return np.asarray(self.data[:])
-
-    def __repr__(self):
-        return '%s(%s, %s, %s.%s)' % \
-               (type(self).__name__, str(self.shape), str(self.dtype),
-                type(self.data).__module__, type(self.data).__name__)
-
-    def __str__(self):
-        return str(self.data)
-
-    def __len__(self):
-        return len(self.data)
-
-    @property
-    def ndim(self):
-        return len(self.shape)
-
-    def store(self, arr, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        backend.store(self, arr, **kwargs)
-
-    def copy(self, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        out = backend.copy(self, **kwargs)
-        return type(self)(out)
-
-    def max(self, axis=None, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        return backend.amax(self, axis=axis, **kwargs)
-
-    def min(self, axis=None, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        return backend.amin(self, axis=axis, **kwargs)
-
-    def sum(self, axis=None, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        return backend.sum(self, axis=axis, **kwargs)
 
     def op_scalar(self, op, other, **kwargs):
         backend = get_backend(kwargs.pop('backend', None))
@@ -141,68 +70,7 @@ class ChunkedArray(object):
     def __eq__(self, other, **kwargs):
         return self.op_scalar(operator.eq, other, **kwargs)
 
-    def __ne__(self, other, **kwargs):
-        return self.op_scalar(operator.ne, other, **kwargs)
 
-    def __lt__(self, other, **kwargs):
-        return self.op_scalar(operator.lt, other, **kwargs)
-
-    def __gt__(self, other, **kwargs):
-        return self.op_scalar(operator.gt, other, **kwargs)
-
-    def __le__(self, other, **kwargs):
-        return self.op_scalar(operator.le, other, **kwargs)
-
-    def __ge__(self, other, **kwargs):
-        return self.op_scalar(operator.ge, other, **kwargs)
-
-    def __add__(self, other, **kwargs):
-        return self.op_scalar(operator.add, other, **kwargs)
-
-    def __floordiv__(self, other, **kwargs):
-        return self.op_scalar(operator.floordiv, other, **kwargs)
-
-    def __mod__(self, other, **kwargs):
-        return self.op_scalar(operator.mod, other, **kwargs)
-
-    def __mul__(self, other, **kwargs):
-        return self.op_scalar(operator.mul, other, **kwargs)
-
-    def __pow__(self, other, **kwargs):
-        return self.op_scalar(operator.pow, other, **kwargs)
-
-    def __sub__(self, other, **kwargs):
-        return self.op_scalar(operator.sub, other, **kwargs)
-
-    def __truediv__(self, other, **kwargs):
-        return self.op_scalar(operator.truediv, other, **kwargs)
-
-    def compress(self, condition, axis=0, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        out = backend.compress(self, condition, axis=axis, **kwargs)
-        return type(self)(out)
-
-    def take(self, indices, axis=0, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        out = backend.take(self, indices, axis=axis, **kwargs)
-        return type(self)(out)
-
-    def subset(self, sel0, sel1, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        out = backend.subset(self, sel0, sel1, **kwargs)
-        return type(self)(out)
-
-    def hstack(self, *others, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        tup = (self,) + others
-        out = backend.hstack(tup, **kwargs)
-        return type(self)(out)
-
-    def vstack(self, *others, **kwargs):
-        backend = get_backend(kwargs.pop('backend', None))
-        tup = (self,) + others
-        out = backend.vstack(tup, **kwargs)
-        return type(self)(out)
 
 
 class GenotypeChunkedArray(ChunkedArray):

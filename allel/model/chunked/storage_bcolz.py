@@ -5,6 +5,7 @@ import atexit
 import shutil
 
 
+import numpy as np
 import bcolz
 
 
@@ -22,9 +23,21 @@ class BcolzStorage(object):
         kwargs = self._set_defaults(kwargs)
         return bcolz.carray(data, expectedlen=expectedlen, **kwargs)
 
-    def table(self, data, expectedlen=None, **kwargs):
+    def table(self, data, names=None, expectedlen=None, **kwargs):
         kwargs = self._set_defaults(kwargs)
-        return bcolz.ctable(data, expectedlen=expectedlen, **kwargs)
+        if isinstance(data, (list, tuple)):
+            # sequence of columns
+            columns = data
+        elif isinstance(data, np.ndarray):
+            # recarray
+            columns = data
+        elif hasattr(data, 'keys'):
+            # dict-like
+            if names is None:
+                names = list(data.keys())
+            columns = [data[n] for n in names]
+        return bcolz.ctable(columns, names=names, expectedlen=expectedlen,
+                            **kwargs)
 
 
 class BcolzMemStorage(BcolzStorage):
