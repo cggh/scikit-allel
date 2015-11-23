@@ -7,7 +7,7 @@ from collections import namedtuple
 import numpy as np
 
 
-from allel.compat import string_types, integer_types
+from allel.compat import string_types, integer_types, range
 from allel.model.ndarray import recarray_to_html_str, recarray_display, \
     subset as _ndarray_subset
 from allel.model.chunked import util as _util
@@ -448,6 +448,62 @@ def binary_op(data, op, other, blen=None, storage=None, create='array',
         raise NotImplementedError('argument type not supported')
 
 
+def _get_expression_variables(expression, vm):
+    cexpr = compile(expression, '<string>', 'eval')
+    if vm == 'numexpr':
+        # Check that var is not a numexpr function here.  This is useful for
+        # detecting unbound variables in expressions.  This is not necessary
+        # for the 'python' engine.
+        from numexpr.expressions import functions as numexpr_functions
+        return [var for var in cexpr.co_names
+                if var not in ['None', 'False', 'True'] and
+                var not in numexpr_functions]
+    else:
+        return [var for var in cexpr.co_names
+                if var not in ['None', 'False', 'True']]
+
+
+def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
+               create='array', vm_kwargs=None, **kwargs):
+
+    # setup
+    storage = _util.get_storage(storage)
+    names, columns = _util.check_table_like(tbl)
+    length = len(columns[0])
+    if vm_kwargs is None:
+        vm_kwargs = dict()
+
+    # setup vm
+    if vm == 'numexpr':
+        import numexpr
+        evaluate = numexpr.evaluate
+    elif vm == 'python':
+        def evaluate(expr, local_dict=None, **ekw):
+            return eval(expr, locals=local_dict, **ekw)
+    else:
+        raise ValueError('expected vm either "numexpr" or "python"')
+
+    # compile expression and get required columns
+    variables = _get_expression_variables(expression, vm)
+    required_columns = {v: columns[names.index(v)] for v in variables}
+
+    # determine block size for evaluation
+    blen = _util.get_blen_table(required_columns, blen=blen)
+
+    # build output
+    out = None
+    for i in range(0, length, blen):
+        j = min(i+blen, length)
+        blocals = {v: c[i:j] for v, c in required_columns.items()}
+        res = evaluate(expression, local_dict=blocals, **vm_kwargs)
+        if out is None:
+            out = getattr(storage, create)(res, expectedlen=length, **kwargs)
+        else:
+            out.append(res)
+
+    return out
+
+
 class Array(object):
 
     def __init__(self, data):
@@ -464,7 +520,7 @@ class Array(object):
         return getattr(self.data, item)
 
     def __array__(self):
-        return np.asarray(self.data[:])
+        return self[:]
 
     def __repr__(self):
         return '%s(%s, %s, %s.%s)' % \
@@ -577,6 +633,8 @@ class Array(object):
 
 class Table(object):
 
+    view_cls = np.recarray
+
     def __init__(self, data, names=None):
         names, columns = _util.check_table_like(data, names=names)
         self.data = data
@@ -604,16 +662,19 @@ class Table(object):
             out = np.empty(outshape, dtype=self.dtype)
             for n, c in zip(self.names, self.columns):
                 out[n] = c[start:stop:step]
-            return out.view(np.recarray)
+            return out.view(self.view_cls)
 
         elif isinstance(item, (list, tuple)) and \
                 all(isinstance(i, string_types) for i in item):
             # item is sequence of column names, return table
             columns = [self.columns[self.names.index(n)] for n in item]
-            return Table(columns, names=item)
+            return type(self)(columns, names=item)
 
         else:
             raise NotImplementedError('item not suppored: %r' % item)
+
+    def __array__(self):
+        return self[:]
 
     def __getattr__(self, item):
         if item in self.names:
@@ -674,8 +735,18 @@ class Table(object):
         out = vstack_table(tup, **kwargs)
         return type(self)(out, names=self.names)
 
-    # TODO eval
-    # TODO query
+    def eval(self, expression, **kwargs):
+        out = eval_table(self, expression, **kwargs)
+        return Array(out)
+
+    def query(self, expression, vm='numexpr', blen=None, storage=None,
+              create='table', vm_kwargs=None, **kwargs):
+        condition = self.eval(expression, vm=vm, blen=blen, storage=storage,
+                              create='array', vm_kwargs=vm_kwargs)
+        out = self.compress(condition, blen=blen, storage=storage,
+                            create=create, **kwargs)
+        return out
+
     # TODO addcol (and __setitem__?)
     # TODO delcol (and __delitem__?)
     # TODO store

@@ -10,11 +10,14 @@ from nose.tools import assert_raises, eq_ as eq
 
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
-    AlleleCountsArray
+    AlleleCountsArray, VariantTable, FeatureTable
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.test_model_api import GenotypeArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, HaplotypeArrayInterface, \
-    haplotype_data, allele_counts_data, AlleleCountsArrayInterface
+    haplotype_data, allele_counts_data, AlleleCountsArrayInterface, \
+    VariantTableInterface, variant_table_data, variant_table_dtype, \
+    variant_table_names, feature_table_data, feature_table_dtype, \
+    feature_table_names, FeatureTableInterface
 import allel.model.chunked as chunked
 
 
@@ -310,3 +313,135 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
         self.assertNotIsInstance(s, chunked.AlleleCountsChunkedArray)
         self.assertNotIsInstance(s, AlleleCountsArray)
         self.assertIsInstance(s, np.uint16)
+
+
+class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
+
+    _class = chunked.VariantChunkedTable
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return chunked.VariantChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = self.setup_instance(a)
+        assert isinstance(vt.data, bcolz.ctable)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            chunked.VariantChunkedTable()
+
+        # recarray
+        ra = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = chunked.VariantChunkedTable(ra)
+        eq(5, len(vt))
+        aeq(ra, vt)
+
+        # dict
+        d = {n: ra[n] for n in variant_table_names}
+        vt = chunked.VariantChunkedTable(d, names=variant_table_names)
+        eq(5, len(vt))
+        aeq(ra, vt)
+
+    def test_slice_types(self):
+        ra = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = chunked.VariantChunkedTable(ra)
+
+        # row slice
+        s = vt[1:]
+        self.assertNotIsInstance(s, chunked.VariantChunkedTable)
+        self.assertIsInstance(s, VariantTable)
+
+        # row index
+        s = vt[0]
+        self.assertNotIsInstance(s, chunked.VariantChunkedTable)
+        self.assertNotIsInstance(s, VariantTable)
+        self.assertIsInstance(s, (np.record, np.void, tuple))
+
+        # col access
+        s = vt['CHROM']
+        self.assertNotIsInstance(s, chunked.VariantChunkedTable)
+        self.assertNotIsInstance(s, VariantTable)
+        self.assertIsInstance(s, chunked.Array)
+
+    def test_take(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = chunked.VariantChunkedTable(a)
+        # take variants not in original order
+        # not supported for carrays
+        indices = [2, 0]
+        with assert_raises(NotImplementedError):
+            vt.take(indices)
+
+
+class VariantChunkedTableTestsHDF5Storage(VariantChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.hdf5mem_storage
+
+    def test_storage(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = self.setup_instance(a)
+        assert isinstance(vt.data, h5py.Group)
+
+
+class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
+
+    _class = chunked.FeatureChunkedTable
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return chunked.FeatureChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = self.setup_instance(a)
+        assert isinstance(vt.data, bcolz.ctable)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with self.assertRaises(TypeError):
+            chunked.FeatureChunkedTable()
+
+        # recarray
+        ra = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = chunked.FeatureChunkedTable(ra)
+        eq(6, len(ft))
+        aeq(ra, ft)
+
+        # dict
+        d = {n: ra[n] for n in feature_table_names}
+        ft = chunked.FeatureChunkedTable(d, names=feature_table_names)
+        eq(6, len(ft))
+        aeq(ra, ft)
+
+    def test_slice_types(self):
+        ra = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = chunked.FeatureChunkedTable(ra)
+
+        # row slice
+        s = ft[1:]
+        self.assertNotIsInstance(s, chunked.FeatureChunkedTable)
+        self.assertIsInstance(s, FeatureTable)
+
+        # row index
+        s = ft[0]
+        self.assertNotIsInstance(s, chunked.FeatureChunkedTable)
+        self.assertNotIsInstance(s, FeatureTable)
+        self.assertIsInstance(s, (np.record, np.void, tuple))
+
+        # col access
+        s = ft['seqid']
+        self.assertNotIsInstance(s, chunked.FeatureChunkedTable)
+        self.assertNotIsInstance(s, FeatureTable)
+        self.assertIsInstance(s, chunked.Array)

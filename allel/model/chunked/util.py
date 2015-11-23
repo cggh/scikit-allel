@@ -34,22 +34,16 @@ def is_array_like(a):
     return hasattr(a, 'shape') and hasattr(a, 'dtype')
 
 
-def ensure_array_like(*arrays, **kwargs):
-    out = list()
+def ensure_array_like(a, **kwargs):
     ndim = kwargs.get('ndim', None)
-    for a in arrays:
-        if not is_array_like(a):
-            a = np.asarray(a)
-        if ndim is not None and len(a.shape) != ndim:
-            raise ValueError(
-                'expected array-like with %s dimensions, found %s' %
-                (ndim, len(a.shape))
-            )
-        out.append(a)
-    if len(out) == 1:
-        return out[0]
-    else:
-        return tuple(out)
+    if not is_array_like(a):
+        a = np.asarray(a)
+    if ndim is not None and len(a.shape) != ndim:
+        raise ValueError(
+            'expected array-like with %s dimensions, found %s' %
+            (ndim, len(a.shape))
+        )
+    return a
 
 
 def check_table_like(data, names=None):
@@ -75,7 +69,7 @@ def check_table_like(data, names=None):
             names = list(data.keys())
         columns = [data[n] for n in names]
 
-    elif hasattr(data, 'dtype') and hasattr(data.type, 'names'):
+    elif hasattr(data, 'dtype') and hasattr(data.dtype, 'names'):
         # numpy recarray or similar
         if names is None:
             names = list(data.dtype.names)
@@ -84,7 +78,7 @@ def check_table_like(data, names=None):
     else:
         raise ValueError('invalid data: %r' % data)
 
-    columns = ensure_array_like(*columns)
+    columns = [ensure_array_like(c) for c in columns]
     check_equal_length(*columns)
     return names, columns
 
