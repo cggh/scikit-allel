@@ -29,7 +29,7 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
     def setup_instance(self, data):
-        data = chunked.storage_registry['default'].array(data)
+        data = chunked.storage_registry['default'].array(data, chunklen=2)
         return chunked.GenotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -127,6 +127,10 @@ class GenotypeChunkedArrayTestsBColzTmpStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.bcolztmp_storage
 
+    def setup_instance(self, data):
+        data = chunked.storage_registry['default'].array(data, chunklen=2)
+        return chunked.GenotypeChunkedArray(data)
+
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, bcolz.carray)
@@ -138,6 +142,10 @@ class GenotypeChunkedArrayTestsBColzCustomStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.BcolzMemStorage(
             cparams=bcolz.cparams(cname='zlib', clevel=1))
+
+    def setup_instance(self, data):
+        data = chunked.storage_registry['default'].array(data, chunklen=2)
+        return chunked.GenotypeChunkedArray(data)
 
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
@@ -151,6 +159,10 @@ class GenotypeChunkedArrayTestsHDF5MemStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.hdf5mem_storage
 
+    def setup_instance(self, data):
+        data = chunked.storage_registry['default'].array(data)
+        return chunked.GenotypeChunkedArray(data)
+
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, h5py.Dataset)
@@ -161,6 +173,10 @@ class GenotypeChunkedArrayTestsHDF5TmpStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.hdf5tmp_storage
 
+    def setup_instance(self, data):
+        data = chunked.storage_registry['default'].array(data)
+        return chunked.GenotypeChunkedArray(data)
+
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, h5py.Dataset)
@@ -170,8 +186,11 @@ class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
     _class = chunked.HaplotypeChunkedArray
 
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+
     def setup_instance(self, data):
-        data = chunked.storage_registry['default'].array(data)
+        data = chunked.storage_registry['default'].array(data, chunklen=2)
         return chunked.HaplotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -244,8 +263,11 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
 
     _class = chunked.AlleleCountsChunkedArray
 
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+
     def setup_instance(self, data):
-        data = chunked.storage_registry['default'].array(data)
+        data = chunked.storage_registry['default'].array(data, chunklen=2)
         return chunked.AlleleCountsChunkedArray(data)
 
     def test_constructor(self):
@@ -315,6 +337,16 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
         self.assertIsInstance(s, np.uint16)
 
 
+class AlleleCountsChunkedArrayTestsHDF5Mem(AlleleCountsChunkedArrayTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.hdf5mem_storage
+
+    def setup_instance(self, data):
+        data = chunked.storage_registry['default'].array(data)
+        return chunked.AlleleCountsChunkedArray(data)
+
+
 class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
 
     _class = chunked.VariantChunkedTable
@@ -323,7 +355,7 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data)
+        data = chunked.storage_registry['default'].table(data, chunklen=2)
         return chunked.VariantChunkedTable(data, **kwargs)
 
     def test_storage(self):
@@ -368,7 +400,7 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
         s = vt['CHROM']
         self.assertNotIsInstance(s, chunked.VariantChunkedTable)
         self.assertNotIsInstance(s, VariantTable)
-        self.assertIsInstance(s, chunked.Array)
+        self.assertIsInstance(s, chunked.ChunkedArray)
 
     def test_take(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -384,6 +416,10 @@ class VariantChunkedTableTestsHDF5Storage(VariantChunkedTableTests):
 
     def setUp(self):
         chunked.storage_registry['default'] = chunked.hdf5mem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return chunked.VariantChunkedTable(data, **kwargs)
 
     def test_storage(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -444,4 +480,4 @@ class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
         s = ft['seqid']
         self.assertNotIsInstance(s, chunked.FeatureChunkedTable)
         self.assertNotIsInstance(s, FeatureTable)
-        self.assertIsInstance(s, chunked.Array)
+        self.assertIsInstance(s, chunked.ChunkedArray)

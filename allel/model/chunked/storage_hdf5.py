@@ -31,15 +31,14 @@ def h5fmem(**kwargs):
     return h5f
 
 
-# noinspection PyShadowingBuiltins
 def h5ftmp(**kwargs):
     """Create an HDF5 file backed by a temporary file."""
 
     # create temporary file name
     suffix = kwargs.pop('suffix', '.h5')
     prefix = kwargs.pop('prefix', 'scikit_allel_')
-    dir = kwargs.pop('dir', None)
-    fn = tempfile.mktemp(suffix=suffix, prefix=prefix, dir=dir)
+    tempdir = kwargs.pop('dir', None)
+    fn = tempfile.mktemp(suffix=suffix, prefix=prefix, dir=tempdir)
     atexit.register(os.remove, fn)
 
     # file creation args
@@ -71,7 +70,7 @@ class HDF5Storage(object):
     def __init(self, **kwargs):
         self.defaults = kwargs
 
-    def create_h5f(self):
+    def create_h5f(self, **kwargs):
         pass
 
     def create_h5d(self, h5g, data=None, **kwargs):
@@ -87,7 +86,8 @@ class HDF5Storage(object):
             # by default, simple chunking across rows
             rowsize = data.dtype.itemsize * reduce(operator.mul,
                                                    data.shape[1:], 1)
-            chunklen = max(1, (2**16) // rowsize)
+            # by default, 1Mb chunks
+            chunklen = max(1, (2**20) // rowsize)
             chunks = (chunklen,) + data.shape[1:]
             kwargs.setdefault('chunks', chunks)
 
@@ -108,7 +108,7 @@ class HDF5Storage(object):
         # ignore expectedlen for now
         data = _util.ensure_array_like(data)
         # use root group
-        h5g = self.create_h5f()
+        h5g, kwargs = self.create_h5f(**kwargs)
         h5d = self.create_h5d(h5g, data=data, **kwargs)
         return h5d
 
@@ -117,7 +117,7 @@ class HDF5Storage(object):
         # ignore expectedlen for now
         names, columns = _util.check_table_like(data, names=names)
         # use root group
-        h5g = self.create_h5f()
+        h5g, kwargs = self.create_h5f(**kwargs)
         for n, c in zip(names, columns):
             self.create_h5d(h5g, data=c, name=n, **kwargs)
         # patch in append method
@@ -132,8 +132,8 @@ class HDF5MemStorage(HDF5Storage):
     def __init__(self, **kwargs):
         self.defaults = kwargs
 
-    def create_h5f(self):
-        return h5fmem()
+    def create_h5f(self, **kwargs):
+        return h5fmem(), kwargs
 
 
 class HDF5TmpStorage(HDF5Storage):
@@ -141,11 +141,18 @@ class HDF5TmpStorage(HDF5Storage):
     def __init__(self, **kwargs):
         self.defaults = kwargs
 
-    def create_h5f(self):
-        return h5ftmp()
+    def create_h5f(self, **kwargs):
+        suffix = kwargs.pop('suffix', '.h5')
+        prefix = kwargs.pop('prefix', 'scikit_allel_')
+        tempdir = kwargs.pop('dir', None)
+        return h5ftmp(dir=tempdir, suffix=suffix, prefix=prefix), kwargs
 
 
 hdf5mem_storage = HDF5MemStorage()
 hdf5tmp_storage = HDF5TmpStorage()
+hdf5mem_zlib1_storage = HDF5MemStorage(compression='gzip', compression_opts=1)
+hdf5tmp_zlib1_storage = HDF5TmpStorage(compression='gzip', compression_opts=1)
 _util.storage_registry['hdf5mem'] = hdf5mem_storage
 _util.storage_registry['hdf5tmp'] = hdf5tmp_storage
+_util.storage_registry['hdf5mem_zlib1'] = hdf5mem_zlib1_storage
+_util.storage_registry['hdf5tmp_zlib1'] = hdf5tmp_zlib1_storage

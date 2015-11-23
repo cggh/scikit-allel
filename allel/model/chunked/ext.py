@@ -15,7 +15,7 @@ from allel.model.chunked import util as _util
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
-class GenotypeChunkedArray(_core.Array):
+class GenotypeChunkedArray(_core.ChunkedArray):
 
     def __init__(self, data):
         super(GenotypeChunkedArray, self).__init__(data)
@@ -79,7 +79,7 @@ class GenotypeChunkedArray(_core.Array):
             raise ValueError('mask has incorrect shape')
 
         # store
-        self._mask = _core.Array(mask)
+        self._mask = _core.ChunkedArray(mask)
 
     def fill_masked(self, value=-1, **kwargs):
         def f(block):
@@ -111,43 +111,43 @@ class GenotypeChunkedArray(_core.Array):
         def f(block):
             return block.is_called()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_missing(self, **kwargs):
         def f(block):
             return block.is_missing()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_hom(self, allele=None, **kwargs):
         def f(block):
             return block.is_hom(allele=allele)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_hom_ref(self, **kwargs):
         def f(block):
             return block.is_hom_ref()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_hom_alt(self, **kwargs):
         def f(block):
             return block.is_hom_alt()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_het(self, allele=None, **kwargs):
         def f(block):
             return block.is_het(allele=allele)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_call(self, call, **kwargs):
         def f(block):
             return block.is_call(call)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def count_called(self, axis=None, **kwargs):
         def mapper(block):
@@ -201,13 +201,13 @@ class GenotypeChunkedArray(_core.Array):
         def f(block):
             return block.to_n_ref(fill=fill, dtype=dtype)
         out = self.apply(f, dtype=dtype, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def to_n_alt(self, fill=0, dtype='i1', **kwargs):
         def f(block):
             return block.to_n_alt(fill=fill, dtype=dtype)
         out = self.apply(f, dtype=dtype, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def to_allele_counts(self, alleles=None, **kwargs):
         # determine alleles to count
@@ -218,13 +218,13 @@ class GenotypeChunkedArray(_core.Array):
         def f(block):
             return block.to_allele_counts(alleles)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def to_packed(self, boundscheck=True, **kwargs):
         def f(block):
             return block.to_packed(boundscheck=boundscheck)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     @staticmethod
     def from_packed(packed, **kwargs):
@@ -256,7 +256,7 @@ class GenotypeChunkedArray(_core.Array):
         def f(block):
             return block.to_gt(phased=phased, max_allele=max_allele)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def map_alleles(self, mapping, **kwargs):
         def f(block, bmapping):
@@ -294,7 +294,7 @@ copy_method_doc(GenotypeChunkedArray.hstack, GenotypeArray.hstack)
 copy_method_doc(GenotypeChunkedArray.vstack, GenotypeArray.vstack)
 
 
-class HaplotypeChunkedArray(_core.Array):
+class HaplotypeChunkedArray(_core.ChunkedArray):
 
     def __init__(self, data):
         super(HaplotypeChunkedArray, self).__init__(data)
@@ -420,7 +420,7 @@ copy_method_doc(HaplotypeChunkedArray.count_alleles_subpops,
 copy_method_doc(HaplotypeChunkedArray.map_alleles, HaplotypeArray.map_alleles)
 
 
-class AlleleCountsChunkedArray(_core.Array):
+class AlleleCountsChunkedArray(_core.ChunkedArray):
 
     def __init__(self, data):
         super(AlleleCountsChunkedArray, self).__init__(data)
@@ -456,55 +456,55 @@ class AlleleCountsChunkedArray(_core.Array):
         def f(block):
             return block.to_frequencies(fill=fill)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def allelism(self, **kwargs):
         def f(block):
             return block.allelism()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def max_allele(self, **kwargs):
         def f(block):
             return block.max_allele()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_variant(self, **kwargs):
         def f(block):
             return block.is_variant()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_non_variant(self, **kwargs):
         def f(block):
             return block.is_non_variant()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_segregating(self, **kwargs):
         def f(block):
             return block.is_segregating()
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_non_segregating(self, allele=None, **kwargs):
         def f(block):
             return block.is_non_segregating(allele=allele)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_singleton(self, allele=1, **kwargs):
         def f(block):
             return block.is_singleton(allele=allele)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def is_doubleton(self, allele=1, **kwargs):
         def f(block):
             return block.is_doubleton(allele=allele)
         out = self.apply(f, **kwargs)
-        return _core.Array(out)
+        return _core.ChunkedArray(out)
 
     def count_variant(self, **kwargs):
         def mapper(block):
@@ -557,7 +557,7 @@ copy_method_doc(AlleleCountsChunkedArray.map_alleles,
                 AlleleCountsArray.map_alleles)
 
 
-class VariantChunkedTable(_core.Table):
+class VariantChunkedTable(_core.ChunkedTable):
 
     view_cls = VariantTable
 
@@ -594,7 +594,7 @@ class VariantChunkedTable(_core.Table):
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
 
 
-class FeatureChunkedTable(_core.Table):
+class FeatureChunkedTable(_core.ChunkedTable):
 
     view_cls = FeatureTable
 
@@ -647,7 +647,7 @@ class FeatureChunkedTable(_core.Table):
         return out
 
 
-class AlleleCountsChunkedTable(_core.Table):
+class AlleleCountsChunkedTable(_core.ChunkedTable):
 
     def __getitem__(self, item):
         out = super(AlleleCountsChunkedTable, self).__getitem__(item)

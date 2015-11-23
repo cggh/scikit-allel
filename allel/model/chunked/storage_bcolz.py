@@ -45,14 +45,13 @@ class BcolzMemStorage(BcolzStorage):
 
 class BcolzTmpStorage(BcolzStorage):
 
-    # noinspection PyShadowingBuiltins
     def _set_defaults(self, kwargs):
         for k, v in self.defaults.items():
             kwargs.setdefault(k, v)
         suffix = kwargs.pop('suffix', '.bcolz')
         prefix = kwargs.pop('prefix', 'scikit_allel_')
-        dir = kwargs.pop('dir', None)
-        rootdir = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+        tempdir = kwargs.pop('dir', None)
+        rootdir = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=tempdir)
         atexit.register(shutil.rmtree, rootdir)
         kwargs['rootdir'] = rootdir
         kwargs['mode'] = 'w'
@@ -61,5 +60,10 @@ class BcolzTmpStorage(BcolzStorage):
 
 bcolzmem_storage = BcolzMemStorage()
 bcolztmp_storage = BcolzTmpStorage()
+_zlib1 = bcolz.cparams(cname='zlib', clevel=1)
+bcolzmem_zlib1_storage = BcolzMemStorage(cparams=_zlib1)
+bcolztmp_zlib1_storage = BcolzTmpStorage(cparams=_zlib1)
 _util.storage_registry['bcolzmem'] = bcolzmem_storage
 _util.storage_registry['bcolztmp'] = bcolztmp_storage
+_util.storage_registry['bcolzmem_zlib1'] = bcolzmem_zlib1_storage
+_util.storage_registry['bcolztmp_zlib1'] = bcolztmp_zlib1_storage

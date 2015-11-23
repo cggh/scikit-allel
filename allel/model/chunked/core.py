@@ -504,7 +504,7 @@ def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
     return out
 
 
-class Array(object):
+class ChunkedArray(object):
 
     def __init__(self, data):
         data = _util.ensure_array_like(data)
@@ -589,7 +589,7 @@ class Array(object):
                   **kwargs):
         out = binary_op(self, op, other, blen=blen, storage=storage,
                         create=create, **kwargs)
-        return Array(out)
+        return ChunkedArray(out)
 
     def __eq__(self, other, **kwargs):
         return self.binary_op(operator.eq, other, **kwargs)
@@ -631,7 +631,7 @@ class Array(object):
         return self.binary_op(operator.truediv, other, **kwargs)
 
 
-class Table(object):
+class ChunkedTable(object):
 
     view_cls = np.recarray
 
@@ -647,7 +647,7 @@ class Table(object):
         if isinstance(item, string_types):
             # item is column name, return column
             idx = self.names.index(item)
-            return Array(self.columns[idx])
+            return ChunkedArray(self.columns[idx])
 
         elif isinstance(item, integer_types):
             # item is row index, return row
@@ -679,7 +679,7 @@ class Table(object):
     def __getattr__(self, item):
         if item in self.names:
             idx = self.names.index(item)
-            return Array(self.columns[idx])
+            return ChunkedArray(self.columns[idx])
         else:
             raise AttributeError(item)
 
@@ -737,7 +737,7 @@ class Table(object):
 
     def eval(self, expression, **kwargs):
         out = eval_table(self, expression, **kwargs)
-        return Array(out)
+        return ChunkedArray(out)
 
     def query(self, expression, vm='numexpr', blen=None, storage=None,
               create='table', vm_kwargs=None, **kwargs):

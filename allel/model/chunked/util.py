@@ -99,9 +99,9 @@ def get_blen_array(data, blen=None):
             return data.chunks[0]
 
         else:
-            # fall back to something simple, ~64k chunks
+            # fall back to something simple, ~1Mb chunks
             row = np.asanyarray(data[0])
-            return max(1, (2**16) // row.nbytes)
+            return max(1, (2**20) // row.nbytes)
 
     else:
         return blen
