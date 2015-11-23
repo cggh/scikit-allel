@@ -273,7 +273,8 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
             chunked.AlleleCountsChunkedArray(data)
 
         # typed data (typed)
-        ac = chunked.AlleleCountsChunkedArray(np.array(allele_counts_data, dtype='u1'))
+        ac = chunked.AlleleCountsChunkedArray(np.array(allele_counts_data,
+                                                       dtype='u1'))
         aeq(allele_counts_data, ac)
         eq(np.uint8, ac.dtype)
 
