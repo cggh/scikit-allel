@@ -13,5 +13,5 @@ from allel.model.chunked import *
 
 
 # legacy
-from .bcolz import GenotypeCArray, HaplotypeCArray, \
+from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
     AlleleCountsCArray, AlleleCountsCTable, VariantCTable, FeatureCTable

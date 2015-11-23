@@ -7,93 +7,17 @@ from collections import namedtuple
 import numpy as np
 
 
-from allel.model.ndarray import recarray_to_html_str, recarray_display
-from allel.model.chunked.storage_bcolz import bcolzmem_storage, \
-    bcolztmp_storage
 from allel.compat import string_types, integer_types
-
-
-default_storage = bcolzmem_storage
-
-
-storage_registry = {
-    'bcolzmem': bcolzmem_storage,
-    'bcolztmp': bcolztmp_storage,
-    'hdf5mem': hdf5mem_storage,
-    'hdf5tmp': hdf5tmp_storage,
-}
-
-
-def _get_storage(storage=None):
-    if storage is None:
-        return default_storage
-    elif isinstance(storage, string_types):
-        # normalise storage name
-        storage = str(storage).lower()
-        return storage_registry[storage]
-    else:
-        # assume custom instance
-        return storage
-
-
-def _get_blen(data, blen=None):
-    """Try to guess a reasonable block length to use for block-wise iteration
-    over `data`."""
-
-    if blen is None:
-
-        if hasattr(data, 'chunklen'):
-            # bcolz carray
-            return data.chunklen
-
-        elif hasattr(data, 'chunks') and hasattr(data, 'shape') and \
-                len(data.chunks) == len(data.shape):
-            # h5py dataset
-            return data.chunks[0]
-
-        else:
-            # fall back to something simple, ~64k chunks
-            row = np.asanyarray(data[0])
-            return max(1, (2**16) // row.nbytes)
-
-    else:
-        return blen
-
-
-def _check_equal_length(*sequences):
-    s = sequences[0]
-    for t in sequences[1:]:
-        if len(t) != len(s):
-            raise ValueError('lengths do not match')
-
-
-def _get_column_names(data):
-    if hasattr(data, 'names'):
-        return data.names
-    elif hasattr(data, 'keys'):
-        return list(data.keys())
-    elif hasattr(data, 'dtype') and hasattr(data.dtype, 'names'):
-        return data.dtype.names
-    elif isinstance(data, (tuple, list)):
-        return ['f%d' % i for i in range(len(data))]
-    else:
-        raise ValueError('could not get column names')
-
-
-def _get_blen_table(data, blen=None):
-    if blen is None:
-        return min(_get_blen(data[n]) for n in _get_column_names(data))
-    else:
-        return blen
+from allel.model.ndarray import recarray_to_html_str, recarray_display, \
+    subset as _ndarray_subset
+from allel.model.chunked import util as _util
 
 
 def store(data, arr, start=0, stop=None, offset=0, blen=None):
     """Copy `data` block-wise into `arr`."""
 
-    # init
-    blen = _get_blen(data, blen)
-
-    # check arguments
+    # setup
+    blen = _util.get_blen_array(data, blen)
     if stop is None:
         stop = len(data)
     else:
@@ -114,11 +38,9 @@ def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
          **kwargs):
     """Copy `data` block-wise into a new array."""
 
-    # init
-    storage = _get_storage(storage)
-    blen = _get_blen(data, blen)
-
-    # check arguments
+    # setup
+    storage = _util.get_storage(storage)
+    blen = _util.get_blen_array(data, blen)
     if stop is None:
         stop = len(data)
     else:
@@ -142,14 +64,14 @@ def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
 
 def apply(data, f, blen=None, storage=None, create='array', **kwargs):
 
-    # init
-    storage = _get_storage(storage)
+    # setup
+    storage = _util.get_storage(storage)
     if isinstance(data, tuple):
-        blen = min(_get_blen(d, blen) for d in data)
+        blen = min(_util.get_blen_array(d, blen) for d in data)
     else:
-        blen = _get_blen(data, blen)
+        blen = _util.get_blen_array(data, blen)
     if isinstance(data, tuple):
-        _check_equal_length(*data)
+        _util.check_equal_length(*data)
         length = len(data[0])
     else:
         length = len(data)
@@ -177,12 +99,12 @@ def apply(data, f, blen=None, storage=None, create='array', **kwargs):
     return out
 
 
-def reduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
-           storage=None, create='array', **kwargs):
+def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
+            storage=None, create='array', **kwargs):
 
-    # init
-    storage = _get_storage(storage)
-    blen = _get_blen(data, blen)
+    # setup
+    storage = _util.get_storage(storage)
+    blen = _util.get_blen_array(data, blen)
     length = len(data)
     # normalise axis arg
     if isinstance(axis, int):
@@ -226,44 +148,44 @@ def reduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
 
 def amax(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
-    return reduce(data, axis=axis, reducer=np.amax,
-                  block_reducer=np.maximum, mapper=mapper,
-                  blen=blen, storage=storage, create=create, **kwargs)
+    return areduce(data, axis=axis, reducer=np.amax,
+                   block_reducer=np.maximum, mapper=mapper,
+                   blen=blen, storage=storage, create=create, **kwargs)
 
 
 def amin(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
-    return reduce(data, axis=axis, reducer=np.amin,
-                  block_reducer=np.minimum, mapper=mapper,
-                  blen=blen, storage=storage, create=create, **kwargs)
+    return areduce(data, axis=axis, reducer=np.amin,
+                   block_reducer=np.minimum, mapper=mapper,
+                   blen=blen, storage=storage, create=create, **kwargs)
 
 
 # noinspection PyShadowingBuiltins
-def sum(data, axis=None, mapper=None, blen=None, storage=None,
-        create='array', **kwargs):
-    return reduce(data, axis=axis, reducer=np.sum,
-                  block_reducer=np.add, mapper=mapper,
-                  blen=blen, storage=storage, create=create, **kwargs)
+def asum(data, axis=None, mapper=None, blen=None, storage=None,
+         create='array', **kwargs):
+    return areduce(data, axis=axis, reducer=np.sum,
+                   block_reducer=np.add, mapper=mapper,
+                   blen=blen, storage=storage, create=create, **kwargs)
 
 
 def count_nonzero(data, mapper=None, blen=None, storage=None,
                   create='array', **kwargs):
-    return reduce(data, reducer=np.count_nonzero,
-                  block_reducer=np.add, mapper=mapper,
-                  blen=blen, storage=storage, create=create, **kwargs)
+    return areduce(data, reducer=np.count_nonzero,
+                   block_reducer=np.add, mapper=mapper,
+                   blen=blen, storage=storage, create=create, **kwargs)
 
 
 def compress(data, condition, axis=0, blen=None, storage=None,
              create='array', **kwargs):
 
-    # init
-    storage = _get_storage(storage)
-    blen = _get_blen(data, blen)
+    # setup
+    storage = _util.get_storage(storage)
+    blen = _util.get_blen_array(data, blen)
     length = len(data)
     nnz = count_nonzero(condition)
 
     if axis == 0:
-        _check_equal_length(data, condition)
+        _util.check_equal_length(data, condition)
 
         # block iteration
         out = None
@@ -305,7 +227,7 @@ def compress(data, condition, axis=0, blen=None, storage=None,
 def take(data, indices, axis=0, blen=None, storage=None,
          create='array', **kwargs):
 
-    # init
+    # setup
     length = len(data)
 
     if axis == 0:
@@ -325,9 +247,9 @@ def take(data, indices, axis=0, blen=None, storage=None,
 
     elif axis == 1:
 
-        # init
-        storage = _get_storage(storage)
-        blen = _get_blen(data, blen)
+        # setup
+        storage = _util.get_storage(storage)
+        blen = _util.get_blen_array(data, blen)
 
         # block iteration
         out = None
@@ -349,13 +271,12 @@ def take(data, indices, axis=0, blen=None, storage=None,
 def compress_table(tbl, condition, blen=None, storage=None, create='table',
                    **kwargs):
 
-    # init
-    storage = _get_storage(storage)
-    blen = _get_blen_table(tbl, blen)
-    names = _get_column_names(tbl)
-    col0 = tbl[names[0]]
-    length = len(col0)
-    _check_equal_length(col0, condition)
+    # setup
+    storage = _util.get_storage(storage)
+    names, columns = _util.check_table_like(tbl)
+    blen = _util.get_blen_table(tbl, blen)
+    _util.check_equal_length(columns[0], condition)
+    length = len(columns[0])
     nnz = count_nonzero(condition)
 
     # block iteration
@@ -365,8 +286,8 @@ def compress_table(tbl, condition, blen=None, storage=None, create='table',
         bcond = np.asanyarray(condition[i:j])
         # don't access any data unless we have to
         if np.any(bcond):
-            blocks = [np.asanyarray(tbl[n][i:j]) for n in names]
-            res = [np.compress(bcond, block, axis=0) for block in blocks]
+            bcolumns = [np.asanyarray(c[i:j]) for c in columns]
+            res = [np.compress(bcond, c, axis=0) for c in bcolumns]
             if out is None:
                 out = getattr(storage, create)(res, names=names,
                                                expectedlen=nnz, **kwargs)
@@ -378,10 +299,9 @@ def compress_table(tbl, condition, blen=None, storage=None, create='table',
 def take_table(tbl, indices, blen=None, storage=None, create='table',
                **kwargs):
 
-    # check inputs
-    names = _get_column_names(tbl)
-    col0 = tbl[names[0]]
-    length = len(col0)
+    # setup
+    names, columns = _util.check_table_like(tbl)
+    length = len(columns[0])
 
     # check that indices are strictly increasing
     indices = np.asanyarray(indices)
@@ -400,9 +320,9 @@ def take_table(tbl, indices, blen=None, storage=None, create='table',
 def subset(data, sel0, sel1, blen=None, storage=None, create='array',
            **kwargs):
 
-    # check inputs
-    storage = _get_storage(storage)
-    blen = _get_blen(data, blen)
+    # setup
+    storage = _util.get_storage(storage)
+    blen = _util.get_blen_array(data, blen)
     length = len(data)
     sel0 = np.asanyarray(sel0)
     sel1 = np.asanyarray(sel1)
@@ -428,7 +348,7 @@ def subset(data, sel0, sel1, blen=None, storage=None, create='array',
         # don't access data unless we have to
         if np.any(bsel0):
             block = np.asanyarray(data[i:j])
-            res = subset(block, bsel0, sel1)
+            res = _ndarray_subset(block, bsel0, sel1)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=sel0_nnz,
                                                **kwargs)
@@ -440,7 +360,7 @@ def subset(data, sel0, sel1, blen=None, storage=None, create='array',
 
 def hstack(tup, blen=None, storage=None, create='array', **kwargs):
 
-    # check inputs
+    # setup
     if not isinstance(tup, (tuple, list)):
         raise ValueError('expected tuple or list, found %r' % tup)
     if len(tup) < 2:
@@ -454,8 +374,8 @@ def hstack(tup, blen=None, storage=None, create='array', **kwargs):
 
 def vstack(tup, blen=None, storage=None, create='array', **kwargs):
 
-    # init
-    storage = _get_storage(storage)
+    # setup
+    storage = _util.get_storage(storage)
     if not isinstance(tup, (tuple, list)):
         raise ValueError('expected tuple or list, found %r' % tup)
     if len(tup) < 2:
@@ -465,7 +385,7 @@ def vstack(tup, blen=None, storage=None, create='array', **kwargs):
     expectedlen = sum(len(a) for a in tup)
     out = None
     for a in tup:
-        ablen = _get_blen(a, blen)
+        ablen = _util.get_blen_array(a, blen)
         for i in range(0, len(a), ablen):
             j = min(i+ablen, len(a))
             block = np.asanyarray(a[i:j])
@@ -479,8 +399,8 @@ def vstack(tup, blen=None, storage=None, create='array', **kwargs):
 
 def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
 
-    # init
-    storage = _get_storage(storage)
+    # setup
+    storage = _util.get_storage(storage)
     if not isinstance(tup, (tuple, list)):
         raise ValueError('expected tuple or list, found %r' % tup)
     if len(tup) < 2:
@@ -489,19 +409,20 @@ def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
     # build output
     expectedlen = sum(len(t) for t in tup)
     out = None
-    for t in tup:
-        tblen = _get_blen_table(t, blen)
-        tnames= _get_column_names(t)
-        tlen = len(t[tnames[0]])
+    tnames = None
+    for tdata in tup:
+        tblen = _util.get_blen_table(tdata, blen)
+        tnames, tcolumns = _util.check_table_like(tdata, names=tnames)
+        tlen = len(tcolumns[0])
         for i in range(0, tlen, tblen):
             j = min(i+tblen, tlen)
-            blocks = [np.asanyarray(t[n][i:j]) for n in tnames]
+            bcolumns = [np.asanyarray(c[i:j]) for c in tcolumns]
             if out is None:
-                out = getattr(storage, create)(blocks, names=tnames,
+                out = getattr(storage, create)(bcolumns, names=tnames,
                                                expectedlen=expectedlen,
                                                **kwargs)
             else:
-                out.append(blocks)
+                out.append(bcolumns)
     return out
 
 
@@ -527,28 +448,10 @@ def binary_op(data, op, other, blen=None, storage=None, create='array',
         raise NotImplementedError('argument type not supported')
 
 
-def _is_array_like(a):
-    return hasattr(a, 'shape') and hasattr(a, 'dtype')
-
-
-def _check_array_like(*arrays, **kwargs):
-    ndim = kwargs.get('ndim', None)
-    for a in arrays:
-        if not _is_array_like(a):
-            raise ValueError(
-                'expected array-like with shape and dtype, found %r' % a
-            )
-        if ndim is not None and len(a.shape) != ndim:
-            raise ValueError(
-                'expected array-like with %s dimensions, found %s' %
-                (ndim, len(a.shape))
-            )
-
-
-class ChunkedArray(object):
+class Array(object):
 
     def __init__(self, data):
-        _check_array_like(data)
+        data = _util.ensure_array_like(data)
         self.data = data
 
     def __getitem__(self, *args):
@@ -580,21 +483,17 @@ class ChunkedArray(object):
 
     # outputs from these methods are not wrapped
     store = store
-    reduce = reduce
+    reduce = areduce
     max = amax
     min = amin
-    sum = sum
+    sum = asum
     count_nonzero = count_nonzero
 
     def apply(self, f, blen=None, storage=None, create='array', **kwargs):
         out = apply(self, f, blen=blen, storage=storage, create=create,
                     **kwargs)
-        if create == 'array':
-            return ChunkedArray(out)
-        elif create == 'table':
-            return ChunkedTable(out)
-        else:
-            return out
+        # don't wrap, leave this up to user
+        return out
 
     def copy(self, start=0, stop=None, blen=None, storage=None, create='array',
              **kwargs):
@@ -629,12 +528,12 @@ class ChunkedArray(object):
         tup = (self,) + others
         out = vstack(tup, **kwargs)
         return type(self)(out)
-    
+
     def binary_op(self, op, other, blen=None, storage=None, create='array',
                   **kwargs):
         out = binary_op(self, op, other, blen=blen, storage=storage,
                         create=create, **kwargs)
-        return ChunkedArray(out)
+        return Array(out)
 
     def __eq__(self, other, **kwargs):
         return self.binary_op(operator.eq, other, **kwargs)
@@ -676,42 +575,10 @@ class ChunkedArray(object):
         return self.binary_op(operator.truediv, other, **kwargs)
 
 
-class ChunkedTable(object):
+class Table(object):
 
     def __init__(self, data, names=None):
-
-        if isinstance(data, (list, tuple)):
-            # sequence of columns
-            if names is None:
-                names = ['f%d' % i for i in range(len(data))]
-            else:
-                if len(names) != len(data):
-                    raise ValueError('bad number of column names')
-            columns = list(data)
-
-        elif hasattr(data, 'names'):
-            # bcolz ctable or similar
-            if names is None:
-                names = list(data.names)
-            columns = [data[n] for n in names]
-
-        elif hasattr(data, 'keys') and callable(data.keys):
-            # dict, h5py Group or similar
-            if names is None:
-                names = list(data.keys())
-            columns = [data[n] for n in names]
-
-        elif hasattr(data, 'dtype') and hasattr(data.type, 'names'):
-            # numpy recarray or similar
-            if names is None:
-                names = list(data.dtype.names)
-            columns = [data[n] for n in names]
-
-        else:
-            raise ValueError('invalid data: %r' % data)
-
-        _check_equal_length(*columns)
-        _check_array_like(*columns)
+        names, columns = _util.check_table_like(data, names=names)
         self.data = data
         self.names = names
         self.columns = columns
@@ -722,7 +589,7 @@ class ChunkedTable(object):
         if isinstance(item, string_types):
             # item is column name, return column
             idx = self.names.index(item)
-            return ChunkedArray(self.columns[idx])
+            return Array(self.columns[idx])
 
         elif isinstance(item, integer_types):
             # item is row index, return row
@@ -743,7 +610,7 @@ class ChunkedTable(object):
                 all(isinstance(i, string_types) for i in item):
             # item is sequence of column names, return table
             columns = [self.columns[self.names.index(n)] for n in item]
-            return ChunkedTable(columns, names=item)
+            return Table(columns, names=item)
 
         else:
             raise NotImplementedError('item not suppored: %r' % item)
@@ -751,7 +618,7 @@ class ChunkedTable(object):
     def __getattr__(self, item):
         if item in self.names:
             idx = self.names.index(item)
-            return ChunkedArray(self.columns[idx])
+            return Array(self.columns[idx])
         else:
             raise AttributeError(item)
 

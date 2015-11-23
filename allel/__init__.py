@@ -2,7 +2,7 @@
 # flake8: noqa
 
 
-import allel.model as model
+from allel import model
 from allel.model import *
 import allel.stats as stats
 import allel.plot as plot

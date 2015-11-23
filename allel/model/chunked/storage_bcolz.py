@@ -5,8 +5,10 @@ import atexit
 import shutil
 
 
-import numpy as np
 import bcolz
+
+
+from allel.model.chunked import util as _util
 
 
 class BcolzStorage(object):
@@ -20,22 +22,13 @@ class BcolzStorage(object):
         return kwargs
 
     def array(self, data, expectedlen=None, **kwargs):
+        data = _util.ensure_array_like(data)
         kwargs = self._set_defaults(kwargs)
         return bcolz.carray(data, expectedlen=expectedlen, **kwargs)
 
     def table(self, data, names=None, expectedlen=None, **kwargs):
+        names, columns = _util.check_table_like(data, names=names)
         kwargs = self._set_defaults(kwargs)
-        if isinstance(data, (list, tuple)):
-            # sequence of columns
-            columns = data
-        elif isinstance(data, np.ndarray):
-            # recarray
-            columns = data
-        elif hasattr(data, 'keys'):
-            # dict-like
-            if names is None:
-                names = list(data.keys())
-            columns = [data[n] for n in names]
         return bcolz.ctable(columns, names=names, expectedlen=expectedlen,
                             **kwargs)
 
@@ -66,6 +59,7 @@ class BcolzTmpStorage(BcolzStorage):
         return kwargs
 
 
-# singleton instances for convenience
 bcolzmem_storage = BcolzMemStorage()
 bcolztmp_storage = BcolzTmpStorage()
+_util.storage_registry['bcolzmem'] = bcolzmem_storage
+_util.storage_registry['bcolztmp'] = bcolztmp_storage
