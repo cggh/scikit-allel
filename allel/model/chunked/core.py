@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 import operator
+from collections import namedtuple
 
 
 import numpy as np
 
 
+from allel.model.ndarray import recarray_to_html_str, recarray_display
 from allel.model.chunked.storage_bcolz import bcolzmem_storage, \
     bcolztmp_storage
-from allel.compat import string_types
+from allel.compat import string_types, integer_types
 
 
 default_storage = bcolzmem_storage
@@ -70,9 +72,10 @@ def _get_column_names(data):
         return data.names
     elif hasattr(data, 'keys'):
         return list(data.keys())
-    elif hasattr(data, 'dtype') and hasattr(data.dtype, 'names') and \
-            data.dtype.names:
+    elif hasattr(data, 'dtype') and hasattr(data.dtype, 'names'):
         return data.dtype.names
+    elif isinstance(data, (tuple, list)):
+        return ['f%d' % i for i in range(len(data))]
     else:
         raise ValueError('could not get column names')
 
@@ -505,10 +508,23 @@ def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
 def binary_op(data, op, other, blen=None, storage=None, create='array',
               **kwargs):
 
-    def f(block):
-        return op(block, other)
+    if hasattr(other, 'shape') and len(other.shape) == 0:
+        other = other[()]
 
-    return apply(data, f, blen=blen, storage=storage, create=create, **kwargs)
+    if np.isscalar(other):
+        def f(block):
+            return op(block, other)
+        return apply(data, f, blen=blen, storage=storage, create=create,
+                     **kwargs)
+
+    elif len(data) == len(other):
+        def f(a, b):
+            return op(a, b)
+        return apply((data, other), f, blen=blen, storage=storage,
+                     create=create, **kwargs)
+
+    else:
+        raise NotImplementedError('argument type not supported')
 
 
 def _is_array_like(a):
@@ -562,27 +578,64 @@ class ChunkedArray(object):
     def ndim(self):
         return len(self.shape)
 
+    # outputs from these methods are not wrapped
     store = store
-    copy = copy
-    apply = apply
-    reduce = reduce 
+    reduce = reduce
     max = amax
     min = amin
     sum = sum
     count_nonzero = count_nonzero
-    compress = compress
-    take = take
-    subset = subset
-    binary_op = binary_op
-    
+
+    def apply(self, f, blen=None, storage=None, create='array', **kwargs):
+        out = apply(self, f, blen=blen, storage=storage, create=create,
+                    **kwargs)
+        if create == 'array':
+            return ChunkedArray(out)
+        elif create == 'table':
+            return ChunkedTable(out)
+        else:
+            return out
+
+    def copy(self, start=0, stop=None, blen=None, storage=None, create='array',
+             **kwargs):
+        out = copy(self, start=start, stop=stop, blen=blen, storage=storage,
+                   create=create, **kwargs)
+        return type(self)(out)
+
+    def compress(self, condition, axis=0, blen=None, storage=None,
+                 create='array', **kwargs):
+        out = compress(self, condition, axis=axis, blen=blen,
+                       storage=storage, create=create, **kwargs)
+        return type(self)(out)
+
+    def take(self, indices, axis=0, blen=None, storage=None,
+             create='array', **kwargs):
+        out = take(self, indices, axis=axis, blen=blen, storage=storage,
+                   create=create, **kwargs)
+        return type(self)(out)
+
+    def subset(self, sel0, sel1, blen=None, storage=None, create='array',
+               **kwargs):
+        out = subset(self, sel0, sel1, blen=blen, storage=storage,
+                     create=create, **kwargs)
+        return type(self)(out)
+
     def hstack(self, *others, **kwargs):
         tup = (self,) + others
-        return hstack(tup, **kwargs)
+        out = hstack(tup, **kwargs)
+        return type(self)(out)
 
     def vstack(self, *others, **kwargs):
         tup = (self,) + others
-        return vstack(tup, **kwargs)
+        out = vstack(tup, **kwargs)
+        return type(self)(out)
     
+    def binary_op(self, op, other, blen=None, storage=None, create='array',
+                  **kwargs):
+        out = binary_op(self, op, other, blen=blen, storage=storage,
+                        create=create, **kwargs)
+        return ChunkedArray(out)
+
     def __eq__(self, other, **kwargs):
         return self.binary_op(operator.eq, other, **kwargs)
 
@@ -621,3 +674,142 @@ class ChunkedArray(object):
 
     def __truediv__(self, other, **kwargs):
         return self.binary_op(operator.truediv, other, **kwargs)
+
+
+class ChunkedTable(object):
+
+    def __init__(self, data, names=None):
+
+        if isinstance(data, (list, tuple)):
+            # sequence of columns
+            if names is None:
+                names = ['f%d' % i for i in range(len(data))]
+            else:
+                if len(names) != len(data):
+                    raise ValueError('bad number of column names')
+            columns = list(data)
+
+        elif hasattr(data, 'names'):
+            # bcolz ctable or similar
+            if names is None:
+                names = list(data.names)
+            columns = [data[n] for n in names]
+
+        elif hasattr(data, 'keys') and callable(data.keys):
+            # dict, h5py Group or similar
+            if names is None:
+                names = list(data.keys())
+            columns = [data[n] for n in names]
+
+        elif hasattr(data, 'dtype') and hasattr(data.type, 'names'):
+            # numpy recarray or similar
+            if names is None:
+                names = list(data.dtype.names)
+            columns = [data[n] for n in names]
+
+        else:
+            raise ValueError('invalid data: %r' % data)
+
+        _check_equal_length(*columns)
+        _check_array_like(*columns)
+        self.data = data
+        self.names = names
+        self.columns = columns
+        self.rowcls = namedtuple('row', names)
+
+    def __getitem__(self, item):
+
+        if isinstance(item, string_types):
+            # item is column name, return column
+            idx = self.names.index(item)
+            return ChunkedArray(self.columns[idx])
+
+        elif isinstance(item, integer_types):
+            # item is row index, return row
+            return self.rowcls(*(col[item] for col in self.columns))
+
+        elif isinstance(item, slice):
+            # item is row slice, return numpy recarray
+            start = 0 if item.start is None else item.start
+            stop = len(self) if item.stop is None else item.stop
+            step = 1 if item.step is None else item.step
+            outshape = (stop - start) // step
+            out = np.empty(outshape, dtype=self.dtype)
+            for n, c in zip(self.names, self.columns):
+                out[n] = c[start:stop:step]
+            return out.view(np.recarray)
+
+        elif isinstance(item, (list, tuple)) and \
+                all(isinstance(i, string_types) for i in item):
+            # item is sequence of column names, return table
+            columns = [self.columns[self.names.index(n)] for n in item]
+            return ChunkedTable(columns, names=item)
+
+        else:
+            raise NotImplementedError('item not suppored: %r' % item)
+
+    def __getattr__(self, item):
+        if item in self.names:
+            idx = self.names.index(item)
+            return ChunkedArray(self.columns[idx])
+        else:
+            raise AttributeError(item)
+
+    def __repr__(self):
+        return '%s(%s, %s.%s)' % \
+               (type(self).__name__, self.shape[0],
+                type(self.data).__module__, type(self.data).__name__)
+
+    def __len__(self):
+        return len(self.columns[0])
+
+    def _repr_html_(self):
+        caption = repr(self)
+        ra = self[:6]
+        return recarray_to_html_str(ra, limit=5, caption=caption)
+
+    def display(self, limit, **kwargs):
+        kwargs.setdefault('caption', repr(self))
+        ra = self[:limit+1]
+        return recarray_display(ra, limit=limit, **kwargs)
+
+    @property
+    def shape(self):
+        return len(self),
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    @property
+    def dtype(self):
+        l = []
+        for n, c in zip(self.names, self.columns):
+            # need to account for multidimensional columns
+            t = (n, c.dtype) if len(c.shape) == 1 else \
+                (n, c.dtype, c.shape[1:])
+            l.append(t)
+        return np.dtype(l)
+
+    def compress(self, condition, blen=None, storage=None, create='table',
+                 **kwargs):
+        out = compress_table(self, condition, blen=blen, storage=storage,
+                             create=create, **kwargs)
+        return type(self)(out, names=self.names)
+
+    def take(self, indices, blen=None, storage=None, create='table', **kwargs):
+        out = take_table(self, indices, blen=blen, storage=storage,
+                         create=create, **kwargs)
+        return type(self)(out, names=self.names)
+
+    def vstack(self, *others, **kwargs):
+        tup = (self,) + others
+        out = vstack_table(tup, **kwargs)
+        return type(self)(out, names=self.names)
+
+    # TODO eval
+    # TODO query
+    # TODO addcol (and __setitem__?)
+    # TODO delcol (and __delitem__?)
+    # TODO store
+    # TODO copy
