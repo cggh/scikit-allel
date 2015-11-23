@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+import itertools
 
 
 import numpy as np
@@ -601,9 +602,50 @@ class FeatureChunkedTable(_core.Table):
     def n_features(self):
         return len(self)
 
-    # TODO to_mask
-    # TODO from_gff3
-    
+    def to_mask(self, size, start_name='start', stop_name='end'):
+        m = np.zeros(size, dtype=bool)
+        start = self[start_name]
+        stop = self[stop_name]
+        for i, j in zip(start, stop):
+            # assume 1-based inclusive coords
+            m[i-1:j] = True
+        return m
+
+    @staticmethod
+    def from_gff3(path, attributes=None, region=None, score_fill=-1,
+                  phase_fill=-1, attributes_fill=b'.', dtype=None,
+                  blen=None, storage=None, create='table', expectedlen=200000,
+                  **kwargs):
+
+        # setup iterator
+        recs = iter_gff3(path, attributes=attributes, region=region,
+                         score_fill=score_fill, phase_fill=phase_fill,
+                         attributes_fill=attributes_fill)
+
+        # read a sample to determine dtype, blen
+        recs_sample = list(itertools.islice(recs, 1000))
+        names = 'seqid', 'source', 'type', 'start', 'end', 'score', 'strand', \
+                'phase'
+        if attributes:
+            names += tuple(attributes)
+        ra = np.rec.array(recs_sample, names=names, dtype=dtype)
+        dtype = ra.dtype
+
+        # setup output
+        storage = _util.get_storage(storage)
+        out = getattr(storage, create)(ra, expectedlen=expectedlen, **kwargs)
+        blen = _util.get_blen_table(out, blen=blen)
+
+        # read block-wise
+        block = list(itertools.islice(recs, 0, blen))
+        while block:
+            a = np.asarray(block, dtype=dtype)
+            out.append(a)
+            block = list(itertools.islice(recs, 0, blen))
+
+        out = FeatureChunkedTable(out)
+        return out
+
 
 class AlleleCountsChunkedTable(_core.Table):
 
@@ -612,5 +654,3 @@ class AlleleCountsChunkedTable(_core.Table):
         if isinstance(item, string_types):
             out = AlleleCountsChunkedArray(out)
         return out
-
-    # TODO
