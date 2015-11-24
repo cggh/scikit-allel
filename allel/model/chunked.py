@@ -1,4 +1,20 @@
 # -*- coding: utf-8 -*-
+"""This module provides alternative implementations of array and table
+classes defined in the :mod:`allel.model.ndarray` module, using
+chunked arrays for data storage. Chunked arrays can be compressed and
+optionally stored on disk, providing a means for working with data too
+large to fit uncompressed in main memory.
+
+Either HDF5 (via `h5py <http://www.h5py.org/>`_) or `bcolz
+<http://bcolz.blosc.org>`_ can be used as the underlying storage
+layer. Choice of storage layer can be made via the `storage` keyword
+argument which all class constructors and methods accept.  This
+argument can either be a string identifying one of the predefined
+storage layer configurations, or an object implementing the chunked
+storage API. For more information about controlling storage see the
+:mod:`allel.chunked` module.
+
+"""
 from __future__ import absolute_import, print_function, division
 import itertools
 
@@ -15,6 +31,50 @@ from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
 class GenotypeChunkedArray(chunked.ChunkedArray):
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.GenotypeArray` class, wrapping a
+    chunked array as the backing store.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data to be wrapped. May be a bcolz carray, h5py dataset, or
+        anything providing a similar interface.
+
+    Examples
+    --------
+
+    Wrap an HDF5 dataset::
+
+        >>> import h5py
+        >>> import allel
+        >>> h5f = h5py.File('ag1000g.phase1.ar3.pass.3L.h5', mode='r')
+        >>> h5d = h5f['/3L/calldata/genotype']
+        >>> g = allel.GenotypeChunkedArray(h5d)
+        >>> g
+        GenotypeChunkedArray((9643193, 765, 2), int8, h5py._hl.dataset.Dataset)
+        >>> g.data
+        <HDF5 dataset "genotype": shape (9643193, 765, 2), type "|i1">
+
+    Obtain a numpy array by slicing, e.g.::
+
+        >>> g[:5] # doctest: +ELLIPSIS
+        GenotypeArray((5, 765, 2), dtype=int8)
+        [[[0 0]
+          [0 0]
+          [0 0]
+          ...
+
+    Note that most methods will return a chunked array, using whatever
+    chunked storage is set as default (bcolz carray) or specified
+    directly via the `storage` keyword argument. E.g.::
+
+        >>> g.copy(stop=1000)
+        GenotypeChunkedArray((1000, 765, 2), int8, bcolz.carray_ext.carray)
+        >>> g.copy(stop=1000, storage='hdf5mem_zlib1')
+        GenotypeChunkedArray((1000, 765, 2), int8, h5py._hl.dataset.Dataset)
+
+    """
 
     def __init__(self, data):
         super(GenotypeChunkedArray, self).__init__(data)
@@ -294,6 +354,17 @@ copy_method_doc(GenotypeChunkedArray.vstack, GenotypeArray.vstack)
 
 
 class HaplotypeChunkedArray(chunked.ChunkedArray):
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.HaplotypeArray` class, using a chunked array as
+    the backing store.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype data to be wrapped. May be a bcolz carray, h5py dataset, or
+        anything providing a similar interface.
+
+    """
 
     def __init__(self, data):
         super(HaplotypeChunkedArray, self).__init__(data)
@@ -420,6 +491,17 @@ copy_method_doc(HaplotypeChunkedArray.map_alleles, HaplotypeArray.map_alleles)
 
 
 class AlleleCountsChunkedArray(chunked.ChunkedArray):
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.AlleleCountsArray` class, using a chunked
+    array as the backing store.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_alleles)
+        Allele counts data to be wrapped. May be a bcolz carray,
+        h5py dataset, or anything providing a similar interface.
+
+    """
 
     def __init__(self, data):
         super(AlleleCountsChunkedArray, self).__init__(data)
@@ -557,6 +639,68 @@ copy_method_doc(AlleleCountsChunkedArray.map_alleles,
 
 
 class VariantChunkedTable(chunked.ChunkedTable):
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.VariantTable` class, using a chunked table as
+    the backing store.
+
+    Parameters
+    ----------
+    data: table_like
+        Data to be wrapped. May be a tuple or list of columns (array-like),
+        a dict mapping names to columns, a bcolz ctable, h5py group,
+        numpy recarray, or anything providing a similar interface.
+    names : sequence of strings
+        Column names.
+
+    Examples
+    --------
+
+    Wrap columns stored as datasets within an HDF5 group::
+
+        >>> import h5py
+        >>> import allel
+        >>> h5f = h5py.File('ag1000g.phase1.ar3.pass.3L.h5', mode='r')
+        >>> h5g = h5f['/3L/variants']
+        >>> vt = allel.VariantChunkedTable(h5g,
+        ...                                names=['CHROM', 'POS', 'REF', 'ALT'],
+        ...                                index=['CHROM', 'POS'])
+        >>> vt
+        VariantChunkedTable(9643193, h5py._hl.group.Group)
+        >>> vt.names
+        ['CHROM', 'POS', 'REF', 'ALT']
+        >>> vt.data
+        <HDF5 group "/3L/variants" (66 members)>
+
+    Obtain a single row::
+
+        >>> vt[0] # doctest: +ELLIPSIS
+        row(CHROM=b'3L', POS=9790, REF=b'C', ALT=array([b'T', b'', b''], ...
+
+    Obtain a numpy array by slicing::
+
+        >>> vt[:5] # doctest: +ELLIPSIS
+        VariantTable((5,), dtype=[('CHROM', 'S12'), ('POS', '<i4'), ('REF', 'S1'), ('ALT', 'S1', (3,))])
+        [(b'3L', 9790, b'C', [b'T', b'', b''])
+         (b'3L', 9798, b'G', [b'A', b'', b''])
+         (b'3L', 9812, b'C', [b'A', b'', b''])
+         (b'3L', 9818, b'T', [b'A', b'', b''])
+         (b'3L', 9829, b'C', [b'T', b'', b''])]
+
+    Access a subset of columns::
+
+        >>> vt[['CHROM', 'POS']]
+        VariantChunkedTable(9643193, builtins.list)
+
+    Note that most methods will return a chunked table, using whatever
+    chunked storage is set as default (bcolz ctable) or specified
+    directly via the `storage` keyword argument. E.g.::
+
+        >>> vt.copy(stop=1000)
+        VariantChunkedTable(1000, bcolz.ctable.ctable)
+        >>> vt.copy(stop=1000, storage='hdf5mem_zlib1')
+        VariantChunkedTable(1000, h5py._hl.files.File)
+
+    """ # flake8: noqa
 
     view_cls = VariantTable
 
@@ -594,6 +738,20 @@ class VariantChunkedTable(chunked.ChunkedTable):
 
 
 class FeatureChunkedTable(chunked.ChunkedTable):
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.FeatureTable` class, using a chunked table as
+    the backing store.
+
+    Parameters
+    ----------
+    data: table_like
+        Data to be wrapped. May be a tuple or list of columns (array-like),
+        a dict mapping names to columns, a bcolz ctable, h5py group,
+        numpy recarray, or anything providing a similar interface.
+    names : sequence of strings
+        Column names.
+
+    """
 
     view_cls = FeatureTable
 

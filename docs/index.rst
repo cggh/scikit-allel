@@ -20,11 +20,11 @@ worked examples with real data, see the following articles:
 
 * `Introducing scikit-allel <http://alimanfoo.github.io/2015/09/15/introducing-scikit-allel.html>`_
 * |Estimating FST|
-* `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_  
+* `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_
 
 .. |Estimating FST| raw:: HTML
 
-    <a href="http://alimanfoo.github.io/2015/09/21/estimating-fst.html">Estimating F<sub>ST</sub></a>	       
+    <a href="http://alimanfoo.github.io/2015/09/21/estimating-fst.html">Estimating F<sub>ST</sub></a>
 
 If you would like to cite `scikit-allel` please use the DOI below.
 
@@ -35,7 +35,7 @@ Installation
 ------------
 
 This package requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
-scikit-learn_, h5py_, numexpr_, bcolz_ and petl_. Install these
+scikit-learn_, h5py_, numexpr_, bcolz_ and petl_. Please install these
 dependencies first, then use pip to install scikit-allel::
 
     $ pip install -U scikit-allel
@@ -44,11 +44,12 @@ Contents
 --------
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
     model
     stats
     io
+    chunked
     util
     release
 

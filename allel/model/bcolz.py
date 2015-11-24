@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-"""
-This module provides alternative implementations of array interfaces defined in
-the :mod:`allel.model` module, using `bcolz <http://bcolz.blosc.org>`_
-compressed arrays (:class:`bcolz.carray`) instead of numpy arrays for data
-storage. Compressed arrays can use either main memory or be stored on disk.
-In either case, the use of compressed arrays enables analysis of data that
-are too large to fit uncompressed into main memory.
+"""This module provides alternative implementations of array
+interfaces defined in the :mod:`allel.model.ndarray` module, using
+`bcolz <http://bcolz.blosc.org>`_ compressed arrays instead of numpy
+arrays for data storage.
+
+.. note::
+
+    Please note this module is now deprecated and will be removed in a
+    future release. It has been superseded by the
+    :mod:`allel.model.chunked` module which supports both bcolz and
+    HDF5 as the underlying storage layer.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -321,27 +325,13 @@ def ctable_block_take(ctbl, indices, **kwargs):
     return ctable_block_compress(ctbl, condition, **kwargs)
 
 
-def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
+def carray_block_subset(carr, sel0, sel1, blen=None, **kwargs):
     if blen is None:
         blen = carr.chunklen
 
     # check inputs
-    sel0 = asarray_ndim(sel0, 1, allow_none=True)
-    sel1 = asarray_ndim(sel1, 1, allow_none=True)
-    if sel0 is None and sel1 is None:
-        raise ValueError('missing selection')
-
-    # if either selection is None, use take/compress
-    if sel1 is None:
-        if sel0.size < carr.shape[0]:
-            return carray_block_take(carr, sel0, axis=0, **kwargs)
-        else:
-            return carray_block_compress(carr, sel0, axis=0, **kwargs)
-    elif sel0 is None:
-        if sel1.size < carr.shape[1]:
-            return carray_block_take(carr, sel1, axis=1, **kwargs)
-        else:
-            return carray_block_compress(carr, sel1, axis=1, **kwargs)
+    sel0 = asarray_ndim(sel0, 1)
+    sel1 = asarray_ndim(sel1, 1)
 
     # ensure boolean array for dim 0
     if sel0.size < carr.shape[0]:
@@ -880,7 +870,6 @@ class GenotypeCArray(CArrayWrapper):
 
     Parameters
     ----------
-
     data : array_like, int, shape (n_variants, n_samples, ploidy), optional
         Data to initialise the array with. May be a bcolz carray, which will
         not be copied if copy=False. May also be None, in which case rootdir
@@ -1172,11 +1161,11 @@ class GenotypeCArray(CArrayWrapper):
 
         return GenotypeCArray(out, copy=False)
 
-    def subset(self, variants=None, samples=None, **kwargs):
-        carr = carray_block_subset(self.carr, variants, samples, **kwargs)
+    def subset(self, sel0, sel1, **kwargs):
+        carr = carray_block_subset(self.carr, sel0, sel1, **kwargs)
         g = GenotypeCArray(carr, copy=False)
         if self.mask is not None:
-            mask = carray_block_subset(self.mask, variants, samples)
+            mask = carray_block_subset(self.mask, sel0, sel1)
             g.mask = mask
         return g
 
@@ -1485,8 +1474,8 @@ class HaplotypeCArray(CArrayWrapper):
         """Number of haplotypes (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def subset(self, variants=None, haplotypes=None, **kwargs):
-        data = carray_block_subset(self.carr, variants, haplotypes, **kwargs)
+    def subset(self, sel0, sel1, **kwargs):
+        data = carray_block_subset(self.carr, sel0, sel1, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
     def to_genotypes(self, ploidy, **kwargs):

@@ -7,5 +7,3 @@ Data structures
     model/ndarray
     model/chunked
     model/bcolz
-
-TODO remove bcolz from toctree

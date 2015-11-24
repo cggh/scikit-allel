@@ -36,28 +36,14 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def subset(data, sel0=None, sel1=None):
+def subset(data, sel0, sel1):
 
     # check inputs
     data = np.asarray(data)
     if data.ndim < 2:
         raise ValueError('data must have 2 or more dimensions')
-    sel0 = asarray_ndim(sel0, 1, allow_none=True)
-    sel1 = asarray_ndim(sel1, 1, allow_none=True)
-    if sel0 is None and sel1 is None:
-        raise ValueError('missing selection')
-
-    # if either selection is None, use take/compress
-    if sel1 is None:
-        if sel0.size < data.shape[0]:
-            return np.take(data, sel0, axis=0)
-        else:
-            return np.compress(sel0, data, axis=0)
-    elif sel0 is None:
-        if sel1.size < data.shape[1]:
-            return np.take(data, sel1, axis=1)
-        else:
-            return np.compress(sel1, data, axis=1)
+    sel0 = asarray_ndim(sel0, 1)
+    sel1 = asarray_ndim(sel1, 1)
 
     # ensure indices
     if sel0.size == data.shape[0]:
@@ -476,16 +462,16 @@ class GenotypeArray(ArrayAug):
 
         return a.view(GenotypeArray)
 
-    def subset(self, variants=None, samples=None):
-        """Make a sub-selection of variants and/or samples.
+    def subset(self, sel0, sel1):
+        """Make a sub-selection of variants and samples.
 
         Parameters
         ----------
 
-        variants : array_like
-            Boolean array or list of indices.
-        samples : array_like
-            Boolean array or list of indices.
+        sel0 : array_like
+            Boolean array or list of indices selecting variants.
+        sel0 : array_like
+            Boolean array or list of indices selecting samples.
 
         Returns
         -------
@@ -499,7 +485,7 @@ class GenotypeArray(ArrayAug):
         >>> g = allel.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
         ...                          [[0, 1], [1, 1], [1, 2]],
         ...                          [[0, 2], [-1, -1], [-1, -1]]])
-        >>> g.subset(variants=[0, 1], samples=[0, 2])
+        >>> g.subset([0, 1], [0, 2])
         GenotypeArray((2, 2, 2), dtype=int64)
         [[[0 0]
           [1 1]]
@@ -508,10 +494,10 @@ class GenotypeArray(ArrayAug):
 
         """
 
-        data = subset(self, variants, samples)
+        data = subset(self, sel0, sel1)
         g = GenotypeArray(data, copy=False)
         if self.mask is not None:
-            m = subset(self.mask, variants, samples)
+            m = subset(self.mask, sel0, sel1)
             g.mask = m
         return g
 
@@ -1820,16 +1806,16 @@ class HaplotypeArray(ArrayAug):
         """Number of haplotypes (length of second dimension)."""
         return self.shape[1]
 
-    def subset(self, variants=None, haplotypes=None):
-        """Make a sub-selection of variants and/or haplotypes.
+    def subset(self, sel0, sel1):
+        """Make a sub-selection of variants and haplotypes.
 
         Parameters
         ----------
 
-        variants : array_like
-            Boolean array or list of indices.
-        haplotypes : array_like
-            Boolean array or list of indices.
+        sel0 : array_like
+            Boolean array or list of indices selecting variants.
+        sel1 : array_like
+            Boolean array or list of indices selecting haplotypes.
 
         Returns
         -------
@@ -1838,7 +1824,7 @@ class HaplotypeArray(ArrayAug):
 
         """
 
-        return HaplotypeArray(subset(self, variants, haplotypes), copy=False)
+        return HaplotypeArray(subset(self, sel0, sel1), copy=False)
 
     def is_called(self):
         return self >= 0

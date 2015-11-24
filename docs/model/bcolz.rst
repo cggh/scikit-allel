@@ -1,7 +1,5 @@
-Compressed arrays (bcolz)
+bcolz arrays (deprecated)
 =========================
-
-TODO delete me
 
 .. automodule:: allel.model.bcolz
 

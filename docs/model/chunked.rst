@@ -8,4 +8,27 @@ GenotypeChunkedArray
 
 .. autoclass:: GenotypeChunkedArray
 
-TODO other classes
+HaplotypeChunkedArray
+---------------------
+
+.. autoclass:: HaplotypeChunkedArray
+
+AlleleCountsChunkedArray
+------------------------
+
+.. autoclass:: AlleleCountsChunkedArray
+
+VariantChunkedTable
+-------------------
+
+.. autoclass:: VariantChunkedTable
+
+FeatureChunkedTable
+-------------------
+
+.. autoclass:: FeatureChunkedTable
+
+AlleleCountsChunkedTable
+------------------------
+
+.. autoclass:: FeatureChunkedTable

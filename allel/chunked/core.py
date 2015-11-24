@@ -64,7 +64,7 @@ def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
 
 def copy_table(tbl, start=0, stop=None, blen=None, storage=None,
                create='table', **kwargs):
-    """TODO"""
+    """Copy `tbl` block-wise into a new table."""
 
     # setup
     names, columns = _util.check_table_like(tbl)
@@ -93,7 +93,7 @@ def copy_table(tbl, start=0, stop=None, blen=None, storage=None,
 
 
 def apply(data, f, blen=None, storage=None, create='array', **kwargs):
-    """TODO"""
+    """Apply function `f` block-wise over `data`."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -132,7 +132,7 @@ def apply(data, f, blen=None, storage=None, create='array', **kwargs):
 
 def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
             storage=None, create='array', **kwargs):
-    """TODO"""
+    """Apply an operation to `data` that reduces over one or more axes."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -180,7 +180,7 @@ def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
 
 def amax(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
-    """TODO"""
+    """Compute the maximum value."""
     return areduce(data, axis=axis, reducer=np.amax,
                    block_reducer=np.maximum, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -188,7 +188,7 @@ def amax(data, axis=None, mapper=None, blen=None, storage=None,
 
 def amin(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
-    """TODO"""
+    """Compute the minimum value."""
     return areduce(data, axis=axis, reducer=np.amin,
                    block_reducer=np.minimum, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -197,7 +197,7 @@ def amin(data, axis=None, mapper=None, blen=None, storage=None,
 # noinspection PyShadowingBuiltins
 def asum(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
-    """TODO"""
+    """Compute the sum."""
     return areduce(data, axis=axis, reducer=np.sum,
                    block_reducer=np.add, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -205,7 +205,7 @@ def asum(data, axis=None, mapper=None, blen=None, storage=None,
 
 def count_nonzero(data, mapper=None, blen=None, storage=None,
                   create='array', **kwargs):
-    """TODO"""
+    """Count the number of non-zero elements."""
     return areduce(data, reducer=np.count_nonzero,
                    block_reducer=np.add, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -213,7 +213,7 @@ def count_nonzero(data, mapper=None, blen=None, storage=None,
 
 def compress(data, condition, axis=0, blen=None, storage=None,
              create='array', **kwargs):
-    """TODO"""
+    """Return selected slices of an array along given axis."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -263,6 +263,7 @@ def compress(data, condition, axis=0, blen=None, storage=None,
 
 def take(data, indices, axis=0, blen=None, storage=None,
          create='array', **kwargs):
+    """Take elements from an array along an axis."""
 
     # setup
     length = len(data)
@@ -307,7 +308,7 @@ def take(data, indices, axis=0, blen=None, storage=None,
 
 def compress_table(tbl, condition, blen=None, storage=None, create='table',
                    **kwargs):
-    """TODO"""
+    """Return selected rows of a table."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -336,7 +337,7 @@ def compress_table(tbl, condition, blen=None, storage=None, create='table',
 
 def take_table(tbl, indices, blen=None, storage=None, create='table',
                **kwargs):
-    """TODO"""
+    """Return selected rows of a table."""
 
     # setup
     names, columns = _util.check_table_like(tbl)
@@ -358,7 +359,7 @@ def take_table(tbl, indices, blen=None, storage=None, create='table',
 
 def subset(data, sel0, sel1, blen=None, storage=None, create='array',
            **kwargs):
-    """TODO"""
+    """Return selected rows and columns of an array."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -399,7 +400,7 @@ def subset(data, sel0, sel1, blen=None, storage=None, create='array',
 
 
 def hstack(tup, blen=None, storage=None, create='array', **kwargs):
-    """TODO"""
+    """Stack arrays in sequence horizontally (column wise)."""
 
     # setup
     if not isinstance(tup, (tuple, list)):
@@ -414,7 +415,7 @@ def hstack(tup, blen=None, storage=None, create='array', **kwargs):
 
 
 def vstack(tup, blen=None, storage=None, create='array', **kwargs):
-    """TODO"""
+    """Stack arrays in sequence vertically (row wise)."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -440,7 +441,7 @@ def vstack(tup, blen=None, storage=None, create='array', **kwargs):
 
 
 def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
-    """TODO"""
+    """Stack tables in sequence vertically (row-wise)."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -471,7 +472,7 @@ def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
 
 def binary_op(data, op, other, blen=None, storage=None, create='array',
               **kwargs):
-    """TODO"""
+    """Compute a binary operation block-wise over `data`."""
 
     # normalise scalars
     if hasattr(other, 'shape') and len(other.shape) == 0:
@@ -512,7 +513,7 @@ def _get_expression_variables(expression, vm):
 # based on bcolz.chunked_eval
 def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
                create='array', vm_kwargs=None, **kwargs):
-    """TODO"""
+    """Evaluate `expression` against columns of a table."""
 
     # setup
     storage = _util.get_storage(storage)
@@ -555,7 +556,15 @@ def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
 
 
 class ChunkedArray(object):
-    """TODO"""
+    """Wrapper class for chunked array-like data.
+
+    Parameters
+    ----------
+    data : array_like
+        Data to be wrapped. May be a bcolz carray, h5py dataset, or
+        anything providing a similar interface.
+
+    """
 
     def __init__(self, data):
         data = _util.ensure_array_like(data)
@@ -682,11 +691,19 @@ class ChunkedArray(object):
         return self.binary_op(operator.truediv, other, **kwargs)
 
 
-# TODO copy method docs
-
-
 class ChunkedTable(object):
-    """TODO"""
+    """Wrapper class for chunked table-like data.
+
+    Parameters
+    ----------
+    data: table_like
+        Data to be wrapped. May be a tuple or list of columns (array-like),
+        a dict mapping names to columns, a bcolz ctable, h5py group,
+        numpy recarray, or anything providing a similar interface.
+    names : sequence of strings
+        Column names.
+
+    """
 
     view_cls = np.recarray
 
@@ -810,7 +827,3 @@ class ChunkedTable(object):
 
     # TODO addcol (and __setitem__?)
     # TODO delcol (and __delitem__?)
-    # TODO store
-    # TODO copy
-
-# TODO copy method docs

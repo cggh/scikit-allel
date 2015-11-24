@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
 """
-This package provides an abstraction layer over chunked array storage
-libraries. Currently bcolz and h5py are supported storage layers.
+This package provides an abstraction layer over generic chunked array storage
+libraries. Currently HDF5 (via `h5py <http://www.h5py.org/>`_) and `bcolz
+<http://bcolz.blosc.org>`_ are supported storage layers.
 
 """
 from __future__ import absolute_import, print_function, division
