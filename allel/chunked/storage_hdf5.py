@@ -66,6 +66,7 @@ def _table_append(h5g, data):
 
 
 class HDF5Storage(object):
+    """Storage layer using HDF5 dataset and group."""
 
     def __init__(self, **kwargs):
         self.defaults = kwargs
@@ -168,11 +169,18 @@ class HDF5TmpStorage(HDF5Storage):
 
 
 hdf5_storage = HDF5Storage()
+"""HDF5 storage with default parameters"""
 hdf5mem_storage = HDF5MemStorage()
+"""HDF5 in-memory storage with default compression"""
 hdf5tmp_storage = HDF5TmpStorage()
+"""HDF5 temporary file storage with default compression"""
 hdf5_zlib1_storage = HDF5Storage(compression='gzip', compression_opts=1)
+"""HDF5 storage with zlib level 1 compression"""
 hdf5mem_zlib1_storage = HDF5MemStorage(compression='gzip', compression_opts=1)
+"""HDF5 in-memory storage with zlib level 1 compression"""
 hdf5tmp_zlib1_storage = HDF5TmpStorage(compression='gzip', compression_opts=1)
+"""HDF5 temporary file storage with zlib level 1 compression"""
+
 _util.storage_registry['hdf5'] = hdf5_storage
 _util.storage_registry['hdf5mem'] = hdf5mem_storage
 _util.storage_registry['hdf5tmp'] = hdf5tmp_storage

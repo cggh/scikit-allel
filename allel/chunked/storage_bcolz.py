@@ -22,6 +22,7 @@ def _table_append(ctbl, data):
 
 
 class BcolzStorage(object):
+    """Storage layer using bcolz carray and ctable."""
 
     def __init__(self, **kwargs):
         self.defaults = kwargs
@@ -73,12 +74,19 @@ class BcolzTmpStorage(BcolzStorage):
 
 
 bcolz_storage = BcolzStorage()
+"""bcolz storage with default parameters"""
 bcolzmem_storage = BcolzMemStorage()
+"""bcolz in-memory storage with default compression"""
 bcolztmp_storage = BcolzTmpStorage()
+"""bcolz temporary file storage with default compression"""
 _zlib1 = bcolz.cparams(cname='zlib', clevel=1)
 bcolz_zlib1_storage = BcolzStorage(cparams=_zlib1)
+"""bcolz storage with zlib level 1 compression"""
 bcolzmem_zlib1_storage = BcolzMemStorage(cparams=_zlib1)
+"""bcolz in-memory storage with zlib level 1 compression"""
 bcolztmp_zlib1_storage = BcolzTmpStorage(cparams=_zlib1)
+"""bcolz temporary file storage with zlib level 1 compression"""
+
 _util.storage_registry['bcolz'] = bcolz_storage
 _util.storage_registry['bcolzmem'] = bcolzmem_storage
 _util.storage_registry['bcolztmp'] = bcolztmp_storage
