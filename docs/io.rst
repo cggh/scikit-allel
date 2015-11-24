@@ -1,5 +1,5 @@
-Input/output
-============
+Input/output utilities
+======================
 
 .. automodule:: allel.io
 .. autofunction:: write_vcf

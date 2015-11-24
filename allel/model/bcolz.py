@@ -932,7 +932,7 @@ class GenotypeCArray(CArrayWrapper):
     Load from HDF5::
 
         >>> import h5py
-        >>> with h5py.File('example.h5', mode='w') as h5f:
+        >>> with h5py.File('test1.h5', mode='w') as h5f:
         ...     h5f.create_dataset('genotype',
         ...                        data=[[[0, 0], [0, 1]],
         ...                              [[0, 1], [1, 1]],
@@ -941,7 +941,7 @@ class GenotypeCArray(CArrayWrapper):
         ...                        chunks=(2, 2, 2))
         ...
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
-        >>> g = allel.GenotypeCArray.from_hdf5('example.h5', 'genotype')
+        >>> g = allel.GenotypeCArray.from_hdf5('test1.h5', 'genotype')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00

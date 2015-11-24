@@ -8,10 +8,11 @@ large to fit uncompressed in main memory.
 Either HDF5 (via `h5py <http://www.h5py.org/>`_) or `bcolz
 <http://bcolz.blosc.org>`_ can be used as the underlying storage
 layer. Choice of storage layer can be made via the `storage` keyword
-argument which all class constructors and methods accept.  This
-argument can either be a string identifying one of the predefined
-storage layer configurations, or an object implementing the chunked
-storage API. For more information about controlling storage see the
+argument which all class methods accept.  This argument can either be
+a string identifying one of the predefined storage layer
+configurations, or an object implementing the chunked storage API. 
+
+For more information about controlling storage see the
 :mod:`allel.chunked` module.
 
 """
@@ -47,32 +48,43 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
     Wrap an HDF5 dataset::
 
         >>> import h5py
+        >>> with h5py.File('callset.h5', mode='w') as h5f:
+        ...     h5g = h5f.create_group('/3L/calldata')
+        ...     h5g.create_dataset('genotype',
+        ...                        data=[[[0, 0], [0, 1]],
+        ...                              [[0, 1], [1, 1]],
+        ...                              [[0, 2], [-1, -1]]],
+        ...                        dtype='i1',
+        ...                        chunks=(2, 2, 2))
+        ...
+        <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
         >>> import allel
-        >>> h5f = h5py.File('ag1000g.phase1.ar3.pass.3L.h5', mode='r')
-        >>> h5d = h5f['/3L/calldata/genotype']
-        >>> g = allel.GenotypeChunkedArray(h5d)
+        >>> callset = h5py.File('callset.h5', mode='r')
+        >>> g = allel.GenotypeChunkedArray(callset['/3L/calldata/genotype'])
         >>> g
-        GenotypeChunkedArray((9643193, 765, 2), int8, h5py._hl.dataset.Dataset)
+        GenotypeChunkedArray((3, 2, 2), int8, h5py._hl.dataset.Dataset)
         >>> g.data
-        <HDF5 dataset "genotype": shape (9643193, 765, 2), type "|i1">
+        <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
 
     Obtain a numpy array by slicing, e.g.::
 
-        >>> g[:5] # doctest: +ELLIPSIS
-        GenotypeArray((5, 765, 2), dtype=int8)
-        [[[0 0]
-          [0 0]
-          [0 0]
-          ...
+        >>> g[:]
+        GenotypeArray((3, 2, 2), dtype=int8)
+        [[[ 0  0]
+          [ 0  1]]
+         [[ 0  1]
+          [ 1  1]]
+         [[ 0  2]
+          [-1 -1]]]
 
     Note that most methods will return a chunked array, using whatever
     chunked storage is set as default (bcolz carray) or specified
     directly via the `storage` keyword argument. E.g.::
 
-        >>> g.copy(stop=1000)
-        GenotypeChunkedArray((1000, 765, 2), int8, bcolz.carray_ext.carray)
-        >>> g.copy(stop=1000, storage='hdf5mem_zlib1')
-        GenotypeChunkedArray((1000, 765, 2), int8, h5py._hl.dataset.Dataset)
+        >>> g.copy()
+        GenotypeChunkedArray((3, 2, 2), int8, bcolz.carray_ext.carray)
+        >>> g.copy(storage='hdf5mem_zlib1')
+        GenotypeChunkedArray((3, 2, 2), int8, h5py._hl.dataset.Dataset)
 
     """
 
@@ -658,49 +670,59 @@ class VariantChunkedTable(chunked.ChunkedTable):
     Wrap columns stored as datasets within an HDF5 group::
 
         >>> import h5py
+        >>> chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+        >>> pos = [2, 7, 3, 9, 6]
+        >>> dp = [35, 12, 78, 22, 99]
+        >>> qd = [4.5, 6.7, 1.2, 4.4, 2.8]
+        >>> ac = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+        >>> with h5py.File('callset.h5', mode='w') as h5f:
+        ...     h5g = h5f.create_group('/3L/variants')
+        ...     h5g.create_dataset('CHROM', data=chrom, chunks=True)
+        ...     h5g.create_dataset('POS', data=pos, chunks=True)
+        ...     h5g.create_dataset('DP', data=dp, chunks=True)
+        ...     h5g.create_dataset('QD', data=qd, chunks=True)
+        ...     h5g.create_dataset('AC', data=ac, chunks=True)
+        ...
+        <HDF5 dataset "CHROM": shape (5,), type "|S4">
+        <HDF5 dataset "POS": shape (5,), type "<i8">
+        <HDF5 dataset "DP": shape (5,), type "<i8">
+        <HDF5 dataset "QD": shape (5,), type "<f8">
+        <HDF5 dataset "AC": shape (5, 2), type "<i8">
         >>> import allel
-        >>> h5f = h5py.File('ag1000g.phase1.ar3.pass.3L.h5', mode='r')
-        >>> h5g = h5f['/3L/variants']
-        >>> vt = allel.VariantChunkedTable(h5g,
-        ...                                names=['CHROM', 'POS', 'REF', 'ALT'],
-        ...                                index=['CHROM', 'POS'])
+        >>> callset = h5py.File('callset.h5', mode='r')
+        >>> vt = allel.VariantChunkedTable(callset['/3L/variants'],
+        ...                                names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
         >>> vt
-        VariantChunkedTable(9643193, h5py._hl.group.Group)
-        >>> vt.names
-        ['CHROM', 'POS', 'REF', 'ALT']
-        >>> vt.data
-        <HDF5 group "/3L/variants" (66 members)>
+        VariantChunkedTable(5, h5py._hl.group.Group)
 
     Obtain a single row::
 
-        >>> vt[0] # doctest: +ELLIPSIS
-        row(CHROM=b'3L', POS=9790, REF=b'C', ALT=array([b'T', b'', b''], ...
+        >>> vt[0]
+        row(CHROM=b'chr1', POS=2, AC=array([1, 2]), QD=4.5, DP=35)
 
     Obtain a numpy array by slicing::
 
-        >>> vt[:5] # doctest: +ELLIPSIS
-        VariantTable((5,), dtype=[('CHROM', 'S12'), ('POS', '<i4'), ('REF', 'S1'), ('ALT', 'S1', (3,))])
-        [(b'3L', 9790, b'C', [b'T', b'', b''])
-         (b'3L', 9798, b'G', [b'A', b'', b''])
-         (b'3L', 9812, b'C', [b'A', b'', b''])
-         (b'3L', 9818, b'T', [b'A', b'', b''])
-         (b'3L', 9829, b'C', [b'T', b'', b''])]
+        >>> vt[:] # doctest: +ELLIPSIS
+        VariantTable((5,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+        [(b'chr1', 2, [1, 2], 4.5, 35) (b'chr1', 7, [3, 4], 6.7, 12)
+         (b'chr2', 3, [5, 6], 1.2, 78) (b'chr2', 9, [7, 8], 4.4, 22)
+         (b'chr3', 6, [9, 10], 2.8, 99)]
 
     Access a subset of columns::
 
         >>> vt[['CHROM', 'POS']]
-        VariantChunkedTable(9643193, builtins.list)
+        VariantChunkedTable(5, builtins.list)
 
     Note that most methods will return a chunked table, using whatever
     chunked storage is set as default (bcolz ctable) or specified
     directly via the `storage` keyword argument. E.g.::
 
-        >>> vt.copy(stop=1000)
-        VariantChunkedTable(1000, bcolz.ctable.ctable)
-        >>> vt.copy(stop=1000, storage='hdf5mem_zlib1')
-        VariantChunkedTable(1000, h5py._hl.files.File)
+        >>> vt.copy()
+        VariantChunkedTable(5, bcolz.ctable.ctable)
+        >>> vt.copy(storage='hdf5mem_zlib1')
+        VariantChunkedTable(5, h5py._hl.files.File)
 
-    """ # flake8: noqa
+    """  # flake8: noqa
 
     view_cls = VariantTable
 

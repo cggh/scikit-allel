@@ -59,6 +59,12 @@ def subset(data, sel0, sel1):
 
 class ArrayAug(np.ndarray):
 
+    def __repr__(self):
+        s = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape,
+                                    self.dtype)
+        s += str(self)
+        return s
+
     def hstack(self, *others):
         """Stack arrays in sequence horizontally (column wise)."""
         tup = (self,) + others
@@ -74,6 +80,18 @@ class ArrayAug(np.ndarray):
 
 class RecArrayAug(np.recarray):
 
+    def __repr__(self):
+        s = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape,
+                                    self.dtype)
+        s += str(self)
+        return s
+
+    def _repr_html_(self):
+        return recarray_to_html_str(self)
+
+    def display(self, limit=5, **kwargs):
+        return recarray_display(self, limit=limit, **kwargs)
+
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
         a = recarray_from_hdf5_group(*args, **kwargs)
@@ -81,6 +99,46 @@ class RecArrayAug(np.recarray):
 
     def to_hdf5_group(self, parent, name, **kwargs):
         return recarray_to_hdf5_group(self, parent, name, **kwargs)
+
+    def eval(self, expression, vm='numexpr'):
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : ndarray
+
+        """
+
+        if vm == 'numexpr':
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            return eval(expression, {}, self)
+
+    def query(self, expression, vm='numexpr'):
+        """Evaluate expression and then use it to extract rows from the table.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : structured array
+
+        """
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
 
 
 class GenotypeArray(ArrayAug):
@@ -255,11 +313,6 @@ class GenotypeArray(ArrayAug):
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'GenotypeArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     def to_html_str(self, limit=5, caption=None, cols=None):
@@ -1740,11 +1793,6 @@ class HaplotypeArray(ArrayAug):
                 return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'HaplotypeArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
     def to_html_str(self, limit=5, caption=None, cols=None):
         import petl as etl
         n, m = self.shape
@@ -2353,11 +2401,6 @@ class AlleleCountsArray(ArrayAug):
             return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'AlleleCountsArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
     def to_html_str(self, limit=5, caption=None):
         import petl as etl
         ac = self[:limit+1]
@@ -2741,7 +2784,7 @@ class AlleleCountsArray(ArrayAug):
         return AlleleCountsArray(out)
 
 
-class SortedIndex(np.ndarray):
+class SortedIndex(ArrayAug):
     """Index of sorted values, e.g., positions from a single chromosome or
     contig.
 
@@ -2827,11 +2870,6 @@ class SortedIndex(np.ndarray):
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'SortedIndex(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     @property
@@ -3233,7 +3271,7 @@ class SortedIndex(np.ndarray):
         return np.compress(loc, self)
 
 
-class UniqueIndex(np.ndarray):
+class UniqueIndex(ArrayAug):
     """Array of unique values (e.g., variant or sample identifiers).
 
     Parameters
@@ -3323,11 +3361,6 @@ class UniqueIndex(np.ndarray):
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'UniqueIndex(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     def locate_key(self, key):
@@ -3723,7 +3756,26 @@ class VariantTable(RecArrayAug):
         VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
 
-    Use the index to query variants:
+    Evaluate expressions against the table::
+
+        >>> vt.eval('DP > 30')
+        array([ True, False,  True, False,  True], dtype=bool)
+        >>> vt.eval('(DP > 30) & (QD > 4)')
+        array([ True, False, False, False, False], dtype=bool)
+        >>> vt.eval('DP * 2')
+        array([ 70,  24, 156,  44, 198], dtype=int64)
+
+    Query the table::
+
+        >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
+        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
+         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
+        >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
+        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
+
+    Use the index to query variants::
 
         >>> vt.query_region(b'chr2', 1, 10)  # doctest: +ELLIPSIS
         VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
@@ -3776,17 +3828,6 @@ class VariantTable(RecArrayAug):
                 return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
-    def _repr_html_(self):
-        return recarray_to_html_str(self)
-
-    def display(self, limit=5, **kwargs):
-        return recarray_display(self, limit=limit, **kwargs)
-
     @property
     def n_variants(self):
         """Number of variants (length of first dimension)."""
@@ -3821,95 +3862,6 @@ class VariantTable(RecArrayAug):
             raise ValueError('invalid index argument, expected string or '
                              'pair of strings, found %s' % repr(index))
         self.index = index
-
-    def eval(self, expression, vm='numexpr'):
-        """Evaluate an expression against the table columns.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : ndarray
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
-        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
-        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
-        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
-        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
-        >>> dtype = [('CHROM', 'S4'),
-        ...          ('POS', 'u4'),
-        ...          ('DP', int),
-        ...          ('QD', float),
-        ...          ('AC', (int, 2))]
-        >>> vt = allel.VariantTable(records, dtype=dtype)
-        >>> vt.eval('DP > 30')
-        array([ True, False,  True, False,  True], dtype=bool)
-        >>> vt.eval('(DP > 30) & (QD > 4)')
-        array([ True, False, False, False, False], dtype=bool)
-        >>> vt.eval('DP * 2')
-        array([ 70,  24, 156,  44, 198], dtype=int64)
-
-        """
-
-        if vm == 'numexpr':
-            return ne.evaluate(expression, local_dict=self)
-        else:
-            return eval(expression, {}, self)
-
-    def query(self, expression, vm='numexpr'):
-        """Evaluate expression and then use it to extract rows from the table.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : VariantTable
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
-        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
-        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
-        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
-        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
-        >>> dtype = [('CHROM', 'S4'),
-        ...          ('POS', 'u4'),
-        ...          ('DP', int),
-        ...          ('QD', float),
-        ...          ('AC', (int, 2))]
-        >>> vt = allel.VariantTable(records, dtype=dtype)
-        >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
-        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
-        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
-         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
-        >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
-        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
-        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
-
-        """
-
-        condition = self.eval(expression, vm=vm)
-        return self.compress(condition)
 
     def query_position(self, chrom=None, position=None):
         """Query the table, returning row or rows matching the given genomic
@@ -4129,17 +4081,6 @@ class FeatureTable(RecArrayAug):
                 return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'FeatureTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
-    def _repr_html_(self):
-        return recarray_to_html_str(self)
-
-    def display(self, limit=5, **kwargs):
-        return recarray_display(self, limit=limit, **kwargs)
-
     @property
     def n_features(self):
         """Number of features (length of first dimension)."""
@@ -4149,50 +4090,6 @@ class FeatureTable(RecArrayAug):
     def names(self):
         """Column names."""
         return self.dtype.names
-
-    def eval(self, expression, vm='numexpr'):
-        """Evaluate an expression against the table columns.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : ndarray
-
-        """
-
-        if vm == 'numexpr':
-            return ne.evaluate(expression, local_dict=self)
-        else:
-            return eval(expression, {}, self)
-
-    def query(self, expression, vm='numexpr'):
-        """Evaluate expression and then use it to extract rows from the table.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : FeatureTable
-
-        """
-
-        condition = self.eval(expression, vm=vm)
-        return self.compress(condition)
 
     def query_region(self, chrom=None, start=None, stop=None):
         """TODO

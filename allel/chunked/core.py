@@ -530,7 +530,7 @@ def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
         # noinspection PyUnusedLocal
         def evaluate(expr, local_dict=None, **kw):
             # takes no keyword arguments
-            return eval(expr, None, local_dict)
+            return eval(expr, dict(), local_dict)
     else:
         raise ValueError('expected vm either "numexpr" or "python"')
 
