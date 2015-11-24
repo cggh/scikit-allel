@@ -435,7 +435,9 @@ class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data)
+        print('before', data)
+        data = chunked.storage_registry['default'].table(data, chunklen=2)
+        print('after', data)
         return chunked.FeatureChunkedTable(data, **kwargs)
 
     def test_storage(self):

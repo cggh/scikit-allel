@@ -70,7 +70,7 @@ class HDF5Storage(object):
     def __init(self, **kwargs):
         self.defaults = kwargs
 
-    def create_h5f(self, **kwargs):
+    def open_h5f(self, **kwargs):
         pass
 
     def create_h5d(self, h5g, data=None, **kwargs):
@@ -108,7 +108,7 @@ class HDF5Storage(object):
         # ignore expectedlen for now
         data = _util.ensure_array_like(data)
         # use root group
-        h5g, kwargs = self.create_h5f(**kwargs)
+        h5g, kwargs = self.open_h5f(**kwargs)
         h5d = self.create_h5d(h5g, data=data, **kwargs)
         return h5d
 
@@ -117,7 +117,7 @@ class HDF5Storage(object):
         # ignore expectedlen for now
         names, columns = _util.check_table_like(data, names=names)
         # use root group
-        h5g, kwargs = self.create_h5f(**kwargs)
+        h5g, kwargs = self.open_h5f(**kwargs)
         for n, c in zip(names, columns):
             self.create_h5d(h5g, data=c, name=n, **kwargs)
         # patch in append method
@@ -132,7 +132,7 @@ class HDF5MemStorage(HDF5Storage):
     def __init__(self, **kwargs):
         self.defaults = kwargs
 
-    def create_h5f(self, **kwargs):
+    def open_h5f(self, **kwargs):
         return h5fmem(), kwargs
 
 
@@ -141,11 +141,14 @@ class HDF5TmpStorage(HDF5Storage):
     def __init__(self, **kwargs):
         self.defaults = kwargs
 
-    def create_h5f(self, **kwargs):
+    def open_h5f(self, **kwargs):
         suffix = kwargs.pop('suffix', '.h5')
         prefix = kwargs.pop('prefix', 'scikit_allel_')
         tempdir = kwargs.pop('dir', None)
         return h5ftmp(dir=tempdir, suffix=suffix, prefix=prefix), kwargs
+
+
+# TODO HDF5FileStorage
 
 
 hdf5mem_storage = HDF5MemStorage()
