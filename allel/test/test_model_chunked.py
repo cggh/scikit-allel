@@ -300,8 +300,7 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
             AlleleCountsChunkedArray(data)
 
         # typed data (typed)
-        ac = AlleleCountsChunkedArray(np.array(allele_counts_data,
-                                                       dtype='u1'))
+        ac = AlleleCountsChunkedArray(np.array(allele_counts_data, dtype='u1'))
         aeq(allele_counts_data, ac)
         eq(np.uint8, ac.dtype)
 
