@@ -10,7 +10,7 @@ import numpy as np
 from allel.compat import string_types, integer_types, range
 from allel.model.ndarray import recarray_to_html_str, recarray_display, \
     subset as _ndarray_subset
-from allel.model.chunked import util as _util
+from allel.chunked import util as _util
 
 
 def store(data, arr, start=0, stop=None, offset=0, blen=None):
@@ -774,3 +774,5 @@ class ChunkedTable(object):
     # TODO delcol (and __delitem__?)
     # TODO store
     # TODO copy
+
+# TODO copy method docs

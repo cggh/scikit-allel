@@ -9,7 +9,7 @@ from types import MethodType
 import bcolz
 
 
-from allel.model.chunked import util as _util
+from allel.chunked import util as _util
 
 
 def _table_append(ctbl, data):

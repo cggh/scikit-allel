@@ -11,7 +11,7 @@ import h5py
 
 
 from allel.compat import reduce
-from allel.model.chunked import util as _util
+from allel.chunked import util as _util
 
 
 def h5fmem(**kwargs):
@@ -67,26 +67,28 @@ def _table_append(h5g, data):
 
 class HDF5Storage(object):
 
-    def __init(self, **kwargs):
+    def __init__(self, **kwargs):
         self.defaults = kwargs
 
-    def open_h5f(self, **kwargs):
-        pass
+    def open_file(self, **kwargs):
+        # override in sub-classes
+        raise NotImplementedError('group must be provided')
 
-    def create_h5d(self, h5g, data=None, **kwargs):
+    def create_dataset(self, h5g, data=None, **kwargs):
 
         # set defaults
         kwargs.setdefault('name', 'data')
         for k, v in self.defaults.items():
             kwargs.setdefault(k, v)
 
+        # handle data
         if data is not None:
             data = _util.ensure_array_like(data)
 
             # by default, simple chunking across rows
             rowsize = data.dtype.itemsize * reduce(operator.mul,
                                                    data.shape[1:], 1)
-            # by default, 1Mb chunks
+            # 1Mb chunks
             chunklen = max(1, (2**20) // rowsize)
             chunks = (chunklen,) + data.shape[1:]
             kwargs.setdefault('chunks', chunks)
@@ -98,64 +100,82 @@ class HDF5Storage(object):
             # set data
             kwargs['data'] = data
 
+        # create dataset
         h5d = h5g.create_dataset(**kwargs)
-        # patch in append method
-        h5d.append = MethodType(_array_append, h5d)
+
         return h5d
 
     # noinspection PyUnusedLocal
     def array(self, data, expectedlen=None, **kwargs):
         # ignore expectedlen for now
+
+        # setup
         data = _util.ensure_array_like(data)
-        # use root group
-        h5g, kwargs = self.open_h5f(**kwargs)
-        h5d = self.create_h5d(h5g, data=data, **kwargs)
+
+        # obtain group
+        h5g = kwargs.pop('group', None)
+        if h5g is None:
+            # open file, use root group
+            h5g, kwargs = self.open_file(**kwargs)
+
+        # create dataset
+        h5d = self.create_dataset(h5g, data=data, **kwargs)
+
+        # patch in append method
+        h5d.append = MethodType(_array_append, h5d)
+
         return h5d
 
     # noinspection PyUnusedLocal
     def table(self, data, names=None, expectedlen=None, **kwargs):
         # ignore expectedlen for now
+
+        # setup
         names, columns = _util.check_table_like(data, names=names)
-        # use root group
-        h5g, kwargs = self.open_h5f(**kwargs)
+
+        # obtain group
+        h5g = kwargs.pop('group', None)
+        if h5g is None:
+            # open file, use root group
+            h5g, kwargs = self.open_file(**kwargs)
+
+        # create columns
         for n, c in zip(names, columns):
-            self.create_h5d(h5g, data=c, name=n, **kwargs)
+            self.create_dataset(h5g, data=c, name=n, **kwargs)
+
         # patch in append method
         h5g.append = MethodType(_table_append, h5g)
+
         # patch in names attribute
         h5g.names = names
+
         return h5g
 
 
 class HDF5MemStorage(HDF5Storage):
 
-    def __init__(self, **kwargs):
-        self.defaults = kwargs
-
-    def open_h5f(self, **kwargs):
+    def open_file(self, **kwargs):
         return h5fmem(), kwargs
 
 
 class HDF5TmpStorage(HDF5Storage):
 
-    def __init__(self, **kwargs):
-        self.defaults = kwargs
-
-    def open_h5f(self, **kwargs):
+    def open_file(self, **kwargs):
         suffix = kwargs.pop('suffix', '.h5')
         prefix = kwargs.pop('prefix', 'scikit_allel_')
         tempdir = kwargs.pop('dir', None)
         return h5ftmp(dir=tempdir, suffix=suffix, prefix=prefix), kwargs
 
 
-# TODO HDF5FileStorage
-
-
+hdf5_storage = HDF5Storage()
 hdf5mem_storage = HDF5MemStorage()
 hdf5tmp_storage = HDF5TmpStorage()
+hdf5_zlib1_storage = HDF5Storage(compression='gzip', compression_opts=1)
 hdf5mem_zlib1_storage = HDF5MemStorage(compression='gzip', compression_opts=1)
 hdf5tmp_zlib1_storage = HDF5TmpStorage(compression='gzip', compression_opts=1)
+_util.storage_registry['hdf5'] = hdf5_storage
 _util.storage_registry['hdf5mem'] = hdf5mem_storage
 _util.storage_registry['hdf5tmp'] = hdf5tmp_storage
+_util.storage_registry['hdf5_zlib1'] = hdf5_zlib1_storage
 _util.storage_registry['hdf5mem_zlib1'] = hdf5mem_zlib1_storage
 _util.storage_registry['hdf5tmp_zlib1'] = hdf5tmp_zlib1_storage
