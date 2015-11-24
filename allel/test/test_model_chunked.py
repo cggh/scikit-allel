@@ -414,6 +414,16 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
         with assert_raises(NotImplementedError):
             vt.take(indices)
 
+    def test_eval_vm(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = self.setup_instance(a)
+
+        expr = '(DP > 30) & (QD < 4)'
+        r = vt.eval(expr, vm='numexpr')
+        aeq([False, False, True, False, True], r)
+        r = vt.eval(expr, vm='python')
+        aeq([False, False, True, False, True], r)
+
 
 class VariantChunkedTableTestsHDF5Storage(VariantChunkedTableTests):
 

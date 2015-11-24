@@ -62,6 +62,36 @@ def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
     return out
 
 
+def copy_table(tbl, start=0, stop=None, blen=None, storage=None,
+               create='table', **kwargs):
+    """TODO"""
+
+    # setup
+    names, columns = _util.check_table_like(tbl)
+    storage = _util.get_storage(storage)
+    blen = _util.get_blen_table(tbl, blen)
+    if stop is None:
+        stop = len(columns[0])
+    else:
+        stop = min(stop, len(columns[0]))
+    length = stop - start
+    if length < 0:
+        raise ValueError('invalid stop/start')
+
+    # copy block-wise
+    out = None
+    for i in range(start, stop, blen):
+        j = min(i+blen, stop)
+        res = [np.asanyarray(c[i:j]) for c in columns]
+        if out is None:
+            out = getattr(storage, create)(res, names=names,
+                                           expectedlen=length, **kwargs)
+        else:
+            out.append(res)
+
+    return out
+
+
 def apply(data, f, blen=None, storage=None, create='array', **kwargs):
     """TODO"""
 
@@ -496,8 +526,10 @@ def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
         import numexpr
         evaluate = numexpr.evaluate
     elif vm == 'python':
-        def evaluate(expr, local_dict=None, **ekw):
-            return eval(expr, locals=local_dict, **ekw)
+        # noinspection PyUnusedLocal
+        def evaluate(expr, local_dict=None, **kw):
+            # takes no keyword arguments
+            return eval(expr, None, local_dict)
     else:
         raise ValueError('expected vm either "numexpr" or "python"')
 
@@ -741,6 +773,12 @@ class ChunkedTable(object):
                 (n, c.dtype, c.shape[1:])
             l.append(t)
         return np.dtype(l)
+
+    def copy(self, start=0, stop=None, blen=None, storage=None,
+             create='table', **kwargs):
+        out = copy_table(self, start=start, stop=stop, blen=blen,
+                         storage=storage, create=create, **kwargs)
+        return type(self)(out, names=self.names)
 
     def compress(self, condition, blen=None, storage=None, create='table',
                  **kwargs):
