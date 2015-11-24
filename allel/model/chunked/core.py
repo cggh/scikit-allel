@@ -63,11 +63,12 @@ def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
 
 
 def apply(data, f, blen=None, storage=None, create='array', **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
     if isinstance(data, tuple):
-        blen = min(_util.get_blen_array(d, blen) for d in data)
+        blen = max(_util.get_blen_array(d, blen) for d in data)
     else:
         blen = _util.get_blen_array(data, blen)
     if isinstance(data, tuple):
@@ -85,7 +86,7 @@ def apply(data, f, blen=None, storage=None, create='array', **kwargs):
         if isinstance(data, tuple):
             blocks = [np.asanyarray(d[i:j]) for d in data]
         else:
-            blocks = np.asanyarray(data[i:j]),
+            blocks = [np.asanyarray(data[i:j])]
 
         # map
         res = f(*blocks)
@@ -101,6 +102,7 @@ def apply(data, f, blen=None, storage=None, create='array', **kwargs):
 
 def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
             storage=None, create='array', **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -148,6 +150,7 @@ def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
 
 def amax(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
+    """TODO"""
     return areduce(data, axis=axis, reducer=np.amax,
                    block_reducer=np.maximum, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -155,6 +158,7 @@ def amax(data, axis=None, mapper=None, blen=None, storage=None,
 
 def amin(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
+    """TODO"""
     return areduce(data, axis=axis, reducer=np.amin,
                    block_reducer=np.minimum, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -163,6 +167,7 @@ def amin(data, axis=None, mapper=None, blen=None, storage=None,
 # noinspection PyShadowingBuiltins
 def asum(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
+    """TODO"""
     return areduce(data, axis=axis, reducer=np.sum,
                    block_reducer=np.add, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -170,6 +175,7 @@ def asum(data, axis=None, mapper=None, blen=None, storage=None,
 
 def count_nonzero(data, mapper=None, blen=None, storage=None,
                   create='array', **kwargs):
+    """TODO"""
     return areduce(data, reducer=np.count_nonzero,
                    block_reducer=np.add, mapper=mapper,
                    blen=blen, storage=storage, create=create, **kwargs)
@@ -177,6 +183,7 @@ def count_nonzero(data, mapper=None, blen=None, storage=None,
 
 def compress(data, condition, axis=0, blen=None, storage=None,
              create='array', **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -270,6 +277,7 @@ def take(data, indices, axis=0, blen=None, storage=None,
 
 def compress_table(tbl, condition, blen=None, storage=None, create='table',
                    **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -298,6 +306,7 @@ def compress_table(tbl, condition, blen=None, storage=None, create='table',
 
 def take_table(tbl, indices, blen=None, storage=None, create='table',
                **kwargs):
+    """TODO"""
 
     # setup
     names, columns = _util.check_table_like(tbl)
@@ -319,6 +328,7 @@ def take_table(tbl, indices, blen=None, storage=None, create='table',
 
 def subset(data, sel0, sel1, blen=None, storage=None, create='array',
            **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -359,6 +369,7 @@ def subset(data, sel0, sel1, blen=None, storage=None, create='array',
 
 
 def hstack(tup, blen=None, storage=None, create='array', **kwargs):
+    """TODO"""
 
     # setup
     if not isinstance(tup, (tuple, list)):
@@ -373,6 +384,7 @@ def hstack(tup, blen=None, storage=None, create='array', **kwargs):
 
 
 def vstack(tup, blen=None, storage=None, create='array', **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -398,6 +410,7 @@ def vstack(tup, blen=None, storage=None, create='array', **kwargs):
 
 
 def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -428,7 +441,9 @@ def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
 
 def binary_op(data, op, other, blen=None, storage=None, create='array',
               **kwargs):
+    """TODO"""
 
+    # normalise scalars
     if hasattr(other, 'shape') and len(other.shape) == 0:
         other = other[()]
 
@@ -448,6 +463,7 @@ def binary_op(data, op, other, blen=None, storage=None, create='array',
         raise NotImplementedError('argument type not supported')
 
 
+# based on bcolz.chunked_eval
 def _get_expression_variables(expression, vm):
     cexpr = compile(expression, '<string>', 'eval')
     if vm == 'numexpr':
@@ -463,8 +479,10 @@ def _get_expression_variables(expression, vm):
                 if var not in ['None', 'False', 'True']]
 
 
+# based on bcolz.chunked_eval
 def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
                create='array', vm_kwargs=None, **kwargs):
+    """TODO"""
 
     # setup
     storage = _util.get_storage(storage)
@@ -505,6 +523,7 @@ def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
 
 
 class ChunkedArray(object):
+    """TODO"""
 
     def __init__(self, data):
         data = _util.ensure_array_like(data)
@@ -631,7 +650,11 @@ class ChunkedArray(object):
         return self.binary_op(operator.truediv, other, **kwargs)
 
 
+# TODO copy method docs
+
+
 class ChunkedTable(object):
+    """TODO"""
 
     view_cls = np.recarray
 
@@ -674,7 +697,7 @@ class ChunkedTable(object):
             raise NotImplementedError('item not suppored: %r' % item)
 
     def __array__(self):
-        return self[:]
+        return np.asarray(self[:])
 
     def __getattr__(self, item):
         if item in self.names:

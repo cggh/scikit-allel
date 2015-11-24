@@ -100,7 +100,7 @@ def get_blen_array(data, blen=None):
 
         else:
             # fall back to something simple, ~1Mb chunks
-            row = np.asanyarray(data[0])
+            row = np.asarray(data[0])
             return max(1, (2**20) // row.nbytes)
 
     else:
@@ -110,6 +110,6 @@ def get_blen_array(data, blen=None):
 def get_blen_table(data, blen=None):
     if blen is None:
         _, columns = check_table_like(data)
-        return min(get_blen_array(c) for c in columns)
+        return max(get_blen_array(c) for c in columns)
     else:
         return blen
