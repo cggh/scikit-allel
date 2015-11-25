@@ -290,9 +290,9 @@ class GenotypeArray(ArrayAug):
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
         if hasattr(s, 'ndim'):
-            if s.ndim == 3 and self.shape[-1] == s.shape[-1]:
+            if s.ndim == 3 and self.shape[2] == s.shape[2]:
                 # dimensionality and ploidy preserved
-                if self.mask is not None:
+                if hasattr(self, 'mask') and self.mask is not None:
                     # attempt to slice mask
                     m = self.mask.__getslice__(*args)
                     s.mask = m
@@ -304,9 +304,9 @@ class GenotypeArray(ArrayAug):
     def __getitem__(self, *args, **kwargs):
         s = np.ndarray.__getitem__(self, *args, **kwargs)
         if hasattr(s, 'ndim'):
-            if s.ndim == 3 and self.shape[-1] == s.shape[-1]:
+            if s.ndim == 3 and self.shape[2] == s.shape[2]:
                 # dimensionality and ploidy preserved
-                if self.mask is not None:
+                if hasattr(self, 'mask') and self.mask is not None:
                     # attempt to slice mask
                     m = self.mask.__getitem__(*args)
                     s.mask = m
@@ -549,7 +549,7 @@ class GenotypeArray(ArrayAug):
 
         data = subset(self, sel0, sel1)
         g = GenotypeArray(data, copy=False)
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             m = subset(self.mask, sel0, sel1)
             g.mask = m
         return g
@@ -580,7 +580,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             expr = '(allele1 >= 0) & (allele2 >= 0)'
@@ -588,10 +588,10 @@ class GenotypeArray(ArrayAug):
 
         # general ploidy case
         else:
-            out = np.all(self >= 0, axis=-1)
+            out = np.all(self >= 0, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -622,7 +622,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             # call is missing if either allele is missing
@@ -632,10 +632,10 @@ class GenotypeArray(ArrayAug):
         # general ploidy case
         else:
             # call is missing if any allele is missing
-            out = np.any(self < 0, axis=-1)
+            out = np.any(self < 0, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out |= self.mask
 
         return out
@@ -676,7 +676,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             if allele is None:
@@ -691,12 +691,12 @@ class GenotypeArray(ArrayAug):
                 allele1 = self[..., 0, None]  # noqa
                 other_alleles = self[..., 1:]  # noqa
                 ex = '(allele1 >= 0) & (allele1 == other_alleles)'
-                out = np.all(ne.evaluate(ex), axis=-1)
+                out = np.all(ne.evaluate(ex), axis=2)
             else:
-                out = np.all(self == allele, axis=-1)
+                out = np.all(self == allele, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -754,7 +754,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 > 0) & (allele1  == allele2)'
@@ -765,10 +765,10 @@ class GenotypeArray(ArrayAug):
             allele1 = self[..., 0, None]  # noqa
             other_alleles = self[..., 1:]  # noqa
             ex = '(allele1 > 0) & (allele1 == other_alleles)'
-            out = np.all(ne.evaluate(ex), axis=-1)
+            out = np.all(ne.evaluate(ex), axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -805,7 +805,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 >= 0) & (allele2  >= 0) & (allele1 != allele2)'
@@ -818,13 +818,13 @@ class GenotypeArray(ArrayAug):
         else:
             allele1 = self[..., 0, None]  # noqa
             other_alleles = self[..., 1:]  # noqa
-            out = np.all(self >= 0, axis=-1) \
-                & np.any(allele1 != other_alleles, axis=-1)
+            out = np.all(self >= 0, axis=2) \
+                & np.any(allele1 != other_alleles, axis=2)
             if allele is not None:
-                out &= np.any(self == allele, axis=-1)
+                out &= np.any(self == allele, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -860,7 +860,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             if not len(call) == DIPLOID:
                 raise ValueError('invalid call: %r', call)
             allele1 = self[..., 0]  # noqa
@@ -870,13 +870,13 @@ class GenotypeArray(ArrayAug):
 
         # general ploidy case
         else:
-            if not len(call) == self.shape[-1]:
+            if not len(call) == self.shape[2]:
                 raise ValueError('invalid call: %r', call)
             call = np.asarray(call)[None, None, :]
-            out = np.all(self == call, axis=-1)
+            out = np.all(self == call, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -966,26 +966,26 @@ class GenotypeArray(ArrayAug):
                 genotype_int8_count_alleles_subpop_masked
 
             if subpop is None:
-                if self.mask is None:
-                    ac = genotype_int8_count_alleles(self, max_allele)
-                else:
+                if hasattr(self, 'mask') and self.mask is not None:
                     ac = genotype_int8_count_alleles_masked(
                         self, self.mask.view(dtype='u1'), max_allele
                     )
+                else:
+                    ac = genotype_int8_count_alleles(self, max_allele)
 
             else:
-                if self.mask is None:
-                    ac = genotype_int8_count_alleles_subpop(
-                        self, max_allele, subpop
-                    )
-                else:
+                if hasattr(self, 'mask') and self.mask is not None:
                     ac = genotype_int8_count_alleles_subpop_masked(
                         self, self.mask.view(dtype='u1'), max_allele, subpop
+                    )
+                else:
+                    ac = genotype_int8_count_alleles_subpop(
+                        self, max_allele, subpop
                     )
 
         else:
             # set up output array
-            ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
 
             # extract subpop
             if subpop is not None:
@@ -1065,7 +1065,7 @@ class GenotypeArray(ArrayAug):
         """
 
         # reshape, preserving size of variants dimension
-        newshape = (self.n_variants, -1)
+        newshape = (self.shape[0], -1)
         data = np.reshape(self, newshape)
         h = HaplotypeArray(data, copy=copy)
         return h
@@ -1112,8 +1112,8 @@ class GenotypeArray(ArrayAug):
         """
 
         # count number of alternate alleles
-        out = np.empty((self.n_variants, self.n_samples), dtype=dtype)
-        np.sum(self == 0, axis=-1, out=out)
+        out = np.empty((self.shape[0], self.shape[1]), dtype=dtype)
+        np.sum(self == 0, axis=2, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -1121,7 +1121,7 @@ class GenotypeArray(ArrayAug):
             out[m] = fill
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out[self.mask] = fill
 
         return out
@@ -1172,8 +1172,8 @@ class GenotypeArray(ArrayAug):
         """
 
         # count number of alternate alleles
-        out = np.empty((self.n_variants, self.n_samples), dtype=dtype)
-        np.sum(self > 0, axis=-1, out=out)
+        out = np.empty((self.shape[0], self.shape[1]), dtype=dtype)
+        np.sum(self > 0, axis=2, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -1181,7 +1181,7 @@ class GenotypeArray(ArrayAug):
             out[m] = fill
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out[self.mask] = fill
 
         return out
@@ -1232,15 +1232,15 @@ class GenotypeArray(ArrayAug):
             alleles = list(range(m+1))
 
         # set up output array
-        outshape = (self.n_variants, self.n_samples, len(alleles))
+        outshape = (self.shape[0], self.shape[1], len(alleles))
         out = np.zeros(outshape, dtype='u1')
 
         for i, allele in enumerate(alleles):
             # count alleles along ploidy dimension
             allele_match = self == allele
-            if self.mask is not None:
+            if hasattr(self, 'mask') and self.mask is not None:
                 allele_match &= ~self.mask[:, :, None]
-            np.sum(allele_match, axis=-1, out=out[..., i])
+            np.sum(allele_match, axis=2, out=out[..., i])
 
         return out
 
@@ -1282,7 +1282,7 @@ class GenotypeArray(ArrayAug):
 
         """
 
-        if self.shape[-1] != 2:
+        if self.shape[2] != 2:
             raise ValueError('can only pack diploid calls')
 
         if boundscheck:
@@ -1498,23 +1498,23 @@ class GenotypeArray(ArrayAug):
         # necessary, TODO review
 
         # define the range of possible indices, e.g., diploid => (0, 1)
-        index_range = np.arange(0, self.shape[-1], dtype='u1')
+        index_range = np.arange(0, self.shape[2], dtype='u1')
 
         # create a random index for each genotype call
         indices = np.random.choice(index_range,
-                                   size=(self.n_variants * self.n_samples),
+                                   size=(self.shape[0] * self.shape[1]),
                                    replace=True)
 
         # reshape genotype data so it's suitable for passing to np.choose
         # by merging the variants and samples dimensions
-        choices = self.reshape(-1, self.shape[-1]).T
+        choices = self.reshape(-1, self.shape[2]).T
 
         # now use random indices to haploidify
         data = np.choose(indices, choices)
 
         # reshape the haploidified data to restore the variants and samples
         # dimensions
-        data = data.reshape((self.n_variants, self.n_samples))
+        data = data.reshape((self.shape[0], self.shape[1]))
 
         # view as haplotype array
         h = HaplotypeArray(data, copy=False)
@@ -1587,7 +1587,7 @@ class GenotypeArray(ArrayAug):
 
         # join via separator
         expr = "a[..., 0]"
-        for i in range(1, self.ploidy):
+        for i in range(1, self.shape[2]):
             expr += " + sep + a[..., %s]" % i
         gt = eval(expr)
 
@@ -1656,7 +1656,7 @@ class GenotypeArray(ArrayAug):
 
         h = self.to_haplotypes()
         hm = h.map_alleles(mapping, copy=copy)
-        gm = hm.to_genotypes(ploidy=self.ploidy)
+        gm = hm.to_genotypes(ploidy=self.shape[2])
         return gm
 
 
@@ -1949,11 +1949,11 @@ class HaplotypeArray(ArrayAug):
         """
 
         # check ploidy is compatible
-        if (self.n_haplotypes % ploidy) > 0:
+        if (self.shape[1] % ploidy) > 0:
             raise ValueError('incompatible ploidy')
 
         # reshape
-        newshape = (self.n_variants, -1, ploidy)
+        newshape = (self.shape[0], -1, ploidy)
         data = self.reshape(newshape)
 
         # wrap
@@ -2132,7 +2132,7 @@ class HaplotypeArray(ArrayAug):
 
         else:
             # set up output array
-            ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
 
             # extract subpop
             if subpop is not None:
