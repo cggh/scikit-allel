@@ -4,14 +4,15 @@ Release notes
 v0.19.0
 -------
 
-The major change in v0.19.0 is the introduction of a new
-:mod:`allel.model.chunked` module, which provides data structures for
-variant call data backed by chunked array storage
-(`#31 <https://github.com/cggh/scikit-allel/issues/31>`_). This is a
-generalisation of the previously available :mod:`allel.model.bcolz` to enable
-the use of both bcolz and HDF5 (via h5py) as backing storage. The
-:mod:`allel.model.bcolz` module is now deprecated but will be retained for
-backwargs compatibility until the next major release.
+The major change in v0.19.0 is the addition of the new
+:mod:`allel.model.chunked` module, which provides classes for variant
+call data backed by chunked array storage (`#31
+<https://github.com/cggh/scikit-allel/issues/31>`_). This is a
+generalisation of the previously available :mod:`allel.model.bcolz` to
+enable the use of both bcolz and HDF5 (via h5py) as backing
+storage. The :mod:`allel.model.bcolz` module is now deprecated but
+will be retained for backwargs compatibility until the next major
+release.
 
 Other changes:
 
