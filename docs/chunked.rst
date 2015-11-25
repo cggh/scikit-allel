@@ -55,7 +55,7 @@ Functions
 .. autofunction:: allel.chunked.core.store
 .. autofunction:: allel.chunked.core.copy
 .. autofunction:: allel.chunked.core.apply
-.. autofunction:: allel.chunked.core.areduce
+.. autofunction:: allel.chunked.core.reduce_axis
 .. autofunction:: allel.chunked.core.amax
 .. autofunction:: allel.chunked.core.amin
 .. autofunction:: allel.chunked.core.asum

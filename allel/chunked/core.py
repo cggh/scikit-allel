@@ -130,8 +130,8 @@ def apply(data, f, blen=None, storage=None, create='array', **kwargs):
     return out
 
 
-def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
-            storage=None, create='array', **kwargs):
+def reduce_axis(data, reducer, block_reducer, mapper=None, axis=None,
+                blen=None, storage=None, create='array', **kwargs):
     """Apply an operation to `data` that reduces over one or more axes."""
 
     # setup
@@ -181,34 +181,34 @@ def areduce(data, reducer, block_reducer, mapper=None, axis=None, blen=None,
 def amax(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
     """Compute the maximum value."""
-    return areduce(data, axis=axis, reducer=np.amax,
-                   block_reducer=np.maximum, mapper=mapper,
-                   blen=blen, storage=storage, create=create, **kwargs)
+    return reduce_axis(data, axis=axis, reducer=np.amax,
+                       block_reducer=np.maximum, mapper=mapper,
+                       blen=blen, storage=storage, create=create, **kwargs)
 
 
 def amin(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
     """Compute the minimum value."""
-    return areduce(data, axis=axis, reducer=np.amin,
-                   block_reducer=np.minimum, mapper=mapper,
-                   blen=blen, storage=storage, create=create, **kwargs)
+    return reduce_axis(data, axis=axis, reducer=np.amin,
+                       block_reducer=np.minimum, mapper=mapper,
+                       blen=blen, storage=storage, create=create, **kwargs)
 
 
 # noinspection PyShadowingBuiltins
 def asum(data, axis=None, mapper=None, blen=None, storage=None,
          create='array', **kwargs):
     """Compute the sum."""
-    return areduce(data, axis=axis, reducer=np.sum,
-                   block_reducer=np.add, mapper=mapper,
-                   blen=blen, storage=storage, create=create, **kwargs)
+    return reduce_axis(data, axis=axis, reducer=np.sum,
+                       block_reducer=np.add, mapper=mapper,
+                       blen=blen, storage=storage, create=create, **kwargs)
 
 
 def count_nonzero(data, mapper=None, blen=None, storage=None,
                   create='array', **kwargs):
     """Count the number of non-zero elements."""
-    return areduce(data, reducer=np.count_nonzero,
-                   block_reducer=np.add, mapper=mapper,
-                   blen=blen, storage=storage, create=create, **kwargs)
+    return reduce_axis(data, reducer=np.count_nonzero,
+                       block_reducer=np.add, mapper=mapper,
+                       blen=blen, storage=storage, create=create, **kwargs)
 
 
 def compress(data, condition, axis=0, blen=None, storage=None,
@@ -599,7 +599,7 @@ class ChunkedArray(object):
 
     # outputs from these methods are not wrapped
     store = store
-    reduce = areduce
+    reduce_axis = reduce_axis
     max = amax
     min = amin
     sum = asum

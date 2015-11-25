@@ -15,13 +15,14 @@ from allel.stats.window import windowed_statistic, moving_statistic
 from allel.stats.diversity import mean_pairwise_difference, \
     mean_pairwise_difference_between
 from allel.stats.misc import jackknife
+from allel.chunked import get_blen_array
 
 
 logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def weir_cockerham_fst(g, subpops, max_allele=None):
+def weir_cockerham_fst(g, subpops, max_allele=None, chunked=False, blen=None):
     """Compute the variance components from the analyses of variance of
     allele frequencies according to Weir and Cockerham (1984).
 
@@ -33,6 +34,11 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
         Sample indices for each subpopulation.
     max_allele : int, optional
         The highest allele index to consider.
+    chunked : bool, optional
+        If True, use a block-wise implementation to avoid loading the entire
+        input array into memory.
+    blen : int, optional
+        Block length to use for chunked implementation.
 
     Returns
     -------
@@ -114,20 +120,21 @@ def weir_cockerham_fst(g, subpops, max_allele=None):
     if max_allele is None:
         max_allele = g.max()
 
-    if hasattr(g, 'chunklen'):
+    if chunked:
         # use a block-wise implementation
-        blen = g.chunklen
+        blen = get_blen_array(g, blen)
         n_variants = g.shape[0]
         shape = (n_variants, max_allele + 1)
         a = np.zeros(shape, dtype='f8')
         b = np.zeros(shape, dtype='f8')
         c = np.zeros(shape, dtype='f8')
         for i in range(0, n_variants, blen):
-            gb = g[i:i+blen]
+            j = min(n_variants, i+blen)
+            gb = g[i:j]
             ab, bb, cb = _weir_cockerham_fst(gb, subpops, max_allele)
-            a[i:i+blen] = ab
-            b[i:i+blen] = bb
-            c[i:i+blen] = cb
+            a[i:j] = ab
+            b[i:j] = bb
+            c[i:j] = cb
 
     else:
         a, b, c = _weir_cockerham_fst(g, subpops, max_allele)

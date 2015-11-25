@@ -529,7 +529,9 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         # test with bcolz carray
         import bcolz
         gnz = bcolz.carray(gn, chunklen=2)
-        actual = allel.stats.locate_unlinked(gnz, size=2, step=1, threshold=.5)
+        actual = allel.stats.locate_unlinked(gnz, size=2, step=1,
+                                             threshold=.5, chunked=True,
+                                             blen=2)
         expect = [True, False, True, True, False]
         aeq(expect, actual)
 
