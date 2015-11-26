@@ -398,22 +398,21 @@ cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
     """Compute integrated haplotype homozygosity from shared suffix lengths."""
 
     n_pairs = ssl.shape[0]
-    if n_pairs > 0:
+    ihh = np.nan
 
+    # compute if at least 1 pair
+    if n_pairs > 0:
         # compute EHH
         b = np.bincount(ssl)
         c = np.cumsum(b[::-1])[:-1]
         ehh = c / n_pairs
 
-        # if ehh does not break down set ihh as nan
-        if ehh[0] > min_ehh:
-            ihh = np.nan
+        # if ehh does not break down do not compute integral
+        if (ehh.size < i) | (ehh[0] <= min_ehh):
 
-        else:
             # trim ehh array at minimum EHH value
-            if min_ehh > 0:
-                ix = bisect_right(ehh, min_ehh)
-                ehh = ehh[ix:]
+            ix = bisect_right(ehh, min_ehh)
+            ehh = ehh[ix:]
 
             # compute variant spacing
             s = ehh.shape[0]
@@ -422,9 +421,6 @@ cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
 
             # compute IHH via trapezoid rule
             ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
-
-    else:
-        ihh = np.nan
 
     return ihh
 
