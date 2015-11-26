@@ -46,6 +46,7 @@ def get_chunks(data, chunks=None):
 
         else:
             # fall back to something simple, ~1Mb chunks of first dimension
+            # print(repr(data))
             row = np.asarray(data[0])
             chunklen = max(1, (2**20) // row.nbytes)
             if row.shape:
@@ -315,7 +316,6 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
         def f(block):
             block = GenotypeArray(block)
-            # print(block.shape, block.ploidy)
             return block.count_alleles(max_allele=max_allele)[:, None, :]
 
         # determine output chunks - preserve dim0; change dim1, dim2
