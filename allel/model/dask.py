@@ -316,7 +316,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
         def f(block):
             block = GenotypeArray(block)
-            print(block.shape, block.ploidy)
+            # print(block.shape, block.ploidy)
             return block.count_alleles(max_allele=max_allele)[:, None, :]
 
         # determine output chunks - preserve dim0; change dim1, dim2
@@ -361,8 +361,8 @@ class GenotypeDaskArray(DaskArrayWrapper):
         # insert an extra dimension for map_blocks
         mapping_chunks = (self.chunks[0], (1,), (mapping.shape[1],))
         mapping = da.from_array(mapping[:, None, :], chunks=mapping_chunks)
-        print(self.shape, mapping.shape)
-        print(self.chunks, mapping.chunks)
+        # print(self.shape, mapping.shape)
+        # print(self.chunks, mapping.chunks)
 
         out = da.map_blocks(f, self.darr, mapping)
         return GenotypeDaskArray(out)
