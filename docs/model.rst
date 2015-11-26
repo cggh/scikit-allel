@@ -5,4 +5,5 @@ Data structures
     :maxdepth: 3
 
     model/ndarray
+    model/chunked
     model/bcolz

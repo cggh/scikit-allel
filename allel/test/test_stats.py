@@ -219,8 +219,8 @@ class TestDiversityDivergence(unittest.TestCase):
                             [0, 1, 1, 2],
                             [0, 1, -1, -1],
                             [-1, -1, -1, -1]])
-        h1 = h.subset(haplotypes=[0, 1])
-        h2 = h.subset(haplotypes=[2, 3])
+        h1 = h.take([0, 1], axis=1)
+        h2 = h.take([2, 3], axis=1)
         ac1 = h1.count_alleles()
         ac2 = h2.count_alleles()
 
@@ -241,8 +241,8 @@ class TestDiversityDivergence(unittest.TestCase):
                             [0, 1, 1, 2],
                             [0, 1, -1, -1],
                             [-1, -1, -1, -1]])
-        h1 = h.subset(haplotypes=[0, 1])
-        h2 = h.subset(haplotypes=[2, 3])
+        h1 = h.take([0, 1], axis=1)
+        h2 = h.take([2, 3], axis=1)
         ac1 = h1.count_alleles()
         ac2 = h2.count_alleles()
         # mean pairwise divergence
@@ -529,7 +529,9 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         # test with bcolz carray
         import bcolz
         gnz = bcolz.carray(gn, chunklen=2)
-        actual = allel.stats.locate_unlinked(gnz, size=2, step=1, threshold=.5)
+        actual = allel.stats.locate_unlinked(gnz, size=2, step=1,
+                                             threshold=.5, chunked=True,
+                                             blen=2)
         expect = [True, False, True, True, False]
         aeq(expect, actual)
 

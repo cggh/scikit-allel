@@ -413,6 +413,23 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
     return y, n_bases
 
 
-# TODO windowed_nnz
-# TODO windowed_nnz_per_base
-# TODO equally_accessible_windows
+def equally_accessible_windows(is_accessible, size):
+    """Create windows each containing the same number of accessible bases.
+
+    Parameters
+    ----------
+    is_accessible : array_like, bool, shape (n_bases,)
+        Array defining accessible status of all bases on a contig/chromosome.
+    size : int
+        Window size (number of accessible bases).
+
+    Returns
+    -------
+    windows : ndarray, int, shape (n_windows, 2)
+        Window start/stop positions (1-based).
+
+    """
+    pos_accessible = np.nonzero(is_accessible)[0] + 1
+    windows = moving_statistic(pos_accessible, lambda v: [v[0], v[-1]],
+                               size=size)
+    return windows

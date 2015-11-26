@@ -7,7 +7,7 @@ import numpy as np
 
 from allel.util import asarray_ndim
 from allel.model.ndarray import HaplotypeArray
-from allel.stats.window import moving_statistic
+from allel.stats.window import moving_statistic, index_windows
 
 
 def ehh_decay(h, truncate=False):
@@ -143,6 +143,8 @@ def plot_voight_painting(painting, palette='colorblind', flank='right',
     ax.set_yticks([])
     ax.set_xlim(0, painting.shape[0])
     ax.set_ylim(0, painting.shape[1])
+
+    return ax
 
 
 def fig_voight_painting(h, index=None, palette='colorblind',
@@ -374,62 +376,63 @@ def ihs(h, pos, min_ehh=0.05):
     return score
 
 
-def plot_haplotype_frequencies(h, palette='Set1', singleton_color='#dddddd',
-                               ax=None):
-    """Plot haplotype frequencies.
+def haplotype_diversity(h):
+    """Estimate haplotype diversity.
 
     Parameters
     ----------
     h : array_like, int, shape (n_variants, n_haplotypes)
         Haplotype array.
-    palette : string, optional
-        A Seaborn palette name.
-    ax : axes, optional
-        The axes on which to draw. If not provided, a new figure will be
-        created.
 
     Returns
     -------
-    ax : axes
+    hd : float
+        Haplotype diversity.
 
     """
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
 
     # check inputs
     h = HaplotypeArray(h, copy=False)
 
-    # setup figure
-    if ax is None:
-        width = plt.rcParams['figure.figsize'][0]
-        height = width / 10
-        fig, ax = plt.subplots(figsize=(width, height))
-        sns.despine(ax=ax, left=True)
+    # number of haplotypes
+    n = h.n_haplotypes
 
-    # count distinct haplotypes
-    hc = h.distinct_counts()
+    # compute haplotype frequencies
+    f = h.distinct_frequencies()
 
-    # setup palette
-    n_colors = np.count_nonzero(hc > 1)
-    palette = sns.color_palette(palette, n_colors)
+    # estimate haplotype diversity
+    hd = (1 - np.sum(f**2)) * n / (n - 1)
 
-    # paint frequencies
-    x1 = 0
-    for i, c in enumerate(hc):
-        x2 = x1 + c
-        if c > 1:
-            color = palette[i]
-        else:
-            color = singleton_color
-        ax.axvspan(x1, x2, color=color)
-        x1 = x2
+    return hd
 
-    # tidy up
-    ax.set_xlim(0, h.shape[1])
-    ax.set_yticks([])
 
-    return ax
+def moving_haplotype_diversity(h, size, start=0, stop=None, step=None):
+    """Estimate haplotype diversity in moving windows.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    hd : ndarray, float, shape (n_windows,)
+        Haplotype diversity.
+
+    """
+
+    hd = moving_statistic(values=h, statistic=haplotype_diversity, size=size,
+                          start=start, stop=stop, step=step)
+    return hd
 
 
 def garud_h(h):
@@ -511,12 +514,197 @@ def moving_garud_h(h, size, start=0, stop=None, step=None):
 
     """
 
-    h = moving_statistic(values=h, statistic=garud_h, size=size, start=start,
-                         stop=stop, step=step)
+    gh = moving_statistic(values=h, statistic=garud_h, size=size, start=start,
+                          stop=stop, step=step)
 
-    h1 = h[:, 0]
-    h12 = h[:, 1]
-    h123 = h[:, 2]
-    h2_h1 = h[:, 3]
+    h1 = gh[:, 0]
+    h12 = gh[:, 1]
+    h123 = gh[:, 2]
+    h2_h1 = gh[:, 3]
 
     return h1, h12, h123, h2_h1
+
+
+def plot_haplotype_frequencies(h, palette='Paired', singleton_color='w',
+                               ax=None):
+    """Plot haplotype frequencies.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    palette : string, optional
+        A Seaborn palette name.
+    singleton_color : string, optional
+        Color to paint singleton haplotypes.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+
+    Returns
+    -------
+    ax : axes
+
+    """
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # check inputs
+    h = HaplotypeArray(h, copy=False)
+
+    # setup figure
+    if ax is None:
+        width = plt.rcParams['figure.figsize'][0]
+        height = width / 10
+        fig, ax = plt.subplots(figsize=(width, height))
+        sns.despine(ax=ax, left=True)
+
+    # count distinct haplotypes
+    hc = h.distinct_counts()
+
+    # setup palette
+    n_colors = np.count_nonzero(hc > 1)
+    palette = sns.color_palette(palette, n_colors)
+
+    # paint frequencies
+    x1 = 0
+    for i, c in enumerate(hc):
+        x2 = x1 + c
+        if c > 1:
+            color = palette[i]
+        else:
+            color = singleton_color
+        ax.axvspan(x1, x2, color=color)
+        x1 = x2
+
+    # tidy up
+    ax.set_xlim(0, h.shape[1])
+    ax.set_yticks([])
+
+    return ax
+
+
+def moving_hfs_rank(h, size, start=0, stop=None):
+    """Helper function for plotting haplotype frequencies in moving windows.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+
+    Returns
+    -------
+    hr : ndarray, int, shape (n_windows, n_haplotypes)
+        Haplotype rank array.
+
+    """
+
+    # determine windows
+    windows = np.asarray(list(index_windows(h, size=size, start=start,
+                                            stop=stop, step=None)))
+
+    # setup output
+    hr = np.zeros((windows.shape[0], h.shape[1]), dtype='i4')
+
+    # iterate over windows
+    for i, (window_start, window_stop) in enumerate(windows):
+
+        # extract haplotypes for the current window
+        hw = h[window_start:window_stop]
+
+        # count haplotypes
+        hc = hw.distinct_counts()
+
+        # ensure sorted descending
+        hc.sort()
+        hc = hc[::-1]
+
+        # compute ranks for non-singleton haplotypes
+        cp = 0
+        for j, c in enumerate(hc):
+            if c > 1:
+                hr[i, cp:cp+c] = j+1
+            cp += c
+
+    return hr
+
+
+def plot_moving_haplotype_frequencies(pos, h, size, start=0, stop=None, n=None,
+                                      palette='Paired', singleton_color='w',
+                                      ax=None):
+    """Plot haplotype frequencies in moving windows over the genome.
+
+    Parameters
+    ----------
+    pos : array_like, int, shape (n_items,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    n : int, optional
+        Color only the `n` most frequent haplotypes (by default, all
+        non-singleton haplotypes are colored).
+    palette : string, optional
+        A Seaborn palette name.
+    singleton_color : string, optional
+        Color to paint singleton haplotypes.
+    ax : axes, optional
+        The axes on which to draw. If not provided, a new figure will be
+        created.
+
+    Returns
+    -------
+    ax : axes
+
+    """
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # setup figure
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    # compute haplotype frequencies
+    # N.B., here we use a haplotype rank data structure to enable the use of
+    # pcolormesh() which is a lot faster than any other type of plotting
+    # function
+    hr = moving_hfs_rank(h, size=size, start=start, stop=stop)
+
+    # truncate to n most common haplotypes
+    if n:
+        hr[hr > n] = 0
+
+    # compute window start and stop positions
+    windows = moving_statistic(pos, statistic=lambda x: (x[0], x[-1]),
+                               size=size, start=start, stop=stop)
+
+    # create color map
+    colors = [singleton_color] + sns.color_palette(palette, n_colors=hr.max())
+    cmap = mpl.colors.ListedColormap(colors)
+
+    # draw colors
+    x = np.append(windows[:, 0], windows[-1, -1])
+    y = np.arange(h.shape[1]+1)
+    ax.pcolormesh(x, y, hr.T, cmap=cmap)
+
+    # tidy up
+    ax.set_xlim(windows[0, 0], windows[-1, -1])
+    ax.set_ylim(0, h.shape[1])
+    ax.set_ylabel('haplotype count')
+    ax.set_xlabel('position (bp)')
+
+    return ax

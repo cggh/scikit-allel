@@ -9,11 +9,9 @@ from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
     locate_fixed_differences, locate_private_alleles
 
 
-try:
-    # noinspection PyUnresolvedReferences
-    import bcolz
-except ImportError:
-    pass
-else:
-    from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
-        AlleleCountsCArray, AlleleCountsCTable, VariantCTable, FeatureCTable
+from allel.model.chunked import *
+
+
+# legacy
+from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
+    AlleleCountsCArray, AlleleCountsCTable, VariantCTable, FeatureCTable

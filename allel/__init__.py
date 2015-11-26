@@ -2,12 +2,13 @@
 # flake8: noqa
 
 
-import allel.model as model
+from allel import model
 from allel.model import *
-import allel.stats as stats
-import allel.plot as plot
-import allel.io as io
-import allel.constants as constants
+from allel import stats
+from allel import plot
+from allel import io
+from allel import chunked
+from allel import constants
+from allel import util
 
-
-__version__ = '0.19.0.dev2'
+__version__ = '0.19.0.dev0'
