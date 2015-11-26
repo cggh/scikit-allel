@@ -354,18 +354,16 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return da.map_blocks(f, packed, chunks=chunks, new_dims=2)
 
     def map_alleles(self, mapping, **kwargs):
-        # TODO broken
 
         def f(block, bmapping):
-            return GenotypeArray(block).map_alleles(bmapping, copy=False)
+            g = GenotypeArray(block)
+            m = bmapping[:, 0, :]
+            return g.map_alleles(m, copy=False)
 
-        # insert an extra dimension for map_blocks
-        mapping_chunks = (self.chunks[0], (1,), (mapping.shape[1],))
-        mapping = da.from_array(mapping[:, None, :], chunks=mapping_chunks)
-        # print(self.shape, mapping.shape)
-        # print(self.chunks, mapping.chunks)
-
-        out = da.map_blocks(f, self.darr, mapping)
+        mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
+        print(self.shape, self.chunks)
+        print(mapping.shape, mapping.chunks)
+        out = da.map_blocks(f, self.darr, mapping[:, None, :])
         return GenotypeDaskArray(out)
 
 
