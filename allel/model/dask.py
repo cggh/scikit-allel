@@ -46,7 +46,6 @@ def get_chunks(data, chunks=None):
 
         else:
             # fall back to something simple, ~1Mb chunks of first dimension
-            # print(repr(data))
             row = np.asarray(data[0])
             chunklen = max(1, (2**20) // row.nbytes)
             if row.shape:
