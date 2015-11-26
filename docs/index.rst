@@ -7,7 +7,7 @@ This package provides utilities for exploratory analysis of large
 scale genetic variation data. It is based on numpy_, scipy_ and other
 established Python scientific libraries.
 
-* GitHub repository: https://github.com/cggh/scikit-allel
+* Source: https://github.com/cggh/scikit-allel
 * Documentation: http://scikit-allel.readthedocs.org/
 * Download: https://pypi.python.org/pypi/scikit-allel
 
@@ -20,17 +20,22 @@ worked examples with real data, see the following articles:
 
 * `Introducing scikit-allel <http://alimanfoo.github.io/2015/09/15/introducing-scikit-allel.html>`_
 * |Estimating FST|
-* `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_  
+* `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_
 
 .. |Estimating FST| raw:: HTML
 
-    <a href="http://alimanfoo.github.io/2015/09/21/estimating-fst.html">Estimating F<sub>ST</sub></a>	       
-		     
+    <a href="http://alimanfoo.github.io/2015/09/21/estimating-fst.html">Estimating F<sub>ST</sub></a>
+
+If you would like to cite `scikit-allel` please use the DOI below.
+
+.. image:: https://zenodo.org/badge/7890/cggh/scikit-allel.svg
+   :target: https://zenodo.org/badge/latestdoi/7890/cggh/scikit-allel
+
 Installation
 ------------
 
 This package requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
-scikit-learn_, h5py_, numexpr_, bcolz_ and petl_. Install these
+scikit-learn_, h5py_, numexpr_, bcolz_ and petl_. Please install these
 dependencies first, then use pip to install scikit-allel::
 
     $ pip install -U scikit-allel
@@ -39,11 +44,13 @@ Contents
 --------
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
     model
     stats
     io
+    chunked
+    util
     release
 
 Acknowledgments

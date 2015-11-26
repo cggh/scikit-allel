@@ -1,6 +1,43 @@
 Release notes
 =============
 
+v0.19.0
+-------
+
+The major change in v0.19.0 is the addition of the new
+:mod:`allel.model.chunked` module, which provides classes for variant
+call data backed by chunked array storage (`#31
+<https://github.com/cggh/scikit-allel/issues/31>`_). This is a
+generalisation of the previously available :mod:`allel.model.bcolz` to
+enable the use of both bcolz and HDF5 (via h5py) as backing
+storage. The :mod:`allel.model.bcolz` module is now deprecated but
+will be retained for backwargs compatibility until the next major
+release.
+
+Other changes:
+
+* Added functions for computing haplotype diversity, see
+  :func:`allel.stats.selection.haplotype_diversity` and
+  :func:`allel.stats.selection.moving_haplotype_diversity`
+  (`#29 <https://github.com/cggh/scikit-allel/issues/29>`_).
+* Added function
+  :func:`allel.stats.selection.plot_moving_haplotype_frequencies` for
+  visualising haplotype frequency spectra in moving windows over the genome
+  (`#30 <https://github.com/cggh/scikit-allel/issues/30>`_).
+* Added `vstack()` and `hstack()` methods to genotype and haplotype arrays to
+  enable combining data from multiple arrays
+  (`#21 <https://github.com/cggh/scikit-allel/issues/21>`_).
+* Added convenience function
+  :func:`allel.stats.window.equally_accessible_windows`
+  (`#16 <https://github.com/cggh/scikit-allel/issues/16>`_).
+* Added methods `from_hdf5_group()` and `to_hdf5_group()` to
+  :class:`allel.model.ndarray.VariantTable`
+  (`#26 <https://github.com/cggh/scikit-allel/issues/26>`_).
+* Fixed missing return value in
+  :func:`allel.stats.selection.plot_voight_painting`
+  (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
+* Added :func:`allel.util.hdf5_cache` utility function.
+
 v0.18.1
 -------
 

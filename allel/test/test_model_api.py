@@ -13,7 +13,8 @@ import tempfile
 
 import numpy as np
 from nose.tools import eq_ as eq, assert_raises, \
-    assert_is_instance, assert_not_is_instance, assert_almost_equal
+    assert_is_instance, assert_not_is_instance, assert_almost_equal, \
+    assert_sequence_equal
 from allel.test.tools import assert_array_equal as aeq
 
 
@@ -236,39 +237,39 @@ class GenotypeArrayInterface(object):
         g = self.setup_instance(diploid_genotype_data)
 
         # test with indices
-        variants = [0, 2]
-        samples = [0, 2]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [0, 2]
+        sel1 = [0, 2]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .take(variants, axis=0)\
-            .take(samples, axis=1)
+            .take(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
         # test with condition
-        variants = [True, False, True, False, False]
-        samples = [True, False, True]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [True, False, True, False, False]
+        sel1 = [True, False, True]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .compress(variants, axis=0)\
-            .compress(samples, axis=1)
+            .compress(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [0, 2]
-        samples = [True, False, True]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [0, 2]
+        sel1 = [True, False, True]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .take(variants, axis=0)\
-            .compress(samples, axis=1)
+            .take(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [True, False, True, False, False]
-        samples = [0, 2]
-        s = g.subset(variants=variants, samples=samples)
+        sel0 = [True, False, True, False, False]
+        sel1 = [0, 2]
+        s = g.subset(sel0, sel1)
         expect = np.array(diploid_genotype_data)\
-            .compress(variants, axis=0)\
-            .take(samples, axis=1)
+            .compress(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
     # genotype counting methods
@@ -851,13 +852,13 @@ class GenotypeArrayInterface(object):
              [False, False, True],
              [True, False, True]]
         g.mask = m
-        g.fill_masked(copy=False)
+        gm = g.fill_masked()
         expect = [[[-1, -1], [0, 1], [-1, -1]],
                   [[0, 2], [1, 1], [-1, -1]],
                   [[1, 0], [-1, -1], [-1, -1]],
                   [[2, 2], [-1, -1], [-1, -1]],
                   [[-1, -1], [-1, -1], [-1, -1]]]
-        aeq(expect, g)
+        aeq(expect, gm)
 
         # polyploid
         a = np.array(triploid_genotype_data, dtype=np.int8)
@@ -867,12 +868,28 @@ class GenotypeArrayInterface(object):
              [False, True, False],
              [False, False, True]]
         g.mask = m
-        g.fill_masked(copy=False)
+        gm = g.fill_masked()
         expect = [[[-1, -1, -1], [0, 0, 1], [-1, -1, -1]],
                   [[0, 1, 1], [1, 1, 1], [-1, -1, -1]],
                   [[0, 1, 2], [-1, -1, -1], [-1, -1, -1]],
                   [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
-        aeq(expect, g)
+        aeq(expect, gm)
+
+    def test_hstack(self):
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g1 = self.setup_instance(a)
+        g2 = self.setup_instance(a)
+        actual = g1.hstack(g2)
+        expect = np.hstack([a, a])
+        aeq(expect, actual)
+
+    def test_vstack(self):
+        a = np.array(diploid_genotype_data, dtype=np.int8)
+        g1 = self.setup_instance(a)
+        g2 = self.setup_instance(a)
+        actual = g1.vstack(g2)
+        expect = np.vstack([a, a])
+        aeq(expect, actual)
 
 
 class HaplotypeArrayInterface(object):
@@ -983,39 +1000,39 @@ class HaplotypeArrayInterface(object):
         h = self.setup_instance(haplotype_data)
 
         # test with indices
-        variants = [0, 2]
-        haplotypes = [0, 2]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [0, 2]
+        sel1 = [0, 2]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .take(variants, axis=0)\
-            .take(haplotypes, axis=1)
+            .take(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
         # test with condition
-        variants = [True, False, True, False]
-        haplotypes = [True, False, True]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [True, False, True, False]
+        sel1 = [True, False, True]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .compress(variants, axis=0)\
-            .compress(haplotypes, axis=1)
+            .compress(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [0, 2]
-        haplotypes = [True, False, True]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [0, 2]
+        sel1 = [True, False, True]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .take(variants, axis=0)\
-            .compress(haplotypes, axis=1)
+            .take(sel0, axis=0)\
+            .compress(sel1, axis=1)
         aeq(expect, s)
 
         # mix and match
-        variants = [True, False, True, False]
-        haplotypes = [0, 2]
-        s = h.subset(variants=variants, haplotypes=haplotypes)
+        sel0 = [True, False, True, False]
+        sel1 = [0, 2]
+        s = h.subset(sel0, sel1)
         expect = np.array(haplotype_data)\
-            .compress(variants, axis=0)\
-            .take(haplotypes, axis=1)
+            .compress(sel0, axis=0)\
+            .take(sel1, axis=1)
         aeq(expect, s)
 
     def test_is_called(self):
@@ -1165,6 +1182,22 @@ class HaplotypeArrayInterface(object):
         h = self.setup_instance(a)
         mapping = np.array(mapping, dtype='i1')
         actual = h.map_alleles(mapping)
+        aeq(expect, actual)
+
+    def test_hstack(self):
+        a = np.array(haplotype_data, dtype=np.int8)
+        h1 = self.setup_instance(a)
+        h2 = self.setup_instance(a)
+        actual = h1.hstack(h2)
+        expect = np.hstack([a, a])
+        aeq(expect, actual)
+
+    def test_vstack(self):
+        a = np.array(haplotype_data, dtype=np.int8)
+        h1 = self.setup_instance(a)
+        h2 = self.setup_instance(a)
+        actual = h1.vstack(h2)
+        expect = np.vstack([a, a])
         aeq(expect, actual)
 
 
@@ -1344,6 +1377,22 @@ class AlleleCountsArrayInterface(object):
                   [2, 0, 0],
                   [0, 0, 0]]
         actual = ac.map_alleles(mapping)
+        aeq(expect, actual)
+
+    def test_hstack(self):
+        a = np.array(allele_counts_data, dtype=np.int8)
+        ac1 = self.setup_instance(a)
+        ac2 = self.setup_instance(a)
+        actual = ac1.hstack(ac2)
+        expect = np.hstack([a, a])
+        aeq(expect, actual)
+
+    def test_vstack(self):
+        a = np.array(allele_counts_data, dtype=np.int8)
+        ac1 = self.setup_instance(a)
+        ac2 = self.setup_instance(a)
+        actual = ac1.vstack(ac2)
+        expect = np.vstack([a, a])
         aeq(expect, actual)
 
 
@@ -1694,7 +1743,7 @@ class VariantTableInterface(object):
         vt = self.setup_instance(a)
         eq(5, len(vt))
         eq(5, vt.n_variants)
-        eq(variant_table_names, vt.names)
+        assert_sequence_equal(variant_table_names, vt.names)
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -1738,7 +1787,7 @@ class VariantTableInterface(object):
         # multi-column access
         s = vt[['CHROM', 'POS']]
         eq(5, s.n_variants)
-        eq(('CHROM', 'POS'), s.names)
+        assert_sequence_equal(('CHROM', 'POS'), s.names)
         aeq(a[['CHROM', 'POS']], s)
 
     def test_take(self):
@@ -1759,7 +1808,7 @@ class VariantTableInterface(object):
         expect = a.compress(condition)
         aeq(expect, t)
         eq(2, t.n_variants)
-        eq(variant_table_names, t.names)
+        assert_sequence_equal(variant_table_names, t.names)
 
     def test_eval(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2029,7 +2078,7 @@ class FeatureTableInterface(object):
         ft = self.setup_instance(a)
         eq(6, len(ft))
         eq(6, ft.n_features)
-        eq(feature_table_names, ft.names)
+        assert_sequence_equal(feature_table_names, ft.names)
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -2070,7 +2119,7 @@ class FeatureTableInterface(object):
         # multi-column access
         s = ft[['seqid', 'start', 'end']]
         eq(6, s.n_features)
-        eq(('seqid', 'start', 'end'), s.names)
+        assert_sequence_equal(('seqid', 'start', 'end'), s.names)
         aeq(a[['seqid', 'start', 'end']], s)
 
     def test_take(self):
@@ -2081,7 +2130,7 @@ class FeatureTableInterface(object):
         expect = a.take(indices)
         aeq(expect, t)
         eq(2, t.n_features)
-        eq(feature_table_names, t.names)
+        assert_sequence_equal(feature_table_names, t.names)
 
     def test_compress(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
@@ -2091,7 +2140,7 @@ class FeatureTableInterface(object):
         expect = a.compress(condition)
         aeq(expect, t)
         eq(2, t.n_features)
-        eq(feature_table_names, t.names)
+        assert_sequence_equal(feature_table_names, t.names)
 
     def test_eval(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)

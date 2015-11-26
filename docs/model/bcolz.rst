@@ -1,4 +1,4 @@
-Compressed arrays (bcolz)
+bcolz arrays (deprecated)
 =========================
 
 .. automodule:: allel.model.bcolz
@@ -37,6 +37,8 @@ Utility functions
 .. autofunction:: carray_block_min
 .. autofunction:: carray_block_compress
 .. autofunction:: carray_block_take
+.. autofunction:: carray_block_vstack
+.. autofunction:: carray_block_hstack
 .. autofunction:: carray_from_hdf5
 .. autofunction:: carray_to_hdf5
 .. autofunction:: ctable_block_compress

@@ -7,6 +7,7 @@ import numpy as np
 
 from allel.stats.window import windowed_statistic
 from allel.util import asarray_ndim, ensure_square
+from allel.chunked import get_blen_array
 
 
 def rogers_huff_r(gn, fill=np.nan):
@@ -103,7 +104,8 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
     return r
 
 
-def locate_unlinked(gn, size=100, step=20, threshold=.1):
+def locate_unlinked(gn, size=100, step=20, threshold=.1, chunked=False,
+                    blen=None):
     """Locate variants in approximate linkage equilibrium, where r**2 is
     below the given `threshold`.
 
@@ -119,6 +121,11 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1):
         Number of variants to advance to the next window.
     threshold : float
         Maximum value of r**2 to include variants.
+    chunked : bool, optional
+        If True, use a block-wise implementation to avoid loading the entire
+        input array into memory.
+    blen : int, optional
+        Block length to use for chunked implementation.
 
     Returns
     -------
@@ -138,7 +145,7 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1):
     from allel.opt.stats import gn_locate_unlinked_int8
 
     # check inputs
-    if not hasattr(gn, 'shape') or not hasattr(gn, 'ndim'):
+    if not hasattr(gn, 'shape') or not hasattr(gn, 'dtype'):
         gn = np.asarray(gn, dtype='i1')
     if gn.ndim != 2:
         raise ValueError('gn must have two dimensions')
@@ -146,17 +153,19 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1):
     # setup output
     loc = np.ones(gn.shape[0], dtype='u1')
 
-    if hasattr(gn, 'chunklen'):
+    if chunked:
         # use block-wise implementation
-        blen = gn.chunklen
+        blen = get_blen_array(gn, blen)
         n_variants = gn.shape[0]
         for i in range(0, n_variants, blen):
             # N.B., ensure overlap with next window
-            gnb = np.asarray(gn[i:i+blen+size], dtype='i1')
-            locb = loc[i:i+blen+size]
+            j = min(n_variants, i+blen+size)
+            gnb = np.asarray(gn[i:j], dtype='i1')
+            locb = loc[i:j]
             gn_locate_unlinked_int8(gnb, locb, size, step, threshold)
 
     else:
+        gn = np.asarray(gn, dtype='i1')
         gn_locate_unlinked_int8(gn, loc, size, step, threshold)
 
     return loc.astype('b1')
