@@ -757,6 +757,7 @@ class GenotypeArrayInterface(object):
         eq(3, actual.n_alleles)
 
         # polyploid
+        print('test polyploid')
         g = self.setup_instance(triploid_genotype_data)
         expect = np.array([[5, 1, 0],
                            [1, 5, 0],
