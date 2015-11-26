@@ -402,7 +402,7 @@ cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
 
     # compute if at least 1 pair
     if n_pairs > 0:
-        
+
         # compute EHH
         b = np.bincount(ssl)
         c = np.cumsum(b[::-1])[:-1]
