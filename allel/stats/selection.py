@@ -311,7 +311,7 @@ def xpehh(h1, h2, pos, min_ehh=0):
     return score
 
 
-def ihs(h, pos, min_ehh=0):
+def ihs(h, pos, min_ehh=0.05):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference and alternate alleles.
@@ -356,6 +356,10 @@ def ihs(h, pos, min_ehh=0):
 
     from allel.opt.stats import ihh01_scan_int8
 
+    assert min_ehh > 1.0/h.shape[1], \
+        "There are insufficient haplotypes (n={nhap}) to decay to an EHH of " \
+        "{minehh}".format(nhap=h.shape[0], minehh=min_ehh)
+
     # scan forward
     ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh)
 
@@ -372,9 +376,70 @@ def ihs(h, pos, min_ehh=0):
     return score
 
 
+def nsl(h):
+    """Compute the unstandardized number of segregating sites by length (nSl)
+    for each variant, comparing mean nSl value between the reference and
+    alternate alleles. after Ferrer-Admetlla et al 2014
+    http://mbe.oxfordjournals.org/content/31/5/1275.full.pdf+html
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        nSl scores need to be normalised by subtracting mean and dividing by SD
+
+    Notes
+    -----
+
+    This function will calculate nSl for all variants. To exclude variants
+    below a given minor allele frequency, filter the input haplotype array
+    before passing to this function. The function only expects segregating sites
+    so ensure they are removed before passing the haplotype array.
+
+    This function computes nSl by comparing the reference and alternate
+    alleles. These can be polarised by switching the sign for any variant where
+    the reference allele is derived.
+
+    This function does nothing about nSl calculations where haplotype
+    homozygosity extends up to the first or last variant. There will be edge
+    effects.
+
+    This function currently does nothing to account for large gaps between
+    variants. There will be edge effects near any large gaps.
+
+    The function returns the uncorrected scores.
+
+    """
+
+    from allel.opt.stats import nsl01_scan_int8
+
+    # check there are no invariant sites
+    ac = h.count_alleles()
+    assert np.all(ac.is_segregating())
+
+    # scan forward
+    nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
+
+    # scan backward
+    nsl0_rev, nsl1_rev = nsl01_scan_int8(h[::-1])
+    nsl0_rev = nsl0_rev[::-1]
+    nsl1_rev = nsl1_rev[::-1]
+
+    # compute unstandardized score
+    nsl0 = nsl0_fwd + nsl0_rev
+    nsl1 = nsl1_fwd + nsl1_rev
+
+    score = np.log(nsl1 / nsl0)
+
+    return score
+
+
 def haplotype_diversity(h):
     """Estimate haplotype diversity.
-
     Parameters
     ----------
     h : array_like, int, shape (n_variants, n_haplotypes)
