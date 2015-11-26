@@ -394,10 +394,13 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h):
 from bisect import bisect_right
 
 
-cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
+def ssl2ihh(ssl, i, pos, min_ehh):
     """Compute integrated haplotype homozygosity from shared suffix lengths."""
 
     n_pairs = ssl.shape[0]
+    ihh = np.nan
+
+    # compute if at least 1 pair
     if n_pairs > 0:
 
         # compute EHH
@@ -405,21 +408,20 @@ cdef inline np.float64_t ssl2ihh(ssl, pos, i, min_ehh):
         c = np.cumsum(b[::-1])[:-1]
         ehh = c / n_pairs
 
-        # deal with minimum EHH
-        if min_ehh > 0:
+        # if ehh does not break down do not compute integral
+        if (ehh.size < i) | (ehh[0] <= min_ehh):
+
+            # trim ehh array at minimum EHH value
             ix = bisect_right(ehh, min_ehh)
             ehh = ehh[ix:]
 
-        # compute variant spacing
-        s = ehh.shape[0]
-        # take absolute value because this might be a reverse scan
-        g = np.abs(np.diff(pos[i-s+1:i+1]))
+            # compute variant spacing
+            s = ehh.shape[0]
+            # take absolute value because this might be a reverse scan
+            g = np.abs(np.diff(pos[i-s+1:i+1]))
 
-        # compute IHH via trapezoid rule
-        ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
-
-    else:
-        ihh = 0
+            # compute IHH via trapezoid rule
+            ihh = np.sum(g * (ehh[:-1] + ehh[1:]) / 2)
 
     return ihh
 
@@ -489,16 +491,16 @@ cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
     return v
 
 
-def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
-    """Scan forwards over haplotypes, computing the integrated haplotype
-    homozygosity backwards for each variant for the reference (0) and
-    alternate (1) alleles separately."""
+def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
+    """Scan forwards over haplotypes, computing a summary statistic derived
+    from the pairwise shared suffix lengths backwards for each variant,
+    for the reference (0) and alternate (1) alleles separately."""
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, p, s
         np.int32_t[:, :] ssl
         np.int8_t a1, a2
-        np.float64_t[:] vihh0, vihh1
+        np.float64_t[:] vstat0, vstat1
         np.float64_t ihh0, ihh1
         np.uint8_t[:] loc0, loc1
 
@@ -517,8 +519,8 @@ def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
     ssl = np.zeros((n_haplotypes, n_haplotypes), dtype='i4')
 
     # integrated haplotype homozygosity values for each variant
-    vihh0 = np.empty(n_variants, dtype='f8')
-    vihh1 = np.empty(n_variants, dtype='f8')
+    vstat0 = np.empty(n_variants, dtype=dtype)
+    vstat1 = np.empty(n_variants, dtype=dtype)
 
     # iterate forward over variants
     for i in range(n_variants):
@@ -552,9 +554,41 @@ def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
         ssl11 = tovector_int32(np.asarray(ssl).compress(l1, axis=0).compress(l1, axis=1))
 
         # compute IHH from shared suffix lengths
-        ihh0 = ssl2ihh(ssl00, pos, i, min_ehh)
-        ihh1 = ssl2ihh(ssl11, pos, i, min_ehh)
-        vihh0[i] = ihh0
-        vihh1[i] = ihh1
+        s00 = stat(ssl00, i, **kwargs)
+        s11 = stat(ssl11, i, **kwargs)
+        vstat0[i] = s00
+        vstat1[i] = s11
 
-    return np.asarray(vihh0), np.asarray(vihh1)
+    return np.asarray(vstat0), np.asarray(vstat1)
+
+
+def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+    """Scan forwards over haplotypes, computing the integrated haplotype
+    homozygosity backwards for each variant for the reference (0) and
+    alternate (1) alleles separately."""
+
+    return ssl01_scan_int8(h, ssl2ihh, pos=pos, min_ehh=min_ehh)
+
+
+def ssl2nsl(ssl):
+    """Compute number segregating by length from shared suffix lengths."""
+
+    n_pairs = ssl.shape[0]
+    if n_pairs > 0:
+        # compute EHH
+        nsl = np.mean(ssl)
+
+    else:
+        # cannot be computed- as anc/der is singleton
+        # the result should never be 0- as the current snp counts
+        nsl = np.nan
+
+    return nsl
+
+
+def nsl01_scan_int8(np.int8_t[:, :] h):
+    """Scan forwards over haplotypes, computing the number of segregating
+    sites by length backwards for each variant for the reference (0) and
+    alternate (1) alleles separately."""
+
+    return ssl01_scan_int8(h, ssl2nsl)

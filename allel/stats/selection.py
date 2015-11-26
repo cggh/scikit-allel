@@ -250,7 +250,7 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
-def xpehh(h1, h2, pos, min_ehh=0):
+def xpehh(h1, h2, pos, min_ehh=0.05):
     """Compute the unstandardized cross-population extended haplotype
     homozygosity score (XPEHH) for each variant.
 
@@ -311,7 +311,7 @@ def xpehh(h1, h2, pos, min_ehh=0):
     return score
 
 
-def ihs(h, pos, min_ehh=0):
+def ihs(h, pos, min_ehh=0.05):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference and alternate alleles.
@@ -355,6 +355,10 @@ def ihs(h, pos, min_ehh=0):
     """
 
     from allel.opt.stats import ihh01_scan_int8
+
+    assert min_ehh > 1.0/h.shape[1], \
+        "There are insufficient haplotypes (n={nhap}) to decay to an EHH of " \
+        "{minehh}".format(nhap=h.shape[0], minehh=min_ehh)
 
     # scan forward
     ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh)
