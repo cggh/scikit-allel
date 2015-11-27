@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # cython: profile=False
+# cython: linetrace=False
+# cython: binding=False
 from __future__ import absolute_import, print_function, division
 
 

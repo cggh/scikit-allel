@@ -592,6 +592,14 @@ class ChunkedArray(object):
             r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
         if self.cratio:
             r += ', cratio=%.1f' % self.cratio
+        if self.cname:
+            r += ', cname=%s' % self.cname
+        if self.clevel is not None:
+            r += ', clevel=%s' % self.clevel
+        if self.shuffle is not None:
+            r += ', shuffle=%s' % self.shuffle
+        if self.chunks is not None:
+            r += ', chunks=%s' % str(self.chunks)
         r += ', data=%s.%s' % (type(self.data).__module__,
                                type(self.data).__name__)
         r += ')'
@@ -609,15 +617,27 @@ class ChunkedArray(object):
 
     @property
     def nbytes(self):
-        if hasattr(self.data, 'nbytes'):
-            return self.data.nbytes
-        return None
+        return _util.get_nbytes(self.data)
 
     @property
     def cbytes(self):
-        if hasattr(self.data, 'cbytes'):
-            return self.data.cbytes
-        return None
+        return _util.get_cbytes(self.data)
+
+    @property
+    def cname(self):
+        return _util.get_cname(self.data)
+
+    @property
+    def clevel(self):
+        return _util.get_clevel(self.data)
+
+    @property
+    def shuffle(self):
+        return _util.get_shuffle(self.data)
+
+    @property
+    def chunks(self):
+        return _util.get_chunks(self.data)
 
     @property
     def cratio(self):
@@ -832,16 +852,14 @@ class ChunkedTable(object):
 
     @property
     def nbytes(self):
-        cols_nbytes = [c.nbytes if hasattr(c, 'nbytes') else None
-                       for c in self.columns]
+        cols_nbytes = [_util.get_nbytes(c) for c in self.columns]
         if all(cols_nbytes):
             return sum(cols_nbytes)
         return None
 
     @property
     def cbytes(self):
-        cols_cbytes = [c.cbytes if hasattr(c, 'cbytes') else None
-                       for c in self.columns]
+        cols_cbytes = [_util.get_cbytes(c) for c in self.columns]
         if all(cols_cbytes):
             return sum(cols_cbytes)
         return None

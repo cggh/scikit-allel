@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# cython: profile=True
+# cython: profile=False
+# cython: linetrace=False
+# cython: binding=False
 from __future__ import absolute_import, print_function, division
 
 
@@ -227,6 +229,8 @@ cpdef Py_ssize_t shared_prefix_length_int8(np.int8_t[:] a, np.int8_t[:] b):
     return n
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef pairwise_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     """Compute the length of the shared prefix between all pairs of
     columns in a 2-dimensional array."""
@@ -250,6 +254,8 @@ cpdef pairwise_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     return np.asarray(lengths)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     """Compute the length of the shared prefix between neighbouring
     columns in a 2-dimensional array."""
@@ -269,6 +275,8 @@ cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     return np.asarray(lengths)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
                                                     np.int64_t[:] indices):
     """Compute the length of the shared prefix between neighbouring
@@ -291,6 +299,8 @@ cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
     return np.asarray(lengths)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
     """Optimized implementation of bisect_left."""
     cdef:
@@ -316,6 +326,8 @@ cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
     return u
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def paint_shared_prefixes_int8(np.int8_t[:, :] h):
     """Paint each shared prefix with a different number. N.B., `h` must be
     already sorted by prefix.
@@ -408,8 +420,9 @@ def ssl2ihh(ssl, i, pos, min_ehh):
         c = np.cumsum(b[::-1])[:-1]
         ehh = c / n_pairs
 
-        # if ehh does not break down do not compute integral
-        if (ehh.size < i) | (ehh[0] <= min_ehh):
+        # only compute integral if user has not specified min_ehh, or if ehh
+        # breaks down to reach less than min_ehh
+        if (min_ehh == 0) | (ehh.size < i) | (ehh[0] <= min_ehh):
 
             # trim ehh array at minimum EHH value
             ix = bisect_right(ehh, min_ehh)
@@ -426,6 +439,8 @@ def ssl2ihh(ssl, i, pos, min_ehh):
     return ihh
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
@@ -476,6 +491,8 @@ def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
     return np.asarray(vihh)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
     cdef:
         Py_ssize_t n, n_pairs, i, j, k
@@ -491,6 +508,8 @@ cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
     return v
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the

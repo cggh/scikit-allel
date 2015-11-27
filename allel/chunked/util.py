@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+import operator
 
 
 import numpy as np
+import h5py
 
 
-from allel.compat import string_types
+from allel.compat import string_types, reduce
 
 
 storage_registry = dict()
@@ -126,3 +128,61 @@ def human_readable_size(size):
         return "%.1fG" % (size / float(2**30))
     else:
         return "%.1fT" % (size / float(2**40))
+
+
+def get_nbytes(data):
+    if hasattr(data, 'nbytes'):
+        return data.nbytes
+    elif is_array_like(data):
+        return reduce(operator.mul, data.shape) * data.dtype.itemsize
+    else:
+        return None
+
+
+def get_cbytes(data):
+    if hasattr(data, 'cbytes'):
+        return data.cbytes
+    elif isinstance(data, h5py.Dataset):
+        # noinspection PyProtectedMember
+        return data._id.get_storage_size()
+    else:
+        return None
+
+
+def get_cname(data):
+    if hasattr(data, 'cparams'):
+        return data.cparams.cname
+    elif hasattr(data, 'compression'):
+        return data.compression
+    else:
+        return None
+
+
+def get_clevel(data):
+    if hasattr(data, 'cparams'):
+        return data.cparams.clevel
+    elif hasattr(data, 'compression_opts'):
+        return data.compression_opts
+    else:
+        return None
+
+
+def get_shuffle(data):
+    if hasattr(data, 'cparams'):
+        return data.cparams.shuffle
+    elif hasattr(data, 'shuffle'):
+        return data.shuffle
+    else:
+        return None
+
+
+def get_chunks(data):
+    if hasattr(data, 'chunklen'):
+        # bcolz carray
+        return (data.chunklen,) + data.shape[1:]
+    elif hasattr(data, 'chunks') and hasattr(data, 'shape') and \
+            len(data.chunks) == len(data.shape):
+        # h5py dataset
+        return data.chunks
+    else:
+        return None

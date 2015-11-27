@@ -11,4 +11,4 @@ from allel import chunked
 from allel import constants
 from allel import util
 
-__version__ = '0.19.0.dev0'
+__version__ = '0.19.0.rc1'

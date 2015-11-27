@@ -65,21 +65,6 @@ def _table_append(h5g, data):
         _dataset_append(h5d, c)
 
 
-def _dataset_nbytes(h5d):
-    return reduce(operator.mul, h5d.shape) * h5d.dtype.itemsize
-
-
-def _dataset_cbytes(h5d):
-    """Amount of file space required for a dataset."""
-    # noinspection PyProtectedMember
-    return h5d._id.get_storage_size()
-
-
-h5py.Dataset.nbytes = property(_dataset_nbytes)
-h5py.Dataset.cbytes = property(_dataset_cbytes)
-h5py.Dataset.append = _dataset_append
-
-
 class HDF5Storage(object):
     """Storage layer using HDF5 dataset and group."""
 
@@ -136,6 +121,9 @@ class HDF5Storage(object):
 
         # create dataset
         h5d = self.create_dataset(h5g, data=data, **kwargs)
+
+        # patch in append method
+        h5d.append = MethodType(_dataset_append, h5d)
 
         return h5d
 

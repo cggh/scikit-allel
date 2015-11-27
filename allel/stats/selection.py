@@ -278,9 +278,9 @@ def xpehh(h1, h2, pos, min_ehh=0.05):
     below a given minor allele frequency, filter the input haplotype arrays
     before passing to this function.
 
-    This function does nothing about XPEHH calculations where haplotype
-    homozygosity extends up to the first or last variant. There will be edge
-    effects.
+    This function returns NaN for any EHH calculations where haplotype
+    homozygosity does not decay below `min_ehh` before reaching the first or
+    last variant. To disable this behaviour, set `min_ehh` to zero.
 
     This function currently does nothing to account for large gaps between
     variants. There will be edge effects near any large gaps.
@@ -344,7 +344,7 @@ def ihs(h, pos, min_ehh=0.05):
 
     This function returns NaN for any IHS calculations where haplotype
     homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant.
+    last variant. To disable this behaviour, set `min_ehh` to zero.
 
     This function currently does nothing to account for large gaps between
     variants. There will be edge effects near any large gaps.
@@ -416,7 +416,7 @@ def nsl(h):
 
     # check there are no invariant sites
     ac = h.count_alleles()
-    assert np.all(ac.is_segregating())
+    assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
 
     # scan forward
     nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
