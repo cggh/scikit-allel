@@ -10,10 +10,8 @@ Either HDF5 (via `h5py <http://www.h5py.org/>`_) or `bcolz
 layer. Choice of storage layer can be made via the `storage` keyword
 argument which all class methods accept.  This argument can either be
 a string identifying one of the predefined storage layer
-configurations, or an object implementing the chunked storage API.
-
-For more information about controlling storage see the
-:mod:`allel.chunked` module.
+configurations, or an object implementing the chunked storage API. For more
+information about controlling storage see the :mod:`allel.chunked` module.
 
 """
 from __future__ import absolute_import, print_function, division

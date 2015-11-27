@@ -58,7 +58,7 @@ For example::
     >>> h5f['test/data']
     <HDF5 dataset "data": shape (100000,), type "<i8">
 
-This module is entirely generic and could be reasonably factored out into a
+This module is entirely generic and could be factored out into a
 stand-alone Python package. If you would like to see this happen please
 comment on `this issue <https://github.com/cggh/scikit-allel/issues/33>`_ on
 the scikit-allel GitHub repository.

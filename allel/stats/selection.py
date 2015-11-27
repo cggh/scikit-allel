@@ -374,8 +374,8 @@ def ihs(h, pos, min_ehh=0.05):
 
 def nsl(h):
     """Compute the unstandardized number of segregating sites by length (nSl)
-    for each variant, comparing mean nSl value between the reference and
-    alternate alleles. after Ferrer-Admetlla et al. (2014).
+    for each variant, comparing the reference and alternate alleles,
+    after Ferrer-Admetlla et al. (2014).
 
     Parameters
     ----------
