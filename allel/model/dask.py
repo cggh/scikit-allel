@@ -131,7 +131,7 @@ class DaskArrayWrapper(object):
         return type(self)(out)
 
     def subset(self, sel0, sel1):
-        out = self.darr[sel0][:sel1]
+        out = self.darr[sel0][:, sel1]
         return type(self)(out)
 
     def hstack(self, *others, **kwargs):
@@ -317,12 +317,12 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
         # deal with subpop
         if subpop:
-            g = self.take(subpop, axis=1)
+            gd = self.take(subpop, axis=1).darr
         else:
-            g = self
+            gd = self.darr
 
         # determine output chunks - preserve dim0; change dim1, dim2
-        chunks = (g.chunks[0], (1,)*len(g.chunks[1]), (max_allele+1,))
+        chunks = (gd.chunks[0], (1,)*len(gd.chunks[1]), (max_allele+1,))
 
         if self.mask is None:
 
@@ -332,10 +332,10 @@ class GenotypeDaskArray(DaskArrayWrapper):
                 return bg.count_alleles(max_allele=max_allele)[:, None, :]
 
             # map blocks and reduce
-            out = g.map_blocks(f, chunks=chunks).sum(axis=1)
+            out = gd.map_blocks(f, chunks=chunks).sum(axis=1)
 
         else:
-            # TODO broken
+
             # map with mask
             def f(block, bmask):
                 print(block.shape, bmask.shape)
@@ -343,8 +343,8 @@ class GenotypeDaskArray(DaskArrayWrapper):
                 bg.mask = bmask[:, :, 0]
                 return bg.count_alleles(max_allele=max_allele)[:, None, :]
 
-            m = self.mask[:, :, None]
-            out = da.map_blocks(f, g, m, chunks=chunks).sum(axis=1)
+            md = self.mask[:, :, None]
+            out = da.map_blocks(f, gd, md, chunks=chunks).sum(axis=1)
 
         return AlleleCountsDaskArray(out)
 
