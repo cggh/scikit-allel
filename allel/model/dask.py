@@ -379,5 +379,3 @@ class AlleleCountsDaskArray(DaskArrayWrapper):
     @property
     def n_alleles(self):
         return self.shape[1]
-
-    # TODO
