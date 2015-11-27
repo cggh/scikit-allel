@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-"""
-This module provides alternative implementations of array interfaces defined in
-the :mod:`allel.model` module, using `bcolz <http://bcolz.blosc.org>`_
-compressed arrays (:class:`bcolz.carray`) instead of numpy arrays for data
-storage. Compressed arrays can use either main memory or be stored on disk.
-In either case, the use of compressed arrays enables analysis of data that
-are too large to fit uncompressed into main memory.
+"""This module provides alternative implementations of array
+interfaces defined in the :mod:`allel.model.ndarray` module, using
+`bcolz <http://bcolz.blosc.org>`_ compressed arrays instead of numpy
+arrays for data storage.
+
+.. note::
+
+    Please note this module is now deprecated and will be removed in a
+    future release. It has been superseded by the
+    :mod:`allel.model.chunked` module which supports both bcolz and
+    HDF5 as the underlying storage layer.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -321,27 +325,13 @@ def ctable_block_take(ctbl, indices, **kwargs):
     return ctable_block_compress(ctbl, condition, **kwargs)
 
 
-def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
+def carray_block_subset(carr, sel0, sel1, blen=None, **kwargs):
     if blen is None:
         blen = carr.chunklen
 
     # check inputs
-    sel0 = asarray_ndim(sel0, 1, allow_none=True)
-    sel1 = asarray_ndim(sel1, 1, allow_none=True)
-    if sel0 is None and sel1 is None:
-        raise ValueError('missing selection')
-
-    # if either selection is None, use take/compress
-    if sel1 is None:
-        if sel0.size < carr.shape[0]:
-            return carray_block_take(carr, sel0, axis=0, **kwargs)
-        else:
-            return carray_block_compress(carr, sel0, axis=0, **kwargs)
-    elif sel0 is None:
-        if sel1.size < carr.shape[1]:
-            return carray_block_take(carr, sel1, axis=1, **kwargs)
-        else:
-            return carray_block_compress(carr, sel1, axis=1, **kwargs)
+    sel0 = asarray_ndim(sel0, 1)
+    sel1 = asarray_ndim(sel1, 1)
 
     # ensure boolean array for dim 0
     if sel0.size < carr.shape[0]:
@@ -366,6 +356,75 @@ def carray_block_subset(carr, sel0=None, sel1=None, blen=None, **kwargs):
         # don't bother decompressing the block unless we have to
         if np.any(bsel0):
             out.append(subset(block, bsel0, sel1))
+
+    return out
+
+
+def carray_block_hstack(tup, blen=None, **kwargs):
+    assert isinstance(tup, (tuple, list)), \
+        'first argument must be tuple or list'
+    assert len(tup) > 1, 'provide two or more arrays to stack'
+    a = tup[0]
+    for x in tup[1:]:
+        assert x.shape[0] == a.shape[0], \
+            'arrays must have equal size for first dimension'
+        assert len(x.shape) == len(a.shape), \
+            'arrays must have same dimensionality'
+
+    # set block size to use
+    if blen is None:
+        blen = min([x.chunklen for x in tup])
+
+    # output defaults
+    kwargs.setdefault('dtype', a.dtype)
+    kwargs.setdefault('cparams', getattr(a, 'cparams', None))
+    kwargs.setdefault('expectedlen', a.shape[0])
+
+    # setup output
+    out = None
+
+    # build output
+    for i in range(0, a.shape[0], blen):
+        block = np.hstack(tuple(x[i:i+blen] for x in tup))
+        if out is None:
+            out = bcolz.carray(block, **kwargs)
+        else:
+            out.append(block)
+
+    return out
+
+
+def carray_block_vstack(tup, blen=None, **kwargs):
+    assert isinstance(tup, (tuple, list)), \
+        'first argument must be tuple or list'
+    assert len(tup) > 1, 'provide two or more arrays to stack'
+    a = tup[0]
+    for x in tup[1:]:
+        assert x.shape[1:] == a.shape[1:], \
+            'arrays must have equal size for trailing dimensions'
+        assert len(x.shape) == len(a.shape), \
+            'arrays must have same dimensionality'
+
+    # set block size to use
+    if blen is None:
+        blen = min([x.chunklen for x in tup])
+
+    # output defaults
+    kwargs.setdefault('dtype', a.dtype)
+    kwargs.setdefault('cparams', getattr(a, 'cparams', None))
+    kwargs.setdefault('expectedlen', sum(x.shape[0] for x in tup))
+
+    # setup output
+    out = None
+
+    # build output
+    for a in tup:
+        for i in range(0, a.shape[0], blen):
+            block = a[i:i+blen]
+            if out is None:
+                out = bcolz.carray(block, **kwargs)
+            else:
+                out.append(block)
 
     return out
 
@@ -777,6 +836,16 @@ class CArrayWrapper(object):
         carr = carray_block_take(self.carr, indices, axis, **kwargs)
         return type(self)(carr, copy=False)
 
+    def hstack(self, *others, **kwargs):
+        tup = (self,) + others
+        carr = carray_block_hstack(tup, **kwargs)
+        return type(self)(carr, copy=False)
+
+    def vstack(self, *others, **kwargs):
+        tup = (self,) + others
+        carr = carray_block_vstack(tup, **kwargs)
+        return type(self)(carr, copy=False)
+
     def copy(self, *args, **kwargs):
         carr = self.carr.copy(*args, **kwargs)
         return type(self)(carr, copy=False)
@@ -801,7 +870,6 @@ class GenotypeCArray(CArrayWrapper):
 
     Parameters
     ----------
-
     data : array_like, int, shape (n_variants, n_samples, ploidy), optional
         Data to initialise the array with. May be a bcolz carray, which will
         not be copied if copy=False. May also be None, in which case rootdir
@@ -864,7 +932,7 @@ class GenotypeCArray(CArrayWrapper):
     Load from HDF5::
 
         >>> import h5py
-        >>> with h5py.File('example.h5', mode='w') as h5f:
+        >>> with h5py.File('test1.h5', mode='w') as h5f:
         ...     h5f.create_dataset('genotype',
         ...                        data=[[[0, 0], [0, 1]],
         ...                              [[0, 1], [1, 1]],
@@ -873,7 +941,7 @@ class GenotypeCArray(CArrayWrapper):
         ...                        chunks=(2, 2, 2))
         ...
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
-        >>> g = allel.GenotypeCArray.from_hdf5('example.h5', 'genotype')
+        >>> g = allel.GenotypeCArray.from_hdf5('test1.h5', 'genotype')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
           nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
@@ -1082,7 +1150,7 @@ class GenotypeCArray(CArrayWrapper):
         for i in range(0, self.shape[0], blen):
             block = self[i:i+blen]
             bmask = mask[i:i+blen]
-            block.fill_masked(value=value, mask=bmask, copy=False)
+            block = block.fill_masked(value=value, mask=bmask, copy=True)
             if copy:
                 if out is None:
                     out = bcolz.carray(block, **kwargs)
@@ -1093,11 +1161,11 @@ class GenotypeCArray(CArrayWrapper):
 
         return GenotypeCArray(out, copy=False)
 
-    def subset(self, variants=None, samples=None, **kwargs):
-        carr = carray_block_subset(self.carr, variants, samples, **kwargs)
+    def subset(self, sel0, sel1, **kwargs):
+        carr = carray_block_subset(self.carr, sel0, sel1, **kwargs)
         g = GenotypeCArray(carr, copy=False)
         if self.mask is not None:
-            mask = carray_block_subset(self.mask, variants, samples)
+            mask = carray_block_subset(self.mask, sel0, sel1)
             g.mask = mask
         return g
 
@@ -1344,6 +1412,8 @@ copy_method_doc(GenotypeCArray.count_alleles_subpops,
                 GenotypeArray.count_alleles_subpops)
 copy_method_doc(GenotypeCArray.to_gt, GenotypeArray.to_gt)
 copy_method_doc(GenotypeCArray.map_alleles, GenotypeArray.map_alleles)
+copy_method_doc(GenotypeCArray.hstack, GenotypeArray.hstack)
+copy_method_doc(GenotypeCArray.vstack, GenotypeArray.vstack)
 
 
 class HaplotypeCArray(CArrayWrapper):
@@ -1404,8 +1474,8 @@ class HaplotypeCArray(CArrayWrapper):
         """Number of haplotypes (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def subset(self, variants=None, haplotypes=None, **kwargs):
-        data = carray_block_subset(self.carr, variants, haplotypes, **kwargs)
+    def subset(self, sel0, sel1, **kwargs):
+        data = carray_block_subset(self.carr, sel0, sel1, **kwargs)
         return HaplotypeCArray(data, copy=False)
 
     def to_genotypes(self, ploidy, **kwargs):
@@ -1432,11 +1502,8 @@ class HaplotypeCArray(CArrayWrapper):
     def is_ref(self, **kwargs):
         return self.op_scalar(operator.eq, 0, **kwargs)
 
-    def is_alt(self, allele=None, **kwargs):
-        if allele is None:
-            return self.op_scalar(operator.gt, 0, **kwargs)
-        else:
-            return self.op_scalar(operator.eq, allele, **kwargs)
+    def is_alt(self, **kwargs):
+        return self.op_scalar(operator.gt, 0, **kwargs)
 
     def is_call(self, allele, **kwargs):
         return self.op_scalar(operator.eq, allele, **kwargs)
@@ -1538,6 +1605,8 @@ copy_method_doc(HaplotypeCArray.count_alleles, HaplotypeArray.count_alleles)
 copy_method_doc(HaplotypeCArray.count_alleles_subpops,
                 HaplotypeArray.count_alleles_subpops)
 copy_method_doc(HaplotypeCArray.map_alleles, HaplotypeArray.map_alleles)
+copy_method_doc(HaplotypeCArray.hstack, HaplotypeArray.hstack)
+copy_method_doc(HaplotypeCArray.vstack, HaplotypeArray.vstack)
 
 
 class AlleleCountsCArray(CArrayWrapper):

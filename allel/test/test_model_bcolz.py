@@ -221,7 +221,7 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         # data has wrong dtype
         data = [4., 5., 3.7]
         with assert_raises(TypeError):
-            GenotypeCArray(data)
+            HaplotypeCArray(data)
 
         # data has wrong dimensions
         data = [1, 2, 3]
@@ -412,6 +412,15 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
         self.assertNotIsInstance(s, VariantTable)
         self.assertIsInstance(s, bcolz.carray)
 
+    def test_take(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = VariantCTable(a)
+        # take variants not in original order
+        # not supported for carrays
+        indices = [2, 0]
+        with assert_raises(ValueError):
+            vt.take(indices)
+
     def test_from_hdf5_group(self):
 
         # setup HDF5 file
@@ -429,15 +438,15 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
                                    compression='gzip')
 
         # file and node path
-        vt = VariantCTable.from_hdf5_group(file_path, node_path)
-        self.assertIsInstance(vt, VariantCTable)
+        vt = self._class.from_hdf5_group(file_path, node_path)
+        self.assertIsInstance(vt, self._class)
         aeq(a, vt[:])
 
         # dataset
         with h5py.File(file_path, mode='r') as h5f:
             h5g = h5f[node_path]
-            vt = VariantCTable.from_hdf5_group(h5g)
-            self.assertIsInstance(vt, VariantCTable)
+            vt = self._class.from_hdf5_group(h5g)
+            self.assertIsInstance(vt, self._class)
             aeq(a, vt[:])
 
     def test_to_hdf5_group(self):
@@ -450,7 +459,7 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         # reorder columns because will come back out in sorted order
         a = a[sorted(a.dtype.names)]
-        vt = VariantCTable(a)
+        vt = self.setup_instance(a)
 
         # write using file path and node path
         vt.to_hdf5_group(file_path, node_path)
@@ -470,15 +479,6 @@ class VariantCTableTests(VariantTableInterface, unittest.TestCase):
             eq(sorted(a.dtype.names), sorted(h5g.keys()))
             for n in a.dtype.names:
                 aeq(a[n], h5g[n][:])
-
-    def test_take(self):
-        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
-        vt = VariantCTable(a)
-        # take variants not in original order
-        # not supported for carrays
-        indices = [2, 0]
-        with assert_raises(ValueError):
-            vt.take(indices)
 
 
 class FeatureCTableTests(FeatureTableInterface, unittest.TestCase):

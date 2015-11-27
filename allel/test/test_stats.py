@@ -219,8 +219,8 @@ class TestDiversityDivergence(unittest.TestCase):
                             [0, 1, 1, 2],
                             [0, 1, -1, -1],
                             [-1, -1, -1, -1]])
-        h1 = h.subset(haplotypes=[0, 1])
-        h2 = h.subset(haplotypes=[2, 3])
+        h1 = h.take([0, 1], axis=1)
+        h2 = h.take([2, 3], axis=1)
         ac1 = h1.count_alleles()
         ac2 = h2.count_alleles()
 
@@ -241,8 +241,8 @@ class TestDiversityDivergence(unittest.TestCase):
                             [0, 1, 1, 2],
                             [0, 1, -1, -1],
                             [-1, -1, -1, -1]])
-        h1 = h.subset(haplotypes=[0, 1])
-        h2 = h.subset(haplotypes=[2, 3])
+        h1 = h.take([0, 1], axis=1)
+        h2 = h.take([2, 3], axis=1)
         ac1 = h1.count_alleles()
         ac2 = h2.count_alleles()
         # mean pairwise divergence
@@ -529,7 +529,9 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         # test with bcolz carray
         import bcolz
         gnz = bcolz.carray(gn, chunklen=2)
-        actual = allel.stats.locate_unlinked(gnz, size=2, step=1, threshold=.5)
+        actual = allel.stats.locate_unlinked(gnz, size=2, step=1,
+                                             threshold=.5, chunked=True,
+                                             blen=2)
         expect = [True, False, True, True, False]
         aeq(expect, actual)
 
@@ -618,3 +620,115 @@ class TestSF(unittest.TestCase):
         expect = [0, 2, 2]
         actual = allel.stats.sfs_scaled(dac)
         aeq(expect, actual)
+
+
+class TestSelection(unittest.TestCase):
+
+    def test_ssl01_scan_int8(self):
+        from allel.opt.stats import nsl01_scan_int8
+
+        h = np.array([[0, 0, 0, 1, 1, 1],
+                      [0, 0, 0, 1, 1, 1],
+                      [0, 0, 0, 1, 1, 1],
+                      [0, 0, 0, 1, 1, 1]], dtype='i1')
+        nsl0, nsl1 = nsl01_scan_int8(h)
+        expect_nsl0 = [1, 2, 3, 4]
+        assert_array_nanclose(expect_nsl0, nsl0)
+        expect_nsl1 = [1, 2, 3, 4]
+        assert_array_nanclose(expect_nsl1, nsl1)
+
+        h = np.array([[0, 0, 0, 1],
+                      [0, 0, 1, 0],
+                      [0, 1, 0, 0],
+                      [1, 0, 0, 0]], dtype='i1')
+        nsl0, nsl1 = nsl01_scan_int8(h)
+        expect_nsl0 = [1, 4/3, 4/3, 4/3]
+        assert_array_nanclose(expect_nsl0, nsl0)
+        expect_nsl1 = [np.nan, np.nan, np.nan, np.nan]
+        assert_array_nanclose(expect_nsl1, nsl1)
+
+        h = np.array([[0, 0, 1],
+                      [0, 1, 1],
+                      [1, 1, 0],
+                      [1, 0, 0]], dtype='i1')
+        nsl0, nsl1 = nsl01_scan_int8(h)
+        expect_nsl0 = [1, np.nan, np.nan, 1]
+        assert_array_nanclose(expect_nsl0, nsl0)
+        expect_nsl1 = [np.nan, 1, 1, np.nan]
+        assert_array_nanclose(expect_nsl1, nsl1)
+
+    def test_ihh01_scan_int8(self):
+        from allel.opt.stats import ihh01_scan_int8
+        pos = [10, 20, 30, 40]
+
+        # case 1
+        h = np.array([[0, 0, 1],
+                      [0, 1, 1],
+                      [1, 1, 0],
+                      [1, 0, 0]], dtype='i1')
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
+        expect_ihh0 = [np.nan, np.nan, np.nan, 0]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [np.nan, np.nan, 0, np.nan]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        expect_ihh0 = [0, np.nan, np.nan, 0]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [np.nan, 0, 0, np.nan]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        # case 2
+        h = np.array([[0, 0, 0, 1],
+                      [0, 0, 1, 0],
+                      [0, 1, 0, 0],
+                      [1, 0, 0, 0]], dtype='i1')
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
+        expect_ihh0 = [np.nan, np.nan, np.nan, 10*2/3]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        expect_ihh0 = [0, 10*2/3, 10*2/3, 10*2/3]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        # case 3
+        h = np.array([[0, 0, 0, 1, 1, 1],
+                      [0, 0, 0, 1, 1, 1],
+                      [0, 0, 0, 1, 1, 1],
+                      [0, 0, 0, 1, 1, 1]], dtype='i1')
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
+        expect_ihh0 = [np.nan, np.nan, np.nan, np.nan]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        expect_ihh0 = [0, 10, 20, 30]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [0, 10, 20, 30]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        # case 4
+        h = np.array([[0, 0, 1, 1, 1, 0],
+                      [0, 1, 0, 1, 0, 1],
+                      [1, 0, 0, 0, 1, 1],
+                      [0, 0, 0, 1, 1, 1]], dtype='i1')
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
+        expect_ihh0 = [np.nan, np.nan, np.nan, 10*2/3]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [np.nan, np.nan, np.nan, 10*2/3]
+        assert_array_nanclose(expect_ihh1, ihh1)
+
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        expect_ihh0 = [0, 10*2/3, 10*2/3, 10*2/3]
+        assert_array_nanclose(expect_ihh0, ihh0)
+        expect_ihh1 = [0, 10*2/3, 10*2/3, 10*2/3]
+        assert_array_nanclose(expect_ihh1, ihh1)

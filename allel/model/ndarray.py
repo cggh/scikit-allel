@@ -36,28 +36,14 @@ logger = logging.getLogger(__name__)
 debug = logger.debug
 
 
-def subset(data, sel0=None, sel1=None):
+def subset(data, sel0, sel1):
 
     # check inputs
     data = np.asarray(data)
     if data.ndim < 2:
         raise ValueError('data must have 2 or more dimensions')
-    sel0 = asarray_ndim(sel0, 1, allow_none=True)
-    sel1 = asarray_ndim(sel1, 1, allow_none=True)
-    if sel0 is None and sel1 is None:
-        raise ValueError('missing selection')
-
-    # if either selection is None, use take/compress
-    if sel1 is None:
-        if sel0.size < data.shape[0]:
-            return np.take(data, sel0, axis=0)
-        else:
-            return np.compress(sel0, data, axis=0)
-    elif sel0 is None:
-        if sel1.size < data.shape[1]:
-            return np.take(data, sel1, axis=1)
-        else:
-            return np.compress(sel1, data, axis=1)
+    sel0 = asarray_ndim(sel0, 1)
+    sel1 = asarray_ndim(sel1, 1)
 
     # ensure indices
     if sel0.size == data.shape[0]:
@@ -71,7 +57,96 @@ def subset(data, sel0=None, sel1=None):
     return data[sel0, sel1]
 
 
-class GenotypeArray(np.ndarray):
+class ArrayAug(np.ndarray):
+
+    def __repr__(self):
+        s = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape,
+                                    self.dtype)
+        s += str(self)
+        return s
+
+    def hstack(self, *others):
+        """Stack arrays in sequence horizontally (column wise)."""
+        tup = (self,) + others
+        a = np.hstack(tup)
+        return type(self)(a, copy=False)
+
+    def vstack(self, *others):
+        """Stack arrays in sequence vertically (row wise)."""
+        tup = (self,) + others
+        a = np.vstack(tup)
+        return type(self)(a, copy=False)
+
+    def reshape(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).reshape(*args, **kwargs)
+        return np.asarray(a)
+
+
+class RecArrayAug(np.recarray):
+
+    def __repr__(self):
+        s = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape,
+                                    self.dtype)
+        s += str(self)
+        return s
+
+    def _repr_html_(self):
+        return recarray_to_html_str(self)
+
+    def display(self, limit=5, **kwargs):
+        return recarray_display(self, limit=limit, **kwargs)
+
+    @classmethod
+    def from_hdf5_group(cls, *args, **kwargs):
+        a = recarray_from_hdf5_group(*args, **kwargs)
+        return cls(a, copy=False)
+
+    def to_hdf5_group(self, parent, name, **kwargs):
+        return recarray_to_hdf5_group(self, parent, name, **kwargs)
+
+    def eval(self, expression, vm='numexpr'):
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : ndarray
+
+        """
+
+        if vm == 'numexpr':
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            return eval(expression, {}, self)
+
+    def query(self, expression, vm='numexpr'):
+        """Evaluate expression and then use it to extract rows from the table.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : structured array
+
+        """
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+
+class GenotypeArray(ArrayAug):
     """Array of discrete genotype calls.
 
     Parameters
@@ -220,9 +295,9 @@ class GenotypeArray(np.ndarray):
     def __getslice__(self, *args, **kwargs):
         s = np.ndarray.__getslice__(self, *args, **kwargs)
         if hasattr(s, 'ndim'):
-            if s.ndim == 3 and self.shape[-1] == s.shape[-1]:
+            if s.ndim == 3 and self.shape[2] == s.shape[2]:
                 # dimensionality and ploidy preserved
-                if self.mask is not None:
+                if hasattr(self, 'mask') and self.mask is not None:
                     # attempt to slice mask
                     m = self.mask.__getslice__(*args)
                     s.mask = m
@@ -234,20 +309,15 @@ class GenotypeArray(np.ndarray):
     def __getitem__(self, *args, **kwargs):
         s = np.ndarray.__getitem__(self, *args, **kwargs)
         if hasattr(s, 'ndim'):
-            if s.ndim == 3 and self.shape[-1] == s.shape[-1]:
+            if s.ndim == 3 and self.shape[2] == s.shape[2]:
                 # dimensionality and ploidy preserved
-                if self.mask is not None:
+                if hasattr(self, 'mask') and self.mask is not None:
                     # attempt to slice mask
                     m = self.mask.__getitem__(*args)
                     s.mask = m
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'GenotypeArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     def to_html_str(self, limit=5, caption=None, cols=None):
@@ -450,16 +520,16 @@ class GenotypeArray(np.ndarray):
 
         return a.view(GenotypeArray)
 
-    def subset(self, variants=None, samples=None):
-        """Make a sub-selection of variants and/or samples.
+    def subset(self, sel0, sel1):
+        """Make a sub-selection of variants and samples.
 
         Parameters
         ----------
 
-        variants : array_like
-            Boolean array or list of indices.
-        samples : array_like
-            Boolean array or list of indices.
+        sel0 : array_like
+            Boolean array or list of indices selecting variants.
+        sel0 : array_like
+            Boolean array or list of indices selecting samples.
 
         Returns
         -------
@@ -473,7 +543,7 @@ class GenotypeArray(np.ndarray):
         >>> g = allel.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
         ...                          [[0, 1], [1, 1], [1, 2]],
         ...                          [[0, 2], [-1, -1], [-1, -1]]])
-        >>> g.subset(variants=[0, 1], samples=[0, 2])
+        >>> g.subset([0, 1], [0, 2])
         GenotypeArray((2, 2, 2), dtype=int64)
         [[[0 0]
           [1 1]]
@@ -482,10 +552,10 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        data = subset(self, variants, samples)
+        data = subset(self, sel0, sel1)
         g = GenotypeArray(data, copy=False)
-        if self.mask is not None:
-            m = subset(self.mask, variants, samples)
+        if hasattr(self, 'mask') and self.mask is not None:
+            m = subset(self.mask, sel0, sel1)
             g.mask = m
         return g
 
@@ -515,7 +585,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             expr = '(allele1 >= 0) & (allele2 >= 0)'
@@ -523,10 +593,10 @@ class GenotypeArray(np.ndarray):
 
         # general ploidy case
         else:
-            out = np.all(self >= 0, axis=-1)
+            out = np.all(self >= 0, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -557,7 +627,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             # call is missing if either allele is missing
@@ -567,10 +637,10 @@ class GenotypeArray(np.ndarray):
         # general ploidy case
         else:
             # call is missing if any allele is missing
-            out = np.any(self < 0, axis=-1)
+            out = np.any(self < 0, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out |= self.mask
 
         return out
@@ -611,7 +681,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             if allele is None:
@@ -626,12 +696,12 @@ class GenotypeArray(np.ndarray):
                 allele1 = self[..., 0, None]  # noqa
                 other_alleles = self[..., 1:]  # noqa
                 ex = '(allele1 >= 0) & (allele1 == other_alleles)'
-                out = np.all(ne.evaluate(ex), axis=-1)
+                out = np.all(ne.evaluate(ex), axis=2)
             else:
-                out = np.all(self == allele, axis=-1)
+                out = np.all(self == allele, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -689,7 +759,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 > 0) & (allele1  == allele2)'
@@ -700,10 +770,10 @@ class GenotypeArray(np.ndarray):
             allele1 = self[..., 0, None]  # noqa
             other_alleles = self[..., 1:]  # noqa
             ex = '(allele1 > 0) & (allele1 == other_alleles)'
-            out = np.all(ne.evaluate(ex), axis=-1)
+            out = np.all(ne.evaluate(ex), axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -740,7 +810,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             allele1 = self[..., 0]  # noqa
             allele2 = self[..., 1]  # noqa
             ex = '(allele1 >= 0) & (allele2  >= 0) & (allele1 != allele2)'
@@ -753,13 +823,13 @@ class GenotypeArray(np.ndarray):
         else:
             allele1 = self[..., 0, None]  # noqa
             other_alleles = self[..., 1:]  # noqa
-            out = np.all(self >= 0, axis=-1) \
-                & np.any(allele1 != other_alleles, axis=-1)
+            out = np.all(self >= 0, axis=2) \
+                & np.any(allele1 != other_alleles, axis=2)
             if allele is not None:
-                out &= np.any(self == allele, axis=-1)
+                out &= np.any(self == allele, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -795,7 +865,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # special case diploid
-        if self.shape[-1] == DIPLOID:
+        if self.shape[2] == DIPLOID:
             if not len(call) == DIPLOID:
                 raise ValueError('invalid call: %r', call)
             allele1 = self[..., 0]  # noqa
@@ -805,13 +875,13 @@ class GenotypeArray(np.ndarray):
 
         # general ploidy case
         else:
-            if not len(call) == self.shape[-1]:
+            if not len(call) == self.shape[2]:
                 raise ValueError('invalid call: %r', call)
             call = np.asarray(call)[None, None, :]
-            out = np.all(self == call, axis=-1)
+            out = np.all(self == call, axis=2)
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -901,26 +971,26 @@ class GenotypeArray(np.ndarray):
                 genotype_int8_count_alleles_subpop_masked
 
             if subpop is None:
-                if self.mask is None:
-                    ac = genotype_int8_count_alleles(self, max_allele)
-                else:
+                if hasattr(self, 'mask') and self.mask is not None:
                     ac = genotype_int8_count_alleles_masked(
                         self, self.mask.view(dtype='u1'), max_allele
                     )
+                else:
+                    ac = genotype_int8_count_alleles(self, max_allele)
 
             else:
-                if self.mask is None:
-                    ac = genotype_int8_count_alleles_subpop(
-                        self, max_allele, subpop
-                    )
-                else:
+                if hasattr(self, 'mask') and self.mask is not None:
                     ac = genotype_int8_count_alleles_subpop_masked(
                         self, self.mask.view(dtype='u1'), max_allele, subpop
+                    )
+                else:
+                    ac = genotype_int8_count_alleles_subpop(
+                        self, max_allele, subpop
                     )
 
         else:
             # set up output array
-            ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
 
             # extract subpop
             if subpop is not None:
@@ -1000,7 +1070,7 @@ class GenotypeArray(np.ndarray):
         """
 
         # reshape, preserving size of variants dimension
-        newshape = (self.n_variants, -1)
+        newshape = (self.shape[0], -1)
         data = np.reshape(self, newshape)
         h = HaplotypeArray(data, copy=copy)
         return h
@@ -1047,8 +1117,8 @@ class GenotypeArray(np.ndarray):
         """
 
         # count number of alternate alleles
-        out = np.empty((self.n_variants, self.n_samples), dtype=dtype)
-        np.sum(self == 0, axis=-1, out=out)
+        out = np.empty((self.shape[0], self.shape[1]), dtype=dtype)
+        np.sum(self == 0, axis=2, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -1056,7 +1126,7 @@ class GenotypeArray(np.ndarray):
             out[m] = fill
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out[self.mask] = fill
 
         return out
@@ -1107,8 +1177,8 @@ class GenotypeArray(np.ndarray):
         """
 
         # count number of alternate alleles
-        out = np.empty((self.n_variants, self.n_samples), dtype=dtype)
-        np.sum(self > 0, axis=-1, out=out)
+        out = np.empty((self.shape[0], self.shape[1]), dtype=dtype)
+        np.sum(self > 0, axis=2, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -1116,7 +1186,7 @@ class GenotypeArray(np.ndarray):
             out[m] = fill
 
         # handle mask
-        if self.mask is not None:
+        if hasattr(self, 'mask') and self.mask is not None:
             out[self.mask] = fill
 
         return out
@@ -1167,15 +1237,15 @@ class GenotypeArray(np.ndarray):
             alleles = list(range(m+1))
 
         # set up output array
-        outshape = (self.n_variants, self.n_samples, len(alleles))
+        outshape = (self.shape[0], self.shape[1], len(alleles))
         out = np.zeros(outshape, dtype='u1')
 
         for i, allele in enumerate(alleles):
             # count alleles along ploidy dimension
             allele_match = self == allele
-            if self.mask is not None:
+            if hasattr(self, 'mask') and self.mask is not None:
                 allele_match &= ~self.mask[:, :, None]
-            np.sum(allele_match, axis=-1, out=out[..., i])
+            np.sum(allele_match, axis=2, out=out[..., i])
 
         return out
 
@@ -1217,7 +1287,7 @@ class GenotypeArray(np.ndarray):
 
         """
 
-        if self.shape[-1] != 2:
+        if self.shape[2] != 2:
             raise ValueError('can only pack diploid calls')
 
         if boundscheck:
@@ -1433,23 +1503,23 @@ class GenotypeArray(np.ndarray):
         # necessary, TODO review
 
         # define the range of possible indices, e.g., diploid => (0, 1)
-        index_range = np.arange(0, self.shape[-1], dtype='u1')
+        index_range = np.arange(0, self.shape[2], dtype='u1')
 
         # create a random index for each genotype call
         indices = np.random.choice(index_range,
-                                   size=(self.n_variants * self.n_samples),
+                                   size=(self.shape[0] * self.shape[1]),
                                    replace=True)
 
         # reshape genotype data so it's suitable for passing to np.choose
         # by merging the variants and samples dimensions
-        choices = self.reshape(-1, self.shape[-1]).T
+        choices = self.reshape(-1, self.shape[2]).T
 
         # now use random indices to haploidify
         data = np.choose(indices, choices)
 
         # reshape the haploidified data to restore the variants and samples
         # dimensions
-        data = data.reshape((self.n_variants, self.n_samples))
+        data = data.reshape((self.shape[0], self.shape[1]))
 
         # view as haplotype array
         h = HaplotypeArray(data, copy=False)
@@ -1522,7 +1592,7 @@ class GenotypeArray(np.ndarray):
 
         # join via separator
         expr = "a[..., 0]"
-        for i in range(1, self.ploidy):
+        for i in range(1, self.shape[2]):
             expr += " + sep + a[..., %s]" % i
         gt = eval(expr)
 
@@ -1591,11 +1661,11 @@ class GenotypeArray(np.ndarray):
 
         h = self.to_haplotypes()
         hm = h.map_alleles(mapping, copy=copy)
-        gm = hm.to_genotypes(ploidy=self.ploidy)
+        gm = hm.to_genotypes(ploidy=self.shape[2])
         return gm
 
 
-class HaplotypeArray(np.ndarray):
+class HaplotypeArray(ArrayAug):
     """Array of haplotypes.
 
     Parameters
@@ -1728,11 +1798,6 @@ class HaplotypeArray(np.ndarray):
                 return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'HaplotypeArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
     def to_html_str(self, limit=5, caption=None, cols=None):
         import petl as etl
         n, m = self.shape
@@ -1794,16 +1859,16 @@ class HaplotypeArray(np.ndarray):
         """Number of haplotypes (length of second dimension)."""
         return self.shape[1]
 
-    def subset(self, variants=None, haplotypes=None):
-        """Make a sub-selection of variants and/or haplotypes.
+    def subset(self, sel0, sel1):
+        """Make a sub-selection of variants and haplotypes.
 
         Parameters
         ----------
 
-        variants : array_like
-            Boolean array or list of indices.
-        haplotypes : array_like
-            Boolean array or list of indices.
+        sel0 : array_like
+            Boolean array or list of indices selecting variants.
+        sel1 : array_like
+            Boolean array or list of indices selecting haplotypes.
 
         Returns
         -------
@@ -1812,7 +1877,7 @@ class HaplotypeArray(np.ndarray):
 
         """
 
-        return HaplotypeArray(subset(self, variants, haplotypes), copy=False)
+        return HaplotypeArray(subset(self, sel0, sel1), copy=False)
 
     def is_called(self):
         return self >= 0
@@ -1889,11 +1954,11 @@ class HaplotypeArray(np.ndarray):
         """
 
         # check ploidy is compatible
-        if (self.n_haplotypes % ploidy) > 0:
+        if (self.shape[1] % ploidy) > 0:
             raise ValueError('incompatible ploidy')
 
         # reshape
-        newshape = (self.n_variants, -1, ploidy)
+        newshape = (self.shape[0], -1, ploidy)
         data = self.reshape(newshape)
 
         # wrap
@@ -2072,7 +2137,7 @@ class HaplotypeArray(np.ndarray):
 
         else:
             # set up output array
-            ac = np.zeros((self.n_variants, max_allele + 1), dtype='i4')
+            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
 
             # extract subpop
             if subpop is not None:
@@ -2223,7 +2288,7 @@ class HaplotypeArray(np.ndarray):
         return c / n
 
 
-class AlleleCountsArray(np.ndarray):
+class AlleleCountsArray(ArrayAug):
     """Array of allele counts.
 
     Parameters
@@ -2339,11 +2404,6 @@ class AlleleCountsArray(np.ndarray):
                 # wrap only if number of alleles is preserved
                 return AlleleCountsArray(s, copy=False)
             return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'AlleleCountsArray(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     def to_html_str(self, limit=5, caption=None):
@@ -2729,7 +2789,7 @@ class AlleleCountsArray(np.ndarray):
         return AlleleCountsArray(out)
 
 
-class SortedIndex(np.ndarray):
+class SortedIndex(ArrayAug):
     """Index of sorted values, e.g., positions from a single chromosome or
     contig.
 
@@ -2815,11 +2875,6 @@ class SortedIndex(np.ndarray):
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'SortedIndex(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     @property
@@ -3221,7 +3276,7 @@ class SortedIndex(np.ndarray):
         return np.compress(loc, self)
 
 
-class UniqueIndex(np.ndarray):
+class UniqueIndex(ArrayAug):
     """Array of unique values (e.g., variant or sample identifiers).
 
     Parameters
@@ -3311,11 +3366,6 @@ class UniqueIndex(np.ndarray):
                 return s
             elif s.ndim > 0:
                 return np.asarray(s)
-        return s
-
-    def __repr__(self):
-        s = 'UniqueIndex(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
         return s
 
     def locate_key(self, key):
@@ -3650,7 +3700,7 @@ class SortedMultiIndex(object):
         return len(self.l1)
 
 
-class VariantTable(np.recarray):
+class VariantTable(RecArrayAug):
     """Table (catalogue) of variants.
 
     Parameters
@@ -3711,7 +3761,26 @@ class VariantTable(np.recarray):
         VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
 
-    Use the index to query variants:
+    Evaluate expressions against the table::
+
+        >>> vt.eval('DP > 30')
+        array([ True, False,  True, False,  True], dtype=bool)
+        >>> vt.eval('(DP > 30) & (QD > 4)')
+        array([ True, False, False, False, False], dtype=bool)
+        >>> vt.eval('DP * 2')
+        array([ 70,  24, 156,  44, 198], dtype=int64)
+
+    Query the table::
+
+        >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
+        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
+         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
+        >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
+        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
+
+    Use the index to query variants::
 
         >>> vt.query_region(b'chr2', 1, 10)  # doctest: +ELLIPSIS
         VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
@@ -3764,17 +3833,6 @@ class VariantTable(np.recarray):
                 return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'VariantTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
-    def _repr_html_(self):
-        return recarray_to_html_str(self)
-
-    def display(self, limit=5, **kwargs):
-        return recarray_display(self, limit=limit, **kwargs)
-
     @property
     def n_variants(self):
         """Number of variants (length of first dimension)."""
@@ -3809,95 +3867,6 @@ class VariantTable(np.recarray):
             raise ValueError('invalid index argument, expected string or '
                              'pair of strings, found %s' % repr(index))
         self.index = index
-
-    def eval(self, expression, vm='numexpr'):
-        """Evaluate an expression against the table columns.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : ndarray
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
-        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
-        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
-        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
-        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
-        >>> dtype = [('CHROM', 'S4'),
-        ...          ('POS', 'u4'),
-        ...          ('DP', int),
-        ...          ('QD', float),
-        ...          ('AC', (int, 2))]
-        >>> vt = allel.VariantTable(records, dtype=dtype)
-        >>> vt.eval('DP > 30')
-        array([ True, False,  True, False,  True], dtype=bool)
-        >>> vt.eval('(DP > 30) & (QD > 4)')
-        array([ True, False, False, False, False], dtype=bool)
-        >>> vt.eval('DP * 2')
-        array([ 70,  24, 156,  44, 198], dtype=int64)
-
-        """
-
-        if vm == 'numexpr':
-            return ne.evaluate(expression, local_dict=self)
-        else:
-            return eval(expression, {}, self)
-
-    def query(self, expression, vm='numexpr'):
-        """Evaluate expression and then use it to extract rows from the table.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : VariantTable
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
-        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
-        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
-        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
-        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
-        >>> dtype = [('CHROM', 'S4'),
-        ...          ('POS', 'u4'),
-        ...          ('DP', int),
-        ...          ('QD', float),
-        ...          ('AC', (int, 2))]
-        >>> vt = allel.VariantTable(records, dtype=dtype)
-        >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
-        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
-        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
-         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
-        >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
-        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
-        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
-
-        """
-
-        condition = self.eval(expression, vm=vm)
-        return self.compress(condition)
 
     def query_position(self, chrom=None, position=None):
         """Query the table, returning row or rows matching the given genomic
@@ -4056,7 +4025,7 @@ def sample_to_haplotype_selection(indices, ploidy):
 # TODO factor out common table code
 
 
-class FeatureTable(np.recarray):
+class FeatureTable(RecArrayAug):
     """Table of genomic features (e.g., genes, exons, etc.).
 
     Parameters
@@ -4117,17 +4086,6 @@ class FeatureTable(np.recarray):
                 return np.asarray(s)
         return s
 
-    def __repr__(self):
-        s = 'FeatureTable(%s, dtype=%s)\n' % (self.shape, self.dtype)
-        s += str(self)
-        return s
-
-    def _repr_html_(self):
-        return recarray_to_html_str(self)
-
-    def display(self, limit=5, **kwargs):
-        return recarray_display(self, limit=limit, **kwargs)
-
     @property
     def n_features(self):
         """Number of features (length of first dimension)."""
@@ -4137,50 +4095,6 @@ class FeatureTable(np.recarray):
     def names(self):
         """Column names."""
         return self.dtype.names
-
-    def eval(self, expression, vm='numexpr'):
-        """Evaluate an expression against the table columns.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : ndarray
-
-        """
-
-        if vm == 'numexpr':
-            return ne.evaluate(expression, local_dict=self)
-        else:
-            return eval(expression, {}, self)
-
-    def query(self, expression, vm='numexpr'):
-        """Evaluate expression and then use it to extract rows from the table.
-
-        Parameters
-        ----------
-
-        expression : string
-            Expression to evaluate.
-        vm : {'numexpr', 'python'}
-            Virtual machine to use.
-
-        Returns
-        -------
-
-        result : FeatureTable
-
-        """
-
-        condition = self.eval(expression, vm=vm)
-        return self.compress(condition)
 
     def query_region(self, chrom=None, start=None, stop=None):
         """TODO
@@ -4479,6 +4393,49 @@ def locate_private_alleles(*acs):
     return loc_pa
 
 
+def array_to_hdf5(a, parent, name, **kwargs):
+    """Write a Numpy array to an HDF5 dataset.
+
+    Parameters
+    ----------
+    a : ndarray
+        Data to write.
+    parent : string or h5py group
+        Parent HDF5 file or group. If a string, will be treated as HDF5 file
+        name.
+    name : string
+        Name or path of dataset to write data into.
+    kwargs : keyword arguments
+        Passed through to h5py require_dataset() function.
+
+    Returns
+    -------
+    h5d : h5py dataset
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if isinstance(parent, str):
+        h5f = h5py.File(parent, mode='a')
+        parent = h5f
+
+    try:
+
+        kwargs.setdefault('chunks', True)  # auto-chunking
+        kwargs.setdefault('dtype', a.dtype)
+        kwargs.setdefault('compression', 'gzip')
+        h5d = parent.require_dataset(name, shape=a.shape, **kwargs)
+        h5d[...] = a
+        return h5d
+
+    finally:
+        if h5f is not None:
+            h5f.close()
+
+
 def recarray_to_html_str(ra, limit=5, caption=None):
     # use implementation from petl
     import petl as etl
@@ -4505,3 +4462,139 @@ def recarray_display(ra, limit=5, caption=None, **kwargs):
                   % (type(ra).__name__, ra.shape, ra.dtype)
     caption = caption.replace('<', '&lt;')
     return tbl.display(limit=limit, caption=caption, **kwargs)
+
+
+def recarray_from_hdf5_group(*args, **kwargs):
+    """Load a recarray from columns stored as separate datasets with an
+    HDF5 group.
+
+    Either provide an h5py group as a single positional argument,
+    or provide two positional arguments giving the HDF5 file path and the
+    group node path within the file.
+
+    The following optional parameters may be given.
+
+    Parameters
+    ----------
+    start : int, optional
+        Index to start loading from.
+    stop : int, optional
+        Index to finish loading at.
+    condition : array_like, bool, optional
+        A 1-dimensional boolean array of the same length as the columns of the
+        table to load, indicating a selection of rows to load.
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if len(args) == 1:
+        group = args[0]
+
+    elif len(args) == 2:
+        file_path, node_path = args
+        h5f = h5py.File(file_path, mode='r')
+        try:
+            group = h5f[node_path]
+        except:
+            h5f.close()
+            raise
+
+    else:
+        raise ValueError('bad arguments; expected group or (file_path, '
+                         'node_path), found %s' % repr(args))
+
+    try:
+
+        if not isinstance(group, h5py.Group):
+            raise ValueError('expected group, found %r' % group)
+
+        # determine dataset names to load
+        available_dataset_names = [n for n in group.keys()
+                                   if isinstance(group[n], h5py.Dataset)]
+        names = kwargs.pop('names', available_dataset_names)
+        names = [str(n) for n in names]  # needed for PY2
+        for n in names:
+            if n not in set(group.keys()):
+                raise ValueError('name not found: %s' % n)
+            if not isinstance(group[n], h5py.Dataset):
+                raise ValueError('name does not refer to a dataset: %s, %r'
+                                 % (n, group[n]))
+
+        # check datasets are aligned
+        datasets = [group[n] for n in names]
+        length = datasets[0].shape[0]
+        for d in datasets[1:]:
+            if d.shape[0] != length:
+                raise ValueError('datasets must be of equal length')
+
+        # determine start and stop parameters for load
+        start = kwargs.pop('start', 0)
+        stop = kwargs.pop('stop', length)
+
+        # check condition
+        condition = kwargs.pop('condition', None)
+        condition = asarray_ndim(condition, 1, allow_none=True)
+        if condition is not None and condition.size != length:
+            raise ValueError('length of condition does not match length '
+                             'of datasets')
+
+        # setup output data
+        dtype = [(n, d.dtype, d.shape[1:]) for n, d in zip(names, datasets)]
+        ra = np.empty(length, dtype=dtype)
+
+        for n, d in zip(names, datasets):
+            a = d[start:stop]
+            if condition is not None:
+                a = np.compress(condition[start:stop], a, axis=0)
+            ra[n] = a
+
+        return ra
+
+    finally:
+        if h5f is not None:
+            h5f.close()
+
+
+def recarray_to_hdf5_group(ra, parent, name, **kwargs):
+    """Write each column in a recarray to a dataset in an HDF5 group.
+
+    Parameters
+    ----------
+
+    parent : string or h5py group
+        Parent HDF5 file or group. If a string, will be treated as HDF5 file
+        name.
+    name : string
+        Name or path of group to write data into.
+    kwargs : keyword arguments
+        Passed through to h5py require_dataset() function.
+
+    Returns
+    -------
+
+    h5g : h5py group
+
+    """
+
+    import h5py
+
+    h5f = None
+
+    if isinstance(parent, str):
+        h5f = h5py.File(parent, mode='a')
+        parent = h5f
+
+    try:
+
+        h5g = parent.require_group(name)
+        for n in ra.dtype.names:
+            array_to_hdf5(ra[n], h5g, n, **kwargs)
+
+        return h5g
+
+    finally:
+        if h5f is not None:
+            h5f.close()

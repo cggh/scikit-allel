@@ -12,9 +12,10 @@ import scipy.linalg
 from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, ensure_square
 from allel.stats.diversity import sequence_divergence
+from allel.chunked import get_blen_array
 
 
-def pairwise_distance(x, metric):
+def pairwise_distance(x, metric, chunked=False, blen=None):
     """Compute pairwise distance between individuals (e.g., samples or
     haplotypes).
 
@@ -29,21 +30,19 @@ def pairwise_distance(x, metric):
         Distance metric. See documentation for the function
         :func:`scipy.spatial.distance.pdist` for a list of built-in
         distance metrics.
+    chunked : bool, optional
+        If True, use a block-wise implementation to avoid loading the entire
+        input array into memory. This means that a distance matrix will be
+        calculated for each block of the input array, and the results will
+        be summed to produce the final output. For some distance metrics
+        this will return a different result from the standard implementation.
+    blen : int, optional
+        Block length to use for chunked implementation.
 
     Returns
     -------
     dist : ndarray, shape (m * (m - 1) / 2,)
         Distance matrix in condensed form.
-
-    Notes
-    -----
-
-    If `x` is a bcolz carray, a chunk-wise implementation will be used to
-    avoid loading the entire input array into memory. This means that
-    a distance matrix will be calculated for each chunk in the input array,
-    and the results will be summed to produce the final output. For some
-    distance metrics this will return a different result from the standard
-    implementation, although the relative distances may be equivalent.
 
     Examples
     --------
@@ -89,12 +88,13 @@ def pairwise_distance(x, metric):
         def f(b):
             return pdist(b, metric=metric)
 
-    if hasattr(x, 'chunklen'):
-        # use chunk-wise implementation
-        blen = x.chunklen
+    if chunked:
+        # use block-wise implementation
+        blen = get_blen_array(x, blen)
         dist = None
         for i in range(0, x.shape[0], blen):
-            block = x[i:i+blen]
+            j = min(x.shape[0], i+blen)
+            block = x[i:j]
             if dist is None:
                 dist = f(block)
             else:

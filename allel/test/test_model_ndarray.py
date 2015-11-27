@@ -177,6 +177,11 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
         expect = np.array(diploid_genotype_data).take(indices, axis=0)
         aeq(expect, t)
 
+    def test_reshape(self):
+        g = self.setup_instance(diploid_genotype_data)
+        h = g.reshape((g.shape[0], -1))
+        self.assertNotIsInstance(h, GenotypeArray)
+
 
 class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 

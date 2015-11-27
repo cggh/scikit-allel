@@ -1,6 +1,56 @@
 Release notes
 =============
 
+v0.19.0
+-------
+
+The major change in v0.19.0 is the addition of the new
+:mod:`allel.model.chunked` module, which provides classes for variant
+call data backed by chunked array storage (`#31
+<https://github.com/cggh/scikit-allel/issues/31>`_). This is a
+generalisation of the previously available :mod:`allel.model.bcolz` to
+enable the use of both bcolz and HDF5 (via h5py) as backing
+storage. The :mod:`allel.model.bcolz` module is now deprecated but
+will be retained for backwargs compatibility until the next major
+release.
+
+Other changes:
+
+* Added function for computing the number of segregating sites by length
+  (nSl), a summary statistic comparing haplotype homozygosity between
+  different alleles (similar to IHS), see :func:`allel.stats.selection.nsl`
+  (`#40 <https://github.com/cggh/scikit-allel/issues/40>`_).
+* Added functions for computing haplotype diversity, see
+  :func:`allel.stats.selection.haplotype_diversity` and
+  :func:`allel.stats.selection.moving_haplotype_diversity`
+  (`#29 <https://github.com/cggh/scikit-allel/issues/29>`_).
+* Added function
+  :func:`allel.stats.selection.plot_moving_haplotype_frequencies` for
+  visualising haplotype frequency spectra in moving windows over the genome
+  (`#30 <https://github.com/cggh/scikit-allel/issues/30>`_).
+* Added `vstack()` and `hstack()` methods to genotype and haplotype arrays to
+  enable combining data from multiple arrays
+  (`#21 <https://github.com/cggh/scikit-allel/issues/21>`_).
+* Added convenience function
+  :func:`allel.stats.window.equally_accessible_windows`
+  (`#16 <https://github.com/cggh/scikit-allel/issues/16>`_).
+* Added methods `from_hdf5_group()` and `to_hdf5_group()` to
+  :class:`allel.model.ndarray.VariantTable`
+  (`#26 <https://github.com/cggh/scikit-allel/issues/26>`_).
+* Added :func:`allel.util.hdf5_cache` utility function.
+* Modified functions in the :mod:`allel.stats.selection` module that depend
+  on calculation of integrated haplotype homozygosity to return NaN when
+  haplotypes do not decay below a specified threshold
+  (`#39 <https://github.com/cggh/scikit-allel/issues/39>`_).
+* Fixed missing return value in
+  :func:`allel.stats.selection.plot_voight_painting`
+  (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
+* Fixed return type from array reshape()
+  (`#34 <https://github.com/cggh/scikit-allel/issues/34>`_).
+
+Contributors: `alimanfoo <https://github.com/alimanfoo>`_,
+`hardingnj <https://github.com/hardingnj>`_
+
 v0.18.1
 -------
 
@@ -241,7 +291,7 @@ v0.9
   :func:`allel.bcolz.carray_from_hdf5`,
   :func:`allel.bcolz.carray_to_hdf5`,
   :func:`allel.bcolz.ctable_from_hdf5_group`,
-  :func:`allel.bcolz.ctable_to_hdf5_group`. 
+  :func:`allel.bcolz.ctable_to_hdf5_group`.
 
 * Refactoring of internals within the :mod:`allel.bcolz` module.
 
