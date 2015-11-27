@@ -823,6 +823,17 @@ class GenotypeArrayInterface(object):
         a = np.array(diploid_genotype_data, dtype=np.int8)
         g = self.setup_instance(a)
         eq(7, g.count_called())
+        eq(4, g.count_het())
+        eq(3, g.count_hom())
+        eq(1, g.count_hom_ref())
+        eq(2, g.count_hom_alt())
+        eq(8, g.count_missing())
+        expect_ac = [[3, 1, 0],
+                     [1, 2, 1],
+                     [1, 2, 1],
+                     [0, 0, 2],
+                     [0, 0, 0]]
+        aeq(expect_ac, g.count_alleles())
         m = [[True, False, False],
              [False, False, False],
              [False, True, False],
@@ -830,17 +841,48 @@ class GenotypeArrayInterface(object):
              [True, False, True]]
         g.mask = m
         eq(5, g.count_called())
+        eq(3, g.count_het())
+        eq(2, g.count_hom())
+        eq(0, g.count_hom_ref())
+        eq(2, g.count_hom_alt())
+        eq(10, g.count_missing())
+        expect_ac = [[1, 1, 0],
+                     [1, 2, 1],
+                     [1, 1, 0],
+                     [0, 0, 2],
+                     [0, 0, 0]]
+        aeq(expect_ac, g.count_alleles())
 
         # polyploid
         a = np.array(triploid_genotype_data, dtype=np.int8)
         g = self.setup_instance(a)
         eq(5, g.count_called())
+        eq(3, g.count_het())
+        eq(2, g.count_hom())
+        eq(1, g.count_hom_ref())
+        eq(1, g.count_hom_alt())
+        eq(7, g.count_missing())
+        expect_ac = [[5, 1, 0],
+                     [1, 5, 0],
+                     [1, 1, 1],
+                     [0, 0, 0]]
+        aeq(expect_ac, g.count_alleles())
         m = [[True, False, False],
              [False, False, False],
              [False, True, False],
              [False, False, True]]
         g.mask = m
         eq(4, g.count_called())
+        eq(3, g.count_het())
+        eq(1, g.count_hom())
+        eq(0, g.count_hom_ref())
+        eq(1, g.count_hom_alt())
+        eq(8, g.count_missing())
+        expect_ac = [[2, 1, 0],
+                     [1, 5, 0],
+                     [1, 1, 1],
+                     [0, 0, 0]]
+        aeq(expect_ac, g.count_alleles())
 
     def test_fill_masked(self):
 

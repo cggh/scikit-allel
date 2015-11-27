@@ -213,12 +213,15 @@ class GenotypeDaskArray(DaskArrayWrapper):
     @mask.setter
     def mask(self, mask):
 
-        # ensure dask array
-        mask = ensure_dask_array(mask)
+        # ensure array-like
+        mask = ensure_array_like(mask)
 
         # check shape
         if mask.shape != self.shape[:2]:
             raise ValueError('mask has incorrect shape')
+
+        # ensure dask array
+        mask = da.from_array(mask, chunks=self.darr.chunks[:2])
 
         # store
         self._mask = mask
@@ -226,81 +229,85 @@ class GenotypeDaskArray(DaskArrayWrapper):
     def fill_masked(self, value=-1):
         def f(block, bmask):
             gb = GenotypeArray(block)
+            print(block.shape, bmask.shape)
             gb.mask = bmask[:, :, 0]
             return gb.fill_masked(value=value)
         out = da.map_blocks(f, self.darr, self.mask[:, :, None],
                             chunks=self.darr.chunks)
         return GenotypeDaskArray(out)
 
-    def is_called(self):
-        def f(block):
-            return GenotypeArray(block).is_called()
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
+    def _is(self, method_name, *args, **kwargs):
+        if self.mask is None:
+            # simple case, no mask
+            def f(block):
+                g = GenotypeArray(block)
+                method = getattr(g, method_name)
+                return method(*args, **kwargs)
+            chunks = (self.chunks[0], self.chunks[1])
+            out = self.map_blocks(f, chunks=chunks, drop_dims=2)
+
+        else:
+            # need to map with mask
+            def f(block, bmask):
+                g = GenotypeArray(block)
+                g.mask = bmask[:, :, 0]
+                method = getattr(g, method_name)
+                return method(*args, **kwargs)
+            chunks = (self.chunks[0], self.chunks[1])
+            m = self.mask[:, :, None]
+            out = da.map_blocks(f, self.darr, m, chunks=chunks, drop_dims=2)
         return out
+
+    def is_called(self):
+        return self._is('is_called')
 
     def is_missing(self):
-        def f(block):
-            return GenotypeArray(block).is_missing()
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._is('is_missing')
 
     def is_hom(self, allele=None):
-        def f(block):
-            return GenotypeArray(block).is_hom(allele=allele)
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._is('is_hom', allele=allele)
 
     def is_hom_ref(self):
-        def f(block):
-            return GenotypeArray(block).is_hom_ref()
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._is('is_hom_ref')
 
     def is_hom_alt(self):
-        def f(block):
-            return GenotypeArray(block).is_hom_alt()
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._is('is_hom_alt')
 
     def is_het(self, allele=None):
-        def f(block):
-            return GenotypeArray(block).is_het(allele=allele)
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._is('is_het', allele=allele)
 
     def is_call(self, call):
-        def f(block):
-            return GenotypeArray(block).is_call(call)
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._is('is_call', call=call)
+
+    def _count(self, method_name, axis, *args, **kwargs):
+        method = getattr(self, method_name)
+        out = method(*args, **kwargs).sum(axis=axis)
+        if axis is None:
+            # result is scalar, might as well compute now (also helps tests)
+            return out.compute()
+        else:
+            return out
 
     def count_called(self, axis=None):
-        return self.is_called().sum(axis=axis)
+        return self._count('is_called', axis)
 
     def count_missing(self, axis=None):
-        return self.is_missing().sum(axis=axis)
+        return self._count('is_missing', axis)
 
     def count_hom(self, allele=None, axis=None):
-        return self.is_hom(allele=allele).sum(axis=axis)
+        return self._count('is_hom', axis, allele=allele)
 
     def count_hom_ref(self, axis=None):
-        return self.is_hom_ref().sum(axis=axis)
+        return self._count('is_hom_ref', axis)
 
     def count_hom_alt(self, axis=None):
-        return self.is_hom_alt().sum(axis=axis)
+        return self._count('is_hom_alt', axis)
 
-    def count_het(self, axis=None):
-        return self.is_het().sum(axis=axis)
+    def count_het(self, allele=None, axis=None):
+        return self._count('is_het', axis, allele=allele)
 
     def count_call(self, call, axis=None):
-        return self.is_call(call).sum(axis=axis)
+        return self._count('is_call', axis, call=call)
 
     def count_alleles(self, max_allele=None, subpop=None):
 
@@ -314,21 +321,34 @@ class GenotypeDaskArray(DaskArrayWrapper):
         else:
             g = self
 
-        def f(block):
-            block = GenotypeArray(block)
-            return block.count_alleles(max_allele=max_allele)[:, None, :]
-
         # determine output chunks - preserve dim0; change dim1, dim2
         chunks = (g.chunks[0], (1,)*len(g.chunks[1]), (max_allele+1,))
 
-        # map blocks and reduce
-        out = g.map_blocks(f, chunks=chunks).sum(axis=1)
+        if self.mask is None:
+
+            # simple case, no mask
+            def f(block):
+                bg = GenotypeArray(block)
+                return bg.count_alleles(max_allele=max_allele)[:, None, :]
+
+            # map blocks and reduce
+            out = g.map_blocks(f, chunks=chunks).sum(axis=1)
+
+        else:
+            # TODO broken
+            # map with mask
+            def f(block, bmask):
+                print(block.shape, bmask.shape)
+                bg = GenotypeArray(block)
+                bg.mask = bmask[:, :, 0]
+                return bg.count_alleles(max_allele=max_allele)[:, None, :]
+
+            m = self.mask[:, :, None]
+            out = da.map_blocks(f, g, m, chunks=chunks).sum(axis=1)
+
         return AlleleCountsDaskArray(out)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
-        # TODO consider different implementation which requires only a
-        # single pass over the data to compute allele counts for all subpops
-        # (original intention of the method).
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
@@ -353,20 +373,18 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return da.map_blocks(f, packed, chunks=chunks, new_dims=2)
 
     def map_alleles(self, mapping, **kwargs):
-        # TODO broken
 
         def f(block, bmapping):
             g = GenotypeArray(block)
             m = bmapping[:, 0, :]
-            return g.map_alleles(m, copy=False)
+            return g.map_alleles(m)
 
-        # insert an extra dimension for map_blocks
-        mapping_chunks = (self.chunks[0], (1,), (mapping.shape[1],))
-        mapping = da.from_array(mapping[:, None, :], chunks=mapping_chunks)
-        # print(self.shape, mapping.shape)
-        # print(self.chunks, mapping.chunks)
+        # obtain dask array
+        mapping = da.from_array(mapping, chunks=(self.darr.chunks[0], None))
 
-        out = da.map_blocks(f, self.darr, mapping)
+        # map blocks
+        out = da.map_blocks(f, self.darr, mapping[:, None, :],
+                            chunks=self.darr.chunks)
         return GenotypeDaskArray(out)
 
 
