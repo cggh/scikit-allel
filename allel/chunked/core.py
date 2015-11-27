@@ -583,9 +583,19 @@ class ChunkedArray(object):
         return self[:]
 
     def __repr__(self):
-        return '%s(%s, %s, %s.%s)' % \
-               (type(self).__name__, str(self.shape), str(self.dtype),
-                type(self.data).__module__, type(self.data).__name__)
+        r = '%s(' % type(self).__name__
+        r += '%s' % str(self.shape)
+        r += ', dtype=%s' % str(self.dtype)
+        if self.nbytes:
+            r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
+        if self.cbytes:
+            r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
+        if self.cratio:
+            r += ', cratio=%.1f' % self.cratio
+        r += ', data=%s.%s' % (type(self.data).__module__,
+                               type(self.data).__name__)
+        r += ')'
+        return r
 
     def __str__(self):
         return str(self.data)
@@ -596,6 +606,26 @@ class ChunkedArray(object):
     @property
     def ndim(self):
         return len(self.shape)
+
+    @property
+    def nbytes(self):
+        if hasattr(self.data, 'nbytes'):
+            return self.data.nbytes
+        return None
+
+    @property
+    def cbytes(self):
+        if hasattr(self.data, 'cbytes'):
+            return self.data.cbytes
+        return None
+
+    @property
+    def cratio(self):
+        nbytes = self.nbytes
+        cbytes = self.cbytes
+        if nbytes and cbytes:
+            return nbytes / cbytes
+        return None
 
     # outputs from these methods are not wrapped
     store = store
@@ -756,9 +786,18 @@ class ChunkedTable(object):
             raise AttributeError(item)
 
     def __repr__(self):
-        return '%s(%s, %s.%s)' % \
-               (type(self).__name__, self.shape[0],
-                type(self.data).__module__, type(self.data).__name__)
+        r = '%s(' % type(self).__name__
+        r += '%s' % len(self)
+        if self.nbytes:
+            r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
+        if self.cbytes:
+            r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
+        if self.cratio:
+            r += ', cratio=%.1f' % self.cratio
+        r += ', data=%s.%s' % (type(self.data).__module__,
+                               type(self.data).__name__)
+        r += ')'
+        return r
 
     def __len__(self):
         return len(self.columns[0])
@@ -790,6 +829,30 @@ class ChunkedTable(object):
                 (n, c.dtype, c.shape[1:])
             l.append(t)
         return np.dtype(l)
+
+    @property
+    def nbytes(self):
+        cols_nbytes = [c.nbytes if hasattr(c, 'nbytes') else None
+                       for c in self.columns]
+        if all(cols_nbytes):
+            return sum(cols_nbytes)
+        return None
+
+    @property
+    def cbytes(self):
+        cols_cbytes = [c.cbytes if hasattr(c, 'cbytes') else None
+                       for c in self.columns]
+        if all(cols_cbytes):
+            return sum(cols_cbytes)
+        return None
+
+    @property
+    def cratio(self):
+        nbytes = self.nbytes
+        cbytes = self.cbytes
+        if nbytes and cbytes:
+            return nbytes / cbytes
+        return None
 
     def copy(self, start=0, stop=None, blen=None, storage=None,
              create='table', **kwargs):

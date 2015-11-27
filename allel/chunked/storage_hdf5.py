@@ -50,7 +50,7 @@ def h5ftmp(**kwargs):
     return h5f
 
 
-def _array_append(h5d, data):
+def _dataset_append(h5d, data):
     hl = len(h5d)
     dl = len(data)
     hln = hl + dl
@@ -62,7 +62,22 @@ def _table_append(h5g, data):
     names, columns = _util.check_table_like(data, names=h5g.names)
     for n, c in zip(names, columns):
         h5d = h5g[n]
-        _array_append(h5d, c)
+        _dataset_append(h5d, c)
+
+
+def _dataset_nbytes(h5d):
+    return reduce(operator.mul, h5d.shape) * h5d.dtype.itemsize
+
+
+def _dataset_cbytes(h5d):
+    """Amount of file space required for a dataset."""
+    # noinspection PyProtectedMember
+    return h5d._id.get_storage_size()
+
+
+h5py.Dataset.nbytes = property(_dataset_nbytes)
+h5py.Dataset.cbytes = property(_dataset_cbytes)
+h5py.Dataset.append = _dataset_append
 
 
 class HDF5Storage(object):
@@ -121,9 +136,6 @@ class HDF5Storage(object):
 
         # create dataset
         h5d = self.create_dataset(h5g, data=data, **kwargs)
-
-        # patch in append method
-        h5d.append = MethodType(_array_append, h5d)
 
         return h5d
 
