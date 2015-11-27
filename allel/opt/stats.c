@@ -1887,6 +1887,7 @@ static char __pyx_k_s00[] = "s00";
 static char __pyx_k_s11[] = "s11";
 static char __pyx_k_ssl[] = "ssl";
 static char __pyx_k_sum[] = "sum";
+static char __pyx_k_args[] = "args";
 static char __pyx_k_axis[] = "axis";
 static char __pyx_k_base[] = "base";
 static char __pyx_k_diff[] = "diff";
@@ -2047,6 +2048,7 @@ static PyObject *__pyx_n_s_a2;
 static PyObject *__pyx_n_s_abs;
 static PyObject *__pyx_n_s_allel_opt_stats;
 static PyObject *__pyx_n_s_allocate_buffer;
+static PyObject *__pyx_n_s_args;
 static PyObject *__pyx_n_s_asarray;
 static PyObject *__pyx_n_s_axis;
 static PyObject *__pyx_n_s_b;
@@ -2206,7 +2208,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_18ssl2ihh(CYTHON_UNUSED PyObject *_
 static PyObject *__pyx_pf_5allel_3opt_5stats_20ihh_scan_int8(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_h, PyObject *__pyx_v_pos, PyObject *__pyx_v_min_ehh); /* proto */
 static PyObject *__pyx_pf_5allel_3opt_5stats_22ssl01_scan_int8(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_h, PyObject *__pyx_v_stat, PyObject *__pyx_v_dtype, PyObject *__pyx_v_kwargs); /* proto */
 static PyObject *__pyx_pf_5allel_3opt_5stats_24ihh01_scan_int8(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_h, PyObject *__pyx_v_pos, PyObject *__pyx_v_min_ehh); /* proto */
-static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ssl); /* proto */
+static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ssl, CYTHON_UNUSED PyObject *__pyx_v_args, CYTHON_UNUSED PyObject *__pyx_v_kwargs); /* proto */
 static PyObject *__pyx_pf_5allel_3opt_5stats_28nsl01_scan_int8(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_h); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
@@ -8646,12 +8648,12 @@ static __Pyx_memviewslice __pyx_f_5allel_3opt_5stats_tovector_int32(__Pyx_memvie
  * 
  * def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):             # <<<<<<<<<<<<<<
  *     """Scan forwards over haplotypes, computing a summary statistic derived
- *     from the pairwise shared suffix lengths backwards for each variant,
+ *     from the pairwise shared suffix lengths for each variant, for the
  */
 
 /* Python wrapper */
 static PyObject *__pyx_pw_5allel_3opt_5stats_23ssl01_scan_int8(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_5allel_3opt_5stats_22ssl01_scan_int8[] = "Scan forwards over haplotypes, computing a summary statistic derived\n    from the pairwise shared suffix lengths backwards for each variant,\n    for the reference (0) and alternate (1) alleles separately.";
+static char __pyx_doc_5allel_3opt_5stats_22ssl01_scan_int8[] = "Scan forwards over haplotypes, computing a summary statistic derived\n    from the pairwise shared suffix lengths for each variant, for the\n    reference (0) and alternate (1) alleles separately.";
 static PyMethodDef __pyx_mdef_5allel_3opt_5stats_23ssl01_scan_int8 = {"ssl01_scan_int8", (PyCFunction)__pyx_pw_5allel_3opt_5stats_23ssl01_scan_int8, METH_VARARGS|METH_KEYWORDS, __pyx_doc_5allel_3opt_5stats_22ssl01_scan_int8};
 static PyObject *__pyx_pw_5allel_3opt_5stats_23ssl01_scan_int8(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   __Pyx_memviewslice __pyx_v_h = { 0, 0, { 0 }, { 0 }, { 0 } };
@@ -8882,7 +8884,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_22ssl01_scan_int8(CYTHON_UNUSED PyO
  *     # down the line
  *     ssl = np.zeros((n_haplotypes, n_haplotypes), dtype='i4')             # <<<<<<<<<<<<<<
  * 
- *     # integrated haplotype homozygosity values for each variant
+ *     # statistic values for each variant
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -8923,7 +8925,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_22ssl01_scan_int8(CYTHON_UNUSED PyO
 
   /* "allel/opt/stats.pyx":522
  * 
- *     # integrated haplotype homozygosity values for each variant
+ *     # statistic values for each variant
  *     vstat0 = np.empty(n_variants, dtype=dtype)             # <<<<<<<<<<<<<<
  *     vstat1 = np.empty(n_variants, dtype=dtype)
  * 
@@ -8956,7 +8958,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_22ssl01_scan_int8(CYTHON_UNUSED PyO
   __pyx_t_7.data = NULL;
 
   /* "allel/opt/stats.pyx":523
- *     # integrated haplotype homozygosity values for each variant
+ *     # statistic values for each variant
  *     vstat0 = np.empty(n_variants, dtype=dtype)
  *     vstat1 = np.empty(n_variants, dtype=dtype)             # <<<<<<<<<<<<<<
  * 
@@ -9442,7 +9444,7 @@ __pyx_t_10.strides[0] = __pyx_v_loc1.strides[0];
  *         ssl00 = tovector_int32(np.asarray(ssl).compress(l0, axis=0).compress(l0, axis=1))
  *         ssl11 = tovector_int32(np.asarray(ssl).compress(l1, axis=0).compress(l1, axis=1))             # <<<<<<<<<<<<<<
  * 
- *         # compute IHH from shared suffix lengths
+ *         # compute statistic from shared suffix lengths
  */
     __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 554; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
@@ -9522,7 +9524,7 @@ __pyx_t_10.strides[0] = __pyx_v_loc1.strides[0];
 
     /* "allel/opt/stats.pyx":557
  * 
- *         # compute IHH from shared suffix lengths
+ *         # compute statistic from shared suffix lengths
  *         s00 = stat(ssl00, i, **kwargs)             # <<<<<<<<<<<<<<
  *         s11 = stat(ssl11, i, **kwargs)
  *         vstat0[i] = s00
@@ -9544,7 +9546,7 @@ __pyx_t_10.strides[0] = __pyx_v_loc1.strides[0];
     __pyx_t_2 = 0;
 
     /* "allel/opt/stats.pyx":558
- *         # compute IHH from shared suffix lengths
+ *         # compute statistic from shared suffix lengths
  *         s00 = stat(ssl00, i, **kwargs)
  *         s11 = stat(ssl11, i, **kwargs)             # <<<<<<<<<<<<<<
  *         vstat0[i] = s00
@@ -9698,7 +9700,7 @@ __pyx_t_10.strides[0] = __pyx_v_loc1.strides[0];
  * 
  * def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):             # <<<<<<<<<<<<<<
  *     """Scan forwards over haplotypes, computing a summary statistic derived
- *     from the pairwise shared suffix lengths backwards for each variant,
+ *     from the pairwise shared suffix lengths for each variant, for the
  */
 
   /* function exit code */
@@ -9895,27 +9897,86 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_24ihh01_scan_int8(CYTHON_UNUSED PyO
 /* "allel/opt/stats.pyx":573
  * 
  * 
- * def ssl2nsl(ssl):             # <<<<<<<<<<<<<<
+ * def ssl2nsl(ssl, *args, **kwargs):             # <<<<<<<<<<<<<<
  *     """Compute number segregating by length from shared suffix lengths."""
  * 
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_5allel_3opt_5stats_27ssl2nsl(PyObject *__pyx_self, PyObject *__pyx_v_ssl); /*proto*/
+static PyObject *__pyx_pw_5allel_3opt_5stats_27ssl2nsl(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
 static char __pyx_doc_5allel_3opt_5stats_26ssl2nsl[] = "Compute number segregating by length from shared suffix lengths.";
-static PyMethodDef __pyx_mdef_5allel_3opt_5stats_27ssl2nsl = {"ssl2nsl", (PyCFunction)__pyx_pw_5allel_3opt_5stats_27ssl2nsl, METH_O, __pyx_doc_5allel_3opt_5stats_26ssl2nsl};
-static PyObject *__pyx_pw_5allel_3opt_5stats_27ssl2nsl(PyObject *__pyx_self, PyObject *__pyx_v_ssl) {
+static PyMethodDef __pyx_mdef_5allel_3opt_5stats_27ssl2nsl = {"ssl2nsl", (PyCFunction)__pyx_pw_5allel_3opt_5stats_27ssl2nsl, METH_VARARGS|METH_KEYWORDS, __pyx_doc_5allel_3opt_5stats_26ssl2nsl};
+static PyObject *__pyx_pw_5allel_3opt_5stats_27ssl2nsl(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_ssl = 0;
+  CYTHON_UNUSED PyObject *__pyx_v_args = 0;
+  CYTHON_UNUSED PyObject *__pyx_v_kwargs = 0;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("ssl2nsl (wrapper)", 0);
-  __pyx_r = __pyx_pf_5allel_3opt_5stats_26ssl2nsl(__pyx_self, ((PyObject *)__pyx_v_ssl));
+  __pyx_v_kwargs = PyDict_New(); if (unlikely(!__pyx_v_kwargs)) return NULL;
+  __Pyx_GOTREF(__pyx_v_kwargs);
+  if (PyTuple_GET_SIZE(__pyx_args) > 1) {
+    __pyx_v_args = PyTuple_GetSlice(__pyx_args, 1, PyTuple_GET_SIZE(__pyx_args));
+    if (unlikely(!__pyx_v_args)) {
+      __Pyx_DECREF(__pyx_v_kwargs); __pyx_v_kwargs = 0;
+      __Pyx_RefNannyFinishContext();
+      return NULL;
+    }
+    __Pyx_GOTREF(__pyx_v_args);
+  } else {
+    __pyx_v_args = __pyx_empty_tuple; __Pyx_INCREF(__pyx_empty_tuple);
+  }
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_ssl,0};
+    PyObject* values[1] = {0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        default:
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ssl)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+      }
+      if (unlikely(kw_args > 0)) {
+        const Py_ssize_t used_pos_args = (pos_args < 1) ? pos_args : 1;
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, __pyx_v_kwargs, values, used_pos_args, "ssl2nsl") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) < 1) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+    }
+    __pyx_v_ssl = values[0];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("ssl2nsl", 0, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __pyx_L3_error:;
+  __Pyx_DECREF(__pyx_v_args); __pyx_v_args = 0;
+  __Pyx_DECREF(__pyx_v_kwargs); __pyx_v_kwargs = 0;
+  __Pyx_AddTraceback("allel.opt.stats.ssl2nsl", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_5allel_3opt_5stats_26ssl2nsl(__pyx_self, __pyx_v_ssl, __pyx_v_args, __pyx_v_kwargs);
 
   /* function exit code */
+  __Pyx_XDECREF(__pyx_v_args);
+  __Pyx_XDECREF(__pyx_v_kwargs);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ssl) {
+static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ssl, CYTHON_UNUSED PyObject *__pyx_v_args, CYTHON_UNUSED PyObject *__pyx_v_kwargs) {
   PyObject *__pyx_v_n_pairs = NULL;
   PyObject *__pyx_v_nsl = NULL;
   PyObject *__pyx_r = NULL;
@@ -9938,7 +9999,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
  * 
  *     n_pairs = ssl.shape[0]             # <<<<<<<<<<<<<<
  *     if n_pairs > 0:
- *         # compute EHH
+ * 
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ssl, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 576; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
@@ -9952,24 +10013,24 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
  * 
  *     n_pairs = ssl.shape[0]
  *     if n_pairs > 0:             # <<<<<<<<<<<<<<
- *         # compute EHH
- *         nsl = np.mean(ssl)
+ * 
+ *         # compute NSL
  */
   __pyx_t_2 = PyObject_RichCompare(__pyx_v_n_pairs, __pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 577; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_3 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 577; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "allel/opt/stats.pyx":579
- *     if n_pairs > 0:
- *         # compute EHH
+    /* "allel/opt/stats.pyx":580
+ * 
+ *         # compute NSL
  *         nsl = np.mean(ssl)             # <<<<<<<<<<<<<<
  * 
  *     else:
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_mean); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_mean); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -9983,16 +10044,16 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
       }
     }
     if (!__pyx_t_1) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_ssl); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_ssl); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
     } else {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1); __pyx_t_1 = NULL;
       __Pyx_INCREF(__pyx_v_ssl);
       __Pyx_GIVEREF(__pyx_v_ssl);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_ssl);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
@@ -10004,13 +10065,13 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
  * 
  *     n_pairs = ssl.shape[0]
  *     if n_pairs > 0:             # <<<<<<<<<<<<<<
- *         # compute EHH
- *         nsl = np.mean(ssl)
+ * 
+ *         # compute NSL
  */
     goto __pyx_L3;
   }
 
-  /* "allel/opt/stats.pyx":584
+  /* "allel/opt/stats.pyx":586
  *         # cannot be computed- as anc/der is singleton
  *         # the result should never be 0- as the current snp counts
  *         nsl = np.nan             # <<<<<<<<<<<<<<
@@ -10018,9 +10079,9 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
  *     return nsl
  */
   /*else*/ {
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 586; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_nan); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 584; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_nan); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 586; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_v_nsl = __pyx_t_4;
@@ -10028,7 +10089,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
   }
   __pyx_L3:;
 
-  /* "allel/opt/stats.pyx":586
+  /* "allel/opt/stats.pyx":588
  *         nsl = np.nan
  * 
  *     return nsl             # <<<<<<<<<<<<<<
@@ -10043,7 +10104,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
   /* "allel/opt/stats.pyx":573
  * 
  * 
- * def ssl2nsl(ssl):             # <<<<<<<<<<<<<<
+ * def ssl2nsl(ssl, *args, **kwargs):             # <<<<<<<<<<<<<<
  *     """Compute number segregating by length from shared suffix lengths."""
  * 
  */
@@ -10065,7 +10126,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_26ssl2nsl(CYTHON_UNUSED PyObject *_
   return __pyx_r;
 }
 
-/* "allel/opt/stats.pyx":589
+/* "allel/opt/stats.pyx":591
  * 
  * 
  * def nsl01_scan_int8(np.int8_t[:, :] h):             # <<<<<<<<<<<<<<
@@ -10086,7 +10147,7 @@ static PyObject *__pyx_pw_5allel_3opt_5stats_29nsl01_scan_int8(PyObject *__pyx_s
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("nsl01_scan_int8 (wrapper)", 0);
   assert(__pyx_arg_h); {
-    __pyx_v_h = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_int8_t(__pyx_arg_h); if (unlikely(!__pyx_v_h.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_h = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_int8_t(__pyx_arg_h); if (unlikely(!__pyx_v_h.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -10117,19 +10178,19 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_28nsl01_scan_int8(CYTHON_UNUSED PyO
   int __pyx_clineno = 0;
   __Pyx_TraceFrameInit(__pyx_codeobj__17)
   __Pyx_RefNannySetupContext("nsl01_scan_int8", 0);
-  __Pyx_TraceCall("nsl01_scan_int8", __pyx_f[0], 589, 0, {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;});
+  __Pyx_TraceCall("nsl01_scan_int8", __pyx_f[0], 591, 0, {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;});
 
-  /* "allel/opt/stats.pyx":594
+  /* "allel/opt/stats.pyx":596
  *     alternate (1) alleles separately."""
  * 
  *     return ssl01_scan_int8(h, ssl2nsl)             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ssl01_scan_int8); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ssl01_scan_int8); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_h, 2, (PyObject *(*)(char *)) __pyx_memview_get_nn___pyx_t_5numpy_int8_t, (int (*)(char *, PyObject *)) __pyx_memview_set_nn___pyx_t_5numpy_int8_t, 0);; if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_h, 2, (PyObject *(*)(char *)) __pyx_memview_get_nn___pyx_t_5numpy_int8_t, (int (*)(char *, PyObject *)) __pyx_memview_set_nn___pyx_t_5numpy_int8_t, 0);; if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_ssl2nsl); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_ssl2nsl); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   __pyx_t_6 = 0;
@@ -10143,7 +10204,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_28nsl01_scan_int8(CYTHON_UNUSED PyO
       __pyx_t_6 = 1;
     }
   }
-  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   if (__pyx_t_5) {
     __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
@@ -10154,7 +10215,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_28nsl01_scan_int8(CYTHON_UNUSED PyO
   PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_t_4);
   __pyx_t_3 = 0;
   __pyx_t_4 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 594; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 596; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -10162,7 +10223,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_28nsl01_scan_int8(CYTHON_UNUSED PyO
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "allel/opt/stats.pyx":589
+  /* "allel/opt/stats.pyx":591
  * 
  * 
  * def nsl01_scan_int8(np.int8_t[:, :] h):             # <<<<<<<<<<<<<<
@@ -24992,6 +25053,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_abs, __pyx_k_abs, sizeof(__pyx_k_abs), 0, 0, 1, 1},
   {&__pyx_n_s_allel_opt_stats, __pyx_k_allel_opt_stats, sizeof(__pyx_k_allel_opt_stats), 0, 0, 1, 1},
   {&__pyx_n_s_allocate_buffer, __pyx_k_allocate_buffer, sizeof(__pyx_k_allocate_buffer), 0, 0, 1, 1},
+  {&__pyx_n_s_args, __pyx_k_args, sizeof(__pyx_k_args), 0, 0, 1, 1},
   {&__pyx_n_s_asarray, __pyx_k_asarray, sizeof(__pyx_k_asarray), 0, 0, 1, 1},
   {&__pyx_n_s_axis, __pyx_k_axis, sizeof(__pyx_k_axis), 0, 0, 1, 1},
   {&__pyx_n_s_b, __pyx_k_b, sizeof(__pyx_k_b), 0, 0, 1, 1},
@@ -25476,7 +25538,7 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):             # <<<<<<<<<<<<<<
  *     """Scan forwards over haplotypes, computing a summary statistic derived
- *     from the pairwise shared suffix lengths backwards for each variant,
+ *     from the pairwise shared suffix lengths for each variant, for the
  */
   __pyx_tuple__43 = PyTuple_Pack(27, __pyx_n_s_h, __pyx_n_s_stat, __pyx_n_s_dtype, __pyx_n_s_kwargs, __pyx_n_s_n_variants, __pyx_n_s_n_haplotypes, __pyx_n_s_n_pairs, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_p, __pyx_n_s_s, __pyx_n_s_ssl, __pyx_n_s_a1, __pyx_n_s_a2, __pyx_n_s_vstat0, __pyx_n_s_vstat1, __pyx_n_s_ihh0, __pyx_n_s_ihh1, __pyx_n_s_loc0, __pyx_n_s_loc1, __pyx_n_s_l0, __pyx_n_s_l1, __pyx_n_s_ssl00, __pyx_n_s_ssl11, __pyx_n_s_s00, __pyx_n_s_s11); if (unlikely(!__pyx_tuple__43)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 494; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__43);
@@ -25498,26 +25560,26 @@ static int __Pyx_InitCachedConstants(void) {
   /* "allel/opt/stats.pyx":573
  * 
  * 
- * def ssl2nsl(ssl):             # <<<<<<<<<<<<<<
+ * def ssl2nsl(ssl, *args, **kwargs):             # <<<<<<<<<<<<<<
  *     """Compute number segregating by length from shared suffix lengths."""
  * 
  */
-  __pyx_tuple__45 = PyTuple_Pack(3, __pyx_n_s_ssl, __pyx_n_s_n_pairs, __pyx_n_s_nsl); if (unlikely(!__pyx_tuple__45)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__45 = PyTuple_Pack(5, __pyx_n_s_ssl, __pyx_n_s_args, __pyx_n_s_kwargs, __pyx_n_s_n_pairs, __pyx_n_s_nsl); if (unlikely(!__pyx_tuple__45)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__45);
   __Pyx_GIVEREF(__pyx_tuple__45);
-  __pyx_codeobj__16 = (PyObject*)__Pyx_PyCode_New(1, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__45, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_scratch_src_github_cggh_scikit, __pyx_n_s_ssl2nsl, 573, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__16 = (PyObject*)__Pyx_PyCode_New(1, 0, 5, 0, CO_VARARGS|CO_VARKEYWORDS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__45, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_scratch_src_github_cggh_scikit, __pyx_n_s_ssl2nsl, 573, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "allel/opt/stats.pyx":589
+  /* "allel/opt/stats.pyx":591
  * 
  * 
  * def nsl01_scan_int8(np.int8_t[:, :] h):             # <<<<<<<<<<<<<<
  *     """Scan forwards over haplotypes, computing the number of segregating
  *     sites by length backwards for each variant for the reference (0) and
  */
-  __pyx_tuple__46 = PyTuple_Pack(2, __pyx_n_s_h, __pyx_n_s_h); if (unlikely(!__pyx_tuple__46)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__46 = PyTuple_Pack(2, __pyx_n_s_h, __pyx_n_s_h); if (unlikely(!__pyx_tuple__46)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__46);
   __Pyx_GIVEREF(__pyx_tuple__46);
-  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__46, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_scratch_src_github_cggh_scikit, __pyx_n_s_nsl01_scan_int8, 589, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__46, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_scratch_src_github_cggh_scikit, __pyx_n_s_nsl01_scan_int8, 591, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "View.MemoryView":278
  *         return self.name
@@ -25907,7 +25969,7 @@ PyMODINIT_FUNC PyInit_stats(void)
  * 
  * def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):             # <<<<<<<<<<<<<<
  *     """Scan forwards over haplotypes, computing a summary statistic derived
- *     from the pairwise shared suffix lengths backwards for each variant,
+ *     from the pairwise shared suffix lengths for each variant, for the
  */
   __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_5stats_23ssl01_scan_int8, NULL, __pyx_n_s_allel_opt_stats); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 494; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
@@ -25929,7 +25991,7 @@ PyMODINIT_FUNC PyInit_stats(void)
   /* "allel/opt/stats.pyx":573
  * 
  * 
- * def ssl2nsl(ssl):             # <<<<<<<<<<<<<<
+ * def ssl2nsl(ssl, *args, **kwargs):             # <<<<<<<<<<<<<<
  *     """Compute number segregating by length from shared suffix lengths."""
  * 
  */
@@ -25938,16 +26000,16 @@ PyMODINIT_FUNC PyInit_stats(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_ssl2nsl, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 573; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "allel/opt/stats.pyx":589
+  /* "allel/opt/stats.pyx":591
  * 
  * 
  * def nsl01_scan_int8(np.int8_t[:, :] h):             # <<<<<<<<<<<<<<
  *     """Scan forwards over haplotypes, computing the number of segregating
  *     sites by length backwards for each variant for the reference (0) and
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_5stats_29nsl01_scan_int8, NULL, __pyx_n_s_allel_opt_stats); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_5stats_29nsl01_scan_int8, NULL, __pyx_n_s_allel_opt_stats); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_nsl01_scan_int8, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 589; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_nsl01_scan_int8, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 591; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "allel/opt/stats.pyx":1

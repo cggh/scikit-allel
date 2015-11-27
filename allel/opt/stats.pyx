@@ -493,8 +493,8 @@ cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
 
 def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
     """Scan forwards over haplotypes, computing a summary statistic derived
-    from the pairwise shared suffix lengths backwards for each variant,
-    for the reference (0) and alternate (1) alleles separately."""
+    from the pairwise shared suffix lengths for each variant, for the
+    reference (0) and alternate (1) alleles separately."""
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, p, s
@@ -518,7 +518,7 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
     # down the line
     ssl = np.zeros((n_haplotypes, n_haplotypes), dtype='i4')
 
-    # integrated haplotype homozygosity values for each variant
+    # statistic values for each variant
     vstat0 = np.empty(n_variants, dtype=dtype)
     vstat1 = np.empty(n_variants, dtype=dtype)
 
@@ -553,7 +553,7 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
         ssl00 = tovector_int32(np.asarray(ssl).compress(l0, axis=0).compress(l0, axis=1))
         ssl11 = tovector_int32(np.asarray(ssl).compress(l1, axis=0).compress(l1, axis=1))
 
-        # compute IHH from shared suffix lengths
+        # compute statistic from shared suffix lengths
         s00 = stat(ssl00, i, **kwargs)
         s11 = stat(ssl11, i, **kwargs)
         vstat0[i] = s00
@@ -570,15 +570,17 @@ def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
     return ssl01_scan_int8(h, ssl2ihh, pos=pos, min_ehh=min_ehh)
 
 
-def ssl2nsl(ssl):
+def ssl2nsl(ssl, *args, **kwargs):
     """Compute number segregating by length from shared suffix lengths."""
 
     n_pairs = ssl.shape[0]
     if n_pairs > 0:
-        # compute EHH
+
+        # compute NSL
         nsl = np.mean(ssl)
 
     else:
+
         # cannot be computed- as anc/der is singleton
         # the result should never be 0- as the current snp counts
         nsl = np.nan
