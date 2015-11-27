@@ -37,6 +37,7 @@ Other changes:
 * Added methods `from_hdf5_group()` and `to_hdf5_group()` to
   :class:`allel.model.ndarray.VariantTable`
   (`#26 <https://github.com/cggh/scikit-allel/issues/26>`_).
+* Added :func:`allel.util.hdf5_cache` utility function.
 * Modified functions in the :mod:`allel.stats.selection` module that depend
   on calculation of integrated haplotype homozygosity to return NaN when
   haplotypes do not decay below a specified threshold
@@ -44,7 +45,8 @@ Other changes:
 * Fixed missing return value in
   :func:`allel.stats.selection.plot_voight_painting`
   (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
-* Added :func:`allel.util.hdf5_cache` utility function.
+* Fixed return type from array reshape()
+  (`#34 <https://github.com/cggh/scikit-allel/issues/34>`_).
 
 Contributors: `alimanfoo <https://github.com/alimanfoo>`_,
 `hardingnj <https://github.com/hardingnj>`_
