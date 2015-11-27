@@ -77,6 +77,11 @@ class ArrayAug(np.ndarray):
         a = np.vstack(tup)
         return type(self)(a, copy=False)
 
+    def reshape(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).reshape(*args, **kwargs)
+        return np.asarray(a)
+
 
 class RecArrayAug(np.recarray):
 
