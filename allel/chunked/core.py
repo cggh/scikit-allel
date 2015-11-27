@@ -585,7 +585,7 @@ class ChunkedArray(object):
     def __repr__(self):
         r = '%s(' % type(self).__name__
         r += '%s' % str(self.shape)
-        r += ', dtype=%s' % str(self.dtype)
+        r += ', %s' % str(self.dtype)
         if self.nbytes:
             r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
         if self.cbytes:

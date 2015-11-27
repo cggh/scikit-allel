@@ -10,7 +10,7 @@ Either HDF5 (via `h5py <http://www.h5py.org/>`_) or `bcolz
 layer. Choice of storage layer can be made via the `storage` keyword
 argument which all class methods accept.  This argument can either be
 a string identifying one of the predefined storage layer
-configurations, or an object implementing the chunked storage API. 
+configurations, or an object implementing the chunked storage API.
 
 For more information about controlling storage see the
 :mod:`allel.chunked` module.
@@ -62,7 +62,7 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
         >>> callset = h5py.File('callset.h5', mode='r')
         >>> g = allel.GenotypeChunkedArray(callset['/3L/calldata/genotype'])
         >>> g
-        GenotypeChunkedArray((3, 2, 2), int8, h5py._hl.dataset.Dataset)
+        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=16, cratio=0.8, data=h5py._hl.dataset.Dataset)
         >>> g.data
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
 
@@ -82,9 +82,9 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
     directly via the `storage` keyword argument. E.g.::
 
         >>> g.copy()
-        GenotypeChunkedArray((3, 2, 2), int8, bcolz.carray_ext.carray)
+        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=16.0K, cratio=0.0, data=bcolz.carray_ext.carray)
         >>> g.copy(storage='hdf5mem_zlib1')
-        GenotypeChunkedArray((3, 2, 2), int8, h5py._hl.dataset.Dataset)
+        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=4.5K, cratio=0.0, data=h5py._hl.dataset.Dataset)
 
     """
 
@@ -693,7 +693,7 @@ class VariantChunkedTable(chunked.ChunkedTable):
         >>> vt = allel.VariantChunkedTable(callset['/3L/variants'],
         ...                                names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
         >>> vt
-        VariantChunkedTable(5, h5py._hl.group.Group)
+        VariantChunkedTable(5, nbytes=220, cbytes=220, cratio=1.0, data=h5py._hl.group.Group)
 
     Obtain a single row::
 
@@ -711,16 +711,16 @@ class VariantChunkedTable(chunked.ChunkedTable):
     Access a subset of columns::
 
         >>> vt[['CHROM', 'POS']]
-        VariantChunkedTable(5, builtins.list)
+        VariantChunkedTable(5, nbytes=60, cbytes=60, cratio=1.0, data=builtins.list)
 
     Note that most methods will return a chunked table, using whatever
     chunked storage is set as default (bcolz ctable) or specified
     directly via the `storage` keyword argument. E.g.::
 
         >>> vt.copy()
-        VariantChunkedTable(5, bcolz.ctable.ctable)
+        VariantChunkedTable(5, nbytes=220, cbytes=80.0K, cratio=0.0, data=bcolz.ctable.ctable)
         >>> vt.copy(storage='hdf5mem_zlib1')
-        VariantChunkedTable(5, h5py._hl.files.File)
+        VariantChunkedTable(5, nbytes=220, cbytes=22.5K, cratio=0.0, data=h5py._hl.files.File)
 
     """  # flake8: noqa
 
