@@ -353,7 +353,8 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return da.map_blocks(f, packed, chunks=chunks, new_dims=2)
 
     def map_alleles(self, mapping, **kwargs):
-
+        # TODO broken
+        
         def f(block, bmapping):
             g = GenotypeArray(block)
             m = bmapping[:, 0, :]
