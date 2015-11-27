@@ -30,7 +30,7 @@ LICENSE = 'MIT'
 INSTALL_REQUIRES = []
 
 CLASSIFIERS = [
-    'Development Status :: 1 - Planning',
+    'Development Status :: 4 - Beta',
     'License :: OSI Approved :: MIT License',
     'Intended Audience :: Developers',
     'Intended Audience :: Science/Research',

@@ -1,7 +1,7 @@
 ``scikit-allel``
-==============
+================
 
-A Python package for exploratory analysis of large scale genetic variation data. 
+A Python package for exploratory analysis of large scale genetic variation data.
 
 * Documentation: http://scikit-allel.readthedocs.org
 * Source code: https://github.com/cggh/scikit-allel
