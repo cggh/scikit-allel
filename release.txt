@@ -10,6 +10,7 @@ git push
 git push --tags
 # merge into master
 git checkout master
+git pull
 git merge v$version
 git push
 # update pypi
