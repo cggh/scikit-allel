@@ -16,6 +16,10 @@ release.
 
 Other changes:
 
+* Added function for computing the number of segregating sites by length
+  (nSl), a summary statistic comparing haplotype homozygosity between
+  different alleles (similar to IHS), see :func:`allel.stats.selection.nsl`
+  (`#40 <https://github.com/cggh/scikit-allel/issues/40>`_).
 * Added functions for computing haplotype diversity, see
   :func:`allel.stats.selection.haplotype_diversity` and
   :func:`allel.stats.selection.moving_haplotype_diversity`
@@ -285,7 +289,7 @@ v0.9
   :func:`allel.bcolz.carray_from_hdf5`,
   :func:`allel.bcolz.carray_to_hdf5`,
   :func:`allel.bcolz.ctable_from_hdf5_group`,
-  :func:`allel.bcolz.ctable_to_hdf5_group`. 
+  :func:`allel.bcolz.ctable_to_hdf5_group`.
 
 * Refactoring of internals within the :mod:`allel.bcolz` module.
 
