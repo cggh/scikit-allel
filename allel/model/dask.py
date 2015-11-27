@@ -355,7 +355,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
     def map_alleles(self, mapping, **kwargs):
         # TODO broken
-        
+
         def f(block, bmapping):
             g = GenotypeArray(block)
             m = bmapping[:, 0, :]
