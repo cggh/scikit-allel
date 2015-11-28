@@ -176,89 +176,70 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
             out.mask = self.mask.subset(sel0, sel1, **kwargs)
         return out
 
-    def is_called(self, **kwargs):
+    def _is(self, method_name, method_kwargs=None, **kwargs):
+        if method_kwargs is None:
+            method_kwargs = dict()
+
         def f(block):
-            return block.is_called()
+            method = getattr(block, method_name)
+            return method(**method_kwargs)
         out = self.apply(f, **kwargs)
         return chunked.ChunkedArray(out)
+
+    def is_called(self, **kwargs):
+        return self._is('is_called', **kwargs)
 
     def is_missing(self, **kwargs):
-        def f(block):
-            return block.is_missing()
-        out = self.apply(f, **kwargs)
-        return chunked.ChunkedArray(out)
+        return self._is('is_missing', **kwargs)
 
     def is_hom(self, allele=None, **kwargs):
-        def f(block):
-            return block.is_hom(allele=allele)
-        out = self.apply(f, **kwargs)
-        return chunked.ChunkedArray(out)
+        return self._is('is_hom', method_kwargs=dict(allele=allele), **kwargs)
 
     def is_hom_ref(self, **kwargs):
-        def f(block):
-            return block.is_hom_ref()
-        out = self.apply(f, **kwargs)
-        return chunked.ChunkedArray(out)
+        return self._is('is_hom_ref', **kwargs)
 
     def is_hom_alt(self, **kwargs):
-        def f(block):
-            return block.is_hom_alt()
-        out = self.apply(f, **kwargs)
-        return chunked.ChunkedArray(out)
+        return self._is('is_hom_alt', **kwargs)
 
     def is_het(self, allele=None, **kwargs):
-        def f(block):
-            return block.is_het(allele=allele)
-        out = self.apply(f, **kwargs)
-        return chunked.ChunkedArray(out)
+        return self._is('is_het', method_kwargs=dict(allele=allele), **kwargs)
 
     def is_call(self, call, **kwargs):
-        def f(block):
-            return block.is_call(call)
-        out = self.apply(f, **kwargs)
-        return chunked.ChunkedArray(out)
+        return self._is('is_call', method_kwargs=dict(call=call), **kwargs)
+
+    def _count(self, method_name, axis, method_kwargs=None, **kwargs):
+        if method_kwargs is None:
+            method_kwargs = dict()
+
+        def mapper(block):
+            method = getattr(block, method_name)
+            return method(**method_kwargs)
+        out = self.sum(axis=axis, mapper=mapper, **kwargs)
+        return out
 
     def count_called(self, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_called()
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+        return self._count('is_called', axis, **kwargs)
 
     def count_missing(self, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_missing()
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+        return self._count('is_missing', axis, **kwargs)
 
     def count_hom(self, allele=None, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_hom(allele=allele)
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+        return self._count('is_hom', axis, method_kwargs=dict(allele=allele),
+                           **kwargs)
 
     def count_hom_ref(self, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_hom_ref()
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+        return self._count('is_hom_ref', axis, **kwargs)
 
     def count_hom_alt(self, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_hom_alt()
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+        return self._count('is_hom_alt', axis, **kwargs)
 
-    def count_het(self, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_het()
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+    def count_het(self, allele=None, axis=None, **kwargs):
+        return self._count('is_het', axis, method_kwargs=dict(allele=allele),
+                           **kwargs)
 
     def count_call(self, call, axis=None, **kwargs):
-        def mapper(block):
-            return block.is_call(call)
-        out = self.sum(axis=axis, mapper=mapper, **kwargs)
-        return out
+        return self._count('is_call', axis, method_kwargs=dict(call=call),
+                           **kwargs)
 
     def to_haplotypes(self, **kwargs):
         def f(block):
