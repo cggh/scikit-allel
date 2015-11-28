@@ -357,12 +357,17 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return {k: self.count_alleles(max_allele=max_allele, subpop=v)
                 for k, v in subpops.items()}
 
-    def to_packed(self, boundscheck=True):
+    def _map_drop_dim2(self, method_name, **kwargs):
         def f(block):
-            return GenotypeArray(block).to_packed(boundscheck=boundscheck)
-        chunks = (self.chunks[0], self.chunks[1])
+            g = GenotypeArray(block)
+            method = getattr(g, method_name)
+            return method(**kwargs)
+        chunks = self.darr.chunks[:2]
         out = self.darr.map_blocks(f, chunks=chunks, drop_dims=2)
         return out
+
+    def to_packed(self, boundscheck=True):
+        return self._map_drop_dim2('to_packed', boundscheck=boundscheck)
 
     @staticmethod
     def from_packed(packed, chunks=None):
@@ -405,14 +410,8 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return out
 
     def to_gt(self, phased=False, max_allele=None):
-
-        def f(block):
-            g = GenotypeArray(block)
-            return g.to_gt(phased=phased, max_allele=max_allele)
-
-        chunks = (self.chunks[0], self.chunks[1])
-        out = self.darr.map_blocks(f, chunks=chunks, drop_dims=2)
-        return out
+        return self._map_drop_dim2('to_gt', phased=phased,
+                                   max_allele=max_allele)
 
     def to_haplotypes(self):
 
@@ -423,6 +422,12 @@ class GenotypeDaskArray(DaskArrayWrapper):
         chunks = (self.chunks[0], tuple(c*2 for c in self.chunks[1]))
         out = self.darr.map_blocks(f, chunks=chunks, drop_dims=2)
         return HaplotypeDaskArray(out)
+
+    def to_n_ref(self, fill=0, dtype='i1'):
+        return self._map_drop_dim2('to_n_ref', fill=fill, dtype=dtype)
+
+    def to_n_alt(self, fill=0, dtype='i1'):
+        return self._map_drop_dim2('to_n_alt', fill=fill, dtype=dtype)
 
 
 class HaplotypeDaskArray(DaskArrayWrapper):
