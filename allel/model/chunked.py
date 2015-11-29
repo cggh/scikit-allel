@@ -241,6 +241,7 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
         return self._count('is_call', axis, method_kwargs=dict(call=call),
                            **kwargs)
 
+    # TODO refactor _to() methods
     def to_haplotypes(self, **kwargs):
         def f(block):
             return block.to_haplotypes()
