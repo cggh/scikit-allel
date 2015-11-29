@@ -26,7 +26,8 @@ import numpy as np
 import dask.array as da
 
 
-from allel.model.ndarray import GenotypeArray
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
+    AlleleCountsArray
 
 
 def get_chunks(data, chunks=None):
@@ -226,63 +227,64 @@ class GenotypeDaskArray(DaskArrayWrapper):
         # store
         self._mask = mask
 
-    def fill_masked(self, value=-1):
-        def f(block, bmask):
-            gb = GenotypeArray(block)
-            print(block.shape, bmask.shape)
-            gb.mask = bmask[:, :, 0]
-            return gb.fill_masked(value=value)
-        out = da.map_blocks(f, self.darr, self.mask[:, :, None],
-                            chunks=self.darr.chunks)
-        return GenotypeDaskArray(out)
+    def _method(self, method_name, chunks=None, drop_dims=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.darr.chunks
 
-    # TODO refactor with _to()
-    def _is(self, method_name, *args, **kwargs):
         if self.mask is None:
             # simple case, no mask
             def f(block):
                 g = GenotypeArray(block)
                 method = getattr(g, method_name)
-                return method(*args, **kwargs)
-            chunks = (self.chunks[0], self.chunks[1])
-            out = self.darr.map_blocks(f, chunks=chunks, drop_dims=2)
-
+                return method(**kwargs)
+            out = self.darr.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
+            
         else:
-            # need to map with mask
+            # map with mask
             def f(block, bmask):
                 g = GenotypeArray(block)
                 g.mask = bmask[:, :, 0]
                 method = getattr(g, method_name)
-                return method(*args, **kwargs)
-            chunks = (self.chunks[0], self.chunks[1])
+                return method(**kwargs)
             m = self.mask[:, :, None]
-            out = da.map_blocks(f, self.darr, m, chunks=chunks, drop_dims=2)
+            out = da.map_blocks(f, self.darr, m, chunks=chunks, 
+                                drop_dims=drop_dims)
+            
         return out
 
+    def _method_drop_dim2(self, method_name, **kwargs):
+        chunks = self.darr.chunks[:2]
+        return self._method(method_name, chunks=chunks, drop_dims=2, **kwargs)
+
+    def fill_masked(self, value=-1):
+        out = self._method('fill_masked', value=value)
+        return GenotypeDaskArray(out)
+
     def is_called(self):
-        return self._is('is_called')
+        return self._method_drop_dim2('is_called')
 
     def is_missing(self):
-        return self._is('is_missing')
+        return self._method_drop_dim2('is_missing')
 
     def is_hom(self, allele=None):
-        return self._is('is_hom', allele=allele)
+        return self._method_drop_dim2('is_hom', allele=allele)
 
     def is_hom_ref(self):
-        return self._is('is_hom_ref')
+        return self._method_drop_dim2('is_hom_ref')
 
     def is_hom_alt(self):
-        return self._is('is_hom_alt')
+        return self._method_drop_dim2('is_hom_alt')
 
     def is_het(self, allele=None):
-        return self._is('is_het', allele=allele)
+        return self._method_drop_dim2('is_het', allele=allele)
 
     def is_call(self, call):
-        return self._is('is_call', call=call)
+        return self._method_drop_dim2('is_call', call=call)
 
-    def _count(self, method_name, axis, *args, **kwargs):
+    def _count(self, method_name, axis, **kwargs):
         method = getattr(self, method_name)
-        out = method(*args, **kwargs).sum(axis=axis)
+        out = method(**kwargs).sum(axis=axis)
         if axis is None:
             # result is scalar, might as well compute now (also helps tests)
             return out.compute()
@@ -329,8 +331,8 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
             # simple case, no mask
             def f(block):
-                bg = GenotypeArray(block)
-                return bg.count_alleles(max_allele=max_allele)[:, None, :]
+                gb = GenotypeArray(block)
+                return gb.count_alleles(max_allele=max_allele)[:, None, :]
 
             # map blocks and reduce
             out = gd.map_blocks(f, chunks=chunks).sum(axis=1)
@@ -340,9 +342,9 @@ class GenotypeDaskArray(DaskArrayWrapper):
             # map with mask
             def f(block, bmask):
                 print(block.shape, bmask.shape)
-                bg = GenotypeArray(block)
-                bg.mask = bmask[:, :, 0]
-                return bg.count_alleles(max_allele=max_allele)[:, None, :]
+                g = GenotypeArray(block)
+                g.mask = bmask[:, :, 0]
+                return g.count_alleles(max_allele=max_allele)[:, None, :]
 
             md = self.mask[:, :, None]
             out = da.map_blocks(f, gd, md, chunks=chunks).sum(axis=1)
@@ -357,25 +359,9 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
         return {k: self.count_alleles(max_allele=max_allele, subpop=v)
                 for k, v in subpops.items()}
-    
-    def _to(self, method_name, chunks=None, drop_dims=None, 
-            new_dims=None, wrap=None, **kwargs):
-        def f(block):
-            g = GenotypeArray(block)
-            method = getattr(g, method_name)
-            return method(**kwargs)
-        out = self.darr.map_blocks(f, chunks=chunks, drop_dims=drop_dims, 
-                                   new_dims=new_dims)
-        if wrap:
-            out = wrap(out)
-        return out
-
-    def _to_drop_dim2(self, method_name, **kwargs):        
-        chunks = self.darr.chunks[:2]
-        return self._to(method_name, chunks=chunks, drop_dims=2, **kwargs)
 
     def to_packed(self, boundscheck=True):
-        return self._to_drop_dim2('to_packed', boundscheck=boundscheck)
+        return self._method_drop_dim2('to_packed', boundscheck=boundscheck)
 
     @staticmethod
     def from_packed(packed, chunks=None):
@@ -409,24 +395,50 @@ class GenotypeDaskArray(DaskArrayWrapper):
             alleles = list(range(m+1))
 
         chunks = (self.chunks[0], self.chunks[1], (len(alleles),))
-        return self._to('to_allele_counts', chunks=chunks, alleles=alleles)
+        return self._method('to_allele_counts', chunks=chunks, alleles=alleles)
 
     def to_gt(self, phased=False, max_allele=None):
-        return self._to_drop_dim2('to_gt', phased=phased,
-                                  max_allele=max_allele)
+        return self._method_drop_dim2('to_gt', phased=phased,
+                                      max_allele=max_allele)
 
     def to_haplotypes(self):
         out = self.darr.reshape(self.shape[0], -1)
         return HaplotypeDaskArray(out)
 
     def to_n_ref(self, fill=0, dtype='i1'):
-        return self._to_drop_dim2('to_n_ref', fill=fill, dtype=dtype)
+        return self._method_drop_dim2('to_n_ref', fill=fill, dtype=dtype)
 
     def to_n_alt(self, fill=0, dtype='i1'):
-        return self._to_drop_dim2('to_n_alt', fill=fill, dtype=dtype)
+        return self._method_drop_dim2('to_n_alt', fill=fill, dtype=dtype)
 
 
 class HaplotypeDaskArray(DaskArrayWrapper):
+
+    def __init__(self, data, chunks=None):
+        super(HaplotypeDaskArray, self).__init__(data, chunks=chunks)
+        self._check_input_data(self.darr)
+
+    @staticmethod
+    def _check_input_data(data):
+        if len(data.shape) != 2:
+            raise ValueError('expected 2 dimensions')
+        if data.dtype.kind not in 'ui':
+            raise TypeError('expected integer dtype')
+
+    def __getitem__(self, *args):
+        out = super(HaplotypeDaskArray, self).__getitem__(*args)
+        if hasattr(out, 'shape') and len(self.shape) == len(out.shape):
+            # dimensionality preserved
+            out = HaplotypeDaskArray(out)
+        return out
+
+    def compute(self, **kwargs):
+        a = self.darr.compute(**kwargs)
+        h = HaplotypeArray(a)
+        return h
+
+    def _repr_html_(self):
+        return self[:6].compute().to_html_str(caption=repr(self))
 
     @property
     def n_variants(self):
@@ -436,8 +448,133 @@ class HaplotypeDaskArray(DaskArrayWrapper):
     def n_haplotypes(self):
         return self.shape[1]
 
+    def to_genotypes(self, ploidy=2):
+
+        # check ploidy is compatible
+        if (self.n_haplotypes % ploidy) > 0:
+            raise ValueError('incompatible ploidy')
+
+        # mapper function
+        def f(block):
+            h = HaplotypeArray(block)
+            return h.to_genotypes(ploidy)
+
+        # rechunk to ensure chunk boundaries don't break individuals
+        hd = self.darr.rechunk(chunks={1: self.n_haplotypes})
+
+        # determine output chunks
+        chunks = (hd.chunks[0], hd.chunks[1], (ploidy,))
+
+        # map blocks
+        out = hd.map_blocks(f, chunks=chunks, new_dims=2)
+        return GenotypeDaskArray(out)
+
+    def is_called(self):
+        return self.darr >= 0
+
+    def is_missing(self):
+        return self.darr < 0
+
+    def is_ref(self):
+        return self.darr < 0
+
+    def is_alt(self):
+        return self.darr > 0
+
+    def is_call(self, allele):
+        return self.darr == allele
+
+    def count_called(self, axis=None):
+        return self.is_called().sum(axis=axis)
+
+    def count_missing(self, axis=None):
+        return self.is_missing().sum(axis=axis)
+
+    def count_ref(self, axis=None):
+        return self.is_ref().sum(axis=axis)
+
+    def count_alt(self, axis=None):
+        return self.is_alt().sum(axis=axis)
+
+    def count_call(self, allele, axis=None):
+        return self.is_call(allele).sum(axis=axis)
+
+    def count_alleles(self, max_allele=None, subpop=None):
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max().compute()
+
+        # deal with subpop
+        if subpop:
+            hd = self.take(subpop, axis=1).darr
+        else:
+            hd = self.darr
+
+        # determine output chunks - preserve dim0, change dim1, new dim2
+        chunks = (hd.chunks[0], (1,)*len(hd.chunks[1]), (max_allele+1,))
+
+        # mapper function
+        def f(block):
+            h = HaplotypeArray(block)
+            return h.count_alleles(max_allele=max_allele)[:, None, :]
+
+        # map blocks and reduce
+        out = hd.map_blocks(f, chunks=chunks).sum(axis=1)
+        return AlleleCountsDaskArray(out)
+
+    def count_alleles_subpops(self, subpops, max_allele=None):
+
+        # if max_allele not specified, count all alleles
+        if max_allele is None:
+            max_allele = self.max().compute()
+
+        return {k: self.count_alleles(max_allele=max_allele, subpop=v)
+                for k, v in subpops.items()}
+
+    def map_alleles(self, mapping, **kwargs):
+
+        def f(block, bmapping):
+            h = HaplotypeArray(block)
+            return h.map_alleles(bmapping)
+
+        # obtain dask array
+        mapping = da.from_array(mapping, chunks=(self.darr.chunks[0], None))
+
+        # map blocks
+        out = da.map_blocks(f, self.darr, mapping,
+                            chunks=self.darr.chunks)
+        return GenotypeDaskArray(out)
+
 
 class AlleleCountsDaskArray(DaskArrayWrapper):
+
+    def __init__(self, data, chunks=None):
+        super(AlleleCountsDaskArray, self).__init__(data, chunks=chunks)
+        self._check_input_data(self.darr)
+
+    @staticmethod
+    def _check_input_data(data):
+        if len(data.shape) != 2:
+            raise ValueError('expected 2 dimensions')
+        if data.dtype.kind not in 'ui':
+            raise TypeError('expected integer dtype')
+
+    def __getitem__(self, *args):
+        out = super(AlleleCountsDaskArray, self).__getitem__(*args)
+        if hasattr(out, 'shape') and len(self.shape) == len(out.shape) \
+                and self.shape[1] == out.shape[1]:
+            # dimensionality and allele indices preserved
+            out = AlleleCountsDaskArray(out)
+        return out
+
+    def compute(self, **kwargs):
+        a = self.darr.compute(**kwargs)
+        h = AlleleCountsArray(a)
+        return h
+
+    def _repr_html_(self):
+        return self[:6].compute().to_html_str(caption=repr(self))
 
     @property
     def n_variants(self):
@@ -446,3 +583,17 @@ class AlleleCountsDaskArray(DaskArrayWrapper):
     @property
     def n_alleles(self):
         return self.shape[1]
+
+    def to_frequencies(self, fill=np.nan):
+        def f(block):
+            ac = AlleleCountsArray(block)
+            return ac.to_frequencies()
+        out = self.darr.map_blocks(f)
+        return out
+
+    def allelism(self):
+        def f(block):
+            ac = AlleleCountsArray(block)
+            return ac.allelism()
+        out = self.darr.map_blocks(f, chunks=self.darr.chunks[:1], drop_dims=1)
+        return out
