@@ -32,6 +32,7 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
 # need to special-case numpy because we are sub-classing ndarray and recarray
+
 class MockNumpy(object):
 
     class ndarray(object):
@@ -44,6 +45,21 @@ class MockNumpy(object):
     nan.__repr__ = lambda self: 'nan'
 
 sys.modules['numpy'] = MockNumpy()
+
+
+# need to special-case dask because we are sub-classing Array
+
+class MockDaskArray(object):
+
+    class Array(object):
+        pass
+
+
+class MockDask(object):
+    array = MockDaskArray()
+
+sys.modules['dask'] = MockDask()
+sys.modules['dask.array'] = MockDaskArray()
 
 
 # If extensions (or modules to document with autodoc) are in another directory,

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""This module provides alternative implementations of array and table
+"""This module provides alternative implementations of array
 classes defined in the :mod:`allel.model.ndarray` module, using
 `dask.array <http://dask.pydata.org/en/latest/array.html>`_ as the
 computational engine.
 
 Dask uses blocked algorithms and task scheduling to break up work into
-smaller pieces, allowing computation over very large datasets. It also uses
+smaller pieces, allowing computation over large datasets. It also uses
 lazy evaluation, meaning that multiple operations can be chained together
 into a task graph, reducing total memory requirements for intermediate
 results, and only the tasks required to generate the requested
@@ -151,7 +151,12 @@ class DaskArrayAug(da.Array):
 
 # noinspection PyAbstractClass
 class GenotypeDaskArray(DaskArrayAug):
-    """TODO"""
+    """Dask genotype array.
+
+    To instantiate from an existing array-like object,
+    use :func:`GenotypeDaskArray.from_array`.
+
+    """
 
     def __init__(self, *args, **kwargs):
         super(GenotypeDaskArray, self).__init__(*args, **kwargs)
@@ -410,6 +415,12 @@ class GenotypeDaskArray(DaskArrayAug):
 
 # noinspection PyAbstractClass
 class HaplotypeDaskArray(DaskArrayAug):
+    """Dask haplotype array.
+
+    To instantiate from an existing array-like object,
+    use :func:`HaplotypeDaskArray.from_array`.
+
+    """
 
     @staticmethod
     def check_input_data(x):
@@ -542,6 +553,12 @@ class HaplotypeDaskArray(DaskArrayAug):
 
 # noinspection PyAbstractClass
 class AlleleCountsDaskArray(DaskArrayAug):
+    """Dask allele counts array.
+
+    To instantiate from an existing array-like object,
+    use :func:`AlleleCountsDaskArray.from_array`.
+
+    """
 
     @staticmethod
     def check_input_data(x):
