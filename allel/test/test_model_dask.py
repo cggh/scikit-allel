@@ -29,35 +29,34 @@ class GenotypeDaskArrayTests(GenotypeArrayInterface, unittest.TestCase):
     _class = GenotypeDaskArray
 
     def setup_instance(self, data):
-        data = np.asarray(data)
-        return GenotypeDaskArray(data, chunks=(2, 2, None))
+        return GenotypeDaskArray.from_array(data, chunks=(2, 2, None))
 
     def test_constructor(self):
 
         # missing data arg
         with assert_raises(TypeError):
             # noinspection PyArgumentList
-            GenotypeDaskArray()
+            GenotypeDaskArray.from_array()
 
         # data has wrong dtype
         data = 'foo bar'
         with assert_raises(ValueError):
-            GenotypeDaskArray(data)
+            GenotypeDaskArray.from_array(data)
 
         # data has wrong dtype
         data = np.array([4., 5., 3.7])
         with assert_raises(ValueError):
-            GenotypeDaskArray(data)
+            GenotypeDaskArray.from_array(data)
 
         # data has wrong dimensions
         data = np.array([1, 2, 3])
         with assert_raises(ValueError):
-            GenotypeDaskArray(data)
+            GenotypeDaskArray.from_array(data)
 
         # data has wrong dimensions
         data = np.array([[1, 2], [3, 4]])  # use HaplotypeDaskArray instead
         with assert_raises(ValueError):
-            GenotypeDaskArray(data)
+            GenotypeDaskArray.from_array(data)
 
         # diploid data (typed)
         gd = self.setup_instance(np.array(diploid_genotype_data, dtype='i1'))
@@ -114,7 +113,7 @@ class GenotypeDaskArrayTests(GenotypeArrayInterface, unittest.TestCase):
         self.assertNotIsInstance(s, GenotypeDaskArray)
         self.assertIsInstance(s, da.Array)
         self.assertNotIsInstance(s.compute(), GenotypeArray)
-        self.assertIsInstance(s.compute(), np.int8)
+        self.assertIsInstance(s.compute()[()], np.int8)
 
     def test_take(self):
         g = np.array(diploid_genotype_data)
@@ -131,35 +130,34 @@ class HaplotypeDaskArrayTests(HaplotypeArrayInterface, unittest.TestCase):
     _class = HaplotypeDaskArray
 
     def setup_instance(self, data):
-        data = np.asarray(data)
-        return HaplotypeDaskArray(data, chunks=(2, 2))
+        return HaplotypeDaskArray.from_array(data, chunks=(2, 2))
 
     def test_constructor(self):
 
         # missing data arg
         with assert_raises(TypeError):
             # noinspection PyArgumentList
-            HaplotypeDaskArray()
+            HaplotypeDaskArray.from_array()
 
         # data has wrong dtype
         data = 'foo bar'
         with assert_raises(ValueError):
-            HaplotypeDaskArray(data)
+            HaplotypeDaskArray.from_array(data)
 
         # data has wrong dtype
         data = np.array([4., 5., 3.7])
         with assert_raises(ValueError):
-            HaplotypeDaskArray(data)
+            HaplotypeDaskArray.from_array(data)
 
         # data has wrong dimensions
         data = np.array([1, 2, 3])
         with assert_raises(ValueError):
-            HaplotypeDaskArray(data)
+            HaplotypeDaskArray.from_array(data)
 
         # data has wrong dimensions
         data = np.array([[[1, 2], [3, 4]]])  # use GenotypeDaskArray instead
         with assert_raises(ValueError):
-            HaplotypeDaskArray(data)
+            HaplotypeDaskArray.from_array(data)
 
         # valid data (typed)
         hd = self.setup_instance(np.array(haplotype_data, dtype='i1'))
@@ -204,7 +202,7 @@ class HaplotypeDaskArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         self.assertNotIsInstance(s, HaplotypeDaskArray)
         self.assertIsInstance(s, da.Array)
         self.assertNotIsInstance(s.compute(), HaplotypeArray)
-        self.assertIsInstance(s.compute(), np.int8)
+        self.assertIsInstance(s.compute()[()], np.int8)
 
 
 class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
@@ -212,40 +210,39 @@ class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
     _class = AlleleCountsDaskArray
 
     def setup_instance(self, data):
-        data = np.asarray(data)
-        return AlleleCountsDaskArray(data, chunks=(2, None))
+        return AlleleCountsDaskArray.from_array(data, chunks=(2, None))
 
     def test_constructor(self):
 
         # missing data arg
         with assert_raises(TypeError):
             # noinspection PyArgumentList
-            AlleleCountsDaskArray()
+            AlleleCountsDaskArray.from_array()
 
         # data has wrong dtype
         data = 'foo bar'
         with assert_raises(ValueError):
-            AlleleCountsDaskArray(data)
+            AlleleCountsDaskArray.from_array(data)
 
         # data has wrong dtype
         data = np.array([4., 5., 3.7])
         with assert_raises(ValueError):
-            AlleleCountsDaskArray(data)
+            AlleleCountsDaskArray.from_array(data)
 
         # data has wrong dimensions
         data = np.array([1, 2, 3])
         with assert_raises(ValueError):
-            AlleleCountsDaskArray(data)
+            AlleleCountsDaskArray.from_array(data)
 
         # data has wrong dimensions
         data = np.array([[[1, 2], [3, 4]]])  
         with assert_raises(ValueError):
-            AlleleCountsDaskArray(data)
+            AlleleCountsDaskArray.from_array(data)
 
         # valid data (typed)
         hd = self.setup_instance(np.array(allele_counts_data, dtype='u2'))
         aeq(allele_counts_data, hd)
-        eq(np.int8, hd.dtype)
+        eq(np.uint16, hd.dtype)
 
     def test_slice_types(self):
 
@@ -287,4 +284,4 @@ class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
         self.assertNotIsInstance(s, AlleleCountsDaskArray)
         self.assertIsInstance(s, da.Array)
         self.assertNotIsInstance(s.compute(), AlleleCountsArray)
-        self.assertIsInstance(s.compute, np.uint16)
+        self.assertIsInstance(s.compute()[()], np.uint16)

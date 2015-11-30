@@ -47,7 +47,6 @@ def get_chunks(data, chunks=None):
 
         else:
             # fall back to something simple, ~1Mb chunks of first dimension
-            # print(repr(data))
             row = np.asarray(data[0])
             chunklen = max(1, (2**20) // row.nbytes)
             if row.shape:
@@ -72,96 +71,103 @@ def ensure_array_like(data):
 
 
 def ensure_dask_array(data, chunks=None):
-    # print(repr(data))
     if isinstance(data, da.Array):
+        if chunks:
+            data = data.rechunk(chunks)
         return data
-    elif isinstance(data, DaskArrayWrapper):
-        return data.darr
     else:
         data = ensure_array_like(data)
         chunks = get_chunks(data, chunks)
         return da.from_array(data, chunks=chunks)
 
 
-class DaskArrayWrapper(object):
+def view_subclass(darr, cls):
+    return cls(darr.dask, name=darr.name, chunks=darr.chunks,
+               dtype=darr.dtype, shape=darr.shape)
 
-    def __init__(self, data, chunks=None):
-        self.darr = ensure_dask_array(data, chunks)
 
-    def __getitem__(self, *args):
-        return self.darr.__getitem__(*args)
+# noinspection PyAbstractClass
+class DaskArrayAug(da.Array):
 
-    def __setitem__(self, key, value):
-        return self.darr.__setitem__(key, value)
+    @classmethod
+    def from_array(cls, x, chunks=None, name=None, lock=False):
 
-    def __getattr__(self, item):
-        return getattr(self.darr, item)
+        # ensure array-like
+        x = ensure_array_like(x)
+        if hasattr(cls, 'check_input_data'):
+            cls.check_input_data(x)
 
-    def __array__(self):
-        return np.asarray(self.darr)
+        # determine chunks
+        chunks = get_chunks(x, chunks)
+
+        # carry on with super-class implementation
+        from dask.array.core import normalize_chunks, tokenize, getem, Lock,\
+            merge
+        chunks = normalize_chunks(chunks, x.shape)
+        name = name or 'from-array-' + tokenize(x, chunks)
+        dsk = getem(name, chunks)
+        if lock is True:
+            lock = Lock()
+        if lock:
+            dsk = dict((k, v + (lock,)) for k, v in dsk.items())
+
+        # use class constructor to support sub-classing of dask.array.Array
+        out = cls(merge({name: x}, dsk), name, chunks, dtype=x.dtype)
+
+        return out
 
     def __repr__(self):
-        return '%s%s' % (type(self).__name__, repr(self.darr[10:]))
-
-    def __str__(self):
-        return str(self.darr)
-
-    def __len__(self):
-        return len(self.darr)
-
-    @property
-    def ndim(self):
-        return len(self.shape)
+        r = super(DaskArrayAug, self).__repr__()
+        return '%s%s' % (type(self).__name__, r[10:])
 
     def compress(self, condition, axis=0):
         if axis == 0:
-            out = self.darr[condition]
+            out = self[condition]
         elif axis == 1:
-            out = self.darr[:, condition]
+            out = self[:, condition]
         else:
             raise NotImplementedError('axis not implemented')
-        return type(self)(out)
+        return view_subclass(out, type(self))
 
     def take(self, indices, axis=0):
         if axis == 0:
-            out = self.darr[indices]
+            out = self[indices]
         elif axis == 1:
-            out = self.darr[:, indices]
+            out = self[:, indices]
         else:
             raise NotImplementedError('axis not implemented')
-        return type(self)(out)
+        return view_subclass(out, type(self))
 
     def subset(self, sel0, sel1):
-        out = self.darr[sel0][:, sel1]
-        return type(self)(out)
+        out = self[sel0][:, sel1]
+        return view_subclass(out, type(self))
 
     def hstack(self, *others, **kwargs):
         others = tuple(ensure_dask_array(d) for d in others)
-        tup = (self.darr,) + others
+        tup = (self,) + others
         out = da.concatenate(tup, axis=1)
-        return type(self)(out)
+        return view_subclass(out, type(self))
 
     def vstack(self, *others, **kwargs):
         others = tuple(ensure_dask_array(d) for d in others)
-        tup = (self.darr,) + others
+        tup = (self,) + others
         out = da.concatenate(tup, axis=0)
-        return type(self)(out)
+        return view_subclass(out, type(self))
 
 
-class GenotypeDaskArray(DaskArrayWrapper):
+# noinspection PyAbstractClass
+class GenotypeDaskArray(DaskArrayAug):
     """TODO"""
 
-    def __init__(self, data, chunks=None):
-        super(GenotypeDaskArray, self).__init__(data, chunks=chunks)
-        self._check_input_data(self.darr)
+    def __init__(self, *args, **kwargs):
+        super(GenotypeDaskArray, self).__init__(*args, **kwargs)
         self._mask = None
 
     @staticmethod
-    def _check_input_data(data):
-        if len(data.shape) != 3:
+    def check_input_data(x):
+        if len(x.shape) != 3:
             raise ValueError('expected 3 dimensions')
-        if data.dtype.kind not in 'ui':
-            raise TypeError('expected integer dtype')
+        # don't check dtype now as it forces compute()
 
     def __getitem__(self, *args):
         out = super(GenotypeDaskArray, self).__getitem__(*args)
@@ -169,7 +175,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
                 and len(self.shape) == len(out.shape) \
                 and self.shape[2] == out.shape[2]:
             # dimensionality and ploidy preserved
-            out = GenotypeDaskArray(out)
+            out = view_subclass(out, GenotypeDaskArray)
             if self.mask is not None:
                 # attempt to slice mask too
                 m = self.mask.__getitem__(*args)
@@ -177,7 +183,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return out
 
     def compute(self, **kwargs):
-        a = self.darr.compute(**kwargs)
+        a = super(GenotypeDaskArray, self).compute(**kwargs)
         g = GenotypeArray(a)
         if self.mask:
             m = self.mask.compute(**kwargs)
@@ -214,15 +220,12 @@ class GenotypeDaskArray(DaskArrayWrapper):
     @mask.setter
     def mask(self, mask):
 
-        # ensure array-like
-        mask = ensure_array_like(mask)
+        # ensure dask array
+        mask = ensure_dask_array(mask, chunks=self.chunks[:2])
 
         # check shape
         if mask.shape != self.shape[:2]:
             raise ValueError('mask has incorrect shape')
-
-        # ensure dask array
-        mask = da.from_array(mask, chunks=self.darr.chunks[:2])
 
         # store
         self._mask = mask
@@ -230,7 +233,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
     def _method(self, method_name, chunks=None, drop_dims=None, **kwargs):
         if chunks is None:
             # no shape change
-            chunks = self.darr.chunks
+            chunks = self.chunks
 
         if self.mask is None:
             # simple case, no mask
@@ -238,7 +241,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
                 g = GenotypeArray(block)
                 method = getattr(g, method_name)
                 return method(**kwargs)
-            out = self.darr.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
+            out = self.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
             
         else:
             # map with mask
@@ -248,18 +251,18 @@ class GenotypeDaskArray(DaskArrayWrapper):
                 method = getattr(g, method_name)
                 return method(**kwargs)
             m = self.mask[:, :, None]
-            out = da.map_blocks(f, self.darr, m, chunks=chunks, 
+            out = da.map_blocks(f, self, m, chunks=chunks, 
                                 drop_dims=drop_dims)
             
         return out
 
     def _method_drop_dim2(self, method_name, **kwargs):
-        chunks = self.darr.chunks[:2]
+        chunks = self.chunks[:2]
         return self._method(method_name, chunks=chunks, drop_dims=2, **kwargs)
 
     def fill_masked(self, value=-1):
         out = self._method('fill_masked', value=value)
-        return GenotypeDaskArray(out)
+        return view_subclass(out, GenotypeDaskArray)
 
     def is_called(self):
         return self._method_drop_dim2('is_called')
@@ -287,7 +290,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
         out = method(**kwargs).sum(axis=axis)
         if axis is None:
             # result is scalar, might as well compute now (also helps tests)
-            return out.compute()
+            return out.compute()[()]
         else:
             return out
 
@@ -316,13 +319,13 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
-            max_allele = self.max().compute()
+            max_allele = self.max().compute()[()]
 
         # deal with subpop
         if subpop:
-            gd = self.take(subpop, axis=1).darr
+            gd = self.take(subpop, axis=1)
         else:
-            gd = self.darr
+            gd = self
 
         # determine output chunks - preserve dim0; change dim1, dim2
         chunks = (gd.chunks[0], (1,)*len(gd.chunks[1]), (max_allele+1,))
@@ -341,7 +344,6 @@ class GenotypeDaskArray(DaskArrayWrapper):
 
             # map with mask
             def f(block, bmask):
-                print(block.shape, bmask.shape)
                 g = GenotypeArray(block)
                 g.mask = bmask[:, :, 0]
                 return g.count_alleles(max_allele=max_allele)[:, None, :]
@@ -349,13 +351,13 @@ class GenotypeDaskArray(DaskArrayWrapper):
             md = self.mask[:, :, None]
             out = da.map_blocks(f, gd, md, chunks=chunks).sum(axis=1)
 
-        return AlleleCountsDaskArray(out)
+        return view_subclass(out, AlleleCountsDaskArray)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
-            max_allele = self.max().compute()
+            max_allele = self.max().compute()[()]
 
         return {k: self.count_alleles(max_allele=max_allele, subpop=v)
                 for k, v in subpops.items()}
@@ -370,7 +372,7 @@ class GenotypeDaskArray(DaskArrayWrapper):
         packed = ensure_dask_array(packed, chunks)
         chunks = (packed.chunks[0], packed.chunks[1], (2,))
         out = da.map_blocks(f, packed, chunks=chunks, new_dims=2)
-        return GenotypeDaskArray(out)
+        return view_subclass(out, GenotypeDaskArray)
 
     def map_alleles(self, mapping, **kwargs):
 
@@ -380,18 +382,18 @@ class GenotypeDaskArray(DaskArrayWrapper):
             return g.map_alleles(m)
 
         # obtain dask array
-        mapping = da.from_array(mapping, chunks=(self.darr.chunks[0], None))
+        mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
         # map blocks
-        out = da.map_blocks(f, self.darr, mapping[:, None, :],
-                            chunks=self.darr.chunks)
-        return GenotypeDaskArray(out)
+        out = da.map_blocks(f, self, mapping[:, None, :],
+                            chunks=self.chunks)
+        return view_subclass(out, GenotypeDaskArray)
 
     def to_allele_counts(self, alleles=None):
 
         # determine alleles to count
         if alleles is None:
-            m = self.max().compute()
+            m = self.max().compute()[()]
             alleles = list(range(m+1))
 
         chunks = (self.chunks[0], self.chunks[1], (len(alleles),))
@@ -402,8 +404,8 @@ class GenotypeDaskArray(DaskArrayWrapper):
                                       max_allele=max_allele)
 
     def to_haplotypes(self):
-        out = self.darr.reshape(self.shape[0], -1)
-        return HaplotypeDaskArray(out)
+        out = self.reshape(self.shape[0], -1)
+        return view_subclass(out, HaplotypeDaskArray)
 
     def to_n_ref(self, fill=0, dtype='i1'):
         return self._method_drop_dim2('to_n_ref', fill=fill, dtype=dtype)
@@ -412,28 +414,24 @@ class GenotypeDaskArray(DaskArrayWrapper):
         return self._method_drop_dim2('to_n_alt', fill=fill, dtype=dtype)
 
 
-class HaplotypeDaskArray(DaskArrayWrapper):
-
-    def __init__(self, data, chunks=None):
-        super(HaplotypeDaskArray, self).__init__(data, chunks=chunks)
-        self._check_input_data(self.darr)
+# noinspection PyAbstractClass
+class HaplotypeDaskArray(DaskArrayAug):
 
     @staticmethod
-    def _check_input_data(data):
-        if len(data.shape) != 2:
+    def check_input_data(x):
+        if len(x.shape) != 2:
             raise ValueError('expected 2 dimensions')
-        if data.dtype.kind not in 'ui':
-            raise TypeError('expected integer dtype')
+        # don't check dtype now as it forces compute()
 
     def __getitem__(self, *args):
         out = super(HaplotypeDaskArray, self).__getitem__(*args)
         if hasattr(out, 'shape') and len(self.shape) == len(out.shape):
             # dimensionality preserved
-            out = HaplotypeDaskArray(out)
+            out = view_subclass(out, HaplotypeDaskArray)
         return out
 
     def compute(self, **kwargs):
-        a = self.darr.compute(**kwargs)
+        a = super(HaplotypeDaskArray, self).compute(**kwargs)
         h = HaplotypeArray(a)
         return h
 
@@ -460,29 +458,29 @@ class HaplotypeDaskArray(DaskArrayWrapper):
             return h.to_genotypes(ploidy)
 
         # rechunk to ensure chunk boundaries don't break individuals
-        hd = self.darr.rechunk(chunks={1: self.n_haplotypes})
+        hd = self.rechunk(chunks={1: self.n_haplotypes})
 
         # determine output chunks
         chunks = (hd.chunks[0], hd.chunks[1], (ploidy,))
 
         # map blocks
         out = hd.map_blocks(f, chunks=chunks, new_dims=2)
-        return GenotypeDaskArray(out)
+        return view_subclass(out, GenotypeDaskArray)
 
     def is_called(self):
-        return self.darr >= 0
+        return self >= 0
 
     def is_missing(self):
-        return self.darr < 0
+        return self < 0
 
     def is_ref(self):
-        return self.darr < 0
+        return self == 0
 
     def is_alt(self):
-        return self.darr > 0
+        return self > 0
 
     def is_call(self, allele):
-        return self.darr == allele
+        return self == allele
 
     def count_called(self, axis=None):
         return self.is_called().sum(axis=axis)
@@ -503,13 +501,13 @@ class HaplotypeDaskArray(DaskArrayWrapper):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
-            max_allele = self.max().compute()
+            max_allele = self.max().compute()[()]
 
         # deal with subpop
         if subpop:
-            hd = self.take(subpop, axis=1).darr
+            hd = self.take(subpop, axis=1)
         else:
-            hd = self.darr
+            hd = self
 
         # determine output chunks - preserve dim0, change dim1, new dim2
         chunks = (hd.chunks[0], (1,)*len(hd.chunks[1]), (max_allele+1,))
@@ -520,14 +518,14 @@ class HaplotypeDaskArray(DaskArrayWrapper):
             return h.count_alleles(max_allele=max_allele)[:, None, :]
 
         # map blocks and reduce
-        out = hd.map_blocks(f, chunks=chunks).sum(axis=1)
-        return AlleleCountsDaskArray(out)
+        out = hd.map_blocks(f, chunks=chunks, new_dims=2).sum(axis=1)
+        return view_subclass(out, AlleleCountsDaskArray)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
 
         # if max_allele not specified, count all alleles
         if max_allele is None:
-            max_allele = self.max().compute()
+            max_allele = self.max().compute()[()]
 
         return {k: self.count_alleles(max_allele=max_allele, subpop=v)
                 for k, v in subpops.items()}
@@ -539,37 +537,33 @@ class HaplotypeDaskArray(DaskArrayWrapper):
             return h.map_alleles(bmapping)
 
         # obtain dask array
-        mapping = da.from_array(mapping, chunks=(self.darr.chunks[0], None))
+        mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
         # map blocks
-        out = da.map_blocks(f, self.darr, mapping,
-                            chunks=self.darr.chunks)
-        return GenotypeDaskArray(out)
+        out = da.map_blocks(f, self, mapping,
+                            chunks=self.chunks)
+        return view_subclass(out, HaplotypeDaskArray)
 
 
-class AlleleCountsDaskArray(DaskArrayWrapper):
-
-    def __init__(self, data, chunks=None):
-        super(AlleleCountsDaskArray, self).__init__(data, chunks=chunks)
-        self._check_input_data(self.darr)
+# noinspection PyAbstractClass
+class AlleleCountsDaskArray(DaskArrayAug):
 
     @staticmethod
-    def _check_input_data(data):
-        if len(data.shape) != 2:
+    def check_input_data(x):
+        if len(x.shape) != 2:
             raise ValueError('expected 2 dimensions')
-        if data.dtype.kind not in 'ui':
-            raise TypeError('expected integer dtype')
+        # don't check dtype now as it forces compute()
 
     def __getitem__(self, *args):
         out = super(AlleleCountsDaskArray, self).__getitem__(*args)
         if hasattr(out, 'shape') and len(self.shape) == len(out.shape) \
                 and self.shape[1] == out.shape[1]:
             # dimensionality and allele indices preserved
-            out = AlleleCountsDaskArray(out)
+            out = view_subclass(out, AlleleCountsDaskArray)
         return out
 
     def compute(self, **kwargs):
-        a = self.darr.compute(**kwargs)
+        a = super(AlleleCountsDaskArray, self).compute(**kwargs)
         h = AlleleCountsArray(a)
         return h
 
@@ -584,16 +578,82 @@ class AlleleCountsDaskArray(DaskArrayWrapper):
     def n_alleles(self):
         return self.shape[1]
 
-    def to_frequencies(self, fill=np.nan):
+    def _method(self, method_name, chunks=None, drop_dims=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.chunks
+
         def f(block):
             ac = AlleleCountsArray(block)
-            return ac.to_frequencies()
-        out = self.darr.map_blocks(f)
+            method = getattr(ac, method_name)
+            return method(**kwargs)
+        out = self.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
+                        
         return out
 
+    def _method_drop_dim1(self, method_name, **kwargs):
+        chunks = self.chunks[:1]
+        return self._method(method_name, chunks=chunks, drop_dims=1, **kwargs)
+    
+    def to_frequencies(self, fill=np.nan):
+        return self._method('to_frequencies', chunks=self.chunks, fill=fill)
+
     def allelism(self):
-        def f(block):
+        return self._method_drop_dim1('allelism')
+
+    def max_allele(self):
+        return self._method_drop_dim1('max_allele')
+
+    def is_variant(self):
+        return self._method_drop_dim1('is_variant')
+
+    def is_non_variant(self):
+        return self._method_drop_dim1('is_non_variant')
+
+    def is_segregating(self):
+        return self._method_drop_dim1('is_segregating')
+
+    def is_non_segregating(self, allele=None):
+        return self._method_drop_dim1('is_non_segregating', allele=allele)
+
+    def is_singleton(self, allele=1):
+        return self._method_drop_dim1('is_singleton', allele=allele)
+
+    def is_doubleton(self, allele=1):
+        return self._method_drop_dim1('is_doubleton', allele=allele)
+
+    def _count(self, method_name, **kwargs):
+        method = getattr(self, method_name)
+        # result is scalar, might as well compute now (also helps tests)
+        return method(**kwargs).sum().compute()[()]
+        
+    def count_variant(self):
+        return self._count('is_variant')
+
+    def count_non_variant(self):
+        return self._count('is_non_variant')
+
+    def count_segregating(self):
+        return self._count('is_segregating')
+
+    def count_non_segregating(self, allele=None):
+        return self._count('is_non_segregating', allele=allele)
+
+    def count_singleton(self, allele=1):
+        return self._count('is_singleton', allele=allele)
+
+    def count_doubleton(self, allele=1):
+        return self._count('is_doubleton', allele=allele)
+
+    def map_alleles(self, mapping):
+
+        def f(block, bmapping):
             ac = AlleleCountsArray(block)
-            return ac.allelism()
-        out = self.darr.map_blocks(f, chunks=self.darr.chunks[:1], drop_dims=1)
-        return out
+            return ac.map_alleles(bmapping)
+
+        # obtain dask array
+        mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
+
+        # map blocks
+        out = da.map_blocks(f, self, mapping, chunks=self.chunks)
+        return AlleleCountsArray(out)
