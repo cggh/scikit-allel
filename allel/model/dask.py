@@ -82,6 +82,7 @@ def ensure_dask_array(data, chunks=None):
 
 
 def view_subclass(darr, cls):
+    """View a dask Array as an instance of a dask Array sub-class."""
     return cls(darr.dask, name=darr.name, chunks=darr.chunks,
                dtype=darr.dtype, shape=darr.shape)
 
@@ -91,30 +92,23 @@ class DaskArrayAug(da.Array):
 
     @classmethod
     def from_array(cls, x, chunks=None, name=None, lock=False):
+        # override this as a class method to allow sub-classes to return
+        # instances of themselves
 
         # ensure array-like
         x = ensure_array_like(x)
         if hasattr(cls, 'check_input_data'):
             cls.check_input_data(x)
 
-        # determine chunks
+        # determine chunks, guessing something reasonable if user does not
+        # specify
         chunks = get_chunks(x, chunks)
 
-        # carry on with super-class implementation
-        from dask.array.core import normalize_chunks, tokenize, getem, Lock,\
-            merge
-        chunks = normalize_chunks(chunks, x.shape)
-        name = name or 'from-array-' + tokenize(x, chunks)
-        dsk = getem(name, chunks)
-        if lock is True:
-            lock = Lock()
-        if lock:
-            dsk = dict((k, v + (lock,)) for k, v in dsk.items())
+        # create vanilla dask array
+        darr = da.from_array(x, chunks=chunks, name=name, lock=lock)
 
-        # use class constructor to support sub-classing of dask.array.Array
-        out = cls(merge({name: x}, dsk), name, chunks, dtype=x.dtype)
-
-        return out
+        # view as sub-class
+        return view_subclass(darr, cls)
 
     def __repr__(self):
         r = super(DaskArrayAug, self).__repr__()
@@ -457,7 +451,8 @@ class HaplotypeDaskArray(DaskArrayAug):
             h = HaplotypeArray(block)
             return h.to_genotypes(ploidy)
 
-        # rechunk to ensure chunk boundaries don't break individuals
+        # rechunk across all columns to ensure chunk boundaries don't break
+        # individuals
         hd = self.rechunk(chunks={1: self.n_haplotypes})
 
         # determine output chunks
