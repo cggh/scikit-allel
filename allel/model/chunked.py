@@ -25,11 +25,11 @@ from allel.compat import copy_method_doc, string_types
 from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
     AlleleCountsArray, VariantTable, FeatureTable, SortedIndex, \
     SortedMultiIndex
-from allel import chunked
+from allel import chunked as _chunked
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
-class GenotypeChunkedArray(chunked.ChunkedArray):
+class GenotypeChunkedArray(_chunked.ChunkedArray):
     """Alternative implementation of the
     :class:`allel.model.ndarray.GenotypeArray` class, wrapping a
     chunked array as the backing store.
@@ -148,7 +148,7 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
             raise ValueError('mask has incorrect shape')
 
         # store
-        self._mask = chunked.ChunkedArray(mask)
+        self._mask = _chunked.ChunkedArray(mask)
 
     def compress(self, condition, axis=0, **storage_kwargs):
         out = super(GenotypeChunkedArray, self).compress(condition, axis=axis,
@@ -243,13 +243,13 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
         out = self.apply_method('to_n_ref', kwargs=dict(fill=fill,
                                                         dtype=dtype),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def to_n_alt(self, fill=0, dtype='i1', **storage_kwargs):
         out = self.apply_method('to_n_alt', kwargs=dict(fill=fill,
                                                         dtype=dtype),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def to_allele_counts(self, alleles=None, **storage_kwargs):
         # determine alleles to count
@@ -260,19 +260,19 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
         out = self.apply_method('to_allele_counts',
                                 kwargs=dict(alleles=alleles),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def to_packed(self, boundscheck=True, **storage_kwargs):
         out = self.apply_method('to_packed',
                                 kwargs=dict(boundscheck=boundscheck),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     @staticmethod
     def from_packed(packed, **storage_kwargs):
         def f(block):
             return GenotypeArray.from_packed(block)
-        out = chunked.apply(packed, f, **storage_kwargs)
+        out = _chunked.apply(packed, f, **storage_kwargs)
         return GenotypeChunkedArray(out)
 
     def count_alleles(self, max_allele=None, subpop=None, **storage_kwargs):
@@ -292,7 +292,7 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
 
         def f(block):
             return block.count_alleles_subpops(subpops, max_allele=max_allele)
-        out = chunked.apply(self, f, create='table', **storage_kwargs)
+        out = _chunked.apply(self, f, create='table', **storage_kwargs)
         return AlleleCountsChunkedTable(out)
 
     def to_gt(self, phased=False, max_allele=None, **storage_kwargs):
@@ -300,13 +300,13 @@ class GenotypeChunkedArray(chunked.ChunkedArray):
                                 kwargs=dict(phased=phased,
                                             max_allele=max_allele),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def map_alleles(self, mapping, **storage_kwargs):
         def f(block, bmapping):
             return block.map_alleles(bmapping, copy=False)
         domain = (self, mapping)
-        out = chunked.apply(domain, f, **storage_kwargs)
+        out = _chunked.apply(domain, f, **storage_kwargs)
         return GenotypeChunkedArray(out)
 
 
@@ -338,7 +338,7 @@ copy_method_doc(GenotypeChunkedArray.hstack, GenotypeArray.hstack)
 copy_method_doc(GenotypeChunkedArray.vstack, GenotypeArray.vstack)
 
 
-class HaplotypeChunkedArray(chunked.ChunkedArray):
+class HaplotypeChunkedArray(_chunked.ChunkedArray):
     """Alternative implementation of the
     :class:`allel.model.ndarray.HaplotypeArray` class, using a chunked array as
     the backing store.
@@ -431,7 +431,7 @@ class HaplotypeChunkedArray(chunked.ChunkedArray):
         return self._count('is_alt', axis=axis, **storage_kwargs)
 
     def count_call(self, allele, axis=None, **storage_kwargs):
-        return self._count('is_call', axis=axis, 
+        return self._count('is_call', axis=axis,
                            kwargs=dict(allele=allele),
                            **storage_kwargs)
 
@@ -451,14 +451,14 @@ class HaplotypeChunkedArray(chunked.ChunkedArray):
 
         def f(block):
             return block.count_alleles_subpops(subpops, max_allele=max_allele)
-        out = chunked.apply(self, f, create='table', **storage_kwargs)
+        out = _chunked.apply(self, f, create='table', **storage_kwargs)
         return AlleleCountsChunkedTable(out)
 
     def map_alleles(self, mapping, **storage_kwargs):
         def f(block, bmapping):
             return block.map_alleles(bmapping, copy=False)
         domain = (self, mapping)
-        out = chunked.apply(domain, f, **storage_kwargs)
+        out = _chunked.apply(domain, f, **storage_kwargs)
         return HaplotypeChunkedArray(out)
 
 
@@ -472,7 +472,7 @@ copy_method_doc(HaplotypeChunkedArray.count_alleles_subpops,
 copy_method_doc(HaplotypeChunkedArray.map_alleles, HaplotypeArray.map_alleles)
 
 
-class AlleleCountsChunkedArray(chunked.ChunkedArray):
+class AlleleCountsChunkedArray(_chunked.ChunkedArray):
     """Alternative implementation of the
     :class:`allel.model.ndarray.AlleleCountsArray` class, using a chunked
     array as the backing store.
@@ -519,45 +519,45 @@ class AlleleCountsChunkedArray(chunked.ChunkedArray):
         out = self.apply_method('to_frequencies',
                                 kwargs=dict(fill=fill),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def allelism(self, **storage_kwargs):
         out = self.apply_method('allelism', **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def max_allele(self, **storage_kwargs):
         out = self.apply_method('max_allele', **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def is_variant(self, **storage_kwargs):
         out = self.apply_method('is_variant', **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def is_non_variant(self, **storage_kwargs):
         out = self.apply_method('is_non_variant', **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def is_segregating(self, **storage_kwargs):
         out = self.apply_method('is_segregating', **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def is_non_segregating(self, allele=None, **storage_kwargs):
         out = self.apply_method('is_non_segregating',
                                 kwargs=dict(allele=allele),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def is_singleton(self, allele=1, **storage_kwargs):
         out = self.apply_method('is_singleton',
                                 kwargs=dict(allele=allele),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def is_doubleton(self, allele=1, **storage_kwargs):
         out = self.apply_method('is_doubleton',
                                 kwargs=dict(allele=allele),
                                 **storage_kwargs)
-        return chunked.ChunkedArray(out)
+        return _chunked.ChunkedArray(out)
 
     def _count(self, method_name, kwargs=None, **storage_kwargs):
         if kwargs is None:
@@ -594,7 +594,7 @@ class AlleleCountsChunkedArray(chunked.ChunkedArray):
         def f(block, bmapping):
             return block.map_alleles(bmapping)
         domain = (self, mapping)
-        out = chunked.apply(domain, f, **storage_kwargs)
+        out = _chunked.apply(domain, f, **storage_kwargs)
         return AlleleCountsChunkedArray(out)
 
 
@@ -605,7 +605,7 @@ copy_method_doc(AlleleCountsChunkedArray.map_alleles,
                 AlleleCountsArray.map_alleles)
 
 
-class VariantChunkedTable(chunked.ChunkedTable):
+class VariantChunkedTable(_chunked.ChunkedTable):
     """Alternative implementation of the
     :class:`allel.model.ndarray.VariantTable` class, using a chunked table as
     the backing store.
@@ -707,14 +707,14 @@ class VariantChunkedTable(chunked.ChunkedTable):
             if write_header:
                 write_vcf_header(vcf_file, self, rename=rename, number=number,
                                  description=description)
-            blen = chunked.get_blen_table(self)
+            blen = _chunked.get_blen_table(self)
             for i in range(0, len(self), blen):
                 j = min(i+blen, len(self))
                 block = self[i:j]
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
 
 
-class FeatureChunkedTable(chunked.ChunkedTable):
+class FeatureChunkedTable(_chunked.ChunkedTable):
     """Alternative implementation of the
     :class:`allel.model.ndarray.FeatureTable` class, using a chunked table as
     the backing store.
@@ -766,9 +766,9 @@ class FeatureChunkedTable(chunked.ChunkedTable):
         dtype = ra.dtype
 
         # setup output
-        storage = chunked.get_storage(storage)
+        storage = _chunked.get_storage(storage)
         out = getattr(storage, create)(ra, expectedlen=expectedlen, **storage_kwargs)
-        blen = chunked.get_blen_table(out, blen=blen)
+        blen = _chunked.get_blen_table(out, blen=blen)
 
         # read block-wise
         block = list(itertools.islice(recs, 0, blen))
@@ -781,7 +781,7 @@ class FeatureChunkedTable(chunked.ChunkedTable):
         return out
 
 
-class AlleleCountsChunkedTable(chunked.ChunkedTable):
+class AlleleCountsChunkedTable(_chunked.ChunkedTable):
 
     def __getitem__(self, item):
         out = super(AlleleCountsChunkedTable, self).__getitem__(item)

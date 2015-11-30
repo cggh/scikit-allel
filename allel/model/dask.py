@@ -236,7 +236,7 @@ class GenotypeDaskArray(DaskArrayAug):
                 method = getattr(g, method_name)
                 return method(**kwargs)
             out = self.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
-            
+
         else:
             # map with mask
             def f(block, bmask):
@@ -245,9 +245,9 @@ class GenotypeDaskArray(DaskArrayAug):
                 method = getattr(g, method_name)
                 return method(**kwargs)
             m = self.mask[:, :, None]
-            out = da.map_blocks(f, self, m, chunks=chunks, 
+            out = da.map_blocks(f, self, m, chunks=chunks,
                                 drop_dims=drop_dims)
-            
+
         return out
 
     def _method_drop_dim2(self, method_name, **kwargs):
@@ -583,13 +583,13 @@ class AlleleCountsDaskArray(DaskArrayAug):
             method = getattr(ac, method_name)
             return method(**kwargs)
         out = self.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
-                        
+
         return out
 
     def _method_drop_dim1(self, method_name, **kwargs):
         chunks = self.chunks[:1]
         return self._method(method_name, chunks=chunks, drop_dims=1, **kwargs)
-    
+
     def to_frequencies(self, fill=np.nan):
         return self._method('to_frequencies', chunks=self.chunks, fill=fill)
 
@@ -621,7 +621,7 @@ class AlleleCountsDaskArray(DaskArrayAug):
         method = getattr(self, method_name)
         # result is scalar, might as well compute now (also helps tests)
         return method(**kwargs).sum().compute()[()]
-        
+
     def count_variant(self):
         return self._count('is_variant')
 
