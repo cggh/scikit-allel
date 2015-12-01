@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module provides alternative implementations of array
-interfaces defined in the :mod:`allel.model.ndarray` module, using
+classes defined in the :mod:`allel.model.ndarray` module, using
 `bcolz <http://bcolz.blosc.org>`_ compressed arrays instead of numpy
 arrays for data storage.
 
@@ -33,7 +33,7 @@ from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
-           'VariantCTable']
+           'VariantCTable', 'FeatureCTable', 'AlleleCountsCTable']
 
 
 def ensure_carray(a, *ndims, **kwargs):
@@ -865,8 +865,9 @@ copy_method_doc(CArrayWrapper.to_hdf5, carray_to_hdf5)
 
 
 class GenotypeCArray(CArrayWrapper):
-    """Alternative implementation of the :class:`allel.model.GenotypeArray`
-    interface, using a :class:`bcolz.carray` as the backing store.
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.GenotypeArray` class, using a
+    :class:`bcolz.carray` as the backing store.
 
     Parameters
     ----------
@@ -1417,8 +1418,9 @@ copy_method_doc(GenotypeCArray.vstack, GenotypeArray.vstack)
 
 
 class HaplotypeCArray(CArrayWrapper):
-    """Alternative implementation of the :class:`allel.model.HaplotypeArray`
-    interface, using a :class:`bcolz.carray` as the backing store.
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.HaplotypeArray` class, using a
+    :class:`bcolz.carray` as the backing store.
 
     Parameters
     ----------
@@ -1610,8 +1612,9 @@ copy_method_doc(HaplotypeCArray.vstack, HaplotypeArray.vstack)
 
 
 class AlleleCountsCArray(CArrayWrapper):
-    """Alternative implementation of the :class:`allel.model.AlleleCountsArray`
-    interface, using a :class:`bcolz.carray` as the backing store.
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.AlleleCountsArray` class, using a
+    :class:`bcolz.carray` as the backing store.
 
     Parameters
     ----------
@@ -1875,8 +1878,9 @@ copy_method_doc(CTableWrapper.to_hdf5_group, ctable_to_hdf5_group)
 
 
 class VariantCTable(CTableWrapper):
-    """Alternative implementation of the :class:`allel.model.VariantTable`
-    interface, using a :class:`bcolz.ctable` as the backing store.
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.VariantTable` class, using a
+    :class:`bcolz.ctable` as the backing store.
 
     Parameters
     ----------
@@ -1905,9 +1909,9 @@ class VariantCTable(CTableWrapper):
         >>> dp = [35, 12, 78, 22, 99]
         >>> qd = [4.5, 6.7, 1.2, 4.4, 2.8]
         >>> ac = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
-        >>> vt = allel.bcolz.VariantCTable([chrom, pos, dp, qd, ac],
-        ...                                names=['CHROM', 'POS', 'DP', 'QD', 'AC'],
-        ...                                index=('CHROM', 'POS'))
+        >>> vt = allel.VariantCTable([chrom, pos, dp, qd, ac],
+        ...                           names=['CHROM', 'POS', 'DP', 'QD', 'AC'],
+        ...                           index=('CHROM', 'POS'))
         >>> vt
         VariantCTable((5,), [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
           nbytes: 220; cbytes: 80.00 KB; ratio: 0.00
@@ -1916,13 +1920,13 @@ class VariantCTable(CTableWrapper):
          (b'chr2', 3, 78, 1.2, [5, 6]) (b'chr2', 9, 22, 4.4, [7, 8])
          (b'chr3', 6, 99, 2.8, [9, 10])]
 
-    Slicing rows returns :class:`allel.model.VariantTable`::
+    Slicing rows returns :class:`allel.model.ndarray.VariantTable`::
 
         >>> vt[:2]
         VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))]))
         [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr1', 7, 12, 6.7, array([3, 4]))]
 
-    Accessing columns returns :class:`allel.bcolz.VariantCTable`::
+    Accessing columns returns :class:`allel.model.bcolz.VariantCTable`::
 
         >>> vt[['DP', 'QD']]
         VariantCTable((5,), [('DP', '<i8'), ('QD', '<f8')])
@@ -1982,8 +1986,9 @@ class VariantCTable(CTableWrapper):
 
 
 class FeatureCTable(CTableWrapper):
-    """Alternative implementation of the :class:`allel.model.FeatureTable`
-    interface, using a :class:`bcolz.ctable` as the backing store.
+    """Alternative implementation of the
+    :class:`allel.model.ndarray.FeatureTable` class, using a
+    :class:`bcolz.ctable` as the backing store.
 
     Parameters
     ----------

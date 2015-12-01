@@ -180,6 +180,12 @@ hdf5mem_zlib1_storage = HDF5MemStorage(compression='gzip', compression_opts=1)
 """HDF5 in-memory storage with zlib level 1 compression"""
 hdf5tmp_zlib1_storage = HDF5TmpStorage(compression='gzip', compression_opts=1)
 """HDF5 temporary file storage with zlib level 1 compression"""
+hdf5_lzf_storage = HDF5Storage(compression='lzf')
+"""HDF5 storage with LZF compression"""
+hdf5mem_lzf_storage = HDF5MemStorage(compression='lzf')
+"""HDF5 in-memory storage with LZF compression"""
+hdf5tmp_lzf_storage = HDF5TmpStorage(compression='lzf')
+"""HDF5 temporary file storage with LZF compression"""
 
 _util.storage_registry['hdf5'] = hdf5_storage
 _util.storage_registry['hdf5mem'] = hdf5mem_storage
@@ -187,3 +193,6 @@ _util.storage_registry['hdf5tmp'] = hdf5tmp_storage
 _util.storage_registry['hdf5_zlib1'] = hdf5_zlib1_storage
 _util.storage_registry['hdf5mem_zlib1'] = hdf5mem_zlib1_storage
 _util.storage_registry['hdf5tmp_zlib1'] = hdf5tmp_zlib1_storage
+_util.storage_registry['hdf5_lzf'] = hdf5_lzf_storage
+_util.storage_registry['hdf5mem_lzf'] = hdf5mem_lzf_storage
+_util.storage_registry['hdf5tmp_lzf'] = hdf5tmp_lzf_storage

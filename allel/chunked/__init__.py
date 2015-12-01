@@ -58,19 +58,23 @@ For example::
     >>> h5f['test/data']
     <HDF5 dataset "data": shape (100000,), type "<i8">
 
-This module is entirely generic and could be factored out into a
-stand-alone Python package. If you would like to see this happen please
-comment on `this issue <https://github.com/cggh/scikit-allel/issues/33>`_ on
-the scikit-allel GitHub repository.
-
 """
 from __future__ import absolute_import, print_function, division
 
 
 from .util import *
-from .storage_bcolz import *
-from .storage_hdf5 import *
 from .core import *
 
+try:
+    import h5py as _h5py
+    from .storage_hdf5 import *
+    storage_registry['default'] = HDF5MemStorage()
+except ImportError:
+    pass
 
-storage_registry['default'] = BcolzStorage()
+try:
+    import bcolz as _bcolz
+    from .storage_bcolz import *
+    storage_registry['default'] = BcolzStorage()
+except ImportError:
+    pass

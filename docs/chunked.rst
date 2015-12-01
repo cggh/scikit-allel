@@ -45,6 +45,12 @@ HDF5 (h5py)
     :annotation: = 'hdf5mem_zlib1'
 .. autodata:: allel.chunked.storage_hdf5.hdf5tmp_zlib1_storage
     :annotation: = 'hdf5tmp_zlib1'
+.. autodata:: allel.chunked.storage_hdf5.hdf5_lzf_storage
+    :annotation: = 'hdf5_lzf'
+.. autodata:: allel.chunked.storage_hdf5.hdf5mem_lzf_storage
+    :annotation: = 'hdf5mem_lzf'
+.. autodata:: allel.chunked.storage_hdf5.hdf5tmp_lzf_storage
+    :annotation: = 'hdf5tmp_lzf'
 
 .. autofunction:: allel.chunked.storage_hdf5.h5fmem
 .. autofunction:: allel.chunked.storage_hdf5.h5ftmp

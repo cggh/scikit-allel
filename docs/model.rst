@@ -6,4 +6,5 @@ Data structures
 
     model/ndarray
     model/chunked
+    model/dask
     model/bcolz

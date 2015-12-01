@@ -661,6 +661,18 @@ class ChunkedArray(object):
         # don't wrap, leave this up to user
         return out
 
+    def apply_method(self, method_name, kwargs=None, **storage_kwargs):
+        if kwargs is None:
+            kwargs = dict()
+
+        def f(block):
+            method = getattr(block, method_name)
+            return method(**kwargs)
+
+        out = self.apply(f, **storage_kwargs)
+        # don't wrap, leave this up to user
+        return out
+
     def copy(self, start=0, stop=None, blen=None, storage=None, create='array',
              **kwargs):
         out = copy(self, start=start, stop=stop, blen=blen, storage=storage,

@@ -1,6 +1,19 @@
 Release notes
 =============
 
+v0.20.0
+-------
+
+* Added new :mod:`allel.model.dask` module, providing
+  implementations of the genotype, haplotype and allele counts classes
+  backed by `dask.array <http://dask.pydata.org/en/latest/array.html>`_
+  (`#32 <https://github.com/cggh/scikit-allel/issues/32>`_).
+* Released the GIL where possible in Cython optimised functions
+  (`#43 <https://github.com/cggh/scikit-allel/issues/43>`_).
+* Changed functions in :mod:`allel.stats.selection` that accept `min_ehh`
+  argument, such that `min_ehh = None` should now be used to indicate that
+  no minimum EHH threshold should be applied.
+
 v0.19.0
 -------
 

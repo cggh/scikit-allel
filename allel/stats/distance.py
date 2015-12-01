@@ -48,9 +48,9 @@ def pairwise_distance(x, metric, chunked=False, blen=None):
     --------
 
     >>> import allel
-    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
-    ...                                [[0, 1], [1, 1], [1, 2]],
-    ...                                [[0, 2], [2, 2], [-1, -1]]])
+    >>> g = allel.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
+    ...                          [[0, 1], [1, 1], [1, 2]],
+    ...                          [[0, 2], [2, 2], [-1, -1]]])
     >>> d = allel.stats.pairwise_distance(g.to_n_alt(), metric='cityblock')
     >>> d
     array([ 3.,  4.,  3.])
@@ -174,7 +174,7 @@ def pairwise_dxy(pos, gac, start=None, stop=None, is_accessible=None):
 
     See Also
     --------
-    allel.model.GenotypeArray.to_allele_counts
+    allel.model.ndarray.GenotypeArray.to_allele_counts
 
     """
 

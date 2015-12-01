@@ -12,7 +12,7 @@ from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
 
 
 from allel.util import ignore_invalid
-from allel.model import GenotypeArray, HaplotypeArray, SortedIndex
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, SortedIndex
 import allel.stats
 
 
@@ -673,7 +673,7 @@ class TestSelection(unittest.TestCase):
         expect_ihh1 = [np.nan, np.nan, 0, np.nan]
         assert_array_nanclose(expect_ihh1, ihh1)
 
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
         expect_ihh0 = [0, np.nan, np.nan, 0]
         assert_array_nanclose(expect_ihh0, ihh0)
         expect_ihh1 = [np.nan, 0, 0, np.nan]
@@ -691,7 +691,7 @@ class TestSelection(unittest.TestCase):
         expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
         assert_array_nanclose(expect_ihh1, ihh1)
 
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
         expect_ihh0 = [0, 10*2/3, 10*2/3, 10*2/3]
         assert_array_nanclose(expect_ihh0, ihh0)
         expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
@@ -709,7 +709,7 @@ class TestSelection(unittest.TestCase):
         expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
         assert_array_nanclose(expect_ihh1, ihh1)
 
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
         expect_ihh0 = [0, 10, 20, 30]
         assert_array_nanclose(expect_ihh0, ihh0)
         expect_ihh1 = [0, 10, 20, 30]
@@ -727,7 +727,7 @@ class TestSelection(unittest.TestCase):
         expect_ihh1 = [np.nan, np.nan, np.nan, 10*2/3]
         assert_array_nanclose(expect_ihh1, ihh1)
 
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0)
+        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
         expect_ihh0 = [0, 10*2/3, 10*2/3, 10*2/3]
         assert_array_nanclose(expect_ihh0, ihh0)
         expect_ihh1 = [0, 10*2/3, 10*2/3, 10*2/3]

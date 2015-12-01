@@ -281,11 +281,11 @@ def hudson_fst(ac1, ac2, fill=np.nan):
     Calculate numerator and denominator for Fst estimation::
 
         >>> import allel
-        >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
-        ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
-        ...                                [[0, 0], [0, 0], [0, 0], [0, 0]],
-        ...                                [[0, 1], [1, 2], [1, 1], [2, 2]],
-        ...                                [[0, 0], [1, 1], [0, 1], [-1, -1]]])
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+        ...                          [[0, 1], [0, 1], [0, 1], [0, 1]],
+        ...                          [[0, 0], [0, 0], [0, 0], [0, 0]],
+        ...                          [[0, 1], [1, 2], [1, 1], [2, 2]],
+        ...                          [[0, 0], [1, 1], [0, 1], [-1, -1]]])
         >>> subpops = [[0, 1], [2, 3]]
         >>> ac1 = g.count_alleles(subpop=subpops[0])
         >>> ac2 = g.count_alleles(subpop=subpops[1])
