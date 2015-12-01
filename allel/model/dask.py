@@ -26,8 +26,11 @@ import numpy as np
 import dask.array as da
 
 
-from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
-    AlleleCountsArray
+from allel.compat import copy_method_doc
+from allel.model import ndarray as _ndarray
+
+
+__all__ = ['GenotypeDaskArray', 'HaplotypeDaskArray', 'AlleleCountsDaskArray']
 
 
 def get_chunks(data, chunks=None):
@@ -177,7 +180,7 @@ class GenotypeDaskArray(DaskArrayAug):
 
     def compute(self, **kwargs):
         a = super(GenotypeDaskArray, self).compute(**kwargs)
-        g = GenotypeArray(a)
+        g = _ndarray.GenotypeArray(a)
         if self.mask:
             m = self.mask.compute(**kwargs)
             g.mask = m
@@ -231,7 +234,7 @@ class GenotypeDaskArray(DaskArrayAug):
         if self.mask is None:
             # simple case, no mask
             def f(block):
-                g = GenotypeArray(block)
+                g = _ndarray.GenotypeArray(block)
                 method = getattr(g, method_name)
                 return method(**kwargs)
             out = self.map_blocks(f, chunks=chunks, drop_axis=drop_axis)
@@ -239,7 +242,7 @@ class GenotypeDaskArray(DaskArrayAug):
         else:
             # map with mask
             def f(block, bmask):
-                g = GenotypeArray(block)
+                g = _ndarray.GenotypeArray(block)
                 g.mask = bmask[:, :, 0]
                 method = getattr(g, method_name)
                 return method(**kwargs)
@@ -327,7 +330,7 @@ class GenotypeDaskArray(DaskArrayAug):
 
             # simple case, no mask
             def f(block):
-                gb = GenotypeArray(block)
+                gb = _ndarray.GenotypeArray(block)
                 return gb.count_alleles(max_allele=max_allele)[:, None, :]
 
             # map blocks and reduce
@@ -337,7 +340,7 @@ class GenotypeDaskArray(DaskArrayAug):
 
             # map with mask
             def f(block, bmask):
-                g = GenotypeArray(block)
+                g = _ndarray.GenotypeArray(block)
                 g.mask = bmask[:, :, 0]
                 return g.count_alleles(max_allele=max_allele)[:, None, :]
 
@@ -361,7 +364,7 @@ class GenotypeDaskArray(DaskArrayAug):
     @staticmethod
     def from_packed(packed, chunks=None):
         def f(block):
-            return GenotypeArray.from_packed(block)
+            return _ndarray.GenotypeArray.from_packed(block)
         packed = ensure_dask_array(packed, chunks)
         chunks = (packed.chunks[0], packed.chunks[1], (2,))
         out = da.map_blocks(f, packed, chunks=chunks, new_axis=2)
@@ -370,7 +373,7 @@ class GenotypeDaskArray(DaskArrayAug):
     def map_alleles(self, mapping, **kwargs):
 
         def f(block, bmapping):
-            g = GenotypeArray(block)
+            g = _ndarray.GenotypeArray(block)
             m = bmapping[:, 0, :]
             return g.map_alleles(m)
 
@@ -394,7 +397,7 @@ class GenotypeDaskArray(DaskArrayAug):
 
     def to_gt(self, phased=False, max_allele=None):
         return self._method_drop_axis2('to_gt', phased=phased,
-                                      max_allele=max_allele)
+                                       max_allele=max_allele)
 
     def to_haplotypes(self):
         out = self.reshape(self.shape[0], -1)
@@ -405,6 +408,48 @@ class GenotypeDaskArray(DaskArrayAug):
 
     def to_n_alt(self, fill=0, dtype='i1'):
         return self._method_drop_axis2('to_n_alt', fill=fill, dtype=dtype)
+
+
+# copy docstrings
+copy_method_doc(GenotypeDaskArray.fill_masked,
+                _ndarray.GenotypeArray.fill_masked)
+copy_method_doc(GenotypeDaskArray.subset,
+                _ndarray.GenotypeArray.subset)
+copy_method_doc(GenotypeDaskArray.is_called,
+                _ndarray.GenotypeArray.is_called)
+copy_method_doc(GenotypeDaskArray.is_missing,
+                _ndarray.GenotypeArray.is_missing)
+copy_method_doc(GenotypeDaskArray.is_hom,
+                _ndarray.GenotypeArray.is_hom)
+copy_method_doc(GenotypeDaskArray.is_hom_ref,
+                _ndarray.GenotypeArray.is_hom_ref)
+copy_method_doc(GenotypeDaskArray.is_hom_alt,
+                _ndarray.GenotypeArray.is_hom_alt)
+copy_method_doc(GenotypeDaskArray.is_het,
+                _ndarray.GenotypeArray.is_het)
+copy_method_doc(GenotypeDaskArray.is_call,
+                _ndarray.GenotypeArray.is_call)
+copy_method_doc(GenotypeDaskArray.to_haplotypes,
+                _ndarray.GenotypeArray.to_haplotypes)
+copy_method_doc(GenotypeDaskArray.to_n_ref,
+                _ndarray.GenotypeArray.to_n_ref)
+copy_method_doc(GenotypeDaskArray.to_n_alt,
+                _ndarray.GenotypeArray.to_n_alt)
+copy_method_doc(GenotypeDaskArray.to_allele_counts,
+                _ndarray.GenotypeArray.to_allele_counts)
+copy_method_doc(GenotypeDaskArray.to_packed,
+                _ndarray.GenotypeArray.to_packed)
+GenotypeDaskArray.from_packed.__doc__ = \
+    _ndarray.GenotypeArray.from_packed.__doc__
+copy_method_doc(GenotypeDaskArray.count_alleles,
+                _ndarray.GenotypeArray.count_alleles)
+copy_method_doc(GenotypeDaskArray.count_alleles_subpops,
+                _ndarray.GenotypeArray.count_alleles_subpops)
+copy_method_doc(GenotypeDaskArray.to_gt, _ndarray.GenotypeArray.to_gt)
+copy_method_doc(GenotypeDaskArray.map_alleles,
+                _ndarray.GenotypeArray.map_alleles)
+copy_method_doc(GenotypeDaskArray.hstack, _ndarray.GenotypeArray.hstack)
+copy_method_doc(GenotypeDaskArray.vstack, _ndarray.GenotypeArray.vstack)
 
 
 # noinspection PyAbstractClass
@@ -431,7 +476,7 @@ class HaplotypeDaskArray(DaskArrayAug):
 
     def compute(self, **kwargs):
         a = super(HaplotypeDaskArray, self).compute(**kwargs)
-        h = HaplotypeArray(a)
+        h = _ndarray.HaplotypeArray(a)
         return h
 
     def _repr_html_(self):
@@ -453,7 +498,7 @@ class HaplotypeDaskArray(DaskArrayAug):
 
         # mapper function
         def f(block):
-            h = HaplotypeArray(block)
+            h = _ndarray.HaplotypeArray(block)
             return h.to_genotypes(ploidy)
 
         # rechunk across all columns to ensure chunk boundaries don't break
@@ -514,7 +559,7 @@ class HaplotypeDaskArray(DaskArrayAug):
 
         # mapper function
         def f(block):
-            h = HaplotypeArray(block)
+            h = _ndarray.HaplotypeArray(block)
             return h.count_alleles(max_allele=max_allele)[:, None, :]
 
         # map blocks and reduce
@@ -533,7 +578,7 @@ class HaplotypeDaskArray(DaskArrayAug):
     def map_alleles(self, mapping, **kwargs):
 
         def f(block, bmapping):
-            h = HaplotypeArray(block)
+            h = _ndarray.HaplotypeArray(block)
             return h.map_alleles(bmapping)
 
         # obtain dask array
@@ -543,6 +588,17 @@ class HaplotypeDaskArray(DaskArrayAug):
         out = da.map_blocks(f, self, mapping,
                             chunks=self.chunks)
         return view_subclass(out, HaplotypeDaskArray)
+
+
+# copy docstrings
+copy_method_doc(HaplotypeDaskArray.to_genotypes,
+                _ndarray.HaplotypeArray.to_genotypes)
+copy_method_doc(HaplotypeDaskArray.count_alleles,
+                _ndarray.HaplotypeArray.count_alleles)
+copy_method_doc(HaplotypeDaskArray.count_alleles_subpops,
+                _ndarray.HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeDaskArray.map_alleles,
+                _ndarray.HaplotypeArray.map_alleles)
 
 
 # noinspection PyAbstractClass
@@ -570,7 +626,7 @@ class AlleleCountsDaskArray(DaskArrayAug):
 
     def compute(self, **kwargs):
         a = super(AlleleCountsDaskArray, self).compute(**kwargs)
-        h = AlleleCountsArray(a)
+        h = _ndarray.AlleleCountsArray(a)
         return h
 
     def _repr_html_(self):
@@ -590,7 +646,7 @@ class AlleleCountsDaskArray(DaskArrayAug):
             chunks = self.chunks
 
         def f(block):
-            ac = AlleleCountsArray(block)
+            ac = _ndarray.AlleleCountsArray(block)
             method = getattr(ac, method_name)
             return method(**kwargs)
         out = self.map_blocks(f, chunks=chunks, drop_axis=drop_axis)
@@ -654,7 +710,7 @@ class AlleleCountsDaskArray(DaskArrayAug):
     def map_alleles(self, mapping):
 
         def f(block, bmapping):
-            ac = AlleleCountsArray(block)
+            ac = _ndarray.AlleleCountsArray(block)
             return ac.map_alleles(bmapping)
 
         # obtain dask array
@@ -662,4 +718,12 @@ class AlleleCountsDaskArray(DaskArrayAug):
 
         # map blocks
         out = da.map_blocks(f, self, mapping, chunks=self.chunks)
-        return AlleleCountsArray(out)
+        return view_subclass(out, AlleleCountsDaskArray)
+
+
+copy_method_doc(AlleleCountsDaskArray.allelism,
+                _ndarray.AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsDaskArray.max_allele,
+                _ndarray.AlleleCountsArray.max_allele)
+copy_method_doc(AlleleCountsDaskArray.map_alleles,
+                _ndarray.AlleleCountsArray.map_alleles)

@@ -3,21 +3,27 @@
 
 
 from allel import model
-from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
-    AlleleCountsArray, VariantTable, FeatureTable, SortedIndex, \
-    SortedMultiIndex, UniqueIndex
-from allel.model.chunked import GenotypeChunkedArray, HaplotypeChunkedArray,\
-    AlleleCountsChunkedArray, VariantChunkedTable, FeatureChunkedTable, \
-    AlleleCountsChunkedTable
-from allel.model.dask import GenotypeDaskArray, HaplotypeDaskArray, \
-    AlleleCountsDaskArray
-from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
-    AlleleCountsCArray, VariantCTable, FeatureCTable, AlleleCountsCTable
 from allel import stats
 from allel import plot
 from allel import io
 from allel import chunked
 from allel import constants
 from allel import util
+
+# convenient shortcuts
+from allel.model.ndarray import *
+from allel.model.chunked import *
+# experimental
+try:
+    import dask.array as _da
+    from allel.model.dask import *
+except ImportError:
+    pass
+# deprecated
+try:
+    import bcolz as _bcolz
+    from allel.model.bcolz import *
+except ImportError:
+    pass
 
 __version__ = '0.20.0.feature_dask'

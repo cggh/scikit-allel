@@ -33,7 +33,7 @@ from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 
 
 __all__ = ['GenotypeCArray', 'HaplotypeCArray', 'AlleleCountsCArray',
-           'VariantCTable']
+           'VariantCTable', 'FeatureCTable', 'AlleleCountsCTable']
 
 
 def ensure_carray(a, *ndims, **kwargs):

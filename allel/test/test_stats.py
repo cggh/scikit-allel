@@ -12,7 +12,7 @@ from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
 
 
 from allel.util import ignore_invalid
-from allel.model import GenotypeArray, HaplotypeArray, SortedIndex
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, SortedIndex
 import allel.stats
 
 

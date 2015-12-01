@@ -184,6 +184,21 @@ class GenotypeChunkedArrayTestsHDF5TmpStorage(GenotypeChunkedArrayTests):
         assert isinstance(g.data, h5py.Dataset)
 
 
+class GenotypeChunkedArrayTestsHDF5TmpLZFStorage(GenotypeChunkedArrayTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.hdf5tmp_lzf_storage
+
+    def setup_instance(self, data):
+        data = chunked.storage_registry['default'].array(data)
+        return GenotypeChunkedArray(data)
+
+    def test_storage(self):
+        g = self.setup_instance(np.array(diploid_genotype_data))
+        assert isinstance(g.data, h5py.Dataset)
+        assert g.data.compression == 'lzf'
+
+
 class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
     _class = HaplotypeChunkedArray

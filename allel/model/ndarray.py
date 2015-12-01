@@ -4206,13 +4206,14 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
     Example with biallelic variants::
 
         >>> import allel
+        >>> from allel.model.ndarray import create_allele_mapping
         >>> ref = [b'A', b'C', b'T', b'G']
         >>> alt = [b'T', b'G', b'C', b'A']
         >>> alleles = [[b'A', b'T'],  # no transformation
         ...            [b'G', b'C'],  # swap
         ...            [b'T', b'A'],  # 1 missing
         ...            [b'A', b'C']]  # 1 missing
-        >>> mapping = allel.model.create_allele_mapping(ref, alt, alleles)
+        >>> mapping = create_allele_mapping(ref, alt, alleles)
         >>> mapping
         array([[ 0,  1],
                [ 1,  0],
@@ -4228,7 +4229,7 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
         >>> alleles = [[b'A', b'T'],
         ...            [b'C', b'T'],
         ...            [b'G', b'A']]
-        >>> mapping = allel.model.create_allele_mapping(ref, alt, alleles)
+        >>> mapping = create_allele_mapping(ref, alt, alleles)
         >>> mapping
         array([[ 0,  1, -1],
                [ 0, -1,  1],
@@ -4293,6 +4294,7 @@ def locate_fixed_differences(ac1, ac2):
     --------
 
     >>> import allel
+    >>> from allel.model.ndarray import locate_fixed_differences
     >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
     ...                          [[0, 1], [0, 1], [0, 1], [0, 1]],
     ...                          [[0, 1], [0, 1], [1, 1], [1, 1]],
@@ -4300,7 +4302,7 @@ def locate_fixed_differences(ac1, ac2):
     ...                          [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
     >>> ac1 = g.count_alleles(subpop=[0, 1])
     >>> ac2 = g.count_alleles(subpop=[2, 3])
-    >>> loc_df = allel.model.locate_fixed_differences(ac1, ac2)
+    >>> loc_df = locate_fixed_differences(ac1, ac2)
     >>> loc_df
     array([ True, False, False,  True,  True], dtype=bool)
 
@@ -4350,15 +4352,16 @@ def locate_private_alleles(*acs):
     --------
 
     >>> import allel
-    >>> g = allel.model.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
-    ...                                [[0, 1], [0, 1], [0, 1], [0, 1]],
-    ...                                [[0, 1], [0, 1], [1, 1], [1, 1]],
-    ...                                [[0, 0], [0, 0], [1, 1], [2, 2]],
-    ...                                [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
+    >>> from allel.model.ndarray import locate_private_alleles
+    >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
+    ...                          [[0, 1], [0, 1], [0, 1], [0, 1]],
+    ...                          [[0, 1], [0, 1], [1, 1], [1, 1]],
+    ...                          [[0, 0], [0, 0], [1, 1], [2, 2]],
+    ...                          [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
     >>> ac1 = g.count_alleles(subpop=[0, 1])
     >>> ac2 = g.count_alleles(subpop=[2])
     >>> ac3 = g.count_alleles(subpop=[3])
-    >>> loc_private_alleles = allel.model.locate_private_alleles(ac1, ac2, ac3)
+    >>> loc_private_alleles = locate_private_alleles(ac1, ac2, ac3)
     >>> loc_private_alleles
     array([[ True, False, False],
            [False, False, False],

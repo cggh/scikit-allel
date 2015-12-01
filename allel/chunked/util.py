@@ -15,11 +15,20 @@ storage_registry = dict()
 
 def get_storage(storage=None):
     if storage is None:
-        return storage_registry['default']
+        try:
+            return storage_registry['default']
+        except KeyError:
+            raise RuntimeError('no default storage available; is either h5py '
+                               'or bcolz installed?')
+
     elif isinstance(storage, string_types):
         # normalise storage name
         storage = str(storage).lower()
-        return storage_registry[storage]
+        try:
+            return storage_registry[storage]
+        except KeyError:
+            raise RuntimeError('storage not recognised: %r' % storage)
+
     else:
         # assume custom instance
         return storage

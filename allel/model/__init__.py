@@ -3,15 +3,19 @@
 from __future__ import absolute_import, print_function, division
 
 
-from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
-    AlleleCountsArray, FeatureTable, VariantTable, SortedIndex, \
-    SortedMultiIndex, UniqueIndex, create_allele_mapping, \
-    locate_fixed_differences, locate_private_alleles
+from allel.model import ndarray
+from allel.model import chunked
 
-
-from allel.model.chunked import *
-
+# experimental
+try:
+    import dask.array as _da
+    from allel.model import dask
+except ImportError:
+    pass
 
 # deprecated
-from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
-    AlleleCountsCArray, AlleleCountsCTable, VariantCTable, FeatureCTable
+try:
+    import bcolz as _bcolz
+    from allel.model import bcolz
+except ImportError:
+    pass

@@ -22,11 +22,14 @@ import numpy as np
 
 
 from allel.compat import copy_method_doc, string_types
-from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
-    AlleleCountsArray, VariantTable, FeatureTable, SortedIndex, \
-    SortedMultiIndex
+from allel.model import ndarray as _ndarray
 from allel import chunked as _chunked
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
+
+
+__all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
+           'AlleleCountsChunkedArray', 'VariantChunkedTable',
+           'FeatureChunkedTable', 'AlleleCountsChunkedTable']
 
 
 class GenotypeChunkedArray(_chunked.ChunkedArray):
@@ -84,7 +87,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
         >>> g.copy(storage='hdf5mem_zlib1')
         GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=4.5K, cratio=0.0, cname=gzip, clevel=1, shuffle=False, chunks=(262144, 2, 2), data=h5py._hl.dataset.Dataset)
 
-    """
+    """  # flake8: noqa
 
     def __init__(self, data):
         super(GenotypeChunkedArray, self).__init__(data)
@@ -104,7 +107,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
                 and len(self.shape) == len(out.shape) \
                 and self.shape[2] == out.shape[2]:
             # dimensionality and ploidy preserved
-            out = GenotypeArray(out)
+            out = _ndarray.GenotypeArray(out)
             if self.mask is not None:
                 # attempt to slice mask too
                 m = self.mask.__getitem__(*args)
@@ -271,7 +274,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
     @staticmethod
     def from_packed(packed, **storage_kwargs):
         def f(block):
-            return GenotypeArray.from_packed(block)
+            return _ndarray.GenotypeArray.from_packed(block)
         out = _chunked.apply(packed, f, **storage_kwargs)
         return GenotypeChunkedArray(out)
 
@@ -286,7 +289,8 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
                                 **storage_kwargs)
         return AlleleCountsChunkedArray(out)
 
-    def count_alleles_subpops(self, subpops, max_allele=None, **storage_kwargs):
+    def count_alleles_subpops(self, subpops, max_allele=None,
+                              **storage_kwargs):
         if max_allele is None:
             max_allele = self.max()
 
@@ -311,31 +315,45 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
 
 
 # copy docstrings
-copy_method_doc(GenotypeChunkedArray.fill_masked, GenotypeArray.fill_masked)
-copy_method_doc(GenotypeChunkedArray.subset, GenotypeArray.subset)
-copy_method_doc(GenotypeChunkedArray.is_called, GenotypeArray.is_called)
-copy_method_doc(GenotypeChunkedArray.is_missing, GenotypeArray.is_missing)
-copy_method_doc(GenotypeChunkedArray.is_hom, GenotypeArray.is_hom)
-copy_method_doc(GenotypeChunkedArray.is_hom_ref, GenotypeArray.is_hom_ref)
-copy_method_doc(GenotypeChunkedArray.is_hom_alt, GenotypeArray.is_hom_alt)
-copy_method_doc(GenotypeChunkedArray.is_het, GenotypeArray.is_het)
-copy_method_doc(GenotypeChunkedArray.is_call, GenotypeArray.is_call)
+copy_method_doc(GenotypeChunkedArray.fill_masked,
+                _ndarray.GenotypeArray.fill_masked)
+copy_method_doc(GenotypeChunkedArray.subset,
+                _ndarray.GenotypeArray.subset)
+copy_method_doc(GenotypeChunkedArray.is_called,
+                _ndarray.GenotypeArray.is_called)
+copy_method_doc(GenotypeChunkedArray.is_missing,
+                _ndarray.GenotypeArray.is_missing)
+copy_method_doc(GenotypeChunkedArray.is_hom,
+                _ndarray.GenotypeArray.is_hom)
+copy_method_doc(GenotypeChunkedArray.is_hom_ref,
+                _ndarray.GenotypeArray.is_hom_ref)
+copy_method_doc(GenotypeChunkedArray.is_hom_alt,
+                _ndarray.GenotypeArray.is_hom_alt)
+copy_method_doc(GenotypeChunkedArray.is_het,
+                _ndarray.GenotypeArray.is_het)
+copy_method_doc(GenotypeChunkedArray.is_call,
+                _ndarray.GenotypeArray.is_call)
 copy_method_doc(GenotypeChunkedArray.to_haplotypes,
-                GenotypeArray.to_haplotypes)
-copy_method_doc(GenotypeChunkedArray.to_n_ref, GenotypeArray.to_n_ref)
-copy_method_doc(GenotypeChunkedArray.to_n_alt, GenotypeArray.to_n_alt)
+                _ndarray.GenotypeArray.to_haplotypes)
+copy_method_doc(GenotypeChunkedArray.to_n_ref,
+                _ndarray.GenotypeArray.to_n_ref)
+copy_method_doc(GenotypeChunkedArray.to_n_alt,
+                _ndarray.GenotypeArray.to_n_alt)
 copy_method_doc(GenotypeChunkedArray.to_allele_counts,
-                GenotypeArray.to_allele_counts)
-copy_method_doc(GenotypeChunkedArray.to_packed, GenotypeArray.to_packed)
-GenotypeChunkedArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
+                _ndarray.GenotypeArray.to_allele_counts)
+copy_method_doc(GenotypeChunkedArray.to_packed,
+                _ndarray.GenotypeArray.to_packed)
+GenotypeChunkedArray.from_packed.__doc__ = \
+    _ndarray.GenotypeArray.from_packed.__doc__
 copy_method_doc(GenotypeChunkedArray.count_alleles,
-                GenotypeArray.count_alleles)
+                _ndarray.GenotypeArray.count_alleles)
 copy_method_doc(GenotypeChunkedArray.count_alleles_subpops,
-                GenotypeArray.count_alleles_subpops)
-copy_method_doc(GenotypeChunkedArray.to_gt, GenotypeArray.to_gt)
-copy_method_doc(GenotypeChunkedArray.map_alleles, GenotypeArray.map_alleles)
-copy_method_doc(GenotypeChunkedArray.hstack, GenotypeArray.hstack)
-copy_method_doc(GenotypeChunkedArray.vstack, GenotypeArray.vstack)
+                _ndarray.GenotypeArray.count_alleles_subpops)
+copy_method_doc(GenotypeChunkedArray.to_gt, _ndarray.GenotypeArray.to_gt)
+copy_method_doc(GenotypeChunkedArray.map_alleles,
+                _ndarray.GenotypeArray.map_alleles)
+copy_method_doc(GenotypeChunkedArray.hstack, _ndarray.GenotypeArray.hstack)
+copy_method_doc(GenotypeChunkedArray.vstack, _ndarray.GenotypeArray.vstack)
 
 
 class HaplotypeChunkedArray(_chunked.ChunkedArray):
@@ -366,7 +384,7 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray):
         out = super(HaplotypeChunkedArray, self).__getitem__(*args)
         if hasattr(out, 'shape') and len(self.shape) == len(out.shape):
             # dimensionality preserved
-            out = HaplotypeArray(out)
+            out = _ndarray.HaplotypeArray(out)
         return out
 
     def _repr_html_(self):
@@ -445,7 +463,8 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray):
         out = self.apply(f, **storage_kwargs)
         return AlleleCountsChunkedArray(out)
 
-    def count_alleles_subpops(self, subpops, max_allele=None, **storage_kwargs):
+    def count_alleles_subpops(self, subpops, max_allele=None,
+                              **storage_kwargs):
         if max_allele is None:
             max_allele = self.max()
 
@@ -464,12 +483,13 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray):
 
 # copy docstrings
 copy_method_doc(HaplotypeChunkedArray.to_genotypes,
-                HaplotypeArray.to_genotypes)
+                _ndarray.HaplotypeArray.to_genotypes)
 copy_method_doc(HaplotypeChunkedArray.count_alleles,
-                HaplotypeArray.count_alleles)
+                _ndarray.HaplotypeArray.count_alleles)
 copy_method_doc(HaplotypeChunkedArray.count_alleles_subpops,
-                HaplotypeArray.count_alleles_subpops)
-copy_method_doc(HaplotypeChunkedArray.map_alleles, HaplotypeArray.map_alleles)
+                _ndarray.HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeChunkedArray.map_alleles,
+                _ndarray.HaplotypeArray.map_alleles)
 
 
 class AlleleCountsChunkedArray(_chunked.ChunkedArray):
@@ -501,7 +521,7 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
         if hasattr(out, 'shape') and len(self.shape) == len(out.shape) and \
                 out.shape[1] == self.shape[1]:
             # dimensionality and allele indices preserved
-            out = AlleleCountsArray(out)
+            out = _ndarray.AlleleCountsArray(out)
         return out
 
     def _repr_html_(self):
@@ -598,11 +618,12 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
         return AlleleCountsChunkedArray(out)
 
 
-copy_method_doc(AlleleCountsChunkedArray.allelism, AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsChunkedArray.allelism,
+                _ndarray.AlleleCountsArray.allelism)
 copy_method_doc(AlleleCountsChunkedArray.max_allele,
-                AlleleCountsArray.max_allele)
+                _ndarray.AlleleCountsArray.max_allele)
 copy_method_doc(AlleleCountsChunkedArray.map_alleles,
-                AlleleCountsArray.map_alleles)
+                _ndarray.AlleleCountsArray.map_alleles)
 
 
 class VariantChunkedTable(_chunked.ChunkedTable):
@@ -679,7 +700,7 @@ class VariantChunkedTable(_chunked.ChunkedTable):
 
     """  # flake8: noqa
 
-    view_cls = VariantTable
+    view_cls = _ndarray.VariantTable
 
     def __init__(self, data, names=None, index=None):
         super(VariantChunkedTable, self).__init__(data, names=names)
@@ -693,10 +714,11 @@ class VariantChunkedTable(_chunked.ChunkedTable):
 
     def set_index(self, spec):
         if isinstance(spec, string_types):
-            self.index = SortedIndex(self[spec][:], copy=False)
+            self.index = _ndarray.SortedIndex(self[spec][:], copy=False)
         elif isinstance(spec, (tuple, list)) and len(spec) == 2:
-            self.index = SortedMultiIndex(self[spec[0]][:], self[spec[1]][:],
-                                          copy=False)
+            self.index = _ndarray.SortedMultiIndex(self[spec[0]][:],
+                                                   self[spec[1]][:],
+                                                   copy=False)
         else:
             raise ValueError('invalid index argument, expected string or '
                              'pair of strings, found %s' % repr(spec))
@@ -730,7 +752,7 @@ class FeatureChunkedTable(_chunked.ChunkedTable):
 
     """
 
-    view_cls = FeatureTable
+    view_cls = _ndarray.FeatureTable
 
     @property
     def n_features(self):
@@ -767,7 +789,8 @@ class FeatureChunkedTable(_chunked.ChunkedTable):
 
         # setup output
         storage = _chunked.get_storage(storage)
-        out = getattr(storage, create)(ra, expectedlen=expectedlen, **storage_kwargs)
+        out = getattr(storage, create)(ra, expectedlen=expectedlen,
+                                       **storage_kwargs)
         blen = _chunked.get_blen_table(out, blen=blen)
 
         # read block-wise

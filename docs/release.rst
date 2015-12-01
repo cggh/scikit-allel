@@ -4,7 +4,7 @@ Release notes
 v0.20.0
 -------
 
-* Added new experimental :mod:`allel.model.dask` module, providing
+* Added new :mod:`allel.model.dask` module, providing
   implementations of the genotype, haplotype and allele counts classes
   backed by `dask.array <http://dask.pydata.org/en/latest/array.html>`_
   (`#32 <https://github.com/cggh/scikit-allel/issues/40>`_).

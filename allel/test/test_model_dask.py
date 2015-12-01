@@ -205,7 +205,8 @@ class HaplotypeDaskArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         self.assertIsInstance(s.compute()[()], np.int8)
 
 
-class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
+class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface,
+                                 unittest.TestCase):
 
     _class = AlleleCountsDaskArray
 
@@ -235,7 +236,7 @@ class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
             AlleleCountsDaskArray.from_array(data)
 
         # data has wrong dimensions
-        data = np.array([[[1, 2], [3, 4]]])  
+        data = np.array([[[1, 2], [3, 4]]])
         with assert_raises(ValueError):
             AlleleCountsDaskArray.from_array(data)
 
