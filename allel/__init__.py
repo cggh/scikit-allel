@@ -11,6 +11,8 @@ from allel.model.chunked import GenotypeChunkedArray, HaplotypeChunkedArray,\
     AlleleCountsChunkedTable
 from allel.model.dask import GenotypeDaskArray, HaplotypeDaskArray, \
     AlleleCountsDaskArray
+from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
+    AlleleCountsCArray, VariantCTable, FeatureCTable, AlleleCountsCTable
 from allel import stats
 from allel import plot
 from allel import io
