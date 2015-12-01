@@ -280,7 +280,7 @@ def xpehh(h1, h2, pos, min_ehh=0.05):
 
     This function returns NaN for any EHH calculations where haplotype
     homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `min_ehh` to zero.
+    last variant. To disable this behaviour, set `min_ehh` to None.
 
     This function currently does nothing to account for large gaps between
     variants. There will be edge effects near any large gaps.
@@ -344,7 +344,7 @@ def ihs(h, pos, min_ehh=0.05):
 
     This function returns NaN for any IHS calculations where haplotype
     homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `min_ehh` to zero.
+    last variant. To disable this behaviour, set `min_ehh` to None.
 
     This function currently does nothing to account for large gaps between
     variants. There will be edge effects near any large gaps.

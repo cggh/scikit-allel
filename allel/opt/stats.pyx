@@ -427,11 +427,17 @@ def ssl2ihh(ssl, i, pos, min_ehh):
 
         # only compute integral if user has not specified min_ehh, or if ehh
         # breaks down to reach less than min_ehh
-        if (min_ehh == 0) | (ehh.size < i) | (ehh[0] <= min_ehh):
+        calc = False
+        if min_ehh is None:
+            calc = True
+        elif (ehh.size < i) | (ehh[0] <= min_ehh):
+            calc = True
+        if calc:
 
             # trim ehh array at minimum EHH value
-            ix = bisect_right(ehh, min_ehh)
-            ehh = ehh[ix:]
+            if min_ehh is not None:
+                ix = bisect_right(ehh, min_ehh)
+                ehh = ehh[ix:]
 
             # compute variant spacing
             s = ehh.shape[0]
@@ -589,7 +595,7 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
     return np.asarray(vstat0), np.asarray(vstat1)
 
 
-def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+def ihh01_scan_int8(np.int8_t[:, :] h, pos, min_ehh):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant for the reference (0) and
     alternate (1) alleles separately."""
