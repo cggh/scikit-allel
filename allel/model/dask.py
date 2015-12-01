@@ -14,9 +14,9 @@ part of the final data set will be executed.
 This module is experimental, if you find a bug please `raise an issue on GitHub
 <https://github.com/cggh/scikit-allel/issues/new>`_.
 
-Currently this module requires a specific branch of Dask to be installed::
+Currently this module requires Dask to be installed from GitHub::
 
-    $ pip install git+https://github.com/mrocklin/dask.git@drop-new-axes
+    $ pip install git+https://github.com/blaze/dask.git@master
 
 """
 from __future__ import absolute_import, print_function, division
@@ -229,7 +229,7 @@ class GenotypeDaskArray(DaskArrayAug):
         # store
         self._mask = mask
 
-    def _method(self, method_name, chunks=None, drop_dims=None, **kwargs):
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
         if chunks is None:
             # no shape change
             chunks = self.chunks
@@ -240,7 +240,7 @@ class GenotypeDaskArray(DaskArrayAug):
                 g = GenotypeArray(block)
                 method = getattr(g, method_name)
                 return method(**kwargs)
-            out = self.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
+            out = self.map_blocks(f, chunks=chunks, drop_axis=drop_axis)
 
         else:
             # map with mask
@@ -251,38 +251,38 @@ class GenotypeDaskArray(DaskArrayAug):
                 return method(**kwargs)
             m = self.mask[:, :, None]
             out = da.map_blocks(f, self, m, chunks=chunks,
-                                drop_dims=drop_dims)
+                                drop_axis=drop_axis)
 
         return out
 
-    def _method_drop_dim2(self, method_name, **kwargs):
+    def _method_drop_axis2(self, method_name, **kwargs):
         chunks = self.chunks[:2]
-        return self._method(method_name, chunks=chunks, drop_dims=2, **kwargs)
+        return self._method(method_name, chunks=chunks, drop_axis=2, **kwargs)
 
     def fill_masked(self, value=-1):
         out = self._method('fill_masked', value=value)
         return view_subclass(out, GenotypeDaskArray)
 
     def is_called(self):
-        return self._method_drop_dim2('is_called')
+        return self._method_drop_axis2('is_called')
 
     def is_missing(self):
-        return self._method_drop_dim2('is_missing')
+        return self._method_drop_axis2('is_missing')
 
     def is_hom(self, allele=None):
-        return self._method_drop_dim2('is_hom', allele=allele)
+        return self._method_drop_axis2('is_hom', allele=allele)
 
     def is_hom_ref(self):
-        return self._method_drop_dim2('is_hom_ref')
+        return self._method_drop_axis2('is_hom_ref')
 
     def is_hom_alt(self):
-        return self._method_drop_dim2('is_hom_alt')
+        return self._method_drop_axis2('is_hom_alt')
 
     def is_het(self, allele=None):
-        return self._method_drop_dim2('is_het', allele=allele)
+        return self._method_drop_axis2('is_het', allele=allele)
 
     def is_call(self, call):
-        return self._method_drop_dim2('is_call', call=call)
+        return self._method_drop_axis2('is_call', call=call)
 
     def _count(self, method_name, axis, **kwargs):
         method = getattr(self, method_name)
@@ -326,7 +326,7 @@ class GenotypeDaskArray(DaskArrayAug):
         else:
             gd = self
 
-        # determine output chunks - preserve dim0; change dim1, dim2
+        # determine output chunks - preserve axis0; change axis1, axis2
         chunks = (gd.chunks[0], (1,)*len(gd.chunks[1]), (max_allele+1,))
 
         if self.mask is None:
@@ -362,7 +362,7 @@ class GenotypeDaskArray(DaskArrayAug):
                 for k, v in subpops.items()}
 
     def to_packed(self, boundscheck=True):
-        return self._method_drop_dim2('to_packed', boundscheck=boundscheck)
+        return self._method_drop_axis2('to_packed', boundscheck=boundscheck)
 
     @staticmethod
     def from_packed(packed, chunks=None):
@@ -370,7 +370,7 @@ class GenotypeDaskArray(DaskArrayAug):
             return GenotypeArray.from_packed(block)
         packed = ensure_dask_array(packed, chunks)
         chunks = (packed.chunks[0], packed.chunks[1], (2,))
-        out = da.map_blocks(f, packed, chunks=chunks, new_dims=2)
+        out = da.map_blocks(f, packed, chunks=chunks, new_axis=2)
         return view_subclass(out, GenotypeDaskArray)
 
     def map_alleles(self, mapping, **kwargs):
@@ -399,7 +399,7 @@ class GenotypeDaskArray(DaskArrayAug):
         return self._method('to_allele_counts', chunks=chunks, alleles=alleles)
 
     def to_gt(self, phased=False, max_allele=None):
-        return self._method_drop_dim2('to_gt', phased=phased,
+        return self._method_drop_axis2('to_gt', phased=phased,
                                       max_allele=max_allele)
 
     def to_haplotypes(self):
@@ -407,10 +407,10 @@ class GenotypeDaskArray(DaskArrayAug):
         return view_subclass(out, HaplotypeDaskArray)
 
     def to_n_ref(self, fill=0, dtype='i1'):
-        return self._method_drop_dim2('to_n_ref', fill=fill, dtype=dtype)
+        return self._method_drop_axis2('to_n_ref', fill=fill, dtype=dtype)
 
     def to_n_alt(self, fill=0, dtype='i1'):
-        return self._method_drop_dim2('to_n_alt', fill=fill, dtype=dtype)
+        return self._method_drop_axis2('to_n_alt', fill=fill, dtype=dtype)
 
 
 # noinspection PyAbstractClass
@@ -470,7 +470,7 @@ class HaplotypeDaskArray(DaskArrayAug):
         chunks = (hd.chunks[0], hd.chunks[1], (ploidy,))
 
         # map blocks
-        out = hd.map_blocks(f, chunks=chunks, new_dims=2)
+        out = hd.map_blocks(f, chunks=chunks, new_axis=2)
         return view_subclass(out, GenotypeDaskArray)
 
     def is_called(self):
@@ -515,7 +515,7 @@ class HaplotypeDaskArray(DaskArrayAug):
         else:
             hd = self
 
-        # determine output chunks - preserve dim0, change dim1, new dim2
+        # determine output chunks - preserve axis0, change axis1, new axis2
         chunks = (hd.chunks[0], (1,)*len(hd.chunks[1]), (max_allele+1,))
 
         # mapper function
@@ -524,7 +524,7 @@ class HaplotypeDaskArray(DaskArrayAug):
             return h.count_alleles(max_allele=max_allele)[:, None, :]
 
         # map blocks and reduce
-        out = hd.map_blocks(f, chunks=chunks, new_dims=2).sum(axis=1)
+        out = hd.map_blocks(f, chunks=chunks, new_axis=2).sum(axis=1)
         return view_subclass(out, AlleleCountsDaskArray)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
@@ -590,7 +590,7 @@ class AlleleCountsDaskArray(DaskArrayAug):
     def n_alleles(self):
         return self.shape[1]
 
-    def _method(self, method_name, chunks=None, drop_dims=None, **kwargs):
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
         if chunks is None:
             # no shape change
             chunks = self.chunks
@@ -599,40 +599,40 @@ class AlleleCountsDaskArray(DaskArrayAug):
             ac = AlleleCountsArray(block)
             method = getattr(ac, method_name)
             return method(**kwargs)
-        out = self.map_blocks(f, chunks=chunks, drop_dims=drop_dims)
+        out = self.map_blocks(f, chunks=chunks, drop_axis=drop_axis)
 
         return out
 
-    def _method_drop_dim1(self, method_name, **kwargs):
+    def _method_drop_axis1(self, method_name, **kwargs):
         chunks = self.chunks[:1]
-        return self._method(method_name, chunks=chunks, drop_dims=1, **kwargs)
+        return self._method(method_name, chunks=chunks, drop_axis=1, **kwargs)
 
     def to_frequencies(self, fill=np.nan):
         return self._method('to_frequencies', chunks=self.chunks, fill=fill)
 
     def allelism(self):
-        return self._method_drop_dim1('allelism')
+        return self._method_drop_axis1('allelism')
 
     def max_allele(self):
-        return self._method_drop_dim1('max_allele')
+        return self._method_drop_axis1('max_allele')
 
     def is_variant(self):
-        return self._method_drop_dim1('is_variant')
+        return self._method_drop_axis1('is_variant')
 
     def is_non_variant(self):
-        return self._method_drop_dim1('is_non_variant')
+        return self._method_drop_axis1('is_non_variant')
 
     def is_segregating(self):
-        return self._method_drop_dim1('is_segregating')
+        return self._method_drop_axis1('is_segregating')
 
     def is_non_segregating(self, allele=None):
-        return self._method_drop_dim1('is_non_segregating', allele=allele)
+        return self._method_drop_axis1('is_non_segregating', allele=allele)
 
     def is_singleton(self, allele=1):
-        return self._method_drop_dim1('is_singleton', allele=allele)
+        return self._method_drop_axis1('is_singleton', allele=allele)
 
     def is_doubleton(self, allele=1):
-        return self._method_drop_dim1('is_doubleton', allele=allele)
+        return self._method_drop_axis1('is_doubleton', allele=allele)
 
     def _count(self, method_name, **kwargs):
         method = getattr(self, method_name)
