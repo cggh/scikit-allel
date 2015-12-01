@@ -114,23 +114,17 @@ class DaskArrayAug(da.Array):
         r = super(DaskArrayAug, self).__repr__()
         return '%s%s' % (type(self).__name__, r[10:])
 
-    def compress(self, condition, axis=0):
-        if axis == 0:
-            out = self[condition]
-        elif axis == 1:
-            out = self[:, condition]
-        else:
-            raise NotImplementedError('axis not implemented')
-        return view_subclass(out, type(self))
+    def compress(self, condition, axis=None):
+        out = da.compress(condition, self, axis=axis)
+        if len(out.shape) == len(self.shape):
+            out = view_subclass(out, type(self))
+        return out
 
-    def take(self, indices, axis=0):
-        if axis == 0:
-            out = self[indices]
-        elif axis == 1:
-            out = self[:, indices]
-        else:
-            raise NotImplementedError('axis not implemented')
-        return view_subclass(out, type(self))
+    def take(self, indices, axis=None):
+        out = da.take(self, indices, axis=axis)
+        if len(out.shape) == len(self.shape):
+            out = view_subclass(out, type(self))
+        return out
 
     def subset(self, sel0, sel1):
         out = self[sel0][:, sel1]
@@ -139,13 +133,13 @@ class DaskArrayAug(da.Array):
     def hstack(self, *others, **kwargs):
         others = tuple(ensure_dask_array(d) for d in others)
         tup = (self,) + others
-        out = da.concatenate(tup, axis=1)
+        out = da.hstack(tup)
         return view_subclass(out, type(self))
 
     def vstack(self, *others, **kwargs):
         others = tuple(ensure_dask_array(d) for d in others)
         tup = (self,) + others
-        out = da.concatenate(tup, axis=0)
+        out = da.vstack(tup)
         return view_subclass(out, type(self))
 
 
