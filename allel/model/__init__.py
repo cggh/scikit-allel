@@ -12,6 +12,6 @@ from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
 from allel.model.chunked import *
 
 
-# legacy
+# deprecated
 from allel.model.bcolz import GenotypeCArray, HaplotypeCArray, \
     AlleleCountsCArray, AlleleCountsCTable, VariantCTable, FeatureCTable

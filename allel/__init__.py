@@ -3,7 +3,14 @@
 
 
 from allel import model
-from allel.model import *
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
+    AlleleCountsArray, VariantTable, FeatureTable, SortedIndex, \
+    SortedMultiIndex, UniqueIndex
+from allel.model.chunked import GenotypeChunkedArray, HaplotypeChunkedArray,\
+    AlleleCountsChunkedArray, VariantChunkedTable, FeatureChunkedTable, \
+    AlleleCountsChunkedTable
+from allel.model.dask import GenotypeDaskArray, HaplotypeDaskArray, \
+    AlleleCountsDaskArray
 from allel import stats
 from allel import plot
 from allel import io
