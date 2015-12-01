@@ -13,14 +13,12 @@ from libc.math cimport sqrt
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.nonecheck(False)
 @cython.cdivision(True)
-@cython.initializedcheck(False)
 cpdef inline np.float32_t gn_corrcoef_int8(np.int8_t[:] gn0,
                                            np.int8_t[:] gn1,
                                            np.int8_t[:] gn0_sq,
                                            np.int8_t[:] gn1_sq,
-                                           np.float32_t fill=np.nan):
+                                           np.float32_t fill) nogil:
     cdef:
         np.int8_t x, y, xsq, ysq
         Py_ssize_t i
@@ -66,9 +64,8 @@ cpdef inline np.float32_t gn_corrcoef_int8(np.int8_t[:] gn0,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn, np.float32_t fill=np.nan):
+def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn not None,
+                              np.float32_t fill=np.nan):
     cdef:
         Py_ssize_t i, j, k, n
         np.float32_t r
@@ -87,26 +84,25 @@ def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn, np.float32_t fill=np.nan):
     out = np.zeros(n_pairs, dtype=np.float32)
 
     # iterate over distinct pairs
-    k = 0
-    for i in range(n):
-        for j in range(i+1, n):
-            gn0 = gn[i]
-            gn1 = gn[j]
-            gn0_sq = gn_sq[i]
-            gn1_sq = gn_sq[j]
-            r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
-            out[k] = r
-            k += 1
+    with nogil:
+        k = 0
+        for i in range(n):
+            for j in range(i+1, n):
+                gn0 = gn[i]
+                gn1 = gn[j]
+                gn0_sq = gn_sq[i]
+                gn1_sq = gn_sq[j]
+                r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
+                out[k] = r
+                k += 1
 
     return np.asarray(out)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna,
-                               np.int8_t[:, :] gnb,
+def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna not None,
+                               np.int8_t[:, :] gnb not None,
                                np.float32_t fill=np.nan):
     cdef:
         Py_ssize_t i, j, k, m, n
@@ -126,92 +122,98 @@ def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna,
     out = np.zeros((m, n), dtype=np.float32)
 
     # iterate over distinct pairs
-    for i in range(m):
-        for j in range(n):
-            gn0 = gna[i]
-            gn1 = gnb[j]
-            gn0_sq = gna_sq[i]
-            gn1_sq = gnb_sq[j]
-            r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
-            out[i, j] = r
+    with nogil:
+        for i in range(m):
+            for j in range(n):
+                gn0 = gna[i]
+                gn1 = gnb[j]
+                gn0_sq = gna_sq[i]
+                gn1_sq = gnb_sq[j]
+                r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
+                out[i, j] = r
 
     return np.asarray(out)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-def gn_locate_unlinked_int8(np.int8_t[:, :] gn, np.uint8_t[:] loc,
+def gn_locate_unlinked_int8(np.int8_t[:, :] gn not None,
+                            np.uint8_t[:] loc not None,
                             Py_ssize_t size, Py_ssize_t step,
                             np.float32_t threshold):
     cdef:
-        Py_ssize_t window_start, window_stop, i, j
+        Py_ssize_t window_start, window_stop, i, j, n_variants
         np.float32_t r_squared
         np.int8_t[:, :] gn_sq
         np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
         int overlap = size - step
         bint last
+        np.float32_t fill = np.nan
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
 
-    # setup intermediates
+    # setup
+    n_variants = gn.shape[0]
     last = False
 
-    for window_start in range(0, gn.shape[0], step):
+    for window_start in range(0, n_variants, step):
+        with nogil:
 
-        # determine end of current window
-        window_stop = window_start + size
-        if window_stop > gn.shape[0]:
-            window_stop = gn.shape[0]
-            last = True
+            # determine end of current window
+            window_stop = window_start + size
+            if window_stop > n_variants:
+                window_stop = n_variants
+                last = True
 
-        if window_start == 0:
-            # first window
-            for i in range(window_start, window_stop):
-                # only go further if still unlinked
-                if loc[i]:
-                    for j in range(i+1, window_stop):
-                        # only go further if still unlinked
-                        if loc[j]:
-                            gn0 = gn[i]
-                            gn1 = gn[j]
-                            gn0_sq = gn_sq[i]
-                            gn1_sq = gn_sq[j]
-                            r_squared = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq) ** 2
-                            if r_squared > threshold:
-                                loc[j] = 0
-
-        else:
-            # subsequent windows
-            for i in range(window_start, window_stop):
-                # only go further if still unlinked
-                if loc[i]:
-                    # don't recalculate anything from overlap with previous
-                    # window
-                    ii = max(i+1, window_start+overlap)
-                    if ii < window_stop:
-                        for j in range(ii, window_stop):
+            if window_start == 0:
+                # first window
+                for i in range(window_start, window_stop):
+                    # only go further if still unlinked
+                    if loc[i]:
+                        for j in range(i+1, window_stop):
                             # only go further if still unlinked
                             if loc[j]:
                                 gn0 = gn[i]
                                 gn1 = gn[j]
                                 gn0_sq = gn_sq[i]
                                 gn1_sq = gn_sq[j]
-                                r_squared = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq) ** 2
+                                r_squared = gn_corrcoef_int8(gn0, gn1, gn0_sq,
+                                                             gn1_sq, fill) ** 2
                                 if r_squared > threshold:
                                     loc[j] = 0
 
-        if last:
-            break
+            else:
+                # subsequent windows
+                for i in range(window_start, window_stop):
+                    # only go further if still unlinked
+                    if loc[i]:
+                        # don't recalculate anything from overlap with previous
+                        # window
+                        ii = max(i+1, window_start+overlap)
+                        if ii < window_stop:
+                            for j in range(ii, window_stop):
+                                # only go further if still unlinked
+                                if loc[j]:
+                                    gn0 = gn[i]
+                                    gn1 = gn[j]
+                                    gn0_sq = gn_sq[i]
+                                    gn1_sq = gn_sq[j]
+                                    r_squared = gn_corrcoef_int8(gn0, gn1,
+                                                                 gn0_sq,
+                                                                 gn1_sq,
+                                                                 fill) ** 2
+                                    if r_squared > threshold:
+                                        loc[j] = 0
+
+            if last:
+                break
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-cpdef Py_ssize_t shared_prefix_length_int8(np.int8_t[:] a, np.int8_t[:] b):
+cpdef Py_ssize_t shared_prefix_length_int8(np.int8_t[:] a,
+                                           np.int8_t[:] b) nogil:
     """Compute the length of the shared prefix between two arrays."""
 
     cdef:
@@ -246,10 +248,11 @@ cpdef pairwise_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     k = 0
 
     # iterate over pairs
-    for i in range(n):
-        for j in range(i+1, n):
-            lengths[k] = shared_prefix_length_int8(h[:, i], h[:, j])
-            k += 1
+    with nogil:
+        for i in range(n):
+            for j in range(i+1, n):
+                lengths[k] = shared_prefix_length_int8(h[:, i], h[:, j])
+                k += 1
 
     return np.asarray(lengths)
 
@@ -269,8 +272,9 @@ cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
     lengths = np.empty(n-1, dtype='i4')
 
     # iterate over columns
-    for i in range(n-1):
-        lengths[i] = shared_prefix_length_int8(h[:, i], h[:, i+1])
+    with nogil:
+        for i in range(n-1):
+            lengths[i] = shared_prefix_length_int8(h[:, i], h[:, i+1])
 
     return np.asarray(lengths)
 
@@ -291,17 +295,18 @@ cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
     lengths = np.empty(n-1, dtype='i4')
 
     # iterate over columns
-    for i in range(n-1):
-        ix = indices[i]
-        jx = indices[i+1]
-        lengths[i] = shared_prefix_length_int8(h[:, ix], h[:, jx])
+    with nogil:
+        for i in range(n-1):
+            ix = indices[i]
+            jx = indices[i+1]
+            lengths[i] = shared_prefix_length_int8(h[:, ix], h[:, jx])
 
     return np.asarray(lengths)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
+cpdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x) nogil:
     """Optimized implementation of bisect_left."""
     cdef:
         Py_ssize_t l, u, m, v
@@ -328,7 +333,7 @@ cdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def paint_shared_prefixes_int8(np.int8_t[:, :] h):
+def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
     """Paint each shared prefix with a different number. N.B., `h` must be
     already sorted by prefix.
 
@@ -441,7 +446,7 @@ def ssl2ihh(ssl, i, pos, min_ehh):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
+def ihh_scan_int8(np.int8_t[:, :] h not None, pos, min_ehh=0):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
 
@@ -469,20 +474,21 @@ def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
         # pairwise comparison of alleles between haplotypes to determine
         # shared suffix lengths
         # N.B., this is the critical performance section
-        p = 0  # pair index
-        for j in range(n_haplotypes):
-            a1 = h[i, j]  # allele on first haplotype in pair
-            for k in range(j+1, n_haplotypes):
-                a2 = h[i, k]  # allele on second haplotype in pair
-                # test for non-equal and non-missing alleles
-                if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
-                    # break shared suffix, reset length to zero
-                    ssl[p] = 0
-                else:
-                    # extend shared suffix
-                    ssl[p] += 1
-                # increment pair index
-                p += 1
+        with nogil:
+            p = 0  # pair index
+            for j in range(n_haplotypes):
+                a1 = h[i, j]  # allele on first haplotype in pair
+                for k in range(j+1, n_haplotypes):
+                    a2 = h[i, k]  # allele on second haplotype in pair
+                    # test for non-equal and non-missing alleles
+                    if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                        # break shared suffix, reset length to zero
+                        ssl[p] = 0
+                    else:
+                        # extend shared suffix
+                        ssl[p] += 1
+                    # increment pair index
+                    p += 1
 
         # compute IHH from shared suffix lengths
         ihh = ssl2ihh(ssl, pos, i, min_ehh)
@@ -493,7 +499,7 @@ def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh=0):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
+cpdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
     cdef:
         Py_ssize_t n, n_pairs, i, j, k
         np.int32_t[:] v
@@ -501,10 +507,11 @@ cdef np.int32_t[:] tovector_int32(np.int32_t[:, :] m):
     n_pairs = (n * (n - 1)) // 2
     v = np.empty(n_pairs, dtype='i4')
     k = 0
-    for i in range(n):
-        for j in range(i+1, n):
-            v[k] = m[i, j]
-            k += 1
+    with nogil:
+        for i in range(n):
+            for j in range(i+1, n):
+                v[k] = m[i, j]
+                k += 1
     return v
 
 
@@ -547,24 +554,25 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, dtype='f8', **kwargs):
         # pairwise comparison of alleles between haplotypes to determine
         # shared suffix lengths
         # N.B., this is the critical performance section
-        loc0[:] = 0
-        loc1[:] = 0
-        for j in range(n_haplotypes):
-            a1 = h[i, j]
-            # keep track of which haplotypes carry which alleles
-            if a1 == 0:
-                loc0[j] = 1
-            elif a1 == 1:
-                loc1[j] = 1
-            for k in range(j+1, n_haplotypes):
-                a2 = h[i, k]
-                # test for non-equal and non-missing alleles
-                if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
-                    # break shared suffix, reset to zero
-                    ssl[j, k] = 0
-                else:
-                    # extend shared suffix
-                    ssl[j, k] += 1
+        with nogil:
+            loc0[:] = 0
+            loc1[:] = 0
+            for j in range(n_haplotypes):
+                a1 = h[i, j]
+                # keep track of which haplotypes carry which alleles
+                if a1 == 0:
+                    loc0[j] = 1
+                elif a1 == 1:
+                    loc1[j] = 1
+                for k in range(j+1, n_haplotypes):
+                    a2 = h[i, k]
+                    # test for non-equal and non-missing alleles
+                    if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                        # break shared suffix, reset to zero
+                        ssl[j, k] = 0
+                    else:
+                        # extend shared suffix
+                        ssl[j, k] += 1
 
         # locate 00 and 11 pairs
         l0 = np.asarray(loc0, dtype='b1')

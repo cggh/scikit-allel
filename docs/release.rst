@@ -7,7 +7,9 @@ v0.20.0
 * Added new :mod:`allel.model.dask` module, providing
   implementations of the genotype, haplotype and allele counts classes
   backed by `dask.array <http://dask.pydata.org/en/latest/array.html>`_
-  (`#32 <https://github.com/cggh/scikit-allel/issues/40>`_).
+  (`#32 <https://github.com/cggh/scikit-allel/issues/32>`_).
+* Released the GIL where possible in Cython optimised functions
+  (`#43 <https://github.com/cggh/scikit-allel/issues/43>`_).
 
 v0.19.0
 -------
