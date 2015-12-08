@@ -1,6 +1,15 @@
 Release notes
 =============
 
+v0.20.1
+-------
+
+* Changed functions :func:`allel.stats.fst.weir_cockerham_fst` and
+  :func:`allel.stats.ld.locate_unlinked` such that chunked implementations
+  are now used by default, to avoid accidentally and unnecessarily loading
+  very large arrays into memory
+  (`#50 <https://github.com/cggh/scikit-allel/issues/50>`_).
+
 v0.20.0
 -------
 

@@ -121,11 +121,8 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1, chunked=False,
         Number of variants to advance to the next window.
     threshold : float
         Maximum value of r**2 to include variants.
-    chunked : bool, optional
-        If True, use a block-wise implementation to avoid loading the entire
-        input array into memory.
     blen : int, optional
-        Block length to use for chunked implementation.
+        Block length to use for chunked computation.
 
     Returns
     -------
@@ -153,20 +150,16 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1, chunked=False,
     # setup output
     loc = np.ones(gn.shape[0], dtype='u1')
 
-    if chunked:
-        # use block-wise implementation
-        blen = get_blen_array(gn, blen)
-        n_variants = gn.shape[0]
-        for i in range(0, n_variants, blen):
-            # N.B., ensure overlap with next window
-            j = min(n_variants, i+blen+size)
-            gnb = np.asarray(gn[i:j], dtype='i1')
-            locb = loc[i:j]
-            gn_locate_unlinked_int8(gnb, locb, size, step, threshold)
-
-    else:
-        gn = np.asarray(gn, dtype='i1')
-        gn_locate_unlinked_int8(gn, loc, size, step, threshold)
+    # compute in chunks to avoid loading big arrays into memory
+    blen = get_blen_array(gn, blen)
+    blen = max(blen, 10*size)  # avoid too small chunks
+    n_variants = gn.shape[0]
+    for i in range(0, n_variants, blen):
+        # N.B., ensure overlap with next window
+        j = min(n_variants, i+blen+size)
+        gnb = np.asarray(gn[i:j], dtype='i1')
+        locb = loc[i:j]
+        gn_locate_unlinked_int8(gnb, locb, size, step, threshold)
 
     return loc.astype('b1')
 
