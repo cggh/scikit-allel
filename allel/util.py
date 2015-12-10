@@ -229,7 +229,7 @@ def _hdf5_cache_act(filepath, parent, container, key, names, no_cache,
 
 
 def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
-               hashed_key=True, **h5dcreate_kwargs):
+               hashed_key=False, **h5dcreate_kwargs):
     """HDF5 cache decorator.
 
     Parameters
@@ -251,8 +251,11 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
         For example, f(3.0) and f(3) will be treated as distinct calls with
         distinct results.
     hashed_key : bool, optional
-        If False, the key will not be hashed, which makes for readable cache
-        group names, but may cause problems if key contains '/' characters.
+        If False (default) the key will not be hashed, which makes for
+        readable cache group names. If True the key will be hashed, however
+        note that on Python >= 3.3 the hash value will not be the same between
+        sessions unless the environment variable PYTHONHASHSEED has been set
+        to the same value.
 
     Returns
     -------
@@ -334,7 +337,7 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
             if hashed_key:
                 key = str(hash(key))
             else:
-                key = str(key)
+                key = str(key).replace('/', '__slash__')
 
             return _hdf5_cache_act(filepath, parent, container, key, names,
                                    no_cache, user_function, args, kwargs,
