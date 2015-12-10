@@ -1,6 +1,11 @@
 Release notes
 =============
 
+* Changed :func:`allel.util.hdf5_cache` to resolve issues with hashing and
+  argument order
+  (`#51 <https://github.com/cggh/scikit-allel/issues/51>`_,
+   `#52 <https://github.com/cggh/scikit-allel/issues/52>`_).
+
 v0.20.1
 -------
 
