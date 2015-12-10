@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
-
-
 from contextlib import contextmanager
 from functools import update_wrapper
 import atexit
@@ -10,6 +8,9 @@ import os
 
 import numpy as np
 from scipy.spatial.distance import squareform
+
+
+from allel.compat import string_types
 
 
 @contextmanager
@@ -187,7 +188,7 @@ def _hdf5_cache_act(filepath, parent, container, key, names, no_cache,
                 # determine dataset name
                 if names is None:
                     n = 'data'
-                elif isinstance(names, str):
+                elif isinstance(names, string_types):
                     n = names
                 elif len(names) > 0:
                     n = names[0]
@@ -209,7 +210,13 @@ def _hdf5_cache_act(filepath, parent, container, key, names, no_cache,
         # load from cache
         else:
 
-            names = sorted(h5g.keys())
+            # determine dataset names
+            if names is None:
+                names = sorted(h5g.keys())
+            elif isinstance(names, string_types):
+                names = (names,)
+
+            # load result from cache
             if len(names) == 1:
                 result = h5g[names[0]]
                 result = result[:] if len(result.shape) > 0 else result[()]
@@ -282,6 +289,20 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
         executing bar
         (array([0, 1, 2]), array([0, 1, 4]), 9)
         >>> bar(3)
+        (array([0, 1, 2]), array([0, 1, 4]), 9)
+
+    Names can also be specified for the datasets, e.g.::
+
+        >>> @allel.util.hdf5_cache(names=['z', 'x', 'y'])
+        ... def baz(n):
+        ...     print('executing baz')
+        ...     a = np.arange(n)
+        ...     return a, a**2, n**2
+        ...
+        >>> baz(3)
+        executing baz
+        (array([0, 1, 2]), array([0, 1, 4]), 9)
+        >>> baz(3)
         (array([0, 1, 2]), array([0, 1, 4]), 9)
 
     """
