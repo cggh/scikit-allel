@@ -41,17 +41,24 @@ def subset(data, sel0, sel1):
     data = np.asarray(data)
     if data.ndim < 2:
         raise ValueError('data must have 2 or more dimensions')
-    sel0 = asarray_ndim(sel0, 1)
-    sel1 = asarray_ndim(sel1, 1)
+    sel0 = asarray_ndim(sel0, 1, allow_none=True)
+    sel1 = asarray_ndim(sel1, 1, allow_none=True)
 
     # ensure indices
-    if sel0.size == data.shape[0]:
+    if sel0 is not None and sel0.dtype.kind == 'b':
         sel0 = np.nonzero(sel0)[0]
-    if sel1.size == data.shape[1]:
+    if sel1 is not None and sel1.dtype.kind == 'b':
         sel1 = np.nonzero(sel1)[0]
 
     # ensure leading dimension indices can be broadcast correctly
-    sel0 = sel0[:, None]
+    if sel0 is not None and sel1 is not None:
+        sel0 = sel0[:, None]
+
+    # deal with None arguments
+    if sel0 is None:
+        sel0 = slice(None)
+    if sel1 is None:
+        sel1 = slice(None)
 
     return data[sel0, sel1]
 
@@ -522,7 +529,7 @@ class GenotypeArray(ArrayAug):
 
         return a.view(GenotypeArray)
 
-    def subset(self, sel0, sel1):
+    def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and samples.
 
         Parameters
@@ -551,6 +558,10 @@ class GenotypeArray(ArrayAug):
           [1 1]]
          [[0 1]
           [1 2]]]
+
+        See Also
+        --------
+        GenotypeArray.take, GenotypeArray.compress.
 
         """
 
@@ -1861,7 +1872,7 @@ class HaplotypeArray(ArrayAug):
         """Number of haplotypes (length of second dimension)."""
         return self.shape[1]
 
-    def subset(self, sel0, sel1):
+    def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and haplotypes.
 
         Parameters
@@ -1876,6 +1887,10 @@ class HaplotypeArray(ArrayAug):
         -------
 
         out : HaplotypeArray
+
+        See Also
+        --------
+        HaplotypeArray.take, HaplotypeArray.compress.
 
         """
 
