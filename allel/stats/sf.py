@@ -284,7 +284,7 @@ def scale_joint_sfs(s):
 
     i = np.arange(s.shape[0])[:, None]
     j = np.arange(s.shape[1])[None, :]
-    out = s * i * j
+    out = (s * i) * j
     return out
 
 
