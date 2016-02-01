@@ -1,6 +1,11 @@
 Release notes
 =============
 
+v0.20.3
+-------
+
+* Fixed a bug in site frequency spectrum scaling functions
+  (`#54 <https://github.com/cggh/scikit-allel/issues/54>`_.
 * Changed behaviour of `subset` method on genotype and haplotype arrays to
   better infer argument types and handle None argument values
   (`#55 <https://github.com/cggh/scikit-allel/issues/55>`_).
