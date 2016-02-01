@@ -129,8 +129,15 @@ class DaskArrayAug(da.Array):
             out = view_subclass(out, type(self))
         return out
 
-    def subset(self, sel0, sel1):
-        out = self[sel0][:, sel1]
+    def subset(self, sel0=None, sel1=None):
+        if sel0 is None and sel1 is None:
+            out = self
+        elif sel1 is None:
+            out = self[sel0]
+        elif sel0 is None:
+            out = self[:, sel1]
+        else:
+            out = self[sel0][:, sel1]
         return view_subclass(out, type(self))
 
     def hstack(self, *others, **kwargs):

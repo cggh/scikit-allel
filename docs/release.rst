@@ -1,6 +1,10 @@
 Release notes
 =============
 
+* Changed behaviour of `subset` method on genotype and haplotype arrays to
+  better infer argument types and handle None argument values
+  (`#55 <https://github.com/cggh/scikit-allel/issues/55>`_).
+
 v0.20.2
 -------
 
