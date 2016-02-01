@@ -13,12 +13,10 @@ established Python scientific libraries.
 * Gitter: https://gitter.im/cggh/pygenomics
 
 Please feel free to ask questions via
-`cggh/pygenomics <https://gitter.im/cggh/pygenomics>`_  on Gitter.
-
-Release announcements are posted to the
+`cggh/pygenomics <https://gitter.im/cggh/pygenomics>`_  on Gitter. Release
+announcements are posted to the
 `cggh/pygenomics <https://gitter.im/cggh/pygenomics>`_ Gitter channel and the
 `biovalidation mailing list <https://groups.google.com/forum/#!forum/biovalidation>`_.
-
 If you find a bug or would like to suggest a feature, please `raise an issue
 on GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
 
