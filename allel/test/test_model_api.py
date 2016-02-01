@@ -272,6 +272,20 @@ class GenotypeArrayInterface(object):
             .take(sel1, axis=1)
         aeq(expect, s)
 
+        # check argument type inference
+        sel0 = list(range(g.shape[0]))
+        sel1 = None
+        s = g.subset(sel0, sel1)
+        expect = np.array(diploid_genotype_data)
+        aeq(expect, s)
+
+        # check argument type inference
+        sel0 = None
+        sel1 = list(range(g.shape[1]))
+        s = g.subset(sel0, sel1)
+        expect = np.array(diploid_genotype_data)
+        aeq(expect, s)
+
     # genotype counting methods
     ###########################
 
@@ -757,7 +771,6 @@ class GenotypeArrayInterface(object):
         eq(3, actual.n_alleles)
 
         # polyploid
-        print('test polyploid')
         g = self.setup_instance(triploid_genotype_data)
         expect = np.array([[5, 1, 0],
                            [1, 5, 0],
