@@ -86,20 +86,18 @@ def sfs_scaled(dac):
     s = sfs(dac)
 
     # apply scaling
-    s = scale_sfs(s, copy=False)
+    s = scale_sfs(s)
 
     return s
 
 
-def scale_sfs(s, copy=True):
+def scale_sfs(s):
     """Scale a site frequency spectrum.
 
     Parameters
     ----------
     s : array_like, int, shape (n_chromosomes,)
         Site frequency spectrum.
-    copy : bool, optional
-        If False, apply scaling to `s` in place.
 
     Returns
     -------
@@ -107,11 +105,9 @@ def scale_sfs(s, copy=True):
         Scaled site frequency spectrum.
 
     """
-    if copy:
-        s = s.copy()
     k = np.arange(s.size)
-    s *= k
-    return s
+    out = s * k
+    return out
 
 
 def sfs_folded_scaled(ac, n=None):
@@ -146,12 +142,12 @@ def sfs_folded_scaled(ac, n=None):
         n = np.amax(np.sum(ac, axis=1))
 
     # apply scaling
-    s = scale_sfs_folded(s, n, copy=False)
+    s = scale_sfs_folded(s, n)
 
     return s
 
 
-def scale_sfs_folded(s, n, copy=True):
+def scale_sfs_folded(s, n):
     """Scale a folded site frequency spectrum.
 
     Parameters
@@ -160,8 +156,6 @@ def scale_sfs_folded(s, n, copy=True):
         Folded site frequency spectrum.
     n : int
         Number of chromosomes called.
-    copy : bool, optional
-        If False, apply scaling to `s` in place.
 
     Returns
     -------
@@ -169,11 +163,9 @@ def scale_sfs_folded(s, n, copy=True):
         Scaled folded site frequency spectrum.
 
     """
-    if copy:
-        s = s.copy()
     k = np.arange(s.shape[0])
-    s *= k * (n - k) / n
-    return s
+    out = s * k * (n - k) / n
+    return out
 
 
 def joint_sfs(dac1, dac2):
@@ -270,20 +262,18 @@ def joint_sfs_scaled(dac1, dac2):
     s = joint_sfs(dac1, dac2)
 
     # apply scaling
-    s = scale_joint_sfs(s, copy=False)
+    s = scale_joint_sfs(s)
 
     return s
 
 
-def scale_joint_sfs(s, copy=True):
+def scale_joint_sfs(s):
     """Scale a joint site frequency spectrum.
 
     Parameters
     ----------
     s : array_like, int, shape (m_chromosomes, n_chromosomes)
         Joint site frequency spectrum.
-    copy : bool, optional
-        If False, apply scaling to `s` in place.
 
     Returns
     -------
@@ -292,13 +282,10 @@ def scale_joint_sfs(s, copy=True):
 
     """
 
-    if copy:
-        s = s.copy()
     i = np.arange(s.shape[0])[:, None]
-    s *= i
     j = np.arange(s.shape[1])[None, :]
-    s *= j
-    return s
+    out = s * i * j
+    return out
 
 
 def joint_sfs_folded_scaled(ac1, ac2, m=None, n=None):
@@ -337,12 +324,12 @@ def joint_sfs_folded_scaled(ac1, ac2, m=None, n=None):
         n = np.amax(np.sum(ac2, axis=1))
 
     # apply scaling
-    s = scale_joint_sfs_folded(s, m, n, copy=False)
+    s = scale_joint_sfs_folded(s, m, n)
 
     return s
 
 
-def scale_joint_sfs_folded(s, m, n, copy=True):
+def scale_joint_sfs_folded(s, m, n):
     """Scale a folded joint site frequency spectrum.
 
     Parameters
@@ -353,8 +340,6 @@ def scale_joint_sfs_folded(s, m, n, copy=True):
         Number of chromosomes called in the first population.
     n : int
         Number of chromosomes called in the second population.
-    copy : bool, optional
-        If False, apply scaling to `s` in place.
 
     Returns
     -------
@@ -362,12 +347,11 @@ def scale_joint_sfs_folded(s, m, n, copy=True):
         Scaled folded joint site frequency spectrum.
 
     """  # noqa
-    if copy:
-        s = s.copy()
+    out = np.empty_like(s)
     for i in range(s.shape[0]):
         for j in range(s.shape[1]):
-            s[i, j] *= i * j * (m-i) * (n-j)
-    return s
+            out[i, j] = s[i, j] * i * j * (m-i) * (n-j)
+    return out
 
 
 def fold_sfs(s, n):
