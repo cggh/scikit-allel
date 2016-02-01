@@ -133,7 +133,12 @@ class RecArrayAug(np.recarray):
         if vm == 'numexpr':
             return ne.evaluate(expression, local_dict=self)
         else:
-            return eval(expression, {}, self)
+            if PY2:
+                # locals must be a mapping
+                m = {k: self[k] for k in self.dtype.names}
+            else:
+                m = self
+            return eval(expression, dict(), m)
 
     def query(self, expression, vm='python'):
         """Evaluate expression and then use it to extract rows from the table.
@@ -3785,7 +3790,7 @@ class VariantTable(RecArrayAug):
         >>> vt.eval('(DP > 30) & (QD > 4)')
         array([ True, False, False, False, False], dtype=bool)
         >>> vt.eval('DP * 2')
-        array([ 70,  24, 156,  44, 198], dtype=int64)
+        array([ 70,  24, 156,  44, 198])
 
     Query the table::
 

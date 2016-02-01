@@ -1946,16 +1946,18 @@ class VariantTableInterface(object):
         vt = self.setup_instance(a)
 
         expr = '(DP > 30) & (QD < 4)'
-        r = vt.eval(expr)
-        aeq([False, False, True, False, True], r)
+        for vm in 'numexpr', 'python':
+            r = vt.eval(expr, vm=vm)
+            aeq([False, False, True, False, True], r)
 
     def test_query(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
 
         query = '(DP > 30) & (QD < 4)'
-        r = vt.query(query)
-        aeq(a.take([2, 4]), r)
+        for vm in 'numexpr', 'python':
+            r = vt.query(query, vm=vm)
+            aeq(a.take([2, 4]), r)
 
     def test_index(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2277,15 +2279,17 @@ class FeatureTableInterface(object):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
         ft = self.setup_instance(a)
         expr = 'type == b"exon"'
-        r = ft.eval(expr)
-        aeq([False, False, True, True, False, False], r)
+        for vm in 'numexpr', 'python':
+            r = ft.eval(expr, vm=vm)
+            aeq([False, False, True, True, False, False], r)
 
     def test_query(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
         ft = self.setup_instance(a)
         expr = 'type == b"exon"'
-        r = ft.query(expr)
-        aeq(a.take([2, 3]), r)
+        for vm in 'numexpr', 'python':
+            r = ft.query(expr, vm=vm)
+            aeq(a.take([2, 3]), r)
 
 
 def test_create_allele_mapping():

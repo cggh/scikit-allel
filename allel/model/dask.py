@@ -14,9 +14,7 @@ part of the final data set will be executed.
 This module is experimental, if you find a bug please `raise an issue on GitHub
 <https://github.com/cggh/scikit-allel/issues/new>`_.
 
-Currently this module requires Dask to be installed from GitHub::
-
-    $ pip install git+https://github.com/blaze/dask.git@master
+This module requires Dask >= 0.7.6.
 
 """
 from __future__ import absolute_import, print_function, division
