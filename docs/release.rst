@@ -1,6 +1,13 @@
 Release notes
 =============
 
+v0.20.3
+-------
+
+* Fixed a bug in the `count_alleles()` methods on genotype and haplotype array
+  classes that manifested if the `max_allele` argument was provided
+  (`#59 <https://github.com/cggh/scikit-allel/issues/59>`_.
+
 v0.20.2
 -------
 
