@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.20.3
+-------
+
+* Fixed a bug in Jupyter notebook display for chunked tables
+  (`#57 <https://github.com/cggh/scikit-allel/issues/57>`_.
+
 v0.20.2
 -------
 
