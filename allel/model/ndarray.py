@@ -103,6 +103,9 @@ class RecArrayAug(np.recarray):
     def display(self, limit=5, **kwargs):
         return recarray_display(self, limit=limit, **kwargs)
 
+    def displayall(self, **kwargs):
+        return self.display(limit=None, **kwargs)
+
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
         a = recarray_from_hdf5_group(*args, **kwargs)

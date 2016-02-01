@@ -4,6 +4,8 @@ Release notes
 v0.20.3
 -------
 
+* Fixed a bug in Jupyter notebook `display` method for chunked tables
+  (`#57 <https://github.com/cggh/scikit-allel/issues/57>`_.
 * Fixed a bug in site frequency spectrum scaling functions
   (`#54 <https://github.com/cggh/scikit-allel/issues/54>`_.
 * Changed behaviour of `subset` method on genotype and haplotype arrays to

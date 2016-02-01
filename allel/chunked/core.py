@@ -802,7 +802,10 @@ class ChunkedTable(object):
         elif isinstance(item, slice):
             # item is row slice, return numpy recarray
             start = 0 if item.start is None else item.start
+            if start < 0:
+                raise ValueError('negative indices not supported')
             stop = len(self) if item.stop is None else item.stop
+            stop = min(stop, len(self))
             step = 1 if item.step is None else item.step
             outshape = (stop - start) // step
             out = np.empty(outshape, dtype=self.dtype)
@@ -851,10 +854,15 @@ class ChunkedTable(object):
         ra = self[:6]
         return recarray_to_html_str(ra, limit=5, caption=caption)
 
-    def display(self, limit, **kwargs):
+    def display(self, limit=5, **kwargs):
         kwargs.setdefault('caption', repr(self))
+        if limit is None:
+            limit = len(self)
         ra = self[:limit+1]
         return recarray_display(ra, limit=limit, **kwargs)
+
+    def displayall(self, **kwargs):
+        return self.display(limit=None, **kwargs)
 
     @property
     def shape(self):
