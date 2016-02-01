@@ -330,18 +330,26 @@ def carray_block_subset(carr, sel0, sel1, blen=None, **kwargs):
         blen = carr.chunklen
 
     # check inputs
-    sel0 = asarray_ndim(sel0, 1)
-    sel1 = asarray_ndim(sel1, 1)
+    sel0 = asarray_ndim(sel0, 1, allow_none=True)
+    sel1 = asarray_ndim(sel1, 1, allow_none=True)
 
     # ensure boolean array for dim 0
-    if sel0.size < carr.shape[0]:
+    if sel0 is not None and sel0.dtype.kind != 'b':
         tmp = np.zeros((carr.shape[0],), dtype=bool)
         tmp[sel0] = True
         sel0 = tmp
 
     # ensure indices for dim 1
-    if sel1.size == carr.shape[1]:
+    if sel1 is not None and sel1.dtype.kind == 'b':
         sel1 = np.nonzero(sel1)[0]
+
+    # shortcuts
+    if sel0 is None and sel1 is None:
+        return carr.copy(**kwargs)
+    elif sel1 is None:
+        return carray_block_compress(carr, sel0, axis=0, blen=blen, **kwargs)
+    elif sel0 is None:
+        return carray_block_take(carr, sel1, axis=1, blen=blen, **kwargs)
 
     # setup output
     kwargs.setdefault('dtype', carr.dtype)
@@ -1162,7 +1170,7 @@ class GenotypeCArray(CArrayWrapper):
 
         return GenotypeCArray(out, copy=False)
 
-    def subset(self, sel0, sel1, **kwargs):
+    def subset(self, sel0=None, sel1=None, **kwargs):
         carr = carray_block_subset(self.carr, sel0, sel1, **kwargs)
         g = GenotypeCArray(carr, copy=False)
         if self.mask is not None:
@@ -1476,7 +1484,7 @@ class HaplotypeCArray(CArrayWrapper):
         """Number of haplotypes (length of second array dimension)."""
         return self.carr.shape[1]
 
-    def subset(self, sel0, sel1, **kwargs):
+    def subset(self, sel0=None, sel1=None, **kwargs):
         data = carray_block_subset(self.carr, sel0, sel1, **kwargs)
         return HaplotypeCArray(data, copy=False)
 

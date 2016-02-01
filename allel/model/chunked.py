@@ -168,7 +168,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
             out.mask = self.mask.take(indices, axis=axis, **storage_kwargs)
         return out
 
-    def subset(self, sel0, sel1, **storage_kwargs):
+    def subset(self, sel0=None, sel1=None, **storage_kwargs):
         out = super(GenotypeChunkedArray, self).subset(sel0, sel1,
                                                        **storage_kwargs)
         if self.mask is not None:
@@ -480,6 +480,11 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray):
         out = _chunked.apply(domain, f, **storage_kwargs)
         return HaplotypeChunkedArray(out)
 
+    def subset(self, sel0=None, sel1=None, **storage_kwargs):
+        out = super(HaplotypeChunkedArray, self).subset(sel0, sel1,
+                                                        **storage_kwargs)
+        return out
+
 
 # copy docstrings
 copy_method_doc(HaplotypeChunkedArray.to_genotypes,
@@ -490,6 +495,8 @@ copy_method_doc(HaplotypeChunkedArray.count_alleles_subpops,
                 _ndarray.HaplotypeArray.count_alleles_subpops)
 copy_method_doc(HaplotypeChunkedArray.map_alleles,
                 _ndarray.HaplotypeArray.map_alleles)
+copy_method_doc(HaplotypeChunkedArray.subset,
+                _ndarray.HaplotypeArray.subset)
 
 
 class AlleleCountsChunkedArray(_chunked.ChunkedArray):
