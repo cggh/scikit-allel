@@ -104,9 +104,12 @@ def get_blen_array(data, blen=None):
             # bcolz carray
             return data.chunklen
 
-        elif hasattr(data, 'chunks') and hasattr(data, 'shape') and \
+        elif hasattr(data, 'chunks') and \
+                hasattr(data, 'shape') and \
+                hasattr(data.chunks, '__len__') and \
+                hasattr(data.shape, '__len__') and \
                 len(data.chunks) == len(data.shape):
-            # h5py dataset
+            # something like h5py dataset
             return data.chunks[0]
 
         else:
@@ -189,9 +192,12 @@ def get_chunks(data):
     if hasattr(data, 'chunklen'):
         # bcolz carray
         return (data.chunklen,) + data.shape[1:]
-    elif hasattr(data, 'chunks') and hasattr(data, 'shape') and \
+    elif hasattr(data, 'chunks') and \
+            hasattr(data, 'shape') and \
+            hasattr(data.chunks, '__len__') and \
+            hasattr(data.shape, '__len__') and \
             len(data.chunks) == len(data.shape):
-        # h5py dataset
+        # something like h5py dataset
         return data.chunks
     else:
         return None
