@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.20.3
+-------
+
+* Fixed a bug in site frequency spectrum scaling functions
+  (`#54 <https://github.com/cggh/scikit-allel/issues/54>`_.
+
 v0.20.2
 -------
 
