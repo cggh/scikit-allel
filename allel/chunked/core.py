@@ -523,7 +523,7 @@ def _get_expression_variables(expression, vm):
 
 
 # based on bcolz.chunked_eval
-def eval_table(tbl, expression, vm='numexpr', blen=None, storage=None,
+def eval_table(tbl, expression, vm='python', blen=None, storage=None,
                create='array', vm_kwargs=None, **kwargs):
     """Evaluate `expression` against columns of a table."""
 
@@ -930,7 +930,7 @@ class ChunkedTable(object):
         out = eval_table(self, expression, **kwargs)
         return ChunkedArray(out)
 
-    def query(self, expression, vm='numexpr', blen=None, storage=None,
+    def query(self, expression, vm='python', blen=None, storage=None,
               create='table', vm_kwargs=None, **kwargs):
         condition = self.eval(expression, vm=vm, blen=blen, storage=storage,
                               create='array', vm_kwargs=vm_kwargs)

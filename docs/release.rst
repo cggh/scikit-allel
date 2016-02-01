@@ -14,6 +14,9 @@ v0.20.3
 * Changed behaviour of `subset` method on genotype and haplotype arrays to
   better infer argument types and handle None argument values
   (`#55 <https://github.com/cggh/scikit-allel/issues/55>`_).
+* Changed table `eval` and `query` methods to make python the default for
+  expression evaluation, because it is more expressive than numexpr
+  (`#58 <https://github.com/cggh/scikit-allel/issues/58>`_).
 
 v0.20.2
 -------

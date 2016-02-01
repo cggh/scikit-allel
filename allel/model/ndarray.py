@@ -114,7 +114,7 @@ class RecArrayAug(np.recarray):
     def to_hdf5_group(self, parent, name, **kwargs):
         return recarray_to_hdf5_group(self, parent, name, **kwargs)
 
-    def eval(self, expression, vm='numexpr'):
+    def eval(self, expression, vm='python'):
         """Evaluate an expression against the table columns.
 
         Parameters
@@ -135,7 +135,7 @@ class RecArrayAug(np.recarray):
         else:
             return eval(expression, {}, self)
 
-    def query(self, expression, vm='numexpr'):
+    def query(self, expression, vm='python'):
         """Evaluate expression and then use it to extract rows from the table.
 
         Parameters

@@ -1864,10 +1864,10 @@ class CTableWrapper(object):
         ctbl = ctable_block_take(self.ctbl, indices, **kwargs)
         return type(self)(ctbl, copy=False)
 
-    def eval(self, expression, vm='numexpr', **kwargs):
+    def eval(self, expression, vm='python', **kwargs):
         return self.ctbl.eval(expression, vm=vm, **kwargs)
 
-    def query(self, expression, vm='numexpr'):
+    def query(self, expression, vm='python'):
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
 
