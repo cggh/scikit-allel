@@ -209,8 +209,9 @@ class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
-    def setup_instance(self, data):
-        data = chunked.storage_registry['default'].array(data, chunklen=2)
+    def setup_instance(self, data, dtype=None):
+        data = chunked.storage_registry['default'].array(data, dtype=dtype,
+                                                         chunklen=2)
         return HaplotypeChunkedArray(data)
 
     def test_constructor(self):

@@ -987,7 +987,7 @@ class GenotypeArrayInterface(object):
 
 class HaplotypeArrayInterface(object):
 
-    def setup_instance(self, data):
+    def setup_instance(self, data, dtype=None):
         # to be implemented in sub-classes
         pass
 
@@ -1219,21 +1219,24 @@ class HaplotypeArrayInterface(object):
                            [0, 2, 0],
                            [0, 0, 1],
                            [0, 0, 0]])
-        actual = self.setup_instance(haplotype_data).count_alleles()
-        aeq(expect, actual)
-        eq(4, actual.n_variants)
-        eq(3, actual.n_alleles)
+        for dtype in None, 'i1', 'i2':
+            h = self.setup_instance(haplotype_data, dtype=dtype)
+            actual = h.count_alleles()
+            aeq(expect, actual)
+            eq(4, actual.n_variants)
+            eq(3, actual.n_alleles)
 
     def test_count_alleles_subpop(self):
         expect = np.array([[1, 0, 0],
                            [0, 1, 0],
                            [0, 0, 1],
                            [0, 0, 0]])
-        h = self.setup_instance(haplotype_data)
-        actual = h.count_alleles(subpop=[0, 2])
-        aeq(expect, actual)
-        eq(4, actual.n_variants)
-        eq(3, actual.n_alleles)
+        for dtype in None, 'i1', 'i2':
+            h = self.setup_instance(haplotype_data, dtype=dtype)
+            actual = h.count_alleles(subpop=[0, 2])
+            aeq(expect, actual)
+            eq(4, actual.n_variants)
+            eq(3, actual.n_alleles)
 
     def test_count_alleles_subpops(self):
         expect_sub1 = np.array([[1, 0, 0],
@@ -1244,15 +1247,36 @@ class HaplotypeArrayInterface(object):
                                 [0, 1, 0],
                                 [0, 0, 0],
                                 [0, 0, 0]])
-        h = self.setup_instance(haplotype_data)
-        subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
-        actual = h.count_alleles_subpops(subpops=subpops)
-        aeq(expect_sub1, actual['sub1'])
-        aeq(expect_sub2, actual['sub2'])
-        eq(4, actual['sub1'].n_variants)
-        eq(3, actual['sub1'].n_alleles)
-        eq(4, actual['sub2'].n_variants)
-        eq(3, actual['sub2'].n_alleles)
+        for dtype in None, 'i1', 'i2':
+            h = self.setup_instance(haplotype_data, dtype=dtype)
+            subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
+            actual = h.count_alleles_subpops(subpops=subpops)
+            aeq(expect_sub1, actual['sub1'])
+            aeq(expect_sub2, actual['sub2'])
+            eq(4, actual['sub1'].n_variants)
+            eq(3, actual['sub1'].n_alleles)
+            eq(4, actual['sub2'].n_variants)
+            eq(3, actual['sub2'].n_alleles)
+
+    def test_count_alleles_max_allele(self):
+        expect = np.array([[1, 1, 0],
+                           [0, 2, 0],
+                           [0, 0, 1],
+                           [0, 0, 0]])
+        for dtype in None, 'i1', 'i2':
+            h = self.setup_instance(haplotype_data, dtype=dtype)
+            actual = h.count_alleles()
+            eq(3, actual.n_alleles)
+            aeq(expect, actual)
+            actual = h.count_alleles(max_allele=2)
+            eq(3, actual.n_alleles)
+            aeq(expect, actual)
+            actual = h.count_alleles(max_allele=1)
+            eq(2, actual.n_alleles)
+            aeq(expect[:, :2], actual)
+            actual = h.count_alleles(max_allele=0)
+            eq(1, actual.n_alleles)
+            aeq(expect[:, :1], actual)
 
     def test_map_alleles(self):
 

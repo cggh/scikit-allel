@@ -187,8 +187,8 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
     _class = HaplotypeArray
 
-    def setup_instance(self, data):
-        return HaplotypeArray(data)
+    def setup_instance(self, data, dtype=None):
+        return HaplotypeArray(data, dtype=dtype)
 
     def test_constructor(self):
 

@@ -2721,9 +2721,10 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
   Py_ssize_t __pyx_t_10;
   Py_ssize_t __pyx_t_11;
   int __pyx_t_12;
-  Py_ssize_t __pyx_t_13;
+  int __pyx_t_13;
   Py_ssize_t __pyx_t_14;
-  PyObject *__pyx_t_15 = NULL;
+  Py_ssize_t __pyx_t_15;
+  PyObject *__pyx_t_16 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -2821,7 +2822,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
  *             # iterate over haplotypes
  *             for j in range(n_haplotypes):             # <<<<<<<<<<<<<<
  *                 allele = h[i, j]
- *                 if allele >= 0:
+ *                 if 0 <= allele <= max_allele:
  */
           __pyx_t_8 = __pyx_v_n_haplotypes;
           for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
@@ -2831,7 +2832,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
  *             # iterate over haplotypes
  *             for j in range(n_haplotypes):
  *                 allele = h[i, j]             # <<<<<<<<<<<<<<
- *                 if allele >= 0:
+ *                 if 0 <= allele <= max_allele:
  *                     ac[i, allele] += 1
  */
             __pyx_t_10 = __pyx_v_i;
@@ -2841,28 +2842,32 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
             /* "allel/opt/model.pyx":128
  *             for j in range(n_haplotypes):
  *                 allele = h[i, j]
- *                 if allele >= 0:             # <<<<<<<<<<<<<<
+ *                 if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                     ac[i, allele] += 1
  * 
  */
-            __pyx_t_12 = ((__pyx_v_allele >= 0) != 0);
+            __pyx_t_12 = (0 <= __pyx_v_allele);
             if (__pyx_t_12) {
+              __pyx_t_12 = (__pyx_v_allele <= __pyx_v_max_allele);
+            }
+            __pyx_t_13 = (__pyx_t_12 != 0);
+            if (__pyx_t_13) {
 
               /* "allel/opt/model.pyx":129
  *                 allele = h[i, j]
- *                 if allele >= 0:
+ *                 if 0 <= allele <= max_allele:
  *                     ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-              __pyx_t_13 = __pyx_v_i;
-              __pyx_t_14 = __pyx_v_allele;
-              *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_13 * __pyx_v_ac.strides[0]) ) + __pyx_t_14 * __pyx_v_ac.strides[1]) )) += 1;
+              __pyx_t_14 = __pyx_v_i;
+              __pyx_t_15 = __pyx_v_allele;
+              *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_14 * __pyx_v_ac.strides[0]) ) + __pyx_t_15 * __pyx_v_ac.strides[1]) )) += 1;
 
               /* "allel/opt/model.pyx":128
  *             for j in range(n_haplotypes):
  *                 allele = h[i, j]
- *                 if allele >= 0:             # <<<<<<<<<<<<<<
+ *                 if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                     ac[i, allele] += 1
  * 
  */
@@ -2919,15 +2924,15 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_15 = PyTuple_New(1+1); if (unlikely(!__pyx_t_15)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_15);
-    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_2); __pyx_t_2 = NULL;
+    __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_16);
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_15, 0+1, __pyx_t_4);
+    PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_15, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_16, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 131; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+    __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
@@ -2949,7 +2954,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_int8_count_alleles(CYTHO
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_15);
+  __Pyx_XDECREF(__pyx_t_16);
   __Pyx_AddTraceback("allel.opt.model.haplotype_int8_count_alleles", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -3072,9 +3077,10 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
   Py_ssize_t __pyx_t_11;
   __pyx_t_5numpy_int64_t __pyx_t_12;
   int __pyx_t_13;
-  Py_ssize_t __pyx_t_14;
+  int __pyx_t_14;
   Py_ssize_t __pyx_t_15;
-  PyObject *__pyx_t_16 = NULL;
+  Py_ssize_t __pyx_t_16;
+  PyObject *__pyx_t_17 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -3183,7 +3189,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
  *             for j in range(n_haplotypes):
  *                 idx = subpop[j]             # <<<<<<<<<<<<<<
  *                 allele = h[i, idx]
- *                 if allele >= 0:
+ *                 if 0 <= allele <= max_allele:
  */
             __pyx_t_10 = __pyx_v_j;
             __pyx_v_idx = (*((__pyx_t_5numpy_int64_t *) ( /* dim=0 */ (__pyx_v_subpop.data + __pyx_t_10 * __pyx_v_subpop.strides[0]) )));
@@ -3192,7 +3198,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
  *             for j in range(n_haplotypes):
  *                 idx = subpop[j]
  *                 allele = h[i, idx]             # <<<<<<<<<<<<<<
- *                 if allele >= 0:
+ *                 if 0 <= allele <= max_allele:
  *                     ac[i, allele] += 1
  */
             __pyx_t_11 = __pyx_v_i;
@@ -3202,28 +3208,32 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
             /* "allel/opt/model.pyx":158
  *                 idx = subpop[j]
  *                 allele = h[i, idx]
- *                 if allele >= 0:             # <<<<<<<<<<<<<<
+ *                 if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                     ac[i, allele] += 1
  * 
  */
-            __pyx_t_13 = ((__pyx_v_allele >= 0) != 0);
+            __pyx_t_13 = (0 <= __pyx_v_allele);
             if (__pyx_t_13) {
+              __pyx_t_13 = (__pyx_v_allele <= __pyx_v_max_allele);
+            }
+            __pyx_t_14 = (__pyx_t_13 != 0);
+            if (__pyx_t_14) {
 
               /* "allel/opt/model.pyx":159
  *                 allele = h[i, idx]
- *                 if allele >= 0:
+ *                 if 0 <= allele <= max_allele:
  *                     ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-              __pyx_t_14 = __pyx_v_i;
-              __pyx_t_15 = __pyx_v_allele;
-              *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_14 * __pyx_v_ac.strides[0]) ) + __pyx_t_15 * __pyx_v_ac.strides[1]) )) += 1;
+              __pyx_t_15 = __pyx_v_i;
+              __pyx_t_16 = __pyx_v_allele;
+              *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_15 * __pyx_v_ac.strides[0]) ) + __pyx_t_16 * __pyx_v_ac.strides[1]) )) += 1;
 
               /* "allel/opt/model.pyx":158
  *                 idx = subpop[j]
  *                 allele = h[i, idx]
- *                 if allele >= 0:             # <<<<<<<<<<<<<<
+ *                 if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                     ac[i, allele] += 1
  * 
  */
@@ -3280,15 +3290,15 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_16 = PyTuple_New(1+1); if (unlikely(!__pyx_t_16)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 161; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_16);
-    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_2); __pyx_t_2 = NULL;
+    __pyx_t_17 = PyTuple_New(1+1); if (unlikely(!__pyx_t_17)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 161; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_17);
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_17, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_16, 0+1, __pyx_t_4);
+    PyTuple_SET_ITEM(__pyx_t_17, 0+1, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_16, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 161; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_17, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 161; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+    __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
@@ -3310,7 +3320,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_int8_count_alleles_subpo
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_16);
+  __Pyx_XDECREF(__pyx_t_17);
   __Pyx_AddTraceback("allel.opt.model.haplotype_int8_count_alleles_subpop", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -3808,9 +3818,10 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_int8_count_alleles_maske
   Py_ssize_t __pyx_t_15;
   Py_ssize_t __pyx_t_16;
   Py_ssize_t __pyx_t_17;
-  Py_ssize_t __pyx_t_18;
+  int __pyx_t_18;
   Py_ssize_t __pyx_t_19;
-  PyObject *__pyx_t_20 = NULL;
+  Py_ssize_t __pyx_t_20;
+  PyObject *__pyx_t_21 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -3940,7 +3951,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_int8_count_alleles_maske
  *                     # iterate over alleles
  *                     for k in range(ploidy):             # <<<<<<<<<<<<<<
  *                         allele = g[i, j, k]
- *                         if allele >= 0:
+ *                         if 0 <= allele <= max_allele:
  */
               __pyx_t_13 = __pyx_v_ploidy;
               for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
@@ -3950,7 +3961,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_int8_count_alleles_maske
  *                     # iterate over alleles
  *                     for k in range(ploidy):
  *                         allele = g[i, j, k]             # <<<<<<<<<<<<<<
- *                         if allele >= 0:
+ *                         if 0 <= allele <= max_allele:
  *                             ac[i, allele] += 1
  */
                 __pyx_t_15 = __pyx_v_i;
@@ -3961,28 +3972,32 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_int8_count_alleles_maske
                 /* "allel/opt/model.pyx":221
  *                     for k in range(ploidy):
  *                         allele = g[i, j, k]
- *                         if allele >= 0:             # <<<<<<<<<<<<<<
+ *                         if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                             ac[i, allele] += 1
  * 
  */
-                __pyx_t_12 = ((__pyx_v_allele >= 0) != 0);
+                __pyx_t_12 = (0 <= __pyx_v_allele);
                 if (__pyx_t_12) {
+                  __pyx_t_12 = (__pyx_v_allele <= __pyx_v_max_allele);
+                }
+                __pyx_t_18 = (__pyx_t_12 != 0);
+                if (__pyx_t_18) {
 
                   /* "allel/opt/model.pyx":222
  *                         allele = g[i, j, k]
- *                         if allele >= 0:
+ *                         if 0 <= allele <= max_allele:
  *                             ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-                  __pyx_t_18 = __pyx_v_i;
-                  __pyx_t_19 = __pyx_v_allele;
-                  *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_18 * __pyx_v_ac.strides[0]) ) + __pyx_t_19 * __pyx_v_ac.strides[1]) )) += 1;
+                  __pyx_t_19 = __pyx_v_i;
+                  __pyx_t_20 = __pyx_v_allele;
+                  *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_19 * __pyx_v_ac.strides[0]) ) + __pyx_t_20 * __pyx_v_ac.strides[1]) )) += 1;
 
                   /* "allel/opt/model.pyx":221
  *                     for k in range(ploidy):
  *                         allele = g[i, j, k]
- *                         if allele >= 0:             # <<<<<<<<<<<<<<
+ *                         if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                             ac[i, allele] += 1
  * 
  */
@@ -4049,15 +4064,15 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_int8_count_alleles_maske
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_20 = PyTuple_New(1+1); if (unlikely(!__pyx_t_20)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_20);
-    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_20, 0, __pyx_t_2); __pyx_t_2 = NULL;
+    __pyx_t_21 = PyTuple_New(1+1); if (unlikely(!__pyx_t_21)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_21);
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_21, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_20, 0+1, __pyx_t_4);
+    PyTuple_SET_ITEM(__pyx_t_21, 0+1, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_20, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_21, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
+    __Pyx_DECREF(__pyx_t_21); __pyx_t_21 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
@@ -4079,7 +4094,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_int8_count_alleles_maske
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_20);
+  __Pyx_XDECREF(__pyx_t_21);
   __Pyx_AddTraceback("allel.opt.model.genotype_int8_count_alleles_masked", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -4208,9 +4223,10 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_int8_count_alleles_subpo
   __pyx_t_5numpy_int64_t __pyx_t_14;
   Py_ssize_t __pyx_t_15;
   int __pyx_t_16;
-  Py_ssize_t __pyx_t_17;
+  int __pyx_t_17;
   Py_ssize_t __pyx_t_18;
-  PyObject *__pyx_t_19 = NULL;
+  Py_ssize_t __pyx_t_19;
+  PyObject *__pyx_t_20 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -4338,7 +4354,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_int8_count_alleles_subpo
  *                 idx = subpop[j]
  *                 for k in range(ploidy):             # <<<<<<<<<<<<<<
  *                     allele = g[i, idx, k]
- *                     if allele >= 0:
+ *                     if 0 <= allele <= max_allele:
  */
             __pyx_t_11 = __pyx_v_ploidy;
             for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
@@ -4348,7 +4364,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_int8_count_alleles_subpo
  *                 idx = subpop[j]
  *                 for k in range(ploidy):
  *                     allele = g[i, idx, k]             # <<<<<<<<<<<<<<
- *                     if allele >= 0:
+ *                     if 0 <= allele <= max_allele:
  *                         ac[i, allele] += 1
  */
               __pyx_t_13 = __pyx_v_i;
@@ -4359,28 +4375,32 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_int8_count_alleles_subpo
               /* "allel/opt/model.pyx":253
  *                 for k in range(ploidy):
  *                     allele = g[i, idx, k]
- *                     if allele >= 0:             # <<<<<<<<<<<<<<
+ *                     if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                         ac[i, allele] += 1
  * 
  */
-              __pyx_t_16 = ((__pyx_v_allele >= 0) != 0);
+              __pyx_t_16 = (0 <= __pyx_v_allele);
               if (__pyx_t_16) {
+                __pyx_t_16 = (__pyx_v_allele <= __pyx_v_max_allele);
+              }
+              __pyx_t_17 = (__pyx_t_16 != 0);
+              if (__pyx_t_17) {
 
                 /* "allel/opt/model.pyx":254
  *                     allele = g[i, idx, k]
- *                     if allele >= 0:
+ *                     if 0 <= allele <= max_allele:
  *                         ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-                __pyx_t_17 = __pyx_v_i;
-                __pyx_t_18 = __pyx_v_allele;
-                *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_17 * __pyx_v_ac.strides[0]) ) + __pyx_t_18 * __pyx_v_ac.strides[1]) )) += 1;
+                __pyx_t_18 = __pyx_v_i;
+                __pyx_t_19 = __pyx_v_allele;
+                *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_18 * __pyx_v_ac.strides[0]) ) + __pyx_t_19 * __pyx_v_ac.strides[1]) )) += 1;
 
                 /* "allel/opt/model.pyx":253
  *                 for k in range(ploidy):
  *                     allele = g[i, idx, k]
- *                     if allele >= 0:             # <<<<<<<<<<<<<<
+ *                     if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                         ac[i, allele] += 1
  * 
  */
@@ -4438,15 +4458,15 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_int8_count_alleles_subpo
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_19 = PyTuple_New(1+1); if (unlikely(!__pyx_t_19)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_19);
-    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_19, 0, __pyx_t_2); __pyx_t_2 = NULL;
+    __pyx_t_20 = PyTuple_New(1+1); if (unlikely(!__pyx_t_20)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_20);
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_20, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_19, 0+1, __pyx_t_4);
+    PyTuple_SET_ITEM(__pyx_t_20, 0+1, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_19, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_20, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_19); __pyx_t_19 = 0;
+    __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
@@ -4468,7 +4488,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_int8_count_alleles_subpo
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_19);
+  __Pyx_XDECREF(__pyx_t_20);
   __Pyx_AddTraceback("allel.opt.model.genotype_int8_count_alleles_subpop", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -4611,9 +4631,10 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_int8_count_alleles_subpo
   Py_ssize_t __pyx_t_16;
   __pyx_t_5numpy_int64_t __pyx_t_17;
   Py_ssize_t __pyx_t_18;
-  Py_ssize_t __pyx_t_19;
+  int __pyx_t_19;
   Py_ssize_t __pyx_t_20;
-  PyObject *__pyx_t_21 = NULL;
+  Py_ssize_t __pyx_t_21;
+  PyObject *__pyx_t_22 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -4753,7 +4774,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_int8_count_alleles_subpo
  *                 if not mask[i, idx]:
  *                     for k in range(ploidy):             # <<<<<<<<<<<<<<
  *                         allele = g[i, idx, k]
- *                         if allele >= 0:
+ *                         if 0 <= allele <= max_allele:
  */
               __pyx_t_14 = __pyx_v_ploidy;
               for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
@@ -4763,7 +4784,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_int8_count_alleles_subpo
  *                 if not mask[i, idx]:
  *                     for k in range(ploidy):
  *                         allele = g[i, idx, k]             # <<<<<<<<<<<<<<
- *                         if allele >= 0:
+ *                         if 0 <= allele <= max_allele:
  *                             ac[i, allele] += 1
  */
                 __pyx_t_16 = __pyx_v_i;
@@ -4774,28 +4795,32 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_int8_count_alleles_subpo
                 /* "allel/opt/model.pyx":288
  *                     for k in range(ploidy):
  *                         allele = g[i, idx, k]
- *                         if allele >= 0:             # <<<<<<<<<<<<<<
+ *                         if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                             ac[i, allele] += 1
  * 
  */
-                __pyx_t_13 = ((__pyx_v_allele >= 0) != 0);
+                __pyx_t_13 = (0 <= __pyx_v_allele);
                 if (__pyx_t_13) {
+                  __pyx_t_13 = (__pyx_v_allele <= __pyx_v_max_allele);
+                }
+                __pyx_t_19 = (__pyx_t_13 != 0);
+                if (__pyx_t_19) {
 
                   /* "allel/opt/model.pyx":289
  *                         allele = g[i, idx, k]
- *                         if allele >= 0:
+ *                         if 0 <= allele <= max_allele:
  *                             ac[i, allele] += 1             # <<<<<<<<<<<<<<
  * 
  *     return np.asarray(ac)
  */
-                  __pyx_t_19 = __pyx_v_i;
-                  __pyx_t_20 = __pyx_v_allele;
-                  *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_19 * __pyx_v_ac.strides[0]) ) + __pyx_t_20 * __pyx_v_ac.strides[1]) )) += 1;
+                  __pyx_t_20 = __pyx_v_i;
+                  __pyx_t_21 = __pyx_v_allele;
+                  *((__pyx_t_5numpy_int32_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ac.data + __pyx_t_20 * __pyx_v_ac.strides[0]) ) + __pyx_t_21 * __pyx_v_ac.strides[1]) )) += 1;
 
                   /* "allel/opt/model.pyx":288
  *                     for k in range(ploidy):
  *                         allele = g[i, idx, k]
- *                         if allele >= 0:             # <<<<<<<<<<<<<<
+ *                         if 0 <= allele <= max_allele:             # <<<<<<<<<<<<<<
  *                             ac[i, allele] += 1
  * 
  */
@@ -4862,15 +4887,15 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_int8_count_alleles_subpo
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_21 = PyTuple_New(1+1); if (unlikely(!__pyx_t_21)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 291; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_21);
-    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_21, 0, __pyx_t_2); __pyx_t_2 = NULL;
+    __pyx_t_22 = PyTuple_New(1+1); if (unlikely(!__pyx_t_22)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 291; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_22);
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_22, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_21, 0+1, __pyx_t_4);
+    PyTuple_SET_ITEM(__pyx_t_22, 0+1, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_21, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 291; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_22, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 291; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_21); __pyx_t_21 = 0;
+    __Pyx_DECREF(__pyx_t_22); __pyx_t_22 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = __pyx_t_1;
@@ -4892,7 +4917,7 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_int8_count_alleles_subpo
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
-  __Pyx_XDECREF(__pyx_t_21);
+  __Pyx_XDECREF(__pyx_t_22);
   __Pyx_AddTraceback("allel.opt.model.genotype_int8_count_alleles_subpop_masked", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
