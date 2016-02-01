@@ -7,6 +7,13 @@ v0.20.3
 * Fixed a bug in the `count_alleles()` methods on genotype and haplotype array
   classes that manifested if the `max_allele` argument was provided
   (`#59 <https://github.com/cggh/scikit-allel/issues/59>`_.
+* Fixed a bug in Jupyter notebook `display` method for chunked tables
+  (`#57 <https://github.com/cggh/scikit-allel/issues/57>`_.
+* Fixed a bug in site frequency spectrum scaling functions
+  (`#54 <https://github.com/cggh/scikit-allel/issues/54>`_.
+* Changed behaviour of `subset` method on genotype and haplotype arrays to
+  better infer argument types and handle None argument values
+  (`#55 <https://github.com/cggh/scikit-allel/issues/55>`_).
 
 v0.20.2
 -------

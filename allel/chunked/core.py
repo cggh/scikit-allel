@@ -357,7 +357,7 @@ def take_table(tbl, indices, blen=None, storage=None, create='table',
                           create=create, **kwargs)
 
 
-def subset(data, sel0, sel1, blen=None, storage=None, create='array',
+def subset(data, sel0=None, sel1=None, blen=None, storage=None, create='array',
            **kwargs):
     """Return selected rows and columns of an array."""
 
@@ -365,20 +365,32 @@ def subset(data, sel0, sel1, blen=None, storage=None, create='array',
     storage = _util.get_storage(storage)
     blen = _util.get_blen_array(data, blen)
     length = len(data)
-    sel0 = np.asanyarray(sel0)
-    sel1 = np.asanyarray(sel1)
+    if sel0 is not None:
+        sel0 = np.asanyarray(sel0)
+    if sel1 is not None:
+        sel1 = np.asanyarray(sel1)
 
     # ensure boolean array for dim 0
-    if sel0.shape[0] < length:
+    if sel0 is not None and sel0.dtype.kind != 'b':
         # assume indices, convert to boolean condition
         tmp = np.zeros(length, dtype=bool)
         tmp[sel0] = True
         sel0 = tmp
 
     # ensure indices for dim 1
-    if sel1.shape[0] == data.shape[1]:
+    if sel1 is not None and sel1.dtype.kind == 'b':
         # assume boolean condition, convert to indices
         sel1 = np.nonzero(sel1)[0]
+
+    # shortcuts
+    if sel0 is None and sel1 is None:
+        return copy(data, blen=blen, storage=storage, create=create, **kwargs)
+    elif sel1 is None:
+        return compress(data, sel0, axis=0, blen=blen, storage=storage,
+                        create=create, **kwargs)
+    elif sel0 is None:
+        return take(data, sel1, axis=1, blen=blen, storage=storage,
+                    create=create, **kwargs)
 
     # build output
     sel0_nnz = count_nonzero(sel0)
@@ -790,7 +802,10 @@ class ChunkedTable(object):
         elif isinstance(item, slice):
             # item is row slice, return numpy recarray
             start = 0 if item.start is None else item.start
+            if start < 0:
+                raise ValueError('negative indices not supported')
             stop = len(self) if item.stop is None else item.stop
+            stop = min(stop, len(self))
             step = 1 if item.step is None else item.step
             outshape = (stop - start) // step
             out = np.empty(outshape, dtype=self.dtype)
@@ -839,10 +854,15 @@ class ChunkedTable(object):
         ra = self[:6]
         return recarray_to_html_str(ra, limit=5, caption=caption)
 
-    def display(self, limit, **kwargs):
+    def display(self, limit=5, **kwargs):
         kwargs.setdefault('caption', repr(self))
+        if limit is None:
+            limit = len(self)
         ra = self[:limit+1]
         return recarray_display(ra, limit=limit, **kwargs)
+
+    def displayall(self, **kwargs):
+        return self.display(limit=None, **kwargs)
 
     @property
     def shape(self):
