@@ -20,7 +20,7 @@ MAINTAINER_EMAIL = 'alimanfoo@googlemail.com',
 
 URL = 'https://github.com/cggh/scikit-allel'
 
-DOWNLOAD_URL = 'http://pypi.python.org/pypi/scikit-allele'
+DOWNLOAD_URL = 'http://pypi.python.org/pypi/scikit-allel'
 
 LICENSE = 'MIT'
 
