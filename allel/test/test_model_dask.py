@@ -28,7 +28,8 @@ class GenotypeDaskArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     _class = GenotypeDaskArray
 
-    def setup_instance(self, data):
+    def setup_instance(self, data, dtype=None):
+        # ignore dtype
         return GenotypeDaskArray.from_array(data, chunks=(2, 2, None))
 
     def test_constructor(self):

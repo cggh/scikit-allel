@@ -10,4 +10,4 @@ nose
 petl
 seaborn
 toolz
-git+https://github.com/blaze/dask.git@master
+dask

@@ -92,7 +92,7 @@ feature_table_names = tuple(t[0] for t in feature_table_dtype)
 
 class GenotypeArrayInterface(object):
 
-    def setup_instance(self, data):
+    def setup_instance(self, data, dtype=None):
         # to be implemented in sub-classes
         pass
 
@@ -744,62 +744,112 @@ class GenotypeArrayInterface(object):
 
     def test_count_alleles(self):
 
-        # diploid
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([[3, 1, 0],
-                           [1, 2, 1],
-                           [1, 2, 1],
-                           [0, 0, 2],
-                           [0, 0, 0]])
-        actual = g.count_alleles()
-        aeq(expect, actual)
-        eq(5, actual.n_variants)
-        eq(3, actual.n_alleles)
+        for dtype in None, 'i1', 'i2':
+            # make sure we test the optimisations too
 
-        # polyploid
-        print('test polyploid')
-        g = self.setup_instance(triploid_genotype_data)
-        expect = np.array([[5, 1, 0],
-                           [1, 5, 0],
-                           [1, 1, 1],
-                           [0, 0, 0]])
-        actual = g.count_alleles()
-        aeq(expect, actual)
-        eq(4, actual.n_variants)
-        eq(3, actual.n_alleles)
+            # diploid
+            g = self.setup_instance(diploid_genotype_data, dtype=dtype)
+            expect = np.array([[3, 1, 0],
+                               [1, 2, 1],
+                               [1, 2, 1],
+                               [0, 0, 2],
+                               [0, 0, 0]])
+            actual = g.count_alleles()
+            aeq(expect, actual)
+            eq(5, actual.n_variants)
+            eq(3, actual.n_alleles)
+
+            # polyploid
+            g = self.setup_instance(triploid_genotype_data, dtype=dtype)
+            expect = np.array([[5, 1, 0],
+                               [1, 5, 0],
+                               [1, 1, 1],
+                               [0, 0, 0]])
+            actual = g.count_alleles()
+            aeq(expect, actual)
+            eq(4, actual.n_variants)
+            eq(3, actual.n_alleles)
 
     def test_count_alleles_subpop(self):
-        g = self.setup_instance(diploid_genotype_data)
-        expect = np.array([[2, 0, 0],
-                           [1, 0, 1],
-                           [1, 1, 0],
-                           [0, 0, 2],
-                           [0, 0, 0]])
-        actual = g.count_alleles(subpop=[0, 2])
-        aeq(expect, actual)
-        eq(5, actual.n_variants)
-        eq(3, actual.n_alleles)
+        for dtype in None, 'i1', 'i2':
+            # make sure we test the optimisations too
+            g = self.setup_instance(diploid_genotype_data, dtype=dtype)
+            expect = np.array([[2, 0, 0],
+                               [1, 0, 1],
+                               [1, 1, 0],
+                               [0, 0, 2],
+                               [0, 0, 0]])
+            actual = g.count_alleles(subpop=[0, 2])
+            aeq(expect, actual)
+            eq(5, actual.n_variants)
+            eq(3, actual.n_alleles)
 
     def test_count_alleles_subpops(self):
-        g = self.setup_instance(diploid_genotype_data)
-        subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
-        expect_sub1 = np.array([[2, 0, 0],
-                                [1, 0, 1],
-                                [1, 1, 0],
-                                [0, 0, 2],
-                                [0, 0, 0]])
-        expect_sub2 = np.array([[1, 1, 0],
-                                [0, 2, 0],
-                                [0, 1, 1],
-                                [0, 0, 0],
-                                [0, 0, 0]])
-        actual = g.count_alleles_subpops(subpops=subpops)
-        aeq(expect_sub1, actual['sub1'])
-        aeq(expect_sub2, actual['sub2'])
-        eq(5, actual['sub1'].n_variants)
-        eq(3, actual['sub1'].n_alleles)
-        eq(5, actual['sub2'].n_variants)
-        eq(3, actual['sub2'].n_alleles)
+        for dtype in None, 'i1', 'i2':
+            # make sure we test the optimisations too
+            g = self.setup_instance(diploid_genotype_data, dtype=dtype)
+            subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
+            expect_sub1 = np.array([[2, 0, 0],
+                                    [1, 0, 1],
+                                    [1, 1, 0],
+                                    [0, 0, 2],
+                                    [0, 0, 0]])
+            expect_sub2 = np.array([[1, 1, 0],
+                                    [0, 2, 0],
+                                    [0, 1, 1],
+                                    [0, 0, 0],
+                                    [0, 0, 0]])
+            actual = g.count_alleles_subpops(subpops=subpops)
+            aeq(expect_sub1, actual['sub1'])
+            aeq(expect_sub2, actual['sub2'])
+            eq(5, actual['sub1'].n_variants)
+            eq(3, actual['sub1'].n_alleles)
+            eq(5, actual['sub2'].n_variants)
+            eq(3, actual['sub2'].n_alleles)
+
+    def test_count_alleles_max_allele(self):
+
+        for dtype in None, 'i1', 'i2':
+            # make sure we test the optimisations too
+
+            # diploid
+            g = self.setup_instance(diploid_genotype_data, dtype=dtype)
+            expect = np.array([[3, 1, 0],
+                               [1, 2, 1],
+                               [1, 2, 1],
+                               [0, 0, 2],
+                               [0, 0, 0]])
+            actual = g.count_alleles()
+            eq(3, actual.n_alleles)
+            aeq(expect, actual)
+            actual = g.count_alleles(max_allele=2)
+            eq(3, actual.n_alleles)
+            aeq(expect, actual)
+            actual = g.count_alleles(max_allele=1)
+            eq(2, actual.n_alleles)
+            aeq(expect[:, :2], actual)
+            actual = g.count_alleles(max_allele=0)
+            eq(1, actual.n_alleles)
+            aeq(expect[:, :1], actual)
+
+            # polyploid
+            g = self.setup_instance(triploid_genotype_data, dtype=dtype)
+            expect = np.array([[5, 1, 0],
+                               [1, 5, 0],
+                               [1, 1, 1],
+                               [0, 0, 0]])
+            actual = g.count_alleles()
+            eq(3, actual.n_alleles)
+            aeq(expect, actual)
+            actual = g.count_alleles(max_allele=2)
+            eq(3, actual.n_alleles)
+            aeq(expect, actual)
+            actual = g.count_alleles(max_allele=1)
+            eq(2, actual.n_alleles)
+            aeq(expect[:, :2], actual)
+            actual = g.count_alleles(max_allele=0)
+            eq(1, actual.n_alleles)
+            aeq(expect[:, :1], actual)
 
     def test_map_alleles(self):
         a = np.array(diploid_genotype_data, dtype=np.int8)

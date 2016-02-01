@@ -29,8 +29,8 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     _class = GenotypeCArray
 
-    def setup_instance(self, data):
-        return GenotypeCArray(data)
+    def setup_instance(self, data, dtype=None):
+        return GenotypeCArray(data, dtype=dtype)
 
     def test_constructor(self):
 

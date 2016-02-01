@@ -185,7 +185,7 @@ def genotype_int8_count_alleles(cnp.int8_t[:, :, :] g not None,
                 # iterate over alleles
                 for k in range(ploidy):
                     allele = g[i, j, k]
-                    if allele >= 0:
+                    if 0 <= allele <= max_allele:
                         ac[i, allele] += 1
 
     return np.asarray(ac)
