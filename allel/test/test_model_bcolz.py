@@ -29,8 +29,8 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     _class = GenotypeCArray
 
-    def setup_instance(self, data):
-        return GenotypeCArray(data)
+    def setup_instance(self, data, dtype=None):
+        return GenotypeCArray(data, dtype=dtype)
 
     def test_constructor(self):
 
@@ -203,8 +203,8 @@ class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
     _class = HaplotypeCArray
 
-    def setup_instance(self, data):
-        return HaplotypeCArray(data)
+    def setup_instance(self, data, dtype=None):
+        return HaplotypeCArray(data, dtype=dtype)
 
     def test_constructor(self):
 

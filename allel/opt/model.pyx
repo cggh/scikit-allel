@@ -125,7 +125,7 @@ def haplotype_int8_count_alleles(cnp.int8_t[:, :] h not None,
             # iterate over haplotypes
             for j in range(n_haplotypes):
                 allele = h[i, j]
-                if allele >= 0:
+                if 0 <= allele <= max_allele:
                     ac[i, allele] += 1
 
     return np.asarray(ac)
@@ -155,7 +155,7 @@ def haplotype_int8_count_alleles_subpop(cnp.int8_t[:, :] h not None,
             for j in range(n_haplotypes):
                 idx = subpop[j]
                 allele = h[i, idx]
-                if allele >= 0:
+                if 0 <= allele <= max_allele:
                     ac[i, allele] += 1
 
     return np.asarray(ac)
@@ -185,7 +185,7 @@ def genotype_int8_count_alleles(cnp.int8_t[:, :, :] g not None,
                 # iterate over alleles
                 for k in range(ploidy):
                     allele = g[i, j, k]
-                    if allele >= 0:
+                    if 0 <= allele <= max_allele:
                         ac[i, allele] += 1
 
     return np.asarray(ac)
@@ -218,7 +218,7 @@ def genotype_int8_count_alleles_masked(cnp.int8_t[:, :, :] g not None,
                     # iterate over alleles
                     for k in range(ploidy):
                         allele = g[i, j, k]
-                        if allele >= 0:
+                        if 0 <= allele <= max_allele:
                             ac[i, allele] += 1
 
     return np.asarray(ac)
@@ -250,7 +250,7 @@ def genotype_int8_count_alleles_subpop(cnp.int8_t[:, :, :] g not None,
                 idx = subpop[j]
                 for k in range(ploidy):
                     allele = g[i, idx, k]
-                    if allele >= 0:
+                    if 0 <= allele <= max_allele:
                         ac[i, allele] += 1
 
     return np.asarray(ac)
@@ -285,7 +285,7 @@ def genotype_int8_count_alleles_subpop_masked(cnp.int8_t[:, :, :] g not None,
                 if not mask[i, idx]:
                     for k in range(ploidy):
                         allele = g[i, idx, k]
-                        if allele >= 0:
+                        if 0 <= allele <= max_allele:
                             ac[i, allele] += 1
 
     return np.asarray(ac)

@@ -28,8 +28,9 @@ class GenotypeDaskArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     _class = GenotypeDaskArray
 
-    def setup_instance(self, data):
-        return GenotypeDaskArray.from_array(data, chunks=(2, 2, None))
+    def setup_instance(self, data, dtype=None):
+        return GenotypeDaskArray.from_array(np.asarray(data, dtype=dtype),
+                                            chunks=(2, 2, None))
 
     def test_constructor(self):
 
@@ -129,8 +130,9 @@ class HaplotypeDaskArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
     _class = HaplotypeDaskArray
 
-    def setup_instance(self, data):
-        return HaplotypeDaskArray.from_array(data, chunks=(2, 2))
+    def setup_instance(self, data, dtype=None):
+        return HaplotypeDaskArray.from_array(np.asarray(data, dtype=dtype),
+                                             chunks=(2, 2))
 
     def test_constructor(self):
 
