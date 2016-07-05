@@ -8351,18 +8351,18 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_22ihh_scan_int8(CYTHON_UNUSED PyObj
   Py_ssize_t __pyx_t_24;
   __Pyx_RefNannySetupContext("ihh_scan_int8", 0);
 
-  /* "allel/opt/stats.pyx":467
+  /* "allel/opt/stats.pyx":466
+ *         np.float64_t ihh
  * 
- *     # initialise
  *     n_variants = h.shape[0]             # <<<<<<<<<<<<<<
+ *     # initialise
  *     n_haplotypes = h.shape[1]
- *     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
  */
   __pyx_v_n_variants = (__pyx_v_h.shape[0]);
 
   /* "allel/opt/stats.pyx":468
- *     # initialise
  *     n_variants = h.shape[0]
+ *     # initialise
  *     n_haplotypes = h.shape[1]             # <<<<<<<<<<<<<<
  *     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
  * 
@@ -8370,7 +8370,7 @@ static PyObject *__pyx_pf_5allel_3opt_5stats_22ihh_scan_int8(CYTHON_UNUSED PyObj
   __pyx_v_n_haplotypes = (__pyx_v_h.shape[1]);
 
   /* "allel/opt/stats.pyx":469
- *     n_variants = h.shape[0]
+ *     # initialise
  *     n_haplotypes = h.shape[1]
  *     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2             # <<<<<<<<<<<<<<
  * 

@@ -463,8 +463,8 @@ def ihh_scan_int8(np.int8_t[:, :] h not None, pos, min_ehh=0):
         np.float64_t[:] vihh
         np.float64_t ihh
 
-    # initialise
     n_variants = h.shape[0]
+    # initialise
     n_haplotypes = h.shape[1]
     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
 
