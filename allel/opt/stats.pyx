@@ -506,7 +506,6 @@ def ihh_scan_int8(np.int8_t[:, :] h,
 
         # pairwise comparison of alleles between haplotypes to determine
         # shared suffix lengths
-        # N.B., this is the critical performance section
         with nogil:
             u = 0  # pair index
             for j in range(n_haplotypes):
@@ -516,12 +515,12 @@ def ihh_scan_int8(np.int8_t[:, :] h,
                     # test for non-equal and non-missing alleles
                     if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
                         # break shared suffix, reset length to zero
-                        ssl[p] = 0
+                        ssl[u] = 0
                     else:
                         # extend shared suffix
-                        ssl[p] += 1
+                        ssl[u] += 1
                     # increment pair index
-                    p += 1
+                    u += 1
 
         # compute IHH from shared suffix lengths
         ihh = ssl2ihh(ssl, i, pos, min_ehh=min_ehh, include_edges=include_edges)

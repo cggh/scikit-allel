@@ -427,7 +427,7 @@ def nsl(h):
 
     # check inputs
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
-    
+
     # check there are no invariant sites
     ac = h.count_alleles()
     assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
