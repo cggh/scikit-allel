@@ -428,10 +428,12 @@ def ssl2ihh(ssl, i, pos, min_ehh):
         # only compute integral if user has not specified min_ehh, or if ehh
         # breaks down to reach less than min_ehh
         calc = False
+        print(i, ehh.size, ehh.shape, ehh[0], min_ehh)
         if min_ehh is None:
             calc = True
-        elif (ehh.size < i) | (ehh[0] <= min_ehh):
+        elif (ehh.shape[0] < i) or (ehh[0] <= min_ehh):
             calc = True
+
         if calc:
 
             # trim ehh array at minimum EHH value
@@ -441,6 +443,7 @@ def ssl2ihh(ssl, i, pos, min_ehh):
 
             # compute variant spacing
             s = ehh.shape[0]
+
             # take absolute value because this might be a reverse scan
             g = np.abs(np.diff(pos[i-s+1:i+1]))
 
@@ -452,7 +455,7 @@ def ssl2ihh(ssl, i, pos, min_ehh):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ihh_scan_int8(np.int8_t[:, :] h not None, pos, min_ehh=0):
+def ihh_scan_int8(np.int8_t[:, :] h, pos, min_ehh):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
 
@@ -497,7 +500,7 @@ def ihh_scan_int8(np.int8_t[:, :] h not None, pos, min_ehh=0):
                     p += 1
 
         # compute IHH from shared suffix lengths
-        ihh = ssl2ihh(ssl, pos, i, min_ehh)
+        ihh = ssl2ihh(ssl, i, pos, min_ehh)
         vihh[i] = ihh
 
     return np.asarray(vihh)

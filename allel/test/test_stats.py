@@ -6,7 +6,7 @@ import unittest
 
 
 import numpy as np
-from nose.tools import assert_raises, eq_ as eq
+from nose.tools import assert_raises, eq_ as eq, assert_is_instance
 from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
     assert_array_nanclose
 
@@ -623,6 +623,36 @@ class TestSF(unittest.TestCase):
 
 
 class TestSelection(unittest.TestCase):
+
+    def test_ihs(self):
+        from allel.stats import ihs
+        n_variants = 1000
+        n_haplotypes = 20
+        h = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
+                              dtype='i1')
+        pos = np.arange(0, n_variants*10, 10)
+
+        for min_ehh in 0, 0.05, 0.5, None:
+            score = ihs(h, pos, min_ehh=min_ehh)
+            assert_is_instance(score, np.ndarray)
+            eq((n_variants,), score.shape)
+            eq(np.dtype('f8'), score.dtype)
+
+    def test_xpehh(self):
+        from allel.stats import xpehh
+        n_variants = 100
+        n_haplotypes = 20
+        h1 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
+                               dtype='i1')
+        h2 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
+                               dtype='i1')
+        pos = np.arange(0, n_variants*10, 10)
+
+        for min_ehh in 0, 0.05, 0.5, None:
+            score = xpehh(h1, h2, pos, min_ehh=min_ehh)
+            assert_is_instance(score, np.ndarray)
+            eq((n_variants,), score.shape)
+            eq(np.dtype('f8'), score.dtype)
 
     def test_ssl01_scan_int8(self):
         from allel.opt.stats import nsl01_scan_int8
