@@ -250,7 +250,7 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
-def xpehh(h1, h2, pos, min_ehh=0.05):
+def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False):
     """Compute the unstandardized cross-population extended haplotype
     homozygosity score (XPEHH) for each variant.
 
@@ -295,13 +295,18 @@ def xpehh(h1, h2, pos, min_ehh=0.05):
 
     from allel.opt.stats import ihh_scan_int8
 
+    # check inputs
+    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
+    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+    pos = np.asarray(pos, dtype='i4')
+
     # scan forward
-    ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh)
-    ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh)
+    ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh, include_edges=include_edges)
+    ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh, include_edges=include_edges)
 
     # scan backward
-    ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh)[::-1]
-    ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh)[::-1]
+    ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)[::-1]
+    ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)[::-1]
 
     # compute unstandardized score
     ihh1 = ihh1_fwd + ihh1_rev
@@ -311,7 +316,7 @@ def xpehh(h1, h2, pos, min_ehh=0.05):
     return score
 
 
-def ihs(h, pos, min_ehh=0.05):
+def ihs(h, pos, min_ehh=0.05, include_edges=False):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference and alternate alleles.
@@ -356,11 +361,17 @@ def ihs(h, pos, min_ehh=0.05):
 
     from allel.opt.stats import ihh01_scan_int8
 
+    # check inputs
+    h = HaplotypeArray(np.asarray(h, dtype='i1'))
+    pos = np.asarray(pos, dtype='i4')
+
     # scan forward
-    ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh)
+    ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh,
+                                         include_edges=include_edges)
 
     # scan backward
-    ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh)
+    ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh,
+                                         include_edges=include_edges)
     ihh0_rev = ihh0_rev[::-1]
     ihh1_rev = ihh1_rev[::-1]
 
@@ -414,6 +425,9 @@ def nsl(h):
 
     from allel.opt.stats import nsl01_scan_int8
 
+    # check inputs
+    h = HaplotypeArray(np.asarray(h, dtype='i1'))
+    
     # check there are no invariant sites
     ac = h.count_alleles()
     assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
