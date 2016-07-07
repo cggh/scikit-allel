@@ -573,6 +573,60 @@ def ihh_scan_int8(np.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def nsl_scan_int8(np.int8_t[:, :] h):
+    """Scan forwards over haplotypes, computing NSL backwards for each variant."""
+
+    cdef:
+        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, s
+        np.int32_t[:] ssl
+        np.int32_t l
+        np.int8_t a1, a2
+        np.float64_t[:] vnsl
+        np.float64_t nsl
+
+    # initialise
+    n_variants = h.shape[0]
+    n_haplotypes = h.shape[1]
+    n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
+
+    # shared suffix lengths between all pairs of haplotypes
+    ssl = np.zeros(n_pairs, dtype='i4')
+
+    # NSL values for each variant
+    vnsl = np.empty(n_variants, dtype='f8')
+
+    with nogil:
+
+        # iterate forward over variants
+        for i in range(n_variants):
+            u = 0  # pair index
+
+            # pairwise comparison of alleles between haplotypes to determine
+            # shared suffix lengths
+            for j in range(n_haplotypes):
+                a1 = h[i, j]  # allele on first haplotype in pair
+                for k in range(j+1, n_haplotypes):
+                    a2 = h[i, k]  # allele on second haplotype in pair
+                    # test for non-equal and non-missing alleles
+                    if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
+                        # break shared suffix, reset length to zero
+                        l = 0
+                    else:
+                        # extend shared suffix
+                        l = ssl[u] + 1
+                    ssl[u] = l
+                    # increment pair index
+                    u += 1
+
+            # compute nsl from shared suffix lengths
+            nsl = ssl2nsl(ssl)
+            vnsl[i] = nsl
+
+    return np.asarray(vnsl)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def ssl01_scan_int8(np.int8_t[:, :] h, stat, **kwargs):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the

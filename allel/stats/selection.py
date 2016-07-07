@@ -477,6 +477,83 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, use_threads=True):
     return score
 
 
+def xpnsl(h1, h2, use_threads=True):
+    """TODO.
+
+    Parameters
+    ----------
+    h1 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the first population.
+    h2 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the second population.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized XPNSL scores.
+
+    Notes
+    -----
+    
+    TODO
+
+    """
+    from allel.opt.stats import nsl_scan_int8
+
+    # check inputs
+    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
+    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # use multiple threads
+
+        # setup threadpool
+        pool = ThreadPool(min(4, multiprocessing.cpu_count()))
+
+        # scan forward
+        res1_fwd = pool.apply_async(nsl_scan_int8, args=(h1,))
+        res2_fwd = pool.apply_async(nsl_scan_int8, args=(h2,))
+
+        # scan backward
+        res1_rev= pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
+        res2_rev = pool.apply_async(nsl_scan_int8, args=(h2[::-1],))
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        nsl1_fwd = res1_fwd.get()
+        nsl2_fwd = res2_fwd.get()
+        nsl1_rev = res1_rev.get()
+        nsl2_rev = res2_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # compute without threads
+
+        # scan forward
+        nsl1_fwd = nsl_scan_int8(h1)
+        nsl2_fwd = nsl_scan_int8(h2)
+
+        # scan backward
+        nsl1_rev = nsl_scan_int8(h1[::-1])
+        nsl2_rev = nsl_scan_int8(h2[::-1])
+
+    # handle reverse scans
+    nsl1_rev = nsl1_rev[::-1]
+    nsl2_rev = nsl2_rev[::-1]
+
+    # compute unstandardized score
+    nsl1 = nsl1_fwd + nsl1_rev
+    nsl2 = nsl2_fwd + nsl2_rev
+    score = np.log(nsl1 / nsl2)
+
+    return score
+
+
 def nsl(h, use_threads=True):
     """Compute the unstandardized number of segregating sites by length (nSl)
     for each variant, comparing the reference and alternate alleles,

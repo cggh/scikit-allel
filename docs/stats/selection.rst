@@ -9,6 +9,7 @@ Selection
 .. autofunction:: xpehh
 .. autofunction:: ihs
 .. autofunction:: nsl
+.. autofunction:: xpnsl
 .. autofunction:: haplotype_diversity
 .. autofunction:: moving_haplotype_diversity
 .. autofunction:: garud_h

@@ -7,7 +7,7 @@ from nose.tools import eq_ as eq, assert_is_instance
 from allel.test.tools import assert_array_equal, assert_array_nanclose
 
 
-from allel.stats import ihs, xpehh, nsl
+from allel.stats import ihs, xpehh, nsl, xpnsl
 from allel.opt.stats import ssl01_scan_int8, nsl01_scan_int8, ihh01_scan_int8,\
     ssl2ihh
 
@@ -359,6 +359,21 @@ def test_nsl():
 
     for use_threads in True, False:
         score = nsl(h, use_threads=use_threads)
+        assert_is_instance(score, np.ndarray)
+        eq((n_variants,), score.shape)
+        eq(np.dtype('f8'), score.dtype)
+
+
+def test_xpnsl():
+    n_variants = 1000
+    n_haplotypes = 20
+    h1 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
+                           dtype='i1')
+    h2 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
+                           dtype='i1')
+
+    for use_threads in True, False:
+        score = xpnsl(h1, h2, use_threads=use_threads)
         assert_is_instance(score, np.ndarray)
         eq((n_variants,), score.shape)
         eq(np.dtype('f8'), score.dtype)
