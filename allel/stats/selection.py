@@ -252,8 +252,18 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
+def adjust_pos_access(pos, is_accessible):
+    assert is_accessible.shape[0] > pos[-1], 'accessibility too short'
+    newpos = np.zeros_like(pos)
+    s = 0
+    for i in range(1, len(pos)):
+        s += np.count_nonzero(is_accessible[pos[i-1]-1:pos[i]-1])
+        newpos[i] = s
+    return newpos
+
+
 def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
-          clip_gap=20000, use_threads=True):
+          clip_gap=20000, use_threads=True, is_accessible=None):
     """Compute the unstandardized cross-population extended haplotype
     homozygosity score (XPEHH) for each variant.
 
@@ -302,6 +312,10 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
     h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
     pos = np.asarray(pos, dtype='i4')
+
+    # apply accessibility
+    if is_accessible is not None:
+        pos = adjust_pos_access(pos, is_accessible)
 
     # setup kwargs
     kwargs = dict(
@@ -362,7 +376,7 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
 
 
 def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
-        clip_gap=20000, use_threads=True):
+        clip_gap=20000, use_threads=True, is_accessible=None):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference and alternate alleles.
@@ -410,6 +424,10 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     # check inputs
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
     pos = np.asarray(pos, dtype='i4')
+
+    # apply accessibility
+    if is_accessible is not None:
+        pos = adjust_pos_access(pos, is_accessible)
 
     # setup kwargs
     kwargs = dict(
