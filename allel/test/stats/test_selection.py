@@ -225,7 +225,7 @@ def test_ssl2ihh_a():
     vidx = 3
     min_ehh = 0
     expect = ((8 - 4) * (1 + 1) / 2) + ((4 - 2) * (1 + 1) / 2)
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     eq(expect, actual)
 
 
@@ -237,7 +237,7 @@ def test_ssl2ihh_b():
     vidx = 3
     min_ehh = 0
     expect = ((8 - 4) * (1/3 + 1/3) / 2) + ((4 - 2) * (1/3 + 1/3) / 2)
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     eq(expect, actual)
 
 
@@ -249,7 +249,7 @@ def test_ssl2ihh_c():
     vidx = 3
     min_ehh = 0
     expect = ((8 - 4) * (1 + 2/3) / 2) + ((4 - 2) * (2/3 + 1/3) / 2)
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     eq(expect, actual)
 
 
@@ -261,7 +261,7 @@ def test_ssl2ihh_d():
     vidx = 3
     min_ehh = 0
     expect = ((8 - 4) * (2/3 + 1/3) / 2) + ((4 - 2) * (1/3 + 1/3) / 2)
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     eq(expect, actual)
 
 
@@ -273,7 +273,7 @@ def test_ssl2ihh_e():
     pos = np.array([1, 2, 4, 8], dtype='i4')
     vidx = 3
     min_ehh = 0
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     assert np.isnan(actual), actual
 
 
@@ -285,7 +285,7 @@ def test_ssl2ihh_f():
     pos = np.array([1, 2, 4, 8], dtype='i4')
     vidx = 3
     min_ehh = 0
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     assert np.isnan(actual), actual
 
 
@@ -298,7 +298,7 @@ def test_ssl2ihh_g():
     vidx = 3
     min_ehh = 0
     expect = ((8 - 4) + (4 - 2) + (2 - 1))
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh, include_edges=True)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh, include_edges=True)
     eq(expect, actual)
 
 
@@ -309,7 +309,7 @@ def test_ssl2ihh_h():
     pos = np.array([1, 2, 4, 8], dtype='i4')
     vidx = 3
     min_ehh = 0.5
-    actual = ssl2ihh(ssl, vidx, pos, min_ehh)
+    actual = ssl2ihh(ssl, max(ssl), vidx, pos, min_ehh)
     assert np.isnan(actual), actual
 
 

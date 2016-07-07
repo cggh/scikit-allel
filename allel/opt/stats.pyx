@@ -414,6 +414,7 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
 @cython.wraparound(False)
 @cython.cdivision(True)
 cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
+                           np.int32_t l_max,
                            Py_ssize_t vidx,
                            np.int32_t[:] pos,
                            np.float64_t min_ehh=0,
@@ -441,7 +442,8 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 
     cdef:
         Py_ssize_t i, j, ix, n_pairs
-        np.int32_t l, l_max
+        np.int32_t l
+        # np.int32_t l_max
         np.float64_t ehh_prv, ehh_cur, ihh, ret, g, n_pairs_ident
         int *b
         bint edge
@@ -452,29 +454,25 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
     edge = True
 
     # only compute if at least 1 pair
-    if n_pairs > 0:
+    if n_pairs > 0 and l_max > 1:
 
-        # find max ssl
-        l_max = ssl[0]
-        for j in range(n_pairs):
-            l = ssl[j]
-            if l > l_max:
-                l_max = l
+        # # find max ssl
+        # l_max = ssl[0]
+        # for j in range(n_pairs):
+        #     l = ssl[j]
+        #     if l > l_max:
+        #         l_max = l
 
-        # do bincount
+        # bincount
         b = <int *>malloc((l_max + 1) * sizeof(int))
+
         try:
+
+            # do bincount
             memset(b, 0, (l_max + 1) * sizeof(int))
             for j in range(n_pairs):
                 l = ssl[j]
                 b[l] += 1
-
-            # # e.g., ssl = [0, 1, 3]
-            # b = np.bincount(ssl)
-            # # e.g., b = [1, 1, 0, 1]
-
-            # l_max = b.shape[0]
-            # e.g., l_max = 3
 
             # initialise
             n_pairs_ident = n_pairs - b[0]
@@ -523,6 +521,7 @@ def ihh_scan_int8(np.int8_t[:, :] h,
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, s
         np.int32_t[:] ssl
+        np.int32_t l, l_max
         np.int8_t a1, a2
         np.float64_t[:] vihh
         np.float64_t ihh
@@ -542,10 +541,11 @@ def ihh_scan_int8(np.int8_t[:, :] h,
 
         # iterate forward over variants
         for i in range(n_variants):
+            u = 0  # pair index
+            l_max = 0
 
             # pairwise comparison of alleles between haplotypes to determine
             # shared suffix lengths
-            u = 0  # pair index
             for j in range(n_haplotypes):
                 a1 = h[i, j]  # allele on first haplotype in pair
                 for k in range(j+1, n_haplotypes):
@@ -553,15 +553,19 @@ def ihh_scan_int8(np.int8_t[:, :] h,
                     # test for non-equal and non-missing alleles
                     if (a1 != a2) and (a1 >= 0) and (a2 >= 0):
                         # break shared suffix, reset length to zero
-                        ssl[u] = 0
+                        l = 0
                     else:
                         # extend shared suffix
-                        ssl[u] += 1
+                        l = ssl[u] + 1
+                    ssl[u] = l
                     # increment pair index
                     u += 1
+                    # update max l
+                    if l > l_max:
+                        l_max = l
 
             # compute IHH from shared suffix lengths
-            ihh = ssl2ihh(ssl, i, pos, min_ehh=min_ehh, include_edges=include_edges)
+            ihh = ssl2ihh(ssl, l_max, i, pos, min_ehh=min_ehh, include_edges=include_edges)
             vihh[i] = ihh
 
     return np.asarray(vihh)
@@ -646,7 +650,7 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11
-        np.int32_t l
+        np.int32_t l, l_max_00, l_max_11
         np.int32_t[:] ssl, ssl00, ssl11
         np.int8_t a1, a2
         np.float64_t[:] vstat0, vstat1
@@ -669,10 +673,11 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
 
         # iterate forward over variants
         for i in range(n_variants):
+            u = u00 = u11 = 0
+            l_max_00 = l_max_11 = 0
 
             # pairwise comparison of alleles between haplotypes to determine
             # shared suffix lengths
-            u = u00 = u11 = 0
             for j in range(n_haplotypes):
                 a1 = h[i, j]
                 for k in range(j+1, n_haplotypes):
@@ -686,19 +691,23 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
                         ssl[u] = l
                         ssl00[u00] = l
                         u00 += 1
+                        if l > l_max_00:
+                            l_max_00 = l
                     elif a1 == a2 == 1:
                         l = ssl[u] + 1
                         ssl[u] = l
                         ssl11[u11] = l
                         u11 += 1
+                        if l > l_max_11:
+                            l_max_11 = l
                     else:
                         # break shared suffix, reset to zero
                         ssl[u] = 0
                     u += 1
 
             # compute statistic from shared suffix lengths
-            vstat0[i] = ssl2ihh(ssl00[:u00], i, pos, min_ehh, include_edges)
-            vstat1[i] = ssl2ihh(ssl11[:u11], i, pos, min_ehh, include_edges)
+            vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, pos, min_ehh, include_edges)
+            vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, pos, min_ehh, include_edges)
 
     return np.asarray(vstat0), np.asarray(vstat1)
 
