@@ -418,7 +418,9 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
                            Py_ssize_t vidx,
                            np.int32_t[:] pos,
                            np.float64_t min_ehh=0,
-                           bint include_edges=False) nogil:
+                           bint include_edges=False,
+                           np.int32_t max_gap=0,
+                           np.int32_t clip_gap=0) nogil:
     """Compute integrated haplotype homozygosity from shared suffix lengths.
 
     Parameters
@@ -491,9 +493,20 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
                     edge = False
                     break
 
-                # accumulate IHH
+                # determine gap width
                 ix = vidx - i
                 g = fabs(pos[ix] - pos[ix + 1])
+
+                # handle very long gaps
+                if max_gap > 0 and g > max_gap:
+                    ihh = NAN
+                    break
+
+                # handle long gaps
+                if clip_gap > 0 and g > clip_gap:
+                    g = clip_gap
+
+                # accumulate IHH
                 ihh += g * (ehh_cur + ehh_prv) / 2
 
                 # move on
@@ -514,7 +527,9 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 def ihh_scan_int8(np.int8_t[:, :] h,
                   np.int32_t[:] pos,
                   np.float64_t min_ehh=0,
-                  bint include_edges=False):
+                  bint include_edges=False,
+                  np.int32_t max_gap=0,
+                  np.int32_t clip_gap=0):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
 
@@ -565,7 +580,11 @@ def ihh_scan_int8(np.int8_t[:, :] h,
                         l_max = l
 
             # compute IHH from shared suffix lengths
-            ihh = ssl2ihh(ssl, l_max, i, pos, min_ehh=min_ehh, include_edges=include_edges)
+            ihh = ssl2ihh(ssl, l_max, i, pos,
+                          min_ehh=min_ehh,
+                          include_edges=include_edges,
+                          max_gap=max_gap,
+                          clip_gap=clip_gap)
             vihh[i] = ihh
 
     return np.asarray(vihh)
@@ -700,7 +719,9 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, **kwargs):
 def ihh01_scan_int8(np.int8_t[:, :] h,
                     np.int32_t[:] pos,
                     np.float64_t min_ehh=0,
-                    bint include_edges=False):
+                    bint include_edges=False,
+                    np.int32_t max_gap=0,
+                    np.int32_t clip_gap=0):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
     reference (0) and alternate (1) alleles separately."""
@@ -763,8 +784,16 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
                     u += 1
 
             # compute statistic from shared suffix lengths
-            vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, pos, min_ehh, include_edges)
-            vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, pos, min_ehh, include_edges)
+            vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, pos,
+                                min_ehh=min_ehh,
+                                include_edges=include_edges,
+                                max_gap=max_gap,
+                                clip_gap=clip_gap)
+            vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, pos,
+                                min_ehh=min_ehh,
+                                include_edges=include_edges,
+                                max_gap=max_gap,
+                                clip_gap=clip_gap)
 
     return np.asarray(vstat0), np.asarray(vstat1)
 

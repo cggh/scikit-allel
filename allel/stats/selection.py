@@ -252,7 +252,8 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
-def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, use_threads=True):
+def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
+          clip_gap=20000, use_threads=True):
     """Compute the unstandardized cross-population extended haplotype
     homozygosity score (XPEHH) for each variant.
 
@@ -302,6 +303,14 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, use_threads=True):
     h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
     pos = np.asarray(pos, dtype='i4')
 
+    # setup kwargs
+    kwargs = dict(
+        min_ehh=min_ehh,
+        include_edges=include_edges,
+        max_gap=max_gap,
+        clip_gap=clip_gap
+    )
+
     if use_threads and multiprocessing.cpu_count() > 1:
         # use multiple threads
 
@@ -309,28 +318,12 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, use_threads=True):
         pool = ThreadPool(min(4, multiprocessing.cpu_count()))
 
         # scan forward
-        res1_fwd = pool.apply_async(
-            ihh_scan_int8,
-            args=(h1, pos),
-            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
-        )
-        res2_fwd = pool.apply_async(
-            ihh_scan_int8,
-            args=(h2, pos),
-            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
-        )
+        res1_fwd = pool.apply_async(ihh_scan_int8, (h1, pos), kwargs)
+        res2_fwd = pool.apply_async(ihh_scan_int8, (h2, pos), kwargs)
 
         # scan backward
-        res1_rev= pool.apply_async(
-            ihh_scan_int8,
-            args=(h1[::-1], pos[::-1]),
-            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
-        )
-        res2_rev = pool.apply_async(
-            ihh_scan_int8,
-            args=(h2[::-1], pos[::-1]),
-            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
-        )
+        res1_rev= pool.apply_async(ihh_scan_int8, (h1[::-1], pos[::-1]), kwargs)
+        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], pos[::-1]), kwargs)
 
         # wait for both to finish
         pool.close()
@@ -349,12 +342,12 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, use_threads=True):
         # compute without threads
 
         # scan forward
-        ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh, include_edges=include_edges)
-        ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh, include_edges=include_edges)
+        ihh1_fwd = ihh_scan_int8(h1, pos, **kwargs)
+        ihh2_fwd = ihh_scan_int8(h2, pos, **kwargs)
 
         # scan backward
-        ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)
-        ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)
+        ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], **kwargs)
+        ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], **kwargs)
 
     # handle reverse scans
     ihh1_rev = ihh1_rev[::-1]
@@ -368,7 +361,8 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, use_threads=True):
     return score
 
 
-def ihs(h, pos, min_ehh=0.05, include_edges=False, use_threads=True):
+def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
+        clip_gap=20000, use_threads=True):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference and alternate alleles.
@@ -417,6 +411,14 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, use_threads=True):
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
     pos = np.asarray(pos, dtype='i4')
 
+    # setup kwargs
+    kwargs = dict(
+        min_ehh=min_ehh,
+        include_edges=include_edges,
+        max_gap=max_gap,
+        clip_gap=clip_gap
+    )
+
     if use_threads and multiprocessing.cpu_count() > 1:
         # run with threads
 
@@ -424,24 +426,11 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, use_threads=True):
         pool = ThreadPool(2)
 
         # scan forward
-        result_fwd = pool.apply_async(
-            ihh01_scan_int8,
-            args=(h, pos),
-            kwds=dict(
-                min_ehh=min_ehh,
-                include_edges=include_edges
-            )
-        )
+        result_fwd = pool.apply_async(ihh01_scan_int8, (h, pos), kwargs)
 
         # scan backward
-        result_rev = pool.apply_async(
-            ihh01_scan_int8,
-            args=(h[::-1], pos[::-1]),
-            kwds=dict(
-                min_ehh=min_ehh,
-                include_edges=include_edges
-            )
-        )
+        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], pos[::-1]),
+                                      kwargs)
 
         # wait for both to finish
         pool.close()
@@ -458,12 +447,10 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, use_threads=True):
         # run without threads
 
         # scan forward
-        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh,
-                                             include_edges=include_edges)
+        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, **kwargs)
 
         # scan backward
-        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh,
-                                             include_edges=include_edges)
+        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], **kwargs)
 
     # handle reverse scan
     ihh0_rev = ihh0_rev[::-1]
