@@ -579,6 +579,7 @@ def nsl_scan_int8(np.int8_t[:, :] h):
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, s
         np.int32_t[:] ssl
+        np.int64_t ssl_sum
         np.int32_t l
         np.int8_t a1, a2
         np.float64_t[:] vnsl
@@ -600,6 +601,7 @@ def nsl_scan_int8(np.int8_t[:, :] h):
         # iterate forward over variants
         for i in range(n_variants):
             u = 0  # pair index
+            ssl_sum = 0
 
             # pairwise comparison of alleles between haplotypes to determine
             # shared suffix lengths
@@ -615,11 +617,12 @@ def nsl_scan_int8(np.int8_t[:, :] h):
                         # extend shared suffix
                         l = ssl[u] + 1
                     ssl[u] = l
+                    ssl_sum += l
                     # increment pair index
                     u += 1
 
             # compute nsl from shared suffix lengths
-            nsl = ssl2nsl(ssl)
+            nsl = ssl_sum / u
             vnsl[i] = nsl
 
     return np.asarray(vnsl)
@@ -768,33 +771,6 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef double ssl2nsl(np.int32_t[:] ssl) nogil:
-    """Compute number segregating by length from shared suffix lengths."""
-
-    cdef:
-        Py_ssize_t n_pairs, i
-        double ret
-        np.int32_t l
-        np.int64_t l_sum
-
-    # initialize
-    n_pairs = ssl.shape[0]
-    ret = NAN
-
-    # only compute if at least 1 pair
-    if n_pairs > 0:
-
-        # compute mean of shared suffix lengths
-        l_sum = 0
-        for i in range(n_pairs):
-            l_sum += ssl[i]
-        ret = l_sum / n_pairs
-
-    return ret
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def nsl01_scan_int8(np.int8_t[:, :] h):
     """Scan forwards over haplotypes, computing the number of segregating
     sites by length backwards for each variant for the reference (0) and
@@ -803,7 +779,8 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11
         np.int32_t l
-        np.int32_t[:] ssl, ssl00, ssl11
+        np.int32_t[:] ssl
+        np.int64_t ssl00_sum, ssl11_sum
         np.int8_t a1, a2
         np.float64_t[:] vstat0, vstat1
 
@@ -814,8 +791,6 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
     # shared suffix lengths between all pairs of haplotypes
     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
     ssl = np.zeros(n_pairs, dtype='i4')
-    ssl00 = np.zeros(n_pairs, dtype='i4')
-    ssl11 = np.zeros(n_pairs, dtype='i4')
 
     # statistic values for each variant
     vstat0 = np.empty(n_variants, dtype='f8')
@@ -825,10 +800,11 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
 
         # iterate forward over variants
         for i in range(n_variants):
+            u = u00 = u11 = 0
+            ssl00_sum = ssl11_sum = 0
 
             # pairwise comparison of alleles between haplotypes to determine
             # shared suffix lengths
-            u = u00 = u11 = 0
             for j in range(n_haplotypes):
                 a1 = h[i, j]
                 for k in range(j+1, n_haplotypes):
@@ -836,24 +812,27 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
                     if a1 < 0 or a2 < 0:
                         # missing allele, assume sharing continues
                         l = ssl[u] + 1
-                        ssl[u] = l
                     elif a1 == a2 == 0:
                         l = ssl[u] + 1
-                        ssl[u] = l
-                        ssl00[u00] = l
+                        ssl00_sum += l
                         u00 += 1
                     elif a1 == a2 == 1:
                         l = ssl[u] + 1
-                        ssl[u] = l
-                        ssl11[u11] = l
+                        ssl11_sum += l
                         u11 += 1
                     else:
                         # break shared suffix, reset to zero
-                        ssl[u] = 0
+                        l = 0
+                    ssl[u] = l
                     u += 1
 
-            # compute statistic from shared suffix lengths
-            vstat0[i] = ssl2nsl(ssl00[:u00])
-            vstat1[i] = ssl2nsl(ssl11[:u11])
+            if u00 > 0:
+                vstat0[i] = ssl00_sum / u00
+            else:
+                vstat0[i] = NAN
+            if u11 > 0:
+                vstat1[i] = ssl11_sum / u11
+            else:
+                vstat1[i] = NAN
 
     return np.asarray(vstat0), np.asarray(vstat1)
