@@ -320,12 +320,15 @@ def test_ihs():
                           dtype='i1')
     pos = np.arange(0, n_variants * 10, 10)
 
-    for min_ehh in 0, 0.05, 0.5:
-        for include_edges in True, False:
-            score = ihs(h, pos, min_ehh=min_ehh, include_edges=include_edges)
-            assert_is_instance(score, np.ndarray)
-            eq((n_variants,), score.shape)
-            eq(np.dtype('f8'), score.dtype)
+    for use_threads in True, False:
+        for min_ehh in 0, 0.05, 0.5:
+            for include_edges in True, False:
+                score = ihs(h, pos, min_ehh=min_ehh,
+                            include_edges=include_edges,
+                            use_threads=use_threads)
+                assert_is_instance(score, np.ndarray)
+                eq((n_variants,), score.shape)
+                eq(np.dtype('f8'), score.dtype)
 
 
 def test_xpehh():
@@ -337,13 +340,15 @@ def test_xpehh():
                            dtype='i1')
     pos = np.arange(0, n_variants * 10, 10)
 
-    for min_ehh in 0, 0.05, 0.5:
-        for include_edges in True, False:
-            score = xpehh(h1, h2, pos, min_ehh=min_ehh,
-                          include_edges=include_edges)
-            assert_is_instance(score, np.ndarray)
-            eq((n_variants,), score.shape)
-            eq(np.dtype('f8'), score.dtype)
+    for use_threads in True, False:
+        for min_ehh in 0, 0.05, 0.5:
+            for include_edges in True, False:
+                score = xpehh(h1, h2, pos, min_ehh=min_ehh,
+                              include_edges=include_edges,
+                              use_threads=use_threads)
+                assert_is_instance(score, np.ndarray)
+                eq((n_variants,), score.shape)
+                eq(np.dtype('f8'), score.dtype)
 
 
 def test_nsl():
@@ -351,9 +356,9 @@ def test_nsl():
     n_haplotypes = 20
     h = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
                           dtype='i1')
-    score = nsl(h)
-    assert_is_instance(score, np.ndarray)
-    eq((n_variants,), score.shape)
-    eq(np.dtype('f8'), score.dtype)
 
-
+    for use_threads in True, False:
+        score = nsl(h, use_threads=use_threads)
+        assert_is_instance(score, np.ndarray)
+        eq((n_variants,), score.shape)
+        eq(np.dtype('f8'), score.dtype)

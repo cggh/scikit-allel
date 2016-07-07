@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+import multiprocessing
+from multiprocessing.pool import ThreadPool
 
 
 import numpy as np
@@ -250,7 +252,7 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
-def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False):
+def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, use_threads=True):
     """Compute the unstandardized cross-population extended haplotype
     homozygosity score (XPEHH) for each variant.
 
@@ -300,13 +302,63 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False):
     h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
     pos = np.asarray(pos, dtype='i4')
 
-    # scan forward
-    ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh, include_edges=include_edges)
-    ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh, include_edges=include_edges)
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # use multiple threads
 
-    # scan backward
-    ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)[::-1]
-    ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)[::-1]
+        # setup threadpool
+        pool = ThreadPool(min(4, multiprocessing.cpu_count()))
+
+        # scan forward
+        res1_fwd = pool.apply_async(
+            ihh_scan_int8,
+            args=(h1, pos),
+            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
+        )
+        res2_fwd = pool.apply_async(
+            ihh_scan_int8,
+            args=(h2, pos),
+            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
+        )
+
+        # scan backward
+        res1_rev= pool.apply_async(
+            ihh_scan_int8,
+            args=(h1[::-1], pos[::-1]),
+            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
+        )
+        res2_rev = pool.apply_async(
+            ihh_scan_int8,
+            args=(h2[::-1], pos[::-1]),
+            kwds=dict(min_ehh=min_ehh, include_edges=include_edges)
+        )
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        ihh1_fwd = res1_fwd.get()
+        ihh2_fwd = res2_fwd.get()
+        ihh1_rev = res1_rev.get()
+        ihh2_rev = res2_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # compute without threads
+
+        # scan forward
+        ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh, include_edges=include_edges)
+        ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh, include_edges=include_edges)
+
+        # scan backward
+        ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)
+        ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh, include_edges=include_edges)
+
+    # handle reverse scans
+    ihh1_rev = ihh1_rev[::-1]
+    ihh2_rev = ihh2_rev[::-1]
 
     # compute unstandardized score
     ihh1 = ihh1_fwd + ihh1_rev
@@ -316,7 +368,7 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False):
     return score
 
 
-def ihs(h, pos, min_ehh=0.05, include_edges=False):
+def ihs(h, pos, min_ehh=0.05, include_edges=False, use_threads=True):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference and alternate alleles.
@@ -365,13 +417,55 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False):
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
     pos = np.asarray(pos, dtype='i4')
 
-    # scan forward
-    ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh,
-                                         include_edges=include_edges)
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # run with threads
 
-    # scan backward
-    ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh,
-                                         include_edges=include_edges)
+        # create pool
+        pool = ThreadPool(2)
+
+        # scan forward
+        result_fwd = pool.apply_async(
+            ihh01_scan_int8,
+            args=(h, pos),
+            kwds=dict(
+                min_ehh=min_ehh,
+                include_edges=include_edges
+            )
+        )
+
+        # scan backward
+        result_rev = pool.apply_async(
+            ihh01_scan_int8,
+            args=(h[::-1], pos[::-1]),
+            kwds=dict(
+                min_ehh=min_ehh,
+                include_edges=include_edges
+            )
+        )
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        ihh0_fwd, ihh1_fwd = result_fwd.get()
+        ihh0_rev, ihh1_rev = result_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # run without threads
+
+        # scan forward
+        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh,
+                                             include_edges=include_edges)
+
+        # scan backward
+        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh,
+                                             include_edges=include_edges)
+
+    # handle reverse scan
     ihh0_rev = ihh0_rev[::-1]
     ihh1_rev = ihh1_rev[::-1]
 
@@ -383,7 +477,7 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False):
     return score
 
 
-def nsl(h):
+def nsl(h, use_threads=True):
     """Compute the unstandardized number of segregating sites by length (nSl)
     for each variant, comparing the reference and alternate alleles,
     after Ferrer-Admetlla et al. (2014).
@@ -428,15 +522,38 @@ def nsl(h):
     # check inputs
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
 
-    # check there are no invariant sites
-    ac = h.count_alleles()
-    assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
+    # # check there are no invariant sites
+    # ac = h.count_alleles()
+    # assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
 
-    # scan forward
-    nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
+    if use_threads and multiprocessing.cpu_count() > 1:
 
-    # scan backward
-    nsl0_rev, nsl1_rev = nsl01_scan_int8(h[::-1])
+        # create pool
+        pool = ThreadPool(2)
+
+        # scan forward
+        result_fwd = pool.apply_async(nsl01_scan_int8, args=(h,))
+
+        # scan backward
+        result_rev = pool.apply_async(nsl01_scan_int8, args=(h[::-1],))
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        nsl0_fwd, nsl1_fwd = result_fwd.get()
+        nsl0_rev, nsl1_rev = result_rev.get()
+
+    else:
+
+        # scan forward
+        nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
+
+        # scan backward
+        nsl0_rev, nsl1_rev = nsl01_scan_int8(h[::-1])
+
+    # handle backwards
     nsl0_rev = nsl0_rev[::-1]
     nsl1_rev = nsl1_rev[::-1]
 
