@@ -409,64 +409,84 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
 
 
 @cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def ssl2ihh(np.int32_t[:] ssl,
             Py_ssize_t vidx,
             np.int32_t[:] pos,
             np.float64_t min_ehh=0,
             bint include_edges=False):
-    """Compute integrated haplotype homozygosity from shared suffix lengths."""
+    """Compute integrated haplotype homozygosity from shared suffix lengths.
+
+    Parameters
+    ----------
+    ssl : ndarray, int32, shape (n_pairs,)
+        Shared suffix lengths between all haplotype pairs.
+    vidx : int
+        Current variant index.
+    min_ehh : float
+        Minimum EHH below which IHH computation will be truncated.
+    include_edges : bool
+        If True, report results for variants where EHH does not fall below the
+        specified minimum before reaching the contig end.
+
+    Returns
+    -------
+    ihh : float
+        Integrated haplotype homozygosity.
+
+    """
 
     cdef:
         Py_ssize_t i, ix, l_max
-        np.float64_t ehh_prv, ehh_cur, ihh, ret, n_pairs, g
-        np.float64_t[:] c
+        np.float64_t ehh_prv, ehh_cur, ihh, ret, n_pairs, n_pairs_ident, g
+        np.int64_t[:] b
         bint edge
 
-    n_pairs = <np.float64_t> ssl.shape[0]
+    # guard condition
+    assert min_ehh >= 0
+
+    # initialize
+    n_pairs = ssl.shape[0]
     ret = np.nan
     edge = True
 
-    # compute if at least 1 pair
+    # only compute if at least 1 pair
     if n_pairs > 0:
 
         # e.g., ssl = [0, 1, 3]
         b = np.bincount(ssl)
         # e.g., b = [1, 1, 0, 1]
 
-        c = np.cumsum(b[::-1], dtype='f8')
-        # e.g., c = [1, 1, 2, 3]
+        with nogil:
 
-        c = c[:-1]
-        # e.g., c = [1, 1, 2]
+            l_max = b.shape[0]
+            # e.g., l_max = 3
 
-        c = c[::-1]
-        # e.g., c = [2, 1, 1]
+            # initialise
+            n_pairs_ident = n_pairs - b[0]
+            ihh = 0
+            ehh_prv = n_pairs_ident / n_pairs
 
-        l_max = c.shape[0]
-        # e.g., l_max = 3
+            # iterate backwards over variants
+            for i in range(1, vidx+1):
 
-        # initialise
-        ihh = 0
-        ehh_prv = c[0] / n_pairs
+                # compute current EHH
+                n_pairs_ident -= b[i]
+                ehh_cur = n_pairs_ident / n_pairs
 
-        # iterate backwards over variants
-        for i in range(1, vidx+1):
+                # check if we've reached minimum EHH
+                if ehh_cur <= min_ehh:
+                    edge = False
+                    break
 
-            if i > (l_max - 1):
-                ehh_cur = 0
-            else:
-                ehh_cur = c[i] / n_pairs
+                # accumulate IHH
+                ix = vidx - i
+                g = fabs(pos[ix] - pos[ix + 1])
+                ihh += g * (ehh_cur + ehh_prv) / 2
 
-            if ehh_cur <= min_ehh:
-                edge = False
-                break
-
-            # accumulate IHH
-            ix = vidx - i
-            g = fabs(pos[ix] - pos[ix + 1])
-            ihh += g * (ehh_cur + ehh_prv) / 2
-
-            ehh_prv = ehh_cur
+                # move on
+                ehh_prv = ehh_cur
 
         if ihh > 0 and (not edge or include_edges):
             ret = ihh
