@@ -24,6 +24,7 @@ This site provides reference documentation for `scikit-allel`. For
 worked examples with real data, see the following articles:
 
 * `Introducing scikit-allel <http://alimanfoo.github.io/2015/09/15/introducing-scikit-allel.html>`_
+* `A tour of scikit-allel <http://alimanfoo.github.io/2016/06/10/scikit-allel-tour.html>`_
 * |Estimating FST|
 * `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_
 

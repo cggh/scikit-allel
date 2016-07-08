@@ -1,6 +1,28 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+In this release the implementations of :func:`allel.stats.selection.ihs`
+and :func:`allel.stats.selection.xpehh` selection statistics have been
+reworked to address a number of issues.
+
+* Both functions now accept `max_gap` and `clip_gap` parameters to perform
+  adjustments to integrated haplotype homozygosity where there are large
+  gaps between variants, following the standard approach. Alternatively, if
+  a map of genome accessibility is available, it may be provided via the
+  `is_accessible` parameter, in which case the distance between variants
+  will be computed as the number of accessible bases between them.
+* Both functions are now faster and can make use of multiple threads to
+  further accelerate computation.
+* Several bugs in the previous implementations of these functions have been
+  fixed (`#91 <https://github.com/cggh/scikit-allel/issues/91>`_).
+* New utility functions are provided for standardising selection scores,
+  see :func:`allel.stats.selection.standardize_by_allele_count` (for use
+  with IHS and NSL) and
+  :func:`allel.stats.selection.standardize` (for use with XPEHH).
+
 v0.20.3
 -------
 

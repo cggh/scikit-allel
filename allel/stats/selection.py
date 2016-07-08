@@ -268,6 +268,127 @@ def adjust_pos_access(pos, is_accessible):
     return newpos
 
 
+def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
+        clip_gap=20000, use_threads=True, is_accessible=None):
+    """Compute the unstandardized integrated haplotype score (IHS) for each
+    variant, comparing integrated haplotype homozygosity between the
+    reference (0) and alternate (1) alleles.
+
+    Parameters
+    ----------
+    h : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array.
+    pos : array_like, int, shape (n_variants,)
+        Variant positions (physical distance).
+    min_ehh: float, optional
+        Minimum EHH beyond which to truncate integrated haplotype
+        homozygosity calculation.
+    include_edges : bool, optional
+        If True, report scores even if EHH does not decay below `min_ehh`
+        before reaching the edge of the data.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    clip_gap : int, optional
+        Clip gaps between variants to at most this number of base pairs.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, distance between variants
+        will be computed as the number of accessible bases between them.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized IHS scores.
+
+    Notes
+    -----
+
+    This function will calculate IHS for all variants. To exclude variants
+    below a given minor allele frequency, filter the input haplotype array
+    before passing to this function.
+
+    This function computes IHS comparing the reference and alternate alleles.
+    These can be polarised by switching the sign for any variant where the
+    reference allele is derived.
+
+    This function returns NaN for any IHS calculations where haplotype
+    homozygosity does not decay below `min_ehh` before reaching the first or
+    last variant. To disable this behaviour, set `include_edges` to True.
+
+    Note that the unstandardized score is returned. Usually these scores are
+    then standardized in different allele frequency bins.
+
+    See Also
+    --------
+    standardize_by_allele_count
+
+    """
+
+    from allel.opt.stats import ihh01_scan_int8
+
+    # check inputs
+    h = HaplotypeArray(np.asarray(h, dtype='i1'))
+    pos = np.asarray(pos, dtype='i4')
+
+    # apply accessibility
+    if is_accessible is not None:
+        pos = adjust_pos_access(pos, is_accessible)
+
+    # setup kwargs
+    kwargs = dict(
+        min_ehh=min_ehh,
+        include_edges=include_edges,
+        max_gap=max_gap,
+        clip_gap=clip_gap
+    )
+
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # run with threads
+
+        # create pool
+        pool = ThreadPool(2)
+
+        # scan forward
+        result_fwd = pool.apply_async(ihh01_scan_int8, (h, pos), kwargs)
+
+        # scan backward
+        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], pos[::-1]),
+                                      kwargs)
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        ihh0_fwd, ihh1_fwd = result_fwd.get()
+        ihh0_rev, ihh1_rev = result_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # run without threads
+
+        # scan forward
+        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, **kwargs)
+
+        # scan backward
+        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], **kwargs)
+
+    # handle reverse scan
+    ihh0_rev = ihh0_rev[::-1]
+    ihh1_rev = ihh1_rev[::-1]
+
+    # compute unstandardized score
+    ihh0 = ihh0_fwd + ihh0_rev
+    ihh1 = ihh1_fwd + ihh1_rev
+    score = np.log(ihh1 / ihh0)
+
+    return score
+
+
 def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
           clip_gap=20000, use_threads=True, is_accessible=None):
     """Compute the unstandardized cross-population extended haplotype
@@ -295,8 +416,8 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     use_threads : bool, optional
         If True use multiple threads to compute.
     is_accessible : array_like, bool, optional
-        Genome accessibility array. If provided, each variant gap will be
-        computed as the number of accessible bases between variants.
+        Genome accessibility array. If provided, distance between variants
+        will be computed as the number of accessible bases between them.
 
     Returns
     -------
@@ -397,201 +518,6 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     return score
 
 
-def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
-        clip_gap=20000, use_threads=True, is_accessible=None):
-    """Compute the unstandardized integrated haplotype score (IHS) for each
-    variant, comparing integrated haplotype homozygosity between the
-    reference and alternate alleles.
-
-    Parameters
-    ----------
-    h : array_like, int, shape (n_variants, n_haplotypes)
-        Haplotype array.
-    pos : array_like, int, shape (n_variants,)
-        Variant positions on physical or genetic map.
-    min_ehh: float, optional
-        Minimum EHH beyond which to truncate integrated haplotype
-        homozygosity calculation.
-    include_edges : bool, optional
-        If True, report scores even if EHH does not decay below `min_ehh`
-        before reaching the edge of the data.
-    max_gap : int, optional
-        Do not report scores if EHH spans a gap larger than this number of
-        base pairs.
-    clip_gap : int, optional
-        Clip gaps between variants to at most this number of base pairs.
-    use_threads : bool, optional
-        If True use multiple threads to compute.
-    is_accessible : array_like, bool, optional
-        Genome accessibility array. If provided, each variant gap will be
-        computed as the number of accessible bases between variants.
-
-    Returns
-    -------
-    score : ndarray, float, shape (n_variants,)
-        Unstandardized IHS scores.
-
-    Notes
-    -----
-
-    This function will calculate IHS for all variants. To exclude variants
-    below a given minor allele frequency, filter the input haplotype array
-    before passing to this function.
-
-    This function computes IHS comparing the reference and alternate alleles.
-    These can be polarised by switching the sign for any variant where the
-    reference allele is derived.
-
-    This function returns NaN for any IHS calculations where haplotype
-    homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `include_edges` to True.
-
-    Note that the unstandardized score is returned. Usually these scores are
-    then standardized in different allele frequency bins.
-
-    See Also
-    --------
-    standardize_by_allele_count
-
-    """
-
-    from allel.opt.stats import ihh01_scan_int8
-
-    # check inputs
-    h = HaplotypeArray(np.asarray(h, dtype='i1'))
-    pos = np.asarray(pos, dtype='i4')
-
-    # apply accessibility
-    if is_accessible is not None:
-        pos = adjust_pos_access(pos, is_accessible)
-
-    # setup kwargs
-    kwargs = dict(
-        min_ehh=min_ehh,
-        include_edges=include_edges,
-        max_gap=max_gap,
-        clip_gap=clip_gap
-    )
-
-    if use_threads and multiprocessing.cpu_count() > 1:
-        # run with threads
-
-        # create pool
-        pool = ThreadPool(2)
-
-        # scan forward
-        result_fwd = pool.apply_async(ihh01_scan_int8, (h, pos), kwargs)
-
-        # scan backward
-        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], pos[::-1]),
-                                      kwargs)
-
-        # wait for both to finish
-        pool.close()
-        pool.join()
-
-        # obtain results
-        ihh0_fwd, ihh1_fwd = result_fwd.get()
-        ihh0_rev, ihh1_rev = result_rev.get()
-
-        # cleanup
-        pool.terminate()
-
-    else:
-        # run without threads
-
-        # scan forward
-        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, **kwargs)
-
-        # scan backward
-        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], **kwargs)
-
-    # handle reverse scan
-    ihh0_rev = ihh0_rev[::-1]
-    ihh1_rev = ihh1_rev[::-1]
-
-    # compute unstandardized score
-    ihh0 = ihh0_fwd + ihh0_rev
-    ihh1 = ihh1_fwd + ihh1_rev
-    score = np.log(ihh1 / ihh0)
-
-    return score
-
-
-def xpnsl(h1, h2, use_threads=True):
-    """Cross-population version of the NSL statistic.
-
-    Parameters
-    ----------
-    h1 : array_like, int, shape (n_variants, n_haplotypes)
-        Haplotype array for the first population.
-    h2 : array_like, int, shape (n_variants, n_haplotypes)
-        Haplotype array for the second population.
-    use_threads : bool, optional
-        If True use multiple threads to compute.
-
-    Returns
-    -------
-    score : ndarray, float, shape (n_variants,)
-        Unstandardized XPNSL scores.
-
-    """
-    from allel.opt.stats import nsl_scan_int8
-
-    # check inputs
-    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
-    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
-
-    if use_threads and multiprocessing.cpu_count() > 1:
-        # use multiple threads
-
-        # setup threadpool
-        pool = ThreadPool(min(4, multiprocessing.cpu_count()))
-
-        # scan forward
-        res1_fwd = pool.apply_async(nsl_scan_int8, args=(h1,))
-        res2_fwd = pool.apply_async(nsl_scan_int8, args=(h2,))
-
-        # scan backward
-        res1_rev = pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
-        res2_rev = pool.apply_async(nsl_scan_int8, args=(h2[::-1],))
-
-        # wait for both to finish
-        pool.close()
-        pool.join()
-
-        # obtain results
-        nsl1_fwd = res1_fwd.get()
-        nsl2_fwd = res2_fwd.get()
-        nsl1_rev = res1_rev.get()
-        nsl2_rev = res2_rev.get()
-
-        # cleanup
-        pool.terminate()
-
-    else:
-        # compute without threads
-
-        # scan forward
-        nsl1_fwd = nsl_scan_int8(h1)
-        nsl2_fwd = nsl_scan_int8(h2)
-
-        # scan backward
-        nsl1_rev = nsl_scan_int8(h1[::-1])
-        nsl2_rev = nsl_scan_int8(h2[::-1])
-
-    # handle reverse scans
-    nsl1_rev = nsl1_rev[::-1]
-    nsl2_rev = nsl2_rev[::-1]
-
-    # compute unstandardized score
-    nsl1 = nsl1_fwd + nsl1_rev
-    nsl2 = nsl2_fwd + nsl2_rev
-    score = np.log(nsl1 / nsl2)
-
-    return score
-
-
 def nsl(h, use_threads=True):
     """Compute the unstandardized number of segregating sites by length (nSl)
     for each variant, comparing the reference and alternate alleles,
@@ -675,6 +601,80 @@ def nsl(h, use_threads=True):
     nsl0 = nsl0_fwd + nsl0_rev
     nsl1 = nsl1_fwd + nsl1_rev
     score = np.log(nsl1 / nsl0)
+
+    return score
+
+
+def xpnsl(h1, h2, use_threads=True):
+    """Cross-population version of the NSL statistic.
+
+    Parameters
+    ----------
+    h1 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the first population.
+    h2 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the second population.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized XPNSL scores.
+
+    """
+    from allel.opt.stats import nsl_scan_int8
+
+    # check inputs
+    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
+    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # use multiple threads
+
+        # setup threadpool
+        pool = ThreadPool(min(4, multiprocessing.cpu_count()))
+
+        # scan forward
+        res1_fwd = pool.apply_async(nsl_scan_int8, args=(h1,))
+        res2_fwd = pool.apply_async(nsl_scan_int8, args=(h2,))
+
+        # scan backward
+        res1_rev = pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
+        res2_rev = pool.apply_async(nsl_scan_int8, args=(h2[::-1],))
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        nsl1_fwd = res1_fwd.get()
+        nsl2_fwd = res2_fwd.get()
+        nsl1_rev = res1_rev.get()
+        nsl2_rev = res2_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # compute without threads
+
+        # scan forward
+        nsl1_fwd = nsl_scan_int8(h1)
+        nsl2_fwd = nsl_scan_int8(h2)
+
+        # scan backward
+        nsl1_rev = nsl_scan_int8(h1[::-1])
+        nsl2_rev = nsl_scan_int8(h2[::-1])
+
+    # handle reverse scans
+    nsl1_rev = nsl1_rev[::-1]
+    nsl2_rev = nsl2_rev[::-1]
+
+    # compute unstandardized score
+    nsl1 = nsl1_fwd + nsl1_rev
+    nsl2 = nsl2_fwd + nsl2_rev
+    score = np.log(nsl1 / nsl2)
 
     return score
 
