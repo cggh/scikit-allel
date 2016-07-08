@@ -7,7 +7,7 @@ from multiprocessing.pool import ThreadPool
 import numpy as np
 
 
-from allel.util import asarray_ndim
+from allel.util import asarray_ndim, check_dim0_aligned
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
 
@@ -979,3 +979,146 @@ def plot_moving_haplotype_frequencies(pos, h, size, start=0, stop=None, n=None,
     ax.set_xlabel('position (bp)')
 
     return ax
+
+
+def make_similar_sized_bins(x, n):
+    """Utility function to create a set of bins over the range of values in `x`
+    such that each bin contains roughly the same number of values.
+
+    Parameters
+    ----------
+    x : array_like
+        The values to be binned.
+    n : int
+        The number of bins to create.
+
+    Returns
+    -------
+    bins : ndarray
+        An array of bin edges.
+
+    Notes
+    -----
+    The actual number of bins returned may be less than `n` if `x` contains
+    integer values and any single value is represented more than len(x)//n
+    times.
+
+    """
+    # copy and sort the array
+    y = np.array(x).flatten()
+    y.sort()
+
+    # setup bins
+    bins = [y[0]]
+
+    # determine step size
+    step = len(y) // n
+
+    # add bin edges
+    for i in range(step, len(y), step):
+
+        # get value at this index
+        v = y[i]
+
+        # only add bin edge if larger than previous
+        if v > bins[-1]:
+            bins.append(v)
+
+    # fix last bin edge
+    bins[-1] = y[-1]
+
+    return np.array(bins)
+
+
+def standardize(score):
+    """Centre and scale to unit variance."""
+    score = asarray_ndim(score, 1)
+    return (score - np.nanmean(score)) / np.nanstd(score)
+
+
+def standardize_by_allele_count(score, aac, bins=None, n_bins=None,
+                                diagnostics=True):
+    """Standardize `score` within allele frequency bins.
+
+    Parameters
+    ----------
+    score : array_like, float
+        The score to be standardized, e.g., IHS or NSL.
+    aac : array_like, int
+        An array of alternate allele counts.
+    bins : array_like, int, optional
+        Allele count bins, overrides `n_bins`.
+    n_bins : int, optional
+        Number of allele count bins to use.
+    diagnostics : bool, optional
+        If True, plot some diagnostic information about the standardization.
+
+    Returns
+    -------
+    score_standardized : ndarray, float
+        Standardized scores.
+    bins : ndarray, int
+        Allele count bins used for standardization.
+
+    """
+
+    from scipy.stats import binned_statistic
+
+    # check inputs
+    score = asarray_ndim(score, 1)
+    aac = asarray_ndim(aac, 1)
+    check_dim0_aligned(score, aac)
+
+    if bins is None:
+        # make our own similar sized bins
+
+        # how many bins to make?
+        if n_bins is None:
+            # something vaguely reasonable
+            n_bins = np.max(aac) // 2
+
+        bins = make_similar_sized_bins(aac, n_bins)
+
+    else:
+        # user-provided bins
+        bins = asarray_ndim(bins, 1)
+
+    mean_score, _, _ = binned_statistic(aac, score, statistic=np.nanmean,
+                                        bins=bins)
+    std_score, _, _ = binned_statistic(aac, score, statistic=np.nanstd,
+                                       bins=bins)
+
+    if diagnostics:
+        import matplotlib.pyplot as plt
+        x = (bins[:-1] + bins[1:]) / 2
+        plt.fill_between(x,
+                         mean_score - std_score,
+                         mean_score + std_score,
+                         alpha=.5,
+                         label='std')
+        plt.plot(x, mean_score, marker='o', label='mean')
+        plt.grid(axis='y')
+        plt.xlabel('Alternate allele count')
+        plt.ylabel('Unstandardized score')
+        plt.title('Standardization diagnostics')
+        plt.legend()
+
+    # apply standardization
+    score_standardized = np.empty_like(score)
+    for i in range(len(bins) - 1):
+        x1 = bins[i]
+        x2 = bins[i + 1]
+        if i == 0:
+            # first bin
+            loc = (aac < x2)
+        elif i == len(bins) - 2:
+            # last bin
+            loc = (aac >= x1)
+        else:
+            # middle bins
+            loc = (aac >= x1) & (aac < x2)
+        m = mean_score[i]
+        s = std_score[i]
+        score_standardized[loc] = (score[loc] - m) / s
+
+    return score_standardized, bins
