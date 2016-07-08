@@ -6,7 +6,7 @@ import unittest
 
 
 import numpy as np
-from nose.tools import assert_raises, eq_ as eq, assert_is_instance
+from nose.tools import assert_raises, eq_ as eq
 from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
     assert_array_nanclose
 

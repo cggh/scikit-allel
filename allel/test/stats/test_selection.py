@@ -12,16 +12,19 @@ from allel.opt.stats import ssl01_scan_int8, nsl01_scan_int8, ihh01_scan_int8,\
     ssl2ihh
 
 
+def sum_ssl(ssl, *args, **kwargs):
+    return np.sum(ssl)
+
+
 def test_ssl01_scan_int8_a():
 
     # 2 haplotypes, identical
     h = np.array([[0, 0],
                   [0, 0],
                   [0, 0]], dtype='i1')
-    stat = lambda ssl, vidx, **kwargs: np.sum(ssl)
     expect0 = [1, 2, 3]
     expect1 = [0, 0, 0]
-    actual0, actual1 = ssl01_scan_int8(h, stat)
+    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
@@ -32,10 +35,9 @@ def test_ssl01_scan_int8_b():
     h = np.array([[1, 1],
                   [1, 1],
                   [1, 1]], dtype='i1')
-    stat = lambda ssl, vidx, **kwargs: np.sum(ssl)
     expect0 = [0, 0, 0]
     expect1 = [1, 2, 3]
-    actual0, actual1 = ssl01_scan_int8(h, stat)
+    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
@@ -47,10 +49,9 @@ def test_ssl01_scan_int8_c():
                   [0, 0],
                   [1, 1],
                   [1, 1]], dtype='i1')
-    stat = lambda ssl, vidx, **kwargs: np.sum(ssl)
     expect0 = [1, 2, 0, 0]
     expect1 = [0, 0, 3, 4]
-    actual0, actual1 = ssl01_scan_int8(h, stat)
+    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
@@ -62,38 +63,35 @@ def test_ssl01_scan_int8_d():
                   [0, 1],
                   [1, 0],
                   [1, 0]], dtype='i1')
-    stat = lambda ssl, vidx, **kwargs: np.sum(ssl)
     expect0 = [0, 0, 0, 0]
     expect1 = [0, 0, 0, 0]
-    actual0, actual1 = ssl01_scan_int8(h, stat)
-    assert_array_equal(expect0, actual0)
-    assert_array_equal(expect1, actual1)
-
-
-def test_ssl01_scan_int8_d():
-
-    # 3 haplotypes, 3 pairs, identical
-    h = np.array([[0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0]], dtype='i1')
-    stat = lambda ssl, vidx, **kwargs: np.sum(ssl)
-    expect0 = [3, 6, 9]
-    expect1 = [0, 0, 0]
-    actual0, actual1 = ssl01_scan_int8(h, stat)
+    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
 def test_ssl01_scan_int8_e():
 
+    # 3 haplotypes, 3 pairs, identical
+    h = np.array([[0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0]], dtype='i1')
+    expect0 = [3, 6, 9]
+    expect1 = [0, 0, 0]
+    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    assert_array_equal(expect0, actual0)
+    assert_array_equal(expect1, actual1)
+
+
+def test_ssl01_scan_int8_f():
+
     # 4 haplotypes,
     h = np.array([[0, 0, 1, 1],
                   [0, 0, 1, 1],
                   [0, 0, 1, 1]], dtype='i1')
-    stat = lambda ssl, vidx, **kwargs: np.sum(ssl)
     expect0 = [1, 2, 3]
     expect1 = [1, 2, 3]
-    actual0, actual1 = ssl01_scan_int8(h, stat)
+    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 

@@ -356,8 +356,10 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         res2_fwd = pool.apply_async(ihh_scan_int8, (h2, pos), kwargs)
 
         # scan backward
-        res1_rev= pool.apply_async(ihh_scan_int8, (h1[::-1], pos[::-1]), kwargs)
-        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], pos[::-1]), kwargs)
+        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], pos[::-1]),
+                                    kwargs)
+        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], pos[::-1]),
+                                    kwargs)
 
         # wait for both to finish
         pool.close()
@@ -551,7 +553,7 @@ def xpnsl(h1, h2, use_threads=True):
         res2_fwd = pool.apply_async(nsl_scan_int8, args=(h2,))
 
         # scan backward
-        res1_rev= pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
+        res1_rev = pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
         res2_rev = pool.apply_async(nsl_scan_int8, args=(h2[::-1],))
 
         # wait for both to finish
