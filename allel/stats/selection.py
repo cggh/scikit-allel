@@ -1121,6 +1121,7 @@ def standardize_by_allele_count(score, aac, bins=None, n_bins=None,
     if diagnostics:
         import matplotlib.pyplot as plt
         x = (bins[:-1] + bins[1:]) / 2
+        plt.figure()
         plt.fill_between(x,
                          mean_score - std_score,
                          mean_score + std_score,
