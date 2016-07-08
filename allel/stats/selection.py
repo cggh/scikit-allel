@@ -253,10 +253,16 @@ def fig_voight_painting(h, index=None, palette='colorblind',
 
 
 def adjust_pos_access(pos, is_accessible):
-    assert is_accessible.shape[0] > pos[-1], 'accessibility too short'
+    """Utility function for use with IHS and XPEHH to adjust variant spacing
+    by taking genome accessibility into account."""
+
+    pos = asarray_ndim(pos, 1)
+    is_accessible = asarray_ndim(is_accessible, 1)
+    assert is_accessible.shape[0] > pos[-1], 'accessibility array too short'
     newpos = np.zeros_like(pos)
     s = 0
     for i in range(1, len(pos)):
+        # N.B., expect pos is 1-based
         s += np.count_nonzero(is_accessible[pos[i-1]-1:pos[i]-1])
         newpos[i] = s
     return newpos
@@ -278,6 +284,19 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     min_ehh: float, optional
         Minimum EHH beyond which to truncate integrated haplotype
         homozygosity calculation.
+    include_edges : bool, optional
+        If True, report scores even if EHH does not decay below `min_ehh`
+        before reaching the edge of the data.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    clip_gap : int, optional
+        Clip gaps between variants to at most this number of base pairs.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, each variant gap will be
+        computed as the number of accessible bases between variants.
 
     Returns
     -------
@@ -293,16 +312,17 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
 
     This function returns NaN for any EHH calculations where haplotype
     homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `min_ehh` to None.
-
-    This function currently does nothing to account for large gaps between
-    variants. There will be edge effects near any large gaps.
+    last variant. To disable this behaviour, set `include_edges` to True.
 
     Note that the unstandardized score is returned. Usually these scores are
-    then normalised in different allele frequency bins.
+    then standardized genome-wide.
 
     Haplotype arrays from the two populations may have different numbers of
     haplotypes.
+
+    See Also
+    --------
+    standardize
 
     """
 
@@ -390,6 +410,19 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     min_ehh: float, optional
         Minimum EHH beyond which to truncate integrated haplotype
         homozygosity calculation.
+    include_edges : bool, optional
+        If True, report scores even if EHH does not decay below `min_ehh`
+        before reaching the edge of the data.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    clip_gap : int, optional
+        Clip gaps between variants to at most this number of base pairs.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, each variant gap will be
+        computed as the number of accessible bases between variants.
 
     Returns
     -------
@@ -409,13 +442,14 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
 
     This function returns NaN for any IHS calculations where haplotype
     homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `min_ehh` to None.
-
-    This function currently does nothing to account for large gaps between
-    variants. There will be edge effects near any large gaps.
+    last variant. To disable this behaviour, set `include_edges` to True.
 
     Note that the unstandardized score is returned. Usually these scores are
-    then normalised in different allele frequency bins.
+    then standardized in different allele frequency bins.
+
+    See Also
+    --------
+    standardize_by_allele_count
 
     """
 
@@ -483,7 +517,7 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
 
 
 def xpnsl(h1, h2, use_threads=True):
-    """TODO.
+    """Cross-population version of the NSL statistic.
 
     Parameters
     ----------
@@ -491,16 +525,13 @@ def xpnsl(h1, h2, use_threads=True):
         Haplotype array for the first population.
     h2 : array_like, int, shape (n_variants, n_haplotypes)
         Haplotype array for the second population.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
 
     Returns
     -------
     score : ndarray, float, shape (n_variants,)
         Unstandardized XPNSL scores.
-
-    Notes
-    -----
-    
-    TODO
 
     """
     from allel.opt.stats import nsl_scan_int8
@@ -568,6 +599,8 @@ def nsl(h, use_threads=True):
     ----------
     h : array_like, int, shape (n_variants, n_haplotypes)
         Haplotype array.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
 
     Returns
     -------
@@ -579,23 +612,20 @@ def nsl(h, use_threads=True):
     below a given minor allele frequency, filter the input haplotype array
     before passing to this function.
 
-    The function only expects segregating sites, so ensure any
-    non-segregating sites are removed before passing in the haplotype array.
-
     This function computes nSl by comparing the reference and alternate
     alleles. These can be polarised by switching the sign for any variant where
     the reference allele is derived.
 
     This function does nothing about nSl calculations where haplotype
-    homozygosity extends up to the first or last variant. There will be edge
+    homozygosity extends up to the first or last variant. There may be edge
     effects.
 
-    This function currently does nothing to account for large gaps between
-    variants. There will be edge effects near any large gaps.
+    Note that the unstandardized score is returned. Usually these scores are
+    then standardized in different allele frequency bins.
 
-    This function returns unstandardised scores. Typically nSl scores are
-    are normalised by subtracting the mean and dividing by the standard
-    deviation.
+    See Also
+    --------
+    standardize_by_allele_count
 
     """
 

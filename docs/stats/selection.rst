@@ -2,14 +2,16 @@ Selection
 =========
 
 .. automodule:: allel.stats.selection
+.. autofunction:: ihs
+.. autofunction:: xpehh
+.. autofunction:: nsl
+.. autofunction:: xpnsl
+.. autofunction:: standardize
+.. autofunction:: standardize_by_allele_count
 .. autofunction:: ehh_decay
 .. autofunction:: voight_painting
 .. autofunction:: plot_voight_painting
 .. autofunction:: fig_voight_painting
-.. autofunction:: xpehh
-.. autofunction:: ihs
-.. autofunction:: nsl
-.. autofunction:: xpnsl
 .. autofunction:: haplotype_diversity
 .. autofunction:: moving_haplotype_diversity
 .. autofunction:: garud_h
