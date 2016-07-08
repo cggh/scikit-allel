@@ -6,7 +6,7 @@ v0.21.0
 
 In this release the implementations of :func:`allel.stats.selection.ihs`
 and :func:`allel.stats.selection.xpehh` selection statistics have been
-reworked to address a number of issues.
+reworked to address a number of issues:
 
 * Both functions now accept `max_gap` and `clip_gap` parameters to perform
   adjustments to integrated haplotype homozygosity where there are large
