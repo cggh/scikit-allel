@@ -415,20 +415,22 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
 @cython.cdivision(True)
 cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
                            np.int32_t l_max,
-                           Py_ssize_t vidx,
-                           np.int32_t[:] pos,
+                           Py_ssize_t variant_idx,
+                           np.float64_t[:] gaps,
                            np.float64_t min_ehh=0,
-                           bint include_edges=False,
-                           np.int32_t max_gap=0,
-                           np.int32_t clip_gap=0) nogil:
+                           bint include_edges=False) nogil:
     """Compute integrated haplotype homozygosity from shared suffix lengths.
 
     Parameters
     ----------
     ssl : ndarray, int32, shape (n_pairs,)
         Shared suffix lengths between all haplotype pairs.
-    vidx : int
+    l_max : int
+        Largest value within `ssl`.
+    variant_idx : int
         Current variant index.
+    gaps : ndarray, float64, shape (n_variants - 1,)
+        Gaps between variants.
     min_ehh : float
         Minimum EHH below which IHH computation will be truncated.
     include_edges : bool
@@ -443,11 +445,10 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
     """
 
     cdef:
-        Py_ssize_t i, j, ix, n_pairs
+        Py_ssize_t i, j, gap_idx, n_pairs
         np.int32_t l
-        # np.int32_t l_max
-        np.float64_t ehh_prv, ehh_cur, ihh, ret, g, n_pairs_ident
-        int *b
+        np.float64_t ehh_prv, ehh_cur, ihh, ret, gap, n_pairs_ident
+        int *hh_breaks
         bint edge
 
     # initialize
@@ -458,34 +459,27 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
     # only compute if at least 1 pair
     if n_pairs > 0 and l_max > 1:
 
-        # # find max ssl
-        # l_max = ssl[0]
-        # for j in range(n_pairs):
-        #     l = ssl[j]
-        #     if l > l_max:
-        #         l_max = l
-
-        # bincount
-        b = <int *>malloc((l_max + 1) * sizeof(int))
+        # find breaks in haplotype homozygosity via bincount
+        hh_breaks = <int *>malloc((l_max + 1) * sizeof(int))
 
         try:
 
             # do bincount
-            memset(b, 0, (l_max + 1) * sizeof(int))
+            memset(hh_breaks, 0, (l_max + 1) * sizeof(int))
             for j in range(n_pairs):
                 l = ssl[j]
-                b[l] += 1
+                hh_breaks[l] += 1
 
             # initialise
-            n_pairs_ident = n_pairs - b[0]
+            n_pairs_ident = n_pairs - hh_breaks[0]
             ihh = 0
             ehh_prv = n_pairs_ident / n_pairs
 
             # iterate backwards over variants
-            for i in range(1, vidx + 1):
+            for i in range(1, variant_idx + 1):
 
                 # compute current EHH
-                n_pairs_ident -= b[i]
+                n_pairs_ident -= hh_breaks[i]
                 ehh_cur = n_pairs_ident / n_pairs
 
                 # check if we've reached minimum EHH
@@ -494,27 +488,23 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
                     break
 
                 # determine gap width
-                ix = vidx - i
-                g = fabs(pos[ix] - pos[ix + 1])
+                gap_idx = variant_idx - i
+                gap = gaps[gap_idx]
 
                 # handle very long gaps
-                if max_gap > 0 and g > max_gap:
+                if gap < 0:
                     ihh = NAN
                     break
 
-                # handle long gaps
-                if clip_gap > 0 and g > clip_gap:
-                    g = clip_gap
-
                 # accumulate IHH
-                ihh += g * (ehh_cur + ehh_prv) / 2
+                ihh += gap * (ehh_cur + ehh_prv) / 2
 
                 # move on
                 ehh_prv = ehh_cur
 
         finally:
             # clean up
-            free(b)
+            free(hh_breaks)
 
         if ihh > 0 and (not edge or include_edges):
             ret = ihh
@@ -525,11 +515,9 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def ihh_scan_int8(np.int8_t[:, :] h,
-                  np.int32_t[:] pos,
+                  np.float64_t[:] gaps,
                   np.float64_t min_ehh=0,
-                  bint include_edges=False,
-                  np.int32_t max_gap=0,
-                  np.int32_t clip_gap=0):
+                  bint include_edges=False):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
 
@@ -580,11 +568,9 @@ def ihh_scan_int8(np.int8_t[:, :] h,
                         l_max = l
 
             # compute IHH from shared suffix lengths
-            ihh = ssl2ihh(ssl, l_max, i, pos,
+            ihh = ssl2ihh(ssl, l_max, i, gaps,
                           min_ehh=min_ehh,
-                          include_edges=include_edges,
-                          max_gap=max_gap,
-                          clip_gap=clip_gap)
+                          include_edges=include_edges)
             vihh[i] = ihh
 
     return np.asarray(vihh)
@@ -717,11 +703,9 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, **kwargs):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def ihh01_scan_int8(np.int8_t[:, :] h,
-                    np.int32_t[:] pos,
+                    np.float64_t[:] gaps,
                     np.float64_t min_ehh=0,
-                    bint include_edges=False,
-                    np.int32_t max_gap=0,
-                    np.int32_t clip_gap=0):
+                    bint include_edges=False):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
     reference (0) and alternate (1) alleles separately."""
@@ -784,16 +768,12 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
                     u += 1
 
             # compute statistic from shared suffix lengths
-            vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, pos,
+            vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, gaps,
                                 min_ehh=min_ehh,
-                                include_edges=include_edges,
-                                max_gap=max_gap,
-                                clip_gap=clip_gap)
-            vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, pos,
+                                include_edges=include_edges)
+            vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, gaps,
                                 min_ehh=min_ehh,
-                                include_edges=include_edges,
-                                max_gap=max_gap,
-                                clip_gap=clip_gap)
+                                include_edges=include_edges)
 
     return np.asarray(vstat0), np.asarray(vstat1)
 

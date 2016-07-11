@@ -252,24 +252,74 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
-def adjust_pos_access(pos, is_accessible):
-    """Utility function for use with IHS and XPEHH to adjust variant spacing
-    by taking genome accessibility into account."""
+def compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible):
+    """Compute spacing between variants for integrating haplotype
+    homozygosity.
 
-    pos = asarray_ndim(pos, 1)
-    is_accessible = asarray_ndim(is_accessible, 1)
-    assert is_accessible.shape[0] > pos[-1], 'accessibility array too short'
-    newpos = np.zeros_like(pos)
-    s = 0
-    for i in range(1, len(pos)):
-        # N.B., expect pos is 1-based
-        s += np.count_nonzero(is_accessible[pos[i-1]-1:pos[i]-1])
-        newpos[i] = s
-    return newpos
+    Parameters
+    ----------
+    pos : array_like, int, shape (n_variants,)
+        Variant positions (physical distance).
+    map_pos : array_like, float, shape (n_variants,)
+        Variant positions (genetic map distance).
+    gap_scale : int, optional
+        Rescale distance between variants if gap is larger than this value.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, distance between variants
+        will be computed as the number of accessible bases between them.
+
+    Returns
+    -------
+    gaps : ndarray, float, shape (n_variants - 1,)
+
+    """
+
+    if map_pos is None:
+        # integrate over physical distance
+        map_pos = pos
+
+    # compute physical gaps
+    physical_gaps = np.diff(pos)
+
+    # compute genetic gaps
+    gaps = np.diff(map_pos).astype('f8')
+
+    if is_accessible is not None:
+
+        # compute accessible gaps
+        is_accessible = asarray_ndim(is_accessible, 1)
+        assert is_accessible.shape[0] > pos[-1], \
+            'accessibility array too short'
+        accessible_gaps = np.zeros_like(physical_gaps)
+        for i in range(1, len(pos)):
+            # N.B., expect pos is 1-based
+            n_access = np.count_nonzero(is_accessible[pos[i-1]-1:pos[i]-1])
+            accessible_gaps[i-1] = n_access
+
+        # adjust using accessibility
+        scaling = accessible_gaps / physical_gaps
+        gaps = gaps * scaling
+
+    elif gap_scale is not None and gap_scale > 0:
+
+        scaling = np.ones(gaps.shape, dtype='f8')
+        loc_scale = physical_gaps > gap_scale
+        scaling[loc_scale] = gap_scale / physical_gaps[loc_scale]
+        gaps = gaps * scaling
+
+    if max_gap is not None and max_gap > 0:
+
+        # deal with very large gaps
+        gaps[physical_gaps > max_gap] = -1
+
+    return gaps
 
 
-def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
-        clip_gap=20000, use_threads=True, is_accessible=None):
+def ihs(h, pos, map_pos=None, min_ehh=0.05, include_edges=False,
+        gap_scale=20000, max_gap=200000, is_accessible=None, use_threads=True):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
     reference (0) and alternate (1) alleles.
@@ -280,22 +330,24 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         Haplotype array.
     pos : array_like, int, shape (n_variants,)
         Variant positions (physical distance).
+    map_pos : array_like, float, shape (n_variants,)
+        Variant positions (genetic map distance).
     min_ehh: float, optional
         Minimum EHH beyond which to truncate integrated haplotype
         homozygosity calculation.
     include_edges : bool, optional
         If True, report scores even if EHH does not decay below `min_ehh`
         before reaching the edge of the data.
+    gap_scale : int, optional
+        Rescale distance between variants if gap is larger than this value.
     max_gap : int, optional
         Do not report scores if EHH spans a gap larger than this number of
         base pairs.
-    clip_gap : int, optional
-        Clip gaps between variants to at most this number of base pairs.
-    use_threads : bool, optional
-        If True use multiple threads to compute.
     is_accessible : array_like, bool, optional
         Genome accessibility array. If provided, distance between variants
         will be computed as the number of accessible bases between them.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
 
     Returns
     -------
@@ -330,19 +382,13 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
 
     # check inputs
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
-    pos = np.asarray(pos, dtype='i4')
+    pos = asarray_ndim(pos, 1)
 
-    # apply accessibility
-    if is_accessible is not None:
-        pos = adjust_pos_access(pos, is_accessible)
+    # compute gaps between variants for integration
+    gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
 
     # setup kwargs
-    kwargs = dict(
-        min_ehh=min_ehh,
-        include_edges=include_edges,
-        max_gap=max_gap,
-        clip_gap=clip_gap
-    )
+    kwargs = dict(min_ehh=min_ehh, include_edges=include_edges)
 
     if use_threads and multiprocessing.cpu_count() > 1:
         # run with threads
@@ -351,10 +397,10 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         pool = ThreadPool(2)
 
         # scan forward
-        result_fwd = pool.apply_async(ihh01_scan_int8, (h, pos), kwargs)
+        result_fwd = pool.apply_async(ihh01_scan_int8, (h, gaps), kwargs)
 
         # scan backward
-        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], pos[::-1]),
+        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], gaps[::-1]),
                                       kwargs)
 
         # wait for both to finish
@@ -372,10 +418,10 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         # run without threads
 
         # scan forward
-        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, **kwargs)
+        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, gaps, **kwargs)
 
         # scan backward
-        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], **kwargs)
+        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], gaps[::-1], **kwargs)
 
     # handle reverse scan
     ihh0_rev = ihh0_rev[::-1]
@@ -389,8 +435,9 @@ def ihs(h, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     return score
 
 
-def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
-          clip_gap=20000, use_threads=True, is_accessible=None):
+def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
+          gap_scale=20000, max_gap=200000, is_accessible=None,
+          use_threads=True):
     """Compute the unstandardized cross-population extended haplotype
     homozygosity score (XPEHH) for each variant.
 
@@ -402,22 +449,24 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         Haplotype array for the second population.
     pos : array_like, int, shape (n_variants,)
         Variant positions on physical or genetic map.
+    map_pos : array_like, float, shape (n_variants,)
+        Variant positions (genetic map distance).
     min_ehh: float, optional
         Minimum EHH beyond which to truncate integrated haplotype
         homozygosity calculation.
     include_edges : bool, optional
         If True, report scores even if EHH does not decay below `min_ehh`
         before reaching the edge of the data.
+    gap_scale : int, optional
+        Rescale distance between variants if gap is larger than this value.
     max_gap : int, optional
         Do not report scores if EHH spans a gap larger than this number of
         base pairs.
-    clip_gap : int, optional
-        Clip gaps between variants to at most this number of base pairs.
-    use_threads : bool, optional
-        If True use multiple threads to compute.
     is_accessible : array_like, bool, optional
         Genome accessibility array. If provided, distance between variants
         will be computed as the number of accessible bases between them.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
 
     Returns
     -------
@@ -452,19 +501,13 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
     # check inputs
     h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
     h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
-    pos = np.asarray(pos, dtype='i4')
+    pos = asarray_ndim(pos, 1)
 
-    # apply accessibility
-    if is_accessible is not None:
-        pos = adjust_pos_access(pos, is_accessible)
+    # compute gaps between variants for integration
+    gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
 
     # setup kwargs
-    kwargs = dict(
-        min_ehh=min_ehh,
-        include_edges=include_edges,
-        max_gap=max_gap,
-        clip_gap=clip_gap
-    )
+    kwargs = dict(min_ehh=min_ehh, include_edges=include_edges)
 
     if use_threads and multiprocessing.cpu_count() > 1:
         # use multiple threads
@@ -473,13 +516,13 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         pool = ThreadPool(min(4, multiprocessing.cpu_count()))
 
         # scan forward
-        res1_fwd = pool.apply_async(ihh_scan_int8, (h1, pos), kwargs)
-        res2_fwd = pool.apply_async(ihh_scan_int8, (h2, pos), kwargs)
+        res1_fwd = pool.apply_async(ihh_scan_int8, (h1, gaps), kwargs)
+        res2_fwd = pool.apply_async(ihh_scan_int8, (h2, gaps), kwargs)
 
         # scan backward
-        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], pos[::-1]),
+        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], gaps[::-1]),
                                     kwargs)
-        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], pos[::-1]),
+        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], gaps[::-1]),
                                     kwargs)
 
         # wait for both to finish
@@ -499,12 +542,12 @@ def xpehh(h1, h2, pos, min_ehh=0.05, include_edges=False, max_gap=200000,
         # compute without threads
 
         # scan forward
-        ihh1_fwd = ihh_scan_int8(h1, pos, **kwargs)
-        ihh2_fwd = ihh_scan_int8(h2, pos, **kwargs)
+        ihh1_fwd = ihh_scan_int8(h1, gaps, **kwargs)
+        ihh2_fwd = ihh_scan_int8(h2, gaps, **kwargs)
 
         # scan backward
-        ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], **kwargs)
-        ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], **kwargs)
+        ihh1_rev = ihh_scan_int8(h1[::-1], gaps[::-1], **kwargs)
+        ihh2_rev = ihh_scan_int8(h2[::-1], gaps[::-1], **kwargs)
 
     # handle reverse scans
     ihh1_rev = ihh1_rev[::-1]
