@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+* Protect against invalid coordinates when mapping from square to condensed
+  coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
+
 v0.20.3
 -------
 
