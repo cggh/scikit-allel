@@ -20,7 +20,8 @@ from allel.stats.fst import weir_cockerham_fst, hudson_fst, \
     blockwise_hudson_fst, blockwise_patterson_fst
 
 from allel.stats.distance import pairwise_distance, pairwise_dxy, pcoa, \
-    plot_pairwise_distance
+    plot_pairwise_distance, condensed_coords, condensed_coords_between, \
+    condensed_coords_within
 
 from allel.stats.hw import heterozygosity_observed, heterozygosity_expected, \
     inbreeding_coefficient

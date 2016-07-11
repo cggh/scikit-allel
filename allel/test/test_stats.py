@@ -418,6 +418,80 @@ class TestDistance(unittest.TestCase):
         actual = allel.stats.pairwise_distance(gac, metric)
         aeq(expect, actual)
 
+    def test_condensed_coords(self):
+        from allel.stats import condensed_coords
+        eq(0, condensed_coords(0, 1, 2))
+        eq(0, condensed_coords(1, 0, 2))
+        eq(0, condensed_coords(0, 1, 3))
+        eq(0, condensed_coords(1, 0, 3))
+        eq(1, condensed_coords(0, 2, 3))
+        eq(1, condensed_coords(2, 0, 3))
+        eq(2, condensed_coords(1, 2, 3))
+        eq(2, condensed_coords(2, 1, 3))
+
+        with assert_raises(ValueError):
+            condensed_coords(0, 0, 1)
+            condensed_coords(0, 1, 1)
+            condensed_coords(1, 0, 1)
+            condensed_coords(0, 0, 2)
+            condensed_coords(0, 2, 2)
+            condensed_coords(2, 0, 2)
+            condensed_coords(1, 1, 2)
+            condensed_coords(0, 0, 3)
+            condensed_coords(1, 1, 3)
+            condensed_coords(2, 2, 3)
+
+    def test_condensed_coords_within(self):
+        from allel.stats import condensed_coords_within
+
+        pop = [0, 1]
+        n = 3
+        expect = [0]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [0, 2]
+        n = 3
+        expect = [1]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [1, 2]
+        n = 3
+        expect = [2]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [0, 1, 3]
+        n = 4
+        expect = [0, 2, 4]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [0, 0]
+        with assert_raises(ValueError):
+            condensed_coords_within(pop, n)
+
+    def test_condensed_coords_between(self):
+        from allel.stats import condensed_coords_between
+
+        pop1 = [0, 1]
+        pop2 = [2, 3]
+        n = 4
+        expect = [1, 2, 3, 4]
+        actual = condensed_coords_between(pop1, pop2, n)
+        eq(expect, actual)
+
+        pop1 = [0, 2]
+        pop2 = [1, 3]
+        n = 4
+        expect = [0, 2, 3, 5]
+        actual = condensed_coords_between(pop1, pop2, n)
+        eq(expect, actual)
+
+        with assert_raises(ValueError):
+            condensed_coords_between(pop1, pop1, n)
+
 
 class TestLinkageDisequilibrium(unittest.TestCase):
 
