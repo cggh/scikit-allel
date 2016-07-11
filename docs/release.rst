@@ -1,6 +1,14 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+* Added convenience methods
+  :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic` and
+  :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic_01` for locating
+  biallelic variants.
+
 v0.20.3
 -------
 
