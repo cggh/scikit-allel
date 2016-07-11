@@ -586,6 +586,16 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
                                 **storage_kwargs)
         return _chunked.ChunkedArray(out)
 
+    def is_biallelic(self, **storage_kwargs):
+        out = self.apply_method('is_biallelic', **storage_kwargs)
+        return _chunked.ChunkedArray(out)
+
+    def is_biallelic_01(self, min_mac=None, **storage_kwargs):
+        out = self.apply_method('is_biallelic_01',
+                                kwargs=dict(min_mac=min_mac),
+                                **storage_kwargs)
+        return _chunked.ChunkedArray(out)
+
     def _count(self, method_name, kwargs=None, **storage_kwargs):
         if kwargs is None:
             kwargs = dict()
@@ -631,6 +641,24 @@ copy_method_doc(AlleleCountsChunkedArray.max_allele,
                 _ndarray.AlleleCountsArray.max_allele)
 copy_method_doc(AlleleCountsChunkedArray.map_alleles,
                 _ndarray.AlleleCountsArray.map_alleles)
+copy_method_doc(AlleleCountsChunkedArray.to_frequencies,
+                _ndarray.AlleleCountsArray.to_frequencies)
+copy_method_doc(AlleleCountsChunkedArray.is_variant, 
+                _ndarray.AlleleCountsArray.is_variant)
+copy_method_doc(AlleleCountsChunkedArray.is_non_variant,
+                _ndarray.AlleleCountsArray.is_non_variant)
+copy_method_doc(AlleleCountsChunkedArray.is_segregating,
+                _ndarray.AlleleCountsArray.is_segregating)
+copy_method_doc(AlleleCountsChunkedArray.is_non_segregating,
+                _ndarray.AlleleCountsArray.is_non_segregating)
+copy_method_doc(AlleleCountsChunkedArray.is_singleton,
+                _ndarray.AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsChunkedArray.is_doubleton,
+                _ndarray.AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsChunkedArray.is_biallelic,
+                _ndarray.AlleleCountsArray.is_biallelic)
+copy_method_doc(AlleleCountsChunkedArray.is_biallelic_01,
+                _ndarray.AlleleCountsArray.is_biallelic_01)
 
 
 class VariantChunkedTable(_chunked.ChunkedTable):

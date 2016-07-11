@@ -374,7 +374,7 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
         aeq(allele_counts_data, ac)
         eq(np.int, ac.dtype)
         eq(2, ac.ndim)
-        eq(5, ac.n_variants)
+        eq(6, ac.n_variants)
         eq(3, ac.n_alleles)
 
 
