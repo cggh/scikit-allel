@@ -12,7 +12,7 @@ from allel.model.ndarray import SortedIndex, \
     locate_fixed_differences, AlleleCountsArray
 from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned, \
     ensure_dim1_aligned
-from allel.stats.window import windowed_statistic, per_base
+from allel.stats.window import windowed_statistic, per_base, moving_statistic
 
 
 logger = logging.getLogger(__name__)
@@ -831,16 +831,15 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
 
 
 # noinspection PyPep8Naming
-def tajima_d(pos, ac, start=None, stop=None):
+def tajima_d(ac, pos=None, start=None, stop=None):
     """Calculate the value of Tajima's D over a given region.
 
     Parameters
     ----------
-
-    pos : array_like, int, shape (n_items,)
-        Variant positions, using 1-based coordinates, in ascending order.
     ac : array_like, int, shape (n_variants, n_alleles)
         Allele counts array.
+    pos : array_like, int, shape (n_items,), optional
+        Variant positions, using 1-based coordinates, in ascending order.
     start : int, optional
         The position at which to start (1-based).
     stop : int, optional
@@ -848,7 +847,6 @@ def tajima_d(pos, ac, start=None, stop=None):
 
     Returns
     -------
-
     D : float
 
     Examples
@@ -865,21 +863,22 @@ def tajima_d(pos, ac, start=None, stop=None):
     ...                          [[0, 1], [-1, -1]],
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
-    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> D = allel.stats.tajima_d(pos, ac, start=1, stop=31)
-    >>> D
+    >>> allel.stats.tajima_d(ac)
     3.1445848780213814
+    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
+    >>> allel.stats.tajima_d(ac, pos=pos, start=7, stop=25)
+    3.8779735196179366
 
     """
 
     # check inputs
-    if not isinstance(pos, SortedIndex):
-        pos = SortedIndex(pos, copy=False)
     if not hasattr(ac, 'count_segregating'):
         ac = AlleleCountsArray(ac, copy=False)
 
     # deal with subregion
-    if start is not None or stop is not None:
+    if pos is not None and (start is not None or stop is not None):
+        if not isinstance(pos, SortedIndex):
+            pos = SortedIndex(pos, copy=False)
         loc = pos.locate_range(start, stop)
         ac = ac[loc]
 
@@ -929,7 +928,6 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
 
     Parameters
     ----------
-
     pos : array_like, int, shape (n_items,)
         Variant positions, using 1-based coordinates, in ascending order.
     ac : array_like, int, shape (n_variants, n_alleles)
@@ -952,7 +950,6 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
 
     Returns
     -------
-
     D : ndarray, float, shape (n_windows,)
         Tajima's D.
     windows : ndarray, int, shape (n_windows, 2)
@@ -1033,4 +1030,49 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     return D, windows, counts
 
 
-# TODO moving_tajima_d
+def moving_tajima_d(ac, size, start=0, stop=None, step=None):
+    """Calculate the value of Tajima's D in moving windows of `size` variants.
+
+
+    Parameters
+    ----------
+    ac : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    D : ndarray, float, shape (n_windows,)
+        Tajima's D.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.GenotypeArray([[[0, 0], [0, 0]],
+    ...                          [[0, 0], [0, 1]],
+    ...                          [[0, 0], [1, 1]],
+    ...                          [[0, 1], [1, 1]],
+    ...                          [[1, 1], [1, 1]],
+    ...                          [[0, 0], [1, 2]],
+    ...                          [[0, 1], [1, 2]],
+    ...                          [[0, 1], [-1, -1]],
+    ...                          [[-1, -1], [-1, -1]]])
+    >>> ac = g.count_alleles()
+    >>> D = allel.stats.moving_tajima_d(ac, size=3)
+    >>> D
+    array([ 0.59158014,  1.89305645,  5.79748537])
+
+    """
+
+    D = moving_statistic(values=ac, statistic=tajima_d, size=size,
+                          start=start, stop=stop, step=step)
+    return D
