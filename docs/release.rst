@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+* Fixed bug in :func:`allel.stats.diversity.sequence_divergence`
+  (`#75 <https://github.com/cggh/scikit-allel/issues/75>`_).
+
 v0.20.3
 -------
 
