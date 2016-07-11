@@ -12,7 +12,8 @@ from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
 
 
 from allel.util import ignore_invalid
-from allel.model.ndarray import GenotypeArray, HaplotypeArray, SortedIndex
+from allel.model.ndarray import GenotypeArray, HaplotypeArray, SortedIndex, \
+    AlleleCountsArray
 import allel.stats
 
 
@@ -184,6 +185,34 @@ class TestDiversityDivergence(unittest.TestCase):
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         actual = allel.stats.mean_pairwise_difference(ac, fill=-1)
         assert_array_close(expect, actual)
+
+    def test_sequence_divergence(self):
+        from allel.stats import sequence_divergence
+        pos = [2, 4, 8]
+        ac1 = AlleleCountsArray([[2, 0],
+                                 [2, 0],
+                                 [2, 0]])
+        ac2 = AlleleCountsArray([[0, 2],
+                                 [0, 2],
+                                 [0, 2]])
+
+        # all variants
+        e = 3 / 7
+        a = sequence_divergence(pos, ac1, ac2)
+        eq(e, a)
+
+        # start/stop
+        e = 2 / 6
+        a = sequence_divergence(pos, ac1, ac2, start=0, stop=5)
+        eq(e, a)
+
+        # start/stop, an provided
+        an1 = ac1.sum(axis=1)
+        an2 = ac2.sum(axis=1)
+        e = 2 / 6
+        a = sequence_divergence(pos, ac1, ac2, start=0, stop=5, an1=an1,
+                                an2=an2)
+        eq(e, a)
 
     def test_windowed_diversity(self):
 
