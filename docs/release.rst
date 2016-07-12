@@ -1,6 +1,21 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+* Added functions :func:`allel.stats.diversity.moving_tajima_d` and
+  :func:`allel.stats.selection.moving_delta_tajima_d`
+  (`#81 <https://github.com/cggh/scikit-allel/issues/81>`_,
+  `#70 <https://github.com/cggh/scikit-allel/issues/70>`_).
+* Added functions :func:`allel.stats.fst.moving_weir_cockerham_fst`,
+  :func:`allel.stats.fst.moving_hudson_fst`,
+  :func:`allel.stats.fst.moving_patterson_fst`.
+* Added functions :func:`allel.stats.admixture.moving_patterson_f3` and
+  :func:`allel.stats.admixture.moving_patterson_d`.
+* Renamed "blockwise" to "average" in function names in
+  :mod:`allel.stats.fst` and :mod:`allel.stats.admixture` for clarity.
+
 v0.20.3
 -------
 
