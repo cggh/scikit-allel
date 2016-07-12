@@ -761,7 +761,7 @@ class CArrayWrapper(object):
     def __getattr__(self, item):
         return getattr(self.carr, item)
 
-    def __array__(self):
+    def __array__(self, *args):
         return self.carr[:]
 
     def __repr__(self):
