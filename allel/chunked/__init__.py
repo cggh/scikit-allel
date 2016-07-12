@@ -68,13 +68,13 @@ from .core import *
 try:
     import h5py as _h5py
     from .storage_hdf5 import *
-    storage_registry['default'] = HDF5MemStorage()
+    storage_registry['default'] = hdf5mem_zlib1_storage
 except ImportError:
     pass
 
 try:
     import bcolz as _bcolz
     from .storage_bcolz import *
-    storage_registry['default'] = BcolzStorage()
+    storage_registry['default'] = bcolzmem_storage
 except ImportError:
     pass

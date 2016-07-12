@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+* Changed HDF5 default chunked storage to use gzip level 1 compression
+  (`#100 <https://github.com/cggh/scikit-allel/issues/100>`_).
+
 v0.20.3
 -------
 
