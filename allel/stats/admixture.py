@@ -203,7 +203,107 @@ def patterson_d(aca, acb, acc, acd):
 
 
 # noinspection PyPep8Naming
-def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
+def moving_patterson_f3(acc, aca, acb, size, start=0, stop=None, step=None,
+                        normed=True):
+    """Estimate F3(C; A, B) in moving windows.
+
+    Parameters
+    ----------
+    acc : array_like, int, shape (n_variants, 2)
+        Allele counts for the test population (C).
+    aca : array_like, int, shape (n_variants, 2)
+        Allele counts for the first source population (A).
+    acb : array_like, int, shape (n_variants, 2)
+        Allele counts for the second source population (B).
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+    normed : bool, optional
+        If False, use un-normalised f3 values.
+
+    Returns
+    -------
+    f3 : ndarray, float, shape (n_windows,)
+        Estimated value of the statistic in each window.
+
+    """
+
+    # calculate per-variant values
+    T, B = patterson_f3(acc, aca, acb)
+
+    # calculate value of statistic within each block
+    if normed:
+        T_bsum = moving_statistic(T, statistic=np.nansum, size=size,
+                                  start=start, stop=stop, step=step)
+        B_bsum = moving_statistic(B, statistic=np.nansum, size=size,
+                                  start=start, stop=stop, step=step)
+        f3 = T_bsum / B_bsum
+
+    else:
+        f3 = moving_statistic(T, statistic=np.nanmean, size=size,
+                              start=start, stop=stop, step=step)
+
+    return f3
+
+
+def moving_patterson_d(aca, acb, acc, acd, size, start=0, stop=None,
+                       step=None):
+    """Estimate D(A, B; C, D) in moving windows.
+
+    Parameters
+    ----------
+    aca : array_like, int, shape (n_variants, 2),
+        Allele counts for population A.
+    acb : array_like, int, shape (n_variants, 2)
+        Allele counts for population B.
+    acc : array_like, int, shape (n_variants, 2)
+        Allele counts for population C.
+    acd : array_like, int, shape (n_variants, 2)
+        Allele counts for population D.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    d : ndarray, float, shape (n_windows,)
+        Estimated value of the statistic in each window.
+
+    """
+
+    # calculate per-variant values
+    num, den = patterson_d(aca, acb, acc, acd)
+
+    # N.B., nans can occur if any of the populations have completely missing
+    # genotype calls at a variant (i.e., allele number is zero). Here we
+    # assume that is rare enough to be negligible.
+
+    # compute the numerator and denominator within each window
+    num_sum = moving_statistic(num, statistic=np.nansum, size=size,
+                               start=start, stop=stop, step=step)
+    den_sum = moving_statistic(den, statistic=np.nansum, size=size,
+                               start=start, stop=stop, step=step)
+
+    # calculate the statistic values in each block
+    d = num_sum / den_sum
+
+    return d
+
+
+# noinspection PyPep8Naming
+def average_patterson_f3(acc, aca, acb, blen, normed=True):
     """Estimate F3(C; A, B) and standard error using the block-jackknife.
 
     Parameters
@@ -273,7 +373,7 @@ def blockwise_patterson_f3(acc, aca, acb, blen, normed=True):
     return f3, se, z, vb, vj
 
 
-def blockwise_patterson_d(aca, acb, acc, acd, blen):
+def average_patterson_d(aca, acb, acc, acd, blen):
     """Estimate D(A, B; C, D) and standard error using the block-jackknife.
 
     Parameters
@@ -337,3 +437,8 @@ def blockwise_patterson_d(aca, acb, acc, acd, blen):
     z = d / se
 
     return d, se, z, vb, vj
+
+
+# backwards compatibility
+blockwise_patterson_f3 = average_patterson_f3
+blockwise_patterson_d = average_patterson_d
