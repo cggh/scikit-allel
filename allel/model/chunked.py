@@ -63,7 +63,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
         >>> callset = h5py.File('callset.h5', mode='r')
         >>> g = allel.GenotypeChunkedArray(callset['/3L/calldata/genotype'])
         >>> g
-        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=16, cratio=0.8, shuffle=False, chunks=(2, 2, 2), data=h5py._hl.dataset.Dataset)
+        GenotypeChunkedArray((3, 2, 2), int8, chunks=(2, 2, 2), nbytes=12, cbytes=16, cratio=0.8, data=h5py._hl.dataset.Dataset)
         >>> g.data
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
 
@@ -83,9 +83,9 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
     directly via the `storage` keyword argument. E.g.::
 
         >>> g.copy()
-        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=16.0K, cratio=0.0, cname=blosclz, clevel=5, shuffle=True, chunks=(4096, 2, 2), data=bcolz.carray_ext.carray)
+        GenotypeChunkedArray((3, 2, 2), int8, chunks=(262144, 2, 2), nbytes=12, cbytes=4.9K, cratio=0.0, compression=blosc, compression_opts={'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}, data=zarr.core.Array)
         >>> g.copy(storage='hdf5mem_zlib1')
-        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=4.5K, cratio=0.0, cname=gzip, clevel=1, shuffle=False, chunks=(262144, 2, 2), data=h5py._hl.dataset.Dataset)
+        GenotypeChunkedArray((3, 2, 2), int8, chunks=(262144, 2, 2), nbytes=12, cbytes=4.5K, cratio=0.0, compression=gzip, compression_opts=1, data=h5py._hl.dataset.Dataset)
 
     """  # flake8: noqa
 
@@ -701,7 +701,7 @@ class VariantChunkedTable(_chunked.ChunkedTable):
     directly via the `storage` keyword argument. E.g.::
 
         >>> vt.copy()
-        VariantChunkedTable(5, nbytes=220, cbytes=80.0K, cratio=0.0, data=bcolz.ctable.ctable)
+        VariantChunkedTable(5, nbytes=220, cbytes=39.1K, cratio=0.0, data=allel.chunked.storage_zarr.ZarrTable)
         >>> vt.copy(storage='hdf5mem_zlib1')
         VariantChunkedTable(5, nbytes=220, cbytes=22.5K, cratio=0.0, data=h5py._hl.files.File)
 
