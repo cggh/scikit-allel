@@ -2,8 +2,9 @@
 # flake8: noqa
 """
 This module provides an abstraction layer over generic chunked array storage
-libraries. Currently HDF5 (via `h5py <http://www.h5py.org/>`_) and `bcolz
-<http://bcolz.blosc.org>`_ are supported storage layers.
+libraries. Currently HDF5 (via `h5py <http://www.h5py.org/>`_), `bcolz
+<http://bcolz.blosc.org>`_ and `zarr <http://zarr.readthedocs.io>`_ are
+supported storage layers.
 
 Different storage configurations can be used with the functions and classes
 defined below. Wherever a function or method takes a `storage` keyword
@@ -27,16 +28,6 @@ For example::
     >>> import numpy as np
     >>> a = np.arange(10000000)
     >>> chunked.copy(a)
-    zarr.core.Array((10000000,), int64, chunks=(131072,), order=C)
-      compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}
-      nbytes: 76.3M; nbytes_stored: 1.3M; ratio: 56.8; initialized: 77/77
-      store: builtins.dict
-    >>> chunked.copy(a, storage='zarrtmp')
-    zarr.core.Array((10000000,), int64, chunks=(131072,), order=C)
-      compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}
-      nbytes: 76.3M; nbytes_stored: 1.3M; ratio: 56.8; initialized: 77/77
-      store: zarr.storage.DirectoryStore
-    >>> chunked.copy(a, storage='bcolzmem')
     carray((10000000,), int64)
       nbytes := 76.29 MB; cbytes := 1.80 MB; ratio: 42.41
       cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
@@ -50,6 +41,16 @@ For example::
       rootdir := '/tmp/scikit_allel_....bcolz'
       mode    := 'w'
     [      0       1       2 ..., 9999997 9999998 9999999]
+    >>> chunked.copy(a, storage='zarrmem')
+    zarr.core.Array((10000000,), int64, chunks=(131072,), order=C)
+      compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}
+      nbytes: 76.3M; nbytes_stored: 1.3M; ratio: 56.8; initialized: 77/77
+      store: builtins.dict
+    >>> chunked.copy(a, storage='zarrtmp')
+    zarr.core.Array((10000000,), int64, chunks=(131072,), order=C)
+      compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}
+      nbytes: 76.3M; nbytes_stored: 1.3M; ratio: 56.8; initialized: 77/77
+      store: zarr.storage.DirectoryStore
     >>> chunked.copy(a, storage=chunked.BcolzStorage(cparams=bcolz.cparams(cname='lz4')))
     carray((10000000,), int64)
       nbytes := 76.29 MB; cbytes := 1.80 MB; ratio: 42.41
@@ -57,6 +58,8 @@ For example::
       chunklen := 65536; chunksize: 524288; blocksize: 32768
     [      0       1       2 ..., 9999997 9999998 9999999]
     >>> chunked.copy(a, storage='hdf5mem_zlib1')
+    <HDF5 dataset "data": shape (10000000,), type "<i8">
+    >>> chunked.copy(a, storage='hdf5tmp_zlib1')
     <HDF5 dataset "data": shape (10000000,), type "<i8">
     >>> import h5py
     >>> h5f = h5py.File('example.h5', mode='w')

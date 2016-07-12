@@ -374,6 +374,7 @@ class GenotypeArray(ArrayAug):
         if caption is None:
             caption = 'GenotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
         caption = caption.replace('<', '&lt;')
+        caption = caption.replace('\n', '<br/>')
 
         # build HTML
         # noinspection PyProtectedMember

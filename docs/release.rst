@@ -4,7 +4,11 @@ Release notes
 v0.21.0
 -------
 
+* Added support for `zarr <http://zarr.readthedocs.io>`_ in the
+  :mod:`allel.chunked` module
+  (`#101 <https://github.com/cggh/scikit-allel/issues/101>`_).
 * Changed HDF5 default chunked storage to use gzip level 1 compression
+  instead of no compression
   (`#100 <https://github.com/cggh/scikit-allel/issues/100>`_).
 
 v0.20.3

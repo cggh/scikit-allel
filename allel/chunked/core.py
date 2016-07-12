@@ -600,19 +600,19 @@ class ChunkedArray(object):
         r += ', %s' % str(self.dtype)
         if self.chunks is not None:
             r += ', chunks=%s' % str(self.chunks)
-        if self.nbytes:
-            r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
-        if self.cbytes:
-            r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
-        if self.cratio:
-            r += ', cratio=%.1f' % self.cratio
-        if self.compression:
-            r += ', compression=%s' % self.compression
-        if self.compression_opts is not None:
-            r += ', compression_opts=%s' % self.compression_opts
-        r += ', data=%s.%s' % (type(self.data).__module__,
-                               type(self.data).__name__)
         r += ')'
+        if self.nbytes:
+            r += '\n  nbytes: %s;' % _util.human_readable_size(self.nbytes)
+            if self.cbytes:
+                r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
+            if self.cratio:
+                r += ' cratio: %.1f;' % self.cratio
+        if self.compression:
+            r += '\n  compression: %s;' % self.compression
+            if self.compression_opts is not None:
+                r += ' compression_opts: %s;' % self.compression_opts
+        r += '\n  data: %s.%s' % (type(self.data).__module__,
+                                  type(self.data).__name__)
         return r
 
     def __str__(self):
