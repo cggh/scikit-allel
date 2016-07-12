@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v0.21.0
+-------
+
+* Fixed bug related to taking views of genotype and haplotype arrays
+  (`#77 <https://github.com/cggh/scikit-allel/issues/77>`_).
+
 v0.20.3
 -------
 
