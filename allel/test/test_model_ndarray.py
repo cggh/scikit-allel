@@ -177,10 +177,14 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
         expect = np.array(diploid_genotype_data).take(indices, axis=0)
         aeq(expect, t)
 
-    def test_reshape(self):
+    def test_no_subclass(self):
         g = self.setup_instance(diploid_genotype_data)
-        h = g.reshape((g.shape[0], -1))
-        self.assertNotIsInstance(h, GenotypeArray)
+        self.assertNotIsInstance(g.reshape((g.shape[0], -1)), GenotypeArray)
+        self.assertNotIsInstance(g.flatten(), GenotypeArray)
+        self.assertNotIsInstance(g.ravel(), GenotypeArray)
+        self.assertNotIsInstance(g.transpose(), GenotypeArray)
+        self.assertNotIsInstance(g.T, GenotypeArray)
+        self.assertNotIsInstance(g.astype('f4'), GenotypeArray)
 
 
 class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):

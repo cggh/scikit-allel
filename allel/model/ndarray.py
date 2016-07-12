@@ -88,6 +88,27 @@ class ArrayAug(np.ndarray):
         a = super(ArrayAug, self).reshape(*args, **kwargs)
         return np.asarray(a)
 
+    def flatten(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).flatten(*args, **kwargs)
+        return np.asarray(a)
+
+    def ravel(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).ravel(*args, **kwargs)
+        return np.asarray(a)
+
+    def transpose(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).transpose(*args, **kwargs)
+        return np.asarray(a)
+
+    @property
+    def T(self):
+        # return as vanilla array
+        a = super(ArrayAug, self).T
+        return np.asarray(a)
+
 
 class RecArrayAug(np.recarray):
 
@@ -160,7 +181,16 @@ class RecArrayAug(np.recarray):
         return self.compress(condition)
 
 
-class GenotypeArray(ArrayAug):
+class IntegerArray(ArrayAug):
+
+    def astype(self, dtype, *args, **kwargs):
+        x = super(IntegerArray, self).astype(dtype, *args, **kwargs)
+        if x.dtype.kind not in 'iu':
+            x = np.asarray(x)
+        return x
+
+
+class GenotypeArray(IntegerArray):
     """Array of discrete genotype calls.
 
     Parameters
@@ -1683,7 +1713,7 @@ class GenotypeArray(ArrayAug):
         return gm
 
 
-class HaplotypeArray(ArrayAug):
+class HaplotypeArray(IntegerArray):
     """Array of haplotypes.
 
     Parameters
@@ -2310,7 +2340,7 @@ class HaplotypeArray(ArrayAug):
         return c / n
 
 
-class AlleleCountsArray(ArrayAug):
+class AlleleCountsArray(IntegerArray):
     """Array of allele counts.
 
     Parameters
