@@ -2,6 +2,7 @@
 from __future__ import absolute_import, print_function, division
 import operator
 import tempfile
+import os
 import atexit
 import shutil
 
@@ -40,27 +41,57 @@ class ZarrStorage(object):
 
         return kwargs
 
-    # noinspection PyUnusedLocal
-    def array(self, data, expectedlen=None, **kwargs):
-        # ignore expectedlen for now
-
-        # setup
-        data = _util.ensure_array_like(data)
-        kwargs = self._set_defaults(kwargs)
+    def _create_array(self, data, **kwargs):
 
         # determine chunks
         chunks = default_chunks(data)
         kwargs.setdefault('chunks', chunks)
 
         # create array
-        z = zarr.array(data, **kwargs)
+        if 'path' in kwargs:
+            kwargs['mode'] = 'w'
+            kwargs['shape'] = data.shape
+            # ensure dtype is specified
+            dtype = kwargs.get('dtype', None)
+            if not dtype:
+                kwargs['dtype'] = data.dtype
+            z = zarr.open(**kwargs)
+            z[:] = data
+        else:
+            z = zarr.array(data, **kwargs)
 
         return z
 
+    # noinspection PyUnusedLocal
+    def array(self, data, expectedlen=None, **kwargs):
+        # ignore expectedlen
+
+        # setup
+        data = _util.ensure_array_like(data)
+        kwargs = self._set_defaults(kwargs)
+
+        # create
+        z = self._create_array(data, **kwargs)
+        return z
+
     def table(self, data, names=None, expectedlen=None, **kwargs):
+        # ignore expectedlen
+
+        # setup
         names, columns = _util.check_table_like(data, names=names)
-        zcols = [self.array(c, expectedlen=expectedlen, **kwargs)
-                 for c in columns]
+        kwargs = self._set_defaults(kwargs)
+        path = kwargs.get('path', None)
+        zcols = list()
+
+        # create columns
+        for n, c in zip(names, columns):
+            col_kwargs = kwargs.copy()
+            if path:
+                col_kwargs['path'] = os.path.join(path, n)
+            zcol = self._create_array(c, **col_kwargs)
+            zcols.append(zcol)
+
+        # create table
         ztbl = ZarrTable(names, zcols)
         return ztbl
 
@@ -86,7 +117,8 @@ class ZarrMemStorage(ZarrStorage):
     # noinspection PyShadowingBuiltins
     def _set_defaults(self, kwargs):
         kwargs = super(ZarrMemStorage, self)._set_defaults(kwargs)
-        kwargs['store'] = dict()
+        if 'path' in kwargs:
+            del kwargs['path']
         return kwargs
 
 
@@ -99,8 +131,8 @@ class ZarrTmpStorage(ZarrStorage):
         tempdir = kwargs.pop('dir', None)
         path = tempfile.mkdtemp(suffix=suffix, prefix=prefix, dir=tempdir)
         atexit.register(shutil.rmtree, path)
-        store = zarr.DirectoryStore(path)
-        kwargs['store'] = store
+        kwargs['path'] = path
+        kwargs['mode'] = 'w'
         return kwargs
 
 

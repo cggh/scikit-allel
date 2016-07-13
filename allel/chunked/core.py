@@ -833,15 +833,15 @@ class ChunkedTable(object):
     def __repr__(self):
         r = '%s(' % type(self).__name__
         r += '%s' % len(self)
-        if self.nbytes:
-            r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
-        if self.cbytes:
-            r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
-        if self.cratio:
-            r += ', cratio=%.1f' % self.cratio
-        r += ', data=%s.%s' % (type(self.data).__module__,
-                               type(self.data).__name__)
         r += ')'
+        if self.nbytes:
+            r += '\n  nbytes: %s;' % _util.human_readable_size(self.nbytes)
+            if self.cbytes:
+                r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
+            if self.cratio:
+                r += ' cratio: %.1f;' % self.cratio
+        r += '\n  data: %s.%s' % (type(self.data).__module__,
+                                  type(self.data).__name__)
         return r
 
     def __len__(self):

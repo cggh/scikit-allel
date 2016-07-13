@@ -1855,6 +1855,7 @@ class HaplotypeArray(ArrayAug):
         if caption is None:
             caption = 'HaplotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
         caption = caption.replace('<', '&lt;')
+        caption = caption.replace('\n', '<br/>')
 
         # build HTML
         # noinspection PyProtectedMember
@@ -2444,6 +2445,7 @@ class AlleleCountsArray(ArrayAug):
             caption = 'AlleleCountsArray(%s, dtype=%s)' \
                       % (self.shape, self.dtype)
         caption = caption.replace('<', '&lt;')
+        caption = caption.replace('\n', '<br/>')
 
         # noinspection PyProtectedMember
         html = etl.util.vis._display_html(tbl,
@@ -4470,6 +4472,7 @@ def recarray_to_html_str(ra, limit=5, caption=None):
         caption = '%s(%s, dtype=%s)' \
                   % (type(ra).__name__, ra.shape, ra.dtype)
     caption = caption.replace('<', '&lt;')
+    caption = caption.replace('\n', '<br/>')
     # noinspection PyProtectedMember
     html = etl.util.vis._display_html(tbl,
                                       caption=caption,
@@ -4487,6 +4490,7 @@ def recarray_display(ra, limit=5, caption=None, **kwargs):
         caption = '%s(%s, dtype=%s)' \
                   % (type(ra).__name__, ra.shape, ra.dtype)
     caption = caption.replace('<', '&lt;')
+    caption = caption.replace('\n', '<br/>')
     return tbl.display(limit=limit, caption=caption, **kwargs)
 
 

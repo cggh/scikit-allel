@@ -690,7 +690,9 @@ class VariantChunkedTable(_chunked.ChunkedTable):
         >>> vt = allel.VariantChunkedTable(callset['/3L/variants'],
         ...                                names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
         >>> vt
-        VariantChunkedTable(5, nbytes=220, cbytes=220, cratio=1.0, data=h5py._hl.group.Group)
+        VariantChunkedTable(5)
+          nbytes: 220; cbytes: 220; cratio: 1.0;
+          data: h5py._hl.group.Group
 
     Obtain a single row::
 
@@ -708,18 +710,26 @@ class VariantChunkedTable(_chunked.ChunkedTable):
     Access a subset of columns::
 
         >>> vt[['CHROM', 'POS']]
-        VariantChunkedTable(5, nbytes=60, cbytes=60, cratio=1.0, data=builtins.list)
+        VariantChunkedTable(5)
+          nbytes: 60; cbytes: 60; cratio: 1.0;
+          data: builtins.list
 
     Note that most methods will return a chunked table, using whatever
     chunked storage is set as default (bcolz ctable) or specified
     directly via the `storage` keyword argument. E.g.::
 
         >>> vt.copy()
-        VariantChunkedTable(5, nbytes=220, cbytes=80.0K, cratio=0.0, data=bcolz.ctable.ctable)
-        >>> vt.copy(storage='zarrmem')
-        VariantChunkedTable(5, nbytes=220, cbytes=39.1K, cratio=0.0, data=allel.chunked.storage_zarr.ZarrTable)
+        VariantChunkedTable(5)
+          nbytes: 220; cbytes: 80.0K; cratio: 0.0;
+          data: bcolz.ctable.ctable
+        >>> vt.copy(storage='zarr')
+        VariantChunkedTable(5)
+          nbytes: 220; cbytes: 39.1K; cratio: 0.0;
+          data: allel.chunked.storage_zarr.ZarrTable
         >>> vt.copy(storage='hdf5mem_zlib1')
-        VariantChunkedTable(5, nbytes=220, cbytes=22.5K, cratio=0.0, data=h5py._hl.files.File)
+        VariantChunkedTable(5)
+          nbytes: 220; cbytes: 22.5K; cratio: 0.0;
+          data: h5py._hl.files.File
 
     """  # flake8: noqa
 
