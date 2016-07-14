@@ -12,4 +12,5 @@ Diversity & divergence
 .. autofunction:: windowed_watterson_theta
 .. autofunction:: tajima_d
 .. autofunction:: windowed_tajima_d
+.. autofunction:: moving_tajima_d
 .. autofunction:: windowed_df

@@ -271,12 +271,20 @@ def condensed_coords(i, j, n):
 
     """
 
+    # guard conditions
+    if i == j or i >= n or j >= n or i < 0 or j < 0:
+        raise ValueError('invalid coordinates: %s, %s' % (i, j))
+
+    # normalise order
     i, j = sorted([i, j])
+
     # calculate number of items in rows before this one (sum of arithmetic
     # progression)
     x = i * ((2 * n) - i - 1) / 2
+
     # add on previous items in current row
     ix = x + j - i - 1
+
     return int(ix)
 
 

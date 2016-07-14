@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 import bcolz
 import h5py
+import zarr
 from nose.tools import assert_raises, eq_ as eq
 
 
@@ -124,6 +125,33 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
         with assert_raises(NotImplementedError):
             g.take(indices, axis=0)
 
+    def test_to_n_ref_array_like(self):
+        # see also https://github.com/cggh/scikit-allel/issues/66
+
+        gn = self.setup_instance(diploid_genotype_data).to_n_ref(fill=-1)
+        t = gn > 0
+        eq(4, np.count_nonzero(t))
+        expect = np.array([[1, 1, 0],
+                           [1, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        aeq(expect, t)
+
+        # numpy reductions trigger the issue
+
+        expect = np.array([2, 1, 1, 0, 0])
+        actual = np.sum(t, axis=1)
+        aeq(expect, actual)
+
+        expect = np.array([0, 0, 0, 0, 0])
+        actual = np.min(t, axis=1)
+        aeq(expect, actual)
+
+        expect = np.array([1, 1, 1, 0, 0])
+        actual = np.max(t, axis=1)
+        aeq(expect, actual)
+
 
 class GenotypeChunkedArrayTestsBColzTmpStorage(GenotypeChunkedArrayTests):
 
@@ -171,6 +199,35 @@ class GenotypeChunkedArrayTestsHDF5MemStorage(GenotypeChunkedArrayTests):
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, h5py.Dataset)
+
+
+class GenotypeChunkedArrayTestsZarrMemStorage(GenotypeChunkedArrayTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def setup_instance(self, data, dtype=None):
+        data = chunked.zarrmem_storage.array(data, dtype=dtype)
+        return GenotypeChunkedArray(data)
+
+    def test_storage(self):
+        g = self.setup_instance(np.array(diploid_genotype_data))
+        assert isinstance(g.data, zarr.core.Array)
+
+
+class GenotypeChunkedArrayTestsZarrTmpStorage(GenotypeChunkedArrayTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrtmp_storage
+
+    def setup_instance(self, data, dtype=None):
+        data = chunked.zarrtmp_storage.array(data, dtype=dtype)
+        return GenotypeChunkedArray(data)
+
+    def test_storage(self):
+        g = self.setup_instance(np.array(diploid_genotype_data))
+        assert isinstance(g.data, zarr.Array)
+        assert isinstance(g.data.store, zarr.DirectoryStore)
 
 
 class GenotypeChunkedArrayTestsHDF5TmpStorage(GenotypeChunkedArrayTests):

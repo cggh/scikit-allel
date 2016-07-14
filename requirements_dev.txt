@@ -1,8 +1,6 @@
 cython
 numpydoc
 flake8
-ipython[all]
-runipy
 psutil
 memory-profiler
 humanize

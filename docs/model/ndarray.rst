@@ -92,6 +92,8 @@ AlleleCountsArray
     .. automethod:: is_non_segregating
     .. automethod:: is_singleton
     .. automethod:: is_doubleton
+    .. automethod:: is_biallelic
+    .. automethod:: is_biallelic_01
     .. automethod:: count_variant
     .. automethod:: count_non_variant
     .. automethod:: count_segregating

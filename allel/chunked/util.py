@@ -76,7 +76,7 @@ def check_table_like(data, names=None):
     elif hasattr(data, 'keys') and callable(data.keys):
         # dict, h5py Group or similar
         if names is None:
-            names = list(data.keys())
+            names = sorted(data.keys())
         columns = [data[n] for n in names]
 
     elif hasattr(data, 'dtype') and hasattr(data.dtype, 'names'):
@@ -154,24 +154,26 @@ def get_nbytes(data):
 def get_cbytes(data):
     if hasattr(data, 'cbytes'):
         return data.cbytes
+    elif hasattr(data, 'nbytes_stored'):
+        return data.nbytes_stored
     elif hasattr(data, '_id') and hasattr(data._id, 'get_storage_size'):
         return data._id.get_storage_size()
     else:
         return None
 
 
-def get_cname(data):
+def get_compression(data):
     if hasattr(data, 'cparams'):
-        return data.cparams.cname
+        return 'blosc'
     elif hasattr(data, 'compression'):
         return data.compression
     else:
         return None
 
 
-def get_clevel(data):
+def get_compression_opts(data):
     if hasattr(data, 'cparams'):
-        return data.cparams.clevel
+        return data.cparams
     elif hasattr(data, 'compression_opts'):
         return data.compression_opts
     else:
