@@ -34,6 +34,8 @@ Other changes:
 * Added workaround for chunked arrays if passed as arguments into numpy
   aggregation functions
   (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
+* Protect against invalid coordinates when mapping from square to condensed
+  coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
 
 v0.20.3
 -------
