@@ -11,7 +11,7 @@ import zarr
 
 
 from allel.chunked import util as _util
-from allel.compat import reduce, zip, text_type
+from allel.compat import reduce, zip
 
 
 def default_chunks(data):
