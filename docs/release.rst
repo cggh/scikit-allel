@@ -49,7 +49,9 @@ Other changes:
   (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
 * Protect against invalid coordinates when mapping from square to condensed
   coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
->>>>>>> master
+* Fixed bug in :func:`allel.stats.sf.plot_sfs_folded` and added docstrings
+  for all plotting functions in :mod:`allel.stats.sf`
+  (`#81 <https://github.com/cggh/scikit-allel/issues/81>`_).
 
 v0.20.3
 -------
