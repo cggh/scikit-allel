@@ -51,7 +51,7 @@ Other changes:
   coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
 * Fixed bug in :func:`allel.stats.sf.plot_sfs_folded` and added docstrings
   for all plotting functions in :mod:`allel.stats.sf`
-  (`#81 <https://github.com/cggh/scikit-allel/issues/81>`_).
+  (`#80 <https://github.com/cggh/scikit-allel/issues/80>`_).
 
 v0.20.3
 -------
