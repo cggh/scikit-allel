@@ -2361,6 +2361,18 @@ class AlleleCountsArray(ArrayAug):
             return np.asarray(s)
         return s
 
+    def __add__(self, other):
+        ret = super(AlleleCountsArray, self).__add__(other)
+        if hasattr(other, 'shape') and other.shape == self.shape:
+            ret = AlleleCountsArray(ret)
+        return ret
+
+    def __sub__(self, other):
+        ret = super(AlleleCountsArray, self).__sub__(other)
+        if hasattr(other, 'shape') and other.shape == self.shape:
+            ret = AlleleCountsArray(ret)
+        return ret
+
     def to_html_str(self, limit=5, caption=None):
         import petl as etl
         ac = self[:limit+1]

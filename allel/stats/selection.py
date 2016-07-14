@@ -10,6 +10,7 @@ import numpy as np
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
+from allel.stats.diversity import moving_tajima_d
 
 
 def ehh_decay(h, truncate=False):
@@ -1060,6 +1061,44 @@ def plot_moving_haplotype_frequencies(pos, h, size, start=0, stop=None, n=None,
     ax.set_xlabel('position (bp)')
 
     return ax
+
+
+def moving_delta_tajima_d(ac1, ac2, size, start=0, stop=None, step=None):
+    """Compute the difference in Tajima's D between two populations in
+    moving windows.
+
+    Parameters
+    ----------
+    ac1 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array for the first population.
+    ac2 : array_like, int, shape (n_variants, n_alleles)
+        Allele counts array for the second population.
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    delta_d : ndarray, float, shape (n_windows,)
+        Standardized delta Tajima's D.
+
+    See Also
+    --------
+    allel.stats.diversity.moving_tajima_d
+
+    """
+
+    D1 = moving_tajima_d(ac1, size=size, start=start, stop=stop, step=step)
+    D2 = moving_tajima_d(ac2, size=size, start=start, stop=stop, step=step)
+    delta = D1 - D2
+    delta_z = (delta - np.mean(delta)) / np.std(delta)
+    return delta_z
 
 
 def make_similar_sized_bins(x, n):

@@ -27,6 +27,17 @@ reworked to address a number of issues:
 
 Other changes:
 
+* Added functions :func:`allel.stats.diversity.moving_tajima_d` and
+  :func:`allel.stats.selection.moving_delta_tajima_d`
+  (`#81 <https://github.com/cggh/scikit-allel/issues/81>`_,
+  `#70 <https://github.com/cggh/scikit-allel/issues/70>`_).
+* Added functions :func:`allel.stats.fst.moving_weir_cockerham_fst`,
+  :func:`allel.stats.fst.moving_hudson_fst`,
+  :func:`allel.stats.fst.moving_patterson_fst`.
+* Added functions :func:`allel.stats.admixture.moving_patterson_f3` and
+  :func:`allel.stats.admixture.moving_patterson_d`.
+* Renamed "blockwise" to "average" in function names in
+  :mod:`allel.stats.fst` and :mod:`allel.stats.admixture` for clarity.
 * Added convenience methods
   :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic` and
   :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic_01` for locating
@@ -38,6 +49,7 @@ Other changes:
   (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
 * Protect against invalid coordinates when mapping from square to condensed
   coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
+>>>>>>> master
 
 v0.20.3
 -------

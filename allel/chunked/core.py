@@ -598,7 +598,7 @@ class ChunkedArray(object):
     def __getattr__(self, item):
         return getattr(self.data, item)
 
-    def __array__(self):
+    def __array__(self, *args):
         return self[:]
 
     def __repr__(self):

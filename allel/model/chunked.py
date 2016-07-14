@@ -531,6 +531,18 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
             out = _ndarray.AlleleCountsArray(out)
         return out
 
+    def __add__(self, other):
+        ret = super(AlleleCountsChunkedArray, self).__add__(other)
+        if hasattr(other, 'shape') and other.shape == self.shape:
+            ret = AlleleCountsChunkedArray(ret.data)
+        return ret
+
+    def __sub__(self, other):
+        ret = super(AlleleCountsChunkedArray, self).__sub__(other)
+        if hasattr(other, 'shape') and other.shape == self.shape:
+            ret = AlleleCountsChunkedArray(ret.data)
+        return ret
+
     def _repr_html_(self):
         return self[:6].to_html_str(caption=repr(self))
 
