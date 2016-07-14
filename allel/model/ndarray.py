@@ -88,6 +88,27 @@ class ArrayAug(np.ndarray):
         a = super(ArrayAug, self).reshape(*args, **kwargs)
         return np.asarray(a)
 
+    def flatten(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).flatten(*args, **kwargs)
+        return np.asarray(a)
+
+    def ravel(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).ravel(*args, **kwargs)
+        return np.asarray(a)
+
+    def transpose(self, *args, **kwargs):
+        # return as vanilla array
+        a = super(ArrayAug, self).transpose(*args, **kwargs)
+        return np.asarray(a)
+
+    @property
+    def T(self):
+        # return as vanilla array
+        a = super(ArrayAug, self).T
+        return np.asarray(a)
+
 
 class RecArrayAug(np.recarray):
 
@@ -160,12 +181,20 @@ class RecArrayAug(np.recarray):
         return self.compress(condition)
 
 
-class GenotypeArray(ArrayAug):
+class IntegerArray(ArrayAug):
+
+    def astype(self, dtype, *args, **kwargs):
+        x = super(IntegerArray, self).astype(dtype, *args, **kwargs)
+        if x.dtype.kind not in 'iu':
+            x = np.asarray(x)
+        return x
+
+
+class GenotypeArray(IntegerArray):
     """Array of discrete genotype calls.
 
     Parameters
     ----------
-
     data : array_like, int, shape (n_variants, n_samples, ploidy)
         Genotype data.
     **kwargs : keyword arguments
@@ -173,7 +202,6 @@ class GenotypeArray(ArrayAug):
 
     Notes
     -----
-
     This class represents data on discrete genotype calls as a
     3-dimensional numpy array of integers. By convention the first
     dimension corresponds to the variants genotyped, the second
@@ -445,7 +473,6 @@ class GenotypeArray(ArrayAug):
 
         Notes
         -----
-
         This is a lightweight genotype call mask and **not** a mask in the
         sense of a numpy masked array. This means that the mask will only be
         taken into account by the genotype and allele counting methods of this
@@ -482,7 +509,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         value : int, optional
             The fill value.
         mask : array_like, bool, shape (n_variants, n_samples), optional
@@ -493,7 +519,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         g : GenotypeArray
 
         Examples
@@ -540,7 +565,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         sel0 : array_like
             Boolean array or list of indices selecting variants.
         sel0 : array_like
@@ -548,7 +572,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : GenotypeArray
 
         Examples
@@ -584,7 +607,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
@@ -626,7 +648,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
@@ -670,13 +691,11 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         allele : int, optional
             Allele index.
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
@@ -730,7 +749,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
@@ -758,7 +776,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
@@ -803,7 +820,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype call matches the
             condition.
@@ -859,13 +875,11 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         call : array_like, int, shape (ploidy,)
             The genotype call to find.
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants, n_samples)
             Array where elements are True if the genotype is `call`.
 
@@ -938,7 +952,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         max_allele : int, optional
             The highest allele index to count. Alleles above this will be
             ignored.
@@ -947,7 +960,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         ac : AlleleCountsArray
 
         Examples
@@ -1032,7 +1044,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         subpops : dict (string -> sequence of ints)
             Mapping of subpopulation names to sample indices.
         max_allele : int, optional
@@ -1041,7 +1052,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : dict (string -> AlleleCountsArray)
             A mapping of subpopulation names to allele counts arrays.
 
@@ -1061,7 +1071,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
             Haplotype array.
         copy : bool, optional
@@ -1069,7 +1078,6 @@ class GenotypeArray(ArrayAug):
 
         Notes
         -----
-
         If genotype calls are unphased, the haplotypes returned by
         this function will bear no resemblance to the true haplotypes.
 
@@ -1100,19 +1108,16 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         fill : int, optional
             Use this value to represent missing calls.
 
         Returns
         -------
-
         out : ndarray, int, shape (n_variants, n_samples)
             Array of ref alleles per genotype call.
 
         Notes
         -----
-
         By default this function returns 0 for missing genotype calls
         **and** for homozygous non-reference genotype calls. Use the
         `fill` argument to change how missing calls are represented.
@@ -1156,19 +1161,16 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         fill : int, optional
             Use this value to represent missing calls.
 
         Returns
         -------
-
         out : ndarray, int, shape (n_variants, n_samples)
             Array of non-ref alleles per genotype call.
 
         Notes
         -----
-
         This function simply counts the number of non-reference
         alleles, it makes no distinction between different alternate
         alleles.
@@ -1215,14 +1217,12 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         alleles : sequence of ints, optional
             If not None, count only the given alleles. (By default, count all
             alleles.)
 
         Returns
         -------
-
         out : ndarray, uint8, shape (n_variants, n_samples, len(alleles))
             Array of allele counts per call.
 
@@ -1276,20 +1276,17 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         boundscheck : bool, optional
             If False, do not check that minimum and maximum alleles are
             compatible with bit-packing.
 
         Returns
         -------
-
         packed : ndarray, uint8, shape (n_variants, n_samples)
             Bit-packed genotype array.
 
         Notes
         -----
-
         If a mask has been set, it is ignored by this function.
 
         Examples
@@ -1339,13 +1336,11 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         packed : ndarray, uint8, shape (n_variants, n_samples)
             Bit-packed diploid genotype array.
 
         Returns
         -------
-
         g : GenotypeArray, shape (n_variants, n_samples, 2)
             Genotype array.
 
@@ -1384,7 +1379,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         format : {'coo', 'csc', 'csr', 'dia', 'dok', 'lil'}
             Sparse matrix format.
         kwargs : keyword arguments
@@ -1392,7 +1386,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         m : scipy.sparse.spmatrix
             Sparse matrix
 
@@ -1432,7 +1425,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         m : scipy.sparse.spmatrix
             Sparse matrix
         ploidy : int
@@ -1445,7 +1437,6 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         g : GenotypeArray, shape (n_variants, n_samples, ploidy)
             Genotype array.
 
@@ -1483,12 +1474,10 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         h : HaplotypeArray
 
         Notes
         -----
-
         If a mask has been set, it is ignored by this function.
 
         Examples
@@ -1551,7 +1540,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         phased : bool, optional
             Determines separator.
         max_allele : int, optional
@@ -1559,12 +1547,10 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         gt : ndarray, string, shape (n_variants, n_samples)
 
         Notes
         -----
-
         If a mask has been set, it is ignored by this function.
 
         Examples
@@ -1622,7 +1608,6 @@ class GenotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         mapping : ndarray, int8, shape (n_variants, max_allele)
             An array defining the allele mapping for each variant.
         copy : bool, optional
@@ -1632,12 +1617,10 @@ class GenotypeArray(ArrayAug):
 
         Returns
         -------
-
         gm : GenotypeArray
 
         Notes
         -----
-
         If a mask has been set, it is ignored by this function.
 
         Examples
@@ -1666,14 +1649,12 @@ class GenotypeArray(ArrayAug):
 
         Notes
         -----
-
         For arrays with dtype int8 an optimised implementation is used which is
         faster and uses far less memory. It is recommended to convert arrays to
         dtype int8 where possible before calling this method.
 
         See Also
         --------
-
         create_allele_mapping
 
         """
@@ -1684,12 +1665,11 @@ class GenotypeArray(ArrayAug):
         return gm
 
 
-class HaplotypeArray(ArrayAug):
+class HaplotypeArray(IntegerArray):
     """Array of haplotypes.
 
     Parameters
     ----------
-
     data : array_like, int, shape (n_variants, n_haplotypes)
         Haplotype data.
     **kwargs : keyword arguments
@@ -1697,7 +1677,6 @@ class HaplotypeArray(ArrayAug):
 
     Notes
     -----
-
     This class represents haplotype data as a 2-dimensional numpy
     array of integers. By convention the first dimension corresponds
     to the variants genotyped, the second dimension corresponds to the
@@ -1884,7 +1863,6 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         sel0 : array_like
             Boolean array or list of indices selecting variants.
         sel1 : array_like
@@ -1892,7 +1870,6 @@ class HaplotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : HaplotypeArray
 
         See Also
@@ -1947,13 +1924,11 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         ploidy : int
             The sample ploidy.
 
         Returns
         -------
-
         g : ndarray, int, shape (n_variants, n_samples, ploidy)
             Genotype array (sharing same underlying buffer).
         copy : bool, optional
@@ -1995,7 +1970,6 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         format : {'coo', 'csc', 'csr', 'dia', 'dok', 'lil'}
             Sparse matrix format.
         kwargs : keyword arguments
@@ -2003,7 +1977,6 @@ class HaplotypeArray(ArrayAug):
 
         Returns
         -------
-
         m : scipy.sparse.spmatrix
             Sparse matrix
 
@@ -2054,7 +2027,6 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         m : scipy.sparse.spmatrix
             Sparse matrix
         order : {'C', 'F'}, optional
@@ -2065,7 +2037,6 @@ class HaplotypeArray(ArrayAug):
 
         Returns
         -------
-
         h : HaplotypeArray, shape (n_variants, n_haplotypes)
             Haplotype array.
 
@@ -2108,7 +2079,6 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         max_allele : int, optional
             The highest allele index to count. Alleles greater than this
             index will be ignored.
@@ -2117,7 +2087,6 @@ class HaplotypeArray(ArrayAug):
 
         Returns
         -------
-
         ac : AlleleCountsArray, int, shape (n_variants, n_alleles)
 
         Examples
@@ -2181,7 +2150,6 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         subpops : dict (string -> sequence of ints)
             Mapping of subpopulation names to sample indices.
         max_allele : int, optional
@@ -2190,7 +2158,6 @@ class HaplotypeArray(ArrayAug):
 
         Returns
         -------
-
         out : dict (string -> AlleleCountsArray)
             A mapping of subpopulation names to allele counts arrays.
 
@@ -2209,7 +2176,6 @@ class HaplotypeArray(ArrayAug):
 
         Parameters
         ----------
-
         mapping : ndarray, int8, shape (n_variants, max_allele)
             An array defining the allele mapping for each variant.
         copy : bool, optional
@@ -2219,7 +2185,6 @@ class HaplotypeArray(ArrayAug):
 
         Returns
         -------
-
         hm : HaplotypeArray
 
         Examples
@@ -2312,12 +2277,11 @@ class HaplotypeArray(ArrayAug):
         return c / n
 
 
-class AlleleCountsArray(ArrayAug):
+class AlleleCountsArray(IntegerArray):
     """Array of allele counts.
 
     Parameters
     ----------
-
     data : array_like, int, shape (n_variants, n_alleles)
         Allele counts data.
     **kwargs : keyword arguments
@@ -2325,7 +2289,6 @@ class AlleleCountsArray(ArrayAug):
 
     Notes
     -----
-
     This class represents allele counts as a 2-dimensional numpy
     array of integers. By convention the first dimension corresponds
     to the variants genotyped, the second dimension corresponds to the
@@ -2429,6 +2392,18 @@ class AlleleCountsArray(ArrayAug):
                 return AlleleCountsArray(s, copy=False)
             return np.asarray(s)
         return s
+
+    def __add__(self, other):
+        ret = super(AlleleCountsArray, self).__add__(other)
+        if hasattr(other, 'shape') and other.shape == self.shape:
+            ret = AlleleCountsArray(ret)
+        return ret
+
+    def __sub__(self, other):
+        ret = super(AlleleCountsArray, self).__sub__(other)
+        if hasattr(other, 'shape') and other.shape == self.shape:
+            ret = AlleleCountsArray(ret)
+        return ret
 
     def to_html_str(self, limit=5, caption=None):
         import petl as etl
@@ -2557,7 +2532,6 @@ class AlleleCountsArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants,)
             Boolean array where elements are True if variant matches the
             condition.
@@ -2583,7 +2557,6 @@ class AlleleCountsArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants,)
             Boolean array where elements are True if variant matches the
             condition.
@@ -2609,7 +2582,6 @@ class AlleleCountsArray(ArrayAug):
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants,)
             Boolean array where elements are True if variant matches the
             condition.
@@ -2636,13 +2608,11 @@ class AlleleCountsArray(ArrayAug):
 
         Parameters
         ----------
-
         allele : int, optional
             Allele index.
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants,)
             Boolean array where elements are True if variant matches the
             condition.
@@ -2673,13 +2643,11 @@ class AlleleCountsArray(ArrayAug):
 
         Parameters
         ----------
-
         allele : int, optional
             Allele index.
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants,)
             Boolean array where elements are True if variant matches the
             condition.
@@ -2707,13 +2675,11 @@ class AlleleCountsArray(ArrayAug):
 
         Parameters
         ----------
-
         allele : int, optional
             Allele index.
 
         Returns
         -------
-
         out : ndarray, bool, shape (n_variants,)
             Boolean array where elements are True if variant matches the
             condition.
@@ -2735,6 +2701,40 @@ class AlleleCountsArray(ArrayAug):
         """
 
         return self[:, allele] == 2
+
+    def is_biallelic(self):
+        """Find biallelic variants.
+
+        Returns
+        -------
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        """
+        return self.allelism() == 2
+
+    def is_biallelic_01(self, min_mac=None):
+        """Find variants biallelic for the reference (0) and first alternate
+        (1) allele.
+
+        Parameters
+        ----------
+        min_mac : int, optional
+            Minimum minor allele count.
+
+        Returns
+        -------
+        out : ndarray, bool, shape (n_variants,)
+            Boolean array where elements are True if variant matches the
+            condition.
+
+        """
+        loc = (self.is_biallelic() &
+               (self.max_allele() == 1))
+        if min_mac is not None:
+            loc = loc & (self[:, :2].min(axis=1) >= min_mac)
+        return loc
 
     def count_variant(self):
         return np.sum(self.is_variant())
@@ -2759,13 +2759,11 @@ class AlleleCountsArray(ArrayAug):
 
         Parameters
         ----------
-
         mapping : ndarray, int8, shape (n_variants, max_allele)
             An array defining the allele mapping for each variant.
 
         Returns
         -------
-
         ac : AlleleCountsArray
 
         Examples
@@ -2796,7 +2794,6 @@ class AlleleCountsArray(ArrayAug):
 
         See Also
         --------
-
         create_allele_mapping
 
         """
@@ -2820,7 +2817,6 @@ class SortedIndex(ArrayAug):
 
     Parameters
     ----------
-
     data : array_like
         Values in ascending order.
     **kwargs : keyword arguments
@@ -2828,7 +2824,6 @@ class SortedIndex(ArrayAug):
 
     Notes
     -----
-
     Values must be given in ascending order, although duplicate values
     may be present (i.e., values must be monotonically increasing).
 
@@ -2914,13 +2909,11 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         key : int
             Value to locate.
 
         Returns
         -------
-
         loc : int or slice
             Location of `key` (will be slice if there are duplicate entries).
 
@@ -2959,13 +2952,11 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         other : array_like, int
             Array of values to intersect.
 
         Returns
         -------
-
         loc : ndarray, bool
             Boolean array with location of intersection.
         loc_other : ndarray, bool
@@ -3006,7 +2997,6 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         keys : array_like, int
             Array of keys to locate.
         strict : bool, optional
@@ -3014,7 +3004,6 @@ class SortedIndex(ArrayAug):
 
         Returns
         -------
-
         loc : ndarray, bool
             Boolean array with location of values.
 
@@ -3049,13 +3038,11 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         other : array_like, int
             Array of values to intersect with.
 
         Returns
         -------
-
         out : SortedIndex
             Values in common.
 
@@ -3080,7 +3067,6 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         start : int, optional
             Start value.
         stop : int, optional
@@ -3088,7 +3074,6 @@ class SortedIndex(ArrayAug):
 
         Returns
         -------
-
         loc : slice
             Slice object.
 
@@ -3128,7 +3113,6 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         start : int, optional
             Start value.
         stop : int, optional
@@ -3136,7 +3120,6 @@ class SortedIndex(ArrayAug):
 
         Returns
         -------
-
         idx : SortedIndex
 
         Examples
@@ -3162,7 +3145,6 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         starts : array_like, int
             Range start values.
         stops : array_like, int
@@ -3170,7 +3152,6 @@ class SortedIndex(ArrayAug):
 
         Returns
         -------
-
         loc : ndarray, bool
             Boolean array with location of entries found.
         loc_ranges : ndarray, bool
@@ -3225,7 +3206,6 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         starts : array_like, int
             Range start values.
         stops : array_like, int
@@ -3235,7 +3215,6 @@ class SortedIndex(ArrayAug):
 
         Returns
         -------
-
         loc : ndarray, bool
             Boolean array with location of entries found.
 
@@ -3270,7 +3249,6 @@ class SortedIndex(ArrayAug):
 
         Parameters
         ----------
-
         starts : array_like, int
             Range start values.
         stops : array_like, int
@@ -3278,7 +3256,6 @@ class SortedIndex(ArrayAug):
 
         Returns
         -------
-
         idx : SortedIndex
 
         Examples
@@ -3306,7 +3283,6 @@ class UniqueIndex(ArrayAug):
 
     Parameters
     ----------
-
     data : array_like
         Values.
     **kwargs : keyword arguments
@@ -3314,7 +3290,6 @@ class UniqueIndex(ArrayAug):
 
     Notes
     -----
-
     This class represents an arbitrary set of unique values, e.g., sample or
     variant identifiers.
 
@@ -3398,13 +3373,11 @@ class UniqueIndex(ArrayAug):
 
         Parameters
         ----------
-
         key : object
             Key to locate.
 
         Returns
         -------
-
         loc : int
             Location of `key`.
 
@@ -3433,13 +3406,11 @@ class UniqueIndex(ArrayAug):
 
         Parameters
         ----------
-
         other : array_like
             Array to intersect.
 
         Returns
         -------
-
         loc : ndarray, bool
             Boolean array with location of intersection.
         loc_other : ndarray, bool
@@ -3480,7 +3451,6 @@ class UniqueIndex(ArrayAug):
 
         Parameters
         ----------
-
         keys : array_like
             Array of keys to locate.
         strict : bool, optional
@@ -3488,7 +3458,6 @@ class UniqueIndex(ArrayAug):
 
         Returns
         -------
-
         loc : ndarray, bool
             Boolean array with location of keys.
 
@@ -3520,13 +3489,11 @@ class UniqueIndex(ArrayAug):
 
         Parameters
         ----------
-
         other : array_like
             Array to intersect.
 
         Returns
         -------
-
         out : UniqueIndex
 
         Examples
@@ -3554,7 +3521,6 @@ class SortedMultiIndex(object):
 
     Parameters
     ----------
-
     l1 : array_like
         First level values in ascending order.
     l2 : array_like
@@ -3596,7 +3562,6 @@ class SortedMultiIndex(object):
 
         Parameters
         ----------
-
         k1 : object
             Level 1 key.
         k2 : object, optional
@@ -3604,7 +3569,6 @@ class SortedMultiIndex(object):
 
         Returns
         -------
-
         loc : int or slice
             Location of requested key (will be slice if there are duplicate
             entries).
@@ -3662,7 +3626,6 @@ class SortedMultiIndex(object):
 
         Parameters
         ----------
-
         key : object
             Level 1 key value.
         start : object, optional
@@ -3672,7 +3635,6 @@ class SortedMultiIndex(object):
 
         Returns
         -------
-
         loc : slice
             Slice object.
 
@@ -3730,7 +3692,6 @@ class VariantTable(RecArrayAug):
 
     Parameters
     ----------
-
     data : array_like, structured, shape (n_variants,)
         Variant records.
     index : string or pair of strings, optional
@@ -3743,7 +3704,6 @@ class VariantTable(RecArrayAug):
 
     Examples
     --------
-
     Instantiate a table from existing data::
 
         >>> import allel
@@ -3873,7 +3833,6 @@ class VariantTable(RecArrayAug):
 
         Parameters
         ----------
-
         index : string or pair of strings, optional
             Names of columns to use for positional index, e.g., 'POS' if table
             contains a 'POS' column and records from a single
@@ -3899,7 +3858,6 @@ class VariantTable(RecArrayAug):
 
         Parameters
         ----------
-
         chrom : string, optional
             Chromosome/contig.
         position : int, optional
@@ -3907,7 +3865,6 @@ class VariantTable(RecArrayAug):
 
         Returns
         -------
-
         result : row or VariantTable
 
         """
@@ -3927,7 +3884,6 @@ class VariantTable(RecArrayAug):
 
         Parameters
         ----------
-
         chrom : string, optional
             Chromosome/contig.
         start : int, optional
@@ -3937,7 +3893,6 @@ class VariantTable(RecArrayAug):
 
         Returns
         -------
-
         result : VariantTable
 
         """
@@ -3956,7 +3911,6 @@ class VariantTable(RecArrayAug):
 
         Parameters
         ----------
-
         path : string
             File path.
         rename : dict, optional
@@ -3970,7 +3924,6 @@ class VariantTable(RecArrayAug):
 
         Examples
         --------
-
         Setup a variant table to write out::
 
             >>> import allel
@@ -4055,7 +4008,6 @@ class FeatureTable(RecArrayAug):
 
     Parameters
     ----------
-
     data : array_like, structured, shape (n_variants,)
         Variant records.
     index : pair or triplet of strings, optional
@@ -4161,7 +4113,6 @@ class FeatureTable(RecArrayAug):
 
         Parameters
         ----------
-
         path : string
             File path.
         attributes : list of strings, optional
@@ -4181,7 +4132,6 @@ class FeatureTable(RecArrayAug):
 
         Returns
         -------
-
         ft : FeatureTable
 
         """
@@ -4213,7 +4163,6 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
 
     Parameters
     ----------
-
     ref : array_like, S1, shape (n_variants,)
         Reference alleles.
     alt : array_like, S1, shape (n_variants, n_alt_alleles)
@@ -4223,12 +4172,10 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
 
     Returns
     -------
-
     mapping : ndarray, int8, shape (n_variants, n_alt_alleles + 1)
 
     Examples
     --------
-
     Example with biallelic variants::
 
         >>> import allel
@@ -4263,7 +4210,6 @@ def create_allele_mapping(ref, alt, alleles, dtype='i1'):
 
     See Also
     --------
-
     GenotypeArray.map_alleles, HaplotypeArray.map_alleles,
     AlleleCountsArray.map_alleles
 
@@ -4300,7 +4246,6 @@ def locate_fixed_differences(ac1, ac2):
 
     Parameters
     ----------
-
     ac1 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array from the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
@@ -4308,12 +4253,10 @@ def locate_fixed_differences(ac1, ac2):
 
     Returns
     -------
-
     loc : ndarray, bool, shape (n_variants,)
 
     See Also
     --------
-
     allel.stats.diversity.windowed_df
 
     Examples
@@ -4363,13 +4306,11 @@ def locate_private_alleles(*acs):
 
     Parameters
     ----------
-
     *acs : array_like, int, shape (n_variants, n_alleles)
         Allele counts arrays from each population.
 
     Returns
     -------
-
     loc : ndarray, bool, shape (n_variants, n_alleles)
         Boolean array where elements are True if allele is private to a
         single population.
@@ -4593,7 +4534,6 @@ def recarray_to_hdf5_group(ra, parent, name, **kwargs):
 
     Parameters
     ----------
-
     parent : string or h5py group
         Parent HDF5 file or group. If a string, will be treated as HDF5 file
         name.
@@ -4604,7 +4544,6 @@ def recarray_to_hdf5_group(ra, parent, name, **kwargs):
 
     Returns
     -------
-
     h5g : h5py group
 
     """
