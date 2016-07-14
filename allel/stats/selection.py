@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+import multiprocessing
+from multiprocessing.pool import ThreadPool
 
 
 import numpy as np
 
 
-from allel.util import asarray_ndim
+from allel.util import asarray_ndim, check_dim0_aligned
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
 
@@ -250,81 +252,106 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
-def xpehh(h1, h2, pos, min_ehh=0.05):
-    """Compute the unstandardized cross-population extended haplotype
-    homozygosity score (XPEHH) for each variant.
+def compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible):
+    """Compute spacing between variants for integrating haplotype
+    homozygosity.
 
     Parameters
     ----------
-    h1 : array_like, int, shape (n_variants, n_haplotypes)
-        Haplotype array for the first population.
-    h2 : array_like, int, shape (n_variants, n_haplotypes)
-        Haplotype array for the second population.
     pos : array_like, int, shape (n_variants,)
-        Variant positions on physical or genetic map.
-    min_ehh: float, optional
-        Minimum EHH beyond which to truncate integrated haplotype
-        homozygosity calculation.
+        Variant positions (physical distance).
+    map_pos : array_like, float, shape (n_variants,)
+        Variant positions (genetic map distance).
+    gap_scale : int, optional
+        Rescale distance between variants if gap is larger than this value.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, distance between variants
+        will be computed as the number of accessible bases between them.
 
     Returns
     -------
-    score : ndarray, float, shape (n_variants,)
-        Unstandardized XPEHH scores.
-
-    Notes
-    -----
-
-    This function will calculate XPEHH for all variants. To exclude variants
-    below a given minor allele frequency, filter the input haplotype arrays
-    before passing to this function.
-
-    This function returns NaN for any EHH calculations where haplotype
-    homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `min_ehh` to None.
-
-    This function currently does nothing to account for large gaps between
-    variants. There will be edge effects near any large gaps.
-
-    Note that the unstandardized score is returned. Usually these scores are
-    then normalised in different allele frequency bins.
-
-    Haplotype arrays from the two populations may have different numbers of
-    haplotypes.
+    gaps : ndarray, float, shape (n_variants - 1,)
 
     """
 
-    from allel.opt.stats import ihh_scan_int8
+    # check inputs
+    if map_pos is None:
+        # integrate over physical distance
+        map_pos = pos
+    else:
+        map_pos = asarray_ndim(map_pos, 1)
+        check_dim0_aligned(pos, map_pos)
 
-    # scan forward
-    ihh1_fwd = ihh_scan_int8(h1, pos, min_ehh=min_ehh)
-    ihh2_fwd = ihh_scan_int8(h2, pos, min_ehh=min_ehh)
+    # compute physical gaps
+    physical_gaps = np.diff(pos)
 
-    # scan backward
-    ihh1_rev = ihh_scan_int8(h1[::-1], pos[::-1], min_ehh=min_ehh)[::-1]
-    ihh2_rev = ihh_scan_int8(h2[::-1], pos[::-1], min_ehh=min_ehh)[::-1]
+    # compute genetic gaps
+    gaps = np.diff(map_pos).astype('f8')
 
-    # compute unstandardized score
-    ihh1 = ihh1_fwd + ihh1_rev
-    ihh2 = ihh2_fwd + ihh2_rev
-    score = np.log(ihh1 / ihh2)
+    if is_accessible is not None:
 
-    return score
+        # compute accessible gaps
+        is_accessible = asarray_ndim(is_accessible, 1)
+        assert is_accessible.shape[0] > pos[-1], \
+            'accessibility array too short'
+        accessible_gaps = np.zeros_like(physical_gaps)
+        for i in range(1, len(pos)):
+            # N.B., expect pos is 1-based
+            n_access = np.count_nonzero(is_accessible[pos[i-1]-1:pos[i]-1])
+            accessible_gaps[i-1] = n_access
+
+        # adjust using accessibility
+        scaling = accessible_gaps / physical_gaps
+        gaps = gaps * scaling
+
+    elif gap_scale is not None and gap_scale > 0:
+
+        scaling = np.ones(gaps.shape, dtype='f8')
+        loc_scale = physical_gaps > gap_scale
+        scaling[loc_scale] = gap_scale / physical_gaps[loc_scale]
+        gaps = gaps * scaling
+
+    if max_gap is not None and max_gap > 0:
+
+        # deal with very large gaps
+        gaps[physical_gaps > max_gap] = -1
+
+    return gaps
 
 
-def ihs(h, pos, min_ehh=0.05):
+def ihs(h, pos, map_pos=None, min_ehh=0.05, include_edges=False,
+        gap_scale=20000, max_gap=200000, is_accessible=None, use_threads=True):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
-    reference and alternate alleles.
+    reference (0) and alternate (1) alleles.
 
     Parameters
     ----------
     h : array_like, int, shape (n_variants, n_haplotypes)
         Haplotype array.
     pos : array_like, int, shape (n_variants,)
-        Variant positions on physical or genetic map.
+        Variant positions (physical distance).
+    map_pos : array_like, float, shape (n_variants,)
+        Variant positions (genetic map distance).
     min_ehh: float, optional
         Minimum EHH beyond which to truncate integrated haplotype
         homozygosity calculation.
+    include_edges : bool, optional
+        If True, report scores even if EHH does not decay below `min_ehh`
+        before reaching the edge of the data.
+    gap_scale : int, optional
+        Rescale distance between variants if gap is larger than this value.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, distance between variants
+        will be computed as the number of accessible bases between them.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
 
     Returns
     -------
@@ -344,23 +371,64 @@ def ihs(h, pos, min_ehh=0.05):
 
     This function returns NaN for any IHS calculations where haplotype
     homozygosity does not decay below `min_ehh` before reaching the first or
-    last variant. To disable this behaviour, set `min_ehh` to None.
-
-    This function currently does nothing to account for large gaps between
-    variants. There will be edge effects near any large gaps.
+    last variant. To disable this behaviour, set `include_edges` to True.
 
     Note that the unstandardized score is returned. Usually these scores are
-    then normalised in different allele frequency bins.
+    then standardized in different allele frequency bins.
+
+    See Also
+    --------
+    standardize_by_allele_count
 
     """
 
     from allel.opt.stats import ihh01_scan_int8
 
-    # scan forward
-    ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, pos, min_ehh=min_ehh)
+    # check inputs
+    h = HaplotypeArray(np.asarray(h, dtype='i1'))
+    pos = asarray_ndim(pos, 1)
+    check_dim0_aligned(h, pos)
 
-    # scan backward
-    ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], pos[::-1], min_ehh=min_ehh)
+    # compute gaps between variants for integration
+    gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
+
+    # setup kwargs
+    kwargs = dict(min_ehh=min_ehh, include_edges=include_edges)
+
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # run with threads
+
+        # create pool
+        pool = ThreadPool(2)
+
+        # scan forward
+        result_fwd = pool.apply_async(ihh01_scan_int8, (h, gaps), kwargs)
+
+        # scan backward
+        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], gaps[::-1]),
+                                      kwargs)
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        ihh0_fwd, ihh1_fwd = result_fwd.get()
+        ihh0_rev, ihh1_rev = result_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # run without threads
+
+        # scan forward
+        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, gaps, **kwargs)
+
+        # scan backward
+        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], gaps[::-1], **kwargs)
+
+    # handle reverse scan
     ihh0_rev = ihh0_rev[::-1]
     ihh1_rev = ihh1_rev[::-1]
 
@@ -372,7 +440,134 @@ def ihs(h, pos, min_ehh=0.05):
     return score
 
 
-def nsl(h):
+def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
+          gap_scale=20000, max_gap=200000, is_accessible=None,
+          use_threads=True):
+    """Compute the unstandardized cross-population extended haplotype
+    homozygosity score (XPEHH) for each variant.
+
+    Parameters
+    ----------
+    h1 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the first population.
+    h2 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the second population.
+    pos : array_like, int, shape (n_variants,)
+        Variant positions on physical or genetic map.
+    map_pos : array_like, float, shape (n_variants,)
+        Variant positions (genetic map distance).
+    min_ehh: float, optional
+        Minimum EHH beyond which to truncate integrated haplotype
+        homozygosity calculation.
+    include_edges : bool, optional
+        If True, report scores even if EHH does not decay below `min_ehh`
+        before reaching the edge of the data.
+    gap_scale : int, optional
+        Rescale distance between variants if gap is larger than this value.
+    max_gap : int, optional
+        Do not report scores if EHH spans a gap larger than this number of
+        base pairs.
+    is_accessible : array_like, bool, optional
+        Genome accessibility array. If provided, distance between variants
+        will be computed as the number of accessible bases between them.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized XPEHH scores.
+
+    Notes
+    -----
+
+    This function will calculate XPEHH for all variants. To exclude variants
+    below a given minor allele frequency, filter the input haplotype arrays
+    before passing to this function.
+
+    This function returns NaN for any EHH calculations where haplotype
+    homozygosity does not decay below `min_ehh` before reaching the first or
+    last variant. To disable this behaviour, set `include_edges` to True.
+
+    Note that the unstandardized score is returned. Usually these scores are
+    then standardized genome-wide.
+
+    Haplotype arrays from the two populations may have different numbers of
+    haplotypes.
+
+    See Also
+    --------
+    standardize
+
+    """
+
+    from allel.opt.stats import ihh_scan_int8
+
+    # check inputs
+    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
+    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+    pos = asarray_ndim(pos, 1)
+    check_dim0_aligned(h1, h2, pos)
+
+    # compute gaps between variants for integration
+    gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
+
+    # setup kwargs
+    kwargs = dict(min_ehh=min_ehh, include_edges=include_edges)
+
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # use multiple threads
+
+        # setup threadpool
+        pool = ThreadPool(min(4, multiprocessing.cpu_count()))
+
+        # scan forward
+        res1_fwd = pool.apply_async(ihh_scan_int8, (h1, gaps), kwargs)
+        res2_fwd = pool.apply_async(ihh_scan_int8, (h2, gaps), kwargs)
+
+        # scan backward
+        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], gaps[::-1]),
+                                    kwargs)
+        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], gaps[::-1]),
+                                    kwargs)
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        ihh1_fwd = res1_fwd.get()
+        ihh2_fwd = res2_fwd.get()
+        ihh1_rev = res1_rev.get()
+        ihh2_rev = res2_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # compute without threads
+
+        # scan forward
+        ihh1_fwd = ihh_scan_int8(h1, gaps, **kwargs)
+        ihh2_fwd = ihh_scan_int8(h2, gaps, **kwargs)
+
+        # scan backward
+        ihh1_rev = ihh_scan_int8(h1[::-1], gaps[::-1], **kwargs)
+        ihh2_rev = ihh_scan_int8(h2[::-1], gaps[::-1], **kwargs)
+
+    # handle reverse scans
+    ihh1_rev = ihh1_rev[::-1]
+    ihh2_rev = ihh2_rev[::-1]
+
+    # compute unstandardized score
+    ihh1 = ihh1_fwd + ihh1_rev
+    ihh2 = ihh2_fwd + ihh2_rev
+    score = np.log(ihh1 / ihh2)
+
+    return score
+
+
+def nsl(h, use_threads=True):
     """Compute the unstandardized number of segregating sites by length (nSl)
     for each variant, comparing the reference and alternate alleles,
     after Ferrer-Admetlla et al. (2014).
@@ -381,6 +576,8 @@ def nsl(h):
     ----------
     h : array_like, int, shape (n_variants, n_haplotypes)
         Haplotype array.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
 
     Returns
     -------
@@ -392,37 +589,60 @@ def nsl(h):
     below a given minor allele frequency, filter the input haplotype array
     before passing to this function.
 
-    The function only expects segregating sites, so ensure any
-    non-segregating sites are removed before passing in the haplotype array.
-
     This function computes nSl by comparing the reference and alternate
     alleles. These can be polarised by switching the sign for any variant where
     the reference allele is derived.
 
     This function does nothing about nSl calculations where haplotype
-    homozygosity extends up to the first or last variant. There will be edge
+    homozygosity extends up to the first or last variant. There may be edge
     effects.
 
-    This function currently does nothing to account for large gaps between
-    variants. There will be edge effects near any large gaps.
+    Note that the unstandardized score is returned. Usually these scores are
+    then standardized in different allele frequency bins.
 
-    This function returns unstandardised scores. Typically nSl scores are
-    are normalised by subtracting the mean and dividing by the standard
-    deviation.
+    See Also
+    --------
+    standardize_by_allele_count
 
     """
 
     from allel.opt.stats import nsl01_scan_int8
 
-    # check there are no invariant sites
-    ac = h.count_alleles()
-    assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
+    # check inputs
+    h = HaplotypeArray(np.asarray(h, dtype='i1'))
 
-    # scan forward
-    nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
+    # # check there are no invariant sites
+    # ac = h.count_alleles()
+    # assert np.all(ac.is_segregating()), 'please remove non-segregating sites'
 
-    # scan backward
-    nsl0_rev, nsl1_rev = nsl01_scan_int8(h[::-1])
+    if use_threads and multiprocessing.cpu_count() > 1:
+
+        # create pool
+        pool = ThreadPool(2)
+
+        # scan forward
+        result_fwd = pool.apply_async(nsl01_scan_int8, args=(h,))
+
+        # scan backward
+        result_rev = pool.apply_async(nsl01_scan_int8, args=(h[::-1],))
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        nsl0_fwd, nsl1_fwd = result_fwd.get()
+        nsl0_rev, nsl1_rev = result_rev.get()
+
+    else:
+
+        # scan forward
+        nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
+
+        # scan backward
+        nsl0_rev, nsl1_rev = nsl01_scan_int8(h[::-1])
+
+    # handle backwards
     nsl0_rev = nsl0_rev[::-1]
     nsl1_rev = nsl1_rev[::-1]
 
@@ -430,6 +650,80 @@ def nsl(h):
     nsl0 = nsl0_fwd + nsl0_rev
     nsl1 = nsl1_fwd + nsl1_rev
     score = np.log(nsl1 / nsl0)
+
+    return score
+
+
+def xpnsl(h1, h2, use_threads=True):
+    """Cross-population version of the NSL statistic.
+
+    Parameters
+    ----------
+    h1 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the first population.
+    h2 : array_like, int, shape (n_variants, n_haplotypes)
+        Haplotype array for the second population.
+    use_threads : bool, optional
+        If True use multiple threads to compute.
+
+    Returns
+    -------
+    score : ndarray, float, shape (n_variants,)
+        Unstandardized XPNSL scores.
+
+    """
+    from allel.opt.stats import nsl_scan_int8
+
+    # check inputs
+    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
+    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+
+    if use_threads and multiprocessing.cpu_count() > 1:
+        # use multiple threads
+
+        # setup threadpool
+        pool = ThreadPool(min(4, multiprocessing.cpu_count()))
+
+        # scan forward
+        res1_fwd = pool.apply_async(nsl_scan_int8, args=(h1,))
+        res2_fwd = pool.apply_async(nsl_scan_int8, args=(h2,))
+
+        # scan backward
+        res1_rev = pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
+        res2_rev = pool.apply_async(nsl_scan_int8, args=(h2[::-1],))
+
+        # wait for both to finish
+        pool.close()
+        pool.join()
+
+        # obtain results
+        nsl1_fwd = res1_fwd.get()
+        nsl2_fwd = res2_fwd.get()
+        nsl1_rev = res1_rev.get()
+        nsl2_rev = res2_rev.get()
+
+        # cleanup
+        pool.terminate()
+
+    else:
+        # compute without threads
+
+        # scan forward
+        nsl1_fwd = nsl_scan_int8(h1)
+        nsl2_fwd = nsl_scan_int8(h2)
+
+        # scan backward
+        nsl1_rev = nsl_scan_int8(h1[::-1])
+        nsl2_rev = nsl_scan_int8(h2[::-1])
+
+    # handle reverse scans
+    nsl1_rev = nsl1_rev[::-1]
+    nsl2_rev = nsl2_rev[::-1]
+
+    # compute unstandardized score
+    nsl1 = nsl1_fwd + nsl1_rev
+    nsl2 = nsl2_fwd + nsl2_rev
+    score = np.log(nsl1 / nsl2)
 
     return score
 
@@ -766,3 +1060,147 @@ def plot_moving_haplotype_frequencies(pos, h, size, start=0, stop=None, n=None,
     ax.set_xlabel('position (bp)')
 
     return ax
+
+
+def make_similar_sized_bins(x, n):
+    """Utility function to create a set of bins over the range of values in `x`
+    such that each bin contains roughly the same number of values.
+
+    Parameters
+    ----------
+    x : array_like
+        The values to be binned.
+    n : int
+        The number of bins to create.
+
+    Returns
+    -------
+    bins : ndarray
+        An array of bin edges.
+
+    Notes
+    -----
+    The actual number of bins returned may be less than `n` if `x` contains
+    integer values and any single value is represented more than len(x)//n
+    times.
+
+    """
+    # copy and sort the array
+    y = np.array(x).flatten()
+    y.sort()
+
+    # setup bins
+    bins = [y[0]]
+
+    # determine step size
+    step = len(y) // n
+
+    # add bin edges
+    for i in range(step, len(y), step):
+
+        # get value at this index
+        v = y[i]
+
+        # only add bin edge if larger than previous
+        if v > bins[-1]:
+            bins.append(v)
+
+    # fix last bin edge
+    bins[-1] = y[-1]
+
+    return np.array(bins)
+
+
+def standardize(score):
+    """Centre and scale to unit variance."""
+    score = asarray_ndim(score, 1)
+    return (score - np.nanmean(score)) / np.nanstd(score)
+
+
+def standardize_by_allele_count(score, aac, bins=None, n_bins=None,
+                                diagnostics=True):
+    """Standardize `score` within allele frequency bins.
+
+    Parameters
+    ----------
+    score : array_like, float
+        The score to be standardized, e.g., IHS or NSL.
+    aac : array_like, int
+        An array of alternate allele counts.
+    bins : array_like, int, optional
+        Allele count bins, overrides `n_bins`.
+    n_bins : int, optional
+        Number of allele count bins to use.
+    diagnostics : bool, optional
+        If True, plot some diagnostic information about the standardization.
+
+    Returns
+    -------
+    score_standardized : ndarray, float
+        Standardized scores.
+    bins : ndarray, int
+        Allele count bins used for standardization.
+
+    """
+
+    from scipy.stats import binned_statistic
+
+    # check inputs
+    score = asarray_ndim(score, 1)
+    aac = asarray_ndim(aac, 1)
+    check_dim0_aligned(score, aac)
+
+    if bins is None:
+        # make our own similar sized bins
+
+        # how many bins to make?
+        if n_bins is None:
+            # something vaguely reasonable
+            n_bins = np.max(aac) // 2
+
+        bins = make_similar_sized_bins(aac, n_bins)
+
+    else:
+        # user-provided bins
+        bins = asarray_ndim(bins, 1)
+
+    mean_score, _, _ = binned_statistic(aac, score, statistic=np.nanmean,
+                                        bins=bins)
+    std_score, _, _ = binned_statistic(aac, score, statistic=np.nanstd,
+                                       bins=bins)
+
+    if diagnostics:
+        import matplotlib.pyplot as plt
+        x = (bins[:-1] + bins[1:]) / 2
+        plt.figure()
+        plt.fill_between(x,
+                         mean_score - std_score,
+                         mean_score + std_score,
+                         alpha=.5,
+                         label='std')
+        plt.plot(x, mean_score, marker='o', label='mean')
+        plt.grid(axis='y')
+        plt.xlabel('Alternate allele count')
+        plt.ylabel('Unstandardized score')
+        plt.title('Standardization diagnostics')
+        plt.legend()
+
+    # apply standardization
+    score_standardized = np.empty_like(score)
+    for i in range(len(bins) - 1):
+        x1 = bins[i]
+        x2 = bins[i + 1]
+        if i == 0:
+            # first bin
+            loc = (aac < x2)
+        elif i == len(bins) - 2:
+            # last bin
+            loc = (aac >= x1)
+        else:
+            # middle bins
+            loc = (aac >= x1) & (aac < x2)
+        m = mean_score[i]
+        s = std_score[i]
+        score_standardized[loc] = (score[loc] - m) / s
+
+    return score_standardized, bins
