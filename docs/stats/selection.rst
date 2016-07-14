@@ -18,3 +18,4 @@ Selection
 .. autofunction:: moving_garud_h
 .. autofunction:: plot_haplotype_frequencies
 .. autofunction:: plot_moving_haplotype_frequencies
+.. autofunction:: moving_delta_tajima_d
