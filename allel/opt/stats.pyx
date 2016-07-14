@@ -482,11 +482,6 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
                 n_pairs_ident -= hh_breaks[i]
                 ehh_cur = n_pairs_ident / n_pairs
 
-                # check if we've reached minimum EHH
-                if ehh_cur <= min_ehh:
-                    edge = False
-                    break
-
                 # determine gap width
                 gap_idx = variant_idx - i
                 gap = gaps[gap_idx]
@@ -498,6 +493,11 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 
                 # accumulate IHH
                 ihh += gap * (ehh_cur + ehh_prv) / 2
+
+                # check if we've reached minimum EHH
+                if ehh_cur <= min_ehh:
+                    edge = False
+                    break
 
                 # move on
                 ehh_prv = ehh_cur

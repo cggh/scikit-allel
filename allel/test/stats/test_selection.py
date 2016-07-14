@@ -163,13 +163,20 @@ def test_ihh01_scan_int8_b():
                   [1, 0, 0, 0]], dtype='i1')
 
     ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0.05)
-    expect_ihh0 = [np.nan, np.nan, 10 * 2 / 3, 10 * 2 / 3]
+    x = (10 * (1 + 1 / 3) / 2) + (10 * (1 / 3 + 0) / 2)
+    expect_ihh0 = [np.nan, np.nan, x, x]
+    assert_array_nanclose(expect_ihh0, ihh0)
+    expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
+    assert_array_nanclose(expect_ihh1, ihh1)
+
+    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0)
+    expect_ihh0 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=True)
-    expect_ihh0 = [np.nan, 10 * 2 / 3, 10 * 2 / 3, 10 * 2 / 3]
+    expect_ihh0 = [np.nan, 10 * (1 + 1 / 3) / 2, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
@@ -203,15 +210,22 @@ def test_ihh01_scan_int8_d():
                   [0, 0, 0, 1, 1, 1]], dtype='i1')
 
     ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0.05)
-    expect_ihh0 = [np.nan, np.nan, 10 * 2 / 3, 10 * 2 / 3]
+    x = (10 * (1 + 1 / 3) / 2) + (10 * (1 / 3 + 0) / 2)
+    expect_ihh0 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
-    expect_ihh1 = [np.nan, np.nan, 10 * 2 / 3, 10 * 2 / 3]
+    expect_ihh1 = [np.nan, np.nan, x, x]
+    assert_array_nanclose(expect_ihh1, ihh1)
+
+    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0)
+    expect_ihh0 = [np.nan, np.nan, x, x]
+    assert_array_nanclose(expect_ihh0, ihh0)
+    expect_ihh1 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=True)
-    expect_ihh0 = [np.nan, 10 * 2 / 3, 10 * 2 / 3, 10 * 2 / 3]
+    expect_ihh0 = [np.nan, 10 * 2 / 3, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
-    expect_ihh1 = [np.nan, 10 * 2 / 3, 10 * 2 / 3, 10 * 2 / 3]
+    expect_ihh1 = [np.nan, 10 * 2 / 3, x, x]
     assert_array_nanclose(expect_ihh1, ihh1)
 
 
@@ -222,7 +236,7 @@ def test_ssl2ihh_a():
     gaps = np.array([1, 2, 4], dtype='f8')
     vidx = 3
     min_ehh = 0
-    expect = (4 * (1 + 1) / 2) + (2 * (1 + 1) / 2)
+    expect = (4 * (1 + 1) / 2) + (2 * (1 + 1) / 2) + (1 * (1 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
     eq(expect, actual)
 
@@ -234,7 +248,8 @@ def test_ssl2ihh_b():
     gaps = np.array([1, 2, 4], dtype='f8')
     vidx = 3
     min_ehh = 0
-    expect = (4 * (1/3 + 1/3) / 2) + (2 * (1/3 + 1/3) / 2)
+    expect = (4 * (1/3 + 1/3) / 2) + (2 * (1/3 + 1/3) / 2) + \
+             (1 * (1/3 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
     eq(expect, actual)
 
@@ -246,7 +261,8 @@ def test_ssl2ihh_c():
     gaps = np.array([1, 2, 4], dtype='f8')
     vidx = 3
     min_ehh = 0
-    expect = (4 * (1 + 2/3) / 2) + (2 * (2/3 + 1/3) / 2)
+    expect = (4 * (1 + 2/3) / 2) + (2 * (2/3 + 1/3) / 2) + \
+             (1 * (1/3 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
     eq(expect, actual)
 
@@ -258,7 +274,8 @@ def test_ssl2ihh_d():
     gaps = np.array([1, 2, 4], dtype='f8')
     vidx = 3
     min_ehh = 0
-    expect = (4 * (2/3 + 1/3) / 2) + (2 * (1/3 + 1/3) / 2)
+    expect = (4 * (2/3 + 1/3) / 2) + (2 * (1/3 + 1/3) / 2) + \
+             (1 * (1/3 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
     eq(expect, actual)
 
@@ -307,8 +324,9 @@ def test_ssl2ihh_h():
     gaps = np.array([1, 2, 4], dtype='f8')
     vidx = 3
     min_ehh = 0.5
+    expect = 4 * (2/3 + 1/3) / 2
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    assert np.isnan(actual), actual
+    eq(expect, actual)
 
 
 def test_ihs():
