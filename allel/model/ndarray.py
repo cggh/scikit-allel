@@ -236,8 +236,8 @@ class GenotypeArray(IntegerArray):
     storing the genotype calls in memory as an uncompressed numpy
     array if integers may be impractical. For working with large
     arrays of genotype data, see the
-    :class:`allel.bcolz.GenotypeCArray` class, which provides an
-    alternative implementation of this interface using compressed
+    :class:`allel.model.chunked.GenotypeChunkedArray` class, which provides an
+    alternative implementation of this interface using chunked compressed
     arrays.
 
     Examples
@@ -480,11 +480,11 @@ class GenotypeArray(IntegerArray):
         class or by any numpy ufuncs.
 
         Note also that the mask may not survive any slicing, indexing or
-        other subsetting procedures (e.g., call to np.compress() or np.take()).
-        I.e., the mask will have to be similarly indexed then reapplied. The
-        only exceptions are simple slicing operations that preserve the
-        dimensionality and ploidy of the array, and the subset() method,
-        both of which **will** preserve the mask if present.
+        other subsetting procedures (e.g., call to :func:`numpy.compress` or
+        :func:`numpy.take`). I.e., the mask will have to be similarly indexed
+        then reapplied. The only exceptions are simple slicing operations
+        that preserve the dimensionality and ploidy of the array, and the
+        subset() method, both of which **will** preserve the mask if present.
 
         """
         if hasattr(self, '_mask'):
@@ -590,7 +590,7 @@ class GenotypeArray(IntegerArray):
 
         See Also
         --------
-        GenotypeArray.take, GenotypeArray.compress.
+        numpy.take, numpy.compress
 
         """
 
@@ -1691,6 +1691,14 @@ class HaplotypeArray(IntegerArray):
     haplotype array can also be viewed as a genotype array. However,
     this is not a requirement.
 
+    With data on large numbers of variants and/or haplotypes,
+    storing the data in memory as an uncompressed numpy
+    array if integers may be impractical. For working with large
+    arrays of haplotype data, see the
+    :class:`allel.model.chunked.HaplotypeChunkedArray` class, which provides an
+    alternative implementation of this interface using chunked compressed
+    arrays.
+
     Examples
     --------
 
@@ -1874,7 +1882,7 @@ class HaplotypeArray(IntegerArray):
 
         See Also
         --------
-        HaplotypeArray.take, HaplotypeArray.compress.
+        numpy.take, numpy.compress
 
         """
 
@@ -3700,7 +3708,8 @@ class VariantTable(RecArrayAug):
         or ('CHROM', 'POS') if table contains records from multiple
         chromosomes/contigs.
     **kwargs : keyword arguments, optional
-        Further keyword arguments are passed through to :func:`np.rec.array`.
+        Further keyword arguments are passed through to
+        :func:`numpy.rec.array`.
 
     Examples
     --------
@@ -4016,7 +4025,8 @@ class FeatureTable(RecArrayAug):
         from a single chromosome/contig, or ('seqid', 'start', 'end') if table
         contains records from multiple chromosomes/contigs.
     **kwargs : keyword arguments, optional
-        Further keyword arguments are passed through to :func:`np.rec.array`.
+        Further keyword arguments are passed through to
+        :func:`numpy.rec.array`.
 
     """
 
