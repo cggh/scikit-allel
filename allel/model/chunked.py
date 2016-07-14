@@ -83,7 +83,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
     directly via the `storage` keyword argument. E.g.::
 
         >>> g.copy()
-        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=16.0K, cratio=0.0, cname=blosclz, clevel=5, shuffle=True, chunks=(4096, 2, 2), data=bcolz.carray_ext.carray)
+        GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=16.0K, cratio=0.0, cname=lz4, clevel=5, shuffle=1, chunks=(4096, 2, 2), data=bcolz.carray_ext.carray)
         >>> g.copy(storage='hdf5mem_zlib1')
         GenotypeChunkedArray((3, 2, 2), int8, nbytes=12, cbytes=4.5K, cratio=0.0, cname=gzip, clevel=1, shuffle=False, chunks=(262144, 2, 2), data=h5py._hl.dataset.Dataset)
 
