@@ -54,6 +54,21 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     return out
 
 
+def moving_mean(values, size, start=0, stop=None, step=None):
+    return moving_statistic(values, statistic=np.mean, size=size,
+                            start=start, stop=stop, step=step)
+
+
+def moving_std(values, size, start=0, stop=None, step=None):
+    return moving_statistic(values, statistic=np.std, size=size,
+                            start=start, stop=stop, step=step)
+
+
+def moving_midpoint(values, size, start=0, stop=None, step=None):
+    return moving_statistic(values, statistic=lambda v: (v[0] + v[-1])/2,
+                            size=size, start=start, stop=stop, step=step)
+
+
 def index_windows(values, size, start, stop, step):
     """Convenience function to construct windows for the
     :func:`moving_statistic` function.

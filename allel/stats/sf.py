@@ -441,6 +441,35 @@ def fold_joint_sfs(s, m, n):
 def plot_sfs(s, yscale='log', bins=None, n=None,
              clip_endpoints=True, label=None, plot_kwargs=None,
              ax=None):
+    """Plot a site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes,)
+        Site frequency spectrum.
+    yscale : string, optional
+        Y axis scale.
+    bins : int or array_like, int, optional
+        Allele count bins.
+    n : int, optional
+        Number of chromosomes sampled. If provided, X axis will be plotted
+        as allele frequency, otherwise as allele count.
+    clip_endpoints : bool, optional
+        If True, do not plot first and last values from frequency spectrum.
+    label : string, optional
+        Label for data series in plot.
+    plot_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.plot().
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
+
     import matplotlib.pyplot as plt
     import scipy
 
@@ -496,9 +525,38 @@ def plot_sfs(s, yscale='log', bins=None, n=None,
 
 
 def plot_sfs_folded(*args, **kwargs):
+    """Plot a folded site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes/2,)
+        Site frequency spectrum.
+    yscale : string, optional
+        Y axis scale.
+    bins : int or array_like, int, optional
+        Allele count bins.
+    n : int, optional
+        Number of chromosomes sampled. If provided, X axis will be plotted
+        as allele frequency, otherwise as allele count.
+    clip_endpoints : bool, optional
+        If True, do not plot first and last values from frequency spectrum.
+    label : string, optional
+        Label for data series in plot.
+    plot_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.plot().
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
+
     ax = plot_sfs(*args, **kwargs)
-    m = kwargs.get('m', None)
-    if m:
+    n = kwargs.get('n', None)
+    if n:
         ax.set_xlabel('minor allele frequency')
     else:
         ax.set_xlabel('minor allele count')
@@ -506,6 +564,34 @@ def plot_sfs_folded(*args, **kwargs):
 
 
 def plot_sfs_scaled(*args, **kwargs):
+    """Plot a scaled site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes,)
+        Site frequency spectrum.
+    yscale : string, optional
+        Y axis scale.
+    bins : int or array_like, int, optional
+        Allele count bins.
+    n : int, optional
+        Number of chromosomes sampled. If provided, X axis will be plotted
+        as allele frequency, otherwise as allele count.
+    clip_endpoints : bool, optional
+        If True, do not plot first and last values from frequency spectrum.
+    label : string, optional
+        Label for data series in plot.
+    plot_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.plot().
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
     kwargs.setdefault('yscale', 'linear')
     ax = plot_sfs(*args, **kwargs)
     ax.set_ylabel('scaled site frequency')
@@ -513,15 +599,66 @@ def plot_sfs_scaled(*args, **kwargs):
 
 
 def plot_sfs_folded_scaled(*args, **kwargs):
+    """Plot a folded scaled site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes/2,)
+        Site frequency spectrum.
+    yscale : string, optional
+        Y axis scale.
+    bins : int or array_like, int, optional
+        Allele count bins.
+    n : int, optional
+        Number of chromosomes sampled. If provided, X axis will be plotted
+        as allele frequency, otherwise as allele count.
+    clip_endpoints : bool, optional
+        If True, do not plot first and last values from frequency spectrum.
+    label : string, optional
+        Label for data series in plot.
+    plot_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.plot().
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
     kwargs.setdefault('yscale', 'linear')
     ax = plot_sfs_folded(*args, **kwargs)
     ax.set_ylabel('scaled site frequency')
+    n = kwargs.get('n', None)
+    if n:
+        ax.set_xlabel('minor allele frequency')
+    else:
+        ax.set_xlabel('minor allele count')
     return ax
 
 
 def plot_joint_sfs(s, ax=None, imshow_kwargs=None):
+    """Plot a joint site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes_pop1, n_chromosomes_pop2)
+        Joint site frequency spectrum.
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+    imshow_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.imshow().
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
+
     import matplotlib.pyplot as plt
-    import matplotlib as mpl
+    from matplotlib.colors import LogNorm
 
     # check inputs
     s = asarray_ndim(s, 2)
@@ -537,28 +674,61 @@ def plot_joint_sfs(s, ax=None, imshow_kwargs=None):
     imshow_kwargs.setdefault('cmap', 'jet')
     imshow_kwargs.setdefault('interpolation', 'none')
     imshow_kwargs.setdefault('aspect', 'auto')
-    imshow_kwargs.setdefault('norm', mpl.colors.LogNorm())
+    imshow_kwargs.setdefault('norm', LogNorm())
 
     # plot data
-    ax.imshow(s, **imshow_kwargs)
+    ax.imshow(s.T, **imshow_kwargs)
 
     # tidy
-    ax.xaxis.tick_top()
-    ax.set_ylabel('derived allele count (population 1)')
-    ax.set_xlabel('derived allele count (population 2)')
-    ax.xaxis.set_label_position('top')
+    ax.invert_yaxis()
+    ax.set_xlabel('derived allele count (population 1)')
+    ax.set_ylabel('derived allele count (population 2)')
 
     return ax
 
 
 def plot_joint_sfs_folded(*args, **kwargs):
+    """Plot a joint site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes_pop1/2, n_chromosomes_pop2/2)
+        Joint site frequency spectrum.
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+    imshow_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.imshow().
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
     ax = plot_joint_sfs(*args, **kwargs)
-    ax.set_ylabel('minor allele count (population 1)')
-    ax.set_xlabel('minor allele count (population 2)')
+    ax.set_xlabel('minor allele count (population 1)')
+    ax.set_ylabel('minor allele count (population 2)')
     return ax
 
 
 def plot_joint_sfs_scaled(*args, **kwargs):
+    """Plot a scaled joint site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes_pop1, n_chromosomes_pop2)
+        Joint site frequency spectrum.
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+    imshow_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.imshow().
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
     imshow_kwargs = kwargs.get('imshow_kwargs', dict())
     imshow_kwargs.setdefault('norm', None)
     kwargs['imshow_kwargs'] = imshow_kwargs
@@ -567,8 +737,27 @@ def plot_joint_sfs_scaled(*args, **kwargs):
 
 
 def plot_joint_sfs_folded_scaled(*args, **kwargs):
+    """Plot a scaled folded joint site frequency spectrum.
+
+    Parameters
+    ----------
+    s : array_like, int, shape (n_chromosomes_pop1/2, n_chromosomes_pop2/2)
+        Joint site frequency spectrum.
+    ax : axes, optional
+        Axes on which to draw. If not provided, a new figure will be created.
+    imshow_kwargs : dict-like
+        Additional keyword arguments, passed through to ax.imshow().
+
+    Returns
+    -------
+    ax : axes
+        The axes on which the plot was drawn.
+
+    """
     imshow_kwargs = kwargs.get('imshow_kwargs', dict())
     imshow_kwargs.setdefault('norm', None)
     kwargs['imshow_kwargs'] = imshow_kwargs
     ax = plot_joint_sfs_folded(*args, **kwargs)
+    ax.set_xlabel('minor allele count (population 1)')
+    ax.set_ylabel('minor allele count (population 2)')
     return ax

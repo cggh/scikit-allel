@@ -28,25 +28,29 @@ For example::
     >>> a = bcolz.arange(100000)
     >>> a
     carray((100000,), int64)
-      nbytes: 781.25 KB; cbytes: 269.83 KB; ratio: 2.90
-      cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+      nbytes := 781.25 KB; cbytes := 269.15 KB; ratio: 2.90
+      cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+      chunklen := 32768; chunksize: 262144; blocksize: 32768
     [    0     1     2 ..., 99997 99998 99999]
     >>> chunked.copy(a)
     carray((100000,), int64)
-      nbytes: 781.25 KB; cbytes: 269.83 KB; ratio: 2.90
-      cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+      nbytes := 781.25 KB; cbytes := 269.15 KB; ratio: 2.90
+      cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+      chunklen := 32768; chunksize: 262144; blocksize: 32768
     [    0     1     2 ..., 99997 99998 99999]
     >>> chunked.copy(a, storage='bcolztmp') # doctest: +ELLIPSIS
     carray((100000,), int64)
-      nbytes: 781.25 KB; cbytes: 269.83 KB; ratio: 2.90
-      cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+      nbytes := 781.25 KB; cbytes := 269.15 KB; ratio: 2.90
+      cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+      chunklen := 32768; chunksize: 262144; blocksize: 32768
       rootdir := '/tmp/scikit_allel_...'
       mode    := 'w'
     [    0     1     2 ..., 99997 99998 99999]
     >>> chunked.copy(a, storage=chunked.BcolzStorage(cparams=bcolz.cparams(cname='lz4')))
     carray((100000,), int64)
-      nbytes: 781.25 KB; cbytes: 269.52 KB; ratio: 2.90
-      cparams := cparams(clevel=5, shuffle=True, cname='lz4')
+      nbytes := 781.25 KB; cbytes := 269.15 KB; ratio: 2.90
+      cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+      chunklen := 32768; chunksize: 262144; blocksize: 32768
     [    0     1     2 ..., 99997 99998 99999]
     >>> chunked.copy(a, storage='hdf5mem_zlib1')
     <HDF5 dataset "data": shape (100000,), type "<i8">

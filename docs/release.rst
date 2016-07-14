@@ -4,6 +4,54 @@ Release notes
 v0.21.0
 -------
 
+In this release the implementations of :func:`allel.stats.selection.ihs`
+and :func:`allel.stats.selection.xpehh` selection statistics have been
+reworked to address a number of issues:
+
+* Both functions can now integrate over either a genetic map (via the
+  `map_pos` parameter) or a physical map.
+* Both functions now accept `max_gap` and `gap_scale` parameters to perform
+  adjustments to integrated haplotype homozygosity where there are large
+  gaps between variants, following the standard approach. Alternatively, if
+  a map of genome accessibility is available, it may be provided via the
+  `is_accessible` parameter, in which case the distance between variants
+  will be scaled by the fraction of accessible bases between them.
+* Both functions are now faster and can make use of multiple threads to
+  further accelerate computation.
+* Several bugs in the previous implementations of these functions have been
+  fixed (`#91 <https://github.com/cggh/scikit-allel/issues/91>`_).
+* New utility functions are provided for standardising selection scores,
+  see :func:`allel.stats.selection.standardize_by_allele_count` (for use
+  with IHS and NSL) and
+  :func:`allel.stats.selection.standardize` (for use with XPEHH).
+
+Other changes:
+
+* Added functions :func:`allel.stats.diversity.moving_tajima_d` and
+  :func:`allel.stats.selection.moving_delta_tajima_d`
+  (`#81 <https://github.com/cggh/scikit-allel/issues/81>`_,
+  `#70 <https://github.com/cggh/scikit-allel/issues/70>`_).
+* Added functions :func:`allel.stats.fst.moving_weir_cockerham_fst`,
+  :func:`allel.stats.fst.moving_hudson_fst`,
+  :func:`allel.stats.fst.moving_patterson_fst`.
+* Added functions :func:`allel.stats.admixture.moving_patterson_f3` and
+  :func:`allel.stats.admixture.moving_patterson_d`.
+* Renamed "blockwise" to "average" in function names in
+  :mod:`allel.stats.fst` and :mod:`allel.stats.admixture` for clarity.
+* Added convenience methods
+  :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic` and
+  :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic_01` for locating
+  biallelic variants.
+* Fixed bug in :func:`allel.stats.diversity.sequence_divergence`
+  (`#75 <https://github.com/cggh/scikit-allel/issues/75>`_).
+* Added workaround for chunked arrays if passed as arguments into numpy
+  aggregation functions
+  (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
+* Protect against invalid coordinates when mapping from square to condensed
+  coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
+* Fixed bug in :func:`allel.stats.sf.plot_sfs_folded` and added docstrings
+  for all plotting functions in :mod:`allel.stats.sf`
+  (`#80 <https://github.com/cggh/scikit-allel/issues/80>`_).
 * Fixed bug related to taking views of genotype and haplotype arrays
   (`#77 <https://github.com/cggh/scikit-allel/issues/77>`_).
 
