@@ -42,6 +42,12 @@ Other changes:
   :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic` and
   :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic_01` for locating
   biallelic variants.
+* Added support for `zarr <http://zarr.readthedocs.io>`_ in the
+  :mod:`allel.chunked` module
+  (`#101 <https://github.com/cggh/scikit-allel/issues/101>`_).
+* Changed HDF5 default chunked storage to use gzip level 1 compression
+  instead of no compression
+  (`#100 <https://github.com/cggh/scikit-allel/issues/100>`_).
 * Fixed bug in :func:`allel.stats.diversity.sequence_divergence`
   (`#75 <https://github.com/cggh/scikit-allel/issues/75>`_).
 * Added workaround for chunked arrays if passed as arguments into numpy

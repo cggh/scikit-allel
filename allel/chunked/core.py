@@ -605,23 +605,21 @@ class ChunkedArray(object):
         r = '%s(' % type(self).__name__
         r += '%s' % str(self.shape)
         r += ', %s' % str(self.dtype)
-        if self.nbytes:
-            r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
-        if self.cbytes:
-            r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
-        if self.cratio:
-            r += ', cratio=%.1f' % self.cratio
-        if self.cname:
-            r += ', cname=%s' % self.cname
-        if self.clevel is not None:
-            r += ', clevel=%s' % self.clevel
-        if self.shuffle is not None:
-            r += ', shuffle=%s' % self.shuffle
         if self.chunks is not None:
             r += ', chunks=%s' % str(self.chunks)
-        r += ', data=%s.%s' % (type(self.data).__module__,
-                               type(self.data).__name__)
         r += ')'
+        if self.nbytes:
+            r += '\n  nbytes: %s;' % _util.human_readable_size(self.nbytes)
+            if self.cbytes:
+                r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
+            if self.cratio:
+                r += ' cratio: %.1f;' % self.cratio
+        if self.compression:
+            r += '\n  compression: %s;' % self.compression
+            if self.compression_opts is not None:
+                r += ' compression_opts: %s;' % self.compression_opts
+        r += '\n  data: %s.%s' % (type(self.data).__module__,
+                                  type(self.data).__name__)
         return r
 
     def __str__(self):
@@ -643,12 +641,12 @@ class ChunkedArray(object):
         return _util.get_cbytes(self.data)
 
     @property
-    def cname(self):
-        return _util.get_cname(self.data)
+    def compression(self):
+        return _util.get_compression(self.data)
 
     @property
-    def clevel(self):
-        return _util.get_clevel(self.data)
+    def compression_opts(self):
+        return _util.get_compression_opts(self.data)
 
     @property
     def shuffle(self):
@@ -842,15 +840,15 @@ class ChunkedTable(object):
     def __repr__(self):
         r = '%s(' % type(self).__name__
         r += '%s' % len(self)
-        if self.nbytes:
-            r += ', nbytes=%s' % _util.human_readable_size(self.nbytes)
-        if self.cbytes:
-            r += ', cbytes=%s' % _util.human_readable_size(self.cbytes)
-        if self.cratio:
-            r += ', cratio=%.1f' % self.cratio
-        r += ', data=%s.%s' % (type(self.data).__module__,
-                               type(self.data).__name__)
         r += ')'
+        if self.nbytes:
+            r += '\n  nbytes: %s;' % _util.human_readable_size(self.nbytes)
+            if self.cbytes:
+                r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
+            if self.cratio:
+                r += ' cratio: %.1f;' % self.cratio
+        r += '\n  data: %s.%s' % (type(self.data).__module__,
+                                  type(self.data).__name__)
         return r
 
     def __len__(self):

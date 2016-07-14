@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 import bcolz
 import h5py
+import zarr
 from nose.tools import assert_raises, eq_ as eq
 
 
@@ -198,6 +199,35 @@ class GenotypeChunkedArrayTestsHDF5MemStorage(GenotypeChunkedArrayTests):
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
         assert isinstance(g.data, h5py.Dataset)
+
+
+class GenotypeChunkedArrayTestsZarrMemStorage(GenotypeChunkedArrayTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def setup_instance(self, data, dtype=None):
+        data = chunked.zarrmem_storage.array(data, dtype=dtype)
+        return GenotypeChunkedArray(data)
+
+    def test_storage(self):
+        g = self.setup_instance(np.array(diploid_genotype_data))
+        assert isinstance(g.data, zarr.core.Array)
+
+
+class GenotypeChunkedArrayTestsZarrTmpStorage(GenotypeChunkedArrayTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrtmp_storage
+
+    def setup_instance(self, data, dtype=None):
+        data = chunked.zarrtmp_storage.array(data, dtype=dtype)
+        return GenotypeChunkedArray(data)
+
+    def test_storage(self):
+        g = self.setup_instance(np.array(diploid_genotype_data))
+        assert isinstance(g.data, zarr.Array)
+        assert isinstance(g.data.store, zarr.DirectoryStore)
 
 
 class GenotypeChunkedArrayTestsHDF5TmpStorage(GenotypeChunkedArrayTests):
