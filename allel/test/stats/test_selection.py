@@ -353,6 +353,65 @@ def test_ihs():
         ihs(h, pos, map_pos=pos[1:])
 
 
+hap1 = np.array([
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 0, 0, 0],
+    [1, 1, 1, 0, 0],
+    [1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0],  # core variants
+    [1, 1, 1, 1, 0],
+    [1, 1, 1, 0, 0],
+    [1, 1, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+])
+
+
+hap2 = np.array([
+    [0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [1, 1, 0, 0, 0],
+    [1, 1, 1, 0, 0],
+    [1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1],  # core variant
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 0],
+    [1, 1, 1, 0, 0],
+    [1, 1, 0, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+])
+
+
+def test_ihs_data():
+    h = np.hstack([hap1, hap2])
+    pos = np.arange(1, h.shape[0] + 1)
+    expect = np.log(5.5/1.5)
+
+    for use_threads in True, False:
+        for include_edges in True, False:
+            score = ihs(h, pos, include_edges=include_edges,
+                        use_threads=use_threads)
+            actual = score[9]
+            eq(expect, actual)
+
+
 def test_xpehh():
     n_variants = 1000
     n_haplotypes = 20
@@ -383,6 +442,18 @@ def test_xpehh():
 
     with assert_raises(ValueError):
         xpehh(h1, h2, pos, map_pos=pos[1:])
+
+
+def test_xpehh_data():
+    pos = np.arange(1, hap1.shape[0] + 1)
+    expect = -np.log(5.5/1.5)
+
+    for use_threads in True, False:
+        for include_edges in True, False:
+            score = xpehh(hap1, hap2, pos, include_edges=include_edges,
+                          use_threads=use_threads)
+            actual = score[9]
+            eq(expect, actual)
 
 
 def test_nsl():
