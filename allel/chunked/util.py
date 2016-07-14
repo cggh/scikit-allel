@@ -4,7 +4,6 @@ import operator
 
 
 import numpy as np
-import h5py
 
 
 from allel.compat import string_types, reduce
@@ -151,11 +150,11 @@ def get_nbytes(data):
         return None
 
 
+# noinspection PyProtectedMember
 def get_cbytes(data):
     if hasattr(data, 'cbytes'):
         return data.cbytes
-    elif isinstance(data, h5py.Dataset):
-        # noinspection PyProtectedMember
+    elif hasattr(data, '_id') and hasattr(data._id, 'get_storage_size'):
         return data._id.get_storage_size()
     else:
         return None
