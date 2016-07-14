@@ -31,6 +31,8 @@ Other changes:
   :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic` and
   :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic_01` for locating
   biallelic variants.
+* Fixed bug in :func:`allel.stats.diversity.sequence_divergence`
+  (`#75 <https://github.com/cggh/scikit-allel/issues/75>`_).
 * Added workaround for chunked arrays if passed as arguments into numpy
   aggregation functions
   (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
