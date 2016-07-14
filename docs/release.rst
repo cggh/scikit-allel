@@ -25,6 +25,12 @@ reworked to address a number of issues:
   with IHS and NSL) and
   :func:`allel.stats.selection.standardize` (for use with XPEHH).
 
+Other changes:
+
+* Added workaround for chunked arrays if passed as arguments into numpy
+  aggregation functions
+  (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
+
 v0.20.3
 -------
 

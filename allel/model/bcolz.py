@@ -780,11 +780,17 @@ class CArrayWrapper(object):
         else:
             raise ValueError('rootdir does not contain a carray')
 
-    def max(self, axis=None):
-        return carray_block_max(self.carr, axis=axis)
+    def max(self, axis=None, blen=None, **kwargs):
+        # ignore any other kwargs
+        return carray_block_max(self.carr, axis=axis, blen=blen)
 
-    def min(self, axis=None):
-        return carray_block_min(self.carr, axis=axis)
+    def min(self, axis=None, blen=None, **kwargs):
+        # ignore any other kwargs
+        return carray_block_min(self.carr, axis=axis, blen=blen)
+
+    def sum(self, axis=None, blen=None, **kwargs):
+        # ignore any other kwargs
+        return carray_block_sum(self.carr, axis=axis, blen=blen)
 
     def op_scalar(self, op, other, **kwargs):
         if not np.isscalar(other):
