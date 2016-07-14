@@ -336,16 +336,28 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
     # check inputs
     if not isinstance(pos, SortedIndex):
         pos = SortedIndex(pos, copy=False)
+    ac1 = asarray_ndim(ac1, 2)
+    ac2 = asarray_ndim(ac2, 2)
+    if an1 is not None:
+        an1 = asarray_ndim(an1, 1)
+    if an2 is not None:
+        an2 = asarray_ndim(an2, 1)
+    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+
+    # handle start/stop
     if start is not None or stop is not None:
         loc = pos.locate_range(start, stop)
         pos = pos[loc]
         ac1 = ac1[loc]
         ac2 = ac2[loc]
+        if an1 is not None:
+            an1 = an1[loc]
+        if an2 is not None:
+            an2 = an2[loc]
     if start is None:
         start = pos[0]
     if stop is None:
         stop = pos[-1]
-    is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
 
     # calculate mean pairwise difference between the two populations
     mpd = mean_pairwise_difference_between(ac1, ac2, an1=an1, an2=an2, fill=0)
@@ -353,7 +365,7 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
     # sum differences over variants
     mpd_sum = np.sum(mpd)
 
-    # calculate value per base
+    # calculate value per base, N.B., expect pos is 1-based
     if is_accessible is None:
         n_bases = stop - start + 1
     else:

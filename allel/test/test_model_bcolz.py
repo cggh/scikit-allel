@@ -198,6 +198,33 @@ class GenotypeCArrayTests(GenotypeArrayInterface, unittest.TestCase):
         with assert_raises(ValueError):
             g.take(indices, axis=0)
 
+    def test_to_n_ref_array_like(self):
+        # see also https://github.com/cggh/scikit-allel/issues/66
+
+        gn = self.setup_instance(diploid_genotype_data).to_n_ref(fill=-1)
+        t = gn > 0
+        eq(4, np.count_nonzero(t))
+        expect = np.array([[1, 1, 0],
+                           [1, 0, 0],
+                           [1, 0, 0],
+                           [0, 0, 0],
+                           [0, 0, 0]], dtype='b1')
+        aeq(expect, t)
+
+        # numpy reductions trigger the issue
+
+        expect = np.array([2, 1, 1, 0, 0])
+        actual = np.sum(t, axis=1)
+        aeq(expect, actual)
+
+        expect = np.array([0, 0, 0, 0, 0])
+        actual = np.min(t, axis=1)
+        aeq(expect, actual)
+
+        expect = np.array([1, 1, 1, 0, 0])
+        actual = np.max(t, axis=1)
+        aeq(expect, actual)
+
 
 class HaplotypeCArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 

@@ -780,11 +780,17 @@ class CArrayWrapper(object):
         else:
             raise ValueError('rootdir does not contain a carray')
 
-    def max(self, axis=None):
-        return carray_block_max(self.carr, axis=axis)
+    def max(self, axis=None, blen=None, **kwargs):
+        # ignore any other kwargs
+        return carray_block_max(self.carr, axis=axis, blen=blen)
 
-    def min(self, axis=None):
-        return carray_block_min(self.carr, axis=axis)
+    def min(self, axis=None, blen=None, **kwargs):
+        # ignore any other kwargs
+        return carray_block_min(self.carr, axis=axis, blen=blen)
+
+    def sum(self, axis=None, blen=None, **kwargs):
+        # ignore any other kwargs
+        return carray_block_sum(self.carr, axis=axis, blen=blen)
 
     def op_scalar(self, op, other, **kwargs):
         if not np.isscalar(other):
@@ -899,8 +905,9 @@ class GenotypeCArray(CArrayWrapper):
         ...                           [[0, 2], [-1, -1]]], dtype='i1')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
-          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 12; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 4096; chunksize: 16384; blocksize: 0
         [[[ 0  0]
           [ 0  1]]
          [[ 0  1]
@@ -929,8 +936,9 @@ class GenotypeCArray(CArrayWrapper):
         >>> g = allel.GenotypeCArray(data)
         >>> g
         GenotypeCArray((3, 2, 2), int8)
-          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 12; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 4096; chunksize: 16384; blocksize: 0
         [[[ 0  0]
           [ 0  1]]
          [[ 0  1]
@@ -953,8 +961,9 @@ class GenotypeCArray(CArrayWrapper):
         >>> g = allel.GenotypeCArray.from_hdf5('test1.h5', 'genotype')
         >>> g
         GenotypeCArray((3, 2, 2), int8)
-          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 12; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 4096; chunksize: 16384; blocksize: 0
         [[[ 0  0]
           [ 0  1]]
          [[ 0  1]
@@ -967,30 +976,34 @@ class GenotypeCArray(CArrayWrapper):
 
         >>> g.take([0, 2], axis=0)
         GenotypeCArray((2, 2, 2), int8)
-          nbytes: 8; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 8; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 4096; chunksize: 16384; blocksize: 0
         [[[ 0  0]
           [ 0  1]]
          [[ 0  2]
           [-1 -1]]]
         >>> g.is_called()
         CArrayWrapper((3, 2), bool)
-          nbytes: 6; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 6; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 8192; chunksize: 16384; blocksize: 0
         [[ True  True]
          [ True  True]
          [ True False]]
         >>> g.to_haplotypes()
         HaplotypeCArray((3, 4), int8)
-          nbytes: 12; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 12; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 4096; chunksize: 16384; blocksize: 0
         [[ 0  0  0  1]
          [ 0  1  1  1]
          [ 0  2 -1 -1]]
         >>> g.count_alleles()
         AlleleCountsCArray((3, 3), int32)
-          nbytes: 36; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 36; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 1365; chunksize: 16380; blocksize: 0
         [[3 1 0]
          [1 3 0]
          [1 0 1]]
@@ -1078,8 +1091,9 @@ class GenotypeCArray(CArrayWrapper):
         5
         >>> g.count_alleles()
         AlleleCountsCArray((3, 3), int32)
-          nbytes: 36; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 36; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 1365; chunksize: 16380; blocksize: 0
         [[3 1 0]
          [1 3 0]
          [1 0 1]]
@@ -1087,8 +1101,9 @@ class GenotypeCArray(CArrayWrapper):
         >>> g.mask = mask
         >>> g.mask
         carray((3, 2), bool)
-          nbytes: 6; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 6; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 8192; chunksize: 16384; blocksize: 0
         [[ True False]
          [False  True]
          [False False]]
@@ -1096,8 +1111,9 @@ class GenotypeCArray(CArrayWrapper):
         3
         >>> g.count_alleles()
         AlleleCountsCArray((3, 3), int32)
-          nbytes: 36; cbytes: 16.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          nbytes := 36; cbytes := 16.00 KB; ratio: 0.00
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+          chunklen := 1365; chunksize: 16380; blocksize: 0
         [[1 1 0]
          [1 1 0]
          [1 0 1]]
@@ -1744,6 +1760,16 @@ class AlleleCountsCArray(CArrayWrapper):
             return block.is_doubleton(allele=allele)
         return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
 
+    def is_biallelic(self, **kwargs):
+        def f(block):
+            return block.is_biallelic()
+        return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
+
+    def is_biallelic_01(self, min_mac=None, **kwargs):
+        def f(block):
+            return block.is_biallelic_01(min_mac=min_mac)
+        return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
+
     def count_variant(self):
         return carray_block_sum(self.is_variant())
 
@@ -1798,6 +1824,10 @@ copy_method_doc(AlleleCountsCArray.is_singleton,
                 AlleleCountsArray.is_singleton)
 copy_method_doc(AlleleCountsCArray.is_doubleton,
                 AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsCArray.is_biallelic,
+                AlleleCountsArray.is_biallelic)
+copy_method_doc(AlleleCountsCArray.is_biallelic_01,
+                AlleleCountsArray.is_biallelic_01)
 copy_method_doc(AlleleCountsCArray.map_alleles, AlleleCountsArray.map_alleles)
 
 
@@ -1923,7 +1953,7 @@ class VariantCTable(CTableWrapper):
         >>> vt
         VariantCTable((5,), [('CHROM', 'S4'), ('POS', '<i8'), ('DP', '<i8'), ('QD', '<f8'), ('AC', '<i8', (2,))])
           nbytes: 220; cbytes: 80.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
         [(b'chr1', 2, 35, 4.5, [1, 2]) (b'chr1', 7, 12, 6.7, [3, 4])
          (b'chr2', 3, 78, 1.2, [5, 6]) (b'chr2', 9, 22, 4.4, [7, 8])
          (b'chr3', 6, 99, 2.8, [9, 10])]
@@ -1939,7 +1969,7 @@ class VariantCTable(CTableWrapper):
         >>> vt[['DP', 'QD']]
         VariantCTable((5,), [('DP', '<i8'), ('QD', '<f8')])
           nbytes: 80; cbytes: 32.00 KB; ratio: 0.00
-          cparams := cparams(clevel=5, shuffle=True, cname='blosclz')
+          cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
     Use the index to locate variants:

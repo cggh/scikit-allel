@@ -142,6 +142,13 @@ def reduce_axis(data, reducer, block_reducer, mapper=None, axis=None,
     if isinstance(axis, int):
         axis = (axis,)
 
+    # deal with 'out' kwarg if supplied, can arise if a chunked array is
+    # passed as an argument to numpy.sum(), see also
+    # https://github.com/cggh/scikit-allel/issues/66
+    kwarg_out = kwargs.pop('out', None)
+    if kwarg_out is not None:
+        raise ValueError('keyword argument "out" is not supported')
+
     if axis is None or 0 in axis:
         # two-step reduction
         out = None
