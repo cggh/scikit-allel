@@ -1760,6 +1760,16 @@ class AlleleCountsCArray(CArrayWrapper):
             return block.is_doubleton(allele=allele)
         return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
 
+    def is_biallelic(self, **kwargs):
+        def f(block):
+            return block.is_biallelic()
+        return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
+
+    def is_biallelic_01(self, min_mac=None, **kwargs):
+        def f(block):
+            return block.is_biallelic_01(min_mac=min_mac)
+        return carray_block_map(self, f, wrap=CArrayWrapper, **kwargs)
+
     def count_variant(self):
         return carray_block_sum(self.is_variant())
 
@@ -1814,6 +1824,10 @@ copy_method_doc(AlleleCountsCArray.is_singleton,
                 AlleleCountsArray.is_singleton)
 copy_method_doc(AlleleCountsCArray.is_doubleton,
                 AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsCArray.is_biallelic,
+                AlleleCountsArray.is_biallelic)
+copy_method_doc(AlleleCountsCArray.is_biallelic_01,
+                AlleleCountsArray.is_biallelic_01)
 copy_method_doc(AlleleCountsCArray.map_alleles, AlleleCountsArray.map_alleles)
 
 

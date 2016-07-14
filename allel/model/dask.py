@@ -689,6 +689,12 @@ class AlleleCountsDaskArray(DaskArrayAug):
     def is_doubleton(self, allele=1):
         return self._method_drop_axis1('is_doubleton', allele=allele)
 
+    def is_biallelic(self):
+        return self._method_drop_axis1('is_biallelic')
+
+    def is_biallelic_01(self, min_mac=None):
+        return self._method_drop_axis1('is_biallelic_01', min_mac=min_mac)
+
     def _count(self, method_name, **kwargs):
         method = getattr(self, method_name)
         # result is scalar, might as well compute now (also helps tests)
@@ -732,3 +738,21 @@ copy_method_doc(AlleleCountsDaskArray.max_allele,
                 _ndarray.AlleleCountsArray.max_allele)
 copy_method_doc(AlleleCountsDaskArray.map_alleles,
                 _ndarray.AlleleCountsArray.map_alleles)
+copy_method_doc(AlleleCountsDaskArray.to_frequencies,
+                _ndarray.AlleleCountsArray.to_frequencies)
+copy_method_doc(AlleleCountsDaskArray.is_variant,
+                _ndarray.AlleleCountsArray.is_variant)
+copy_method_doc(AlleleCountsDaskArray.is_non_variant,
+                _ndarray.AlleleCountsArray.is_non_variant)
+copy_method_doc(AlleleCountsDaskArray.is_segregating,
+                _ndarray.AlleleCountsArray.is_segregating)
+copy_method_doc(AlleleCountsDaskArray.is_non_segregating,
+                _ndarray.AlleleCountsArray.is_non_segregating)
+copy_method_doc(AlleleCountsDaskArray.is_singleton,
+                _ndarray.AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsDaskArray.is_doubleton,
+                _ndarray.AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsDaskArray.is_biallelic,
+                _ndarray.AlleleCountsArray.is_biallelic)
+copy_method_doc(AlleleCountsDaskArray.is_biallelic_01,
+                _ndarray.AlleleCountsArray.is_biallelic_01)
