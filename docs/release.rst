@@ -52,6 +52,8 @@ Other changes:
 * Fixed bug in :func:`allel.stats.sf.plot_sfs_folded` and added docstrings
   for all plotting functions in :mod:`allel.stats.sf`
   (`#80 <https://github.com/cggh/scikit-allel/issues/80>`_).
+* Fixed bug related to taking views of genotype and haplotype arrays
+  (`#77 <https://github.com/cggh/scikit-allel/issues/77>`_).
 
 v0.20.3
 -------
