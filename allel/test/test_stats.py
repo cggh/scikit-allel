@@ -447,6 +447,80 @@ class TestDistance(unittest.TestCase):
         actual = allel.stats.pairwise_distance(gac, metric)
         aeq(expect, actual)
 
+    def test_condensed_coords(self):
+        from allel.stats import condensed_coords
+        eq(0, condensed_coords(0, 1, 2))
+        eq(0, condensed_coords(1, 0, 2))
+        eq(0, condensed_coords(0, 1, 3))
+        eq(0, condensed_coords(1, 0, 3))
+        eq(1, condensed_coords(0, 2, 3))
+        eq(1, condensed_coords(2, 0, 3))
+        eq(2, condensed_coords(1, 2, 3))
+        eq(2, condensed_coords(2, 1, 3))
+
+        with assert_raises(ValueError):
+            condensed_coords(0, 0, 1)
+            condensed_coords(0, 1, 1)
+            condensed_coords(1, 0, 1)
+            condensed_coords(0, 0, 2)
+            condensed_coords(0, 2, 2)
+            condensed_coords(2, 0, 2)
+            condensed_coords(1, 1, 2)
+            condensed_coords(0, 0, 3)
+            condensed_coords(1, 1, 3)
+            condensed_coords(2, 2, 3)
+
+    def test_condensed_coords_within(self):
+        from allel.stats import condensed_coords_within
+
+        pop = [0, 1]
+        n = 3
+        expect = [0]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [0, 2]
+        n = 3
+        expect = [1]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [1, 2]
+        n = 3
+        expect = [2]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [0, 1, 3]
+        n = 4
+        expect = [0, 2, 4]
+        actual = condensed_coords_within(pop, n)
+        eq(expect, actual)
+
+        pop = [0, 0]
+        with assert_raises(ValueError):
+            condensed_coords_within(pop, n)
+
+    def test_condensed_coords_between(self):
+        from allel.stats import condensed_coords_between
+
+        pop1 = [0, 1]
+        pop2 = [2, 3]
+        n = 4
+        expect = [1, 2, 3, 4]
+        actual = condensed_coords_between(pop1, pop2, n)
+        eq(expect, actual)
+
+        pop1 = [0, 2]
+        pop2 = [1, 3]
+        n = 4
+        expect = [0, 2, 3, 5]
+        actual = condensed_coords_between(pop1, pop2, n)
+        eq(expect, actual)
+
+        with assert_raises(ValueError):
+            condensed_coords_between(pop1, pop1, n)
+
 
 class TestLinkageDisequilibrium(unittest.TestCase):
 
@@ -649,115 +723,3 @@ class TestSF(unittest.TestCase):
         expect = [0, 2, 2]
         actual = allel.stats.sfs_scaled(dac)
         aeq(expect, actual)
-
-
-class TestSelection(unittest.TestCase):
-
-    def test_ssl01_scan_int8(self):
-        from allel.opt.stats import nsl01_scan_int8
-
-        h = np.array([[0, 0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1, 1]], dtype='i1')
-        nsl0, nsl1 = nsl01_scan_int8(h)
-        expect_nsl0 = [1, 2, 3, 4]
-        assert_array_nanclose(expect_nsl0, nsl0)
-        expect_nsl1 = [1, 2, 3, 4]
-        assert_array_nanclose(expect_nsl1, nsl1)
-
-        h = np.array([[0, 0, 0, 1],
-                      [0, 0, 1, 0],
-                      [0, 1, 0, 0],
-                      [1, 0, 0, 0]], dtype='i1')
-        nsl0, nsl1 = nsl01_scan_int8(h)
-        expect_nsl0 = [1, 4/3, 4/3, 4/3]
-        assert_array_nanclose(expect_nsl0, nsl0)
-        expect_nsl1 = [np.nan, np.nan, np.nan, np.nan]
-        assert_array_nanclose(expect_nsl1, nsl1)
-
-        h = np.array([[0, 0, 1],
-                      [0, 1, 1],
-                      [1, 1, 0],
-                      [1, 0, 0]], dtype='i1')
-        nsl0, nsl1 = nsl01_scan_int8(h)
-        expect_nsl0 = [1, np.nan, np.nan, 1]
-        assert_array_nanclose(expect_nsl0, nsl0)
-        expect_nsl1 = [np.nan, 1, 1, np.nan]
-        assert_array_nanclose(expect_nsl1, nsl1)
-
-    def test_ihh01_scan_int8(self):
-        from allel.opt.stats import ihh01_scan_int8
-        pos = [10, 20, 30, 40]
-
-        # case 1
-        h = np.array([[0, 0, 1],
-                      [0, 1, 1],
-                      [1, 1, 0],
-                      [1, 0, 0]], dtype='i1')
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
-        expect_ihh0 = [np.nan, np.nan, np.nan, 0]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [np.nan, np.nan, 0, np.nan]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
-        expect_ihh0 = [0, np.nan, np.nan, 0]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [np.nan, 0, 0, np.nan]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        # case 2
-        h = np.array([[0, 0, 0, 1],
-                      [0, 0, 1, 0],
-                      [0, 1, 0, 0],
-                      [1, 0, 0, 0]], dtype='i1')
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
-        expect_ihh0 = [np.nan, np.nan, np.nan, 10*2/3]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
-        expect_ihh0 = [0, 10*2/3, 10*2/3, 10*2/3]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        # case 3
-        h = np.array([[0, 0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1, 1]], dtype='i1')
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
-        expect_ihh0 = [np.nan, np.nan, np.nan, np.nan]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
-        expect_ihh0 = [0, 10, 20, 30]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [0, 10, 20, 30]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        # case 4
-        h = np.array([[0, 0, 1, 1, 1, 0],
-                      [0, 1, 0, 1, 0, 1],
-                      [1, 0, 0, 0, 1, 1],
-                      [0, 0, 0, 1, 1, 1]], dtype='i1')
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=0.05)
-        expect_ihh0 = [np.nan, np.nan, np.nan, 10*2/3]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [np.nan, np.nan, np.nan, 10*2/3]
-        assert_array_nanclose(expect_ihh1, ihh1)
-
-        ihh0, ihh1 = ihh01_scan_int8(h, pos, min_ehh=None)
-        expect_ihh0 = [0, 10*2/3, 10*2/3, 10*2/3]
-        assert_array_nanclose(expect_ihh0, ihh0)
-        expect_ihh1 = [0, 10*2/3, 10*2/3, 10*2/3]
-        assert_array_nanclose(expect_ihh1, ihh1)

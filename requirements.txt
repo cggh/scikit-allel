@@ -4,10 +4,11 @@ matplotlib
 pandas
 scikit-learn
 numexpr
-h5py
-bcolz
 nose
 petl
 seaborn
 toolz
 dask
+h5py --no-binary :all:
+bcolz --no-binary :all:
+zarr --no-binary :all:
