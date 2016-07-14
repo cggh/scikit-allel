@@ -16,7 +16,6 @@ import collections
 
 
 import numpy as np
-import numexpr as ne
 
 
 from allel.compat import PY2
@@ -152,6 +151,7 @@ class RecArrayAug(np.recarray):
         """
 
         if vm == 'numexpr':
+            import numexpr as ne
             return ne.evaluate(expression, local_dict=self)
         else:
             if PY2:
@@ -624,6 +624,7 @@ class GenotypeArray(IntegerArray):
                [ True, False]], dtype=bool)
 
         """
+        import numexpr as ne
 
         # special case diploid
         if self.shape[2] == DIPLOID:
@@ -665,6 +666,7 @@ class GenotypeArray(IntegerArray):
                [False,  True]], dtype=bool)
 
         """
+        import numexpr as ne
 
         # special case diploid
         if self.shape[2] == DIPLOID:
@@ -717,6 +719,7 @@ class GenotypeArray(IntegerArray):
                [False, False]], dtype=bool)
 
         """
+        import numexpr as ne
 
         # special case diploid
         if self.shape[2] == DIPLOID:
@@ -793,6 +796,7 @@ class GenotypeArray(IntegerArray):
                [ True, False]], dtype=bool)
 
         """
+        import numexpr as ne
 
         # special case diploid
         if self.shape[2] == DIPLOID:
@@ -843,6 +847,7 @@ class GenotypeArray(IntegerArray):
                [ True, False]], dtype=bool)
 
         """
+        import numexpr as ne
 
         # special case diploid
         if self.shape[2] == DIPLOID:
@@ -896,6 +901,7 @@ class GenotypeArray(IntegerArray):
                [ True, False]], dtype=bool)
 
         """
+        import numexpr as ne
 
         # special case diploid
         if self.shape[2] == DIPLOID:

@@ -6,7 +6,6 @@ import itertools
 
 
 import numpy as np
-import scipy.linalg
 
 
 from allel.model.ndarray import SortedIndex
@@ -214,6 +213,7 @@ def pcoa(dist):
         Variance explained by each dimension.
 
     """
+    import scipy.linalg
 
     # This implementation is based on the skbio.math.stats.ordination.PCoA
     # implementation, with some minor adjustments.

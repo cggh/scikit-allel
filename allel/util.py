@@ -7,7 +7,6 @@ import os
 
 
 import numpy as np
-from scipy.spatial.distance import squareform
 
 
 from allel.compat import string_types
@@ -31,6 +30,21 @@ def check_array_like(a, *ndims, **kwargs):
 
 
 def asarray_ndim(a, *ndims, **kwargs):
+    """Ensure numpy array.
+
+    Parameters
+    ----------
+    a : array_like
+    *ndims : int, optional
+        Allowed values for number of dimensions.
+    **kwargs
+        Passed through to :func:`numpy.array`.
+
+    Returns
+    -------
+    a : numpy.ndarray
+
+    """
     allow_none = kwargs.pop('allow_none', False)
     kwargs.setdefault('copy', False)
     if a is None and allow_none:
@@ -90,6 +104,7 @@ def ensure_dim1_aligned(*arrays, **kwargs):
 
 
 def ensure_square(dist):
+    from scipy.spatial.distance import squareform
     dist = asarray_ndim(dist, 1, 2)
     if dist.ndim == 1:
         dist = squareform(dist)
