@@ -3,7 +3,7 @@ from __future__ import absolute_import, print_function, division
 
 
 import numpy as np
-from nose.tools import eq_ as eq, assert_is_instance
+from nose.tools import eq_ as eq, assert_is_instance, assert_raises
 from allel.test.tools import assert_array_equal, assert_array_nanclose
 
 
@@ -328,6 +328,12 @@ def test_ihs():
                 eq((n_variants,), score.shape)
                 eq(np.dtype('f8'), score.dtype)
 
+    with assert_raises(ValueError):
+        ihs(h, pos[1:])
+
+    with assert_raises(ValueError):
+        ihs(h, pos, map_pos=pos[1:])
+
 
 def test_xpehh():
     n_variants = 1000
@@ -347,6 +353,18 @@ def test_xpehh():
                 assert_is_instance(score, np.ndarray)
                 eq((n_variants,), score.shape)
                 eq(np.dtype('f8'), score.dtype)
+
+    with assert_raises(ValueError):
+        xpehh(h1, h2[1:], pos)
+
+    with assert_raises(ValueError):
+        xpehh(h1[1:], h2, pos)
+
+    with assert_raises(ValueError):
+        xpehh(h1, h2, pos[1:])
+
+    with assert_raises(ValueError):
+        xpehh(h1, h2, pos, map_pos=pos[1:])
 
 
 def test_nsl():

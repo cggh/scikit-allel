@@ -277,9 +277,13 @@ def compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible):
 
     """
 
+    # check inputs
     if map_pos is None:
         # integrate over physical distance
         map_pos = pos
+    else:
+        map_pos = asarray_ndim(map_pos, 1)
+        check_dim0_aligned(pos, map_pos)
 
     # compute physical gaps
     physical_gaps = np.diff(pos)
@@ -383,6 +387,7 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     # check inputs
     h = HaplotypeArray(np.asarray(h, dtype='i1'))
     pos = asarray_ndim(pos, 1)
+    check_dim0_aligned(h, pos)
 
     # compute gaps between variants for integration
     gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
@@ -502,6 +507,7 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
     h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
     pos = asarray_ndim(pos, 1)
+    check_dim0_aligned(h1, h2, pos)
 
     # compute gaps between variants for integration
     gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
