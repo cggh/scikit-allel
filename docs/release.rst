@@ -1,6 +1,13 @@
 Release notes
 =============
 
+v0.21.1
+-------
+
+* Minor change to calculation of integrated haplotype homozygosity to enable
+  values to be reported for first and last variants if `include_edges` is
+  `True`.
+
 v0.21.0
 -------
 

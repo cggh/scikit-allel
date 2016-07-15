@@ -449,15 +449,15 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
         np.int32_t l
         np.float64_t ehh_prv, ehh_cur, ihh, ret, gap, n_pairs_ident
         int *hh_breaks
-        bint edge
 
     # initialize
     n_pairs = ssl.shape[0]
-    ret = NAN
-    edge = True
 
     # only compute if at least 1 pair
-    if n_pairs > 0 and l_max > 1:
+    if n_pairs > 0:
+
+        # initialise
+        ihh = 0
 
         # find breaks in haplotype homozygosity via bincount
         hh_breaks = <int *>malloc((l_max + 1) * sizeof(int))
@@ -470,10 +470,14 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
                 l = ssl[j]
                 hh_breaks[l] += 1
 
-            # initialise
+            # initialise EHH
             n_pairs_ident = n_pairs - hh_breaks[0]
-            ihh = 0
             ehh_prv = n_pairs_ident / n_pairs
+
+            # edge case - check if haplotype homozygosity is already below
+            # min_ehh
+            if ehh_prv <= min_ehh:
+                return 0
 
             # iterate backwards over variants
             for i in range(1, variant_idx + 1):
@@ -488,16 +492,14 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 
                 # handle very long gaps
                 if gap < 0:
-                    ihh = NAN
-                    break
+                    return NAN
 
                 # accumulate IHH
                 ihh += gap * (ehh_cur + ehh_prv) / 2
 
                 # check if we've reached minimum EHH
                 if ehh_cur <= min_ehh:
-                    edge = False
-                    break
+                    return ihh
 
                 # move on
                 ehh_prv = ehh_cur
@@ -506,10 +508,11 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
             # clean up
             free(hh_breaks)
 
-        if ihh > 0 and (not edge or include_edges):
-            ret = ihh
+        # if we get this far, EHH never decayed below min_ehh
+        if include_edges:
+            return ihh
 
-    return ret
+    return NAN
 
 
 @cython.boundscheck(False)
