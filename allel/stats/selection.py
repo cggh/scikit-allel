@@ -323,7 +323,7 @@ def compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible):
     return gaps
 
 
-def ihs(h, pos, map_pos=None, min_ehh=0.05, include_edges=False,
+def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
         gap_scale=20000, max_gap=200000, is_accessible=None, use_threads=True):
     """Compute the unstandardized integrated haplotype score (IHS) for each
     variant, comparing integrated haplotype homozygosity between the
@@ -340,6 +340,9 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     min_ehh: float, optional
         Minimum EHH beyond which to truncate integrated haplotype
         homozygosity calculation.
+    min_maf : float, optional
+        Do not compute integrated haplotype homozogysity for variants with
+        minor allele frequency below this value.
     include_edges : bool, optional
         If True, report scores even if EHH does not decay below `min_ehh`
         before reaching the edge of the data.
@@ -394,7 +397,8 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
 
     # setup kwargs
-    kwargs = dict(min_ehh=min_ehh, include_edges=include_edges)
+    kwargs = dict(min_ehh=min_ehh, min_maf=min_maf,
+                  include_edges=include_edges)
 
     if use_threads and multiprocessing.cpu_count() > 1:
         # run with threads
@@ -1189,6 +1193,11 @@ def standardize_by_allele_count(score, aac, bins=None, n_bins=None,
     aac = asarray_ndim(aac, 1)
     check_dim0_aligned(score, aac)
 
+    # remove nans
+    nonan = ~np.isnan(score)
+    score_nonan = score[nonan]
+    aac_nonan = aac[nonan]
+
     if bins is None:
         # make our own similar sized bins
 
@@ -1197,15 +1206,18 @@ def standardize_by_allele_count(score, aac, bins=None, n_bins=None,
             # something vaguely reasonable
             n_bins = np.max(aac) // 2
 
-        bins = make_similar_sized_bins(aac, n_bins)
+        # make bins
+        bins = make_similar_sized_bins(aac_nonan, n_bins)
 
     else:
         # user-provided bins
         bins = asarray_ndim(bins, 1)
 
-    mean_score, _, _ = binned_statistic(aac, score, statistic=np.nanmean,
+    mean_score, _, _ = binned_statistic(aac_nonan, score_nonan,
+                                        statistic=np.mean,
                                         bins=bins)
-    std_score, _, _ = binned_statistic(aac, score, statistic=np.nanstd,
+    std_score, _, _ = binned_statistic(aac_nonan, score_nonan,
+                                       statistic=np.std,
                                        bins=bins)
 
     if diagnostics:

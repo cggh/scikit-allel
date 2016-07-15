@@ -8,7 +8,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 cimport numpy as np
 cimport cython
-from libc.math cimport sqrt, fabs, NAN
+from libc.math cimport sqrt, fabs, NAN, fmin
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 
@@ -708,17 +708,20 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, **kwargs):
 def ihh01_scan_int8(np.int8_t[:, :] h,
                     np.float64_t[:] gaps,
                     np.float64_t min_ehh=0,
+                    np.float64_t min_maf=0,
                     bint include_edges=False):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
     reference (0) and alternate (1) alleles separately."""
 
     cdef:
-        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11
+        Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11, \
+            c0, c1
         np.int32_t l, l_max_00, l_max_11
         np.int32_t[:] ssl, ssl00, ssl11
         np.int8_t a1, a2
         np.float64_t[:] vstat0, vstat1
+        np.float64_t maf
 
     # initialise
     n_variants = h.shape[0]
@@ -738,13 +741,17 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
 
         # iterate forward over variants
         for i in range(n_variants):
-            u = u00 = u11 = 0
+            u = u00 = u11 = c0 = c1 = 0
             l_max_00 = l_max_11 = 0
 
             # pairwise comparison of alleles between haplotypes to determine
             # shared suffix lengths
             for j in range(n_haplotypes):
                 a1 = h[i, j]
+                if a1 == 0:
+                    c0 += 1
+                elif a1 == 1:
+                    c1 += 1
                 for k in range(j+1, n_haplotypes):
                     a2 = h[i, k]
                     if a1 < 0 or a2 < 0:
@@ -770,13 +777,25 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
                         ssl[u] = 0
                     u += 1
 
-            # compute statistic from shared suffix lengths
-            vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, gaps,
-                                min_ehh=min_ehh,
-                                include_edges=include_edges)
-            vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, gaps,
-                                min_ehh=min_ehh,
-                                include_edges=include_edges)
+            # compute minor allele frequency
+            if c0 < c1:
+                maf = c0 / (c0 + c1)
+            else:
+                maf = c1 / (c0 + c1)
+
+            if maf < min_maf:
+                # minor allele frequency below cutoff, don't bother to compute
+                vstat0[i] = NAN
+                vstat1[i] = NAN
+
+            else:
+                # compute statistic from shared suffix lengths
+                vstat0[i] = ssl2ihh(ssl00[:u00], l_max_00, i, gaps,
+                                    min_ehh=min_ehh,
+                                    include_edges=include_edges)
+                vstat1[i] = ssl2ihh(ssl11[:u11], l_max_11, i, gaps,
+                                    min_ehh=min_ehh,
+                                    include_edges=include_edges)
 
     return np.asarray(vstat0), np.asarray(vstat1)
 

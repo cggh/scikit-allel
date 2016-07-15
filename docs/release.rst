@@ -4,6 +4,8 @@ Release notes
 v0.21.1
 -------
 
+* Added parameter `min_maf` to :func:`allel.stats.selection.ihs` to skip IHS
+  calculation for variants below a given minor allele frequency.
 * Minor change to calculation of integrated haplotype homozygosity to enable
   values to be reported for first and last variants if `include_edges` is
   `True`.
