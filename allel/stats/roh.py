@@ -10,6 +10,44 @@ def call_roh(g, pos, ix, emission=(0.001, 0.0025, 0.01),
              transition=1e-6, min_roh=100000,
              is_accessible=None, contig_size=None):
 
+    """
+    Call ROH (runs of homozygosity) of a given individual
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    pos: array_like, int, shape (n_variants)
+        Positions of variants, same 0th dimension as g
+    ix: integer
+        index of the sample on which to call roh
+    emission: tuple or array_like, float
+        Probability of observing a heterozygote in each hidden state.
+        Supports >= 2 states. Appropriate values will depend on
+        frequency of sequencing error & spurious het calls due
+        to misalignment
+    transition: float
+        Probability of moving between states
+    min_roh: integer
+        Minimum size (bp) to condsider as a ROH. Will depend on contig size
+        and recombination rate. In humans typically > 1Mbp
+    is_accessible: array_like, bool, shape (npositions)
+        Boolean array for each locus in contig describing whether accessible
+        or not.
+    contig_size: int
+        If is_accessible not known/not provided, allows specification of
+        total length of contig.
+
+    Returns
+    -------
+    roh: ndarray, int, shape (n_roh, 2)
+        Span windows of ROH
+    froh: float
+        Proportion of genome in ROH
+
+    """
+
+
     # this function computes the likely ROH using an HMM model.
     # define model:
     ### 2 state model, 3 observable
@@ -23,7 +61,7 @@ def call_roh(g, pos, ix, emission=(0.001, 0.0025, 0.01),
     start_prob = np.repeat(1/emission_px.size, emission_px.size)
 
     # transition between underlying states
-    transitions = derive_transition_mx(transition, emission_px.size)
+    transitions = _derive_transition_mx(transition, emission_px.size)
 
     # probability of inaccessible
     if is_accessible is None:
@@ -33,7 +71,7 @@ def call_roh(g, pos, ix, emission=(0.001, 0.0025, 0.01),
         is_accessible = ChunkedArray(np.repeat(True, contig_size))
 
     p_accessible = is_accessible.mean()
-    emission_mx = derive_emission_mx(emission_px, p_accessible)
+    emission_mx = _derive_emission_mx(emission_px, p_accessible)
 
     # initialize HMM
     roh_hmm = hmm.MultinomialHMM(n_components=emission_px.size)
@@ -46,8 +84,8 @@ def call_roh(g, pos, ix, emission=(0.001, 0.0025, 0.01),
     is_heterozygote = g.is_het()
 
     hz = is_heterozygote[:, ix]
-    pred, obs = predict_roh_state(roh_hmm, hz, pos, is_accessible)
-    homozygous_windows = get_state_windows(pred, state=0)
+    pred, obs = _predict_roh_state(roh_hmm, hz, pos, is_accessible)
+    homozygous_windows = _get_state_windows(pred, state=0)
 
     # filter by roh size
     roh_sizes = np.diff(homozygous_windows, axis=1).flatten()
@@ -57,7 +95,7 @@ def call_roh(g, pos, ix, emission=(0.001, 0.0025, 0.01),
     return roh, np.diff(roh, axis=1).sum() / is_accessible.size
 
 
-def predict_roh_state(model, is_het, pos, accessible):
+def _predict_roh_state(model, is_het, pos, accessible):
 
     # assume non-included pos are homozygous reference
     assert is_het.shape == pos.shape
@@ -76,7 +114,7 @@ def predict_roh_state(model, is_het, pos, accessible):
     return predictions, observations
 
 
-def derive_emission_mx(prob, pa):
+def _derive_emission_mx(prob, pa):
     # one row per p in prob
     # hom, het, unobserved
     mx = [[(1-p) * (1-pa), p * (1-pa), pa] for p in prob]
@@ -85,7 +123,7 @@ def derive_emission_mx(prob, pa):
     return mxe
 
 
-def derive_transition_mx(pr, nstates):
+def _derive_transition_mx(pr, nstates):
     # this is a symmetric matrix
     mx = np.zeros((nstates, nstates))
     effective_tp = pr/(nstates-1)
@@ -99,10 +137,10 @@ def derive_transition_mx(pr, nstates):
 
 
 # This function translates the yes/no into a set of windows
-def get_state_windows(predicted_state, state=0):
+def _get_state_windows(predicted_state, state=0):
 
     assert isinstance(predicted_state, np.ndarray), \
-        "get_state_windows expects an ndarray"
+        "_get_state_windows expects an ndarray"
     wh = np.where(predicted_state == state)[0]
     if wh.size == 0:
         # then there are no things of interest
