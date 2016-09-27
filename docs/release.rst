@@ -1,6 +1,11 @@
 Release notes
 =============
 
+v0.21.2
+-------
+
+This release resolves compatibility issues with Zarr version 2.1.
+
 v0.21.1
 -------
 
