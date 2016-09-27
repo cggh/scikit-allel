@@ -31,9 +31,9 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.storage_registry['default'].array(data, dtype=dtype,
-                                                         chunklen=2)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].array(data, chunklen=2,
+                                                         **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -158,8 +158,8 @@ class GenotypeChunkedArrayTestsBColzTmpStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.bcolztmp_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.bcolztmp_storage.array(data, dtype=dtype, chunklen=2)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.bcolztmp_storage.array(data, chunklen=2, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -175,9 +175,9 @@ class GenotypeChunkedArrayTestsBColzCustomStorage(GenotypeChunkedArrayTests):
             cparams=bcolz.cparams(cname='zlib', clevel=1)
         )
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.storage_registry['default'].array(data, dtype=dtype,
-                                                         chunklen=2)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].array(data, chunklen=2,
+                                                         **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -192,8 +192,8 @@ class GenotypeChunkedArrayTestsHDF5MemStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.hdf5mem_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.hdf5mem_storage.array(data, dtype=dtype)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.hdf5mem_storage.array(data, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -206,8 +206,8 @@ class GenotypeChunkedArrayTestsZarrMemStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.zarrmem_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.zarrmem_storage.array(data, dtype=dtype)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.zarrmem_storage.array(data, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -220,8 +220,8 @@ class GenotypeChunkedArrayTestsZarrTmpStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.zarrtmp_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.zarrtmp_storage.array(data, dtype=dtype)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.zarrtmp_storage.array(data, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):

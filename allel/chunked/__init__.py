@@ -42,15 +42,15 @@ For example::
       mode    := 'w'
     [      0       1       2 ..., 9999997 9999998 9999999]
     >>> chunked.copy(a, storage='zarrmem')
-    zarr.core.Array((10000000,), int64, chunks=(131072,), order=C)
-      compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}
-      nbytes: 76.3M; nbytes_stored: 1.3M; ratio: 56.8; initialized: 77/77
-      store: builtins.dict
+    Array((10000000,), int64, chunks=(16384,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.5; initialized: 611/611
+      compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
+      store: DictStore
     >>> chunked.copy(a, storage='zarrtmp')
-    zarr.core.Array((10000000,), int64, chunks=(131072,), order=C)
-      compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1}
-      nbytes: 76.3M; nbytes_stored: 1.3M; ratio: 56.8; initialized: 77/77
-      store: zarr.storage.DirectoryStore
+    Array((10000000,), int64, chunks=(16384,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.5; initialized: 611/611
+      compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
+      store: TempStore
     >>> chunked.copy(a, storage=chunked.BcolzStorage(cparams=bcolz.cparams(cname='lz4')))
     carray((10000000,), int64)
       nbytes := 76.29 MB; cbytes := 1.80 MB; ratio: 42.41

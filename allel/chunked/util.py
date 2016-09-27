@@ -167,6 +167,9 @@ def get_compression(data):
         return 'blosc'
     elif hasattr(data, 'compression'):
         return data.compression
+    elif hasattr(data, 'compressor'):
+        # zarr 2
+        return data.compressor.codec_id
     else:
         return None
 
@@ -176,6 +179,11 @@ def get_compression_opts(data):
         return data.cparams
     elif hasattr(data, 'compression_opts'):
         return data.compression_opts
+    elif hasattr(data, 'compressor'):
+        # zarr 2
+        config = data.compressor.get_config()
+        del config['id']
+        return config
     else:
         return None
 
