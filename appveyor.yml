@@ -57,7 +57,8 @@ build: false
 test_script:
   - "%CMD_IN_ENV% conda config --add channels conda-forge"
   - "%CMD_IN_ENV% conda install --yes --file=requirements_ci.txt"
-  - "%CMD_IN_ENV% python setup.py install"
+  - "%CMD_IN_ENV% pip install petl"
+  - "%CMD_IN_ENV% python setup.py build_ext --inplace"
   - "%CMD_IN_ENV% python -m nose -v allel"
 
 after_test:

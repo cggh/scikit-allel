@@ -10,7 +10,6 @@ pandas
 scikit-learn
 numexpr
 nose
-petl
 seaborn
 toolz
 dask

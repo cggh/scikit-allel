@@ -26,8 +26,10 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
   - conda install --yes --name=test-environment --file=requirements_ci.txt
-  - python setup.py install
+  - pip install petl
 
 script:
   # Your test script goes here
+  - python setup.py build_ext --inplace
   - python -m nose -v allel
+  - python setup.py bdist_wheel
