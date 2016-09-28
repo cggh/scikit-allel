@@ -1,0 +1,11 @@
+cython
+numpy
+scipy
+scikit-learn
+numexpr
+dask
+h5py
+bcolz
+zarr
+nose
+flake8

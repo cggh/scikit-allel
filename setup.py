@@ -70,7 +70,7 @@ def setup_extensions(metadata):
 
         # check for cython
         try:
-            # build with cython
+            print('[scikit-allel] build with cython')
             from Cython.Build import cythonize
             ext_modules = cythonize([
                 Extension('allel.opt.model',
@@ -85,7 +85,7 @@ def setup_extensions(metadata):
                           ),
             ])
         except ImportError:
-            # build previously cythonized C
+            print('[scikit-allel] build from C')
             ext_modules = [
                 Extension('allel.opt.model',
                           sources=['allel/opt/model.c'],

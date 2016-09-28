@@ -91,9 +91,9 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
           compression: blosc; compression_opts: cparams(clevel=5, shuffle=1, cname='lz4', quantize=0);
           data: bcolz.carray_ext.carray
         >>> g.copy(storage='zarrmem')
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(262144, 2, 2))
-          nbytes: 12; cbytes: 4.9K; cratio: 0.0;
-          compression: blosc; compression_opts: {'clevel': 5, 'cname': 'blosclz', 'shuffle': 1};
+        GenotypeChunkedArray((3, 2, 2), int8, chunks=(2, 2, 2))
+          nbytes: 12; cbytes: 379; cratio: 0.0;
+          compression: blosc; compression_opts: {'shuffle': 1, 'cname': 'lz4', 'clevel': 5};
           data: zarr.core.Array
         >>> g.copy(storage='hdf5mem_zlib1')
         GenotypeChunkedArray((3, 2, 2), int8, chunks=(262144, 2, 2))
@@ -764,7 +764,7 @@ class VariantChunkedTable(_chunked.ChunkedTable):
           data: bcolz.ctable.ctable
         >>> vt.copy(storage='zarr')
         VariantChunkedTable(5)
-          nbytes: 220; cbytes: 39.1K; cratio: 0.0;
+          nbytes: 220; cbytes: 1.7K; cratio: 0.1;
           data: allel.chunked.storage_zarr.ZarrTable
         >>> vt.copy(storage='hdf5mem_zlib1')
         VariantChunkedTable(5)

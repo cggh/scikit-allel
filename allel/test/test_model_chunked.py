@@ -22,6 +22,7 @@ from allel.test.test_model_api import GenotypeArrayInterface, \
 from allel import chunked
 from allel.model.chunked import GenotypeChunkedArray, HaplotypeChunkedArray,\
     AlleleCountsChunkedArray, VariantChunkedTable, FeatureChunkedTable
+from allel.chunked.storage_zarr import ZarrTable
 
 
 class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -31,9 +32,9 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.storage_registry['default'].array(data, dtype=dtype,
-                                                         chunklen=2)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].array(data, chunklen=2,
+                                                         **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -158,8 +159,8 @@ class GenotypeChunkedArrayTestsBColzTmpStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.bcolztmp_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.bcolztmp_storage.array(data, dtype=dtype, chunklen=2)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.bcolztmp_storage.array(data, chunklen=2, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -175,9 +176,9 @@ class GenotypeChunkedArrayTestsBColzCustomStorage(GenotypeChunkedArrayTests):
             cparams=bcolz.cparams(cname='zlib', clevel=1)
         )
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.storage_registry['default'].array(data, dtype=dtype,
-                                                         chunklen=2)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].array(data, chunklen=2,
+                                                         **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -192,8 +193,8 @@ class GenotypeChunkedArrayTestsHDF5MemStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.hdf5mem_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.hdf5mem_storage.array(data, dtype=dtype)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.hdf5mem_storage.array(data, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -206,8 +207,8 @@ class GenotypeChunkedArrayTestsZarrMemStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.zarrmem_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.zarrmem_storage.array(data, dtype=dtype)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.zarrmem_storage.array(data, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -220,8 +221,8 @@ class GenotypeChunkedArrayTestsZarrTmpStorage(GenotypeChunkedArrayTests):
     def setUp(self):
         chunked.storage_registry['default'] = chunked.zarrtmp_storage
 
-    def setup_instance(self, data, dtype=None):
-        data = chunked.zarrtmp_storage.array(data, dtype=dtype)
+    def setup_instance(self, data, **kwargs):
+        data = chunked.zarrtmp_storage.array(data, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_storage(self):
@@ -515,6 +516,21 @@ class VariantChunkedTableTestsHDF5Storage(VariantChunkedTableTests):
         assert isinstance(vt.data, h5py.Group)
 
 
+class VariantChunkedTableTestsZarrStorage(VariantChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return VariantChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = self.setup_instance(a)
+        assert isinstance(vt.data, ZarrTable)
+
+
 class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
 
     _class = FeatureChunkedTable
@@ -523,9 +539,7 @@ class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
     def setup_instance(self, data, **kwargs):
-        print('before', data)
         data = chunked.storage_registry['default'].table(data, chunklen=2)
-        print('after', data)
         return FeatureChunkedTable(data, **kwargs)
 
     def test_storage(self):
@@ -572,3 +586,33 @@ class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
         self.assertNotIsInstance(s, FeatureChunkedTable)
         self.assertNotIsInstance(s, FeatureTable)
         self.assertIsInstance(s, chunked.ChunkedArray)
+
+
+class FeatureChunkedTableTestsHDF5Storage(FeatureChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.hdf5mem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return FeatureChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        assert isinstance(ft.data, h5py.Group)
+
+
+class FeatureChunkedTableTestsZarrStorage(FeatureChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return FeatureChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        assert isinstance(ft.data, ZarrTable)

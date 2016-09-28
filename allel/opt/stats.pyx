@@ -8,9 +8,15 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 cimport numpy as np
 cimport cython
-from libc.math cimport sqrt, fabs, NAN, fmin
+from libc.math cimport sqrt, fabs, fmin
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
+
+
+# work around NAN undeclared in windows
+cdef:
+    np.float32_t nan32 = np.nan
+    np.float64_t nan64 = np.nan
 
 
 @cython.boundscheck(False)
@@ -67,7 +73,7 @@ cpdef inline np.float32_t gn_corrcoef_int8(np.int8_t[:] gn0,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn not None,
-                              np.float32_t fill=np.nan):
+                              np.float32_t fill=nan32):
     cdef:
         Py_ssize_t i, j, k, n
         np.float32_t r
@@ -105,7 +111,7 @@ def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn not None,
 @cython.wraparound(False)
 def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna not None,
                                np.int8_t[:, :] gnb not None,
-                               np.float32_t fill=np.nan):
+                               np.float32_t fill=nan32):
     cdef:
         Py_ssize_t i, j, k, m, n
         np.float32_t r
@@ -150,7 +156,7 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn not None,
         np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
         int overlap = size - step
         bint last
-        np.float32_t fill = np.nan
+        np.float32_t fill = nan32
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
@@ -492,7 +498,7 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 
                 # handle very long gaps
                 if gap < 0:
-                    return NAN
+                    return nan64
 
                 # accumulate IHH
                 ihh += gap * (ehh_cur + ehh_prv) / 2
@@ -512,7 +518,7 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
         if include_edges:
             return ihh
 
-    return NAN
+    return nan64
 
 
 @cython.boundscheck(False)
@@ -785,8 +791,8 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
 
             if maf < min_maf:
                 # minor allele frequency below cutoff, don't bother to compute
-                vstat0[i] = NAN
-                vstat1[i] = NAN
+                vstat0[i] = nan64
+                vstat1[i] = nan64
 
             else:
                 # compute statistic from shared suffix lengths
@@ -860,10 +866,10 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
             if u00 > 0:
                 vstat0[i] = ssl00_sum / u00
             else:
-                vstat0[i] = NAN
+                vstat0[i] = nan64
             if u11 > 0:
                 vstat1[i] = ssl11_sum / u11
             else:
-                vstat1[i] = NAN
+                vstat1[i] = nan64
 
     return np.asarray(vstat0), np.asarray(vstat1)
