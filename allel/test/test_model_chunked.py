@@ -22,6 +22,7 @@ from allel.test.test_model_api import GenotypeArrayInterface, \
 from allel import chunked
 from allel.model.chunked import GenotypeChunkedArray, HaplotypeChunkedArray,\
     AlleleCountsChunkedArray, VariantChunkedTable, FeatureChunkedTable
+from allel.chunked.storage_zarr import ZarrTable
 
 
 class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
@@ -513,6 +514,21 @@ class VariantChunkedTableTestsHDF5Storage(VariantChunkedTableTests):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
         assert isinstance(vt.data, h5py.Group)
+
+
+class VariantChunkedTableTestsZarrStorage(VariantChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return VariantChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
+        vt = self.setup_instance(a)
+        assert isinstance(vt.data, ZarrTable)
 
 
 class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
