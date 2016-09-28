@@ -539,9 +539,7 @@ class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.bcolzmem_storage
 
     def setup_instance(self, data, **kwargs):
-        print('before', data)
         data = chunked.storage_registry['default'].table(data, chunklen=2)
-        print('after', data)
         return FeatureChunkedTable(data, **kwargs)
 
     def test_storage(self):
@@ -588,3 +586,33 @@ class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
         self.assertNotIsInstance(s, FeatureChunkedTable)
         self.assertNotIsInstance(s, FeatureTable)
         self.assertIsInstance(s, chunked.ChunkedArray)
+
+
+class FeatureChunkedTableTestsHDF5Storage(FeatureChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.hdf5mem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return FeatureChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        assert isinstance(ft.data, h5py.Group)
+
+
+class FeatureChunkedTableTestsZarrStorage(FeatureChunkedTableTests):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].table(data)
+        return FeatureChunkedTable(data, **kwargs)
+
+    def test_storage(self):
+        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
+        ft = self.setup_instance(a)
+        assert isinstance(ft.data, ZarrTable)
