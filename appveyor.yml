@@ -56,10 +56,12 @@ build: false
 
 test_script:
   - "%CMD_IN_ENV% conda config --add channels conda-forge"
+  - "%CMD_IN_ENV% conda create -q -n test-environment python=%PYTHON_VERSION%"
+  - "%CMD_IN_ENV% source activate test-environment"
   - "%CMD_IN_ENV% conda install --yes --file=requirements_ci.txt"
   - "%CMD_IN_ENV% pip install petl"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
-  - "%CMD_IN_ENV% python -m nose -v allel"
+  - "%CMD_IN_ENV% nosetests -v allel"
 
 after_test:
   - "%CMD_IN_ENV% python setup.py bdist_wheel"
