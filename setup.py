@@ -63,7 +63,7 @@ def setup_extensions(metadata):
 
     # TODO review this, numpy as optional dependency doesn't really work,
     # lots of stuff breaks if the C extensions don't get built
-    
+
     try:
         # only build extensions if numpy is available
         import numpy as np

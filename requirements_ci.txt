@@ -9,3 +9,4 @@ bcolz
 zarr
 nose
 flake8
+petl
