@@ -1218,7 +1218,7 @@ class GenotypeArray(IntegerArray):
 
         return out
 
-    def to_allele_counts(self, alleles=None):
+    def to_allele_counts(self, alleles=None, dtype='u1'):
         """Transform genotype calls into allele counts per call.
 
         Parameters
@@ -1263,7 +1263,7 @@ class GenotypeArray(IntegerArray):
 
         # set up output array
         outshape = (self.shape[0], self.shape[1], len(alleles))
-        out = np.zeros(outshape, dtype='u1')
+        out = np.zeros(outshape, dtype=dtype)
 
         for i, allele in enumerate(alleles):
             # count alleles along ploidy dimension

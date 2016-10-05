@@ -52,3 +52,5 @@ from allel.stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
     plot_joint_sfs_scaled, plot_joint_sfs_folded_scaled
 
 from allel.stats.misc import plot_variant_locator
+
+from allel.stats.mendel import mendel_errors
