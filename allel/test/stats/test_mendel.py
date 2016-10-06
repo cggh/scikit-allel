@@ -3,10 +3,14 @@ from __future__ import absolute_import, print_function, division
 import unittest
 
 
+import numpy as np
 from numpy.testing import assert_array_equal
 
 
-from allel.stats.mendel import *
+from allel.stats.mendel import mendel_errors, paint_transmission, \
+    INHERIT_PARENT1, INHERIT_PARENT2, INHERIT_NONPARENTAL, \
+    INHERIT_NONSEG_REF, INHERIT_NONSEG_ALT, INHERIT_MISSING, \
+    INHERIT_PARENT_MISSING
 
 
 class TestMendelErrors(unittest.TestCase):
