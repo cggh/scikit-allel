@@ -42,13 +42,13 @@ For example::
       mode    := 'w'
     [      0       1       2 ..., 9999997 9999998 9999999]
     >>> chunked.copy(a, storage='zarrmem')
-    Array((10000000,), int64, chunks=(16384,), order=C)
-      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.5; initialized: 611/611
+    Array((10000000,), int64, chunks=(524288,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.0; initialized: 20/20
       compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
       store: DictStore
     >>> chunked.copy(a, storage='zarrtmp')
-    Array((10000000,), int64, chunks=(16384,), order=C)
-      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.5; initialized: 611/611
+    Array((10000000,), int64, chunks=(524288,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.0; initialized: 20/20
       compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
       store: TempStore
     >>> chunked.copy(a, storage=chunked.BcolzStorage(cparams=bcolz.cparams(cname='lz4')))
