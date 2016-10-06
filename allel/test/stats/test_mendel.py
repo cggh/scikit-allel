@@ -3,16 +3,16 @@ from __future__ import absolute_import, print_function, division
 import unittest
 
 
-import numpy as np
 from numpy.testing import assert_array_equal
 
 
-from allel.stats import mendel_errors
+from allel.stats.mendel import *
 
 
-class TestMendelianError(unittest.TestCase):
+class TestMendelErrors(unittest.TestCase):
 
-    def _test(self, genotypes, expect):
+    @staticmethod
+    def _test(genotypes, expect):
         parent_genotypes = genotypes[:, 0:2]
         progeny_genotypes = genotypes[:, 2:]
 
@@ -165,3 +165,77 @@ class TestMendelianError(unittest.TestCase):
             [0, 0],
         ])
         self._test(genotypes, expect)
+
+
+def test_paint_transmission():
+
+    haplotypes = []
+    expect = []
+
+    haplotypes.append([0, 0, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_NONSEG_REF,
+        INHERIT_NONPARENTAL,
+        INHERIT_NONPARENTAL,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([0, 1, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_PARENT1,
+        INHERIT_PARENT2,
+        INHERIT_NONPARENTAL,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([1, 0, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_PARENT2,
+        INHERIT_PARENT1,
+        INHERIT_NONPARENTAL,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([1, 1, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_NONPARENTAL,
+        INHERIT_NONSEG_ALT,
+        INHERIT_NONPARENTAL,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([0, 2, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_PARENT1,
+        INHERIT_NONPARENTAL,
+        INHERIT_PARENT2,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([0, -1, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_PARENT_MISSING,
+        INHERIT_PARENT_MISSING,
+        INHERIT_PARENT_MISSING,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([-1, 1, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_PARENT_MISSING,
+        INHERIT_PARENT_MISSING,
+        INHERIT_PARENT_MISSING,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes.append([-1, -1, 0, 1, 2, -1])
+    expect.append([
+        INHERIT_PARENT_MISSING,
+        INHERIT_PARENT_MISSING,
+        INHERIT_PARENT_MISSING,
+        INHERIT_MISSING,
+    ])
+
+    haplotypes = np.array(haplotypes)
+    actual = paint_transmission(haplotypes[:, :2], haplotypes[:, 2:])
+    assert_array_equal(expect, actual)

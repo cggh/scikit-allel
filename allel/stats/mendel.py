@@ -5,11 +5,11 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-from allel.model.ndarray import GenotypeArray
+from allel.model.ndarray import GenotypeArray, HaplotypeArray
 
 
 def mendel_errors(parent_genotypes, progeny_genotypes):
-    """Locate genotype calls not consistent with Mendelian segregation of
+    """Locate genotype calls not consistent with Mendelian transmission of
     alleles.
 
     Parameters
@@ -23,6 +23,10 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
     -------
     me : ndarray, int, shape (n_variants, n_progeny)
         Mendel errors for each progeny genotype call.
+
+    Examples
+    --------
+    TODO
 
     """
 
@@ -64,4 +68,73 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
     return me
 
 
-# TODO inheritance
+# constants to represent inheritance states
+INHERIT_UNDETERMINED = 0
+INHERIT_PARENT1 = 1
+INHERIT_PARENT2 = 2
+INHERIT_NONSEG_REF = 3
+INHERIT_NONSEG_ALT = 4
+INHERIT_NONPARENTAL = 5
+INHERIT_PARENT_MISSING = 6
+INHERIT_MISSING = 7
+
+
+def paint_transmission(parent_haplotypes, progeny_haplotypes):
+    """TODO
+
+    """
+
+    # check inputs
+    parent_haplotypes = HaplotypeArray(parent_haplotypes)
+    progeny_haplotypes = HaplotypeArray(progeny_haplotypes)
+    if parent_haplotypes.n_haplotypes != 2:
+        raise ValueError('exactly two parental haplotypes should be provided')
+
+    # convenience variables
+    parent1 = parent_haplotypes[:, 0, np.newaxis]
+    parent2 = parent_haplotypes[:, 1, np.newaxis]
+    gamete_is_missing = progeny_haplotypes < 0
+    parent_is_missing = np.any(parent_haplotypes < 0, axis=1)
+    # need this for broadcasting, but also need to retain original for later
+    parent_is_missing_bc = parent_is_missing[:, np.newaxis]
+    parent_diplotype = GenotypeArray(parent_haplotypes[:, np.newaxis, :])
+    parent_is_hom_ref = parent_diplotype.is_hom_ref()
+    parent_is_het = parent_diplotype.is_het()
+    parent_is_hom_alt = parent_diplotype.is_hom_alt()
+
+    # identify allele calls where inheritance can be determined
+    is_callable = ~gamete_is_missing & ~parent_is_missing_bc
+    is_callable_seg = is_callable & parent_is_het
+
+    # main inheritance states
+    inherit_parent1 = is_callable_seg & (progeny_haplotypes == parent1)
+    inherit_parent2 = is_callable_seg & (progeny_haplotypes == parent2)
+    nonseg_ref = (
+        is_callable &
+        parent_is_hom_ref &
+        (progeny_haplotypes == parent1)
+    )
+    nonseg_alt = (
+        is_callable &
+        parent_is_hom_alt &
+        (progeny_haplotypes == parent1)
+    )
+    nonparental = (
+        is_callable &
+        (progeny_haplotypes != parent1) &
+        (progeny_haplotypes != parent2)
+    )
+
+    # record inheritance states
+    # N.B., order in which these are set matters
+    inheritance = np.zeros_like(progeny_haplotypes, dtype='u1')
+    print(inherit_parent1.shape)
+    inheritance[inherit_parent1] = INHERIT_PARENT1
+    inheritance[inherit_parent2] = INHERIT_PARENT2
+    inheritance[nonseg_ref] = INHERIT_NONSEG_REF
+    inheritance[nonseg_alt] = INHERIT_NONSEG_ALT
+    inheritance[nonparental] = INHERIT_NONPARENTAL
+    inheritance[parent_is_missing] = INHERIT_PARENT_MISSING
+    inheritance[gamete_is_missing] = INHERIT_MISSING
+
+    return inheritance
