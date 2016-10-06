@@ -22,11 +22,159 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
     Returns
     -------
     me : ndarray, int, shape (n_variants, n_progeny)
-        Mendel errors for each progeny genotype call.
+        Count of Mendel errors for each progeny genotype call.
 
     Examples
     --------
-    TODO
+    The following are all consistent with Mendelian transmission. Note that a
+    value of 0 is returned for missing calls::
+
+        >>> import allel
+        >>> import numpy as np
+        >>> genotypes = np.array([
+        ...     # aa x aa -> aa
+        ...     [[0, 0], [0, 0], [0, 0], [-1, -1], [-1, -1], [-1, -1]],
+        ...     [[1, 1], [1, 1], [1, 1], [-1, -1], [-1, -1], [-1, -1]],
+        ...     [[2, 2], [2, 2], [2, 2], [-1, -1], [-1, -1], [-1, -1]],
+        ...     # aa x ab -> aa or ab
+        ...     [[0, 0], [0, 1], [0, 0], [0, 1], [-1, -1], [-1, -1]],
+        ...     [[0, 0], [0, 2], [0, 0], [0, 2], [-1, -1], [-1, -1]],
+        ...     [[1, 1], [0, 1], [1, 1], [0, 1], [-1, -1], [-1, -1]],
+        ...     # aa x bb -> ab
+        ...     [[0, 0], [1, 1], [0, 1], [-1, -1], [-1, -1], [-1, -1]],
+        ...     [[0, 0], [2, 2], [0, 2], [-1, -1], [-1, -1], [-1, -1]],
+        ...     [[1, 1], [2, 2], [1, 2], [-1, -1], [-1, -1], [-1, -1]],
+        ...     # aa x bc -> ab or ac
+        ...     [[0, 0], [1, 2], [0, 1], [0, 2], [-1, -1], [-1, -1]],
+        ...     [[1, 1], [0, 2], [0, 1], [1, 2], [-1, -1], [-1, -1]],
+        ...     # ab x ab -> aa or ab or bb
+        ...     [[0, 1], [0, 1], [0, 0], [0, 1], [1, 1], [-1, -1]],
+        ...     [[1, 2], [1, 2], [1, 1], [1, 2], [2, 2], [-1, -1]],
+        ...     [[0, 2], [0, 2], [0, 0], [0, 2], [2, 2], [-1, -1]],
+        ...     # ab x bc -> ab or ac or bb or bc
+        ...     [[0, 1], [1, 2], [0, 1], [0, 2], [1, 1], [1, 2]],
+        ...     [[0, 1], [0, 2], [0, 0], [0, 1], [0, 1], [1, 2]],
+        ...     # ab x cd -> ac or ad or bc or bd
+        ...     [[0, 1], [2, 3], [0, 2], [0, 3], [1, 2], [1, 3]],
+        ... ])
+        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me
+        array([[0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0],
+               [0, 0, 0, 0]])
+
+    The following are cases of 'non-parental' inheritance where one or two
+    alleles are found in the progeny that are not present in either parent.
+    Note that the number of errors may be 1 or 2 depending on the number of
+    non-parental alleles::
+
+        >>> genotypes = np.array([
+        ...     # aa x aa -> ab or ac or bb or cc
+        ...     [[0, 0], [0, 0], [0, 1], [0, 2], [1, 1], [2, 2]],
+        ...     [[1, 1], [1, 1], [0, 1], [1, 2], [0, 0], [2, 2]],
+        ...     [[2, 2], [2, 2], [0, 2], [1, 2], [0, 0], [1, 1]],
+        ...     # aa x ab -> ac or bc or cc
+        ...     [[0, 0], [0, 1], [0, 2], [1, 2], [2, 2], [2, 2]],
+        ...     [[0, 0], [0, 2], [0, 1], [1, 2], [1, 1], [1, 1]],
+        ...     [[1, 1], [0, 1], [1, 2], [0, 2], [2, 2], [2, 2]],
+        ...     # aa x bb -> ac or bc or cc
+        ...     [[0, 0], [1, 1], [0, 2], [1, 2], [2, 2], [2, 2]],
+        ...     [[0, 0], [2, 2], [0, 1], [1, 2], [1, 1], [1, 1]],
+        ...     [[1, 1], [2, 2], [0, 1], [0, 2], [0, 0], [0, 0]],
+        ...     # ab x ab -> ac or bc or cc
+        ...     [[0, 1], [0, 1], [0, 2], [1, 2], [2, 2], [2, 2]],
+        ...     [[0, 2], [0, 2], [0, 1], [1, 2], [1, 1], [1, 1]],
+        ...     [[1, 2], [1, 2], [0, 1], [0, 2], [0, 0], [0, 0]],
+        ...     # ab x bc -> ad or bd or cd or dd
+        ...     [[0, 1], [1, 2], [0, 3], [1, 3], [2, 3], [3, 3]],
+        ...     [[0, 1], [0, 2], [0, 3], [1, 3], [2, 3], [3, 3]],
+        ...     [[0, 2], [1, 2], [0, 3], [1, 3], [2, 3], [3, 3]],
+        ...     # ab x cd -> ae or be or ce or de
+        ...     [[0, 1], [2, 3], [0, 4], [1, 4], [2, 4], [3, 4]],
+        ... ])
+        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me
+        array([[1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 2, 2],
+               [1, 1, 1, 2],
+               [1, 1, 1, 2],
+               [1, 1, 1, 2],
+               [1, 1, 1, 1]])
+
+    The following are cases of 'hemi-parental' inheritance, where progeny
+    appear to have inherited two copies of an allele found only once in one of
+    the parents::
+
+        >>> genotypes = np.array([
+        ...     # aa x ab -> bb
+        ...     [[0, 0], [0, 1], [1, 1], [-1, -1]],
+        ...     [[0, 0], [0, 2], [2, 2], [-1, -1]],
+        ...     [[1, 1], [0, 1], [0, 0], [-1, -1]],
+        ...     # ab x bc -> aa or cc
+        ...     [[0, 1], [1, 2], [0, 0], [2, 2]],
+        ...     [[0, 1], [0, 2], [1, 1], [2, 2]],
+        ...     [[0, 2], [1, 2], [0, 0], [1, 1]],
+        ...     # ab x cd -> aa or bb or cc or dd
+        ...     [[0, 1], [2, 3], [0, 0], [1, 1]],
+        ...     [[0, 1], [2, 3], [2, 2], [3, 3]],
+        ... ])
+        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me
+        array([[1, 0],
+               [1, 0],
+               [1, 0],
+               [1, 1],
+               [1, 1],
+               [1, 1],
+               [1, 1],
+               [1, 1]])
+
+    The following are cases of 'uni-parental' inheritance, where progeny
+    appear to have inherited both alleles from a single parent::
+
+        >>> genotypes = np.array([
+        ...     # aa x bb -> aa or bb
+        ...     [[0, 0], [1, 1], [0, 0], [1, 1]],
+        ...     [[0, 0], [2, 2], [0, 0], [2, 2]],
+        ...     [[1, 1], [2, 2], [1, 1], [2, 2]],
+        ...     # aa x bc -> aa or bc
+        ...     [[0, 0], [1, 2], [0, 0], [1, 2]],
+        ...     [[1, 1], [0, 2], [1, 1], [0, 2]],
+        ...     # ab x cd -> ab or cd
+        ...     [[0, 1], [2, 3], [0, 1], [2, 3]],
+        ... ])
+        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me
+        array([[1, 1],
+               [1, 1],
+               [1, 1],
+               [1, 1],
+               [1, 1],
+               [1, 1]])
 
     """
 
@@ -80,7 +228,52 @@ INHERIT_MISSING = 7
 
 
 def paint_transmission(parent_haplotypes, progeny_haplotypes):
-    """TODO
+    """Paint haplotypes inherited from a single diploid parent according to
+    their allelic inheritance.
+
+    Parameters
+    ----------
+    parent_haplotypes : array_like, int, shape (n_variants, 2)
+        Both haplotypes from a single diploid parent.
+    progeny_haplotypes : array_like, int, shape (n_variants, n_progeny)
+        Haplotypes found in progeny of the given parent, inherited from the
+        given parent. I.e., haplotypes from gametes of the given parent.
+
+    Returns
+    -------
+    painting : ndarray, uint8, shape (n_variants, n_progeny)
+        An array of integers coded as follows: 1 = allele inherited from
+        first parental haplotype; 2 = allele inherited from second parental
+        haplotype; 3 = reference allele, also carried by both parental
+        haplotypes; 4 = non-reference allele, also carried by both parental
+        haplotypes; 5 = non-parental allele; 6 = either or both parental
+        alleles missing; 7 = missing allele; 0 = undetermined.
+
+    Examples
+    --------
+    >>> import allel
+    >>> import numpy as np
+    >>> haplotypes = np.array([
+    ...     [0, 0, 0, 1, 2, -1],
+    ...     [0, 1, 0, 1, 2, -1],
+    ...     [1, 0, 0, 1, 2, -1],
+    ...     [1, 1, 0, 1, 2, -1],
+    ...     [0, 2, 0, 1, 2, -1],
+    ...     [0, -1, 0, 1, 2, -1],
+    ...     [-1, 1, 0, 1, 2, -1],
+    ...     [-1, -1, 0, 1, 2, -1],
+    ... ])
+    >>> painting = allel.stats.paint_transmission(haplotypes[:, :2],
+    ...                                           haplotypes[:, 2:])
+    >>> painting
+    array([[3, 5, 5, 7],
+           [1, 2, 5, 7],
+           [2, 1, 5, 7],
+           [5, 4, 5, 7],
+           [1, 5, 2, 7],
+           [6, 6, 6, 7],
+           [6, 6, 6, 7],
+           [6, 6, 6, 7]], dtype=uint8)
 
     """
 
@@ -93,7 +286,7 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     # convenience variables
     parent1 = parent_haplotypes[:, 0, np.newaxis]
     parent2 = parent_haplotypes[:, 1, np.newaxis]
-    gamete_is_missing = progeny_haplotypes < 0
+    progeny_is_missing = progeny_haplotypes < 0
     parent_is_missing = np.any(parent_haplotypes < 0, axis=1)
     # need this for broadcasting, but also need to retain original for later
     parent_is_missing_bc = parent_is_missing[:, np.newaxis]
@@ -103,7 +296,7 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     parent_is_hom_alt = parent_diplotype.is_hom_alt()
 
     # identify allele calls where inheritance can be determined
-    is_callable = ~gamete_is_missing & ~parent_is_missing_bc
+    is_callable = ~progeny_is_missing & ~parent_is_missing_bc
     is_callable_seg = is_callable & parent_is_het
 
     # main inheritance states
@@ -127,14 +320,13 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
 
     # record inheritance states
     # N.B., order in which these are set matters
-    inheritance = np.zeros_like(progeny_haplotypes, dtype='u1')
-    print(inherit_parent1.shape)
-    inheritance[inherit_parent1] = INHERIT_PARENT1
-    inheritance[inherit_parent2] = INHERIT_PARENT2
-    inheritance[nonseg_ref] = INHERIT_NONSEG_REF
-    inheritance[nonseg_alt] = INHERIT_NONSEG_ALT
-    inheritance[nonparental] = INHERIT_NONPARENTAL
-    inheritance[parent_is_missing] = INHERIT_PARENT_MISSING
-    inheritance[gamete_is_missing] = INHERIT_MISSING
+    painting = np.zeros(progeny_haplotypes.shape, dtype='u1')
+    painting[inherit_parent1] = INHERIT_PARENT1
+    painting[inherit_parent2] = INHERIT_PARENT2
+    painting[nonseg_ref] = INHERIT_NONSEG_REF
+    painting[nonseg_alt] = INHERIT_NONSEG_ALT
+    painting[nonparental] = INHERIT_NONPARENTAL
+    painting[parent_is_missing] = INHERIT_PARENT_MISSING
+    painting[progeny_is_missing] = INHERIT_MISSING
 
-    return inheritance
+    return painting
