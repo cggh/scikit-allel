@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, division
 import unittest
 
 
+from nose.tools import eq_ as eq, assert_not_equal as neq
 import numpy as np
 from numpy.testing import assert_array_equal
 
@@ -10,7 +11,7 @@ from numpy.testing import assert_array_equal
 from allel.stats.mendel import mendel_errors, paint_transmission, \
     INHERIT_PARENT1, INHERIT_PARENT2, INHERIT_NONPARENTAL, \
     INHERIT_NONSEG_REF, INHERIT_NONSEG_ALT, INHERIT_MISSING, \
-    INHERIT_PARENT_MISSING
+    INHERIT_PARENT_MISSING, phase_progeny_by_transmission
 
 
 class TestMendelErrors(unittest.TestCase):
@@ -243,3 +244,92 @@ def test_paint_transmission():
     haplotypes = np.array(haplotypes)
     actual = paint_transmission(haplotypes[:, :2], haplotypes[:, 2:])
     assert_array_equal(expect, actual)
+
+
+def test_phase_progeny_by_transmission():
+
+    gu = []  # unphased genotypes
+    gp = []  # expected genotypes after phasing
+    expect_is_phased = []
+
+    # N.B., always mother, father, children...
+
+    # biallelic cases
+
+    gu.append([[0, 0], [0, 0], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    gp.append([[0, 0], [0, 0], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    expect_is_phased.append([False, False, True, False, False, False])
+
+    gu.append([[1, 1], [1, 1], [1, 1], [0, 1], [0, 0], [-1, -1]])
+    gp.append([[1, 1], [1, 1], [1, 1], [0, 1], [0, 0], [-1, -1]])
+    expect_is_phased.append([False, False, True, False, False, False])
+
+    gu.append([[0, 0], [0, 1], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    gp.append([[0, 0], [0, 1], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    expect_is_phased.append([False, False, True, True, False, False])
+
+    gu.append([[0, 1], [0, 0], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    gp.append([[0, 1], [0, 0], [0, 0], [1, 0], [1, 1], [-1, -1]])
+    expect_is_phased.append([False, False, True, True, False, False])
+
+    gu.append([[0, 0], [1, 1], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    gp.append([[0, 0], [1, 1], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    expect_is_phased.append([False, False, False, True, False, False])
+
+    gu.append([[1, 1], [0, 0], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    gp.append([[1, 1], [0, 0], [0, 0], [1, 0], [1, 1], [-1, -1]])
+    expect_is_phased.append([False, False, False, True, False, False])
+
+    gu.append([[0, 1], [0, 1], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    gp.append([[0, 1], [0, 1], [0, 0], [0, 1], [1, 1], [-1, -1]])
+    expect_is_phased.append([False, False, True, False, True, False])
+
+    # some multi-allelic cases
+
+    gu.append([[0, 0], [1, 2], [0, 0], [0, 1], [0, 2], [1, 2]])
+    gp.append([[0, 0], [1, 2], [0, 0], [0, 1], [0, 2], [1, 2]])
+    expect_is_phased.append([False, False, False, True, True, False])
+
+    gu.append([[1, 2], [0, 0], [0, 0], [0, 1], [0, 2], [1, 2]])
+    gp.append([[1, 2], [0, 0], [0, 0], [1, 0], [2, 0], [1, 2]])
+    expect_is_phased.append([False, False, False, True, True, False])
+
+    gu.append([[0, 1], [0, 2], [0, 0], [0, 1], [0, 2], [1, 2]])
+    gp.append([[0, 1], [0, 2], [0, 0], [1, 0], [0, 2], [1, 2]])
+    expect_is_phased.append([False, False, True, True, True, True])
+
+    gu.append([[0, 2], [0, 1], [0, 0], [0, 1], [0, 2], [1, 2]])
+    gp.append([[0, 2], [0, 1], [0, 0], [0, 1], [2, 0], [2, 1]])
+    expect_is_phased.append([False, False, True, True, True, True])
+
+    gu.append([[0, 1], [2, 3], [0, 2], [0, 3], [1, 2], [1, 3]])
+    gp.append([[0, 1], [2, 3], [0, 2], [0, 3], [1, 2], [1, 3]])
+    expect_is_phased.append([False, False, True, True, True, True])
+
+    gu.append([[2, 3], [0, 1], [0, 2], [0, 3], [1, 2], [1, 3]])
+    gp.append([[2, 3], [0, 1], [2, 0], [3, 0], [2, 1], [3, 1]])
+    expect_is_phased.append([False, False, True, True, True, True])
+
+    # run checks
+    g = np.array(gu, dtype='i1')
+    ga, is_phased = phase_progeny_by_transmission(g)
+    assert_array_equal(gp, ga)
+    assert_array_equal(expect_is_phased, is_phased)
+    # no copy
+    eq(g.__array_interface__['data'], ga.__array_interface__['data'])
+
+    # check different dtype
+    g = np.array(gu, dtype='i8')
+    ga, is_phased = phase_progeny_by_transmission(g)
+    assert_array_equal(gp, ga)
+    assert_array_equal(expect_is_phased, is_phased)
+    # have to copy because of dtype
+    neq(g.__array_interface__['data'], ga.__array_interface__['data'])
+
+    # check with copy
+    g = np.array(gu, dtype='i1')
+    ga, is_phased = phase_progeny_by_transmission(g, copy=True)
+    assert_array_equal(gp, ga)
+    assert_array_equal(expect_is_phased, is_phased)
+    # user asked for copy
+    neq(g.__array_interface__['data'], ga.__array_interface__['data'])

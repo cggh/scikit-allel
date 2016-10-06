@@ -873,3 +873,89 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
                 vstat1[i] = nan64
 
     return np.asarray(vstat0), np.asarray(vstat1)
+
+
+def phase_progeny_by_transmission_int8(np.int8_t[:, :, :] g):
+    # N.B., here we will modify g in-place
+
+    cdef:
+        Py_ssize_t n_variants, n_samples, n_progeny, i, j, max_allele
+        np.uint8_t[:, :] is_phased
+        np.int8_t a1, a2, ma1, ma2, pa1, pa2
+        np.uint8_t[:] mac, pac
+
+    # guard conditions
+    assert g.shape[2] == 2
+
+    n_variants = g.shape[0]
+    n_samples = g.shape[1]
+    n_progeny = n_samples - 2
+    max_allele = np.max(g)
+
+    # setup intermediates
+    mac = np.zeros(max_allele + 1, dtype='u1')  # maternal allele counts
+    pac = np.zeros(max_allele + 1, dtype='u1')  # paternal allele counts
+
+    # setup outputs
+    is_phased = np.zeros((n_variants, n_samples), dtype='u1')
+
+    # iterate over variants
+    for i in range(n_variants):
+
+        # access parental genotypes
+        ma1 = g[i, 0, 0]  # maternal allele 1
+        ma2 = g[i, 0, 1]  # maternal allele 2
+        pa1 = g[i, 1, 0]  # paternal allele 1
+        pa2 = g[i, 1, 1]  # paternal allele 2
+
+        # check for any missing calls in parents
+        if ma1 < 0 or ma2 < 0 or pa1 < 0 or pa2 < 0:
+            continue
+
+        # parental allele counts
+        mac[:] = 0  # reset to zero
+        pac[:] = 0  # reset to zero
+        mac[ma1] = 1
+        mac[ma2] = 1
+        pac[pa1] = 1
+        pac[pa2] = 1
+
+        # iterate over progeny
+        for j in range(2, n_progeny + 2):
+
+            # access progeny alleles
+            a1 = g[i, j, 0]
+            a2 = g[i, j, 1]
+
+            if a1 < 0 or a2 < 0:  # child is missing
+                continue
+
+            elif a1 == a2:  # child is homozygous
+
+                if mac[a1] > 0 and pac[a1] > 0:  # Mendelian consistent
+                    # trivially phase the child
+                    is_phased[i, j] = 1
+
+            else:  # child is heterozygous
+
+                if mac[a1] > 0 and pac[a1] == 0 and pac[a2] > 0:
+                    # allele 1 is unique to mother, no need to swap
+                    is_phased[i, j] = 1
+
+                elif mac[a2] > 0 and pac[a2] == 0 and pac[a1] > 0:
+                    # allele 2 is unique to mother, swap child alleles
+                    g[i, j, 0] = a2
+                    g[i, j, 1] = a1
+                    is_phased[i, j] = 1
+
+                elif pac[a1] > 0 and mac[a1] == 0 and mac[a2] > 0:
+                    # allele 1 is unique to father, swap child alleles
+                    g[i, j, 0] = a2
+                    g[i, j, 1] = a1
+                    is_phased[i, j] = 1
+
+                elif pac[a2] > 0 and mac[a2] == 0 and mac[a1] > 0:
+                    # allele 2 is unique to father, no need to swap
+                    is_phased[i, j] = 1
+
+    return is_phased

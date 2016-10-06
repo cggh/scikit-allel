@@ -6,6 +6,7 @@ import numpy as np
 
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray
+from allel.errors import err_diploid_only
 
 
 def mendel_errors(parent_genotypes, progeny_genotypes):
@@ -182,7 +183,7 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
     parent_genotypes = GenotypeArray(parent_genotypes)
     progeny_genotypes = GenotypeArray(progeny_genotypes)
     if parent_genotypes.ploidy != 2 or progeny_genotypes.ploidy != 2:
-        raise ValueError('only diploid calls are supported')
+        err_diploid_only()
 
     # transform into per-call allele counts
     max_allele = max(parent_genotypes.max(), progeny_genotypes.max())
@@ -252,8 +253,7 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     Examples
     --------
     >>> import allel
-    >>> import numpy as np
-    >>> haplotypes = np.array([
+    >>> haplotypes = allel.HaplotypeArray([
     ...     [0, 0, 0, 1, 2, -1],
     ...     [0, 1, 0, 1, 2, -1],
     ...     [1, 0, 0, 1, 2, -1],
@@ -262,7 +262,7 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     ...     [0, -1, 0, 1, 2, -1],
     ...     [-1, 1, 0, 1, 2, -1],
     ...     [-1, -1, 0, 1, 2, -1],
-    ... ])
+    ... ], dtype='i1')
     >>> painting = allel.stats.paint_transmission(haplotypes[:, :2],
     ...                                           haplotypes[:, 2:])
     >>> painting
@@ -330,3 +330,101 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     painting[progeny_is_missing] = INHERIT_MISSING
 
     return painting
+
+
+def phase_progeny_by_transmission(g, copy=False):
+    """Phase progeny genotypes where possible using Mendelian transmission.
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, 2)
+        Genotype array, with parents as first two columns and progeny as
+        remaining columns.
+    copy : bool, optional
+        If True, store phased genotypes in a new array, otherwise phase
+        in-place.
+
+    Returns
+    -------
+    g : ndarray, int8, shape (n_variants, n_samples, 2)
+        Genotype array with progeny phased where possible.
+    is_phased : ndarray, bool, shape (n_variants, n_samples)
+        True where genotype has been phased.
+
+    Examples
+    --------
+    >>> import allel
+    >>> g = allel.GenotypeArray([
+    ...     [[0, 0], [0, 0], [0, 0]],
+    ...     [[1, 1], [1, 1], [1, 1]],
+    ...     [[0, 0], [1, 1], [0, 1]],
+    ...     [[1, 1], [0, 0], [0, 1]],
+    ...     [[0, 0], [0, 1], [0, 0]],
+    ...     [[0, 0], [0, 1], [0, 1]],
+    ...     [[0, 1], [0, 0], [0, 1]],
+    ...     [[0, 1], [0, 1], [0, 1]],
+    ...     [[0, 1], [1, 2], [0, 1]],
+    ...     [[1, 2], [0, 1], [1, 2]],
+    ...     [[0, 1], [2, 3], [0, 2]],
+    ...     [[2, 3], [0, 1], [1, 3]],
+    ...     [[0, 0], [0, 0], [-1, -1]],
+    ...     [[0, 0], [0, 0], [1, 1]],
+    ... ], dtype='i1')
+    >>> g, is_phased = allel.stats.phase_progeny_by_transmission(g)
+    >>> g
+    GenotypeArray((14, 3, 2), dtype=int8)
+    [[[ 0  0]  [ 0  0]  [ 0  0]]
+     [[ 1  1]  [ 1  1]  [ 1  1]]
+     [[ 0  0]  [ 1  1]  [ 0  1]]
+     [[ 1  1]  [ 0  0]  [ 1  0]]
+     [[ 0  0]  [ 0  1]  [ 0  0]]
+     [[ 0  0]  [ 0  1]  [ 0  1]]
+     [[ 0  1]  [ 0  0]  [ 1  0]]
+     [[ 0  1]  [ 0  1]  [ 0  1]]
+     [[ 0  1]  [ 1  2]  [ 0  1]]
+     [[ 1  2]  [ 0  1]  [ 2  1]]
+     [[ 0  1]  [ 2  3]  [ 0  2]]
+     [[ 2  3]  [ 0  1]  [ 3  1]]
+     [[ 0  0]  [ 0  0]  [-1 -1]]
+     [[ 0  0]  [ 0  0]  [ 1  1]]]
+    >>> is_phased
+    array([[False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False, False],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False,  True],
+           [False, False, False],
+           [False, False, False]], dtype=bool)
+
+    """
+
+    # setup
+    g = GenotypeArray(g)
+    if g.ploidy != 2:
+        err_diploid_only()
+    if g.n_samples < 3:
+        raise ValueError(
+            'bad genotypes: at least three samples required (2 parents and 1 '
+            'or more progeny); found %s' % g.n_samples
+        )
+
+    # handle user-request to copy the data before phasing
+    if copy:
+        g = g.copy()
+
+    # ensure correct dtype
+    g = g.astype('i1', copy=False)
+
+    # run the phasing
+    from allel.opt.stats import phase_progeny_by_transmission_int8
+    is_phased = phase_progeny_by_transmission_int8(g)
+
+    # outputs
+    return g, np.asarray(is_phased).view('b1')
