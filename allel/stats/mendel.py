@@ -6,7 +6,8 @@ import numpy as np
 
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray
-from allel.errors import err_diploid_only
+from allel.util import asarray_ndim, check_dim_aligned, check_ploidy, \
+    check_min_samples
 
 
 def mendel_errors(parent_genotypes, progeny_genotypes):
@@ -332,17 +333,15 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     return painting
 
 
-def phase_progeny_by_transmission(g, copy=False):
-    """Phase progeny genotypes where possible using Mendelian transmission.
+def phase_progeny_by_transmission(g):
+    """Phase progeny genotypes from a trio or cross using Mendelian
+    transmission.
 
     Parameters
     ----------
     g : array_like, int, shape (n_variants, n_samples, 2)
         Genotype array, with parents as first two columns and progeny as
         remaining columns.
-    copy : bool, optional
-        If True, store phased genotypes in a new array, otherwise phase
-        in-place.
 
     Returns
     -------
@@ -406,25 +405,97 @@ def phase_progeny_by_transmission(g, copy=False):
     """
 
     # setup
-    g = GenotypeArray(g)
-    if g.ploidy != 2:
-        err_diploid_only()
-    if g.n_samples < 3:
-        raise ValueError(
-            'bad genotypes: at least three samples required (2 parents and 1 '
-            'or more progeny); found %s' % g.n_samples
-        )
-
-    # handle user-request to copy the data before phasing
-    if copy:
-        g = g.copy()
-
-    # ensure correct dtype
-    g = g.astype('i1', copy=False)
+    g = GenotypeArray(g, dtype='i1', copy=True)
+    check_ploidy(2, g.ploidy)
+    check_min_samples(3, g.n_samples)
 
     # run the phasing
     from allel.opt.stats import phase_progeny_by_transmission_int8
     is_phased = phase_progeny_by_transmission_int8(g)
 
     # outputs
+    return g, np.asarray(is_phased).view('b1')
+
+
+def phase_parents_by_transmission(g, is_phased, window_size):
+    """Phase parent genotypes from a trio or cross, given progeny genotypes
+    already phased by Mendelian transmission.
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, 2)
+        Genotype array, with parents as first two columns and progeny as
+        remaining columns, where progeny genotypes are already phased.
+    is_phased : ndarray, bool, shape (n_variants, n_samples)
+        True where genotype has been phased.
+    window_size : int
+        Number of previous heterozygous sites to include when phasing each
+        parent. A number somewhere between 10 and 100 may be appropriate,
+        depending on levels of heterozygosity and quality of data.
+
+    Returns
+    -------
+    g : ndarray, int8, shape (n_variants, n_samples, 2)
+        Genotype array with parents phased where possible.
+    is_phased : ndarray, bool, shape (n_variants, n_samples)
+        True where genotype has been phased.
+
+    """
+
+    # setup
+    g = GenotypeArray(g, dtype='i1', copy=True)
+    check_ploidy(2, g.ploidy)
+    check_min_samples(3, g.n_samples)
+    is_phased = asarray_ndim(is_phased, 2, dtype=bool, copy=True)
+    check_dim_aligned(0, g, is_phased)
+    check_dim_aligned(1, g, is_phased)
+
+    # run the phasing
+    from allel.opt.stats import phase_parents_by_transmission_int8
+    phase_parents_by_transmission_int8(g, is_phased.view('u1'), window_size)
+
+    # outputs
+    return g, is_phased
+
+
+def phase_by_transmission(g, window_size, copy=True):
+    """Phase genotypes in a trio or cross where possible using Mendelian
+    transmission.
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, 2)
+        Genotype array, with parents as first two columns and progeny as
+        remaining columns.
+    window_size : int
+        Number of previous heterozygous sites to include when phasing each
+        parent. A number somewhere between 10 and 100 may be appropriate,
+        depending on levels of heterozygosity and quality of data.
+    copy : bool, optional
+        If False, attempt to phase genotypes in-place. Note that this is
+        only possible if the input array has int8 dtype, otherwise a copy is
+        always made regardless of this parameter.
+
+    Returns
+    -------
+    g : ndarray, int8, shape (n_variants, n_samples, 2)
+        Genotype array with progeny phased where possible.
+    is_phased : ndarray, bool, shape (n_variants, n_samples)
+        True where genotype has been phased.
+
+    """
+
+    # setup
+    g = GenotypeArray(g, dtype='i1', copy=copy)
+    check_ploidy(2, g.ploidy)
+    check_min_samples(3, g.n_samples)
+
+    # phase the progeny
+    from allel.opt.stats import phase_progeny_by_transmission_int8
+    is_phased = phase_progeny_by_transmission_int8(g)
+
+    # phase the parents
+    from allel.opt.stats import phase_parents_by_transmission_int8
+    phase_parents_by_transmission_int8(g, is_phased, window_size)
+
     return g, np.asarray(is_phased).view('b1')

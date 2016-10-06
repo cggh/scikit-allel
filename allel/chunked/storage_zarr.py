@@ -1,12 +1,24 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+import operator
 
 
 import zarr
+import zarr.util
 
 
 from allel.chunked import util as _util
-from allel.compat import zip
+from allel.compat import zip, reduce
+
+
+def default_chunks(data, expectedlen=None):
+    # 4M chunks of first dimension
+    if data.ndim > 1:
+        rowsize = reduce(operator.mul, data.shape[1:]) * data.dtype.itemsize
+        chunks = ((2**22 // rowsize),) + data.shape[1:]
+    else:
+        chunks = 2*22 // data.dtype.itemsize
+    return chunks
 
 
 class ZarrStorage(object):
@@ -31,6 +43,11 @@ class ZarrStorage(object):
         data = _util.ensure_array_like(data)
         kwargs = self._set_defaults(kwargs)
 
+        # determine chunks
+        chunks = kwargs.get('chunks', None)
+        if chunks is None:
+            kwargs['chunks'] = default_chunks(data, expectedlen)
+
         # create
         z = zarr.array(data, **kwargs)
 
@@ -45,8 +62,11 @@ class ZarrStorage(object):
         g = zarr.group(**kwargs)
 
         # create columns
+        chunks = kwargs.get('chunks', None)
         for n, c in zip(names, columns):
-            g.array(name=n, data=c)
+            if chunks is None:
+                chunks = default_chunks(c, expectedlen)
+            g.array(name=n, data=c, chunks=chunks)
 
         # create table
         ztbl = ZarrTable(names, g)

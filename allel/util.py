@@ -362,3 +362,17 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
         return update_wrapper(wrapper, user_function)
 
     return decorator
+
+
+def check_ploidy(expect, actual):
+    if expect != actual:
+        raise ValueError(
+            'expected ploidy %s, found %s' % (expect, actual)
+        )
+
+
+def check_min_samples(expect, actual):
+    if actual < expect:
+        raise ValueError(
+            'expected at least %s samples, found %s' % (expect, actual)
+        )

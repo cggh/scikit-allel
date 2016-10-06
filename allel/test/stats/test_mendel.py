@@ -312,7 +312,7 @@ def test_phase_progeny_by_transmission():
 
     # run checks
     g = np.array(gu, dtype='i1')
-    ga, is_phased = phase_progeny_by_transmission(g)
+    ga, is_phased = phase_progeny_by_transmission(g, copy=False)
     assert_array_equal(gp, ga)
     assert_array_equal(expect_is_phased, is_phased)
     # no copy
@@ -320,7 +320,7 @@ def test_phase_progeny_by_transmission():
 
     # check different dtype
     g = np.array(gu, dtype='i8')
-    ga, is_phased = phase_progeny_by_transmission(g)
+    ga, is_phased = phase_progeny_by_transmission(g, copy=False)
     assert_array_equal(gp, ga)
     assert_array_equal(expect_is_phased, is_phased)
     # have to copy because of dtype

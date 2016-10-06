@@ -875,6 +875,8 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
     return np.asarray(vstat0), np.asarray(vstat1)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def phase_progeny_by_transmission_int8(np.int8_t[:, :, :] g):
     # N.B., here we will modify g in-place
 
@@ -959,3 +961,111 @@ def phase_progeny_by_transmission_int8(np.int8_t[:, :, :] g):
                     is_phased[i, j] = 1
 
     return is_phased
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def phase_parents_by_transmission_int8(np.int8_t[:, :, :] g,
+                                       np.uint8_t[:, :] is_phased,
+                                       Py_ssize_t window_size):
+    # N.B., here we will modify g and is_phased in-place
+
+    cdef:
+        Py_ssize_t i, parent, ii, n_variants, n_samples, keep, flip, n_inf
+        np.int8_t a1, a2, max_allele, pa1, pa2, x, y
+        np.uint32_t[:] block_start
+        np.uint32_t[:] n_progeny_phased
+        np.uint32_t[:, :] linkage
+
+    # guard conditions
+    assert g.shape[2] == 2
+    assert g.shape[0] == is_phased.shape[0]
+    assert g.shape[1] == is_phased.shape[1]
+
+    # setup intermediates
+    n_variants = g.shape[0]
+    n_samples = g.shape[1]
+    max_allele = np.max(g)
+    linkage = np.zeros((max_allele + 1, max_allele + 1), dtype='u4')
+    n_progeny_phased = np.sum(is_phased[:, 2:], axis=1).astype('u4')
+
+    # iterate over variants
+    for i in range(n_variants):
+
+        if n_progeny_phased[i] == 0:
+            # no progeny genotypes phased, cannot phase parent
+            continue
+
+        # iterate over parents
+        for parent in range(2):
+
+            if is_phased[i, parent]:
+                # parent already phased somehow, not expected but skip anyway
+                continue
+
+            # access parent's alleles
+            a1 = g[i, parent, 0]
+            a2 = g[i, parent, 1]
+
+            if a1 < 0 or a2 < 0:
+                # missing call, skip
+                continue
+
+            elif a1 == a2:
+                # parent is homozygous, trivially phase
+                is_phased[i, parent] = 1
+
+            elif n_progeny_phased[i] > 0:
+                # parent is het and some progeny are phased, so should be
+                # able to phase parent
+
+                # setup accumulators for evidence on whether to swap alleles
+                keep = flip = 0
+
+                # keep track of how many informative variants are visited
+                n_inf = 0
+
+                # setup index for back-tracking
+                ii = i - 1
+
+                # look back and collect linkage evidence from previous variants
+                while ii >= 0 and n_inf < window_size:
+
+                    # access alleles for previous variant
+                    pa1 = g[ii, parent, 0]
+                    pa2 = g[ii, parent, 1]
+
+                    if (is_phased[ii, parent] and
+                            (pa1 != pa2) and
+                            (n_progeny_phased[ii] > 0)):
+
+                        # variant is phase informative, accumulate
+                        n_inf += 1
+
+                        # collect linkage information
+                        linkage[:, :] = 0
+                        for j in range(2, n_samples):
+                            if is_phased[ii, j] and is_phased[i, j]:
+                                x = g[ii, j, parent]
+                                y = g[i, j, parent]
+                                linkage[x, y] += 1
+
+                        # accumulate evidence
+                        keep += linkage[pa1, a1] + linkage[pa2, a2]
+                        flip += linkage[pa1, a2] + linkage[pa2, a1]
+
+                    ii -= 1
+
+                # make a decision
+                if n_inf == 0:
+                    # no previous informative variants, start of data,
+                    # phase arbitrarily
+                    is_phased[i, parent] = 1
+
+                elif keep > flip:
+                    is_phased[i, parent] = 1
+
+                elif flip > keep:
+                    is_phased[i, parent] = 1
+                    g[i, parent, 0] = a2
+                    g[i, parent, 1] = a1

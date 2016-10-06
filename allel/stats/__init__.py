@@ -54,4 +54,5 @@ from allel.stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
 from allel.stats.misc import plot_variant_locator
 
 from allel.stats.mendel import mendel_errors, paint_transmission, \
-    phase_progeny_by_transmission
+    phase_progeny_by_transmission, phase_parents_by_transmission, \
+    phase_by_transmission
