@@ -26,10 +26,13 @@ install:
 
 script:
   - python setup.py build_ext --inplace
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
-      nosetests allel -v --with-doctest --doctest-options=+NORMALIZE_WHITESPACE;
-    else
-      nosetests allel -v;
-    fi
+  - export PYTHONHASHSEED=42
+# need to get bcolz updated in conda before we can do doctests
+#  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+#      nosetests allel -v --with-doctest --doctest-options=+NORMALIZE_WHITESPACE;
+#    else
+#      nosetests allel -v;
+#    fi
+  - nosetests -v allel
   - flake8 allel
   - python setup.py bdist_wheel
