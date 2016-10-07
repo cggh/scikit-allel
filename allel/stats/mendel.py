@@ -183,8 +183,8 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
     # setup
     parent_genotypes = GenotypeArray(parent_genotypes)
     progeny_genotypes = GenotypeArray(progeny_genotypes)
-    if parent_genotypes.ploidy != 2 or progeny_genotypes.ploidy != 2:
-        err_diploid_only()
+    check_ploidy(2, parent_genotypes.ploidy)
+    check_ploidy(2, progeny_genotypes.ploidy)
 
     # transform into per-call allele counts
     max_allele = max(parent_genotypes.max(), progeny_genotypes.max())

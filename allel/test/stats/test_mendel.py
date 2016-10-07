@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function, division
 import unittest
 
 
-from nose.tools import eq_ as eq, assert_not_equal as neq
 import numpy as np
 from numpy.testing import assert_array_equal
 
