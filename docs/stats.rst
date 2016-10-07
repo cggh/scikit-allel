@@ -13,6 +13,7 @@ Statistics and plotting
     stats/decomposition
     stats/admixture
     stats/selection
+    stats/mendel
     stats/window
     stats/preprocessing
     stats/misc
