@@ -11,14 +11,22 @@ from allel.chunked import util as _util
 from allel.compat import zip, reduce
 
 
-def default_chunks(data):
-    # 4M chunks of first dimension, ignore expectedlen
+def default_chunks(data, expectedlen):
+    # here we will only ever chunk first dimension
+    rowsize = data.dtype.itemsize
     if data.ndim > 1:
-        rowsize = reduce(operator.mul, data.shape[1:]) * data.dtype.itemsize
+        # pretend array is 1D
+        rowsize *= reduce(operator.mul, data.shape[1:])
+    if expectedlen is None:
+        # default to 4M chunks of first dimension
         chunklen = 2**22 // rowsize
+    else:
+        # use zarr heuristics
+        chunklen, = zarr.util.guess_chunks((expectedlen,), rowsize)
+    if data.ndim > 1:
         chunks = (chunklen,) + data.shape[1:]
     else:
-        chunks = 2**22 // data.dtype.itemsize
+        chunks = chunklen,
     return chunks
 
 
@@ -45,7 +53,7 @@ class ZarrStorage(object):
         kwargs = self._set_defaults(kwargs)
 
         # determine chunks
-        kwargs.setdefault('chunks', default_chunks(data))
+        kwargs.setdefault('chunks', default_chunks(data, expectedlen))
 
         # create
         z = zarr.array(data, **kwargs)
@@ -64,7 +72,7 @@ class ZarrStorage(object):
         chunks = kwargs.get('chunks', None)
         for n, c in zip(names, columns):
             if chunks is None:
-                chunks = default_chunks(c)
+                chunks = default_chunks(c, expectedlen)
             g.array(name=n, data=c, chunks=chunks)
 
         # create table

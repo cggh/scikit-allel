@@ -28,6 +28,11 @@ For example::
     >>> import numpy as np
     >>> a = np.arange(10000000)
     >>> chunked.copy(a)
+    Array((10000000,), int64, chunks=(39063,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.2M; ratio: 66.2; initialized: 256/256
+      compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
+      store: DictStore
+    >>> chunked.copy(a, storage='bcolzmem')
     carray((10000000,), int64)
       nbytes := 76.29 MB; cbytes := 1.80 MB; ratio: 42.41
       cparams := cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
@@ -42,13 +47,13 @@ For example::
       mode    := 'w'
     [      0       1       2 ..., 9999997 9999998 9999999]
     >>> chunked.copy(a, storage='zarrmem')
-    Array((10000000,), int64, chunks=(524288,), order=C)
-      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.0; initialized: 20/20
+    Array((10000000,), int64, chunks=(39063,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.2M; ratio: 66.2; initialized: 256/256
       compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
       store: DictStore
     >>> chunked.copy(a, storage='zarrtmp')
-    Array((10000000,), int64, chunks=(524288,), order=C)
-      nbytes: 76.3M; nbytes_stored: 1.1M; ratio: 68.0; initialized: 20/20
+    Array((10000000,), int64, chunks=(39063,), order=C)
+      nbytes: 76.3M; nbytes_stored: 1.2M; ratio: 66.2; initialized: 256/256
       compressor: Blosc(cname='lz4', clevel=5, shuffle=1)
       store: TempStore
     >>> chunked.copy(a, storage=chunked.BcolzStorage(cparams=bcolz.cparams(cname='lz4')))
@@ -84,15 +89,15 @@ except ImportError:
     pass
 
 try:
-    import zarr as _zarr
-    from .storage_zarr import *
-    storage_registry['default'] = zarrmem_storage
+    import bcolz as _bcolz
+    from .storage_bcolz import *
+    storage_registry['default'] = bcolzmem_storage
 except ImportError:
     pass
 
 try:
-    import bcolz as _bcolz
-    from .storage_bcolz import *
-    storage_registry['default'] = bcolzmem_storage
+    import zarr as _zarr
+    from .storage_zarr import *
+    storage_registry['default'] = zarrmem_storage
 except ImportError:
     pass
