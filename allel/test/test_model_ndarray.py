@@ -11,7 +11,7 @@ from allel.test.tools import assert_array_equal as aeq
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray, SortedIndex, \
     UniqueIndex, SortedMultiIndex, AlleleCountsArray, VariantTable, \
-    FeatureTable
+    FeatureTable, GenotypeVector
 from allel.test.test_model_api import GenotypeArrayInterface, \
     HaplotypeArrayInterface, SortedIndexInterface, UniqueIndexInterface, \
     SortedMultiIndexInterface, diploid_genotype_data, triploid_genotype_data, \
@@ -690,3 +690,85 @@ class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
         eq(1, ft.ndim)
         eq(6, ft.n_features)
         eq(feature_table_names, ft.names)
+
+
+from allel.test.test_model_api import diploid_genotype_data, \
+    triploid_genotype_data
+
+
+class GenotypeVectorTests(unittest.TestCase):
+
+    def test_properties(self):
+
+        # diploid row
+        gv = GenotypeVector(diploid_genotype_data[0])
+        eq(2, gv.ndim)
+        eq((3, 2), gv.shape)
+        eq(np.dtype(int), gv.dtype)
+        eq(3, gv.n_calls)
+        eq(2, gv.ploidy)
+        eq(6, gv.n_allele_calls)
+
+        # diploid column
+        gv = GenotypeVector(np.array(diploid_genotype_data, dtype='i1')[:, 0])
+        eq(2, gv.ndim)
+        eq((5, 2), gv.shape)
+        eq(np.dtype('i1'), gv.dtype)
+        eq(5, gv.n_calls)
+        eq(2, gv.ploidy)
+        eq(10, gv.n_allele_calls)
+
+        # triploid row
+        gv = GenotypeVector(triploid_genotype_data[0])
+        eq(2, gv.ndim)
+        eq((3, 3), gv.shape)
+        eq(np.dtype(int), gv.dtype)
+        eq(3, gv.n_calls)
+        eq(3, gv.ploidy)
+        eq(9, gv.n_allele_calls)
+
+        # triploid column
+        gv = GenotypeVector(np.array(triploid_genotype_data, dtype='i1')[:, 0])
+        eq(2, gv.ndim)
+        eq((4, 3), gv.shape)
+        eq(np.dtype('i1'), gv.dtype)
+        eq(4, gv.n_calls)
+        eq(3, gv.ploidy)
+        eq(12, gv.n_allele_calls)
+
+    # n_calls
+    # ploidy
+    # n_allele_calls
+    # _check_input_data
+    # __new__
+    # __array_finalize__
+    # __array_wrap__
+    # __getslice__
+    # __getitem__
+    # to_html_str
+    # _repr_html_
+    # mask getter
+    # mask setter
+    # fill_masked
+    # is_called
+    # is_missing
+    # is_hom
+    # is_hom_ref
+    # is_hom_alt
+    # is_het
+    # is_call
+    # count_called
+    # count_missing
+    # count_hom
+    # count_hom_ref
+    # count_hom_alt
+    # count_het
+    # count_call
+    # to_haplotypes
+    # to_n_ref
+    # to_n_alt
+    # to_allele_counts
+    # haploidify
+    # to_gt
+    # map_alleles
+

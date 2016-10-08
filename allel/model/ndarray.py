@@ -186,6 +186,7 @@ class IntegerArray(ArrayAug):
     def astype(self, dtype, *args, **kwargs):
         x = super(IntegerArray, self).astype(dtype, *args, **kwargs)
         if x.dtype.kind not in 'iu':
+            # don't wrap as sub-class
             x = np.asarray(x)
         return x
 
@@ -1669,6 +1670,66 @@ class GenotypeArray(IntegerArray):
         hm = h.map_alleles(mapping, copy=copy)
         gm = hm.to_genotypes(ploidy=self.shape[2])
         return gm
+
+
+class GenotypeVector(object):
+    """TODO"""
+
+    @staticmethod
+    def _check_input_data(obj):
+
+        # check dtype
+        if obj.dtype.kind not in 'ui':
+            raise TypeError('integer dtype required')
+
+        # check dimensionality
+        if obj.ndim != 2:
+            raise TypeError('array with 2 dimensions required')
+
+    def __init__(self, data, copy=False, **kwargs):
+        wrapped = np.array(data, copy=copy, **kwargs)
+        self._check_input_data(wrapped)
+        self.wrapped = wrapped
+
+    def __getitem__(self, *args, **kwargs):
+        s = self.wrapped.__getitem__(*args, **kwargs)
+        if hasattr(s, 'ndim'):
+            if s.ndim == 2 and self.shape[1] == s.shape[1]:
+                # dimensionality and ploidy preserved
+                s = GenotypeVector(s)
+                if hasattr(self, 'mask') and self.mask is not None:
+                    # attempt to slice mask
+                    m = self.mask.__getitem__(*args, **kwargs)
+                    s.mask = m
+                return s
+        return s
+
+    def __getattr__(self, item):
+        return getattr(self.wrapped, item)
+
+    def to_html_str(self, limit=5, caption=None, cols=None):
+        # TODO
+        pass
+
+    def _repr_html_(self):
+        return self.to_html_str()
+
+    @property
+    def n_calls(self):
+        """Number of calls (length of first array dimension)."""
+        return self.shape[0]
+
+    @property
+    def ploidy(self):
+        """Sample ploidy (length of second array dimension)."""
+        return self.shape[1]
+
+    @property
+    def n_allele_calls(self):
+        """Total number of allele calls (n_calls * ploidy)."""
+        return self.shape[0] * self.shape[1]
+
+    # TODO finish this
 
 
 class HaplotypeArray(IntegerArray):
