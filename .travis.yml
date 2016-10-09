@@ -30,5 +30,5 @@ install:
 script:
   - python setup.py build_ext --inplace
   - nosetests -v allel
-  - flake8 allel
+  - flake8 --max-line-length=90 allel
   - python setup.py bdist_wheel
