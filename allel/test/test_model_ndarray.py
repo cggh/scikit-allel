@@ -696,6 +696,7 @@ from allel.test.test_model_api import diploid_genotype_data, \
     triploid_genotype_data
 
 
+# noinspection PyMethodMayBeStatic
 class GenotypeVectorTests(unittest.TestCase):
 
     def test_properties(self):
@@ -736,14 +737,47 @@ class GenotypeVectorTests(unittest.TestCase):
         eq(3, gv.ploidy)
         eq(12, gv.n_allele_calls)
 
-    # n_calls
-    # ploidy
-    # n_allele_calls
-    # _check_input_data
-    # __new__
-    # __array_finalize__
-    # __array_wrap__
-    # __getslice__
+    def test_input_data(self):
+
+        # ndim 3
+        with assert_raises(TypeError):
+            GenotypeVector(diploid_genotype_data)
+        with assert_raises(TypeError):
+            GenotypeVector(triploid_genotype_data)
+
+        # ndim 1
+        with assert_raises(TypeError):
+            GenotypeVector([0, 1, 0, -1])
+
+        # ndim 1
+        with assert_raises(TypeError):
+            GenotypeVector([0, 1, 0, -1])
+
+        # wrong dtype
+        with assert_raises(TypeError):
+            GenotypeVector(np.array(diploid_genotype_data, dtype='f4')[:, 0])
+
+    def test_getitem(self):
+
+        # slice first dimension should return same type
+        gv = GenotypeVector(diploid_genotype_data[0])
+        gs = gv[0:2]
+        assert_is_instance(gs, GenotypeVector)
+
+        # fancy index first dimension should return same type
+        gs = gv[np.array([True, False, True], dtype=bool)]
+        assert_is_instance(gs, GenotypeVector)
+        gs = gv[[0, 2]]
+        assert_is_instance(gs, GenotypeVector)
+
+        # index second dimension, should return plain array
+        gs = gv[:, 0]
+        assert_not_is_instance(gs, GenotypeVector)
+
+        # edge case
+        gs = gv[np.newaxis, :2, 0]
+        assert_not_is_instance(gs, GenotypeVector)
+
     # __getitem__
     # to_html_str
     # _repr_html_

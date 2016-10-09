@@ -1693,15 +1693,16 @@ class GenotypeVector(object):
 
     def __getitem__(self, *args, **kwargs):
         s = self.wrapped.__getitem__(*args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 2 and self.shape[1] == s.shape[1]:
-                # dimensionality and ploidy preserved
-                s = GenotypeVector(s)
-                if hasattr(self, 'mask') and self.mask is not None:
-                    # attempt to slice mask
-                    m = self.mask.__getitem__(*args, **kwargs)
-                    s.mask = m
-                return s
+        if (len(args) >= 1 and
+                isinstance(args[0], (slice, list, np.ndarray)) and
+                (len(args) == 1 or args[1] in {slice(None), Ellipsis})):
+            # dimensionality and ploidy preserved
+            s = GenotypeVector(s)
+            if hasattr(self, 'mask') and self.mask is not None:
+                # attempt to slice mask
+                m = self.mask.__getitem__(*args, **kwargs)
+                s.mask = m
+            return s
         return s
 
     def __getattr__(self, item):
