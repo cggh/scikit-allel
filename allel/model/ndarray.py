@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 import collections
+import bisect
+import itertools
 
 
 # third-party imports
@@ -11,9 +13,15 @@ import numpy as np
 from allel.util import check_dtype_kind, check_shape, check_dtype, asarray_ndim, check_ndim,\
     ignore_invalid, check_dim0_aligned
 from allel.compat import PY2
+from allel.io import recarray_to_hdf5_group, recarray_from_hdf5_group, write_vcf, iter_gff3
+from .abc import Wrapper
 
 
-class ArrayBase(object):
+__all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
+           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+
+
+class ArrayBase(Wrapper):
     """Abstract base class that wraps a NumPy array."""
 
     @classmethod
@@ -23,110 +31,12 @@ class ArrayBase(object):
     def __init__(self, data, copy=False, **kwargs):
         values = np.array(data, copy=copy, **kwargs)
         self._check_values(values)
-        self._values = values
-
-    @property
-    def values(self):
-        """The underlying array of values."""
-        return self._values
-
-    def __getattr__(self, item):
-        return getattr(self.values, item)
-
-    def __getitem__(self, item):
-        return self.values[item]
-
-    def __iter__(self):
-        return iter(self.values)
-
-    def __len__(self):
-        return len(self.values)
-
-    def __array__(self, *args):
-        a = self.values
-        if args:
-            a = a.astype(args[0])
-        return a
-
-    def __str__(self):
-        return str(self.values)
+        super(ArrayBase, self).__init__(values)
 
     def __repr__(self):
         r = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
         r += str(self)
         return r
-
-    def __eq__(self, other):
-        return self.values == other
-
-    def __ne__(self, other):
-        return self.values != other
-
-    def __lt__(self, other):
-        return self.values < other
-
-    def __gt__(self, other):
-        return self.values > other
-
-    def __le__(self, other):
-        return self.values <= other
-
-    def __ge__(self, other):
-        return self.values >= other
-
-    def __abs__(self):
-        return abs(self.values)
-
-    def __add__(self, other):
-        return self.values + other
-
-    def __and__(self, other):
-        return self.values & other
-
-    def __div__(self, other):
-        return self.values.__div__(other)
-
-    def __floordiv__(self, other):
-        return self.values // other
-
-    def __inv__(self):
-        return ~self.values
-
-    def __invert__(self):
-        return ~self.values
-
-    def __lshift__(self, other):
-        return self.values << other
-
-    def __mod__(self, other):
-        return self.values % other
-
-    def __mul__(self, other):
-        return self.values * other
-
-    def __neg__(self):
-        return -self.values
-
-    def __or__(self, other):
-        return self.values | other
-
-    def __pos__(self):
-        return +self.values
-
-    def __pow__(self, other):
-        return self.values ** other
-
-    def __rshift__(self, other):
-        return self.values >> other
-
-    def __sub__(self, other):
-        return self.values - other
-
-    def __truediv__(self, other):
-        return self.values.__truediv__(other)
-
-    def __xor__(self, other):
-        return self.values ^ other
 
     def hstack(self, *others):
         """Stack arrays in sequence horizontally (column-wise)."""
@@ -3092,3 +3002,1372 @@ class AlleleCountsArray(ArrayBase):
         if axis == 0:
             out = type(self)(out)
         return out
+
+
+class SortedIndex(ArrayBase):
+    """Index of sorted values, e.g., positions from a single chromosome or
+    contig.
+
+    Parameters
+    ----------
+    data : array_like
+        Values in ascending order.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+    Values must be given in ascending order, although duplicate values
+    may be present (i.e., values must be monotonically increasing).
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> idx = allel.SortedIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> idx
+    SortedIndex((7,), dtype=int32)
+    [ 2  5 14 15 42 42 77]
+    >>> idx.dtype
+    dtype('int32')
+    >>> idx.ndim
+    1
+    >>> idx.shape
+    (7,)
+    >>> idx.is_unique
+    False
+
+    """
+
+    @classmethod
+    def _check_values(cls, values):
+        check_ndim(values, 1)
+        # check sorted ascending
+        if np.any(values[:-1] > values[1:]):
+            raise ValueError('values must be monotonically increasing')
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(SortedIndex, self).__init__(data, copy=copy, **kwargs)
+        self._is_unique = None
+
+    @property
+    def is_unique(self):
+        """True if no duplicate entries."""
+        if self._is_unique is None:
+            self._is_unique = ~np.any(self[:-1] == self[1:])
+        return self._is_unique
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def locate_key(self, key):
+        """Get index location for the requested key.
+
+        Parameters
+        ----------
+        key : int
+            Value to locate.
+
+        Returns
+        -------
+        loc : int or slice
+            Location of `key` (will be slice if there are duplicate entries).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx = allel.SortedIndex([3, 6, 6, 11])
+        >>> idx.locate_key(3)
+        0
+        >>> idx.locate_key(11)
+        3
+        >>> idx.locate_key(6)
+        slice(1, 3, None)
+        >>> try:
+        ...     idx.locate_key(2)
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        2
+
+        """
+
+        left = bisect.bisect_left(self, key)
+        right = bisect.bisect_right(self, key)
+        diff = right - left
+        if diff == 0:
+            raise KeyError(key)
+        elif diff == 1:
+            return left
+        else:
+            return slice(left, right)
+
+    def locate_intersection(self, other):
+        """Locate the intersection with another array.
+
+        Parameters
+        ----------
+        other : array_like, int
+            Array of values to intersect.
+
+        Returns
+        -------
+        loc : ndarray, bool
+            Boolean array with location of intersection.
+        loc_other : ndarray, bool
+            Boolean array with location in `other` of intersection.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx1 = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
+        >>> loc1, loc2 = idx1.locate_intersection(idx2)
+        >>> loc1
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> loc2
+        array([False,  True,  True, False], dtype=bool)
+        >>> idx1[loc1]
+        SortedIndex((2,), dtype=int64)
+        [ 6 20]
+        >>> idx2[loc2]
+        SortedIndex((2,), dtype=int64)
+        [ 6 20]
+
+        """
+
+        # check inputs
+        other = SortedIndex(other, copy=False)
+
+        # find intersection
+        assume_unique = self.is_unique and other.is_unique
+        loc = np.in1d(self, other, assume_unique=assume_unique)
+        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+
+        return loc, loc_other
+
+    def locate_keys(self, keys, strict=True):
+        """Get index locations for the requested keys.
+
+        Parameters
+        ----------
+        keys : array_like, int
+            Array of keys to locate.
+        strict : bool, optional
+            If True, raise KeyError if any keys are not found in the index.
+
+        Returns
+        -------
+        loc : ndarray, bool
+            Boolean array with location of values.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx1 = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
+        >>> loc = idx1.locate_keys(idx2, strict=False)
+        >>> loc
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> idx1[loc]
+        SortedIndex((2,), dtype=int64)
+        [ 6 20]
+
+        """
+
+        # check inputs
+        keys = SortedIndex(keys, copy=False)
+
+        # find intersection
+        loc, found = self.locate_intersection(keys)
+
+        if strict and np.any(~found):
+            raise KeyError(keys[~found])
+
+        return loc
+
+    def intersect(self, other):
+        """Intersect with `other` sorted index.
+
+        Parameters
+        ----------
+        other : array_like, int
+            Array of values to intersect with.
+
+        Returns
+        -------
+        out : SortedIndex
+            Values in common.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx1 = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
+        >>> idx1.intersect(idx2)
+        SortedIndex((2,), dtype=int64)
+        [ 6 20]
+
+        """
+
+        loc = self.locate_keys(other, strict=False)
+        return self.compress(loc, axis=0)
+
+    def locate_range(self, start=None, stop=None):
+        """Locate slice of index containing all entries within `start` and
+        `stop` values **inclusive**.
+
+        Parameters
+        ----------
+        start : int, optional
+            Start value.
+        stop : int, optional
+            Stop value.
+
+        Returns
+        -------
+        loc : slice
+            Slice object.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> loc = idx.locate_range(4, 32)
+        >>> loc
+        slice(1, 4, None)
+        >>> idx[loc]
+        SortedIndex((3,), dtype=int64)
+        [ 6 11 20]
+
+        """
+
+        # locate start and stop indices
+        if start is None:
+            start_index = 0
+        else:
+            start_index = bisect.bisect_left(self, start)
+        if stop is None:
+            stop_index = len(self)
+        else:
+            stop_index = bisect.bisect_right(self, stop)
+
+        if stop_index - start_index == 0:
+            raise KeyError(start, stop)
+
+        loc = slice(start_index, stop_index)
+        return loc
+
+    def intersect_range(self, start=None, stop=None):
+        """Intersect with range defined by `start` and `stop` values
+        **inclusive**.
+
+        Parameters
+        ----------
+        start : int, optional
+            Start value.
+        stop : int, optional
+            Stop value.
+
+        Returns
+        -------
+        idx : SortedIndex
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> idx.intersect_range(4, 32)
+        SortedIndex((3,), dtype=int64)
+        [ 6 11 20]
+
+        """
+
+        try:
+            loc = self.locate_range(start=start, stop=stop)
+        except KeyError:
+            return self[0:0]
+        else:
+            return self[loc]
+
+    def locate_intersection_ranges(self, starts, stops):
+        """Locate the intersection with a set of ranges.
+
+        Parameters
+        ----------
+        starts : array_like, int
+            Range start values.
+        stops : array_like, int
+            Range stop values.
+
+        Returns
+        -------
+        loc : ndarray, bool
+            Boolean array with location of entries found.
+        loc_ranges : ndarray, bool
+            Boolean array with location of ranges containing one or more
+            entries.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
+        ...                    [100, 120]])
+        >>> starts = ranges[:, 0]
+        >>> stops = ranges[:, 1]
+        >>> loc, loc_ranges = idx.locate_intersection_ranges(starts, stops)
+        >>> loc
+        array([False,  True,  True, False,  True], dtype=bool)
+        >>> loc_ranges
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> idx[loc]
+        SortedIndex((3,), dtype=int64)
+        [ 6 11 35]
+        >>> ranges[loc_ranges]
+        array([[ 6, 17],
+               [31, 35]])
+
+        """
+
+        # check inputs
+        starts = asarray_ndim(starts, 1)
+        stops = asarray_ndim(stops, 1)
+        check_dim0_aligned(starts, stops)
+
+        # find indices of start and stop values in idx
+        start_indices = np.searchsorted(self, starts)
+        stop_indices = np.searchsorted(self, stops, side='right')
+
+        # find intervals overlapping at least one value
+        loc_ranges = start_indices < stop_indices
+
+        # find values within at least one interval
+        loc = np.zeros(self.shape, dtype=np.bool)
+        for i, j in zip(start_indices[loc_ranges], stop_indices[loc_ranges]):
+            loc[i:j] = True
+
+        return loc, loc_ranges
+
+    def locate_ranges(self, starts, stops, strict=True):
+        """Locate items within the given ranges.
+
+        Parameters
+        ----------
+        starts : array_like, int
+            Range start values.
+        stops : array_like, int
+            Range stop values.
+        strict : bool, optional
+            If True, raise KeyError if any ranges contain no entries.
+
+        Returns
+        -------
+        loc : ndarray, bool
+            Boolean array with location of entries found.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
+        ...                    [100, 120]])
+        >>> starts = ranges[:, 0]
+        >>> stops = ranges[:, 1]
+        >>> loc = idx.locate_ranges(starts, stops, strict=False)
+        >>> loc
+        array([False,  True,  True, False,  True], dtype=bool)
+        >>> idx[loc]
+        SortedIndex((3,), dtype=int64)
+        [ 6 11 35]
+
+        """
+
+        loc, found = self.locate_intersection_ranges(starts, stops)
+
+        if strict and np.any(~found):
+            raise KeyError(starts[~found], stops[~found])
+
+        return loc
+
+    def intersect_ranges(self, starts, stops):
+        """Intersect with a set of ranges.
+
+        Parameters
+        ----------
+        starts : array_like, int
+            Range start values.
+        stops : array_like, int
+            Range stop values.
+
+        Returns
+        -------
+        idx : SortedIndex
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
+        >>> ranges = np.array([[0, 2], [6, 17], [12, 15], [31, 35],
+        ...                    [100, 120]])
+        >>> starts = ranges[:, 0]
+        >>> stops = ranges[:, 1]
+        >>> idx.intersect_ranges(starts, stops)
+        SortedIndex((3,), dtype=int64)
+        [ 6 11 35]
+
+        """
+
+        loc = self.locate_ranges(starts, stops, strict=False)
+        return self.compress(loc, axis=0)
+
+
+class UniqueIndex(ArrayBase):
+    """Array of unique values (e.g., variant or sample identifiers).
+
+    Parameters
+    ----------
+    data : array_like
+        Values.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+    This class represents an arbitrary set of unique values, e.g., sample or
+    variant identifiers.
+
+    There is no need for values to be sorted. However, all values must be
+    unique within the array, and must be hashable objects.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
+    >>> idx
+    UniqueIndex((4,), dtype=object)
+    ['A' 'C' 'B' 'F']
+    >>> idx.dtype
+    dtype('O')
+    >>> idx.ndim
+    1
+    >>> idx.shape
+    (4,)
+
+    """
+
+    @classmethod
+    def _check_values(cls, obj):
+        check_ndim(obj, 1)
+        # check unique
+        # noinspection PyTupleAssignmentBalance
+        _, counts = np.unique(obj, return_counts=True)
+        if np.any(counts > 1):
+            raise ValueError('values are not unique')
+
+    def __init__(self, data, copy=False, dtype=object, **kwargs):
+        super(UniqueIndex, self).__init__(data, copy=copy, dtype=dtype, **kwargs)
+        self.lookup = {v: i for i, v in enumerate(data)}
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def locate_key(self, key):
+        """Get index location for the requested key.
+
+        Parameters
+        ----------
+        key : object
+            Key to locate.
+
+        Returns
+        -------
+        loc : int
+            Location of `key`.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
+        >>> idx.locate_key('A')
+        0
+        >>> idx.locate_key('B')
+        2
+        >>> try:
+        ...     idx.locate_key('X')
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        'X'
+
+        """
+
+        return self.lookup[key]
+
+    def locate_intersection(self, other):
+        """Locate the intersection with another array.
+
+        Parameters
+        ----------
+        other : array_like
+            Array to intersect.
+
+        Returns
+        -------
+        loc : ndarray, bool
+            Boolean array with location of intersection.
+        loc_other : ndarray, bool
+            Boolean array with location in `other` of intersection.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'], dtype=object)
+        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
+        >>> loc1, loc2 = idx1.locate_intersection(idx2)
+        >>> loc1
+        array([False,  True, False,  True], dtype=bool)
+        >>> loc2
+        array([False,  True, False,  True, False], dtype=bool)
+        >>> idx1[loc1]
+        UniqueIndex((2,), dtype=object)
+        ['C' 'F']
+        >>> idx2[loc2]
+        UniqueIndex((2,), dtype=object)
+        ['F' 'C']
+
+        """
+
+        # check inputs
+        other = UniqueIndex(other)
+
+        # find intersection
+        assume_unique = True
+        loc = np.in1d(self, other, assume_unique=assume_unique)
+        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+
+        return loc, loc_other
+
+    def locate_keys(self, keys, strict=True):
+        """Get index locations for the requested keys.
+
+        Parameters
+        ----------
+        keys : array_like
+            Array of keys to locate.
+        strict : bool, optional
+            If True, raise KeyError if any keys are not found in the index.
+
+        Returns
+        -------
+        loc : ndarray, bool
+            Boolean array with location of keys.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
+        >>> idx.locate_keys(['F', 'C'])
+        array([False,  True, False,  True], dtype=bool)
+        >>> idx.locate_keys(['X', 'F', 'G', 'C', 'Z'], strict=False)
+        array([False,  True, False,  True], dtype=bool)
+
+        """
+
+        # check inputs
+        keys = UniqueIndex(keys)
+
+        # find intersection
+        loc, found = self.locate_intersection(keys)
+
+        if strict and np.any(~found):
+            raise KeyError(keys[~found])
+
+        return loc
+
+    def intersect(self, other):
+        """Intersect with `other`.
+
+        Parameters
+        ----------
+        other : array_like
+            Array to intersect.
+
+        Returns
+        -------
+        out : UniqueIndex
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'], dtype=object)
+        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
+        >>> idx1.intersect(idx2)
+        UniqueIndex((2,), dtype=object)
+        ['C' 'F']
+        >>> idx2.intersect(idx1)
+        UniqueIndex((2,), dtype=object)
+        ['F' 'C']
+
+        """
+
+        loc = self.locate_keys(other, strict=False)
+        return self.compress(loc, axis=0)
+
+
+class SortedMultiIndex(object):
+    """Two-level index of sorted values, e.g., variant positions from two or
+    more chromosomes/contigs.
+
+    Parameters
+    ----------
+    l1 : array_like
+        First level values in ascending order.
+    l2 : array_like
+        Second level values, in ascending order within each sub-level.
+    copy : bool, optional
+        If True, inputs will be copied into new arrays.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
+    >>> pos = [1, 4, 2, 5, 5, 3]
+    >>> idx = allel.SortedMultiIndex(chrom, pos)
+    >>> len(idx)
+    6
+
+    """
+
+    def __init__(self, l1, l2, copy=False):
+        l1 = SortedIndex(l1, copy=copy)
+        l2 = np.array(l2, copy=copy)
+        check_ndim(l2, 1)
+        check_dim0_aligned(l1, l2)
+        self.l1 = l1
+        self.l2 = l2
+
+    def __repr__(self):
+        s = ('SortedMultiIndex(%s)\n' % len(self))
+        return s
+
+    def __str__(self):
+        s = ('SortedMultiIndex(%s)\n' % len(self))
+        return s
+
+    def locate_key(self, k1, k2=None):
+        """
+        Get index location for the requested key.
+
+        Parameters
+        ----------
+        k1 : object
+            Level 1 key.
+        k2 : object, optional
+            Level 2 key.
+
+        Returns
+        -------
+        loc : int or slice
+            Location of requested key (will be slice if there are duplicate
+            entries).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.SortedMultiIndex(chrom, pos)
+        >>> idx.locate_key('chr1')
+        slice(0, 2, None)
+        >>> idx.locate_key('chr1', 4)
+        1
+        >>> idx.locate_key('chr2', 5)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_key('chr3', 4)
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        ('chr3', 4)
+
+        """
+
+        loc1 = self.l1.locate_key(k1)
+        if k2 is None:
+            return loc1
+        if isinstance(loc1, slice):
+            offset = loc1.start
+            try:
+                loc2 = SortedIndex(self.l2[loc1], copy=False).locate_key(k2)
+            except KeyError:
+                # reraise with more information
+                raise KeyError(k1, k2)
+            else:
+                if isinstance(loc2, slice):
+                    loc = slice(offset + loc2.start, offset + loc2.stop)
+                else:
+                    # assume singleton
+                    loc = offset + loc2
+        else:
+            # singleton match in l1
+            v = self.l2[loc1]
+            if v == k2:
+                loc = loc1
+            else:
+                raise KeyError(k1, k2)
+        return loc
+
+    def locate_range(self, key, start=None, stop=None):
+        """Locate slice of index containing all entries within the range
+        `key`:`start`-`stop` **inclusive**.
+
+        Parameters
+        ----------
+        key : object
+            Level 1 key value.
+        start : object, optional
+            Level 2 start value.
+        stop : object, optional
+            Level 2 stop value.
+
+        Returns
+        -------
+        loc : slice
+            Slice object.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.SortedMultiIndex(chrom, pos)
+        >>> idx.locate_range('chr1')
+        slice(0, 2, None)
+        >>> idx.locate_range('chr1', 1, 4)
+        slice(0, 2, None)
+        >>> idx.locate_range('chr2', 3, 7)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_range('chr3', 4, 9)
+        ... except KeyError as e:
+        ...     print(e)
+        ('chr3', 4, 9)
+
+        """
+
+        loc1 = self.l1.locate_key(key)
+        if start is None and stop is None:
+            loc = loc1
+        elif isinstance(loc1, slice):
+            offset = loc1.start
+            idx = SortedIndex(self.l2[loc1], copy=False)
+            try:
+                loc2 = idx.locate_range(start, stop)
+            except KeyError:
+                raise KeyError(key, start, stop)
+            else:
+                loc = slice(offset + loc2.start, offset + loc2.stop)
+        else:
+            # singleton match in l1
+            v = self.l2[loc1]
+            if start <= v <= stop:
+                loc = loc1
+            else:
+                raise KeyError(key, start, stop)
+        # ensure slice is always returned
+        if not isinstance(loc, slice):
+            loc = slice(loc, loc + 1)
+        return loc
+
+    def __len__(self):
+        return len(self.l1)
+
+
+class RecArrayBase(ArrayBase):
+
+    @classmethod
+    def _check_values(cls, data):
+        check_ndim(data, 1)
+        if not data.dtype.names:
+            raise ValueError('expected recarray')
+
+    # noinspection PyMissingConstructor
+    def __init__(self, data, copy=False, **kwargs):
+        values = np.rec.array(data, copy=copy, **kwargs)
+        self._check_values(values)
+        self._values = values
+
+    @property
+    def names(self):
+        """Column names."""
+        return self.dtype.names
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    def _display_items(self, threshold, edgeitems):
+        if threshold is None:
+            threshold = self.shape[0]
+
+        # ensure sensible edgeitems
+        edgeitems = min(edgeitems, threshold // 2)
+
+        # determine indices of items to show
+        if self.shape[0] > threshold:
+            indices = list(range(edgeitems))
+            indices += list(range(self.shape[0] - edgeitems, self.shape[0], 1))
+        else:
+            indices = list(range(self.shape[0]))
+
+        # convert to stringy thingy
+        tmp = self[indices]
+        items = [[repr(x) for x in row] for row in tmp]
+
+        # insert ellipsis
+        if self.shape[0] > threshold:
+            indices = (
+                indices[:edgeitems] + ['...'] + indices[-edgeitems:]
+            )
+            items = items[:edgeitems] + [['...']] + items[-edgeitems:]
+
+        return indices, items
+
+    def to_html(self, threshold=6, edgeitems=3, caption=None):
+        indices, items = self._display_items(threshold, edgeitems)
+        # N.B., table captions don't render in jupyter notebooks on GitHub,
+        # so put caption outside table element
+        if caption is None:
+            caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
+        # sanitize caption
+        caption = caption.replace('<', '&lt;')
+        caption = caption.strip().replace('\n', '<br/>')
+        html = caption
+        html += '<table>'
+        html += '<tr><th></th>'
+        html += ''.join(['<th style="text-align: center">%s</th>' % n
+                         for n in self.dtype.names])
+        html += '</tr>'
+        for row_index, row in zip(indices, items):
+            if row_index == '...':
+                html += '<tr><th style="text-align: center">...</th>' \
+                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
+                        len(self.names)
+            else:
+                html += '<tr><th style="text-align: center">%s</th>' % row_index
+                html += ''.join(['<td style="text-align: center">%s</td>' % item
+                                 for item in row])
+                html += '</tr>'
+        html += '</table>'
+        return html
+
+    def __str__(self):
+        return str(self.values)
+
+    def _repr_html_(self):
+        return self.to_html()
+
+    def display(self, threshold=6, edgeitems=3, caption=None):
+        html = self.to_html(threshold, edgeitems, caption)
+        from IPython.display import display_html
+        display_html(html, raw=True)
+
+    def displayall(self, caption=None):
+        self.display(threshold=None, caption=caption)
+
+    @classmethod
+    def from_hdf5_group(cls, *args, **kwargs):
+        a = recarray_from_hdf5_group(*args, **kwargs)
+        return cls(a, copy=False)
+
+    def to_hdf5_group(self, parent, name, **kwargs):
+        return recarray_to_hdf5_group(self, parent, name, **kwargs)
+
+    def eval(self, expression, vm='python'):
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : ndarray
+
+        """
+
+        if vm == 'numexpr':
+            import numexpr as ne
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            if PY2:
+                # locals must be a mapping
+                m = {k: self[k] for k in self.dtype.names}
+            else:
+                m = self
+            return eval(expression, dict(), m)
+
+    def query(self, expression, vm='python'):
+        """Evaluate expression and then use it to extract rows from the table.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : structured array
+
+        """
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(RecArrayBase, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
+        if axis == 0:
+            out = type(self)(out.view(self.dtype))
+        return out
+
+
+class VariantTable(RecArrayBase):
+    """Table (catalogue) of variants.
+
+    Parameters
+    ----------
+    data : array_like, structured, shape (n_variants,)
+        Variant records.
+    index : string or pair of strings, optional
+        Names of columns to use for positional index, e.g., 'POS' if table
+        contains a 'POS' column and records from a single chromosome/contig,
+        or ('CHROM', 'POS') if table contains records from multiple
+        chromosomes/contigs.
+    **kwargs : keyword arguments, optional
+        Further keyword arguments are passed through to
+        :func:`numpy.rec.array`.
+
+    Examples
+    --------
+    Instantiate a table from existing data::
+
+        >>> import allel
+        >>> records = [[b'chr1', 2, 35, 4.5, (1, 2)],
+        ...            [b'chr1', 7, 12, 6.7, (3, 4)],
+        ...            [b'chr2', 3, 78, 1.2, (5, 6)],
+        ...            [b'chr2', 9, 22, 4.4, (7, 8)],
+        ...            [b'chr3', 6, 99, 2.8, (9, 10)]]
+        >>> dtype = [('CHROM', 'S4'),
+        ...          ('POS', 'u4'),
+        ...          ('DP', int),
+        ...          ('QD', float),
+        ...          ('AC', (int, 2))]
+        >>> vt = allel.VariantTable(records, dtype=dtype,
+        ...                         index=('CHROM', 'POS'))
+        >>> vt.names
+        ('CHROM', 'POS', 'DP', 'QD', 'AC')
+        >>> vt.n_variants
+        5
+
+    Access a column::
+
+        >>> vt['DP']
+        array([35, 12, 78, 22, 99])
+
+    Access multiple columns::
+
+        >>> vt[['DP', 'QD']]  # doctest: +ELLIPSIS
+        VariantTable((5,), dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8...
+        [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
+
+    Access a row::
+
+        >>> vt[2]
+        (b'chr2', 3, 78, 1.2, array([5, 6]))
+
+    Access multiple rows::
+
+        >>> vt[2:4]  # doctest: +ELLIPSIS
+        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
+
+    Evaluate expressions against the table::
+
+        >>> vt.eval('DP > 30')
+        array([ True, False,  True, False,  True], dtype=bool)
+        >>> vt.eval('(DP > 30) & (QD > 4)')
+        array([ True, False, False, False, False], dtype=bool)
+        >>> vt.eval('DP * 2')
+        array([ 70,  24, 156,  44, 198])
+
+    Query the table::
+
+        >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
+        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
+         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
+        >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
+        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
+
+    Use the index to query variants::
+
+        >>> vt.query_region(b'chr2', 1, 10)  # doctest: +ELLIPSIS
+        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
+
+    """
+
+    def __init__(self, data, index=None, copy=False, **kwargs):
+        super(VariantTable, self).__init__(data, copy=copy, **kwargs)
+        self.set_index(index)
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first dimension)."""
+        return self.shape[0]
+
+    # noinspection PyAttributeOutsideInit
+    def set_index(self, index):
+        """Set or reset the index.
+
+        Parameters
+        ----------
+        index : string or pair of strings, optional
+            Names of columns to use for positional index, e.g., 'POS' if table
+            contains a 'POS' column and records from a single
+            chromosome/contig, or ('CHROM', 'POS') if table contains records
+            from multiple chromosomes/contigs.
+
+        """
+        if index is None:
+            pass
+        elif isinstance(index, str):
+            index = SortedIndex(self[index], copy=False)
+        elif isinstance(index, (tuple, list)) and len(index) == 2:
+            index = SortedMultiIndex(self[index[0]], self[index[1]],
+                                     copy=False)
+        else:
+            raise ValueError('invalid index argument, expected string or '
+                             'pair of strings, found %s' % repr(index))
+        self.index = index
+
+    def query_position(self, chrom=None, position=None):
+        """Query the table, returning row or rows matching the given genomic
+        position.
+
+        Parameters
+        ----------
+        chrom : string, optional
+            Chromosome/contig.
+        position : int, optional
+            Position (1-based).
+
+        Returns
+        -------
+        result : row or VariantTable
+
+        """
+
+        if self.index is None:
+            raise ValueError('no index has been set')
+        if isinstance(self.index, SortedIndex):
+            # ignore chrom
+            loc = self.index.locate_key(position)
+        else:
+            loc = self.index.locate_key(chrom, position)
+        return self[loc]
+
+    def query_region(self, chrom=None, start=None, stop=None):
+        """Query the table, returning row or rows within the given genomic
+        region.
+
+        Parameters
+        ----------
+        chrom : string, optional
+            Chromosome/contig.
+        start : int, optional
+            Region start position (1-based).
+        stop : int, optional
+            Region stop position (1-based).
+
+        Returns
+        -------
+        result : VariantTable
+
+        """
+        if self.index is None:
+            raise ValueError('no index has been set')
+        if isinstance(self.index, SortedIndex):
+            # ignore chrom
+            loc = self.index.locate_range(start, stop)
+        else:
+            loc = self.index.locate_range(chrom, start, stop)
+        return self[loc]
+
+    def to_vcf(self, path, rename=None, number=None, description=None,
+               fill=None, write_header=True):
+        r"""Write to a variant call format (VCF) file.
+
+        Parameters
+        ----------
+        path : string
+            File path.
+        rename : dict, optional
+            Rename these columns in the VCF.
+        number : dict, optional
+            Override the number specified in INFO headers.
+        description : dict, optional
+            Descriptions for the INFO and FILTER headers.
+        fill : dict, optional
+            Fill values used for missing data in the table.
+        write_header : bool, optional
+            If True write VCF header.
+
+        Examples
+        --------
+        Setup a variant table to write out::
+
+            >>> import allel
+            >>> chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+            >>> pos = [2, 6, 3, 8, 1]
+            >>> ids = ['a', 'b', 'c', 'd', 'e']
+            >>> ref = [b'A', b'C', b'T', b'G', b'N']
+            >>> alt = [(b'T', b'.'),
+            ...        (b'G', b'.'),
+            ...        (b'A', b'C'),
+            ...        (b'C', b'A'),
+            ...        (b'X', b'.')]
+            >>> qual = [1.2, 2.3, 3.4, 4.5, 5.6]
+            >>> filter_qd = [True, True, True, False, False]
+            >>> filter_dp = [True, False, True, False, False]
+            >>> dp = [12, 23, 34, 45, 56]
+            >>> qd = [12.3, 23.4, 34.5, 45.6, 56.7]
+            >>> flg = [True, False, True, False, True]
+            >>> ac = [(1, -1), (3, -1), (5, 6), (7, 8), (9, -1)]
+            >>> xx = [(1.2, 2.3), (3.4, 4.5), (5.6, 6.7), (7.8, 8.9),
+            ...       (9.0, 9.9)]
+            >>> columns = [chrom, pos, ids, ref, alt, qual, filter_dp,
+            ...            filter_qd, dp, qd, flg, ac, xx]
+            >>> records = list(zip(*columns))
+            >>> dtype = [('CHROM', 'S4'),
+            ...          ('POS', 'u4'),
+            ...          ('ID', 'S1'),
+            ...          ('REF', 'S1'),
+            ...          ('ALT', ('S1', 2)),
+            ...          ('qual', 'f4'),
+            ...          ('filter_dp', bool),
+            ...          ('filter_qd', bool),
+            ...          ('dp', int),
+            ...          ('qd', float),
+            ...          ('flg', bool),
+            ...          ('ac', (int, 2)),
+            ...          ('xx', (float, 2))]
+            >>> vt = allel.VariantTable(records, dtype=dtype)
+
+        Now write out to VCF and inspect the result::
+
+            >>> rename = {'dp': 'DP', 'qd': 'QD', 'filter_qd': 'QD'}
+            >>> fill = {'ALT': b'.', 'ac': -1}
+            >>> number = {'ac': 'A'}
+            >>> description = {'ac': 'Allele counts', 'filter_dp': 'Low depth'}
+            >>> vt.to_vcf('example.vcf', rename=rename, fill=fill,
+            ...           number=number, description=description)
+            >>> print(open('example.vcf').read())  # doctest: +ELLIPSIS
+            ##fileformat=VCFv4.1
+            ##fileDate=...
+            ##source=...
+            ##INFO=<ID=DP,Number=1,Type=Integer,Description="">
+            ##INFO=<ID=QD,Number=1,Type=Float,Description="">
+            ##INFO=<ID=ac,Number=A,Type=Integer,Description="Allele counts">
+            ##INFO=<ID=flg,Number=0,Type=Flag,Description="">
+            ##INFO=<ID=xx,Number=2,Type=Float,Description="">
+            ##FILTER=<ID=QD,Description="">
+            ##FILTER=<ID=dp,Description="Low depth">
+            #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+            chr1	2	a	A	T	1.2	QD;dp	DP=12;QD=12.3;ac=1;flg;xx=...
+            chr1	6	b	C	G	2.3	QD	DP=23;QD=23.4;ac=3;xx=3.4,4.5
+            chr2	3	c	T	A,C	3.4	QD;dp	DP=34;QD=34.5;ac=5,6;flg;x...
+            chr2	8	d	G	C,A	4.5	PASS	DP=45;QD=45.6;ac=7,8;xx=7...
+            chr3	1	e	N	X	5.6	PASS	DP=56;QD=56.7;ac=9;flg;xx=...
+
+        """
+
+        write_vcf(path, variants=self, rename=rename, number=number,
+                  description=description, fill=fill,
+                  write_header=write_header)
+
+
+def sample_to_haplotype_selection(indices, ploidy):
+    return [(i * ploidy) + n for i in indices for n in range(ploidy)]
+
+
+class FeatureTable(RecArrayBase):
+    """Table of genomic features (e.g., genes, exons, etc.).
+
+    Parameters
+    ----------
+    data : array_like, structured, shape (n_variants,)
+        Variant records.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments, optional
+        Further keyword arguments are passed through to
+        :func:`numpy.rec.array`.
+
+    """
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(FeatureTable, self).__init__(data, copy=copy, **kwargs)
+
+    @property
+    def n_features(self):
+        """Number of features (length of first dimension)."""
+        return self.shape[0]
+
+    def to_mask(self, size, start_name='start', stop_name='end'):
+        """Construct a mask array where elements are True if the fall within
+        features in the table.
+
+        Parameters
+        ----------
+
+        size : int
+            Size of chromosome/contig.
+        start_name : string, optional
+            Name of column with start coordinates.
+        stop_name : string, optional
+            Name of column with stop coordinates.
+
+        Returns
+        -------
+
+        mask : ndarray, bool
+
+        """
+        m = np.zeros(size, dtype=bool)
+        for start, stop in self[[start_name, stop_name]]:
+            m[start-1:stop] = True
+        return m
+
+    @staticmethod
+    def from_gff3(path, attributes=None, region=None, score_fill=-1, phase_fill=-1,
+                  attributes_fill=b'.', dtype=None):
+        """Read a feature table from a GFF3 format file.
+
+        Parameters
+        ----------
+        path : string
+            File path.
+        attributes : list of strings, optional
+            List of columns to extract from the "attributes" field.
+        region : string, optional
+            Genome region to extract. If given, file must be position
+            sorted, bgzipped and tabix indexed. Tabix must also be installed
+            and on the system path.
+        score_fill : object, optional
+            Value to use where score field has a missing value.
+        phase_fill : object, optional
+            Value to use where phase field has a missing value.
+        attributes_fill : object or list of objects, optional
+            Value(s) to use where attribute field(s) have a missing value.
+        dtype : numpy dtype, optional
+            Manually specify a dtype.
+
+        Returns
+        -------
+        ft : FeatureTable
+
+        """
+
+        # setup iterator
+        recs = iter_gff3(path, attributes=attributes, region=region,
+                         score_fill=score_fill, phase_fill=phase_fill,
+                         attributes_fill=attributes_fill)
+
+        # determine dtype from sample of initial records
+        if dtype is None:
+            names = 'seqid', 'source', 'type', 'start', 'end', 'score', \
+                    'strand', 'phase'
+            if attributes is not None:
+                names += tuple(attributes)
+            recs_sample = list(itertools.islice(recs, 1000))
+            a = np.rec.array(recs_sample, names=names)
+            dtype = a.dtype
+            recs = itertools.chain(recs_sample, recs)
+
+        a = np.fromiter(recs, dtype=dtype)
+        ft = FeatureTable(a, copy=False)
+        return ft

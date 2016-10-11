@@ -367,6 +367,8 @@ def subset(data, sel0=None, sel1=None, blen=None, storage=None, create='array',
            **kwargs):
     """Return selected rows and columns of an array."""
 
+    # TODO refactor sel0 and sel1 normalization with ndarray.subset
+
     # setup
     storage = _util.get_storage(storage)
     blen = _util.get_blen_array(data, blen)
@@ -589,8 +591,8 @@ class ChunkedArray(object):
         # TODO add in self.data for backwards compatibility
         self.values = data
 
-    def __getitem__(self, *args):
-        return self.values.__getitem__(*args)
+    def __getitem__(self, item):
+        return self.values.__getitem__(item)
 
     def __setitem__(self, key, value):
         return self.values.__setitem__(key, value)
@@ -708,9 +710,9 @@ class ChunkedArray(object):
                    create=create, **kwargs)
         return type(self)(out)
 
-    def subset(self, sel0, sel1, blen=None, storage=None, create='array',
+    def subset(self, sel0=None, sel1=None, blen=None, storage=None, create='array',
                **kwargs):
-        out = subset(self, sel0, sel1, blen=blen, storage=storage,
+        out = subset(self, sel0=sel0, sel1=sel1, blen=blen, storage=storage,
                      create=create, **kwargs)
         return type(self)(out)
 

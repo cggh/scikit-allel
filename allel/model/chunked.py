@@ -22,9 +22,9 @@ import numpy as np
 
 
 from allel.compat import copy_method_doc, string_types
-from allel.model import ndarray as _ndarray
 from allel import chunked as _chunked
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
+from . import ndarray as _ndarray
 
 
 __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
@@ -67,7 +67,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
           nbytes: 12; cbytes: 30; cratio: 0.4;
           compression: gzip; compression_opts: 1;
           values: h5py._hl.dataset.Dataset
-        >>> g.data
+        >>> g.values
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
 
     Obtain a numpy array by slicing, e.g.::
@@ -104,19 +104,19 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
     """  # flake8: noqa
 
     def __init__(self, data):
+        self._check_values(data)
         super(GenotypeChunkedArray, self).__init__(data)
-        self._check_input_data(self.data)
         self._mask = None
 
     @staticmethod
-    def _check_input_data(data):
+    def _check_values(data):
         if len(data.shape) != 3:
             raise ValueError('expected 3 dimensions')
         if data.dtype.kind not in 'ui':
             raise TypeError('expected integer dtype')
 
-    def __getitem__(self, *args):
-        out = super(GenotypeChunkedArray, self).__getitem__(*args)
+    def __getitem__(self, item):
+        out = super(GenotypeChunkedArray, self).__getitem__(item)
         if hasattr(out, 'shape') \
                 and len(self.shape) == len(out.shape) \
                 and self.shape[2] == out.shape[2]:
@@ -124,7 +124,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
             out = _ndarray.GenotypeArray(out)
             if self.mask is not None:
                 # attempt to slice mask too
-                m = self.mask.__getitem__(*args)
+                m = self.mask.__getitem__(item)
                 out.mask = m
         return out
 
@@ -168,12 +168,15 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
         # store
         self._mask = _chunked.ChunkedArray(mask)
 
+    # TODO is_phased
+
     def compress(self, condition, axis=0, **storage_kwargs):
         out = super(GenotypeChunkedArray, self).compress(condition, axis=axis,
                                                          **storage_kwargs)
         if self.mask is not None:
             out.mask = self.mask.compress(condition, axis=axis,
                                           **storage_kwargs)
+        # TODO is_phased
         return out
 
     def take(self, indices, axis=0, **storage_kwargs):
@@ -181,6 +184,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
                                                      **storage_kwargs)
         if self.mask is not None:
             out.mask = self.mask.take(indices, axis=axis, **storage_kwargs)
+        # TODO is_phased
         return out
 
     def subset(self, sel0=None, sel1=None, **storage_kwargs):
@@ -188,6 +192,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
                                                        **storage_kwargs)
         if self.mask is not None:
             out.mask = self.mask.subset(sel0, sel1, **storage_kwargs)
+        # TODO is_phased
         return out
 
     def fill_masked(self, value=-1, **storage_kwargs):
@@ -385,18 +390,18 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray):
     """
 
     def __init__(self, data):
+        self._check_values(data)
         super(HaplotypeChunkedArray, self).__init__(data)
-        self._check_input_data(self.data)
 
     @staticmethod
-    def _check_input_data(data):
+    def _check_values(data):
         if len(data.shape) != 2:
             raise ValueError('expected 2 dimensions')
         if data.dtype.kind not in 'ui':
             raise TypeError('expected integer dtype')
 
-    def __getitem__(self, *args):
-        out = super(HaplotypeChunkedArray, self).__getitem__(*args)
+    def __getitem__(self, item):
+        out = super(HaplotypeChunkedArray, self).__getitem__(item)
         if hasattr(out, 'shape') and len(self.shape) == len(out.shape):
             # dimensionality preserved
             out = _ndarray.HaplotypeArray(out)
@@ -528,34 +533,34 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
     """
 
     def __init__(self, data):
+        self._check_values(data)
         super(AlleleCountsChunkedArray, self).__init__(data)
-        self._check_input_data(self.data)
 
     @staticmethod
-    def _check_input_data(data):
+    def _check_values(data):
         if len(data.shape) != 2:
             raise ValueError('expected 2 dimensions')
         if data.dtype.kind not in 'ui':
             raise TypeError('expected integer dtype')
 
-    def __getitem__(self, *args):
-        out = super(AlleleCountsChunkedArray, self).__getitem__(*args)
+    def __getitem__(self, item):
+        out = super(AlleleCountsChunkedArray, self).__getitem__(item)
         if hasattr(out, 'shape') and len(self.shape) == len(out.shape) and \
                 out.shape[1] == self.shape[1]:
             # dimensionality and allele indices preserved
             out = _ndarray.AlleleCountsArray(out)
         return out
 
-    def __add__(self, other):
-        ret = super(AlleleCountsChunkedArray, self).__add__(other)
-        if hasattr(other, 'shape') and other.shape == self.shape:
-            ret = AlleleCountsChunkedArray(ret.data)
+    def __add__(self, other, **kwargs):
+        ret = super(AlleleCountsChunkedArray, self).__add__(other, **kwargs)
+        if hasattr(ret, 'shape') and ret.shape == self.shape:
+            ret = AlleleCountsChunkedArray(ret.values)
         return ret
 
-    def __sub__(self, other):
-        ret = super(AlleleCountsChunkedArray, self).__sub__(other)
-        if hasattr(other, 'shape') and other.shape == self.shape:
-            ret = AlleleCountsChunkedArray(ret.data)
+    def __sub__(self, other, **kwargs):
+        ret = super(AlleleCountsChunkedArray, self).__sub__(other, **kwargs)
+        if hasattr(ret, 'shape') and ret.shape == self.shape:
+            ret = AlleleCountsChunkedArray(ret.values)
         return ret
 
     def _repr_html_(self):
@@ -884,5 +889,5 @@ class AlleleCountsChunkedTable(_chunked.ChunkedTable):
         out = super(AlleleCountsChunkedTable, self).__getitem__(item)
         if isinstance(item, string_types):
             # rewrap
-            out = AlleleCountsChunkedArray(out.data)
+            out = AlleleCountsChunkedArray(out.values)
         return out
