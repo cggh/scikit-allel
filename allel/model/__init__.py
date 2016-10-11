@@ -5,6 +5,8 @@ from __future__ import absolute_import, print_function, division
 
 from . import ndarray
 from .ndarray import *
+from . import chunked
+from .chunked import *
 from . import util
 from .util import create_allele_mapping, locate_fixed_differences, locate_private_alleles
 

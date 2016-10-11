@@ -8,8 +8,7 @@ import numpy as np
 
 
 from allel.compat import string_types, integer_types, range
-from allel.model.ndarray import recarray_to_html_str, recarray_display, \
-    subset as _ndarray_subset
+from allel.model.ndarray.arrays import subset as _ndarray_subset
 from allel.chunked import util as _util
 
 
@@ -587,16 +586,17 @@ class ChunkedArray(object):
 
     def __init__(self, data):
         data = _util.ensure_array_like(data)
-        self.data = data
+        # TODO add in self.data for backwards compatibility
+        self.values = data
 
     def __getitem__(self, *args):
-        return self.data.__getitem__(*args)
+        return self.values.__getitem__(*args)
 
     def __setitem__(self, key, value):
-        return self.data.__setitem__(key, value)
+        return self.values.__setitem__(key, value)
 
     def __getattr__(self, item):
-        return getattr(self.data, item)
+        return getattr(self.values, item)
 
     def __array__(self, *args):
         return self[:]
@@ -618,15 +618,15 @@ class ChunkedArray(object):
             r += '\n  compression: %s;' % self.compression
             if self.compression_opts is not None:
                 r += ' compression_opts: %s;' % self.compression_opts
-        r += '\n  data: %s.%s' % (type(self.data).__module__,
-                                  type(self.data).__name__)
+        r += '\n  values: %s.%s' % (type(self.values).__module__,
+                                  type(self.values).__name__)
         return r
 
     def __str__(self):
-        return str(self.data)
+        return str(self.values)
 
     def __len__(self):
-        return len(self.data)
+        return len(self.values)
 
     @property
     def ndim(self):
@@ -634,27 +634,27 @@ class ChunkedArray(object):
 
     @property
     def nbytes(self):
-        return _util.get_nbytes(self.data)
+        return _util.get_nbytes(self.values)
 
     @property
     def cbytes(self):
-        return _util.get_cbytes(self.data)
+        return _util.get_cbytes(self.values)
 
     @property
     def compression(self):
-        return _util.get_compression(self.data)
+        return _util.get_compression(self.values)
 
     @property
     def compression_opts(self):
-        return _util.get_compression_opts(self.data)
+        return _util.get_compression_opts(self.values)
 
     @property
     def shuffle(self):
-        return _util.get_shuffle(self.data)
+        return _util.get_shuffle(self.values)
 
     @property
     def chunks(self):
-        return _util.get_chunks(self.data)
+        return _util.get_chunks(self.values)
 
     @property
     def cratio(self):
@@ -788,7 +788,8 @@ class ChunkedTable(object):
 
     def __init__(self, data, names=None):
         names, columns = _util.check_table_like(data, names=names)
-        self.data = data
+        # TODO add in self.data for backwards compability
+        self.values = data
         self.names = names
         self.columns = columns
         self.rowcls = namedtuple('row', names)
@@ -847,8 +848,8 @@ class ChunkedTable(object):
                 r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
             if self.cratio:
                 r += ' cratio: %.1f;' % self.cratio
-        r += '\n  data: %s.%s' % (type(self.data).__module__,
-                                  type(self.data).__name__)
+        r += '\n  values: %s.%s' % (type(self.values).__module__,
+                                  type(self.values).__name__)
         return r
 
     def __len__(self):

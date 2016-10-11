@@ -33,6 +33,9 @@ class SortedIndex(ArrayBase):
 
     >>> import allel
     >>> idx = allel.SortedIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> idx
+    SortedIndex((7,), dtype=int32)
+    [ 2  5 14 15 42 42 77]
     >>> idx.dtype
     dtype('int32')
     >>> idx.ndim
@@ -52,15 +55,33 @@ class SortedIndex(ArrayBase):
             raise ValueError('values must be monotonically increasing')
 
     def __init__(self, data, copy=False, **kwargs):
-        super(SortedIndex, self).__init__(self, data, copy=copy, **kwargs)
+        super(SortedIndex, self).__init__(data, copy=copy, **kwargs)
         self._is_unique = None
 
     @property
     def is_unique(self):
         """True if no duplicate entries."""
-        if self._unique is None:
+        if self._is_unique is None:
             self._is_unique = ~np.any(self[:-1] == self[1:])
         return self._is_unique
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
 
     def locate_key(self, key):
         """Get index location for the requested key.
@@ -217,7 +238,7 @@ class SortedIndex(ArrayBase):
         """
 
         loc = self.locate_keys(other, strict=False)
-        return np.compress(loc, self)
+        return self.compress(loc, axis=0)
 
     def locate_range(self, start=None, stop=None):
         """Locate slice of index containing all entries within `start` and
@@ -433,7 +454,7 @@ class SortedIndex(ArrayBase):
         """
 
         loc = self.locate_ranges(starts, stops, strict=False)
-        return np.compress(loc, self)
+        return self.compress(loc, axis=0)
 
 
 class UniqueIndex(ArrayBase):
@@ -459,8 +480,11 @@ class UniqueIndex(ArrayBase):
 
     >>> import allel
     >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
+    >>> idx
+    UniqueIndex((4,), dtype=object)
+    ['A' 'C' 'B' 'F']
     >>> idx.dtype
-    dtype('<U1')
+    dtype('O')
     >>> idx.ndim
     1
     >>> idx.shape
@@ -477,9 +501,27 @@ class UniqueIndex(ArrayBase):
         if np.any(counts > 1):
             raise ValueError('values are not unique')
 
-    def __init__(self, data, copy=False, **kwargs):
-        super(UniqueIndex, self).__init__(data, copy=copy, **kwargs)
+    def __init__(self, data, copy=False, dtype=object, **kwargs):
+        super(UniqueIndex, self).__init__(data, copy=copy, dtype=dtype, **kwargs)
         self.lookup = {v: i for i, v in enumerate(data)}
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
 
     def locate_key(self, key):
         """Get index location for the requested key.
@@ -533,18 +575,18 @@ class UniqueIndex(ArrayBase):
         --------
 
         >>> import allel
-        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'])
-        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'], dtype=object)
+        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
         >>> loc1, loc2 = idx1.locate_intersection(idx2)
         >>> loc1
         array([False,  True, False,  True], dtype=bool)
         >>> loc2
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc1]
-        UniqueIndex((2,), dtype=<U1)
+        UniqueIndex((2,), dtype=object)
         ['C' 'F']
         >>> idx2[loc2]
-        UniqueIndex((2,), dtype=<U1)
+        UniqueIndex((2,), dtype=object)
         ['F' 'C']
 
         """
@@ -613,19 +655,19 @@ class UniqueIndex(ArrayBase):
         --------
 
         >>> import allel
-        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'])
-        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'], dtype=object)
+        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
         >>> idx1.intersect(idx2)
-        UniqueIndex((2,), dtype=<U1)
+        UniqueIndex((2,), dtype=object)
         ['C' 'F']
         >>> idx2.intersect(idx1)
-        UniqueIndex((2,), dtype=<U1)
+        UniqueIndex((2,), dtype=object)
         ['F' 'C']
 
         """
 
         loc = self.locate_keys(other, strict=False)
-        return np.compress(loc, self)
+        return self.compress(loc, axis=0)
 
 
 class SortedMultiIndex(object):

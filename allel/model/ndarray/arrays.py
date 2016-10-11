@@ -143,6 +143,15 @@ class ArrayBase(object):
         tup = (self,) + others
         return np.dstack(tup)
 
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        tup = (self,) + others
+        return np.concatenate(tup, **kwargs)
+
+    def copy(self, *args, **kwargs):
+        data = self.values.copy(*args, **kwargs)
+        return type(self)(data)
+
 
 class GenotypeBase(ArrayBase):
     """Abstract class for wrapping genotype calls."""
@@ -184,22 +193,32 @@ class GenotypeBase(ArrayBase):
         >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
         ...                          [[0, 1], [1, 1]],
         ...                          [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g
+        GenotypeArray((3, 2, 2), dtype=int8)
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
         >>> g.count_called()
         5
         >>> g.count_alleles()
         AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 3 0]
-         [1 0 1]]
+        3 1 0
+        1 3 0
+        1 0 1
         >>> mask = [[True, False], [False, True], [False, False]]
         >>> g.mask = mask
+        >>> g
+        GenotypeArray((3, 2, 2), dtype=int8)
+        ./. 0/1
+        0/1 ./.
+        0/2 ./.
         >>> g.count_called()
         3
         >>> g.count_alleles()
         AlleleCountsArray((3, 3), dtype=int32)
-        [[1 1 0]
-         [1 1 0]
-         [1 0 1]]
+        1 1 0
+        1 1 0
+        1 0 1
 
         Notes
         -----
@@ -275,14 +294,13 @@ class GenotypeBase(ArrayBase):
         ...                          [[0, 2], [-1, -1]]], dtype='i1')
         >>> mask = [[True, False], [False, True], [False, False]]
         >>> g.mask = mask
-        >>> g.fill_masked()
-        GenotypeArray((3, 2, 2), dtype=int8)
-        [[[-1 -1]
-          [ 0  1]]
-         [[ 0  1]
-          [-1 -1]]
-         [[ 0  2]
-          [-1 -1]]]
+        >>> g.fill_masked().values
+        array([[[-1, -1],
+                [ 0,  1]],
+               [[ 0,  1],
+                [-1, -1]],
+               [[ 0,  2],
+                [-1, -1]]], dtype=int8)
 
         """
 
@@ -726,13 +744,6 @@ class GenotypeBase(ArrayBase):
                 [0, 2, 0]],
                [[0, 0, 2],
                 [0, 0, 0]]], dtype=uint8)
-        >>> g.to_allele_counts(alleles=(0, 1))
-        array([[[2, 0],
-                [1, 1]],
-               [[1, 0],
-                [0, 2]],
-               [[0, 0],
-                [0, 0]]], dtype=uint8)
 
         """
 
@@ -816,6 +827,15 @@ class GenotypeBase(ArrayBase):
 
     def map_alleles(self, mapping, copy=True):
         pass  # TODO
+
+    def copy(self, *args, **kwargs):
+        data = self.values.copy(*args, **kwargs)
+        out = type(self)(data)
+        if self.mask is not None:
+            out.mask = self.mask.copy()
+        if self.is_phased is not None:
+            out.is_phased = self.is_phased.copy()
+        return out
 
 
 def subset(data, sel0, sel1):
@@ -920,21 +940,24 @@ class GenotypeArray(GenotypeBase):
         >>> g.ploidy
         2
         >>> g
+        GenotypeArray((3, 2, 2), dtype=int8)
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
 
     Genotype calls for a single variant at all samples can be obtained
     by indexing the first dimension, e.g.::
 
         >>> g[1]
-        array([[0, 1],
-               [1, 1]], dtype=int8)
+        GenotypeVector((2, 2), dtype=int8)
+        0/1 1/1
 
     Genotype calls for a single sample at all variants can be obtained
     by indexing the second dimension, e.g.::
 
         >>> g[:, 1]
-        array([[ 0,  1],
-               [ 1,  1],
-               [-1, -1]], dtype=int8)
+        GenotypeVector((3, 2), dtype=int8)
+        0/1 1/1 ./.
 
     A genotype call for a single sample at a single variant can be
     obtained by indexing the first and second dimensions, e.g.::
@@ -951,6 +974,10 @@ class GenotypeArray(GenotypeBase):
         >>> g.ploidy
         3
         >>> g
+        GenotypeArray((3, 2, 3), dtype=int8)
+        0/0/0 0/0/1
+        0/1/1 1/1/1
+        0/1/2 ././.
 
     """
 
@@ -1085,7 +1112,7 @@ class GenotypeArray(GenotypeBase):
             caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
         # sanitize caption
         caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
+        caption = caption.strip().replace('\n', '<br/>')
         html = caption
         html += '<table>'
         html += '<tr><th></th>'
@@ -1094,7 +1121,8 @@ class GenotypeArray(GenotypeBase):
         html += '</tr>'
         for row_index, row in zip(row_indices, items):
             if row_index == '...':
-                html += '<tr><th colspan="%s" style="text-align: left">...</th></tr>' % \
+                html += '<tr><th style="text-align: center">...</th>' \
+                        '<td style="text-align: center" colspan=%s>...</td></tr>' % \
                         (len(col_indices) + 1)
             else:
                 html += '<tr><th style="text-align: center">%s</th>' % row_index
@@ -1142,9 +1170,9 @@ class GenotypeArray(GenotypeBase):
         ...                          [[0, 2], [-1, -1]]])
         >>> g.to_haplotypes()
         HaplotypeArray((3, 4), dtype=int64)
-        [[ 0  0  0  1]
-         [ 0  1  1  1]
-         [ 0  2 -1 -1]]
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
 
         """
 
@@ -1239,12 +1267,9 @@ class GenotypeArray(GenotypeBase):
         ...                    [34, 239]], dtype='u1')
         >>> allel.GenotypeArray.from_packed(packed)
         GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  2]
-          [ 1  1]]
-         [[ 2  2]
-          [-1 -1]]]
+        0/0 0/1
+        0/2 1/1
+        2/2 ./.
 
         """
 
@@ -1337,14 +1362,10 @@ class GenotypeArray(GenotypeBase):
         >>> g = allel.GenotypeArray.from_sparse(m, ploidy=2)
         >>> g
         GenotypeArray((4, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  0]]
-         [[ 0  1]
-          [ 0  1]]
-         [[ 1  1]
-          [ 0  0]]
-         [[ 0  0]
-          [-1 -1]]]
+        0/0 0/0
+        0/1 0/1
+        1/1 0/0
+        0/0 ./.
 
         """
 
@@ -1376,18 +1397,18 @@ class GenotypeArray(GenotypeBase):
         ...                          [[2, 2], [-1, -1]]])
         >>> g.haploidify_samples()
         HaplotypeArray((4, 2), dtype=int64)
-        [[ 0  1]
-         [ 0  1]
-         [ 1  1]
-         [ 2 -1]]
+        0 1
+        0 1
+        1 1
+        2 .
         >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
         ...                          [[0, 1, 1], [1, 1, 1]],
         ...                          [[0, 1, 2], [-1, -1, -1]]])
         >>> g.haploidify_samples()
         HaplotypeArray((3, 2), dtype=int64)
-        [[ 0  0]
-         [ 1  1]
-         [ 2 -1]]
+        0 0
+        1 1
+        2 .
 
         """
 
@@ -1440,14 +1461,14 @@ class GenotypeArray(GenotypeBase):
         ...                          [[2, 2], [-1, -1]]])
         >>> g.count_alleles()
         AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 2 1]
-         [0 0 2]]
+        3 1 0
+        1 2 1
+        0 0 2
         >>> g.count_alleles(max_allele=1)
         AlleleCountsArray((3, 2), dtype=int32)
-        [[3 1]
-         [1 2]
-         [0 0]]
+        3 1
+        1 2
+        0 0
 
         """
 
@@ -1571,10 +1592,8 @@ class GenotypeArray(GenotypeBase):
         ...                          [[0, 2], [-1, -1], [-1, -1]]])
         >>> g.subset([0, 1], [0, 2])
         GenotypeArray((2, 2, 2), dtype=int64)
-        [[[0 0]
-          [1 1]]
-         [[0 1]
-          [1 2]]]
+        0/0 1/1
+        0/1 1/2
 
         See Also
         --------
@@ -1587,6 +1606,26 @@ class GenotypeArray(GenotypeBase):
             out.mask = subset(self.mask, sel0, sel1)
         if self.is_phased is not None:
             out.is_phased = subset(self.is_phased, sel0, sel1)
+        return out
+
+    def hstack(self, *others):
+        """Stack arrays in sequence horizontally (column-wise)."""
+        out = super(GenotypeArray, self).hstack(*others)
+        out = type(self)(out)
+        return out
+
+    def vstack(self, *others):
+        """Stack arrays in sequence vertically (row-wise)."""
+        out = super(GenotypeArray, self).vstack(*others)
+        out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(GenotypeArray, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
+        if axis in {0, 1}:
+            out = type(self)(out)
         return out
 
     def map_alleles(self, mapping, copy=True):
@@ -1624,14 +1663,10 @@ class GenotypeArray(GenotypeBase):
         ...                     [0, 2, 1]], dtype='i1')
         >>> g.map_alleles(mapping)
         GenotypeArray((4, 2, 2), dtype=int8)
-        [[[ 1  1]
-          [ 1  2]]
-         [[ 2  1]
-          [ 0  0]]
-         [[ 1  0]
-          [ 0  1]]
-         [[ 1  1]
-          [-1 -1]]]
+        1/1 1/2
+        2/1 0/0
+        1/0 0/1
+        1/1 ./.
 
         Notes
         -----
@@ -1734,7 +1769,7 @@ class GenotypeVector(GenotypeBase):
             caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
         # sanitize caption
         caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
+        caption = caption.strip().replace('\n', '<br/>')
         html = caption
         html += '<table>'
         html += '<tr>'
@@ -1774,6 +1809,20 @@ class GenotypeVector(GenotypeBase):
                 out.mask = self.mask.take(indices, axis=axis)
             if self.is_phased is not None:
                 out.is_phased = self.is_phased.take(indices, axis=axis)
+        return out
+
+    def vstack(self, *others):
+        """Stack arrays in sequence vertically (row-wise)."""
+        out = super(GenotypeVector, self).vstack(*others)
+        out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(GenotypeVector, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
+        if axis == 0:
+            out = type(self)(out)
         return out
 
     def to_haplotypes(self, copy=False):
@@ -1834,6 +1883,10 @@ class HaplotypeArray(ArrayBase):
         >>> h.n_haplotypes
         4
         >>> h
+        HaplotypeArray((3, 4), dtype=int8)
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
 
     Allele calls for a single variant at all haplotypes can be obtained
     by indexing the first dimension, e.g.::
@@ -1857,12 +1910,9 @@ class HaplotypeArray(ArrayBase):
 
         >>> h.to_genotypes(ploidy=2)
         GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  1]
-          [ 1  1]]
-         [[ 0  2]
-          [-1 -1]]]
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
 
     """
 
@@ -1956,7 +2006,7 @@ class HaplotypeArray(ArrayBase):
             caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
         # sanitize caption
         caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
+        caption = caption.strip().replace('\n', '<br/>')
         html = caption
         html += '<table>'
         html += '<tr><th></th>'
@@ -1965,7 +2015,9 @@ class HaplotypeArray(ArrayBase):
         html += '</tr>'
         for row_index, row in zip(row_indices, items):
             if row_index == '...':
-                html += '<tr><td>...</td><td colspan="%s"></td></tr>' % len(col_indices)
+                html += '<tr><th style="text-align: center">...</th>' \
+                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
+                        len(col_indices)
             else:
                 html += '<tr><th style="text-align: center">%s</th>' % \
                         row_index
@@ -2039,6 +2091,26 @@ class HaplotypeArray(ArrayBase):
             out = type(self)(out)
         return out
 
+    def hstack(self, *others):
+        """Stack arrays in sequence horizontally (column-wise)."""
+        out = super(HaplotypeArray, self).hstack(*others)
+        out = type(self)(out)
+        return out
+
+    def vstack(self, *others):
+        """Stack arrays in sequence vertically (row-wise)."""
+        out = super(HaplotypeArray, self).vstack(*others)
+        out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(HaplotypeArray, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
+        if axis in {0, 1}:
+            out = type(self)(out)
+        return out
+
     def is_called(self):
         return self >= 0
 
@@ -2104,12 +2176,9 @@ class HaplotypeArray(ArrayBase):
         ...                           [0, 2, -1, -1]], dtype='i1')
         >>> h.to_genotypes(ploidy=2)
         GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  1]
-          [ 1  1]]
-         [[ 0  2]
-          [-1 -1]]]
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
 
         """
 
@@ -2215,10 +2284,10 @@ class HaplotypeArray(ArrayBase):
         >>> h = allel.HaplotypeArray.from_sparse(m)
         >>> h
         HaplotypeArray((4, 4), dtype=int8)
-        [[ 0  0  0  0]
-         [ 0  1  0  1]
-         [ 1  1  0  0]
-         [ 0  0 -1 -1]]
+        0 0 0 0
+        0 1 0 1
+        1 1 0 0
+        0 0 . .
 
         """
 
@@ -2261,9 +2330,9 @@ class HaplotypeArray(ArrayBase):
         >>> ac = h.count_alleles()
         >>> ac
         AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 3 0]
-         [1 0 1]]
+        3 1 0
+        1 3 0
+        1 0 1
 
         """
 
@@ -2361,9 +2430,9 @@ class HaplotypeArray(ArrayBase):
         ...                     [2, 1, 0]], dtype='i1')
         >>> h.map_alleles(mapping)
         HaplotypeArray((3, 4), dtype=int8)
-        [[ 1  1  1  2]
-         [ 2  0  0  0]
-         [ 2  0 -1 -1]]
+        1 1 1 2
+        2 0 0 0
+        2 0 . .
 
         Notes
         -----
@@ -2470,9 +2539,9 @@ class AlleleCountsArray(ArrayBase):
         >>> ac = g.count_alleles()
         >>> ac
         AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 3 0]
-         [1 0 1]]
+        3 1 0
+        1 3 0
+        1 0 1
         >>> ac.dtype
         dtype('int32')
         >>> ac.shape
@@ -2604,7 +2673,7 @@ class AlleleCountsArray(ArrayBase):
             caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
         # sanitize caption
         caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
+        caption = caption.strip().replace('\n', '<br/>')
         html = caption
         html += '<table>'
         html += '<tr><th></th>'
@@ -2613,7 +2682,9 @@ class AlleleCountsArray(ArrayBase):
         html += '</tr>'
         for row_index, row in zip(indices, items):
             if row_index == '...':
-                html += '<tr><td>...</td><td colspan="%s"></td></tr>' % self.shape[1]
+                html += '<tr><th style="text-align: center">...</th>' \
+                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
+                        self.shape[1]
             else:
                 html += '<tr><th style="text-align: center">%s</th>' % row_index
                 html += ''.join(['<td style="text-align: center">%s</td>' % item
@@ -2963,20 +3034,20 @@ class AlleleCountsArray(ArrayBase):
         >>> ac = g.count_alleles()
         >>> ac
         AlleleCountsArray((4, 3), dtype=int32)
-        [[4 0 0]
-         [3 1 0]
-         [1 2 1]
-         [0 0 2]]
+        4 0 0
+        3 1 0
+        1 2 1
+        0 0 2
         >>> mapping = [[1, 0, 2],
         ...            [1, 0, 2],
         ...            [2, 1, 0],
         ...            [1, 2, 0]]
         >>> ac.map_alleles(mapping)
         AlleleCountsArray((4, 3), dtype=int64)
-        [[0 4 0]
-         [1 3 0]
-         [1 2 1]
-         [2 0 0]]
+        0 4 0
+        1 3 0
+        1 2 1
+        2 0 0
 
         See Also
         --------
@@ -3004,6 +3075,20 @@ class AlleleCountsArray(ArrayBase):
 
     def take(self, indices, axis=0):
         out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def vstack(self, *others):
+        """Stack arrays in sequence vertically (row-wise)."""
+        out = super(AlleleCountsArray, self).vstack(*others)
+        out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(AlleleCountsArray, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
         if axis == 0:
             out = type(self)(out)
         return out

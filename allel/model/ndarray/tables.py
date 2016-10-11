@@ -23,13 +23,19 @@ class RecArrayBase(ArrayBase):
         if not data.dtype.names:
             raise ValueError('expected recarray')
 
+    # noinspection PyMissingConstructor
+    def __init__(self, data, copy=False, **kwargs):
+        values = np.rec.array(data, copy=copy, **kwargs)
+        self._check_values(values)
+        self._values = values
+
     @property
     def names(self):
         """Column names."""
         return self.dtype.names
 
     def __getitem__(self, item):
-        s = super(RecArrayBase, self).__getitem__(item)
+        s = self.values[item]
         if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
             return type(self)(s)
         return s
@@ -69,7 +75,7 @@ class RecArrayBase(ArrayBase):
             caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
         # sanitize caption
         caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
+        caption = caption.strip().replace('\n', '<br/>')
         html = caption
         html += '<table>'
         html += '<tr><th></th>'
@@ -78,7 +84,9 @@ class RecArrayBase(ArrayBase):
         html += '</tr>'
         for row_index, row in zip(indices, items):
             if row_index == '...':
-                html += '<tr><td>...</td><td colspan="%s"></td></tr>' % self.shape[1]
+                html += '<tr><th style="text-align: center">...</th>' \
+                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
+                        len(self.names)
             else:
                 html += '<tr><th style="text-align: center">%s</th>' % row_index
                 html += ''.join(['<td style="text-align: center">%s</td>' % item
@@ -154,6 +162,26 @@ class RecArrayBase(ArrayBase):
 
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(RecArrayBase, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
+        if axis == 0:
+            out = type(self)(out.view(self.dtype))
+        return out
 
 
 class VariantTable(RecArrayBase):
