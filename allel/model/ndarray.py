@@ -14,8 +14,7 @@ from allel.util import check_dtype_kind, check_shape, check_dtype, asarray_ndim,
     ignore_invalid, check_dim0_aligned, contains_newaxis
 from allel.compat import PY2
 from allel.io import recarray_to_hdf5_group, recarray_from_hdf5_group, write_vcf, iter_gff3
-from .abc import ArrayWrapper
-from .display import Displayable1D, Displayable2D, DisplayableTable
+from allel.abc import ArrayWrapper, Displayable1D, Displayable2D, DisplayableTable
 
 
 __all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
@@ -174,7 +173,8 @@ class GenericGenotypeArray(GenericGenotypes, Displayable2D):
         return out
 
 
-class GenericHaplotypeArray(ArrayWrapper, Displayable2D):
+# noinspection PyAbstractClass
+class GenericHaplotypeArray(Displayable2D):
 
     @property
     def n_variants(self):
@@ -186,23 +186,9 @@ class GenericHaplotypeArray(ArrayWrapper, Displayable2D):
         """Number of haplotypes."""
         return self.shape[1]
 
-    def to_str_items(self):
-        tmp = self[:]
-        max_allele = np.max(tmp)
-        if max_allele <= 0:
-            max_allele = 1
-        n = int(np.floor(np.log10(max_allele))) + 1
-        t = tmp.astype((np.string_, n))
-        # recode missing alleles
-        t[tmp < 0] = b'.'
-        if PY2:
-            out = [[x.rjust(n) for x in row] for row in t]
-        else:
-            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
-        return out
 
-
-class GenericAlleleCountsArray(ArrayWrapper, Displayable2D):
+# noinspection PyAbstractClass
+class GenericAlleleCountsArray(Displayable2D):
 
     @property
     def n_variants(self):
@@ -901,7 +887,7 @@ class NumpyGenotypes(NumpyWrapper, GenericGenotypes):
         # recode missing alleles
         a[self < 0] = b'.'
         if self.mask is not None:
-            a[self.mask[..., np.newaxis]] = b'.'
+            a[self.mask] = b'.'
 
         # determine allele call separator
         if self.is_phased is None:
@@ -965,6 +951,11 @@ class GenotypeVector(NumpyGenotypes, GenericGenotypeVector):
         """Stack arrays in sequence vertically (row-wise)."""
         out = super(GenotypeVector, self).vstack(*others)
         out = type(self)(out)
+        if self.mask is not None:
+            out.mask = np.concatenate((self.mask,) + tuple(o.mask for o in others))
+        if self.is_phased is not None:
+            out.is_phased = np.concatenate((self.is_phased,) +
+                                           tuple(o.is_phased for o in others))
         return out
 
     def concatenate(self, *others, **kwargs):
@@ -973,6 +964,12 @@ class GenotypeVector(NumpyGenotypes, GenericGenotypeVector):
         axis = kwargs.get('axis', 0)
         if axis == 0:
             out = type(self)(out)
+            if self.mask is not None:
+                out.mask = np.concatenate((self.mask,) +
+                                          tuple(o.mask for o in others), axis=0)
+            if self.is_phased is not None:
+                out.is_phased = np.concatenate((self.is_phased,) +
+                                               tuple(o.is_phased for o in others), axis=0)
         return out
 
     def to_haplotypes(self, copy=False):
@@ -1572,12 +1569,20 @@ class GenotypeArray(NumpyGenotypes, GenericGenotypeArray):
         """Stack arrays in sequence horizontally (column-wise)."""
         out = super(GenotypeArray, self).hstack(*others)
         out = type(self)(out)
+        if self.mask is not None:
+            out.mask = np.hstack((self.mask,) + tuple(o.mask for o in others))
+        if self.is_phased is not None:
+            out.is_phased = np.hstack((self.is_phased,) + tuple(o.is_phased for o in others))
         return out
 
     def vstack(self, *others):
         """Stack arrays in sequence vertically (row-wise)."""
         out = super(GenotypeArray, self).vstack(*others)
         out = type(self)(out)
+        if self.mask is not None:
+            out.mask = np.vstack((self.mask,) + tuple(o.mask for o in others))
+        if self.is_phased is not None:
+            out.is_phased = np.vstack((self.is_phased,) + tuple(o.is_phased for o in others))
         return out
 
     def concatenate(self, *others, **kwargs):
@@ -1586,6 +1591,12 @@ class GenotypeArray(NumpyGenotypes, GenericGenotypeArray):
         axis = kwargs.get('axis', 0)
         if axis in {0, 1}:
             out = type(self)(out)
+            if self.mask is not None:
+                out.mask = np.concatenate((self.mask,) +
+                                          tuple(o.mask for o in others), axis=axis)
+            if self.is_phased is not None:
+                out.is_phased = np.concatenate((self.is_phased,) +
+                                               tuple(o.is_phased for o in others), axis=axis)
         return out
 
     def map_alleles(self, mapping, copy=True):
@@ -1741,114 +1752,20 @@ class HaplotypeArray(NumpyWrapper, GenericHaplotypeArray):
     def __init__(self, data, copy=False, **kwargs):
         super(HaplotypeArray, self).__init__(data, copy=copy, **kwargs)
 
-    def _display_items(self, row_threshold, col_threshold, row_edgeitems, col_edgeitems):
-        if row_threshold is None:
-            row_threshold = self.shape[0]
-        if col_threshold is None:
-            col_threshold = self.shape[1]
-
-        # ensure sensible edgeitems
-        row_edgeitems = min(row_edgeitems, row_threshold // 2)
-        col_edgeitems = min(col_edgeitems, col_threshold // 2)
-
-        # determine indices of items to show
-        if self.shape[0] > row_threshold:
-            row_indices = list(range(row_edgeitems))
-            row_indices += list(range(self.shape[0] - row_edgeitems, self.shape[0], 1))
-        else:
-            row_indices = list(range(self.shape[0]))
-        if self.shape[1] > col_threshold:
-            col_indices = list(range(col_edgeitems))
-            col_indices += list(range(self.shape[1] - col_edgeitems, self.shape[1], 1))
-        else:
-            col_indices = list(range(self.shape[1]))
-
-        # convert to stringy thingy
-        tmp = self[np.array(row_indices)[:, np.newaxis], col_indices]
+    def to_str_items(self):
+        tmp = self[:]
         max_allele = np.max(tmp)
         if max_allele <= 0:
             max_allele = 1
         n = int(np.floor(np.log10(max_allele))) + 1
-        t = tmp.astype((np.string_, n)).view(np.chararray)
+        t = tmp.astype((np.string_, n))
         # recode missing alleles
         t[tmp < 0] = b'.'
         if PY2:
-            items = [[x.rjust(n) for x in row] for row in t]
+            out = [[x.rjust(n) for x in row] for row in t]
         else:
-            items = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
-
-        # insert ellipsis
-        if self.shape[1] > col_threshold:
-            col_indices = (
-                col_indices[:col_edgeitems] + ['...'] + col_indices[-col_edgeitems:]
-            )
-            items = [(row[:col_edgeitems] + [' ... '] + row[-col_edgeitems:])
-                     for row in items]
-        if self.shape[0] > row_threshold:
-            row_indices = (
-                row_indices[:row_edgeitems] + ['...'] + row_indices[-row_edgeitems:]
-            )
-            items = items[:row_edgeitems] + [['...']] + items[-row_edgeitems:]
-
-        return row_indices, col_indices, items
-
-    def to_str(self, row_threshold=6, col_threshold=20, row_edgeitems=3,
-               col_edgeitems=10):
-        _, _, items = self._display_items(row_threshold, col_threshold, row_edgeitems,
-                                          col_edgeitems)
-        s = ''
-        for row in items:
-            s += ' '.join(row) + '\n'
-        return s
-
-    def to_html(self, row_threshold=6, col_threshold=20, row_edgeitems=3, col_edgeitems=10,
-                caption=None):
-        # TODO refactor with GenotypeArray.to_html
-        row_indices, col_indices, items = self._display_items(
-            row_threshold, col_threshold, row_edgeitems, col_edgeitems
-        )
-        # N.B., table captions don't render in jupyter notebooks on GitHub,
-        # so put caption outside table element
-        if caption is None:
-            caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
-        # sanitize caption
-        caption = caption.replace('<', '&lt;')
-        caption = caption.strip().replace('\n', '<br/>')
-        html = caption
-        html += '<table>'
-        html += '<tr><th></th>'
-        html += ''.join(['<th style="text-align: center">%s</th>' % i
-                         for i in col_indices])
-        html += '</tr>'
-        for row_index, row in zip(row_indices, items):
-            if row_index == '...':
-                html += '<tr><th style="text-align: center">...</th>' \
-                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
-                        len(col_indices)
-            else:
-                html += '<tr><th style="text-align: center">%s</th>' % \
-                        row_index
-                html += ''.join(['<td style="text-align: center">%s</td>' % item
-                                 for item in row])
-                html += '</tr>'
-        html += '</table>'
-        return html
-
-    def __str__(self):
-        return self.to_str()
-
-    def _repr_html_(self):
-        return self.to_html()
-
-    def display(self, row_threshold=6, col_threshold=10, row_edgeitems=3,
-                col_edgeitems=5, caption=None):
-        html = self.to_html(row_threshold, col_threshold, row_edgeitems,
-                            col_edgeitems, caption)
-        from IPython.display import display_html
-        display_html(html, raw=True)
-
-    def displayall(self, caption=None):
-        self.display(row_threshold=None, col_threshold=None, caption=caption)
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        return out
 
     def __getitem__(self, item):
         s = self.values.__getitem__(item)
@@ -2398,6 +2315,19 @@ class AlleleCountsArray(NumpyWrapper, GenericAlleleCountsArray):
         if hasattr(ret, 'shape') and ret.shape == self.shape:
             ret = AlleleCountsArray(ret)
         return ret
+
+    def to_str_items(self):
+        tmp = self[:]
+        max_allele = np.max(tmp)
+        if max_allele <= 0:
+            max_allele = 1
+        n = int(np.floor(np.log10(max_allele))) + 1
+        t = tmp.astype((np.string_, n))
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in t]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        return out
 
     def to_frequencies(self, fill=np.nan):
         """Compute allele frequencies.

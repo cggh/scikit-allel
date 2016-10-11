@@ -10,6 +10,10 @@ import numpy as np
 from allel.util import asarray_ndim, check_dim0_aligned, ensure_dim1_aligned
 
 
+__all__ = ['create_allele_mapping', 'locate_private_alleles', 'locate_fixed_differences',
+           'sample_to_haplotype_selection']
+
+
 def create_allele_mapping(ref, alt, alleles, dtype='i1'):
     """Create an array mapping variant alleles into a different allele index
     system.

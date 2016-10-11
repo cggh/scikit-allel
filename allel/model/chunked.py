@@ -33,7 +33,7 @@ __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
            'FeatureChunkedTable', 'AlleleCountsChunkedTable']
 
 
-class GenotypeChunkedArray(_chunked.ChunkedArray):
+class GenotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericGenotypeArray):
     """Alternative implementation of the
     :class:`allel.model.ndarray.GenotypeArray` class, wrapping a
     chunked array as the backing store.
@@ -108,48 +108,12 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
         self._check_values(data)
         super(GenotypeChunkedArray, self).__init__(data)
         self._mask = None
+        self._is_phased = None
 
     @staticmethod
     def _check_values(data):
         check_ndim(data, 3)
         check_dtype_kind(data, 'u', 'i')
-
-    def __getitem__(self, item):
-        out = super(GenotypeChunkedArray, self).__getitem__(item)
-        if hasattr(out, 'shape') \
-                and len(self.shape) == len(out.shape) \
-                and self.shape[2] == out.shape[2]:
-            # dimensionality and ploidy preserved
-            out = _ndarray.GenotypeArray(out)
-            if self.mask is not None:
-                # attempt to slice mask too
-                m = self.mask.__getitem__(item)
-                out.mask = m
-        return out
-
-    def _repr_html_(self):
-        indices = list(range(5)) + list(range(self.shape[0] - 5, self.shape[0]))
-        return self.take(indices, axis=0)[:].to_display_html(caption=repr(self))
-
-    @property
-    def n_variants(self):
-        return self.shape[0]
-
-    @property
-    def n_samples(self):
-        return self.shape[1]
-
-    @property
-    def ploidy(self):
-        return self.shape[2]
-
-    @property
-    def n_calls(self):
-        return self.shape[0] * self.shape[1]
-
-    @property
-    def n_allele_calls(self):
-        return self.shape[0] * self.shape[1] * self.shape[2]
 
     @property
     def mask(self):
@@ -160,14 +124,28 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
 
         # check input
         if not hasattr(mask, 'shape'):
-            mask = np.asarray(mask)
+            mask = np.asarray(mask, dtype=bool)
         if mask.shape != self.shape[:2]:
             raise ValueError('mask has incorrect shape')
 
         # store
         self._mask = _chunked.ChunkedArray(mask)
 
-    # TODO is_phased
+    @property
+    def is_phased(self):
+        return self._is_phased
+
+    @is_phased.setter
+    def is_phased(self, is_phased):
+
+        # check input
+        if not hasattr(is_phased, 'shape'):
+            is_phased = np.asarray(is_phased, dtype=bool)
+        if is_phased.shape != self.shape[:2]:
+            raise ValueError('is_phased has incorrect shape')
+
+        # store
+        self._is_phased = _chunked.ChunkedArray(is_phased)
 
     def compress(self, condition, axis=0, **storage_kwargs):
         out = super(GenotypeChunkedArray, self).compress(condition, axis=axis,
@@ -175,7 +153,9 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
         if self.mask is not None:
             out.mask = self.mask.compress(condition, axis=axis,
                                           **storage_kwargs)
-        # TODO is_phased
+        if self.is_phased is not None:
+            out.is_phased = self.is_phased.compress(condition, axis=axis,
+                                          **storage_kwargs)
         return out
 
     def take(self, indices, axis=0, **storage_kwargs):
@@ -183,7 +163,8 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
                                                      **storage_kwargs)
         if self.mask is not None:
             out.mask = self.mask.take(indices, axis=axis, **storage_kwargs)
-        # TODO is_phased
+        if self.is_phased is not None:
+            out.is_phased = self.is_phased.take(indices, axis=axis, **storage_kwargs)
         return out
 
     def subset(self, sel0=None, sel1=None, **storage_kwargs):
@@ -191,7 +172,8 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
                                                        **storage_kwargs)
         if self.mask is not None:
             out.mask = self.mask.subset(sel0, sel1, **storage_kwargs)
-        # TODO is_phased
+        if self.is_phased is not None:
+            out.is_phased = self.is_phased.subset(sel0, sel1, **storage_kwargs)
         return out
 
     def fill_masked(self, value=-1, **storage_kwargs):
@@ -375,7 +357,7 @@ copy_method_doc(GenotypeChunkedArray.hstack, _ndarray.GenotypeArray.hstack)
 copy_method_doc(GenotypeChunkedArray.vstack, _ndarray.GenotypeArray.vstack)
 
 
-class HaplotypeChunkedArray(_chunked.ChunkedArray):
+class HaplotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericHaplotypeArray):
     """Alternative implementation of the
     :class:`allel.model.ndarray.HaplotypeArray` class, using a chunked array as
     the backing store.
@@ -398,24 +380,6 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray):
             raise ValueError('expected 2 dimensions')
         if data.dtype.kind not in 'ui':
             raise TypeError('expected integer dtype')
-
-    def __getitem__(self, item):
-        out = super(HaplotypeChunkedArray, self).__getitem__(item)
-        if hasattr(out, 'shape') and len(self.shape) == len(out.shape):
-            # dimensionality preserved
-            out = _ndarray.HaplotypeArray(out)
-        return out
-
-    def _repr_html_(self):
-        return self[:6].to_html_str(caption=repr(self))
-
-    @property
-    def n_variants(self):
-        return self.shape[0]
-
-    @property
-    def n_haplotypes(self):
-        return self.shape[1]
 
     def to_genotypes(self, ploidy=2, **storage_kwargs):
 
@@ -518,7 +482,7 @@ copy_method_doc(HaplotypeChunkedArray.subset,
                 _ndarray.HaplotypeArray.subset)
 
 
-class AlleleCountsChunkedArray(_chunked.ChunkedArray):
+class AlleleCountsChunkedArray(_chunked.ChunkedArray, _ndarray.GenericAlleleCountsArray):
     """Alternative implementation of the
     :class:`allel.model.ndarray.AlleleCountsArray` class, using a chunked
     array as the backing store.
@@ -542,14 +506,6 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
         if data.dtype.kind not in 'ui':
             raise TypeError('expected integer dtype')
 
-    def __getitem__(self, item):
-        out = super(AlleleCountsChunkedArray, self).__getitem__(item)
-        if hasattr(out, 'shape') and len(self.shape) == len(out.shape) and \
-                out.shape[1] == self.shape[1]:
-            # dimensionality and allele indices preserved
-            out = _ndarray.AlleleCountsArray(out)
-        return out
-
     def __add__(self, other, **kwargs):
         ret = super(AlleleCountsChunkedArray, self).__add__(other, **kwargs)
         if hasattr(ret, 'shape') and ret.shape == self.shape:
@@ -561,17 +517,6 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray):
         if hasattr(ret, 'shape') and ret.shape == self.shape:
             ret = AlleleCountsChunkedArray(ret.values)
         return ret
-
-    def _repr_html_(self):
-        return self[:6].to_html_str(caption=repr(self))
-
-    @property
-    def n_variants(self):
-        return self.shape[0]
-
-    @property
-    def n_alleles(self):
-        return self.shape[1]
 
     def to_frequencies(self, fill=np.nan, **storage_kwargs):
         out = self.apply_method('to_frequencies',
@@ -807,7 +752,7 @@ class VariantChunkedTable(_chunked.ChunkedTable):
             if write_header:
                 write_vcf_header(vcf_file, self, rename=rename, number=number,
                                  description=description)
-            blen = _chunked.get_blen_table(self)
+            blen = _chunked.get_blen_table(self, blen)
             for i in range(0, len(self), blen):
                 j = min(i+blen, len(self))
                 block = self[i:j]

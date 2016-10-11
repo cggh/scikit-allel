@@ -8,8 +8,9 @@ import numpy as np
 
 
 from allel.compat import string_types, integer_types, range
-from allel.model.ndarray.arrays import subset as _ndarray_subset
+from allel.model.ndarray import subset as _ndarray_subset
 from allel.chunked import util as _util
+from allel.abc import ArrayWrapper, DisplayableTable
 
 
 def store(data, arr, start=0, stop=None, offset=0, blen=None):
@@ -52,7 +53,7 @@ def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
     out = None
     for i in range(start, stop, blen):
         j = min(i+blen, stop)
-        block = np.asanyarray(data[i:j])
+        block = data[i:j]
         if out is None:
             out = getattr(storage, create)(block, expectedlen=length, **kwargs)
         else:
@@ -81,7 +82,7 @@ def copy_table(tbl, start=0, stop=None, blen=None, storage=None,
     out = None
     for i in range(start, stop, blen):
         j = min(i+blen, stop)
-        res = [np.asanyarray(c[i:j]) for c in columns]
+        res = [c[i:j] for c in columns]
         if out is None:
             out = getattr(storage, create)(res, names=names,
                                            expectedlen=length, **kwargs)
@@ -113,9 +114,9 @@ def apply(data, f, blen=None, storage=None, create='array', **kwargs):
 
         # obtain blocks
         if isinstance(data, tuple):
-            blocks = [np.asanyarray(d[i:j]) for d in data]
+            blocks = [d[i:j] for d in data]
         else:
-            blocks = [np.asanyarray(data[i:j])]
+            blocks = [data[i:j]]
 
         # map
         res = f(*blocks)
@@ -153,7 +154,7 @@ def reduce_axis(data, reducer, block_reducer, mapper=None, axis=None,
         out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            block = np.asanyarray(data[i:j])
+            block = data[i:j]
             if mapper:
                 block = mapper(block)
             res = reducer(block, axis=axis)
@@ -173,7 +174,7 @@ def reduce_axis(data, reducer, block_reducer, mapper=None, axis=None,
         out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            block = np.asanyarray(data[i:j])
+            block = data[i:j]
             if mapper:
                 block = mapper(block)
             r = reducer(block, axis=axis)
@@ -234,10 +235,10 @@ def compress(data, condition, axis=0, blen=None, storage=None,
         out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            bcond = np.asanyarray(condition[i:j])
+            bcond = condition[i:j]
             # don't access any data unless we have to
             if np.any(bcond):
-                block = np.asanyarray(data[i:j])
+                block = data[i:j]
                 res = np.compress(bcond, block, axis=0)
                 if out is None:
                     out = getattr(storage, create)(res, expectedlen=nnz,
@@ -253,7 +254,7 @@ def compress(data, condition, axis=0, blen=None, storage=None,
         condition = np.asanyarray(condition)
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            block = np.asanyarray(data[i:j])
+            block = data[i:j]
             res = np.compress(condition, block, axis=1)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=length,
@@ -299,7 +300,7 @@ def take(data, indices, axis=0, blen=None, storage=None,
         out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            block = np.asanyarray(data[i:j])
+            block = data[i:j]
             res = np.take(block, indices, axis=1)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=length,
@@ -328,10 +329,10 @@ def compress_table(tbl, condition, blen=None, storage=None, create='table',
     out = None
     for i in range(0, length, blen):
         j = min(i+blen, length)
-        bcond = np.asanyarray(condition[i:j])
+        bcond = condition[i:j]
         # don't access any data unless we have to
         if np.any(bcond):
-            bcolumns = [np.asanyarray(c[i:j]) for c in columns]
+            bcolumns = [c[i:j] for c in columns]
             res = [np.compress(bcond, c, axis=0) for c in bcolumns]
             if out is None:
                 out = getattr(storage, create)(res, names=names,
@@ -408,7 +409,7 @@ def subset(data, sel0=None, sel1=None, blen=None, storage=None, create='array',
         bsel0 = sel0[i:j]
         # don't access data unless we have to
         if np.any(bsel0):
-            block = np.asanyarray(data[i:j])
+            block = data[i:j]
             res = _ndarray_subset(block, bsel0, sel1)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=sel0_nnz,
@@ -451,7 +452,7 @@ def vstack(tup, blen=None, storage=None, create='array', **kwargs):
         ablen = _util.get_blen_array(a, blen)
         for i in range(0, len(a), ablen):
             j = min(i+ablen, len(a))
-            block = np.asanyarray(a[i:j])
+            block = a[i:j]
             if out is None:
                 out = getattr(storage, create)(block, expectedlen=expectedlen,
                                                **kwargs)
@@ -480,7 +481,7 @@ def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
         tlen = len(tcolumns[0])
         for i in range(0, tlen, tblen):
             j = min(i+tblen, tlen)
-            bcolumns = [np.asanyarray(c[i:j]) for c in tcolumns]
+            bcolumns = [c[i:j] for c in tcolumns]
             if out is None:
                 out = getattr(storage, create)(bcolumns, names=tnames,
                                                expectedlen=expectedlen,
@@ -575,7 +576,7 @@ def eval_table(tbl, expression, vm='python', blen=None, storage=None,
     return out
 
 
-class ChunkedArray(object):
+class ChunkedArray(ArrayWrapper):
     """Wrapper class for chunked array-like data.
 
     Parameters
@@ -588,22 +589,11 @@ class ChunkedArray(object):
 
     def __init__(self, data):
         data = _util.ensure_array_like(data)
+        super(ChunkedArray, self).__init__(data)
         # TODO add in self.data for backwards compatibility
-        self.values = data
 
-    def __getitem__(self, item):
-        return self.values.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        return self.values.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        return getattr(self.values, item)
-
-    def __array__(self, *args):
-        return self[:]
-
-    def __repr__(self):
+    @property
+    def caption(self):
         r = '%s(' % type(self).__name__
         r += '%s' % str(self.shape)
         r += ', %s' % str(self.dtype)
@@ -624,15 +614,8 @@ class ChunkedArray(object):
                                   type(self.values).__name__)
         return r
 
-    def __str__(self):
-        return str(self.values)
-
-    def __len__(self):
-        return len(self.values)
-
-    @property
-    def ndim(self):
-        return len(self.shape)
+    def __repr__(self):
+        return self.caption
 
     @property
     def nbytes(self):
@@ -772,7 +755,7 @@ class ChunkedArray(object):
         return self.binary_op(operator.truediv, other, **kwargs)
 
 
-class ChunkedTable(object):
+class ChunkedTable(DisplayableTable):
     """Wrapper class for chunked table-like data.
 
     Parameters
@@ -790,22 +773,30 @@ class ChunkedTable(object):
 
     def __init__(self, data, names=None):
         names, columns = _util.check_table_like(data, names=names)
+        super(ChunkedTable, self).__init__(data)
         # TODO add in self.data for backwards compability
-        self.values = data
-        self.names = names
-        self.columns = columns
+        self._names = names
+        self._columns = columns
         self.rowcls = namedtuple('row', names)
+
+    @property
+    def names(self):
+        return self._names
+
+    @property
+    def columns(self):
+        return self._columns
 
     def __getitem__(self, item):
 
         if isinstance(item, string_types):
             # item is column name, return column
-            idx = self.names.index(item)
-            return ChunkedArray(self.columns[idx])
+            idx = self._names.index(item)
+            return ChunkedArray(self._columns[idx])
 
         elif isinstance(item, integer_types):
             # item is row index, return row
-            return self.rowcls(*(col[item] for col in self.columns))
+            return self.rowcls(*(col[item] for col in self._columns))
 
         elif isinstance(item, slice):
             # item is row slice, return numpy recarray
@@ -817,28 +808,31 @@ class ChunkedTable(object):
             step = 1 if item.step is None else item.step
             outshape = (stop - start) // step
             out = np.empty(outshape, dtype=self.dtype)
-            for n, c in zip(self.names, self.columns):
+            for n, c in zip(self._names, self._columns):
                 out[n] = c[start:stop:step]
             return out.view(self.view_cls)
 
         elif isinstance(item, (list, tuple)) and \
                 all(isinstance(i, string_types) for i in item):
             # item is sequence of column names, return table
-            columns = [self.columns[self.names.index(n)] for n in item]
+            columns = [self._columns[self._names.index(n)] for n in item]
             return type(self)(columns, names=item)
 
         else:
             raise NotImplementedError('item not suppored: %r' % item)
 
-    def __array__(self):
-        return np.asarray(self[:])
+    def __array__(self, *args):
+        a = np.asarray(self[:])
+        if args:
+            a = a.astype(args[0])
+        return a
 
     def __getattr__(self, item):
-        if item in self.names:
-            idx = self.names.index(item)
-            return ChunkedArray(self.columns[idx])
+        if item in self._names:
+            idx = self._names.index(item)
+            return ChunkedArray(self._columns[idx])
         else:
-            raise AttributeError(item)
+            return super(ChunkedTable, self).__getattr__(item)
 
     def __repr__(self):
         r = '%s(' % type(self).__name__
@@ -855,22 +849,7 @@ class ChunkedTable(object):
         return r
 
     def __len__(self):
-        return len(self.columns[0])
-
-    def _repr_html_(self):
-        caption = repr(self)
-        ra = self[:6]
-        return recarray_to_html_str(ra, limit=5, caption=caption)
-
-    def display(self, limit=5, **kwargs):
-        kwargs.setdefault('caption', repr(self))
-        if limit is None:
-            limit = len(self)
-        ra = self[:limit+1]
-        return recarray_display(ra, limit=limit, **kwargs)
-
-    def displayall(self, **kwargs):
-        return self.display(limit=None, **kwargs)
+        return len(self._columns[0])
 
     @property
     def shape(self):
@@ -883,7 +862,7 @@ class ChunkedTable(object):
     @property
     def dtype(self):
         l = []
-        for n, c in zip(self.names, self.columns):
+        for n, c in zip(self._names, self._columns):
             # need to account for multidimensional columns
             t = (n, c.dtype) if len(c.shape) == 1 else \
                 (n, c.dtype, c.shape[1:])
@@ -892,14 +871,14 @@ class ChunkedTable(object):
 
     @property
     def nbytes(self):
-        cols_nbytes = [_util.get_nbytes(c) for c in self.columns]
+        cols_nbytes = [_util.get_nbytes(c) for c in self._columns]
         if all(cols_nbytes):
             return sum(cols_nbytes)
         return None
 
     @property
     def cbytes(self):
-        cols_cbytes = [_util.get_cbytes(c) for c in self.columns]
+        cols_cbytes = [_util.get_cbytes(c) for c in self._columns]
         if all(cols_cbytes):
             return sum(cols_cbytes)
         return None
@@ -916,23 +895,23 @@ class ChunkedTable(object):
              create='table', **kwargs):
         out = copy_table(self, start=start, stop=stop, blen=blen,
                          storage=storage, create=create, **kwargs)
-        return type(self)(out, names=self.names)
+        return type(self)(out, names=self._names)
 
     def compress(self, condition, blen=None, storage=None, create='table',
                  **kwargs):
         out = compress_table(self, condition, blen=blen, storage=storage,
                              create=create, **kwargs)
-        return type(self)(out, names=self.names)
+        return type(self)(out, names=self._names)
 
     def take(self, indices, blen=None, storage=None, create='table', **kwargs):
         out = take_table(self, indices, blen=blen, storage=storage,
                          create=create, **kwargs)
-        return type(self)(out, names=self.names)
+        return type(self)(out, names=self._names)
 
     def vstack(self, *others, **kwargs):
         tup = (self,) + others
         out = vstack_table(tup, **kwargs)
-        return type(self)(out, names=self.names)
+        return type(self)(out, names=self._names)
 
     def eval(self, expression, **kwargs):
         out = eval_table(self, expression, **kwargs)
