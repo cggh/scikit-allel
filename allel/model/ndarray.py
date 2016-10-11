@@ -11,17 +11,226 @@ import numpy as np
 
 # internal imports
 from allel.util import check_dtype_kind, check_shape, check_dtype, asarray_ndim, check_ndim,\
-    ignore_invalid, check_dim0_aligned
+    ignore_invalid, check_dim0_aligned, contains_newaxis
 from allel.compat import PY2
 from allel.io import recarray_to_hdf5_group, recarray_from_hdf5_group, write_vcf, iter_gff3
-from .abc import Wrapper
+from .abc import ArrayWrapper
+from .display import Displayable1D, Displayable2D, DisplayableTable
 
 
 __all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
            'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
 
 
-class ArrayBase(Wrapper):
+def subset(data, sel0, sel1):
+    """Apply selections on first and second axes."""
+
+    # check inputs
+    data = np.asarray(data)
+    if data.ndim < 2:
+        raise ValueError('data must have 2 or more dimensions')
+    sel0 = asarray_ndim(sel0, 1, allow_none=True)
+    sel1 = asarray_ndim(sel1, 1, allow_none=True)
+
+    # ensure indices
+    if sel0 is not None and sel0.dtype.kind == 'b':
+        sel0, = np.nonzero(sel0)
+    if sel1 is not None and sel1.dtype.kind == 'b':
+        sel1, = np.nonzero(sel1)
+
+    # ensure leading dimension indices can be broadcast correctly
+    if sel0 is not None and sel1 is not None:
+        sel0 = sel0[:, np.newaxis]
+
+    # deal with None arguments
+    if sel0 is None:
+        sel0 = slice(None)
+    if sel1 is None:
+        sel1 = slice(None)
+
+    return data[sel0, sel1]
+
+
+class GenericGenotypes(ArrayWrapper):
+
+    @property
+    def ploidy(self):
+        """Sample ploidy."""
+        return self.shape[-1]
+
+    @property
+    def n_allele_calls(self):
+        """Total number of allele calls."""
+        return np.prod(self.shape)
+
+    @property
+    def n_calls(self):
+        """Total number of genotype calls."""
+        return self.n_allele_calls // self.ploidy
+
+    def to_gt(self, max_allele=None):
+        raise NotImplementedError
+
+
+# noinspection PyAbstractClass
+class GenericGenotypeVector(GenericGenotypes, Displayable1D):
+    
+    def __getitem__(self, item):
+        s = self.values[item]
+        
+        # decide whether to wrap the result
+        wrap = (
+            hasattr(s, 'ndim') and s.ndim == self.ndim and  # dimensionality preserved
+            s.shape[-1] == self.shape[-1] and  # ploidy preserved
+            not contains_newaxis(item)
+        )
+        if wrap:
+            s = GenotypeVector(s)
+            if self.mask is not None:
+                m = self.mask[item]
+                s.mask = m
+            if self.is_phased is not None:
+                p = self.is_phased[item]
+                s.is_phased = p
+            return s
+        
+        return s
+
+    def to_str_items(self):
+        gt = self[:].to_gt()
+        if PY2:
+            out = list(gt)
+        else:
+            out = [str(x, 'ascii') for x in gt]
+        return out
+
+
+# noinspection PyAbstractClass
+class GenericGenotypeArray(GenericGenotypes, Displayable2D):
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples (length of second array dimension)."""
+        return self.shape[1]
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        
+        # decide whether to wrap the result as GenotypeArray
+        wrap_array = (
+            hasattr(s, 'ndim') and s.ndim == 3 and  # dimensionality preserved
+            s.shape[-1] == self.shape[-1] and  # ploidy preserved
+            not contains_newaxis(item)
+        )
+        if wrap_array:
+            s = GenotypeArray(s)
+            if self.mask is not None:
+                m = self.mask[item]
+                s.mask = m
+            if self.is_phased is not None:
+                p = self.is_phased[item]
+                s.is_phased = p
+            return s
+
+        # decide whether to wrap the result as GenotypeVector
+        wrap_vector = (
+            # single row selection
+            isinstance(item, int) or (
+                # other way to make a single row selection
+                isinstance(item, tuple) and
+                len(item) == 2 and
+                isinstance(item[0], int) and
+                isinstance(item[1], (slice, list, np.ndarray, type(Ellipsis)))
+            ) or (
+                # single column selection
+                len(item) == 2 and
+                isinstance(item[0], (slice, list, np.ndarray)) and
+                isinstance(item[1], int)
+            )
+        )
+        if wrap_vector:
+            s = GenotypeVector(s)
+            if self.mask is not None:
+                m = self.mask[item]
+                s.mask = m
+            if self.is_phased is not None:
+                p = self.is_phased[item]
+                s.is_phased = p
+
+        return s
+
+    def to_str_items(self):
+        gt = self[:].to_gt()
+        n = gt.dtype.itemsize
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in gt]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        return out
+
+
+class GenericHaplotypeArray(ArrayWrapper, Displayable2D):
+
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_haplotypes(self):
+        """Number of haplotypes."""
+        return self.shape[1]
+
+    def to_str_items(self):
+        tmp = self[:]
+        max_allele = np.max(tmp)
+        if max_allele <= 0:
+            max_allele = 1
+        n = int(np.floor(np.log10(max_allele))) + 1
+        t = tmp.astype((np.string_, n))
+        # recode missing alleles
+        t[tmp < 0] = b'.'
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in t]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        return out
+
+
+class GenericAlleleCountsArray(ArrayWrapper, Displayable2D):
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.shape[0]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles (length of second array dimension)."""
+        return self.shape[1]
+
+    def __getitem__(self, item):
+        s = self.values[item]
+
+        # decide whether to wrap the result
+        wrap_array = (
+            hasattr(s, 'ndim') and s.ndim == 2 and  # dimensionality preserved
+            self.shape[1] == s.shape[1] and  # number of alleles preserved
+            not contains_newaxis(item)
+        )
+        if wrap_array:
+            s = AlleleCountsArray(s)
+            return s
+
+        return s
+
+
+class NumpyWrapper(ArrayWrapper):
     """Abstract base class that wraps a NumPy array."""
 
     @classmethod
@@ -31,7 +240,7 @@ class ArrayBase(Wrapper):
     def __init__(self, data, copy=False, **kwargs):
         values = np.array(data, copy=copy, **kwargs)
         self._check_values(values)
-        super(ArrayBase, self).__init__(values)
+        super(NumpyWrapper, self).__init__(values)
 
     def __repr__(self):
         r = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
@@ -63,32 +272,17 @@ class ArrayBase(Wrapper):
         return type(self)(data)
 
 
-class GenotypeBase(ArrayBase):
-    """Abstract class for wrapping genotype calls."""
+class NumpyGenotypes(NumpyWrapper, GenericGenotypes):
+    """Base class for wrapping a NumPy array of genotype calls."""
 
     @classmethod
     def _check_values(cls, data):
         check_dtype_kind(data, 'u', 'i')
 
     def __init__(self, data, copy=False, **kwargs):
-        super(GenotypeBase, self).__init__(data, copy=copy, **kwargs)
+        super(NumpyGenotypes, self).__init__(data, copy=copy, **kwargs)
         self._mask = None
         self._is_phased = None
-
-    @property
-    def ploidy(self):
-        """Sample ploidy."""
-        return self.shape[-1]
-
-    @property
-    def n_allele_calls(self):
-        """Total number of allele calls."""
-        return np.prod(self.shape)
-
-    @property
-    def n_calls(self):
-        """Total number of genotype calls."""
-        return self.n_allele_calls // self.ploidy
 
     @property
     def mask(self):
@@ -168,18 +362,6 @@ class GenotypeBase(ArrayBase):
             check_shape(is_phased, self.shape[:-1])
             check_dtype(is_phased, np.dtype(bool))
         self._is_phased = is_phased
-
-    def to_str(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def to_html(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def __str__(self):
-        return self.to_str()
-
-    def _repr_html_(self):
-        return self.to_html()
 
     def fill_masked(self, value=-1, copy=True):
         """Fill masked genotype calls with a given value.
@@ -675,7 +857,7 @@ class GenotypeBase(ArrayBase):
 
         return out
 
-    def to_gt(self):
+    def to_gt(self, max_allele=None):
         """Convert genotype calls to VCF-style string representation.
 
         Returns
@@ -707,7 +889,8 @@ class GenotypeBase(ArrayBase):
         """
 
         # how many characters needed per allele call?
-        max_allele = np.max(self)
+        if max_allele is None:
+            max_allele = np.max(self)
         if max_allele <= 0:
             max_allele = 1
         nchar = int(np.floor(np.log10(max_allele))) + 1
@@ -748,35 +931,55 @@ class GenotypeBase(ArrayBase):
         return out
 
 
-def subset(data, sel0, sel1):
+class GenotypeVector(NumpyGenotypes, GenericGenotypeVector):
 
-    # check inputs
-    data = np.asarray(data)
-    if data.ndim < 2:
-        raise ValueError('data must have 2 or more dimensions')
-    sel0 = asarray_ndim(sel0, 1, allow_none=True)
-    sel1 = asarray_ndim(sel1, 1, allow_none=True)
+    @classmethod
+    def _check_values(cls, data):
+        super(GenotypeVector, cls)._check_values(data)
+        check_ndim(data, 2)
 
-    # ensure indices
-    if sel0 is not None and sel0.dtype.kind == 'b':
-        sel0, = np.nonzero(sel0)
-    if sel1 is not None and sel1.dtype.kind == 'b':
-        sel1, = np.nonzero(sel1)
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeVector, self).__init__(data, copy=copy, **kwargs)
 
-    # ensure leading dimension indices can be broadcast correctly
-    if sel0 is not None and sel1 is not None:
-        sel0 = sel0[:, np.newaxis]
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+            if self.mask is not None:
+                out.mask = self.mask.compress(condition, axis=axis)
+            if self.is_phased is not None:
+                out.is_phased = self.is_phased.compress(condition, axis=axis)
+        return out
 
-    # deal with None arguments
-    if sel0 is None:
-        sel0 = slice(None)
-    if sel1 is None:
-        sel1 = slice(None)
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+            if self.mask is not None:
+                out.mask = self.mask.take(indices, axis=axis)
+            if self.is_phased is not None:
+                out.is_phased = self.is_phased.take(indices, axis=axis)
+        return out
 
-    return data[sel0, sel1]
+    def vstack(self, *others):
+        """Stack arrays in sequence vertically (row-wise)."""
+        out = super(GenotypeVector, self).vstack(*others)
+        out = type(self)(out)
+        return out
+
+    def concatenate(self, *others, **kwargs):
+        """Concatenate arrays."""
+        out = super(GenotypeVector, self).concatenate(*others, **kwargs)
+        axis = kwargs.get('axis', 0)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def to_haplotypes(self, copy=False):
+        return HaplotypeArray(self, copy=copy)
 
 
-class GenotypeArray(GenotypeBase):
+class GenotypeArray(NumpyGenotypes, GenericGenotypeArray):
     """Array of discrete genotype calls.
 
     Parameters
@@ -898,159 +1101,6 @@ class GenotypeArray(GenotypeBase):
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeArray, self).__init__(data, copy=copy, **kwargs)
-
-    @property
-    def n_variants(self):
-        """Number of variants (length of first array dimension)."""
-        return self.shape[0]
-
-    @property
-    def n_samples(self):
-        """Number of samples (length of second array dimension)."""
-        return self.shape[1]
-
-    def __getitem__(self, item):
-        s = self.values.__getitem__(item)
-
-        # decide whether to wrap the result as GenotypeArray
-        wrap_array = (
-            hasattr(s, 'ndim') and s.ndim == 3 and  # dimensionality preserved
-            s.shape[-1] == self.shape[-1] and  # ploidy preserved
-            not _adds_newaxis(item)
-        )
-        if wrap_array:
-            s = type(self)(s)
-            if self.mask is not None:
-                m = self.mask[item]
-                s.mask = m
-            if self.is_phased is not None:
-                p = self.is_phased[item]
-                s.is_phased = p
-            return s
-
-        # decide whether to wrap the result as GenotypeVector
-        wrap_vector = (
-            # row selection
-            isinstance(item, int) or (
-                # row selection
-                isinstance(item, tuple) and
-                len(item) == 2 and
-                isinstance(item[0], int) and
-                isinstance(item[1], (slice, list, np.ndarray, type(Ellipsis)))
-            ) or (
-                # column selection
-                len(item) == 2 and
-                isinstance(item[0], (slice, list, np.ndarray)) and
-                isinstance(item[1], int)
-            )
-        )
-        if wrap_vector:
-            s = GenotypeVector(s)
-            if self.mask is not None:
-                m = self.mask[item]
-                s.mask = m
-            if self.is_phased is not None:
-                p = self.is_phased[item]
-                s.is_phased = p
-
-        return s
-
-    def _display_items(self, row_threshold, col_threshold, row_edgeitems, col_edgeitems):
-        if row_threshold is None:
-            row_threshold = self.shape[0]
-        if col_threshold is None:
-            col_threshold = self.shape[1]
-        # ensure sensible edgeitems
-        row_edgeitems = min(row_edgeitems, row_threshold // 2)
-        col_edgeitems = min(col_edgeitems, col_threshold // 2)
-
-        # determine indices of items to show
-        if self.shape[0] > row_threshold:
-            row_indices = list(range(row_edgeitems))
-            row_indices += list(range(self.shape[0] - row_edgeitems, self.shape[0], 1))
-        else:
-            row_indices = list(range(self.shape[0]))
-        if self.shape[1] > col_threshold:
-            col_indices = list(range(col_edgeitems))
-            col_indices += list(range(self.shape[1] - col_edgeitems, self.shape[1], 1))
-        else:
-            col_indices = list(range(self.shape[1]))
-
-        # convert to gt
-        tmp = self[np.array(row_indices)[:, np.newaxis], col_indices]
-        if tmp.mask is not None:
-            tmp.fill_masked(copy=False)
-        gt = tmp.to_gt()
-        n = gt.dtype.itemsize
-        if PY2:
-            items = [[x.rjust(n) for x in row] for row in gt]
-        else:
-            items = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
-
-        # insert ellipsis
-        if self.shape[1] > col_threshold:
-            col_indices = (
-                col_indices[:col_edgeitems] + ['...'] + col_indices[-col_edgeitems:]
-            )
-            items = [(row[:col_edgeitems] + [' ... '] + row[-col_edgeitems:])
-                     for row in items]
-        if self.shape[0] > row_threshold:
-            row_indices = (
-                row_indices[:row_edgeitems] + ['...'] + row_indices[-row_edgeitems:]
-            )
-            items = items[:row_edgeitems] + [['...']] + items[-row_edgeitems:]
-
-        return row_indices, col_indices, items
-
-    def to_str(self, row_threshold=6, col_threshold=10, row_edgeitems=3,
-               col_edgeitems=5):
-        _, _, items = self._display_items(row_threshold, col_threshold, row_edgeitems,
-                                          col_edgeitems)
-        s = ''
-        for row in items:
-            s += ' '.join(row) + '\n'
-        return s
-
-    def to_html(self, row_threshold=6, col_threshold=10, row_edgeitems=3, col_edgeitems=5,
-                caption=None):
-        row_indices, col_indices, items = self._display_items(
-            row_threshold, col_threshold, row_edgeitems, col_edgeitems
-        )
-        # N.B., table captions don't render in jupyter notebooks on GitHub,
-        # so put caption outside table element
-        if caption is None:
-            caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
-        # sanitize caption
-        caption = caption.replace('<', '&lt;')
-        caption = caption.strip().replace('\n', '<br/>')
-        html = caption
-        html += '<table>'
-        html += '<tr><th></th>'
-        html += ''.join(['<th style="text-align: center">%s</th>' % i
-                         for i in col_indices])
-        html += '</tr>'
-        for row_index, row in zip(row_indices, items):
-            if row_index == '...':
-                html += '<tr><th style="text-align: center">...</th>' \
-                        '<td style="text-align: center" colspan=%s>...</td></tr>' % \
-                        (len(col_indices) + 1)
-            else:
-                html += '<tr><th style="text-align: center">%s</th>' % row_index
-                html += ''.join(['<td style="text-align: center">%s</td>' % item
-                                 for item in row])
-                html += '</tr>'
-        html += '</table>'
-        return html
-
-    def display(self, row_threshold=6, col_threshold=10, row_edgeitems=3,
-                col_edgeitems=5, caption=None):
-        html = self.to_html(row_threshold, col_threshold, row_edgeitems, col_edgeitems,
-                            caption)
-        from IPython.display import display_html
-        display_html(html, raw=True)
-
-    def displayall(self, caption=None):
-        self.display(row_threshold=None, col_threshold=None, caption=caption)
 
     def to_haplotypes(self, copy=False):
         """Reshape a genotype array to view it as haplotypes by
@@ -1596,150 +1646,7 @@ class GenotypeArray(GenotypeBase):
         return gm
 
 
-def _adds_newaxis(item):
-    if item is None:
-        return True
-    elif item is np.newaxis:
-        return True
-    elif isinstance(item, tuple):
-        return any((i is None or i is np.newaxis) for i in item)
-    return False
-
-
-class GenotypeVector(GenotypeBase):
-
-    @classmethod
-    def _check_values(cls, data):
-        super(GenotypeVector, cls)._check_values(data)
-        check_ndim(data, 2)
-
-    def __init__(self, data, copy=False, **kwargs):
-        super(GenotypeVector, self).__init__(data, copy=copy, **kwargs)
-
-    def __getitem__(self, item):
-        s = self.values.__getitem__(item)
-        # decide whether to wrap the result
-        wrap = (
-            hasattr(s, 'ndim') and s.ndim == self.ndim and  # dimensionality preserved
-            s.shape[-1] == self.shape[-1] and  # ploidy preserved
-            not _adds_newaxis(item)
-        )
-        if wrap:
-            s = type(self)(s)
-            if self.mask is not None:
-                m = self.mask[item]
-                s.mask = m
-            if self.is_phased is not None:
-                p = self.is_phased[item]
-                s.is_phased = p
-            return s
-        return s
-
-    def _display_items(self, threshold, edgeitems):
-        if threshold is None:
-            threshold = self.shape[0]
-
-        # ensure sensible edgeitems
-        edgeitems = min(edgeitems, threshold // 2)
-
-        # determine indices of items to show
-        if self.shape[0] > threshold:
-            indices = list(range(edgeitems))
-            indices += list(range(self.shape[0] - edgeitems, self.shape[0], 1))
-        else:
-            indices = list(range(self.shape[0]))
-
-        # convert to gt
-        tmp = self[indices]
-        if tmp.mask is not None:
-            tmp.fill_masked(copy=False)
-        gt = tmp.to_gt()
-        if PY2:
-            items = list(gt)
-        else:
-            items = [str(x, 'ascii') for x in gt]
-
-        # insert ellipsis
-        if self.shape[0] > threshold:
-            indices = indices[:edgeitems] + [' ... '] + indices[-edgeitems:]
-            items = items[:edgeitems] + [' ... '] + items[-edgeitems:]
-
-        return indices, items
-
-    def to_str(self, threshold=10, edgeitems=5):
-        _, items = self._display_items(threshold, edgeitems)
-        s = ' '.join(items)
-        return s
-
-    def to_html(self, threshold=10, edgeitems=5, caption=None):
-        indices, items = self._display_items(threshold, edgeitems)
-        # N.B., table captions don't render in jupyter notebooks on GitHub,
-        # so put caption outside table element
-        if caption is None:
-            caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
-        # sanitize caption
-        caption = caption.replace('<', '&lt;')
-        caption = caption.strip().replace('\n', '<br/>')
-        html = caption
-        html += '<table>'
-        html += '<tr>'
-        html += ''.join(['<th style="text-align: center">%s</th>' % i
-                         for i in indices])
-        html += '</tr>'
-        html += '<tr>'
-        html += ''.join(['<td style="text-align: center">%s</td>' % item
-                         for item in items])
-        html += '</tr>'
-        html += '</table>'
-        return html
-
-    def display(self, threshold=10, edgeitems=5, caption=None):
-        html = self.to_html(threshold, edgeitems, caption)
-        from IPython.display import display_html
-        display_html(html, raw=True)
-
-    def displayall(self, caption=None):
-        self.display(threshold=None, caption=caption)
-
-    def compress(self, condition, axis=0):
-        out = self.values.compress(condition, axis=axis)
-        if axis == 0:
-            out = type(self)(out)
-            if self.mask is not None:
-                out.mask = self.mask.compress(condition, axis=axis)
-            if self.is_phased is not None:
-                out.is_phased = self.is_phased.compress(condition, axis=axis)
-        return out
-
-    def take(self, indices, axis=0):
-        out = self.values.take(indices, axis=axis)
-        if axis == 0:
-            out = type(self)(out)
-            if self.mask is not None:
-                out.mask = self.mask.take(indices, axis=axis)
-            if self.is_phased is not None:
-                out.is_phased = self.is_phased.take(indices, axis=axis)
-        return out
-
-    def vstack(self, *others):
-        """Stack arrays in sequence vertically (row-wise)."""
-        out = super(GenotypeVector, self).vstack(*others)
-        out = type(self)(out)
-        return out
-
-    def concatenate(self, *others, **kwargs):
-        """Concatenate arrays."""
-        out = super(GenotypeVector, self).concatenate(*others, **kwargs)
-        axis = kwargs.get('axis', 0)
-        if axis == 0:
-            out = type(self)(out)
-        return out
-
-    def to_haplotypes(self, copy=False):
-        return HaplotypeArray(self, copy=copy)
-
-
-class HaplotypeArray(ArrayBase):
+class HaplotypeArray(NumpyWrapper, GenericHaplotypeArray):
     """Array of haplotypes.
 
     Parameters
@@ -1833,16 +1740,6 @@ class HaplotypeArray(ArrayBase):
 
     def __init__(self, data, copy=False, **kwargs):
         super(HaplotypeArray, self).__init__(data, copy=copy, **kwargs)
-
-    @property
-    def n_variants(self):
-        """Number of variants."""
-        return self.shape[0]
-
-    @property
-    def n_haplotypes(self):
-        """Number of haplotypes."""
-        return self.shape[1]
 
     def _display_items(self, row_threshold, col_threshold, row_edgeitems, col_edgeitems):
         if row_threshold is None:
@@ -1959,7 +1856,7 @@ class HaplotypeArray(ArrayBase):
         # decide whether to wrap the result as GenotypeArray
         wrap_array = (
             hasattr(s, 'ndim') and s.ndim == 2 and  # dimensionality preserved
-            not _adds_newaxis(item)
+            not contains_newaxis(item)
         )
         if wrap_array:
             s = type(self)(s)
@@ -2418,7 +2315,7 @@ class HaplotypeArray(ArrayBase):
         return c / n
 
 
-class AlleleCountsArray(ArrayBase):
+class AlleleCountsArray(NumpyWrapper, GenericAlleleCountsArray):
     """Array of allele counts.
 
     Parameters
@@ -2501,115 +2398,6 @@ class AlleleCountsArray(ArrayBase):
         if hasattr(ret, 'shape') and ret.shape == self.shape:
             ret = AlleleCountsArray(ret)
         return ret
-
-    def __getitem__(self, item):
-        s = self.values.__getitem__(item)
-
-        # decide whether to wrap the result
-        wrap_array = (
-            hasattr(s, 'ndim') and s.ndim == 2 and  # dimensionality preserved
-            self.shape[1] == s.shape[1] and  # number of alleles preserved
-            not _adds_newaxis(item)
-        )
-        if wrap_array:
-            s = type(self)(s)
-            return s
-
-        return s
-
-    def __str__(self):
-        return self.to_str()
-
-    def _repr_html_(self):
-        return self.to_html()
-
-    @property
-    def n_variants(self):
-        """Number of variants (length of first array dimension)."""
-        return self.shape[0]
-
-    @property
-    def n_alleles(self):
-        """Number of alleles (length of second array dimension)."""
-        return self.shape[1]
-
-    def _display_items(self, threshold, edgeitems):
-        if threshold is None:
-            threshold = self.shape[0]
-
-        # ensure sensible edgeitems
-        edgeitems = min(edgeitems, threshold // 2)
-
-        # determine indices of items to show
-        if self.shape[0] > threshold:
-            indices = list(range(edgeitems))
-            indices += list(range(self.shape[0] - edgeitems, self.shape[0], 1))
-        else:
-            indices = list(range(self.shape[0]))
-
-        # convert to stringy thingy
-        tmp = self[indices]
-        max_value = np.max(tmp)
-        if max_value <= 0:
-            max_value = 1
-        n = int(np.floor(np.log10(max_value))) + 1
-        t = tmp.astype((np.string_, n)).view(np.chararray)
-        if PY2:
-            items = [[x.rjust(n) for x in row] for row in t]
-        else:
-            items = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
-
-        # insert ellipsis
-        if self.shape[0] > threshold:
-            indices = (
-                indices[:edgeitems] + ['...'] + indices[-edgeitems:]
-            )
-            items = items[:edgeitems] + [['...']] + items[-edgeitems:]
-
-        return indices, items
-
-    def to_str(self, threshold=6, edgeitems=3):
-        _, items = self._display_items(threshold, edgeitems)
-        s = ''
-        for row in items:
-            s += ' '.join(row) + '\n'
-        return s
-
-    def to_html(self, threshold=6, edgeitems=3, caption=None):
-        indices, items = self._display_items(threshold, edgeitems)
-        # N.B., table captions don't render in jupyter notebooks on GitHub,
-        # so put caption outside table element
-        if caption is None:
-            caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
-        # sanitize caption
-        caption = caption.replace('<', '&lt;')
-        caption = caption.strip().replace('\n', '<br/>')
-        html = caption
-        html += '<table>'
-        html += '<tr><th></th>'
-        html += ''.join(['<th style="text-align: center">%s</th>' % i
-                         for i in range(self.shape[1])])
-        html += '</tr>'
-        for row_index, row in zip(indices, items):
-            if row_index == '...':
-                html += '<tr><th style="text-align: center">...</th>' \
-                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
-                        self.shape[1]
-            else:
-                html += '<tr><th style="text-align: center">%s</th>' % row_index
-                html += ''.join(['<td style="text-align: center">%s</td>' % item
-                                 for item in row])
-                html += '</tr>'
-        html += '</table>'
-        return html
-
-    def display(self, threshold=6, edgeitems=3, caption=None):
-        html = self.to_html(threshold, edgeitems, caption)
-        from IPython.display import display_html
-        display_html(html, raw=True)
-
-    def displayall(self, caption=None):
-        self.display(threshold=None, caption=caption)
 
     def to_frequencies(self, fill=np.nan):
         """Compute allele frequencies.
@@ -3004,7 +2792,7 @@ class AlleleCountsArray(ArrayBase):
         return out
 
 
-class SortedIndex(ArrayBase):
+class SortedIndex(NumpyWrapper, Displayable1D):
     """Index of sorted values, e.g., positions from a single chromosome or
     contig.
 
@@ -3073,6 +2861,19 @@ class SortedIndex(ArrayBase):
         out = self.values.take(indices, axis=axis)
         if axis == 0:
             out = type(self)(out)
+        return out
+
+    def to_str_items(self):
+        tmp = self[:]
+        max_value = np.max(tmp)
+        if max_value <= 0:
+            max_value = 1
+        n = int(np.floor(np.log10(max_value))) + 1
+        t = tmp.astype((np.string_, n))
+        if PY2:
+            out = [x.rjust(n) for x in t]
+        else:
+            out = [str(x, 'ascii').rjust(n) for x in t]
         return out
 
     def locate_key(self, key):
@@ -3449,7 +3250,7 @@ class SortedIndex(ArrayBase):
         return self.compress(loc, axis=0)
 
 
-class UniqueIndex(ArrayBase):
+class UniqueIndex(NumpyWrapper):
     """Array of unique values (e.g., variant or sample identifiers).
 
     Parameters
@@ -3834,7 +3635,7 @@ class SortedMultiIndex(object):
         return len(self.l1)
 
 
-class RecArrayBase(ArrayBase):
+class RecArrayWrapper(NumpyWrapper, DisplayableTable):
 
     @classmethod
     def _check_values(cls, data):
@@ -3848,85 +3649,11 @@ class RecArrayBase(ArrayBase):
         self._check_values(values)
         self._values = values
 
-    @property
-    def names(self):
-        """Column names."""
-        return self.dtype.names
-
     def __getitem__(self, item):
         s = self.values[item]
         if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
             return type(self)(s)
         return s
-
-    def _display_items(self, threshold, edgeitems):
-        if threshold is None:
-            threshold = self.shape[0]
-
-        # ensure sensible edgeitems
-        edgeitems = min(edgeitems, threshold // 2)
-
-        # determine indices of items to show
-        if self.shape[0] > threshold:
-            indices = list(range(edgeitems))
-            indices += list(range(self.shape[0] - edgeitems, self.shape[0], 1))
-        else:
-            indices = list(range(self.shape[0]))
-
-        # convert to stringy thingy
-        tmp = self[indices]
-        items = [[repr(x) for x in row] for row in tmp]
-
-        # insert ellipsis
-        if self.shape[0] > threshold:
-            indices = (
-                indices[:edgeitems] + ['...'] + indices[-edgeitems:]
-            )
-            items = items[:edgeitems] + [['...']] + items[-edgeitems:]
-
-        return indices, items
-
-    def to_html(self, threshold=6, edgeitems=3, caption=None):
-        indices, items = self._display_items(threshold, edgeitems)
-        # N.B., table captions don't render in jupyter notebooks on GitHub,
-        # so put caption outside table element
-        if caption is None:
-            caption = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape, self.dtype)
-        # sanitize caption
-        caption = caption.replace('<', '&lt;')
-        caption = caption.strip().replace('\n', '<br/>')
-        html = caption
-        html += '<table>'
-        html += '<tr><th></th>'
-        html += ''.join(['<th style="text-align: center">%s</th>' % n
-                         for n in self.dtype.names])
-        html += '</tr>'
-        for row_index, row in zip(indices, items):
-            if row_index == '...':
-                html += '<tr><th style="text-align: center">...</th>' \
-                        '<td style="text-align: center" colspan="%s">...</td></tr>' % \
-                        len(self.names)
-            else:
-                html += '<tr><th style="text-align: center">%s</th>' % row_index
-                html += ''.join(['<td style="text-align: center">%s</td>' % item
-                                 for item in row])
-                html += '</tr>'
-        html += '</table>'
-        return html
-
-    def __str__(self):
-        return str(self.values)
-
-    def _repr_html_(self):
-        return self.to_html()
-
-    def display(self, threshold=6, edgeitems=3, caption=None):
-        html = self.to_html(threshold, edgeitems, caption)
-        from IPython.display import display_html
-        display_html(html, raw=True)
-
-    def displayall(self, caption=None):
-        self.display(threshold=None, caption=caption)
 
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
@@ -3996,14 +3723,14 @@ class RecArrayBase(ArrayBase):
 
     def concatenate(self, *others, **kwargs):
         """Concatenate arrays."""
-        out = super(RecArrayBase, self).concatenate(*others, **kwargs)
+        out = super(RecArrayWrapper, self).concatenate(*others, **kwargs)
         axis = kwargs.get('axis', 0)
         if axis == 0:
             out = type(self)(out.view(self.dtype))
         return out
 
 
-class VariantTable(RecArrayBase):
+class VariantTable(RecArrayWrapper):
     """Table (catalogue) of variants.
 
     Parameters
@@ -4270,11 +3997,7 @@ class VariantTable(RecArrayBase):
                   write_header=write_header)
 
 
-def sample_to_haplotype_selection(indices, ploidy):
-    return [(i * ploidy) + n for i in indices for n in range(ploidy)]
-
-
-class FeatureTable(RecArrayBase):
+class FeatureTable(RecArrayWrapper):
     """Table of genomic features (e.g., genes, exons, etc.).
 
     Parameters

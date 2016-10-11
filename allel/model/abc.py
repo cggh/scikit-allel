@@ -6,8 +6,8 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-class Wrapper(object):
-    """Abstract base class that delegates everything to a wrapped object."""
+class ArrayWrapper(object):
+    """Abstract base class that delegates everything to a wrapped array-like object."""
 
     def __init__(self, values):
         self._values = values

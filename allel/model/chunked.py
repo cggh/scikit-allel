@@ -24,6 +24,7 @@ import numpy as np
 from allel.compat import copy_method_doc, string_types
 from allel import chunked as _chunked
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
+from allel.util import check_ndim, check_dtype_kind
 from . import ndarray as _ndarray
 
 
@@ -110,10 +111,8 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
 
     @staticmethod
     def _check_values(data):
-        if len(data.shape) != 3:
-            raise ValueError('expected 3 dimensions')
-        if data.dtype.kind not in 'ui':
-            raise TypeError('expected integer dtype')
+        check_ndim(data, 3)
+        check_dtype_kind(data, 'u', 'i')
 
     def __getitem__(self, item):
         out = super(GenotypeChunkedArray, self).__getitem__(item)
@@ -130,7 +129,7 @@ class GenotypeChunkedArray(_chunked.ChunkedArray):
 
     def _repr_html_(self):
         indices = list(range(5)) + list(range(self.shape[0] - 5, self.shape[0]))
-        return self.take(indices, axis=0)[:].to_html(caption=repr(self))
+        return self.take(indices, axis=0)[:].to_display_html(caption=repr(self))
 
     @property
     def n_variants(self):

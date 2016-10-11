@@ -387,3 +387,13 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
         return update_wrapper(wrapper, user_function)
 
     return decorator
+
+
+def contains_newaxis(item):
+    if item is None:
+        return True
+    elif item is np.newaxis:
+        return True
+    elif isinstance(item, tuple):
+        return any((i is None or i is np.newaxis) for i in item)
+    return False

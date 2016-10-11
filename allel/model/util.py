@@ -207,3 +207,7 @@ def locate_private_alleles(*acs):
     loc_pa = npa == 1
 
     return loc_pa
+
+
+def sample_to_haplotype_selection(indices, ploidy):
+    return [(i * ploidy) + n for i in indices for n in range(ploidy)]
