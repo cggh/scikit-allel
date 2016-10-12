@@ -26,7 +26,6 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
   - conda install --yes --name=test-environment --file=requirements_ci.txt
-  - pip install zarr
   - pip install bcolz
 
 script:
