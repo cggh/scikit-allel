@@ -95,8 +95,7 @@ class GenotypePCA(object):
 
         # calculate explained variance
         explained_variance_ = (s ** 2) / n_samples
-        explained_variance_ratio_ = (explained_variance_ /
-                                     explained_variance_.sum())
+        explained_variance_ratio_ = (explained_variance_ / np.sum(explained_variance_))
 
         # store variables
         n_components = self.n_components
@@ -218,7 +217,6 @@ class GenotypeRandomizedPCA(object):
         # transpose for svd
         # TODO eliminate need for transposition
         x = gn.T
-        n_samples, n_features = x.shape
 
         # intermediates
         random_state = check_random_state(self.random_state)

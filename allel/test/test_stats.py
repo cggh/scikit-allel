@@ -147,9 +147,7 @@ class TestWindowUtilities(unittest.TestCase):
         nnz, windows, counts = allel.windowed_statistic(
             pos, b, statistic=np.count_nonzero, size=10, start=1
         )
-        densities, n_bases = allel.per_base(nnz, windows,
-                                                  is_accessible=is_accessible,
-                                                  fill=-1)
+        densities, n_bases = allel.per_base(nnz, windows, is_accessible=is_accessible, fill=-1)
         aeq(expected_densities, densities)
         aeq(expected_n_bases, n_bases)
 
@@ -230,9 +228,7 @@ class TestDiversityDivergence(unittest.TestCase):
         # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
         expect = [(7/6)/10, (13/6)/10, 1/11]
-        actual, _, _, _ = allel.windowed_diversity(pos, ac, size=10,
-                                                         start=1,
-                                                         stop=31)
+        actual, _, _, _ = allel.windowed_diversity(pos, ac, size=10, start=1, stop=31)
         assert_array_close(expect, actual)
 
     def test_mean_pairwise_divergence(self):
@@ -253,8 +249,7 @@ class TestDiversityDivergence(unittest.TestCase):
         ac2 = h2.count_alleles()
 
         expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
-        actual = allel.mean_pairwise_difference_between(ac1, ac2,
-                                                              fill=-1)
+        actual = allel.mean_pairwise_difference_between(ac1, ac2, fill=-1)
         aeq(expect, actual)
 
     def test_windowed_divergence(self):
@@ -321,16 +316,16 @@ class TestHardyWeinberg(unittest.TestCase):
 
     def test_heterozygosity_expected(self):
 
-        def refimpl(af, ploidy, fill=0):
+        def refimpl(f, ploidy, fill=0):
             """Limited reference implementation for testing purposes."""
 
             # check allele frequencies sum to 1
-            af_sum = np.sum(af, axis=1)
+            af_sum = np.sum(f, axis=1)
 
             # assume three alleles
-            p = af[:, 0]
-            q = af[:, 1]
-            r = af[:, 2]
+            p = f[:, 0]
+            q = f[:, 1]
+            r = f[:, 2]
 
             out = 1 - p**ploidy - q**ploidy - r**ploidy
             with ignore_invalid():
@@ -353,13 +348,11 @@ class TestHardyWeinberg(unittest.TestCase):
         expect1 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, -1]
         af = g.count_alleles().to_frequencies()
         expect2 = refimpl(af, ploidy=g.ploidy, fill=-1)
-        actual = allel.heterozygosity_expected(af, ploidy=g.ploidy,
-                                                     fill=-1)
+        actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
         assert_array_close(expect1, actual)
         assert_array_close(expect2, actual)
         expect3 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, 0]
-        actual = allel.heterozygosity_expected(af, ploidy=g.ploidy,
-                                                     fill=0)
+        actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=0)
         assert_array_close(expect3, actual)
 
         # polyploid
@@ -376,8 +369,7 @@ class TestHardyWeinberg(unittest.TestCase):
                            [[-1, -1, -1], [-1, -1, -1]]], dtype='i1')
         af = g.count_alleles().to_frequencies()
         expect = refimpl(af, ploidy=g.ploidy, fill=-1)
-        actual = allel.heterozygosity_expected(af, ploidy=g.ploidy,
-                                                     fill=-1)
+        actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
         assert_array_close(expect, actual)
 
     def test_inbreeding_coefficient(self):
@@ -627,9 +619,7 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         # test with bcolz carray
         import bcolz
         gnz = bcolz.carray(gn, chunklen=2)
-        actual = allel.locate_unlinked(gnz, size=2, step=1,
-                                             threshold=.5, chunked=True,
-                                             blen=2)
+        actual = allel.locate_unlinked(gnz, size=2, step=1, threshold=.5, blen=2)
         expect = [True, False, True, True, False]
         aeq(expect, actual)
 

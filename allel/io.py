@@ -16,6 +16,7 @@ import numpy as np
 
 
 import allel
+from allel.util import asarray_ndim
 
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,7 @@ def write_vcf_header(vcf_file, variants, rename, number, description):
     print(line, file=vcf_file)
 
 
+# noinspection PyShadowingBuiltins
 def write_vcf_data(vcf_file, variants, rename, fill):
     if rename is None:
         rename = dict()
@@ -250,6 +252,7 @@ def _vcf_value_str(o, fill=None):
         return str(o)
 
 
+# noinspection PyShadowingBuiltins
 def _vcf_info_str(name, id, value, fill):
     if isinstance(value, (bool, np.bool_)):
         if bool(value):
@@ -439,6 +442,7 @@ def array_to_hdf5(a, parent, name, **kwargs):
             h5f.close()
 
 
+# noinspection PyIncorrectDocstring
 def recarray_from_hdf5_group(*args, **kwargs):
     """Load a recarray from columns stored as separate datasets with an
     HDF5 group.
@@ -538,6 +542,8 @@ def recarray_to_hdf5_group(ra, parent, name, **kwargs):
 
     Parameters
     ----------
+    ra : recarray
+        Numpy recarray to store.
     parent : string or h5py group
         Parent HDF5 file or group. If a string, will be treated as HDF5 file
         name.

@@ -64,6 +64,8 @@ def heterozygosity_expected(af, ploidy, fill=np.nan):
 
     af : array_like, float, shape (n_variants, n_alleles)
         Allele frequencies array.
+    ploidy : int
+        Sample ploidy.
     fill : float, optional
         Use this value for variants where allele frequencies do not sum to 1.
 

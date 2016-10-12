@@ -20,6 +20,7 @@ This module requires Dask >= 0.7.6.
 from __future__ import absolute_import, print_function, division
 
 
+import numpy as np
 import dask.array as da
 
 
@@ -27,7 +28,11 @@ from allel.util import check_shape, check_dtype, check_ndim, check_integer_dtype
 from allel.abc import ArrayWrapper, DisplayAs2D, DisplayAs1D
 from allel.compat import copy_method_doc
 from .ndarray import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector
-from .generic import *
+from .generic import index_genotype_vector, index_genotype_array, index_haplotype_array, \
+    index_allele_counts_array, compress_genotypes, concatenate_genotypes, take_genotypes, \
+    subset_genotype_array, compress_haplotype_array, concatenate_haplotype_array, \
+    take_haplotype_array, compress_allele_counts_array, concatenate_allele_counts_array, \
+    take_allele_counts_array, subset_haplotype_array
 
 
 __all__ = ['GenotypeDaskVector', 'GenotypeDaskArray', 'HaplotypeDaskArray',
@@ -62,8 +67,8 @@ def get_chunks(data, chunks=None):
     else:
 
         return chunks
-    
-    
+
+
 def ensure_dask_array(data, chunks=None, name=None, lock=False):
     if isinstance(data, da.Array):
         return data
@@ -612,19 +617,19 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
         return HaplotypeDaskArray(out)
 
     def compress(self, condition, axis=0, **kwargs):
-        return compress_haplotype_array(self, condition, axis=axis, cls=type(self), 
+        return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
                                         compress=da.compress, **kwargs)
 
     def take(self, indices, axis=0, **kwargs):
-        return take_haplotype_array(self, indices, axis=axis, cls=type(self), 
+        return take_haplotype_array(self, indices, axis=axis, cls=type(self),
                                     take=da.take, **kwargs)
-    
+
     def subset(self, sel0=None, sel1=None, **kwargs):
-        return subset_haplotype_array(self, sel0, sel1, cls=type(self), 
+        return subset_haplotype_array(self, sel0, sel1, cls=type(self),
                                       subset=da_subset, **kwargs)
 
     def concatenate(self, others, axis=0, **kwargs):
-        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self), 
+        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self),
                                            concatenate=da.concatenate, **kwargs)
 
     def str_items(self):

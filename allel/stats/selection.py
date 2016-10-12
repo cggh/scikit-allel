@@ -1051,7 +1051,7 @@ def plot_moving_haplotype_frequencies(pos, h, size, start=0, stop=None, n=None,
         hr[hr > n] = 0
 
     # compute window start and stop positions
-    windows = moving_statistic(pos, statistic=lambda x: (x[0], x[-1]),
+    windows = moving_statistic(pos, statistic=lambda v: (v[0], v[-1]),
                                size=size, start=start, stop=stop)
 
     # create color map
@@ -1103,9 +1103,9 @@ def moving_delta_tajima_d(ac1, ac2, size, start=0, stop=None, step=None):
 
     """
 
-    D1 = moving_tajima_d(ac1, size=size, start=start, stop=stop, step=step)
-    D2 = moving_tajima_d(ac2, size=size, start=start, stop=stop, step=step)
-    delta = D1 - D2
+    d1 = moving_tajima_d(ac1, size=size, start=start, stop=stop, step=step)
+    d2 = moving_tajima_d(ac2, size=size, start=start, stop=stop, step=step)
+    delta = d1 - d2
     delta_z = (delta - np.mean(delta)) / np.std(delta)
     return delta_z
 
