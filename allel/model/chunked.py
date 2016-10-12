@@ -5,8 +5,8 @@ chunked arrays for data storage. Chunked arrays can be compressed and
 optionally stored on disk, providing a means for working with data too
 large to fit uncompressed in main memory.
 
-Either HDF5 (via `h5py <http://www.h5py.org/>`_) or `bcolz
-<http://bcolz.blosc.org>`_ can be used as the underlying storage
+Either `Zarr <http://zarr.readthedocs.io>`_, HDF5 (via `h5py <http://www.h5py.org/>`_) 
+or `bcolz <http://bcolz.blosc.org>`_ can be used as the underlying storage
 layer. Choice of storage layer can be made via the `storage` keyword
 argument which all class methods accept.  This argument can either be
 a string identifying one of the predefined storage layer
@@ -23,9 +23,17 @@ import numpy as np
 
 from allel.compat import copy_method_doc, string_types
 from allel import chunked as _chunked
+from allel.chunked import ChunkedArrayWrapper, ChunkedTableWrapper
 from allel.io import write_vcf_header, write_vcf_data, iter_gff3
-from allel.util import check_ndim, check_dtype_kind
-from . import ndarray as _ndarray
+from allel.util import check_ndim, check_integer_dtype
+from allel.abc import DisplayAs2D
+from .ndarray import GenotypeVector, GenotypeArray, HaplotypeArray, AlleleCountsArray, \
+    VariantTable, FeatureTable, SortedIndex, SortedMultiIndex
+from .generic import compress_genotypes, \
+    take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
+    index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
+    subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
+    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array
 
 
 __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
@@ -33,7 +41,7 @@ __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
            'FeatureChunkedTable', 'AlleleCountsChunkedTable']
 
 
-class GenotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericGenotypeArray):
+class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     """Alternative implementation of the
     :class:`allel.model.ndarray.GenotypeArray` class, wrapping a
     chunked array as the backing store.
@@ -64,56 +72,81 @@ class GenotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericGenotypeArray)
         >>> callset = h5py.File('callset.h5', mode='r')
         >>> g = allel.GenotypeChunkedArray(callset['/3L/calldata/genotype'])
         >>> g
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(2, 2, 2))
-          nbytes: 12; cbytes: 30; cratio: 0.4;
-          compression: gzip; compression_opts: 1;
-          values: h5py._hl.dataset.Dataset
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(2, 2, 2)
+           nbytes=12 cbytes=30 cratio=0.4
+           compression=gzip compression_opts=1
+           values=h5py._hl.dataset.Dataset>
         >>> g.values
         <HDF5 dataset "genotype": shape (3, 2, 2), type "|i1">
 
     Obtain a numpy array by slicing, e.g.::
 
         >>> g[:]
-        GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  1]
-          [ 1  1]]
-         [[ 0  2]
-          [-1 -1]]]
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
 
     Note that most methods will return a chunked array, using whatever
     chunked storage is set as default (bcolz carray) or specified
     directly via the `storage` keyword argument. E.g.::
 
-        >>> g.copy()
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(4096, 2, 2))
-          nbytes: 12; cbytes: 16.0K; cratio: 0.0;
-          compression: blosc; compression_opts: cparams(clevel=5, shuffle=1, cname='lz4', quantize=0);
-          values: bcolz.carray_ext.carray
+        >>> g.copy()  # doctest: +ELLIPSIS
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(4096, 2, 2)
+           nbytes=12 cbytes=16.0K cratio=0.0
+           compression=blosc compression_opts=cparams(clevel=5, shuffle=1, cname='lz4', ...
+           values=bcolz.carray_ext.carray>
         >>> g.copy(storage='zarrmem')
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(2, 2, 2))
-          nbytes: 12; cbytes: 379; cratio: 0.0;
-          compression: blosc; compression_opts: {'shuffle': 1, 'cname': 'lz4', 'clevel': 5};
-          values: zarr.core.Array
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(2, 2, 2)
+           nbytes=12 cbytes=379 cratio=0.0
+           compression=blosc compression_opts={'shuffle': 1, 'cname': 'lz4', 'clevel': 5}
+           values=zarr.core.Array>
         >>> g.copy(storage='hdf5mem_zlib1')
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(262144, 2, 2))
-          nbytes: 12; cbytes: 4.5K; cratio: 0.0;
-          compression: gzip; compression_opts: 1;
-          values: h5py._hl.dataset.Dataset
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(262144, 2, 2)
+           nbytes=12 cbytes=4.5K cratio=0.0
+           compression=gzip compression_opts=1
+           values=h5py._hl.dataset.Dataset>
 
     """  # flake8: noqa
 
+    @classmethod
+    def check_values(cls, data):
+        check_ndim(data, 3)
+        check_integer_dtype(data)
+
     def __init__(self, data):
-        self._check_values(data)
         super(GenotypeChunkedArray, self).__init__(data)
         self._mask = None
         self._is_phased = None
+        
+    def __getitem__(self, item):
+        return index_genotype_array(self, item, array_cls=GenotypeArray, 
+                                    vector_cls=GenotypeVector)
 
-    @staticmethod
-    def _check_values(data):
-        check_ndim(data, 3)
-        check_dtype_kind(data, 'u', 'i')
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples."""
+        return self.shape[1]
+
+    @property
+    def ploidy(self):
+        """Sample ploidy."""
+        return self.shape[-1]
+
+    @property
+    def n_allele_calls(self):
+        """Total number of allele calls."""
+        return np.prod(self.shape)
+
+    @property
+    def n_calls(self):
+        """Total number of genotype calls."""
+        return self.n_allele_calls // self.ploidy
 
     @property
     def mask(self):
@@ -121,15 +154,11 @@ class GenotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericGenotypeArray)
 
     @mask.setter
     def mask(self, mask):
-
-        # check input
         if not hasattr(mask, 'shape'):
             mask = np.asarray(mask, dtype=bool)
         if mask.shape != self.shape[:2]:
             raise ValueError('mask has incorrect shape')
-
-        # store
-        self._mask = _chunked.ChunkedArray(mask)
+        self._mask = mask
 
     @property
     def is_phased(self):
@@ -137,73 +166,40 @@ class GenotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericGenotypeArray)
 
     @is_phased.setter
     def is_phased(self, is_phased):
-
-        # check input
         if not hasattr(is_phased, 'shape'):
             is_phased = np.asarray(is_phased, dtype=bool)
         if is_phased.shape != self.shape[:2]:
             raise ValueError('is_phased has incorrect shape')
+        self._is_phased = is_phased
 
-        # store
-        self._is_phased = _chunked.ChunkedArray(is_phased)
-
-    def compress(self, condition, axis=0, **storage_kwargs):
-        out = super(GenotypeChunkedArray, self).compress(condition, axis=axis,
-                                                         **storage_kwargs)
-        if self.mask is not None:
-            out.mask = self.mask.compress(condition, axis=axis,
-                                          **storage_kwargs)
-        if self.is_phased is not None:
-            out.is_phased = self.is_phased.compress(condition, axis=axis,
-                                          **storage_kwargs)
-        return out
-
-    def take(self, indices, axis=0, **storage_kwargs):
-        out = super(GenotypeChunkedArray, self).take(indices, axis=axis,
-                                                     **storage_kwargs)
-        if self.mask is not None:
-            out.mask = self.mask.take(indices, axis=axis, **storage_kwargs)
-        if self.is_phased is not None:
-            out.is_phased = self.is_phased.take(indices, axis=axis, **storage_kwargs)
-        return out
-
-    def subset(self, sel0=None, sel1=None, **storage_kwargs):
-        out = super(GenotypeChunkedArray, self).subset(sel0, sel1,
-                                                       **storage_kwargs)
-        if self.mask is not None:
-            out.mask = self.mask.subset(sel0, sel1, **storage_kwargs)
-        if self.is_phased is not None:
-            out.is_phased = self.is_phased.subset(sel0, sel1, **storage_kwargs)
-        return out
-
-    def fill_masked(self, value=-1, **storage_kwargs):
+    def fill_masked(self, value=-1, **kwargs):
         out = self.apply_method('fill_masked', kwargs=dict(value=value),
-                                **storage_kwargs)
+                                **kwargs)
         return GenotypeChunkedArray(out)
 
-    def is_called(self, **storage_kwargs):
-        return self.apply_method('is_called', **storage_kwargs)
+    def is_called(self, **kwargs):
+        return self.apply_method('is_called', **kwargs)
 
-    def is_missing(self, **storage_kwargs):
-        return self.apply_method('is_missing', **storage_kwargs)
+    def is_missing(self, **kwargs):
+        return self.apply_method('is_missing', **kwargs)
 
-    def is_hom(self, allele=None, **storage_kwargs):
+    def is_hom(self, allele=None, **kwargs):
         return self.apply_method('is_hom', kwargs=dict(allele=allele),
-                                 **storage_kwargs)
+                                 **kwargs)
 
-    def is_hom_ref(self, **storage_kwargs):
-        return self.apply_method('is_hom_ref', **storage_kwargs)
+    def is_hom_ref(self, **kwargs):
+        return self.apply_method('is_hom_ref', **kwargs)
 
-    def is_hom_alt(self, **storage_kwargs):
-        return self.apply_method('is_hom_alt', **storage_kwargs)
+    def is_hom_alt(self, **kwargs):
+        return self.apply_method('is_hom_alt', **kwargs)
 
-    def is_het(self, allele=None, **storage_kwargs):
+    def is_het(self, allele=None, **kwargs):
         return self.apply_method('is_het', kwargs=dict(allele=allele),
-                                 **storage_kwargs)
+                                 **kwargs)
 
-    def is_call(self, call, **storage_kwargs):
+    def is_call(self, call, **kwargs):
         return self.apply_method('is_call', kwargs=dict(call=call),
-                                 **storage_kwargs)
+                                 **kwargs)
 
     def _count(self, method_name, axis, kwargs=None, **storage_kwargs):
         if kwargs is None:
@@ -215,149 +211,144 @@ class GenotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericGenotypeArray)
         out = self.sum(axis=axis, mapper=mapper, **storage_kwargs)
         return out
 
-    def count_called(self, axis=None, **storage_kwargs):
-        return self._count('is_called', axis, **storage_kwargs)
+    def count_called(self, axis=None, **kwargs):
+        return self._count('is_called', axis, **kwargs)
 
-    def count_missing(self, axis=None, **storage_kwargs):
-        return self._count('is_missing', axis, **storage_kwargs)
+    def count_missing(self, axis=None, **kwargs):
+        return self._count('is_missing', axis, **kwargs)
 
-    def count_hom(self, allele=None, axis=None, **storage_kwargs):
+    def count_hom(self, allele=None, axis=None, **kwargs):
         return self._count('is_hom', axis, kwargs=dict(allele=allele),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def count_hom_ref(self, axis=None, **storage_kwargs):
-        return self._count('is_hom_ref', axis, **storage_kwargs)
+    def count_hom_ref(self, axis=None, **kwargs):
+        return self._count('is_hom_ref', axis, **kwargs)
 
-    def count_hom_alt(self, axis=None, **storage_kwargs):
-        return self._count('is_hom_alt', axis, **storage_kwargs)
+    def count_hom_alt(self, axis=None, **kwargs):
+        return self._count('is_hom_alt', axis, **kwargs)
 
-    def count_het(self, allele=None, axis=None, **storage_kwargs):
+    def count_het(self, allele=None, axis=None, **kwargs):
         return self._count('is_het', axis, kwargs=dict(allele=allele),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def count_call(self, call, axis=None, **storage_kwargs):
+    def count_call(self, call, axis=None, **kwargs):
         return self._count('is_call', axis, kwargs=dict(call=call),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def to_haplotypes(self, **storage_kwargs):
-        out = self.apply_method('to_haplotypes', **storage_kwargs)
+    def to_haplotypes(self, **kwargs):
+        out = self.apply_method('to_haplotypes', **kwargs)
         return HaplotypeChunkedArray(out)
 
-    def to_n_ref(self, fill=0, dtype='i1', **storage_kwargs):
+    def to_n_ref(self, fill=0, dtype='i1', **kwargs):
         out = self.apply_method('to_n_ref', kwargs=dict(fill=fill,
                                                         dtype=dtype),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                **kwargs)
+        return out
 
-    def to_n_alt(self, fill=0, dtype='i1', **storage_kwargs):
+    def to_n_alt(self, fill=0, dtype='i1', **kwargs):
         out = self.apply_method('to_n_alt', kwargs=dict(fill=fill,
                                                         dtype=dtype),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                **kwargs)
+        return out
 
-    def to_allele_counts(self, alleles=None, **storage_kwargs):
+    def to_allele_counts(self, max_allele=None, **kwargs):
         # determine alleles to count
-        if alleles is None:
-            m = self.max()
-            alleles = list(range(m+1))
-
-        out = self.apply_method('to_allele_counts',
-                                kwargs=dict(alleles=alleles),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
-
-    def to_packed(self, boundscheck=True, **storage_kwargs):
-        out = self.apply_method('to_packed',
-                                kwargs=dict(boundscheck=boundscheck),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
-
-    @staticmethod
-    def from_packed(packed, **storage_kwargs):
-        def f(block):
-            return _ndarray.GenotypeArray.from_packed(block)
-        out = _chunked.apply(packed, f, **storage_kwargs)
-        return GenotypeChunkedArray(out)
-
-    def count_alleles(self, max_allele=None, subpop=None, **storage_kwargs):
-        # if max_allele not specified, count all alleles
         if max_allele is None:
             max_allele = self.max()
 
+        out = self.apply_method('to_allele_counts',
+                                kwargs=dict(max_allele=max_allele),
+                                **kwargs)
+        return out
+
+    def to_packed(self, boundscheck=True, **kwargs):
+        out = self.apply_method('to_packed',
+                                kwargs=dict(boundscheck=boundscheck),
+                                **kwargs)
+        return out
+
+    @classmethod
+    def from_packed(cls, packed, **kwargs):
+        def f(block):
+            return GenotypeArray.from_packed(block)
+        out = _chunked.apply(packed, f, **kwargs)
+        return cls(out)
+
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
+        if max_allele is None:
+            max_allele = self.max()
         out = self.apply_method('count_alleles',
-                                kwargs=dict(max_allele=max_allele,
-                                            subpop=subpop),
-                                **storage_kwargs)
+                                kwargs=dict(max_allele=max_allele, subpop=subpop),
+                                **kwargs)
         return AlleleCountsChunkedArray(out)
 
     def count_alleles_subpops(self, subpops, max_allele=None,
-                              **storage_kwargs):
+                              **kwargs):
         if max_allele is None:
             max_allele = self.max()
 
         def f(block):
             return block.count_alleles_subpops(subpops, max_allele=max_allele)
-        out = _chunked.apply(self, f, create='table', **storage_kwargs)
+
+        out = _chunked.apply(self, f, create='table', **kwargs)
         return AlleleCountsChunkedTable(out)
 
-    def to_gt(self, phased=False, max_allele=None, **storage_kwargs):
+    def to_gt(self, max_allele=None, **kwargs):
         out = self.apply_method('to_gt',
-                                kwargs=dict(phased=phased,
-                                            max_allele=max_allele),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                kwargs=dict(max_allele=max_allele),
+                                **kwargs)
+        return out
 
-    def map_alleles(self, mapping, **storage_kwargs):
+    def map_alleles(self, mapping, **kwargs):
         def f(block, bmapping):
             return block.map_alleles(bmapping, copy=False)
         domain = (self, mapping)
-        out = _chunked.apply(domain, f, **storage_kwargs)
+        out = _chunked.apply(domain, f, **kwargs)
         return GenotypeChunkedArray(out)
+    
+    def compress(self, condition, axis=0, **kwargs):
+        return compress_genotypes(self, condition, axis=axis, wrap_axes={0, 1}, 
+                                  cls=type(self), compress=_chunked.compress, **kwargs)
+
+    def take(self, indices, axis=0, **kwargs):
+        return take_genotypes(self, indices, axis=axis, wrap_axes={0, 1}, cls=type(self), 
+                              take=_chunked.take, **kwargs)
+    
+    def subset(self, sel0=None, sel1=None, **kwargs):
+        return subset_genotype_array(self, sel0, sel1, cls=type(self), 
+                                     subset=_chunked.subset, **kwargs)
+
+    def concatenate(self, others, axis=0, **kwargs):
+        return concatenate_genotypes(self, others, axis=axis, wrap_axes={0, 1}, 
+                                     cls=type(self), concatenate=_chunked.concatenate, 
+                                     **kwargs)
 
 
 # copy docstrings
-copy_method_doc(GenotypeChunkedArray.fill_masked,
-                _ndarray.GenotypeArray.fill_masked)
-copy_method_doc(GenotypeChunkedArray.subset,
-                _ndarray.GenotypeArray.subset)
-copy_method_doc(GenotypeChunkedArray.is_called,
-                _ndarray.GenotypeArray.is_called)
-copy_method_doc(GenotypeChunkedArray.is_missing,
-                _ndarray.GenotypeArray.is_missing)
-copy_method_doc(GenotypeChunkedArray.is_hom,
-                _ndarray.GenotypeArray.is_hom)
-copy_method_doc(GenotypeChunkedArray.is_hom_ref,
-                _ndarray.GenotypeArray.is_hom_ref)
-copy_method_doc(GenotypeChunkedArray.is_hom_alt,
-                _ndarray.GenotypeArray.is_hom_alt)
-copy_method_doc(GenotypeChunkedArray.is_het,
-                _ndarray.GenotypeArray.is_het)
-copy_method_doc(GenotypeChunkedArray.is_call,
-                _ndarray.GenotypeArray.is_call)
-copy_method_doc(GenotypeChunkedArray.to_haplotypes,
-                _ndarray.GenotypeArray.to_haplotypes)
-copy_method_doc(GenotypeChunkedArray.to_n_ref,
-                _ndarray.GenotypeArray.to_n_ref)
-copy_method_doc(GenotypeChunkedArray.to_n_alt,
-                _ndarray.GenotypeArray.to_n_alt)
-copy_method_doc(GenotypeChunkedArray.to_allele_counts,
-                _ndarray.GenotypeArray.to_allele_counts)
-copy_method_doc(GenotypeChunkedArray.to_packed,
-                _ndarray.GenotypeArray.to_packed)
-GenotypeChunkedArray.from_packed.__doc__ = \
-    _ndarray.GenotypeArray.from_packed.__doc__
-copy_method_doc(GenotypeChunkedArray.count_alleles,
-                _ndarray.GenotypeArray.count_alleles)
+copy_method_doc(GenotypeChunkedArray.fill_masked, GenotypeArray.fill_masked)
+copy_method_doc(GenotypeChunkedArray.subset, GenotypeArray.subset)
+copy_method_doc(GenotypeChunkedArray.is_called, GenotypeArray.is_called)
+copy_method_doc(GenotypeChunkedArray.is_missing, GenotypeArray.is_missing)
+copy_method_doc(GenotypeChunkedArray.is_hom, GenotypeArray.is_hom)
+copy_method_doc(GenotypeChunkedArray.is_hom_ref, GenotypeArray.is_hom_ref)
+copy_method_doc(GenotypeChunkedArray.is_hom_alt, GenotypeArray.is_hom_alt)
+copy_method_doc(GenotypeChunkedArray.is_het, GenotypeArray.is_het)
+copy_method_doc(GenotypeChunkedArray.is_call, GenotypeArray.is_call)
+copy_method_doc(GenotypeChunkedArray.to_haplotypes, GenotypeArray.to_haplotypes)
+copy_method_doc(GenotypeChunkedArray.to_n_ref, GenotypeArray.to_n_ref)
+copy_method_doc(GenotypeChunkedArray.to_n_alt, GenotypeArray.to_n_alt)
+copy_method_doc(GenotypeChunkedArray.to_allele_counts, GenotypeArray.to_allele_counts)
+copy_method_doc(GenotypeChunkedArray.to_packed, GenotypeArray.to_packed)
+GenotypeChunkedArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
+copy_method_doc(GenotypeChunkedArray.count_alleles, GenotypeArray.count_alleles)
 copy_method_doc(GenotypeChunkedArray.count_alleles_subpops,
-                _ndarray.GenotypeArray.count_alleles_subpops)
-copy_method_doc(GenotypeChunkedArray.to_gt, _ndarray.GenotypeArray.to_gt)
-copy_method_doc(GenotypeChunkedArray.map_alleles,
-                _ndarray.GenotypeArray.map_alleles)
-copy_method_doc(GenotypeChunkedArray.hstack, _ndarray.GenotypeArray.hstack)
-copy_method_doc(GenotypeChunkedArray.vstack, _ndarray.GenotypeArray.vstack)
+                GenotypeArray.count_alleles_subpops)
+copy_method_doc(GenotypeChunkedArray.to_gt, GenotypeArray.to_gt)
+copy_method_doc(GenotypeChunkedArray.map_alleles, GenotypeArray.map_alleles)
+copy_method_doc(GenotypeChunkedArray.concatenate, GenotypeArray.concatenate)
 
 
-class HaplotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericHaplotypeArray):
+class HaplotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     """Alternative implementation of the
     :class:`allel.model.ndarray.HaplotypeArray` class, using a chunked array as
     the backing store.
@@ -370,18 +361,28 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericHaplotypeArra
 
     """
 
+    @classmethod
+    def check_values(cls, data):
+        check_ndim(data, 2)
+        check_integer_dtype(data)
+
     def __init__(self, data):
-        self._check_values(data)
         super(HaplotypeChunkedArray, self).__init__(data)
 
-    @staticmethod
-    def _check_values(data):
-        if len(data.shape) != 2:
-            raise ValueError('expected 2 dimensions')
-        if data.dtype.kind not in 'ui':
-            raise TypeError('expected integer dtype')
+    def __getitem__(self, item):
+        return index_haplotype_array(self, item, cls=HaplotypeArray)
 
-    def to_genotypes(self, ploidy=2, **storage_kwargs):
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_haplotypes(self):
+        """Number of haplotypes."""
+        return self.shape[1]
+
+    def to_genotypes(self, ploidy=2, **kwargs):
 
         # check ploidy is compatible
         if (self.n_haplotypes % ploidy) > 0:
@@ -391,23 +392,23 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericHaplotypeArra
         def f(block):
             return block.to_genotypes(ploidy)
 
-        out = self.apply(f, **storage_kwargs)
+        out = self.apply(f, **kwargs)
         return GenotypeChunkedArray(out)
 
-    def is_called(self, **storage_kwargs):
-        return self.__ge__(0, **storage_kwargs)
+    def is_called(self, **kwargs):
+        return self.__ge__(0, **kwargs)
 
-    def is_missing(self, **storage_kwargs):
-        return self.__lt__(0, **storage_kwargs)
+    def is_missing(self, **kwargs):
+        return self.__lt__(0, **kwargs)
 
-    def is_ref(self, **storage_kwargs):
-        return self.__eq__(0, **storage_kwargs)
+    def is_ref(self, **kwargs):
+        return self.__eq__(0, **kwargs)
 
-    def is_alt(self, **storage_kwargs):
-        return self.__gt__(0, **storage_kwargs)
+    def is_alt(self, **kwargs):
+        return self.__gt__(0, **kwargs)
 
-    def is_call(self, allele, **storage_kwargs):
-        return self.__eq__(allele, **storage_kwargs)
+    def is_call(self, allele, **kwargs):
+        return self.__eq__(allele, **kwargs)
 
     def _count(self, method_name, axis, kwargs=None, **storage_kwargs):
         if kwargs is None:
@@ -419,70 +420,77 @@ class HaplotypeChunkedArray(_chunked.ChunkedArray, _ndarray.GenericHaplotypeArra
         out = self.sum(axis=axis, mapper=mapper, **storage_kwargs)
         return out
 
-    def count_called(self, axis=None, **storage_kwargs):
-        return self._count('is_called', axis=axis, **storage_kwargs)
+    def count_called(self, axis=None, **kwargs):
+        return self._count('is_called', axis=axis, **kwargs)
 
-    def count_missing(self, axis=None, **storage_kwargs):
-        return self._count('is_missing', axis=axis, **storage_kwargs)
+    def count_missing(self, axis=None, **kwargs):
+        return self._count('is_missing', axis=axis, **kwargs)
 
-    def count_ref(self, axis=None, **storage_kwargs):
-        return self._count('is_ref', axis=axis, **storage_kwargs)
+    def count_ref(self, axis=None, **kwargs):
+        return self._count('is_ref', axis=axis, **kwargs)
 
-    def count_alt(self, axis=None, **storage_kwargs):
-        return self._count('is_alt', axis=axis, **storage_kwargs)
+    def count_alt(self, axis=None, **kwargs):
+        return self._count('is_alt', axis=axis, **kwargs)
 
-    def count_call(self, allele, axis=None, **storage_kwargs):
+    def count_call(self, allele, axis=None, **kwargs):
         return self._count('is_call', axis=axis,
                            kwargs=dict(allele=allele),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def count_alleles(self, max_allele=None, subpop=None, **storage_kwargs):
+    def count_alleles(self, max_allele=None, subpop=None, **kwargs):
         # if max_allele not specified, count all alleles
         if max_allele is None:
             max_allele = self.max()
 
         def f(block):
             return block.count_alleles(max_allele=max_allele, subpop=subpop)
-        out = self.apply(f, **storage_kwargs)
+        out = self.apply(f, **kwargs)
         return AlleleCountsChunkedArray(out)
 
     def count_alleles_subpops(self, subpops, max_allele=None,
-                              **storage_kwargs):
+                              **kwargs):
         if max_allele is None:
             max_allele = self.max()
 
         def f(block):
             return block.count_alleles_subpops(subpops, max_allele=max_allele)
-        out = _chunked.apply(self, f, create='table', **storage_kwargs)
+        out = _chunked.apply(self, f, create='table', **kwargs)
         return AlleleCountsChunkedTable(out)
 
-    def map_alleles(self, mapping, **storage_kwargs):
+    def map_alleles(self, mapping, **kwargs):
         def f(block, bmapping):
             return block.map_alleles(bmapping, copy=False)
         domain = (self, mapping)
-        out = _chunked.apply(domain, f, **storage_kwargs)
+        out = _chunked.apply(domain, f, **kwargs)
         return HaplotypeChunkedArray(out)
 
-    def subset(self, sel0=None, sel1=None, **storage_kwargs):
-        out = super(HaplotypeChunkedArray, self).subset(sel0, sel1,
-                                                        **storage_kwargs)
-        return out
+    def compress(self, condition, axis=0, **kwargs):
+        return compress_haplotype_array(self, condition, axis=axis, cls=type(self), 
+                                        compress=_chunked.compress, **kwargs)
+
+    def take(self, indices, axis=0, **kwargs):
+        return take_haplotype_array(self, indices, axis=axis, cls=type(self), 
+                                    take=_chunked.take, **kwargs)
+    
+    def subset(self, sel0=None, sel1=None, **kwargs):
+        return subset_haplotype_array(self, sel0, sel1, cls=type(self), 
+                                      subset=_chunked.subset, **kwargs)
+
+    def concatenate(self, others, axis=0, **kwargs):
+        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self), 
+                                           concatenate=_chunked.concatenate, **kwargs)
 
 
 # copy docstrings
-copy_method_doc(HaplotypeChunkedArray.to_genotypes,
-                _ndarray.HaplotypeArray.to_genotypes)
-copy_method_doc(HaplotypeChunkedArray.count_alleles,
-                _ndarray.HaplotypeArray.count_alleles)
+copy_method_doc(HaplotypeChunkedArray.to_genotypes, HaplotypeArray.to_genotypes)
+copy_method_doc(HaplotypeChunkedArray.count_alleles, HaplotypeArray.count_alleles)
 copy_method_doc(HaplotypeChunkedArray.count_alleles_subpops,
-                _ndarray.HaplotypeArray.count_alleles_subpops)
-copy_method_doc(HaplotypeChunkedArray.map_alleles,
-                _ndarray.HaplotypeArray.map_alleles)
-copy_method_doc(HaplotypeChunkedArray.subset,
-                _ndarray.HaplotypeArray.subset)
+                HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeChunkedArray.map_alleles, HaplotypeArray.map_alleles)
+copy_method_doc(HaplotypeChunkedArray.subset, HaplotypeArray.subset)
 
 
-class AlleleCountsChunkedArray(_chunked.ChunkedArray, _ndarray.GenericAlleleCountsArray):
+class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     """Alternative implementation of the
     :class:`allel.model.ndarray.AlleleCountsArray` class, using a chunked
     array as the backing store.
@@ -495,82 +503,100 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray, _ndarray.GenericAlleleCoun
 
     """
 
+    @classmethod
+    def check_values(cls, data):
+        check_ndim(data, 2)
+        check_integer_dtype(data)
+
     def __init__(self, data):
-        self._check_values(data)
         super(AlleleCountsChunkedArray, self).__init__(data)
 
-    @staticmethod
-    def _check_values(data):
-        if len(data.shape) != 2:
-            raise ValueError('expected 2 dimensions')
-        if data.dtype.kind not in 'ui':
-            raise TypeError('expected integer dtype')
+    def __getitem__(self, item):
+        return index_allele_counts_array(self, item, cls=AlleleCountsArray)
 
     def __add__(self, other, **kwargs):
         ret = super(AlleleCountsChunkedArray, self).__add__(other, **kwargs)
         if hasattr(ret, 'shape') and ret.shape == self.shape:
-            ret = AlleleCountsChunkedArray(ret.values)
+            ret = AlleleCountsChunkedArray(ret)
         return ret
 
     def __sub__(self, other, **kwargs):
         ret = super(AlleleCountsChunkedArray, self).__sub__(other, **kwargs)
         if hasattr(ret, 'shape') and ret.shape == self.shape:
-            ret = AlleleCountsChunkedArray(ret.values)
+            ret = AlleleCountsChunkedArray(ret)
         return ret
 
-    def to_frequencies(self, fill=np.nan, **storage_kwargs):
-        out = self.apply_method('to_frequencies',
-                                kwargs=dict(fill=fill),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.shape[0]
 
-    def allelism(self, **storage_kwargs):
-        out = self.apply_method('allelism', **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    @property
+    def n_alleles(self):
+        """Number of alleles (length of second array dimension)."""
+        return self.shape[1]
 
-    def max_allele(self, **storage_kwargs):
-        out = self.apply_method('max_allele', **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.shape[0]
 
-    def is_variant(self, **storage_kwargs):
-        out = self.apply_method('is_variant', **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    @property
+    def n_alleles(self):
+        """Number of alleles (length of second array dimension)."""
+        return self.shape[1]
 
-    def is_non_variant(self, **storage_kwargs):
-        out = self.apply_method('is_non_variant', **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    def to_frequencies(self, fill=np.nan, **kwargs):
+        out = self.apply_method('to_frequencies', kwargs=dict(fill=fill), **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def is_segregating(self, **storage_kwargs):
-        out = self.apply_method('is_segregating', **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    def allelism(self, **kwargs):
+        out = self.apply_method('allelism', **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def is_non_segregating(self, allele=None, **storage_kwargs):
+    def max_allele(self, **kwargs):
+        out = self.apply_method('max_allele', **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def is_variant(self, **kwargs):
+        out = self.apply_method('is_variant', **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def is_non_variant(self, **kwargs):
+        out = self.apply_method('is_non_variant', **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def is_segregating(self, **kwargs):
+        out = self.apply_method('is_segregating', **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def is_non_segregating(self, allele=None, **kwargs):
         out = self.apply_method('is_non_segregating',
                                 kwargs=dict(allele=allele),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def is_singleton(self, allele=1, **storage_kwargs):
+    def is_singleton(self, allele=1, **kwargs):
         out = self.apply_method('is_singleton',
                                 kwargs=dict(allele=allele),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def is_doubleton(self, allele=1, **storage_kwargs):
+    def is_doubleton(self, allele=1, **kwargs):
         out = self.apply_method('is_doubleton',
                                 kwargs=dict(allele=allele),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def is_biallelic(self, **storage_kwargs):
-        out = self.apply_method('is_biallelic', **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+    def is_biallelic(self, **kwargs):
+        out = self.apply_method('is_biallelic', **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def is_biallelic_01(self, min_mac=None, **storage_kwargs):
+    def is_biallelic_01(self, min_mac=None, **kwargs):
         out = self.apply_method('is_biallelic_01',
                                 kwargs=dict(min_mac=min_mac),
-                                **storage_kwargs)
-        return _chunked.ChunkedArray(out)
+                                **kwargs)
+        return ChunkedArrayWrapper(out)
 
     def _count(self, method_name, kwargs=None, **storage_kwargs):
         if kwargs is None:
@@ -582,62 +608,74 @@ class AlleleCountsChunkedArray(_chunked.ChunkedArray, _ndarray.GenericAlleleCoun
         out = self.sum(mapper=mapper, **storage_kwargs)
         return out
 
-    def count_variant(self, **storage_kwargs):
-        return self._count('is_variant', **storage_kwargs)
+    def count_variant(self, **kwargs):
+        return self._count('is_variant', **kwargs)
 
-    def count_non_variant(self, **storage_kwargs):
-        return self._count('is_non_variant', **storage_kwargs)
+    def count_non_variant(self, **kwargs):
+        return self._count('is_non_variant', **kwargs)
 
-    def count_segregating(self, **storage_kwargs):
-        return self._count('is_segregating', **storage_kwargs)
+    def count_segregating(self, **kwargs):
+        return self._count('is_segregating', **kwargs)
 
-    def count_non_segregating(self, allele=None, **storage_kwargs):
+    def count_non_segregating(self, allele=None, **kwargs):
         return self._count('is_non_segregating', kwargs=dict(allele=allele),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def count_singleton(self, allele=1, **storage_kwargs):
+    def count_singleton(self, allele=1, **kwargs):
         return self._count('is_singleton', kwargs=dict(allele=allele),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def count_doubleton(self, allele=1, **storage_kwargs):
+    def count_doubleton(self, allele=1, **kwargs):
         return self._count('is_doubleton', kwargs=dict(allele=allele),
-                           **storage_kwargs)
+                           **kwargs)
 
-    def map_alleles(self, mapping, **storage_kwargs):
+    def map_alleles(self, mapping, **kwargs):
         def f(block, bmapping):
             return block.map_alleles(bmapping)
         domain = (self, mapping)
-        out = _chunked.apply(domain, f, **storage_kwargs)
+        out = _chunked.apply(domain, f, **kwargs)
         return AlleleCountsChunkedArray(out)
+
+    def compress(self, condition, axis=0, **kwargs):
+        return compress_allele_counts_array(self, condition, axis=axis, cls=type(self), 
+                                            compress=_chunked.compress, **kwargs)
+
+    def take(self, indices, axis=0, **kwargs):
+        return take_allele_counts_array(self, indices, axis=axis, cls=type(self), 
+                                        take=_chunked.take, **kwargs)
+    
+    def concatenate(self, others, axis=0, **kwargs):
+        return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self), 
+                                               concatenate=_chunked.concatenate, **kwargs)
 
 
 copy_method_doc(AlleleCountsChunkedArray.allelism,
-                _ndarray.AlleleCountsArray.allelism)
+                AlleleCountsArray.allelism)
 copy_method_doc(AlleleCountsChunkedArray.max_allele,
-                _ndarray.AlleleCountsArray.max_allele)
+                AlleleCountsArray.max_allele)
 copy_method_doc(AlleleCountsChunkedArray.map_alleles,
-                _ndarray.AlleleCountsArray.map_alleles)
+                AlleleCountsArray.map_alleles)
 copy_method_doc(AlleleCountsChunkedArray.to_frequencies,
-                _ndarray.AlleleCountsArray.to_frequencies)
+                AlleleCountsArray.to_frequencies)
 copy_method_doc(AlleleCountsChunkedArray.is_variant, 
-                _ndarray.AlleleCountsArray.is_variant)
+                AlleleCountsArray.is_variant)
 copy_method_doc(AlleleCountsChunkedArray.is_non_variant,
-                _ndarray.AlleleCountsArray.is_non_variant)
+                AlleleCountsArray.is_non_variant)
 copy_method_doc(AlleleCountsChunkedArray.is_segregating,
-                _ndarray.AlleleCountsArray.is_segregating)
+                AlleleCountsArray.is_segregating)
 copy_method_doc(AlleleCountsChunkedArray.is_non_segregating,
-                _ndarray.AlleleCountsArray.is_non_segregating)
+                AlleleCountsArray.is_non_segregating)
 copy_method_doc(AlleleCountsChunkedArray.is_singleton,
-                _ndarray.AlleleCountsArray.is_singleton)
+                AlleleCountsArray.is_singleton)
 copy_method_doc(AlleleCountsChunkedArray.is_doubleton,
-                _ndarray.AlleleCountsArray.is_doubleton)
+                AlleleCountsArray.is_doubleton)
 copy_method_doc(AlleleCountsChunkedArray.is_biallelic,
-                _ndarray.AlleleCountsArray.is_biallelic)
+                AlleleCountsArray.is_biallelic)
 copy_method_doc(AlleleCountsChunkedArray.is_biallelic_01,
-                _ndarray.AlleleCountsArray.is_biallelic_01)
+                AlleleCountsArray.is_biallelic_01)
 
 
-class VariantChunkedTable(_chunked.ChunkedTable):
+class VariantChunkedTable(ChunkedTableWrapper):
     """Alternative implementation of the
     :class:`allel.model.ndarray.VariantTable` class, using a chunked table as
     the backing store.
@@ -679,10 +717,10 @@ class VariantChunkedTable(_chunked.ChunkedTable):
         >>> callset = h5py.File('callset.h5', mode='r')
         >>> vt = allel.VariantChunkedTable(callset['/3L/variants'],
         ...                                names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
-        >>> vt
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 220; cratio: 1.0;
-          values: h5py._hl.group.Group
+        >>> vt  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=220 cratio=1.0;
+           values=h5py._hl.group.Group>
 
     Obtain a single row::
 
@@ -691,7 +729,7 @@ class VariantChunkedTable(_chunked.ChunkedTable):
 
     Obtain a numpy array by slicing::
 
-        >>> vt[:] # doctest: +ELLIPSIS
+        >>> vt[:]  # doctest: +ELLIPSIS
         VariantTable((5,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
         [(b'chr1', 2, [1, 2], 4.5, 35) (b'chr1', 7, [3, 4], 6.7, 12)
          (b'chr2', 3, [5, 6], 1.2, 78) (b'chr2', 9, [7, 8], 4.4, 22)
@@ -700,30 +738,30 @@ class VariantChunkedTable(_chunked.ChunkedTable):
     Access a subset of columns::
 
         >>> vt[['CHROM', 'POS']]
-        VariantChunkedTable(5)
-          nbytes: 60; cbytes: 60; cratio: 1.0;
-          values: builtins.list
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8')]
+           nbytes=60 cbytes=60 cratio=1.0;
+           values=builtins.list>
 
     Note that most methods will return a chunked table, using whatever
     chunked storage is set as default (bcolz ctable) or specified
     directly via the `storage` keyword argument. E.g.::
 
-        >>> vt.copy()
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 80.0K; cratio: 0.0;
-          values: bcolz.ctable.ctable
-        >>> vt.copy(storage='zarr')
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 1.7K; cratio: 0.1;
-          values: allel.chunked.storage_zarr.ZarrTable
-        >>> vt.copy(storage='hdf5mem_zlib1')
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 22.5K; cratio: 0.0;
-          values: h5py._hl.files.File
+        >>> vt.copy()  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=80.0K cratio=0.0;
+           values=bcolz.ctable.ctable>
+        >>> vt.copy(storage='zarr')  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=1.7K cratio=0.1;
+           values=allel.chunked.storage_zarr.ZarrTable>
+        >>> vt.copy(storage='hdf5mem_zlib1')  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=22.5K cratio=0.0;
+           values=h5py._hl.files.File>
 
-    """  # flake8: noqa
+    """
 
-    view_cls = _ndarray.VariantTable
+    array_cls = VariantTable
 
     def __init__(self, data, names=None, index=None):
         super(VariantChunkedTable, self).__init__(data, names=names)
@@ -737,11 +775,9 @@ class VariantChunkedTable(_chunked.ChunkedTable):
 
     def set_index(self, spec):
         if isinstance(spec, string_types):
-            self.index = _ndarray.SortedIndex(self[spec][:], copy=False)
+            self.index = SortedIndex(self[spec][:], copy=False)
         elif isinstance(spec, (tuple, list)) and len(spec) == 2:
-            self.index = _ndarray.SortedMultiIndex(self[spec[0]][:],
-                                                   self[spec[1]][:],
-                                                   copy=False)
+            self.index = SortedMultiIndex(self[spec[0]][:], self[spec[1]][:], copy=False)
         else:
             raise ValueError('invalid index argument, expected string or '
                              'pair of strings, found %s' % repr(spec))
@@ -759,7 +795,7 @@ class VariantChunkedTable(_chunked.ChunkedTable):
                 write_vcf_data(vcf_file, block, rename=rename, fill=fill)
 
 
-class FeatureChunkedTable(_chunked.ChunkedTable):
+class FeatureChunkedTable(ChunkedTableWrapper):
     """Alternative implementation of the
     :class:`allel.model.ndarray.FeatureTable` class, using a chunked table as
     the backing store.
@@ -775,7 +811,10 @@ class FeatureChunkedTable(_chunked.ChunkedTable):
 
     """
 
-    view_cls = _ndarray.FeatureTable
+    array_cls = FeatureTable
+
+    def __init__(self, data, names=None):
+        super(FeatureChunkedTable, self).__init__(data, names=names)
 
     @property
     def n_features(self):
@@ -794,7 +833,7 @@ class FeatureChunkedTable(_chunked.ChunkedTable):
     def from_gff3(path, attributes=None, region=None, score_fill=-1,
                   phase_fill=-1, attributes_fill=b'.', dtype=None,
                   blen=None, storage=None, create='table', expectedlen=200000,
-                  **storage_kwargs):
+                  **kwargs):
 
         # setup iterator
         recs = iter_gff3(path, attributes=attributes, region=region,
@@ -813,7 +852,7 @@ class FeatureChunkedTable(_chunked.ChunkedTable):
         # setup output
         storage = _chunked.get_storage(storage)
         out = getattr(storage, create)(ra, expectedlen=expectedlen,
-                                       **storage_kwargs)
+                                       **kwargs)
         blen = _chunked.get_blen_table(out, blen=blen)
 
         # read block-wise
@@ -827,7 +866,7 @@ class FeatureChunkedTable(_chunked.ChunkedTable):
         return out
 
 
-class AlleleCountsChunkedTable(_chunked.ChunkedTable):
+class AlleleCountsChunkedTable(ChunkedTableWrapper):
 
     def __getitem__(self, item):
         out = super(AlleleCountsChunkedTable, self).__getitem__(item)
@@ -835,3 +874,7 @@ class AlleleCountsChunkedTable(_chunked.ChunkedTable):
             # rewrap
             out = AlleleCountsChunkedArray(out.values)
         return out
+
+    @property
+    def n_variants(self):
+        return len(self)

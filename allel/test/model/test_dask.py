@@ -13,7 +13,7 @@ from nose.tools import assert_raises, eq_ as eq
 from allel.model.ndarray import GenotypeArray, HaplotypeArray, \
     AlleleCountsArray
 from allel.test.tools import assert_array_equal as aeq
-from allel.test.test_model_api import GenotypeArrayInterface, \
+from allel.test.model.test_api import GenotypeArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, HaplotypeArrayInterface, \
     haplotype_data, allele_counts_data, AlleleCountsArrayInterface
 from allel.model.dask import GenotypeDaskArray, HaplotypeDaskArray, \

@@ -8,8 +8,8 @@ import logging
 import numpy as np
 
 
-from allel.model.ndarray import SortedIndex, \
-    locate_fixed_differences, AlleleCountsArray
+from allel.model.ndarray import SortedIndex, AlleleCountsArray
+from allel.model.util import locate_fixed_differences
 from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned, \
     ensure_dim1_aligned
 from allel.stats.window import windowed_statistic, per_base, moving_statistic

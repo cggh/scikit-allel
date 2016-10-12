@@ -13,8 +13,7 @@ from allel.test.tools import assert_array_equal as aeq
 # internal imports
 from allel import VariantTable, FeatureTable
 from allel.test.model.test_api import VariantTableInterface, variant_table_data, \
-    variant_table_names, variant_table_dtype, FeatureTableInterface, feature_table_data, \
-    feature_table_dtype, feature_table_names
+    variant_table_dtype, FeatureTableInterface, feature_table_data, feature_table_dtype
 
 
 # noinspection PyMethodMayBeStatic
@@ -51,15 +50,6 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
         s = vt[['CHROM', 'POS']]
         assert_is_instance(s, VariantTable)
 
-    def test_view(self):
-        a = np.rec.array(variant_table_data,
-                         dtype=variant_table_dtype)
-        vt = a.view(VariantTable)
-        aeq(a, vt)
-        eq(1, vt.ndim)
-        eq(5, vt.n_variants)
-        eq(variant_table_names, vt.names)
-
     def test_take(self):
         a = np.rec.array(variant_table_data,
                          dtype=variant_table_dtype)
@@ -77,8 +67,8 @@ class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
 
     _class = FeatureTable
 
-    def setup_instance(self, data, index=None, **kwargs):
-        return FeatureTable(data, index=index, **kwargs)
+    def setup_instance(self, data, **kwargs):
+        return FeatureTable(data, **kwargs)
 
     def test_constructor(self):
 
@@ -105,12 +95,3 @@ class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
         assert_not_is_instance(s, FeatureTable)
         s = ft[['seqid', 'start', 'end']]
         assert_is_instance(s, FeatureTable)
-
-    def test_view(self):
-        a = np.rec.array(feature_table_data,
-                         dtype=feature_table_dtype)
-        ft = a.view(FeatureTable)
-        aeq(a, ft)
-        eq(1, ft.ndim)
-        eq(6, ft.n_features)
-        eq(feature_table_names, ft.names)

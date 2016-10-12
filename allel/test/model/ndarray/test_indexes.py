@@ -76,7 +76,7 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
         eq(np.uint32, idx.dtype)
 
         # valid data (non-numeric)
-        data = ['1', '12', '4', '5', '5', '7']
+        data = np.array(['1', '12', '4', '5', '5', '7'], dtype=object)
         idx = SortedIndex(data)
         aeq(data, idx)
 
@@ -94,57 +94,6 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
         assert_is_instance(s, np.uint32)
         assert_not_is_instance(s, SortedIndex)
         eq(data[0], s)
-
-    def test_view(self):
-
-        # data has wrong dtype
-        data = 'foo bar'
-        with assert_raises(TypeError):
-            np.asarray(data).view(SortedIndex)
-
-        # data has wrong dimensions
-        data = [[1, 2], [3, 4]]
-        with assert_raises(TypeError):
-            np.asarray(data).view(SortedIndex)
-
-        # values are not sorted
-        data = [2, 1, 3, 5]
-        with assert_raises(ValueError):
-            np.asarray(data).view(SortedIndex)
-
-        # values are not sorted
-        data = [4., 5., 3.7]
-        with assert_raises(ValueError):
-            np.asarray(data).view(SortedIndex)
-
-        # valid data (unique)
-        data = [1, 4, 5, 7, 12]
-        idx = np.asarray(data).view(SortedIndex)
-        aeq(data, idx)
-        eq(np.int, idx.dtype)
-        eq(1, idx.ndim)
-        eq(5, len(idx))
-        assert idx.is_unique
-
-        # valid data (non-unique)
-        data = [1, 4, 5, 5, 7, 12]
-        idx = np.asarray(data).view(SortedIndex)
-        aeq(data, idx)
-        eq(np.int, idx.dtype)
-        eq(1, idx.ndim)
-        eq(6, len(idx))
-        assert not idx.is_unique
-
-        # valid data (typed)
-        data = np.array([1, 4, 5, 5, 7, 12], dtype='u4')
-        idx = np.asarray(data).view(SortedIndex)
-        aeq(data, idx)
-        eq(np.uint32, idx.dtype)
-
-        # valid data (non-numeric)
-        data = ['1', '12', '4', '5', '5', '7']
-        idx = np.asarray(data).view(SortedIndex)
-        aeq(data, idx)
 
 
 # noinspection PyMethodMayBeStatic
@@ -197,30 +146,6 @@ class UniqueIndexTests(UniqueIndexInterface, unittest.TestCase):
         s = lbl[0]
         assert_is_instance(s, str)
         assert_not_is_instance(s, UniqueIndex)
-
-    def test_view(self):
-
-        # data has wrong dimensions
-        data = [['A', 'C'], ['B', 'F']]
-        with assert_raises(TypeError):
-            np.array(data).view(UniqueIndex)
-
-        # labels are not unique
-        data = ['A', 'B', 'D', 'B']
-        with assert_raises(ValueError):
-            np.array(data).view(UniqueIndex)
-
-        # valid data
-        data = ['A', 'C', 'B', 'F']
-        lbl = np.array(data).view(UniqueIndex)
-        aeq(data, lbl)
-        eq(1, lbl.ndim)
-        eq(4, len(lbl))
-
-        # valid data (typed)
-        data = np.array(['A', 'C', 'B', 'F'], dtype='a1')
-        lbl = data.view(UniqueIndex)
-        aeq(data, lbl)
 
 
 class SortedMultiIndexTests(SortedMultiIndexInterface, unittest.TestCase):

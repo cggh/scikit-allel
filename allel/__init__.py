@@ -4,11 +4,12 @@
 
 from . import model
 from .model import *
-# from allel import stats
-# from allel import plot
-# from allel import io
-# from allel import chunked
-# from allel import constants
-# from allel import util
+from . import stats
+from .stats import *
+from . import plot
+from . import io
+from . import chunked
+from . import constants
+from . import util
 
 __version__ = '0.22.0.dev0'

@@ -71,6 +71,7 @@ def check_shape(a, shape):
 
 
 def check_dtype(a, *dtypes):
+    dtypes = [np.dtype(t) for t in dtypes]
     if a.dtype not in dtypes:
         raise TypeError('bad dtype: expected on of %s; found %s' % (dtypes, a.dtype))
 
@@ -78,6 +79,10 @@ def check_dtype(a, *dtypes):
 def check_dtype_kind(a, *kinds):
     if a.dtype.kind not in kinds:
         raise TypeError('bad dtype kind: expected on of %s; found %s' % (kinds, a.dtype.kind))
+
+
+def check_integer_dtype(a):
+    check_dtype_kind(a, 'u', 'i')
 
 
 def check_dim0_aligned(*arrays):

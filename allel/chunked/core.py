@@ -8,9 +8,9 @@ import numpy as np
 
 
 from allel.compat import string_types, integer_types, range
-from allel.model.ndarray import subset as _ndarray_subset
 from allel.chunked import util as _util
-from allel.abc import ArrayWrapper, DisplayableTable
+from allel.abc import ArrayWrapper, DisplayAsTable
+from allel.model.ndarray import subset as _numpy_subset
 
 
 def store(data, arr, start=0, stop=None, offset=0, blen=None):
@@ -218,8 +218,7 @@ def count_nonzero(data, mapper=None, blen=None, storage=None,
                        blen=blen, storage=storage, create=create, **kwargs)
 
 
-def compress(data, condition, axis=0, blen=None, storage=None,
-             create='array', **kwargs):
+def compress(condition, data, axis=0, blen=None, storage=None, create='array', **kwargs):
     """Return selected slices of an array along given axis."""
 
     # setup
@@ -235,10 +234,11 @@ def compress(data, condition, axis=0, blen=None, storage=None,
         out = None
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            bcond = condition[i:j]
+            bcond = np.asarray(condition[i:j])
+            print(type(bcond), repr(bcond))
             # don't access any data unless we have to
             if np.any(bcond):
-                block = data[i:j]
+                block = np.asarray(data[i:j])
                 res = np.compress(bcond, block, axis=0)
                 if out is None:
                     out = getattr(storage, create)(res, expectedlen=nnz,
@@ -254,7 +254,7 @@ def compress(data, condition, axis=0, blen=None, storage=None,
         condition = np.asanyarray(condition)
         for i in range(0, length, blen):
             j = min(i+blen, length)
-            block = data[i:j]
+            block = np.asarray(data[i:j])
             res = np.compress(condition, block, axis=1)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=length,
@@ -287,7 +287,7 @@ def take(data, indices, axis=0, blen=None, storage=None,
         # implement via compress()
         condition = np.zeros((length,), dtype=bool)
         condition[indices] = True
-        return compress(data, condition, axis=0, blen=blen, storage=storage,
+        return compress(condition, data, axis=0, blen=blen, storage=storage,
                         create=create, **kwargs)
 
     elif axis == 1:
@@ -313,8 +313,7 @@ def take(data, indices, axis=0, blen=None, storage=None,
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def compress_table(tbl, condition, blen=None, storage=None, create='table',
-                   **kwargs):
+def compress_table(condition, tbl, blen=None, storage=None, create='table', **kwargs):
     """Return selected rows of a table."""
 
     # setup
@@ -360,7 +359,7 @@ def take_table(tbl, indices, blen=None, storage=None, create='table',
     # implement via compress()
     condition = np.zeros((length,), dtype=bool)
     condition[indices] = True
-    return compress_table(tbl, condition, blen=blen, storage=storage,
+    return compress_table(condition, tbl, blen=blen, storage=storage,
                           create=create, **kwargs)
 
 
@@ -389,13 +388,13 @@ def subset(data, sel0=None, sel1=None, blen=None, storage=None, create='array',
     # ensure indices for dim 1
     if sel1 is not None and sel1.dtype.kind == 'b':
         # assume boolean condition, convert to indices
-        sel1 = np.nonzero(sel1)[0]
+        sel1, = np.nonzero(sel1)
 
     # shortcuts
     if sel0 is None and sel1 is None:
         return copy(data, blen=blen, storage=storage, create=create, **kwargs)
     elif sel1 is None:
-        return compress(data, sel0, axis=0, blen=blen, storage=storage,
+        return compress(sel0, data, axis=0, blen=blen, storage=storage,
                         create=create, **kwargs)
     elif sel0 is None:
         return take(data, sel1, axis=1, blen=blen, storage=storage,
@@ -410,7 +409,7 @@ def subset(data, sel0=None, sel1=None, blen=None, storage=None, create='array',
         # don't access data unless we have to
         if np.any(bsel0):
             block = data[i:j]
-            res = _ndarray_subset(block, bsel0, sel1)
+            res = _numpy_subset(block, bsel0, sel1)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=sel0_nnz,
                                                **kwargs)
@@ -420,48 +419,7 @@ def subset(data, sel0=None, sel1=None, blen=None, storage=None, create='array',
     return out
 
 
-def hstack(tup, blen=None, storage=None, create='array', **kwargs):
-    """Stack arrays in sequence horizontally (column wise)."""
-
-    # setup
-    if not isinstance(tup, (tuple, list)):
-        raise ValueError('expected tuple or list, found %r' % tup)
-    if len(tup) < 2:
-        raise ValueError('expected two or more arrays to stack')
-
-    def f(*blocks):
-        return np.hstack(blocks)
-
-    return apply(tup, f, blen=blen, storage=storage, create=create, **kwargs)
-
-
-def vstack(tup, blen=None, storage=None, create='array', **kwargs):
-    """Stack arrays in sequence vertically (row wise)."""
-
-    # setup
-    storage = _util.get_storage(storage)
-    if not isinstance(tup, (tuple, list)):
-        raise ValueError('expected tuple or list, found %r' % tup)
-    if len(tup) < 2:
-        raise ValueError('expected two or more arrays to stack')
-
-    # build output
-    expectedlen = sum(len(a) for a in tup)
-    out = None
-    for a in tup:
-        ablen = _util.get_blen_array(a, blen)
-        for i in range(0, len(a), ablen):
-            j = min(i+ablen, len(a))
-            block = a[i:j]
-            if out is None:
-                out = getattr(storage, create)(block, expectedlen=expectedlen,
-                                               **kwargs)
-            else:
-                out.append(block)
-    return out
-
-
-def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
+def concatenate_table(tup, blen=None, storage=None, create='table', **kwargs):
     """Stack tables in sequence vertically (row-wise)."""
 
     # setup
@@ -488,6 +446,41 @@ def vstack_table(tup, blen=None, storage=None, create='table', **kwargs):
                                                **kwargs)
             else:
                 out.append(bcolumns)
+    return out
+
+
+def concatenate(tup, axis=0, blen=None, storage=None, create='array', **kwargs):
+    """Concatenate arrays."""
+
+    # setup
+    storage = _util.get_storage(storage)
+    if not isinstance(tup, (tuple, list)):
+        raise ValueError('expected tuple or list, found %r' % tup)
+    if len(tup) < 2:
+        raise ValueError('expected two or more arrays')
+
+    if axis == 0:
+
+        # build output
+        expectedlen = sum(len(a) for a in tup)
+        out = None
+        for a in tup:
+            ablen = _util.get_blen_array(a, blen)
+            for i in range(0, len(a), ablen):
+                j = min(i+ablen, len(a))
+                block = a[i:j]
+                if out is None:
+                    out = getattr(storage, create)(block, expectedlen=expectedlen, **kwargs)
+                else:
+                    out.append(block)
+
+    else:
+
+        def f(*blocks):
+            return np.concatenate(blocks, axis=axis)
+
+        out = apply(tup, f, blen=blen, storage=storage, create=create, **kwargs)
+
     return out
 
 
@@ -576,7 +569,7 @@ def eval_table(tbl, expression, vm='python', blen=None, storage=None,
     return out
 
 
-class ChunkedArray(ArrayWrapper):
+class ChunkedArrayWrapper(ArrayWrapper):
     """Wrapper class for chunked array-like data.
 
     Parameters
@@ -589,29 +582,28 @@ class ChunkedArray(ArrayWrapper):
 
     def __init__(self, data):
         data = _util.ensure_array_like(data)
-        super(ChunkedArray, self).__init__(data)
-        # TODO add in self.data for backwards compatibility
+        super(ChunkedArrayWrapper, self).__init__(data)
 
     @property
     def caption(self):
-        r = '%s(' % type(self).__name__
-        r += '%s' % str(self.shape)
-        r += ', %s' % str(self.dtype)
+        r = '<%s' % type(self).__name__
+        r += ' shape=%s' % str(self.shape)
+        r += ' dtype=%s' % str(self.dtype)
         if self.chunks is not None:
-            r += ', chunks=%s' % str(self.chunks)
-        r += ')'
+            r += ' chunks=%s' % str(self.chunks)
         if self.nbytes:
-            r += '\n  nbytes: %s;' % _util.human_readable_size(self.nbytes)
+            r += '\n   nbytes=%s' % _util.human_readable_size(self.nbytes)
             if self.cbytes:
-                r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
+                r += ' cbytes=%s' % _util.human_readable_size(self.cbytes)
             if self.cratio:
-                r += ' cratio: %.1f;' % self.cratio
+                r += ' cratio=%.1f' % self.cratio
         if self.compression:
-            r += '\n  compression: %s;' % self.compression
+            r += '\n   compression=%s' % self.compression
             if self.compression_opts is not None:
-                r += ' compression_opts: %s;' % self.compression_opts
-        r += '\n  values: %s.%s' % (type(self.values).__module__,
-                                  type(self.values).__name__)
+                r += ' compression_opts=%s' % self.compression_opts
+        values_cls = type(self.values)
+        r += '\n   values=%s.%s' % (values_cls.__module__, values_cls.__name__)
+        r += '>'
         return r
 
     def __repr__(self):
@@ -679,41 +671,14 @@ class ChunkedArray(ArrayWrapper):
              **kwargs):
         out = copy(self, start=start, stop=stop, blen=blen, storage=storage,
                    create=create, **kwargs)
-        return type(self)(out)
-
-    def compress(self, condition, axis=0, blen=None, storage=None,
-                 create='array', **kwargs):
-        out = compress(self, condition, axis=axis, blen=blen,
-                       storage=storage, create=create, **kwargs)
-        return type(self)(out)
-
-    def take(self, indices, axis=0, blen=None, storage=None,
-             create='array', **kwargs):
-        out = take(self, indices, axis=axis, blen=blen, storage=storage,
-                   create=create, **kwargs)
-        return type(self)(out)
-
-    def subset(self, sel0=None, sel1=None, blen=None, storage=None, create='array',
-               **kwargs):
-        out = subset(self, sel0=sel0, sel1=sel1, blen=blen, storage=storage,
-                     create=create, **kwargs)
-        return type(self)(out)
-
-    def hstack(self, *others, **kwargs):
-        tup = (self,) + others
-        out = hstack(tup, **kwargs)
-        return type(self)(out)
-
-    def vstack(self, *others, **kwargs):
-        tup = (self,) + others
-        out = vstack(tup, **kwargs)
+        # can always wrap this
         return type(self)(out)
 
     def binary_op(self, op, other, blen=None, storage=None, create='array',
                   **kwargs):
         out = binary_op(self, op, other, blen=blen, storage=storage,
                         create=create, **kwargs)
-        return ChunkedArray(out)
+        return out
 
     def __eq__(self, other, **kwargs):
         return self.binary_op(operator.eq, other, **kwargs)
@@ -755,7 +720,7 @@ class ChunkedArray(ArrayWrapper):
         return self.binary_op(operator.truediv, other, **kwargs)
 
 
-class ChunkedTable(DisplayableTable):
+class ChunkedTableWrapper(DisplayAsTable):
     """Wrapper class for chunked table-like data.
 
     Parameters
@@ -769,12 +734,13 @@ class ChunkedTable(DisplayableTable):
 
     """
 
-    view_cls = np.recarray
+    array_cls = None
 
+    # noinspection PyMissingConstructor
     def __init__(self, data, names=None):
         names, columns = _util.check_table_like(data, names=names)
-        super(ChunkedTable, self).__init__(data)
-        # TODO add in self.data for backwards compability
+        # skip super-class constructor because we are more flexible about type of values here
+        self._values = data
         self._names = names
         self._columns = columns
         self.rowcls = namedtuple('row', names)
@@ -792,7 +758,7 @@ class ChunkedTable(DisplayableTable):
         if isinstance(item, string_types):
             # item is column name, return column
             idx = self._names.index(item)
-            return ChunkedArray(self._columns[idx])
+            return ChunkedArrayWrapper(self._columns[idx])
 
         elif isinstance(item, integer_types):
             # item is row index, return row
@@ -808,9 +774,13 @@ class ChunkedTable(DisplayableTable):
             step = 1 if item.step is None else item.step
             outshape = (stop - start) // step
             out = np.empty(outshape, dtype=self.dtype)
+            print(self.dtype)
             for n, c in zip(self._names, self._columns):
                 out[n] = c[start:stop:step]
-            return out.view(self.view_cls)
+            out = out.view(np.recarray)
+            if self.array_cls is not None:
+                out = self.array_cls(out)
+            return out
 
         elif isinstance(item, (list, tuple)) and \
                 all(isinstance(i, string_types) for i in item):
@@ -830,23 +800,28 @@ class ChunkedTable(DisplayableTable):
     def __getattr__(self, item):
         if item in self._names:
             idx = self._names.index(item)
-            return ChunkedArray(self._columns[idx])
+            return ChunkedArrayWrapper(self._columns[idx])
         else:
-            return super(ChunkedTable, self).__getattr__(item)
+            return super(ChunkedTableWrapper, self).__getattr__(item)
+
+    @property
+    def caption(self):
+        r = '<%s' % type(self).__name__
+        r += ' shape=%s' % str(self.shape)
+        r += ' dtype=%s' % str(self.dtype)
+        if self.nbytes:
+            r += '\n   nbytes=%s' % _util.human_readable_size(self.nbytes)
+            if self.cbytes:
+                r += ' cbytes=%s' % _util.human_readable_size(self.cbytes)
+            if self.cratio:
+                r += ' cratio=%.1f;' % self.cratio
+        values_cls = type(self.values)
+        r += '\n   values=%s.%s' % (values_cls.__module__, values_cls.__name__)
+        r += '>'
+        return r
 
     def __repr__(self):
-        r = '%s(' % type(self).__name__
-        r += '%s' % len(self)
-        r += ')'
-        if self.nbytes:
-            r += '\n  nbytes: %s;' % _util.human_readable_size(self.nbytes)
-            if self.cbytes:
-                r += ' cbytes: %s;' % _util.human_readable_size(self.cbytes)
-            if self.cratio:
-                r += ' cratio: %.1f;' % self.cratio
-        r += '\n  values: %s.%s' % (type(self.values).__module__,
-                                  type(self.values).__name__)
-        return r
+        return self.caption
 
     def __len__(self):
         return len(self._columns[0])
@@ -895,35 +870,27 @@ class ChunkedTable(DisplayableTable):
              create='table', **kwargs):
         out = copy_table(self, start=start, stop=stop, blen=blen,
                          storage=storage, create=create, **kwargs)
-        return type(self)(out, names=self._names)
-
-    def compress(self, condition, blen=None, storage=None, create='table',
-                 **kwargs):
-        out = compress_table(self, condition, blen=blen, storage=storage,
-                             create=create, **kwargs)
-        return type(self)(out, names=self._names)
-
-    def take(self, indices, blen=None, storage=None, create='table', **kwargs):
-        out = take_table(self, indices, blen=blen, storage=storage,
-                         create=create, **kwargs)
-        return type(self)(out, names=self._names)
-
-    def vstack(self, *others, **kwargs):
-        tup = (self,) + others
-        out = vstack_table(tup, **kwargs)
+        # can always wrap this
         return type(self)(out, names=self._names)
 
     def eval(self, expression, **kwargs):
         out = eval_table(self, expression, **kwargs)
-        return ChunkedArray(out)
+        return ChunkedArrayWrapper(out)
 
-    def query(self, expression, vm='python', blen=None, storage=None,
-              create='table', vm_kwargs=None, **kwargs):
-        condition = self.eval(expression, vm=vm, blen=blen, storage=storage,
-                              create='array', vm_kwargs=vm_kwargs)
-        out = self.compress(condition, blen=blen, storage=storage,
-                            create=create, **kwargs)
+    def query(self, expression, vm='python', blen=None, storage=None, create='table',
+              vm_kwargs=None, **kwargs):
+        condition = self.eval(expression, vm=vm, blen=blen, storage=storage, create='array',
+                              vm_kwargs=vm_kwargs)
+        out = self.compress(condition, blen=blen, storage=storage, create=create, **kwargs)
+        # should already be wrapped
         return out
 
-    # TODO addcol (and __setitem__?)
-    # TODO delcol (and __delitem__?)
+    def compress(self, condition, blen=None, storage=None, create='table', **kwargs):
+        out = compress_table(condition, self, blen=blen, storage=storage, create=create,
+                             **kwargs)
+        return type(self)(out)
+
+    def take(self, indices, blen=None, storage=None, create='table', **kwargs):
+        out = take_table(self, indices, blen=blen, storage=storage, create=create,
+                         **kwargs)
+        return type(self)(out)

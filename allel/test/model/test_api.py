@@ -983,21 +983,14 @@ class GenotypeArrayInterface(object):
                   [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]]
         aeq(expect, gm)
 
-    def test_hstack(self):
+    def test_concatenate(self):
         a = np.array(diploid_genotype_data, dtype=np.int8)
         g1 = self.setup_instance(a)
         g2 = self.setup_instance(a)
-        actual = g1.hstack(g2)
-        expect = np.hstack([a, a])
-        aeq(expect, actual)
-
-    def test_vstack(self):
-        a = np.array(diploid_genotype_data, dtype=np.int8)
-        g1 = self.setup_instance(a)
-        g2 = self.setup_instance(a)
-        actual = g1.vstack(g2)
-        expect = np.vstack([a, a])
-        aeq(expect, actual)
+        for axis in 0, 1:
+            actual = g1.concatenate(g2, axis=axis)
+            expect = np.concatenate([a, a], axis=axis)
+            aeq(expect, actual)
 
 
 class HaplotypeArrayInterface(object):
@@ -1316,21 +1309,14 @@ class HaplotypeArrayInterface(object):
         actual = h.map_alleles(mapping)
         aeq(expect, actual)
 
-    def test_hstack(self):
+    def test_concatenate(self):
         a = np.array(haplotype_data, dtype=np.int8)
         h1 = self.setup_instance(a)
         h2 = self.setup_instance(a)
-        actual = h1.hstack(h2)
-        expect = np.hstack([a, a])
-        aeq(expect, actual)
-
-    def test_vstack(self):
-        a = np.array(haplotype_data, dtype=np.int8)
-        h1 = self.setup_instance(a)
-        h2 = self.setup_instance(a)
-        actual = h1.vstack(h2)
-        expect = np.vstack([a, a])
-        aeq(expect, actual)
+        for axis in 0, 1:
+            actual = h1.concatenate(h2, axis=axis)
+            expect = np.concatenate([a, a], axis=axis)
+            aeq(expect, actual)
 
 
 class AlleleCountsArrayInterface(object):
@@ -1409,8 +1395,10 @@ class AlleleCountsArrayInterface(object):
 
     def test_compress(self):
         ac = self.setup_instance(allele_counts_data)
+        print(type(ac), repr(ac))
         condition = [True, False, True, False, True, False]
         t = ac.compress(condition, axis=0)
+        print(type(t), repr(t))
         eq(3, t.n_variants)
         eq(ac.n_alleles, t.n_alleles)
         expect = np.array(allele_counts_data).compress(condition, axis=0)
@@ -1526,21 +1514,14 @@ class AlleleCountsArrayInterface(object):
         actual = ac.map_alleles(mapping)
         aeq(expect, actual)
 
-    def test_hstack(self):
+    def test_concatenate(self):
         a = np.array(allele_counts_data, dtype=np.int8)
         ac1 = self.setup_instance(a)
         ac2 = self.setup_instance(a)
-        actual = ac1.hstack(ac2)
-        expect = np.hstack([a, a])
-        aeq(expect, actual)
-
-    def test_vstack(self):
-        a = np.array(allele_counts_data, dtype=np.int8)
-        ac1 = self.setup_instance(a)
-        ac2 = self.setup_instance(a)
-        actual = ac1.vstack(ac2)
-        expect = np.vstack([a, a])
-        aeq(expect, actual)
+        for axis in 0, 1:
+            actual = ac1.concatenate(ac2, axis=axis)
+            expect = np.concatenate([a, a], axis=axis)
+            aeq(expect, actual)
 
 
 class SortedIndexInterface(object):
@@ -2229,16 +2210,6 @@ class FeatureTableInterface(object):
         eq(6, ft.n_features)
         assert_sequence_equal(feature_table_names, ft.names)
 
-    def test_array_like(self):
-        # Test that an instance is array-like, in that it can be used as
-        # input argument to np.rec.array(). I.e., there is a standard way to
-        # get a vanilla numpy array representation of the data.
-
-        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
-        ft = self.setup_instance(a)
-        b = np.asarray(ft)
-        aeq(a, b)
-
     def test_get_item(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
         ft = self.setup_instance(a)
@@ -2321,7 +2292,7 @@ def test_create_allele_mapping():
               [1, 0],
               [0, -1],
               [-1, 0]]
-    actual = allel.model.ndarray.create_allele_mapping(ref, alt, alleles)
+    actual = allel.create_allele_mapping(ref, alt, alleles)
     aeq(expect, actual)
 
     # multiallelic case
@@ -2335,5 +2306,5 @@ def test_create_allele_mapping():
     expect = [[0, 1, -1],
               [0, -1, 1],
               [-1, 0, -1]]
-    actual = allel.model.ndarray.create_allele_mapping(ref, alt, alleles)
+    actual = allel.create_allele_mapping(ref, alt, alleles)
     aeq(expect, actual)
