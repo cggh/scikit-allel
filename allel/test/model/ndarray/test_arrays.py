@@ -107,7 +107,6 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
         for i in range(g.n_variants):
             for j in range(g.n_samples):
                 self.assertIn(h[i, j], set(g[i, j]))
-        print(repr(h))
 
         # triploid
         g = GenotypeArray([[[0, 1, 2], [3, 4, 5]],

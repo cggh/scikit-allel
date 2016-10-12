@@ -235,7 +235,6 @@ def compress(condition, data, axis=0, blen=None, storage=None, create='array', *
         for i in range(0, length, blen):
             j = min(i+blen, length)
             bcond = np.asarray(condition[i:j])
-            print(type(bcond), repr(bcond))
             # don't access any data unless we have to
             if np.any(bcond):
                 block = np.asarray(data[i:j])
@@ -774,7 +773,6 @@ class ChunkedTableWrapper(DisplayAsTable):
             step = 1 if item.step is None else item.step
             outshape = (stop - start) // step
             out = np.empty(outshape, dtype=self.dtype)
-            print(self.dtype)
             for n, c in zip(self._names, self._columns):
                 out[n] = c[start:stop:step]
             out = out.view(np.recarray)

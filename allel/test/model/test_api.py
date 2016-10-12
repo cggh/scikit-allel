@@ -1395,10 +1395,8 @@ class AlleleCountsArrayInterface(object):
 
     def test_compress(self):
         ac = self.setup_instance(allele_counts_data)
-        print(type(ac), repr(ac))
         condition = [True, False, True, False, True, False]
         t = ac.compress(condition, axis=0)
-        print(type(t), repr(t))
         eq(3, t.n_variants)
         eq(ac.n_alleles, t.n_alleles)
         expect = np.array(allele_counts_data).compress(condition, axis=0)

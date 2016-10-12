@@ -54,7 +54,6 @@ class ArrayWrapper(object):
 
     def __array__(self, *args):
         v = self.values[:]
-        print('__array__', type(v), repr(v))
         a = np.asarray(v)
         if args:
             a = a.astype(args[0])

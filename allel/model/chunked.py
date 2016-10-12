@@ -710,10 +710,10 @@ class VariantChunkedTable(ChunkedTableWrapper):
     Obtain a numpy array by slicing::
 
         >>> vt[:]  # doctest: +ELLIPSIS
-        VariantTable((5,), dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
-        [(b'chr1', 2, [1, 2], 4.5, 35) (b'chr1', 7, [3, 4], 6.7, 12)
-         (b'chr2', 3, [5, 6], 1.2, 78) (b'chr2', 9, [7, 8], 4.4, 22)
-         (b'chr3', 6, [9, 10], 2.8, 99)]
+        <VariantTable shape=(5,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<i8'), ...
+        [(b'chr1', 2, array([1, 2]), 4.5, 35) (b'chr1', 7, array([3, 4]), 6.7, 12)
+         (b'chr2', 3, array([5, 6]), 1.2, 78) (b'chr2', 9, array([7, 8]), 4.4, 22)
+         (b'chr3', 6, array([ 9, 10]), 2.8, 99)]
 
     Access a subset of columns::
 
