@@ -5,7 +5,7 @@ chunked arrays for data storage. Chunked arrays can be compressed and
 optionally stored on disk, providing a means for working with data too
 large to fit uncompressed in main memory.
 
-Either `Zarr <http://zarr.readthedocs.io>`_, HDF5 (via `h5py <http://www.h5py.org/>`_) 
+Either `Zarr <http://zarr.readthedocs.io>`_, HDF5 (via `h5py <http://www.h5py.org/>`_)
 or `bcolz <http://bcolz.blosc.org>`_ can be used as the underlying storage
 layer. Choice of storage layer can be made via the `storage` keyword
 argument which all class methods accept.  This argument can either be
@@ -111,6 +111,7 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(GenotypeChunkedArray, cls).check_values(data)
         check_ndim(data, 3)
         check_integer_dtype(data)
 
@@ -118,9 +119,9 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         super(GenotypeChunkedArray, self).__init__(data)
         self._mask = None
         self._is_phased = None
-        
+
     def __getitem__(self, item):
-        return index_genotype_array(self, item, array_cls=GenotypeArray, 
+        return index_genotype_array(self, item, array_cls=GenotypeArray,
                                     vector_cls=GenotypeVector)
 
     @property
@@ -305,22 +306,22 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         domain = (self, mapping)
         out = _chunked.apply(domain, f, **kwargs)
         return GenotypeChunkedArray(out)
-    
+
     def compress(self, condition, axis=0, **kwargs):
-        return compress_genotypes(self, condition, axis=axis, wrap_axes={0, 1}, 
+        return compress_genotypes(self, condition, axis=axis, wrap_axes={0, 1},
                                   cls=type(self), compress=_chunked.compress, **kwargs)
 
     def take(self, indices, axis=0, **kwargs):
-        return take_genotypes(self, indices, axis=axis, wrap_axes={0, 1}, cls=type(self), 
+        return take_genotypes(self, indices, axis=axis, wrap_axes={0, 1}, cls=type(self),
                               take=_chunked.take, **kwargs)
-    
+
     def subset(self, sel0=None, sel1=None, **kwargs):
-        return subset_genotype_array(self, sel0, sel1, cls=type(self), 
+        return subset_genotype_array(self, sel0, sel1, cls=type(self),
                                      subset=_chunked.subset, **kwargs)
 
     def concatenate(self, others, axis=0, **kwargs):
-        return concatenate_genotypes(self, others, axis=axis, wrap_axes={0, 1}, 
-                                     cls=type(self), concatenate=_chunked.concatenate, 
+        return concatenate_genotypes(self, others, axis=axis, wrap_axes={0, 1},
+                                     cls=type(self), concatenate=_chunked.concatenate,
                                      **kwargs)
 
 
@@ -364,6 +365,7 @@ class HaplotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(HaplotypeChunkedArray, cls).check_values(data)
         check_ndim(data, 2)
         check_integer_dtype(data)
 
@@ -466,19 +468,19 @@ class HaplotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         return HaplotypeChunkedArray(out)
 
     def compress(self, condition, axis=0, **kwargs):
-        return compress_haplotype_array(self, condition, axis=axis, cls=type(self), 
+        return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
                                         compress=_chunked.compress, **kwargs)
 
     def take(self, indices, axis=0, **kwargs):
-        return take_haplotype_array(self, indices, axis=axis, cls=type(self), 
+        return take_haplotype_array(self, indices, axis=axis, cls=type(self),
                                     take=_chunked.take, **kwargs)
-    
+
     def subset(self, sel0=None, sel1=None, **kwargs):
-        return subset_haplotype_array(self, sel0, sel1, cls=type(self), 
+        return subset_haplotype_array(self, sel0, sel1, cls=type(self),
                                       subset=_chunked.subset, **kwargs)
 
     def concatenate(self, others, axis=0, **kwargs):
-        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self), 
+        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self),
                                            concatenate=_chunked.concatenate, **kwargs)
 
 
@@ -506,6 +508,7 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(AlleleCountsChunkedArray, cls).check_values(data)
         check_ndim(data, 2)
         check_integer_dtype(data)
 
@@ -628,15 +631,15 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         return AlleleCountsChunkedArray(out)
 
     def compress(self, condition, axis=0, **kwargs):
-        return compress_allele_counts_array(self, condition, axis=axis, cls=type(self), 
+        return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
                                             compress=_chunked.compress, **kwargs)
 
     def take(self, indices, axis=0, **kwargs):
-        return take_allele_counts_array(self, indices, axis=axis, cls=type(self), 
+        return take_allele_counts_array(self, indices, axis=axis, cls=type(self),
                                         take=_chunked.take, **kwargs)
-    
+
     def concatenate(self, others, axis=0, **kwargs):
-        return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self), 
+        return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
                                                concatenate=_chunked.concatenate, **kwargs)
 
 

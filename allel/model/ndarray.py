@@ -68,6 +68,7 @@ class NumpyRecArrayWrapper(DisplayAsTable):
 
     @classmethod
     def check_values(cls, data):
+        super(NumpyRecArrayWrapper, cls).check_values(data)
         check_ndim(data, 1)
         if not data.dtype.names:
             raise ValueError('expected recarray')
@@ -170,6 +171,7 @@ class Genotypes(NumpyArrayWrapper):
 
     @classmethod
     def check_values(cls, data):
+        super(Genotypes, cls).check_values(data)
         check_integer_dtype(data)
 
     def __init__(self, data, copy=False, **kwargs):
@@ -1622,6 +1624,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(HaplotypeArray, cls).check_values(data)
         check_integer_dtype(data)
         check_ndim(data, 2)
 
@@ -2154,6 +2157,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(AlleleCountsArray, cls).check_values(data)
         check_integer_dtype(data)
         check_ndim(data, 2)
 
@@ -2613,6 +2617,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
 
     @classmethod
     def check_values(cls, values):
+        super(SortedIndex, cls).check_values(values)
         check_ndim(values, 1)
         # check sorted ascending
         if np.any(values[:-1] > values[1:]):
@@ -3073,11 +3078,12 @@ class UniqueIndex(NumpyArrayWrapper):
     """
 
     @classmethod
-    def check_values(cls, obj):
-        check_ndim(obj, 1)
+    def check_values(cls, data):
+        super(UniqueIndex, cls).check_values(data)
+        check_ndim(data, 1)
         # check unique
         # noinspection PyTupleAssignmentBalance
-        _, counts = np.unique(obj, return_counts=True)
+        _, counts = np.unique(data, return_counts=True)
         if np.any(counts > 1):
             raise ValueError('values are not unique')
 
