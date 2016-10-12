@@ -417,8 +417,7 @@ class TestDistance(unittest.TestCase):
                             [-1, -1, -1, -1]])
         import scipy.spatial
         d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
-        import allel.distance
-        d2 = allel.distance.pdist(h, 'hamming')
+        d2 = allel.stats.distance.pdist(h, 'hamming')
         aeq(d1, d2)
 
     def test_pairwise_distance_multidim(self):
@@ -436,13 +435,10 @@ class TestDistance(unittest.TestCase):
         gac = g.to_allele_counts()
 
         def metric(ac1, ac2):
-            mpd = allel.mean_pairwise_difference_between(ac1, ac2,
-                                                               fill=0)
+            mpd = allel.mean_pairwise_difference_between(ac1, ac2, fill=0)
             return mpd.sum()
 
-        expect = [
-            allel.mean_pairwise_difference_between(gac[:, 0], gac[:, 1],
-                                                         fill=0).sum()]
+        expect = [allel.mean_pairwise_difference_between(gac[:, 0], gac[:, 1], fill=0).sum()]
         actual = allel.pairwise_distance(gac, metric)
         aeq(expect, actual)
 

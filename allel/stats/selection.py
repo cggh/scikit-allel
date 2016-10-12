@@ -7,7 +7,7 @@ from multiprocessing.pool import ThreadPool
 import numpy as np
 
 
-from allel.util import asarray_ndim, check_dim0_aligned
+from allel.util import asarray_ndim, check_dim0_aligned, check_ndim
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
 from allel.stats.diversity import moving_tajima_d
@@ -389,7 +389,8 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
     from allel.opt.stats import ihh01_scan_int8
 
     # check inputs
-    h = HaplotypeArray(np.asarray(h, dtype='i1'))
+    h = np.asarray(h, dtype='i1')
+    check_ndim(h, 2)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(h, pos)
 
@@ -509,8 +510,10 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     from allel.opt.stats import ihh_scan_int8
 
     # check inputs
-    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
-    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+    h1 = np.asarray(h1, dtype='i1')
+    h2 = np.asarray(h2, dtype='i1')
+    check_ndim(h1, 2)
+    check_ndim(h2, 2)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(h1, h2, pos)
 
@@ -531,10 +534,8 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
         res2_fwd = pool.apply_async(ihh_scan_int8, (h2, gaps), kwargs)
 
         # scan backward
-        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], gaps[::-1]),
-                                    kwargs)
-        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], gaps[::-1]),
-                                    kwargs)
+        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], gaps[::-1]), kwargs)
+        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], gaps[::-1]), kwargs)
 
         # wait for both to finish
         pool.close()
@@ -614,7 +615,8 @@ def nsl(h, use_threads=True):
     from allel.opt.stats import nsl01_scan_int8
 
     # check inputs
-    h = HaplotypeArray(np.asarray(h, dtype='i1'))
+    h = np.asarray(h, dtype='i1')
+    check_ndim(h, 2)
 
     # # check there are no invariant sites
     # ac = h.count_alleles()
@@ -680,8 +682,11 @@ def xpnsl(h1, h2, use_threads=True):
     from allel.opt.stats import nsl_scan_int8
 
     # check inputs
-    h1 = HaplotypeArray(np.asarray(h1, dtype='i1'))
-    h2 = HaplotypeArray(np.asarray(h2, dtype='i1'))
+    h1 = np.asarray(h1, dtype='i1')
+    h2 = np.asarray(h2, dtype='i1')
+    check_ndim(h1, 2)
+    check_ndim(h2, 2)
+    check_dim0_aligned(h1, h2)
 
     if use_threads and multiprocessing.cpu_count() > 1:
         # use multiple threads

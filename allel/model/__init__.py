@@ -10,18 +10,12 @@ from .chunked import *
 from . import util
 from .util import *
 
-# from allel.model import chunked
-
-# experimental
-# try:
-#     import dask.array as _da
-#     from allel.model import dask
-# except ImportError:
-#     pass
-
-# deprecated
-# try:
-#     import bcolz as _bcolz
-#     from allel.model import bcolz
-# except ImportError:
-#     pass
+try:
+    # dask support is optional
+    # noinspection PyUnresolvedReferences
+    import dask.array
+except ImportError:
+    pass
+else:
+    from . import dask
+    from .dask import *

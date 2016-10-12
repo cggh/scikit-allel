@@ -20,7 +20,6 @@ This module requires Dask >= 0.7.6.
 from __future__ import absolute_import, print_function, division
 
 
-import numpy as np
 import dask.array as da
 
 
@@ -31,7 +30,8 @@ from .ndarray import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeV
 from .generic import *
 
 
-__all__ = ['GenotypeDaskArray', 'HaplotypeDaskArray', 'AlleleCountsDaskArray']
+__all__ = ['GenotypeDaskVector', 'GenotypeDaskArray', 'HaplotypeDaskArray',
+           'AlleleCountsDaskArray']
 
 
 def get_chunks(data, chunks=None):
@@ -64,12 +64,16 @@ def get_chunks(data, chunks=None):
         return chunks
     
     
-def ensure_dask_array(data, chunks=None):
+def ensure_dask_array(data, chunks=None, name=None, lock=False):
     if isinstance(data, da.Array):
         return data
     else:
+        if not hasattr(data, 'shape'):
+            data = np.asarray(data)
+        if not data.shape:
+            raise TypeError('data is not array-like')
         chunks = get_chunks(data, chunks)
-        return da.from_array(data, chunks=chunks)
+        return da.from_array(data, chunks=chunks, name=name, lock=lock)
 
 
 def da_subset(d, sel0, sel1):
@@ -87,13 +91,86 @@ def da_subset(d, sel0, sel1):
 class DaskArrayWrapper(ArrayWrapper):
 
     def __init__(self, data, chunks=None, name=None, lock=False):
-        if not isinstance(data, da.Array):
-            chunks = get_chunks(data, chunks)
-            data = da.from_array(data, chunks=chunks, name=name, lock=lock)
+        data = ensure_dask_array(data, chunks=chunks, name=name, lock=lock)
         super(DaskArrayWrapper, self).__init__(data)
 
     def __repr__(self):
         return self.caption
+
+    def __eq__(self, other):
+        return self.values == other
+
+    def __ne__(self, other):
+        return self.values != other
+
+    def __lt__(self, other):
+        return self.values < other
+
+    def __gt__(self, other):
+        return self.values > other
+
+    def __le__(self, other):
+        return self.values <= other
+
+    def __ge__(self, other):
+        return self.values >= other
+
+    def __abs__(self):
+        return abs(self.values)
+
+    def __add__(self, other):
+        return self.values + other
+
+    def __and__(self, other):
+        return self.values & other
+
+    def __div__(self, other):
+        return self.values.__div__(other)
+
+    def __floordiv__(self, other):
+        return self.values // other
+
+    def __inv__(self):
+        return ~self.values
+
+    def __invert__(self):
+        return ~self.values
+
+    def __lshift__(self, other):
+        return self.values << other
+
+    def __mod__(self, other):
+        return self.values % other
+
+    def __mul__(self, other):
+        return self.values * other
+
+    def __neg__(self):
+        return -self.values
+
+    def __or__(self, other):
+        return self.values | other
+
+    def __pos__(self):
+        return +self.values
+
+    def __pow__(self, other):
+        return self.values ** other
+
+    def __rshift__(self, other):
+        return self.values >> other
+
+    def __sub__(self, other):
+        return self.values - other
+
+    def __truediv__(self, other):
+        return self.values.__truediv__(other)
+
+    def __xor__(self, other):
+        return self.values ^ other
+
+    def compute(self, **kwargs):
+        return self.values.compute(**kwargs)
 
 
 class GenotypesDask(DaskArrayWrapper):
@@ -144,18 +221,19 @@ class GenotypesDask(DaskArrayWrapper):
             check_dtype(is_phased, bool)
         self._is_phased = is_phased
 
-    def compute(self, *args, **kwargs):
+    def compute(self, **kwargs):
         arrays = [self.values]
         if self.mask is not None:
             arrays.append(self.mask)
         if self.is_phased is not None:
             arrays.append(self.is_phased)
-        arrays = list(da.compute(arrays, *args, **kwargs))
+        arrays = list(da.compute(*arrays, **kwargs))
         out = self.array_cls(arrays.pop())
         if self.mask is not None:
             out.mask = arrays.pop()
         if self.is_phased is not None:
             out.is_phased = arrays.pop()
+        return out
 
     def rechunk(self, *args, **kwargs):
         values = self.values.rechunk(*args, **kwargs)
@@ -165,37 +243,6 @@ class GenotypesDask(DaskArrayWrapper):
         if self.is_phased is not None:
             out.is_phased = self.is_phased.rechunk(*args, **kwargs)
         return out
-
-    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
-        if chunks is None:
-            # no shape change
-            chunks = self.chunks
-        array_cls = self.array_cls
-
-        if self.mask is None:
-            # simple case, no mask
-            def f(block):
-                g = array_cls(block)
-                method = getattr(g, method_name)
-                return method(**kwargs)
-            out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis)
-
-        else:
-            # map with mask
-            def f(block, bmask):
-                g = array_cls(block)
-                g.mask = bmask[..., 0]
-                method = getattr(g, method_name)
-                return method(**kwargs)
-            m = self.mask[..., np.newaxis]
-            out = da.map_blocks(f, self.values, m, chunks=chunks, drop_axis=drop_axis)
-
-        return out
-
-    def _method_drop_ploidy(self, method_name, **kwargs):
-        chunks = self.chunks[:-1]
-        drop_axis = len(self.shape) - 1  # TODO does -1 work?
-        return self._method(method_name, chunks=chunks, drop_axis=drop_axis, **kwargs)
 
     def fill_masked(self, value=-1):
         out = self._method('fill_masked', value=value)
@@ -262,6 +309,7 @@ class GenotypeDaskVector(GenotypesDask, DisplayAs1D):
 
     @classmethod
     def check_values(cls, data):
+        super(GenotypeDaskVector, cls).check_values(data)
         check_ndim(data, 2)
         check_integer_dtype(data)
 
@@ -270,6 +318,36 @@ class GenotypeDaskVector(GenotypesDask, DisplayAs1D):
 
     def __getitem__(self, item):
         return index_genotype_vector(self, item, cls=type(self))
+
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.chunks
+        array_cls = self.array_cls
+
+        if self.mask is None:
+            # simple case, no mask
+            def f(block):
+                g = array_cls(block)
+                method = getattr(g, method_name)
+                return method(**kwargs)
+            out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis)
+
+        else:
+            # map with mask
+            def f(block, bmask):
+                g = array_cls(block)
+                g.mask = bmask[:, 0]
+                method = getattr(g, method_name)
+                return method(**kwargs)
+            m = self.mask[:, np.newaxis]
+            out = da.map_blocks(f, self.values, m, chunks=chunks, drop_axis=drop_axis)
+
+        return out
+
+    def _method_drop_ploidy(self, method_name, **kwargs):
+        chunks = self.chunks[:-1]
+        return self._method(method_name, chunks=chunks, drop_axis=1, **kwargs)
 
     def compress(self, condition, axis=0, **kwargs):
         return compress_genotypes(self, condition, axis=axis, wrap_axes={0},
@@ -291,6 +369,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(GenotypeDaskArray, cls).check_values(data)
         check_ndim(data, 3)
         check_integer_dtype(data)
 
@@ -300,6 +379,36 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
     def __getitem__(self, item):
         return index_genotype_array(self, item, array_cls=type(self),
                                     vector_cls=GenotypeDaskVector)
+
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.chunks
+        array_cls = self.array_cls
+
+        if self.mask is None:
+            # simple case, no mask
+            def f(block):
+                g = array_cls(block)
+                method = getattr(g, method_name)
+                return method(**kwargs)
+            out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis)
+
+        else:
+            # map with mask
+            def f(block, bmask):
+                g = array_cls(block)
+                g.mask = bmask[:, :, 0]
+                method = getattr(g, method_name)
+                return method(**kwargs)
+            m = self.mask[:, :, np.newaxis]
+            out = da.map_blocks(f, self.values, m, chunks=chunks, drop_axis=drop_axis)
+
+        return out
+
+    def _method_drop_ploidy(self, method_name, **kwargs):
+        chunks = self.chunks[:-1]
+        return self._method(method_name, chunks=chunks, drop_axis=2, **kwargs)
 
     @property
     def n_variants(self):
@@ -319,9 +428,9 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
 
         # deal with subpop
         if subpop:
-            gd = self.take(subpop, axis=1)
+            gd = self.take(subpop, axis=1).values
         else:
-            gd = self
+            gd = self.values
 
         # determine output chunks - preserve axis0; change axis1, axis2
         chunks = (gd.chunks[0], (1,)*len(gd.chunks[1]), (max_allele+1,))
@@ -334,7 +443,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 return gb.count_alleles(max_allele=max_allele)[:, None, :]
 
             # map blocks and reduce
-            out = gd.map_blocks(f, chunks=chunks).sum(axis=1)
+            out = da.map_blocks(f, gd, chunks=chunks).sum(axis=1)
 
         else:
 
@@ -370,7 +479,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
         out = da.map_blocks(f, packed, chunks=chunks, new_axis=2)
         return cls(out)
 
-    def map_alleles(self, mapping, **kwargs):
+    def map_alleles(self, mapping):
 
         def f(block, bmapping):
             g = GenotypeArray(block)
@@ -381,21 +490,20 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
         mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
         # map blocks
-        out = da.map_blocks(f, self, mapping[:, None, :], chunks=self.chunks)
+        out = da.map_blocks(f, self.values, mapping[:, None, :], chunks=self.chunks)
         return type(self)(out)
 
-    def to_allele_counts(self, alleles=None):
+    def to_allele_counts(self, max_allele=None):
 
         # determine alleles to count
-        if alleles is None:
-            m = self.max().compute()[()]
-            alleles = list(range(m+1))
+        if max_allele is None:
+            max_allele = self.max().compute()[()]
 
-        chunks = (self.chunks[0], self.chunks[1], (len(alleles),))
-        return self._method('to_allele_counts', chunks=chunks, alleles=alleles)
+        chunks = (self.chunks[0], self.chunks[1], (max_allele + 1,))
+        return self._method('to_allele_counts', chunks=chunks, max_allele=max_allele)
 
-    def to_gt(self, phased=False, max_allele=None):
-        return self._method_drop_ploidy('to_gt', phased=phased, max_allele=max_allele)
+    def to_gt(self, max_allele=None):
+        return self._method_drop_ploidy('to_gt', max_allele=max_allele)
 
     def to_haplotypes(self):
         out = self.reshape(self.shape[0], -1)
@@ -440,7 +548,8 @@ copy_method_doc(GenotypeDaskArray.to_n_ref, GenotypeArray.to_n_ref)
 copy_method_doc(GenotypeDaskArray.to_n_alt, GenotypeArray.to_n_alt)
 copy_method_doc(GenotypeDaskArray.to_allele_counts, GenotypeArray.to_allele_counts)
 copy_method_doc(GenotypeDaskArray.to_packed, GenotypeArray.to_packed)
-GenotypeDaskArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
+# TODO
+# GenotypeDaskArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
 copy_method_doc(GenotypeDaskArray.count_alleles, GenotypeArray.count_alleles)
 copy_method_doc(GenotypeDaskArray.count_alleles_subpops,
                 GenotypeArray.count_alleles_subpops)
@@ -453,6 +562,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
 
     @classmethod
     def check_values(cls, data):
+        super(HaplotypeDaskArray, cls).check_values(data)
         check_ndim(data, 2)
         check_integer_dtype(data)
 
@@ -470,8 +580,8 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
     def n_haplotypes(self):
         return self.shape[1]
 
-    def compute(self, *args, **kwargs):
-        out = super(HaplotypeDaskArray, self).compute(*args, **kwargs)
+    def compute(self, **kwargs):
+        out = super(HaplotypeDaskArray, self).compute(**kwargs)
         return HaplotypeArray(out)
 
     def to_genotypes(self, ploidy=2):
@@ -485,9 +595,8 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
             h = HaplotypeArray(block)
             return h.to_genotypes(ploidy)
 
-        # rechunk across all columns to ensure chunk boundaries don't break
-        # individuals
-        hd = self.rechunk(chunks={1: self.n_haplotypes})
+        # rechunk across all columns to ensure chunk boundaries don't break individuals
+        hd = self.values.rechunk(chunks={1: self.n_haplotypes})
 
         # determine output chunks
         chunks = (hd.chunks[0], hd.chunks[1], (ploidy,))
@@ -534,9 +643,9 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
 
         # deal with subpop
         if subpop:
-            hd = self.take(subpop, axis=1)
+            hd = self.take(subpop, axis=1).values
         else:
-            hd = self
+            hd = self.values
 
         # determine output chunks - preserve axis0, change axis1, new axis2
         chunks = (hd.chunks[0], (1,)*len(hd.chunks[1]), (max_allele+1,))
@@ -559,7 +668,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
         return {k: self.count_alleles(max_allele=max_allele, subpop=v)
                 for k, v in subpops.items()}
 
-    def map_alleles(self, mapping, **kwargs):
+    def map_alleles(self, mapping):
 
         def f(block, bmapping):
             h = HaplotypeArray(block)
@@ -569,24 +678,181 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
         mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
         # map blocks
-        out = da.map_blocks(f, self, mapping,
-                            chunks=self.chunks)
-        return view_subclass(out, HaplotypeDaskArray)
+        out = da.map_blocks(f, self.values, mapping, chunks=self.chunks)
+        return HaplotypeDaskArray(out)
 
-    def concatenate(self, others, axis=0):
-        pass
+    def compress(self, condition, axis=0, **kwargs):
+        return compress_haplotype_array(self, condition, axis=axis, cls=type(self), 
+                                        compress=da.compress, **kwargs)
+
+    def take(self, indices, axis=0, **kwargs):
+        return take_haplotype_array(self, indices, axis=axis, cls=type(self), 
+                                    take=da.take, **kwargs)
+    
+    def subset(self, sel0=None, sel1=None, **kwargs):
+        return subset_haplotype_array(self, sel0, sel1, cls=type(self), 
+                                      subset=da_subset, **kwargs)
+
+    def concatenate(self, others, axis=0, **kwargs):
+        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self), 
+                                           concatenate=da.concatenate, **kwargs)
 
 
 # copy docstrings
-copy_method_doc(HaplotypeDaskArray.to_genotypes,
-                HaplotypeArray.to_genotypes)
-copy_method_doc(HaplotypeDaskArray.count_alleles,
-                HaplotypeArray.count_alleles)
-copy_method_doc(HaplotypeDaskArray.count_alleles_subpops,
-                HaplotypeArray.count_alleles_subpops)
-copy_method_doc(HaplotypeDaskArray.map_alleles,
-                HaplotypeArray.map_alleles)
+copy_method_doc(HaplotypeDaskArray.to_genotypes, HaplotypeArray.to_genotypes)
+copy_method_doc(HaplotypeDaskArray.count_alleles, HaplotypeArray.count_alleles)
+copy_method_doc(HaplotypeDaskArray.count_alleles_subpops, HaplotypeArray.count_alleles_subpops)
+copy_method_doc(HaplotypeDaskArray.map_alleles, HaplotypeArray.map_alleles)
 
 
 class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
-    pass
+
+    @classmethod
+    def check_values(cls, data):
+        super(AlleleCountsDaskArray, cls).check_values(data)
+        check_ndim(data, 2)
+        check_integer_dtype(data)
+
+    def __init__(self, data, chunks=None, name=None, lock=False):
+        super(AlleleCountsDaskArray, self).__init__(data, chunks=chunks, name=name, lock=lock)
+
+    def __getitem__(self, item):
+        return index_allele_counts_array(self, item, cls=type(self))
+
+    def __add__(self, other):
+        ret = super(AlleleCountsDaskArray, self).__add__(other)
+        if hasattr(ret, 'shape') and ret.shape == self.shape:
+            ret = AlleleCountsDaskArray(ret)
+        return ret
+
+    def __sub__(self, other):
+        ret = super(AlleleCountsDaskArray, self).__sub__(other)
+        if hasattr(ret, 'shape') and ret.shape == self.shape:
+            ret = AlleleCountsDaskArray(ret)
+        return ret
+
+    @property
+    def n_variants(self):
+        """Number of variants (length of first array dimension)."""
+        return self.shape[0]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles (length of second array dimension)."""
+        return self.shape[1]
+
+    def compute(self, **kwargs):
+        out = super(AlleleCountsDaskArray, self).compute(**kwargs)
+        return AlleleCountsArray(out)
+
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.chunks
+
+        def f(block):
+            ac = AlleleCountsArray(block)
+            method = getattr(ac, method_name)
+            return method(**kwargs)
+        out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis)
+
+        return out
+
+    def _method_drop_axis1(self, method_name, **kwargs):
+        chunks = self.chunks[:1]
+        return self._method(method_name, chunks=chunks, drop_axis=1, **kwargs)
+
+    def to_frequencies(self, fill=np.nan):
+        return self._method('to_frequencies', chunks=self.chunks, fill=fill)
+
+    def allelism(self):
+        return self._method_drop_axis1('allelism')
+
+    def max_allele(self):
+        return self._method_drop_axis1('max_allele')
+
+    def is_variant(self):
+        return self._method_drop_axis1('is_variant')
+
+    def is_non_variant(self):
+        return self._method_drop_axis1('is_non_variant')
+
+    def is_segregating(self):
+        return self._method_drop_axis1('is_segregating')
+
+    def is_non_segregating(self, allele=None):
+        return self._method_drop_axis1('is_non_segregating', allele=allele)
+
+    def is_singleton(self, allele=1):
+        return self._method_drop_axis1('is_singleton', allele=allele)
+
+    def is_doubleton(self, allele=1):
+        return self._method_drop_axis1('is_doubleton', allele=allele)
+
+    def is_biallelic(self):
+        return self._method_drop_axis1('is_biallelic')
+
+    def is_biallelic_01(self, min_mac=None):
+        return self._method_drop_axis1('is_biallelic_01', min_mac=min_mac)
+
+    def _count(self, method_name, **kwargs):
+        method = getattr(self, method_name)
+        # result is scalar, might as well compute now (also helps tests)
+        return method(**kwargs).sum().compute()[()]
+
+    def count_variant(self):
+        return self._count('is_variant')
+
+    def count_non_variant(self):
+        return self._count('is_non_variant')
+
+    def count_segregating(self):
+        return self._count('is_segregating')
+
+    def count_non_segregating(self, allele=None):
+        return self._count('is_non_segregating', allele=allele)
+
+    def count_singleton(self, allele=1):
+        return self._count('is_singleton', allele=allele)
+
+    def count_doubleton(self, allele=1):
+        return self._count('is_doubleton', allele=allele)
+
+    def map_alleles(self, mapping):
+
+        def f(block, bmapping):
+            ac = AlleleCountsArray(block)
+            return ac.map_alleles(bmapping)
+
+        # obtain dask array
+        mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
+
+        # map blocks
+        out = da.map_blocks(f, self.values, mapping, chunks=self.chunks)
+        return AlleleCountsDaskArray(out)
+
+    def compress(self, condition, axis=0, **kwargs):
+        return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
+                                            compress=da.compress, **kwargs)
+
+    def take(self, indices, axis=0, **kwargs):
+        return take_allele_counts_array(self, indices, axis=axis, cls=type(self),
+                                        take=da.take, **kwargs)
+
+    def concatenate(self, others, axis=0, **kwargs):
+        return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
+                                               concatenate=da.concatenate, **kwargs)
+
+
+copy_method_doc(AlleleCountsDaskArray.allelism, AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsDaskArray.max_allele, AlleleCountsArray.max_allele)
+copy_method_doc(AlleleCountsDaskArray.map_alleles, AlleleCountsArray.map_alleles)
+copy_method_doc(AlleleCountsDaskArray.to_frequencies, AlleleCountsArray.to_frequencies)
+copy_method_doc(AlleleCountsDaskArray.is_variant, AlleleCountsArray.is_variant)
+copy_method_doc(AlleleCountsDaskArray.is_non_variant, AlleleCountsArray.is_non_variant)
+copy_method_doc(AlleleCountsDaskArray.is_segregating, AlleleCountsArray.is_segregating)
+copy_method_doc(AlleleCountsDaskArray.is_non_segregating, AlleleCountsArray.is_non_segregating)
+copy_method_doc(AlleleCountsDaskArray.is_singleton, AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsDaskArray.is_doubleton, AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsDaskArray.is_biallelic, AlleleCountsArray.is_biallelic)
+copy_method_doc(AlleleCountsDaskArray.is_biallelic_01, AlleleCountsArray.is_biallelic_01)

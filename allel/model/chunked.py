@@ -339,7 +339,8 @@ copy_method_doc(GenotypeChunkedArray.to_n_ref, GenotypeArray.to_n_ref)
 copy_method_doc(GenotypeChunkedArray.to_n_alt, GenotypeArray.to_n_alt)
 copy_method_doc(GenotypeChunkedArray.to_allele_counts, GenotypeArray.to_allele_counts)
 copy_method_doc(GenotypeChunkedArray.to_packed, GenotypeArray.to_packed)
-GenotypeChunkedArray.from_packed.__doc__ = GenotypeArray.from_packed.__doc__
+# TODO
+# copy_method_doc(GenotypeChunkedArray.from_packed, GenotypeArray.from_packed)
 copy_method_doc(GenotypeChunkedArray.count_alleles, GenotypeArray.count_alleles)
 copy_method_doc(GenotypeChunkedArray.count_alleles_subpops,
                 GenotypeArray.count_alleles_subpops)
@@ -536,16 +537,6 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         """Number of alleles (length of second array dimension)."""
         return self.shape[1]
 
-    @property
-    def n_variants(self):
-        """Number of variants (length of first array dimension)."""
-        return self.shape[0]
-
-    @property
-    def n_alleles(self):
-        """Number of alleles (length of second array dimension)."""
-        return self.shape[1]
-
     def to_frequencies(self, fill=np.nan, **kwargs):
         out = self.apply_method('to_frequencies', kwargs=dict(fill=fill), **kwargs)
         return ChunkedArrayWrapper(out)
@@ -649,30 +640,19 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
                                                concatenate=_chunked.concatenate, **kwargs)
 
 
-copy_method_doc(AlleleCountsChunkedArray.allelism,
-                AlleleCountsArray.allelism)
-copy_method_doc(AlleleCountsChunkedArray.max_allele,
-                AlleleCountsArray.max_allele)
-copy_method_doc(AlleleCountsChunkedArray.map_alleles,
-                AlleleCountsArray.map_alleles)
-copy_method_doc(AlleleCountsChunkedArray.to_frequencies,
-                AlleleCountsArray.to_frequencies)
-copy_method_doc(AlleleCountsChunkedArray.is_variant, 
-                AlleleCountsArray.is_variant)
-copy_method_doc(AlleleCountsChunkedArray.is_non_variant,
-                AlleleCountsArray.is_non_variant)
-copy_method_doc(AlleleCountsChunkedArray.is_segregating,
-                AlleleCountsArray.is_segregating)
+copy_method_doc(AlleleCountsChunkedArray.allelism, AlleleCountsArray.allelism)
+copy_method_doc(AlleleCountsChunkedArray.max_allele, AlleleCountsArray.max_allele)
+copy_method_doc(AlleleCountsChunkedArray.map_alleles, AlleleCountsArray.map_alleles)
+copy_method_doc(AlleleCountsChunkedArray.to_frequencies, AlleleCountsArray.to_frequencies)
+copy_method_doc(AlleleCountsChunkedArray.is_variant, AlleleCountsArray.is_variant)
+copy_method_doc(AlleleCountsChunkedArray.is_non_variant, AlleleCountsArray.is_non_variant)
+copy_method_doc(AlleleCountsChunkedArray.is_segregating, AlleleCountsArray.is_segregating)
 copy_method_doc(AlleleCountsChunkedArray.is_non_segregating,
                 AlleleCountsArray.is_non_segregating)
-copy_method_doc(AlleleCountsChunkedArray.is_singleton,
-                AlleleCountsArray.is_singleton)
-copy_method_doc(AlleleCountsChunkedArray.is_doubleton,
-                AlleleCountsArray.is_doubleton)
-copy_method_doc(AlleleCountsChunkedArray.is_biallelic,
-                AlleleCountsArray.is_biallelic)
-copy_method_doc(AlleleCountsChunkedArray.is_biallelic_01,
-                AlleleCountsArray.is_biallelic_01)
+copy_method_doc(AlleleCountsChunkedArray.is_singleton, AlleleCountsArray.is_singleton)
+copy_method_doc(AlleleCountsChunkedArray.is_doubleton, AlleleCountsArray.is_doubleton)
+copy_method_doc(AlleleCountsChunkedArray.is_biallelic, AlleleCountsArray.is_biallelic)
+copy_method_doc(AlleleCountsChunkedArray.is_biallelic_01, AlleleCountsArray.is_biallelic_01)
 
 
 class VariantChunkedTable(ChunkedTableWrapper):

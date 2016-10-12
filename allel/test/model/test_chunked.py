@@ -83,38 +83,32 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
         g = self.setup_instance(np.array(diploid_genotype_data, dtype='i1'))
 
+        # total slice
+        s = g[:]
+        self.assertIsInstance(s, GenotypeArray)
+
         # row slice
         s = g[1:]
-        self.assertNotIsInstance(s, GenotypeChunkedArray)
         self.assertIsInstance(s, GenotypeArray)
 
         # col slice
         s = g[:, 1:]
-        self.assertNotIsInstance(s, GenotypeChunkedArray)
         self.assertIsInstance(s, GenotypeArray)
 
         # row index
         s = g[0]
-        self.assertNotIsInstance(s, GenotypeChunkedArray)
-        self.assertNotIsInstance(s, GenotypeArray)
         self.assertIsInstance(s, GenotypeVector)
 
         # col index
         s = g[:, 0]
-        self.assertNotIsInstance(s, GenotypeChunkedArray)
-        self.assertNotIsInstance(s, GenotypeArray)
         self.assertIsInstance(s, GenotypeVector)
 
         # ploidy index
         s = g[:, :, 0]
-        self.assertNotIsInstance(s, GenotypeChunkedArray)
-        self.assertNotIsInstance(s, GenotypeArray)
         self.assertIsInstance(s, np.ndarray)
 
         # item
         s = g[0, 0, 0]
-        self.assertNotIsInstance(s, GenotypeChunkedArray)
-        self.assertNotIsInstance(s, GenotypeArray)
         self.assertIsInstance(s, np.int8)
 
     def test_take(self):

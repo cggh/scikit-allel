@@ -10,11 +10,12 @@ import numpy as np
 
 
 # internal imports
-from allel.util import check_integer_dtype, check_shape, check_dtype, asarray_ndim, \
-    check_ndim, ignore_invalid, check_dim0_aligned
+from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
+    check_dim0_aligned
+from allel.util import check_ndim, asarray_ndim
 from allel.compat import PY2
-from allel.io import write_vcf, iter_gff3
-from allel.abc import NumpyArrayWrapper, DisplayAs1D, DisplayAs2D, NumpyRecArrayWrapper
+from allel.io import write_vcf, iter_gff3, recarray_from_hdf5_group, recarray_to_hdf5_group
+from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from .generic import index_genotype_vector, compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
@@ -53,6 +54,187 @@ def subset(data, sel0, sel1):
         sel1 = slice(None)
 
     return data[sel0, sel1]
+
+
+class NumpyArrayWrapper(ArrayWrapper):
+    """Abstract base class that wraps a NumPy array."""
+
+    def __init__(self, data, copy=False, **kwargs):
+        values = np.array(data, copy=copy, **kwargs)
+        super(NumpyArrayWrapper, self).__init__(values)
+
+    def __eq__(self, other):
+        return self.values == other
+
+    def __ne__(self, other):
+        return self.values != other
+
+    def __lt__(self, other):
+        return self.values < other
+
+    def __gt__(self, other):
+        return self.values > other
+
+    def __le__(self, other):
+        return self.values <= other
+
+    def __ge__(self, other):
+        return self.values >= other
+
+    def __abs__(self):
+        return abs(self.values)
+
+    def __add__(self, other):
+        return self.values + other
+
+    def __and__(self, other):
+        return self.values & other
+
+    def __div__(self, other):
+        return self.values.__div__(other)
+
+    def __floordiv__(self, other):
+        return self.values // other
+
+    def __inv__(self):
+        return ~self.values
+
+    def __invert__(self):
+        return ~self.values
+
+    def __lshift__(self, other):
+        return self.values << other
+
+    def __mod__(self, other):
+        return self.values % other
+
+    def __mul__(self, other):
+        return self.values * other
+
+    def __neg__(self):
+        return -self.values
+
+    def __or__(self, other):
+        return self.values | other
+
+    def __pos__(self):
+        return +self.values
+
+    def __pow__(self, other):
+        return self.values ** other
+
+    def __rshift__(self, other):
+        return self.values >> other
+
+    def __sub__(self, other):
+        return self.values - other
+
+    def __truediv__(self, other):
+        return self.values.__truediv__(other)
+
+    def __xor__(self, other):
+        return self.values ^ other
+
+    def copy(self, *args, **kwargs):
+        data = self.values.copy(*args, **kwargs)
+        # can always wrap this as sub-class type
+        return type(self)(data)
+
+
+class NumpyRecArrayWrapper(NumpyArrayWrapper, DisplayAsTable):
+
+    @classmethod
+    def _check_values(cls, data):
+        check_ndim(data, 1)
+        if not data.dtype.names:
+            raise ValueError('expected recarray')
+
+    # noinspection PyMissingConstructor
+    def __init__(self, data, copy=False, **kwargs):
+        values = np.rec.array(data, copy=copy, **kwargs)
+        self._check_values(values)
+        self._values = values
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    @classmethod
+    def from_hdf5_group(cls, *args, **kwargs):
+        a = recarray_from_hdf5_group(*args, **kwargs)
+        return cls(a, copy=False)
+
+    def to_hdf5_group(self, parent, name, **kwargs):
+        return recarray_to_hdf5_group(self, parent, name, **kwargs)
+
+    def eval(self, expression, vm='python'):
+        """Evaluate an expression against the table columns.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : ndarray
+
+        """
+
+        if vm == 'numexpr':
+            import numexpr as ne
+            return ne.evaluate(expression, local_dict=self)
+        else:
+            if PY2:
+                # locals must be a mapping
+                m = {k: self[k] for k in self.dtype.names}
+            else:
+                m = self
+            return eval(expression, dict(), m)
+
+    def query(self, expression, vm='python'):
+        """Evaluate expression and then use it to extract rows from the table.
+
+        Parameters
+        ----------
+        expression : string
+            Expression to evaluate.
+        vm : {'numexpr', 'python'}
+            Virtual machine to use.
+
+        Returns
+        -------
+        result : structured array
+
+        """
+
+        condition = self.eval(expression, vm=vm)
+        return self.compress(condition)
+
+    def compress(self, condition, axis=0):
+        out = self.values.compress(condition, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0):
+        out = self.values.take(indices, axis=axis)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def concatenate(self, others):
+        """Concatenate arrays."""
+        if not isinstance(others, (list, tuple)):
+            others = others,
+        tup = (self.values,) + tuple(o.values for o in others)
+        out = np.concatenate(tup, axis=0)
+        out = type(self)(out)
+        return out
 
 
 class Genotypes(NumpyArrayWrapper):
