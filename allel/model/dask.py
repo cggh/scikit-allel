@@ -72,6 +72,8 @@ def ensure_dask_array(data, chunks=None, name=None, lock=False):
             data = np.asarray(data)
         if not data.shape:
             raise TypeError('data is not array-like')
+        if isinstance(data, ArrayWrapper):
+            data = data.values
         chunks = get_chunks(data, chunks)
         return da.from_array(data, chunks=chunks, name=name, lock=lock)
 
@@ -96,78 +98,6 @@ class DaskArrayWrapper(ArrayWrapper):
 
     def __repr__(self):
         return self.caption
-
-    def __eq__(self, other):
-        return self.values == other
-
-    def __ne__(self, other):
-        return self.values != other
-
-    def __lt__(self, other):
-        return self.values < other
-
-    def __gt__(self, other):
-        return self.values > other
-
-    def __le__(self, other):
-        return self.values <= other
-
-    def __ge__(self, other):
-        return self.values >= other
-
-    def __abs__(self):
-        return abs(self.values)
-
-    def __add__(self, other):
-        return self.values + other
-
-    def __and__(self, other):
-        return self.values & other
-
-    def __div__(self, other):
-        return self.values.__div__(other)
-
-    def __floordiv__(self, other):
-        return self.values // other
-
-    def __inv__(self):
-        return ~self.values
-
-    def __invert__(self):
-        return ~self.values
-
-    def __lshift__(self, other):
-        return self.values << other
-
-    def __mod__(self, other):
-        return self.values % other
-
-    def __mul__(self, other):
-        return self.values * other
-
-    def __neg__(self):
-        return -self.values
-
-    def __or__(self, other):
-        return self.values | other
-
-    def __pos__(self):
-        return +self.values
-
-    def __pow__(self, other):
-        return self.values ** other
-
-    def __rshift__(self, other):
-        return self.values >> other
-
-    def __sub__(self, other):
-        return self.values - other
-
-    def __truediv__(self, other):
-        return self.values.__truediv__(other)
-
-    def __xor__(self, other):
-        return self.values ^ other
 
     def compute(self, **kwargs):
         return self.values.compute(**kwargs)
@@ -300,7 +230,7 @@ class GenotypesDask(DaskArrayWrapper):
         return self._count('is_call', axis, call=call)
 
     def str_items(self):
-        self.compute().str_items()
+        return self.compute().str_items()
 
 
 class GenotypeDaskVector(GenotypesDask, DisplayAs1D):
@@ -697,6 +627,9 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
         return concatenate_haplotype_array(self, others, axis=axis, cls=type(self), 
                                            concatenate=da.concatenate, **kwargs)
 
+    def str_items(self):
+        return self.compute().str_items()
+
 
 # copy docstrings
 copy_method_doc(HaplotypeDaskArray.to_genotypes, HaplotypeArray.to_genotypes)
@@ -842,6 +775,9 @@ class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
     def concatenate(self, others, axis=0, **kwargs):
         return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
                                                concatenate=da.concatenate, **kwargs)
+
+    def str_items(self):
+        return self.compute().str_items()
 
 
 copy_method_doc(AlleleCountsDaskArray.allelism, AlleleCountsArray.allelism)

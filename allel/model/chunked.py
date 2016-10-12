@@ -699,7 +699,7 @@ class VariantChunkedTable(ChunkedTableWrapper):
         ...                                names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
         >>> vt  # doctest: +ELLIPSIS
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
-           nbytes=220 cbytes=220 cratio=1.0;
+           nbytes=220 cbytes=220 cratio=1.0
            values=h5py._hl.group.Group>
 
     Obtain a single row::
@@ -719,7 +719,7 @@ class VariantChunkedTable(ChunkedTableWrapper):
 
         >>> vt[['CHROM', 'POS']]
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8')]
-           nbytes=60 cbytes=60 cratio=1.0;
+           nbytes=60 cbytes=60 cratio=1.0
            values=builtins.list>
 
     Note that most methods will return a chunked table, using whatever
@@ -728,15 +728,15 @@ class VariantChunkedTable(ChunkedTableWrapper):
 
         >>> vt.copy()  # doctest: +ELLIPSIS
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
-           nbytes=220 cbytes=80.0K cratio=0.0;
+           nbytes=220 cbytes=80.0K cratio=0.0
            values=bcolz.ctable.ctable>
         >>> vt.copy(storage='zarr')  # doctest: +ELLIPSIS
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
-           nbytes=220 cbytes=1.7K cratio=0.1;
+           nbytes=220 cbytes=1.7K cratio=0.1
            values=allel.chunked.storage_zarr.ZarrTable>
         >>> vt.copy(storage='hdf5mem_zlib1')  # doctest: +ELLIPSIS
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
-           nbytes=220 cbytes=22.5K cratio=0.0;
+           nbytes=220 cbytes=22.5K cratio=0.0
            values=h5py._hl.files.File>
 
     """

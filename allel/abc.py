@@ -15,6 +15,9 @@ class ArrayWrapper(object):
             raise TypeError('values must be array-like')
 
     def __init__(self, data):
+        if isinstance(data, ArrayWrapper):
+            # don't wrap a wrapper
+            data = data.values
         self.check_values(data)
         self._values = data
 
@@ -58,6 +61,116 @@ class ArrayWrapper(object):
         if args:
             a = a.astype(args[0])
         return a
+
+    def __eq__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values == other
+
+    def __ne__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values != other
+
+    def __lt__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values < other
+
+    def __gt__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values > other
+
+    def __le__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values <= other
+
+    def __ge__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values >= other
+
+    def __abs__(self):
+        return abs(self.values)
+
+    def __add__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values + other
+
+    def __and__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values & other
+
+    def __div__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values.__div__(other)
+
+    def __floordiv__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values // other
+
+    def __inv__(self):
+        return ~self.values
+
+    def __invert__(self):
+        return ~self.values
+
+    def __lshift__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values << other
+
+    def __mod__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values % other
+
+    def __mul__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values * other
+
+    def __neg__(self):
+        return -self.values
+
+    def __or__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values | other
+
+    def __pos__(self):
+        return +self.values
+
+    def __pow__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values ** other
+
+    def __rshift__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values >> other
+
+    def __sub__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values - other
+
+    def __truediv__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values.__truediv__(other)
+
+    def __xor__(self, other):
+        if isinstance(other, ArrayWrapper):
+            other = other.values
+        return self.values ^ other
 
 
 def arr1d_to_html(indices, items, caption):
@@ -169,7 +282,7 @@ class DisplayAs1D(DisplayableArray):
                 list(range(self.shape[0] - edgeitems, self.shape[0], 1))
             )
             head = self[:edgeitems].str_items()
-            tail = self[-edgeitems:].str_items()
+            tail = self[self.shape[0] - edgeitems:].str_items()
             items = head + [' ... '] + tail
         else:
             indices = list(range(self.shape[0]))
@@ -220,7 +333,7 @@ class DisplayAs2D(DisplayableArray):
                 list(range(self.shape[0] - row_edgeitems, self.shape[0], 1))
             )
             head = self[:row_edgeitems].str_items()
-            tail = self[-row_edgeitems:].str_items()
+            tail = self[self.shape[0] - row_edgeitems:].str_items()
             items = head + [' ... '] + tail
         else:
             row_indices = list(range(self.shape[0]))
@@ -234,7 +347,7 @@ class DisplayAs2D(DisplayableArray):
             )
             items = [
                 row if row == ' ... ' else
-                (row[:col_edgeitems] + [' ... '] + row[-col_edgeitems:])
+                (row[:col_edgeitems] + [' ... '] + row[self.shape[1] - col_edgeitems:])
                 for row in items
             ]
         else:
@@ -302,7 +415,7 @@ class DisplayAsTable(DisplayableArray):
                 list(range(self.shape[0] - edgeitems, self.shape[0], 1))
             )
             head = self[:edgeitems].str_items()
-            tail = self[-edgeitems:].str_items()
+            tail = self[self.shape[0] - edgeitems:].str_items()
             items = head + [' ... '] + tail
         else:
             indices = list(range(self.shape[0]))

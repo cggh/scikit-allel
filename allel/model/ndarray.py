@@ -63,88 +63,11 @@ class NumpyArrayWrapper(ArrayWrapper):
         values = np.array(data, copy=copy, **kwargs)
         super(NumpyArrayWrapper, self).__init__(values)
 
-    def __eq__(self, other):
-        return self.values == other
 
-    def __ne__(self, other):
-        return self.values != other
-
-    def __lt__(self, other):
-        return self.values < other
-
-    def __gt__(self, other):
-        return self.values > other
-
-    def __le__(self, other):
-        return self.values <= other
-
-    def __ge__(self, other):
-        return self.values >= other
-
-    def __abs__(self):
-        return abs(self.values)
-
-    def __add__(self, other):
-        return self.values + other
-
-    def __and__(self, other):
-        return self.values & other
-
-    def __div__(self, other):
-        return self.values.__div__(other)
-
-    def __floordiv__(self, other):
-        return self.values // other
-
-    def __inv__(self):
-        return ~self.values
-
-    def __invert__(self):
-        return ~self.values
-
-    def __lshift__(self, other):
-        return self.values << other
-
-    def __mod__(self, other):
-        return self.values % other
-
-    def __mul__(self, other):
-        return self.values * other
-
-    def __neg__(self):
-        return -self.values
-
-    def __or__(self, other):
-        return self.values | other
-
-    def __pos__(self):
-        return +self.values
-
-    def __pow__(self, other):
-        return self.values ** other
-
-    def __rshift__(self, other):
-        return self.values >> other
-
-    def __sub__(self, other):
-        return self.values - other
-
-    def __truediv__(self, other):
-        return self.values.__truediv__(other)
-
-    def __xor__(self, other):
-        return self.values ^ other
-
-    def copy(self, *args, **kwargs):
-        data = self.values.copy(*args, **kwargs)
-        # can always wrap this as sub-class type
-        return type(self)(data)
-
-
-class NumpyRecArrayWrapper(NumpyArrayWrapper, DisplayAsTable):
+class NumpyRecArrayWrapper(DisplayAsTable):
 
     @classmethod
-    def _check_values(cls, data):
+    def check_values(cls, data):
         check_ndim(data, 1)
         if not data.dtype.names:
             raise ValueError('expected recarray')
@@ -152,7 +75,7 @@ class NumpyRecArrayWrapper(NumpyArrayWrapper, DisplayAsTable):
     # noinspection PyMissingConstructor
     def __init__(self, data, copy=False, **kwargs):
         values = np.rec.array(data, copy=copy, **kwargs)
-        self._check_values(values)
+        self.check_values(values)
         self._values = values
 
     def __getitem__(self, item):
@@ -214,6 +137,11 @@ class NumpyRecArrayWrapper(NumpyArrayWrapper, DisplayAsTable):
 
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
+
+    def copy(self, *args, **kwargs):
+        data = self.values.copy(*args, **kwargs)
+        # can always wrap this as sub-class type
+        return type(self)(data)
 
     def compress(self, condition, axis=0):
         out = self.values.compress(condition, axis=axis)

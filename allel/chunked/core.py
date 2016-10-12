@@ -812,7 +812,7 @@ class ChunkedTableWrapper(DisplayAsTable):
             if self.cbytes:
                 r += ' cbytes=%s' % _util.human_readable_size(self.cbytes)
             if self.cratio:
-                r += ' cratio=%.1f;' % self.cratio
+                r += ' cratio=%.1f' % self.cratio
         values_cls = type(self.values)
         r += '\n   values=%s.%s' % (values_cls.__module__, values_cls.__name__)
         r += '>'
