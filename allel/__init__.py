@@ -3,7 +3,14 @@
 
 
 from . import model
-from .model import *
+from .model.ndarray import *
+from .model.chunked import *
+try:
+    import dask
+except ImportError:
+    pass
+else:
+    from .model.dask import *
 from . import stats
 from .stats import *
 from . import plot

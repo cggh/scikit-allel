@@ -1198,7 +1198,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         """
 
-        check_ploidy(2, self.ploidy)
+        check_ploidy(self.ploidy, 2)
 
         if boundscheck:
             amx = self.max()

@@ -92,20 +92,20 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     directly via the `storage` keyword argument. E.g.::
 
         >>> g.copy()
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(3, 2, 2))
-          nbytes: 12; cbytes: 359; cratio: 0.0;
-          compression: blosc; compression_opts: {'shuffle': 1, 'cname': 'lz4', 'clevel': 5};
-          data: zarr.core.Array
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
+           nbytes=12 cbytes=359 cratio=0.0
+           compression=blosc compression_opts={'shuffle': 1, 'cname': 'lz4', 'clevel': 5}
+           values=zarr.core.Array>
         >>> g.copy(storage='bcolzmem')  # doctest: +ELLIPSIS
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(4096, 2, 2))
-          nbytes: 12; cbytes: 16.0K; cratio: 0.0;
-          compression: blosc; compression_opts: cparams(clevel=5, shuffle=1, cname='lz4', ...
-          data: bcolz.carray_ext.carray
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(4096, 2, 2)
+           nbytes=12 cbytes=16.0K cratio=0.0
+           compression=blosc compression_opts=cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+           values=bcolz.carray_ext.carray>
         >>> g.copy(storage='hdf5mem_zlib1')
-        GenotypeChunkedArray((3, 2, 2), int8, chunks=(3, 2, 2))
-          nbytes: 12; cbytes: 20; cratio: 0.6;
-          compression: gzip; compression_opts: 1;
-          data: h5py._hl.dataset.Dataset
+        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
+           nbytes=12 cbytes=20 cratio=0.6
+           compression=gzip compression_opts=1
+           values=h5py._hl.dataset.Dataset>
 
     """  # flake8: noqa
 
@@ -729,18 +729,18 @@ class VariantChunkedTable(ChunkedTableWrapper):
     chunked storage is set as default (bcolz ctable) or specified
     directly via the `storage` keyword argument. E.g.::
 
-        >>> vt.copy()
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 1.7K; cratio: 0.1;
-          data: allel.chunked.storage_zarr.ZarrTable
-        >>> vt.copy(storage='bcolzmem')
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 80.0K; cratio: 0.0;
-          data: bcolz.ctable.ctable
-        >>> vt.copy(storage='hdf5mem_zlib1')
-        VariantChunkedTable(5)
-          nbytes: 220; cbytes: 131; cratio: 1.7;
-          data: h5py._hl.files.File
+        >>> vt.copy()  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=1.7K cratio=0.1
+           values=allel.chunked.storage_zarr.ZarrTable>
+        >>> vt.copy(storage='bcolzmem')  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=80.0K cratio=0.0
+           values=bcolz.ctable.ctable>
+        >>> vt.copy(storage='hdf5mem_zlib1')  # doctest: +ELLIPSIS
+        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
+           nbytes=220 cbytes=131 cratio=1.7
+           values=h5py._hl.files.File>
 
     """
 

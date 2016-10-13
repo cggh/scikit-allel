@@ -7,7 +7,7 @@ import numpy as np
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray
 from allel.util import asarray_ndim, check_dim_aligned, check_ploidy, \
-    check_min_samples
+    check_min_samples, check_type, check_dtype
 
 
 def mendel_errors(parent_genotypes, progeny_genotypes):
@@ -183,15 +183,13 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
     # setup
     parent_genotypes = GenotypeArray(parent_genotypes)
     progeny_genotypes = GenotypeArray(progeny_genotypes)
-    check_ploidy(2, parent_genotypes.ploidy)
-    check_ploidy(2, progeny_genotypes.ploidy)
+    check_ploidy(parent_genotypes.ploidy, 2)
+    check_ploidy(progeny_genotypes.ploidy, 2)
 
     # transform into per-call allele counts
     max_allele = max(parent_genotypes.max(), progeny_genotypes.max())
-    alleles = list(range(max_allele + 1))
-    parent_gc = parent_genotypes.to_allele_counts(alleles=alleles, dtype='i1')
-    progeny_gc = progeny_genotypes.to_allele_counts(alleles=alleles,
-                                                    dtype='i1')
+    parent_gc = parent_genotypes.to_allele_counts(max_allele=max_allele, dtype='i1')
+    progeny_gc = progeny_genotypes.to_allele_counts(max_allele=max_allele, dtype='i1')
 
     # detect nonparental and hemiparental inheritance by comparing allele
     # counts between parents and progeny
@@ -303,21 +301,11 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     # main inheritance states
     inherit_parent1 = is_callable_seg & (progeny_haplotypes == parent1)
     inherit_parent2 = is_callable_seg & (progeny_haplotypes == parent2)
-    nonseg_ref = (
-        is_callable &
-        parent_is_hom_ref &
-        (progeny_haplotypes == parent1)
-    )
-    nonseg_alt = (
-        is_callable &
-        parent_is_hom_alt &
-        (progeny_haplotypes == parent1)
-    )
-    nonparental = (
-        is_callable &
+    nonseg_ref = (is_callable & parent_is_hom_ref & (progeny_haplotypes == parent1))
+    nonseg_alt = (is_callable & parent_is_hom_alt & (progeny_haplotypes == parent1))
+    nonparental = (is_callable &
         (progeny_haplotypes != parent1) &
-        (progeny_haplotypes != parent2)
-    )
+        (progeny_haplotypes != parent2))
 
     # record inheritance states
     # N.B., order in which these are set matters
@@ -347,8 +335,6 @@ def phase_progeny_by_transmission(g):
     -------
     g : ndarray, int8, shape (n_variants, n_samples, 2)
         Genotype array with progeny phased where possible.
-    is_phased : ndarray, bool, shape (n_variants, n_samples)
-        True where genotype has been phased.
 
     Examples
     --------
@@ -369,24 +355,23 @@ def phase_progeny_by_transmission(g):
     ...     [[0, 0], [0, 0], [-1, -1]],
     ...     [[0, 0], [0, 0], [1, 1]],
     ... ], dtype='i1')
-    >>> g, is_phased = allel.stats.phase_progeny_by_transmission(g)
-    >>> g
-    GenotypeArray((14, 3, 2), dtype=int8)
-    [[[ 0  0]  [ 0  0]  [ 0  0]]
-     [[ 1  1]  [ 1  1]  [ 1  1]]
-     [[ 0  0]  [ 1  1]  [ 0  1]]
-     [[ 1  1]  [ 0  0]  [ 1  0]]
-     [[ 0  0]  [ 0  1]  [ 0  0]]
-     [[ 0  0]  [ 0  1]  [ 0  1]]
-     [[ 0  1]  [ 0  0]  [ 1  0]]
-     [[ 0  1]  [ 0  1]  [ 0  1]]
-     [[ 0  1]  [ 1  2]  [ 0  1]]
-     [[ 1  2]  [ 0  1]  [ 2  1]]
-     [[ 0  1]  [ 2  3]  [ 0  2]]
-     [[ 2  3]  [ 0  1]  [ 3  1]]
-     [[ 0  0]  [ 0  0]  [-1 -1]]
-     [[ 0  0]  [ 0  0]  [ 1  1]]]
-    >>> is_phased
+    >>> g = allel.stats.phase_progeny_by_transmission(g)
+    >>> print(g.to_str(row_threshold=None))
+    0/0 0/0 0|0
+    1/1 1/1 1|1
+    0/0 1/1 0|1
+    1/1 0/0 1|0
+    0/0 0/1 0|0
+    0/0 0/1 0|1
+    0/1 0/0 1|0
+    0/1 0/1 0/1
+    0/1 1/2 0|1
+    1/2 0/1 2|1
+    0/1 2/3 0|2
+    2/3 0/1 3|1
+    0/0 0/0 ./.
+    0/0 0/0 1/1
+    >>> g.is_phased
     array([[False, False,  True],
            [False, False,  True],
            [False, False,  True],
@@ -406,28 +391,27 @@ def phase_progeny_by_transmission(g):
 
     # setup
     g = GenotypeArray(g, dtype='i1', copy=True)
-    check_ploidy(2, g.ploidy)
-    check_min_samples(3, g.n_samples)
+    check_ploidy(g.ploidy, 2)
+    check_min_samples(g.n_samples, 3)
 
     # run the phasing
     from allel.opt.stats import phase_progeny_by_transmission_int8
-    is_phased = phase_progeny_by_transmission_int8(g)
+    is_phased = phase_progeny_by_transmission_int8(g.values)
+    g.is_phased = np.asarray(is_phased).view(bool)
 
     # outputs
-    return g, np.asarray(is_phased).view('b1')
+    return g
 
 
-def phase_parents_by_transmission(g, is_phased, window_size):
+def phase_parents_by_transmission(g, window_size):
     """Phase parent genotypes from a trio or cross, given progeny genotypes
     already phased by Mendelian transmission.
 
     Parameters
     ----------
-    g : array_like, int, shape (n_variants, n_samples, 2)
+    g : GenotypeArray
         Genotype array, with parents as first two columns and progeny as
         remaining columns, where progeny genotypes are already phased.
-    is_phased : ndarray, bool, shape (n_variants, n_samples)
-        True where genotype has been phased.
     window_size : int
         Number of previous heterozygous sites to include when phasing each
         parent. A number somewhere between 10 and 100 may be appropriate,
@@ -435,27 +419,26 @@ def phase_parents_by_transmission(g, is_phased, window_size):
 
     Returns
     -------
-    g : ndarray, int8, shape (n_variants, n_samples, 2)
+    g : GenotypeArray
         Genotype array with parents phased where possible.
-    is_phased : ndarray, bool, shape (n_variants, n_samples)
-        True where genotype has been phased.
 
     """
 
     # setup
-    g = GenotypeArray(g, dtype='i1', copy=True)
-    check_ploidy(2, g.ploidy)
-    check_min_samples(3, g.n_samples)
-    is_phased = asarray_ndim(is_phased, 2, dtype=bool, copy=True)
-    check_dim_aligned(0, g, is_phased)
-    check_dim_aligned(1, g, is_phased)
+    check_type(g, GenotypeArray)
+    check_dtype(g.values, 'i1')
+    check_ploidy(g.ploidy, 2)
+    if g.is_phased is None:
+        raise ValueError('genotype array must first have progeny phased by transmission')
+    check_min_samples(g.n_samples, 3)
 
     # run the phasing
     from allel.opt.stats import phase_parents_by_transmission_int8
-    phase_parents_by_transmission_int8(g, is_phased.view('u1'), window_size)
+    is_phased = g.is_phased.view('u1')
+    phase_parents_by_transmission_int8(g.values, is_phased, window_size)
 
     # outputs
-    return g, is_phased
+    return g
 
 
 def phase_by_transmission(g, window_size, copy=True):
@@ -478,24 +461,23 @@ def phase_by_transmission(g, window_size, copy=True):
 
     Returns
     -------
-    g : ndarray, int8, shape (n_variants, n_samples, 2)
+    g : GenotypeArray
         Genotype array with progeny phased where possible.
-    is_phased : ndarray, bool, shape (n_variants, n_samples)
-        True where genotype has been phased.
 
     """
 
     # setup
     g = GenotypeArray(g, dtype='i1', copy=copy)
-    check_ploidy(2, g.ploidy)
-    check_min_samples(3, g.n_samples)
+    check_ploidy(g.ploidy, 2)
+    check_min_samples(g.n_samples, 3)
 
     # phase the progeny
     from allel.opt.stats import phase_progeny_by_transmission_int8
-    is_phased = phase_progeny_by_transmission_int8(g)
+    is_phased = phase_progeny_by_transmission_int8(g.values)
+    g.is_phased = np.asarray(is_phased).view(bool)
 
     # phase the parents
     from allel.opt.stats import phase_parents_by_transmission_int8
-    phase_parents_by_transmission_int8(g, is_phased, window_size)
+    phase_parents_by_transmission_int8(g.values, is_phased, window_size)
 
-    return g, np.asarray(is_phased).view('b1')
+    return g

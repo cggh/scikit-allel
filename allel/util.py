@@ -407,15 +407,20 @@ def contains_newaxis(item):
     return False
 
 
-def check_ploidy(expect, actual):
+def check_ploidy(actual, expect):
     if expect != actual:
         raise ValueError(
             'expected ploidy %s, found %s' % (expect, actual)
         )
 
 
-def check_min_samples(expect, actual):
+def check_min_samples(actual, expect):
     if actual < expect:
         raise ValueError(
             'expected at least %s samples, found %s' % (expect, actual)
         )
+
+
+def check_type(obj, expected):
+    if not isinstance(obj, expected):
+        raise TypeError('bad argument type, expected %s, found %s' % (expected, type(obj)))

@@ -311,6 +311,6 @@ def test_phase_progeny_by_transmission():
 
     # run checks
     g = np.array(gu, dtype='i1')
-    ga, is_phased = phase_progeny_by_transmission(g)
+    ga = phase_progeny_by_transmission(g)
     assert_array_equal(gp, ga)
-    assert_array_equal(expect_is_phased, is_phased)
+    assert_array_equal(expect_is_phased, ga.is_phased)

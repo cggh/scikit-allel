@@ -10,7 +10,7 @@ import numpy as np
 from allel.compat import string_types, integer_types, range
 from allel.chunked import util as _util
 from allel.abc import ArrayWrapper, DisplayAsTable
-from allel.model.ndarray import subset as _numpy_subset
+from allel.model.ndarray import subset as _numpy_subset, NumpyRecArrayWrapper
 
 
 def store(data, arr, start=0, stop=None, offset=0, blen=None):
@@ -733,7 +733,7 @@ class ChunkedTableWrapper(DisplayAsTable):
 
     """
 
-    array_cls = None
+    array_cls = NumpyRecArrayWrapper
 
     # noinspection PyMissingConstructor
     def __init__(self, data, names=None):

@@ -76,23 +76,30 @@ class ZarrStorage(object):
             g.array(name=n, data=c, chunks=chunks)
 
         # create table
-        ztbl = ZarrTable(names, g)
+        ztbl = ZarrTable(g, names=names)
         return ztbl
 
 
 class ZarrTable(object):
 
-    def __init__(self, names, columns):
+    def __init__(self, grp, names=None):
+        self.grp = grp
+        available_names = sorted(grp.array_keys())
+        if names is None:
+            names = available_names
+        else:
+            for n in names:
+                if n not in available_names:
+                    raise ValueError('name not available: %s' % n)
         self.names = names
-        self.columns = columns
 
     def __getitem__(self, item):
-        return self.columns[item]
+        return self.grp[item]
 
     def append(self, data):
-        _, columns = _util.check_table_like(data, names=self.names)
-        for n in self.names:
-            self.columns[n].append(columns[n])
+        names, columns = _util.check_table_like(data, names=self.names)
+        for n, c in zip(names, columns):
+            self.grp[n].append(c)
 
 
 class ZarrMemStorage(ZarrStorage):
