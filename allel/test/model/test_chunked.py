@@ -478,7 +478,8 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
 
         # bad access
         with assert_raises(IndexError):
-            _ = vt[:, 0]
+            # noinspection PyStatementEffect
+            vt[:, 0]
 
     def test_take(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)

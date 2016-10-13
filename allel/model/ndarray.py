@@ -1473,23 +1473,6 @@ class GenotypeArray(Genotypes, DisplayAs2D):
                 self.values, self.mask.view(dtype='u1'), max_allele, subpop
             )
 
-        # else:
-        #     # set up output array
-        #     ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
-        #
-        #     # extract subpop
-        #     g = self
-        #     if subpop is not None:
-        #         g = g[:, subpop]
-        #
-        #     # count alleles
-        #     alleles = list(range(max_allele + 1))
-        #     for allele in alleles:
-        #         allele_match = g == allele
-        #         if g.mask is not None:
-        #             allele_match &= ~g.mask[:, :, None]
-        #         np.sum(allele_match, axis=(1, 2), out=ac[:, allele])
-
         return AlleleCountsArray(ac, copy=False)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
@@ -1922,21 +1905,6 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         else:
             ac = haplotype_array_count_alleles_subpop(self.values, max_allele, subpop)
 
-        # else:
-        #     # set up output array
-        #     ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
-        #
-        #     # extract subpop
-        #     if subpop is not None:
-        #         h = self[:, subpop]
-        #     else:
-        #         h = self
-        #
-        #     # count alleles
-        #     alleles = list(range(max_allele + 1))
-        #     for allele in alleles:
-        #         np.sum(h == allele, axis=1, out=ac[:, allele])
-
         return AlleleCountsArray(ac, copy=False)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
@@ -2019,12 +1987,6 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         # use optimisation
         mapping = np.asarray(mapping, dtype=self.dtype)
         data = haplotype_array_map_alleles(self.values, mapping, copy=copy)
-
-        # else:
-        #     # use numpy indexing
-        #     i = np.arange(self.shape[0]).reshape((-1, 1))
-        #     data = mapping[i, self]
-        #     data[self < 0] = -1
 
         return HaplotypeArray(data, copy=False)
 
