@@ -29,8 +29,8 @@ def sfs(dac):
     dac = asarray_ndim(dac, 1)
     check_integer_dtype(dac)
 
-    # need integer for bincount
-    dac = dac.astype('i8', copy=False)
+    # need platform integer for bincount
+    dac = dac.astype(int, copy=False)
 
     # compute site frequency spectrum
     s = np.bincount(dac)
@@ -63,8 +63,8 @@ def sfs_folded(ac):
     # compute minor allele counts
     mac = np.amin(ac, axis=1)
 
-    # need integer for bincount
-    mac = mac.astype('i8', copy=False)
+    # need platform integer for bincount
+    mac = mac.astype(int, copy=False)
 
     # compute folded site frequency spectrum
     s = np.bincount(mac)
@@ -205,8 +205,8 @@ def joint_sfs(dac1, dac2):
     n = np.max(dac1) + 1
     m = np.max(dac2) + 1
 
-    # ensure integer for bincount
-    tmp = (dac1 * m + dac2).astype('i8', copy=False)
+    # need platform integer for bincount
+    tmp = (dac1 * m + dac2).astype(int, copy=False)
 
     s = np.bincount(tmp)
     s.resize((n, m))
@@ -248,7 +248,7 @@ def joint_sfs_folded(ac1, ac2):
     # compute site frequency spectrum
     m = np.max(mac1) + 1
     n = np.max(mac2) + 1
-    tmp = (mac1 * n + mac2).astype('i8', copy=False)
+    tmp = (mac1 * n + mac2).astype(int, copy=False)
     s = np.bincount(tmp)
     s.resize((m, n))
     return s

@@ -59,7 +59,6 @@ test_script:
   - "%CMD_IN_ENV% conda create --yes -n test-environment python=%PYTHON_VERSION%"
   - "%CMD_IN_ENV% activate test-environment"
   - "%CMD_IN_ENV% conda install --yes --file=requirements_ci.txt"
-  - "%CMD_IN_ENV% pip install bcolz==1.1.0 hmmlearn"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
   - "%CMD_IN_ENV% nosetests -v allel --exclude=from_gff3_region"
 

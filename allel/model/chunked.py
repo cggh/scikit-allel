@@ -99,7 +99,7 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         >>> g.copy(storage='bcolzmem')  # doctest: +ELLIPSIS
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(4096, 2, 2)
            nbytes=12 cbytes=16.0K cratio=0.0
-           compression=blosc compression_opts=cparams(clevel=5, shuffle=1, cname='lz4', quantize=0)
+           compression=blosc compression_opts=cparams(clevel=5, shuffle=1, cname='blosclz')
            values=bcolz.carray_ext.carray>
         >>> g.copy(storage='hdf5mem_zlib1')
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
@@ -295,9 +295,7 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         return AlleleCountsChunkedTable(out)
 
     def to_gt(self, max_allele=None, **kwargs):
-        out = self.apply_method('to_gt',
-                                kwargs=dict(max_allele=max_allele),
-                                **kwargs)
+        out = self.apply_method('to_gt', kwargs=dict(max_allele=max_allele), **kwargs)
         return out
 
     def map_alleles(self, mapping, **kwargs):

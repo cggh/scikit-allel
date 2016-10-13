@@ -8,3 +8,4 @@ h5py
 zarr
 nose
 flake8
+bcolz

@@ -649,8 +649,7 @@ class ChunkedArrayWrapper(ArrayWrapper):
     count_nonzero = count_nonzero
 
     def apply(self, f, blen=None, storage=None, create='array', **kwargs):
-        out = apply(self, f, blen=blen, storage=storage, create=create,
-                    **kwargs)
+        out = apply(self, f, blen=blen, storage=storage, create=create, **kwargs)
         # don't wrap, leave this up to user
         return out
 
