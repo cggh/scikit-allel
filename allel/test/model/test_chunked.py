@@ -421,7 +421,8 @@ class AlleleCountsChunkedArrayTestsHDF5Mem(AlleleCountsChunkedArrayTests):
         return AlleleCountsChunkedArray(data)
 
 
-class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface, unittest.TestCase):
+class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface,
+                                            unittest.TestCase):
 
     _class = GenotypeAlleleCountsChunkedArray
 

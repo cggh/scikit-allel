@@ -478,4 +478,3 @@ class GenotypeAlleleCountsArrayTests(GenotypeAlleleCountsArrayInterface, unittes
         s = g[0, 0, 0]
         assert_is_instance(s, np.int8)
         assert_not_is_instance(s, GenotypeAlleleCountsArray)
-

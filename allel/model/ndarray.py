@@ -30,8 +30,8 @@ from allel.opt.model import genotype_array_pack_diploid, genotype_array_count_al
 
 
 __all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
-           'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector', 'SortedIndex', 'UniqueIndex',
-           'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+           'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector', 'SortedIndex',
+           'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
 
 
 def subset(data, sel0, sel1):
