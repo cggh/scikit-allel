@@ -24,7 +24,7 @@ install:
   - source activate test-environment
   - conda install --yes gcc
   - conda install --yes --name=test-environment --file=requirements_ci.txt
-  - pip install bcolz
+  - pip install bcolz hmmlearn
 
 script:
   - python setup.py build_ext --inplace

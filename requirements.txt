@@ -3,6 +3,7 @@ scipy
 matplotlib
 pandas
 scikit-learn
+hmmlearn
 numexpr
 nose
 seaborn
