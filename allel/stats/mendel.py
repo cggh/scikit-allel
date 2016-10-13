@@ -6,8 +6,7 @@ import numpy as np
 
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray
-from allel.util import asarray_ndim, check_dim_aligned, check_ploidy, \
-    check_min_samples, check_type, check_dtype
+from allel.util import check_ploidy, check_min_samples, check_type, check_dtype
 
 
 def mendel_errors(parent_genotypes, progeny_genotypes):
@@ -303,9 +302,9 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     inherit_parent2 = is_callable_seg & (progeny_haplotypes == parent2)
     nonseg_ref = (is_callable & parent_is_hom_ref & (progeny_haplotypes == parent1))
     nonseg_alt = (is_callable & parent_is_hom_alt & (progeny_haplotypes == parent1))
-    nonparental = (is_callable &
-        (progeny_haplotypes != parent1) &
-        (progeny_haplotypes != parent2))
+    nonparental = (
+        is_callable & (progeny_haplotypes != parent1) & (progeny_haplotypes != parent2)
+    )
 
     # record inheritance states
     # N.B., order in which these are set matters
