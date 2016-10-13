@@ -109,14 +109,10 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
     """  # flake8: noqa
 
-    @classmethod
-    def check_values(cls, data):
-        super(GenotypeChunkedArray, cls).check_values(data)
-        check_ndim(data, 3)
-        check_integer_dtype(data)
-
     def __init__(self, data):
         super(GenotypeChunkedArray, self).__init__(data)
+        check_ndim(self.values, 3)
+        check_integer_dtype(self.values)
         self._mask = None
         self._is_phased = None
 
@@ -361,14 +357,10 @@ class HaplotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
     """
 
-    @classmethod
-    def check_values(cls, data):
-        super(HaplotypeChunkedArray, cls).check_values(data)
-        check_ndim(data, 2)
-        check_integer_dtype(data)
-
     def __init__(self, data):
         super(HaplotypeChunkedArray, self).__init__(data)
+        check_ndim(self.values, 2)
+        check_integer_dtype(self.values)
 
     def __getitem__(self, item):
         return index_haplotype_array(self, item, cls=HaplotypeArray)
@@ -504,14 +496,10 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
     """
 
-    @classmethod
-    def check_values(cls, data):
-        super(AlleleCountsChunkedArray, cls).check_values(data)
-        check_ndim(data, 2)
-        check_integer_dtype(data)
-
     def __init__(self, data):
         super(AlleleCountsChunkedArray, self).__init__(data)
+        check_ndim(self.values, 2)
+        check_integer_dtype(self.values)
 
     def __getitem__(self, item):
         return index_allele_counts_array(self, item, cls=AlleleCountsArray)

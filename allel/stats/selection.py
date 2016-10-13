@@ -398,8 +398,7 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
     gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
 
     # setup kwargs
-    kwargs = dict(min_ehh=min_ehh, min_maf=min_maf,
-                  include_edges=include_edges)
+    kwargs = dict(min_ehh=min_ehh, min_maf=min_maf, include_edges=include_edges)
 
     if use_threads and multiprocessing.cpu_count() > 1:
         # run with threads

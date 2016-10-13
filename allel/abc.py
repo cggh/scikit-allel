@@ -9,16 +9,12 @@ import numpy as np
 class ArrayWrapper(object):
     """Abstract base class that delegates to a wrapped array-like object."""
 
-    @classmethod
-    def check_values(cls, data):
-        if not hasattr(data, 'shape') or not hasattr(data, 'dtype'):
-            raise TypeError('values must be array-like')
-
     def __init__(self, data):
         if isinstance(data, ArrayWrapper):
             # don't wrap a wrapper
             data = data.values
-        self.check_values(data)
+        if not hasattr(data, 'shape') or not hasattr(data, 'dtype'):
+            raise TypeError('values must be array-like')
         self._values = data
 
     @property

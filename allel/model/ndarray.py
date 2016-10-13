@@ -70,18 +70,12 @@ class NumpyArrayWrapper(ArrayWrapper):
 
 class NumpyRecArrayWrapper(DisplayAsTable):
 
-    @classmethod
-    def check_values(cls, data):
-        super(NumpyRecArrayWrapper, cls).check_values(data)
-        check_ndim(data, 1)
-        if not data.dtype.names:
-            raise ValueError('expected recarray')
-
-    # noinspection PyMissingConstructor
     def __init__(self, data, copy=False, **kwargs):
         values = np.rec.array(data, copy=copy, **kwargs)
-        self.check_values(values)
-        self._values = values
+        check_ndim(values, 1)
+        if not values.dtype.names:
+            raise ValueError('expected recarray')
+        super(NumpyRecArrayWrapper, self).__init__(values)
 
     def __getitem__(self, item):
         s = self.values[item]
@@ -173,13 +167,9 @@ class NumpyRecArrayWrapper(DisplayAsTable):
 class Genotypes(NumpyArrayWrapper):
     """Base class for wrapping a NumPy array of genotype calls."""
 
-    @classmethod
-    def check_values(cls, data):
-        super(Genotypes, cls).check_values(data)
-        check_integer_dtype(data)
-
     def __init__(self, data, copy=False, **kwargs):
         super(Genotypes, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
         self._mask = None
         self._is_phased = None
 
@@ -899,13 +889,9 @@ class Genotypes(NumpyArrayWrapper):
 
 class GenotypeVector(Genotypes, DisplayAs1D):
 
-    @classmethod
-    def check_values(cls, data):
-        super(GenotypeVector, cls).check_values(data)
-        check_ndim(data, 2)
-
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeVector, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 2)
 
     def __getitem__(self, item):
         return index_genotype_vector(self, item, type(self))
@@ -1049,13 +1035,9 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
     """
 
-    @classmethod
-    def check_values(cls, data):
-        super(GenotypeArray, cls).check_values(data)
-        check_ndim(data, 3)
-
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeArray, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 3)
 
     def __getitem__(self, item):
         return index_genotype_array(self, item, array_cls=type(self),
@@ -1589,14 +1571,10 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
     """
 
-    @classmethod
-    def check_values(cls, data):
-        super(HaplotypeArray, cls).check_values(data)
-        check_integer_dtype(data)
-        check_ndim(data, 2)
-
     def __init__(self, data, copy=False, **kwargs):
         super(HaplotypeArray, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+        check_ndim(self.values, 2)
 
     @property
     def n_variants(self):
@@ -2096,14 +2074,10 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
     """
 
-    @classmethod
-    def check_values(cls, data):
-        super(AlleleCountsArray, cls).check_values(data)
-        check_integer_dtype(data)
-        check_ndim(data, 2)
-
     def __init__(self, data, copy=False, **kwargs):
         super(AlleleCountsArray, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+        check_ndim(self.values, 2)
 
     def __add__(self, other):
         ret = super(AlleleCountsArray, self).__add__(other)
@@ -2521,6 +2495,11 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         return type(self)(out)
 
 
+class GenotypeAlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
+    """TODO"""
+    pass
+
+
 class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
     """Index of sorted values, e.g., positions from a single chromosome or
     contig.
@@ -2556,16 +2535,12 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
 
     """
 
-    @classmethod
-    def check_values(cls, values):
-        super(SortedIndex, cls).check_values(values)
-        check_ndim(values, 1)
-        # check sorted ascending
-        if np.any(values[:-1] > values[1:]):
-            raise ValueError('values must be monotonically increasing')
-
     def __init__(self, data, copy=False, **kwargs):
         super(SortedIndex, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 1)
+        # check sorted ascending
+        if np.any(self.values[:-1] > self.values[1:]):
+            raise ValueError('values must be monotonically increasing')
         self._is_unique = None
 
     @property
@@ -3018,19 +2993,15 @@ class UniqueIndex(NumpyArrayWrapper):
 
     """
 
-    @classmethod
-    def check_values(cls, data):
-        super(UniqueIndex, cls).check_values(data)
-        check_ndim(data, 1)
-        # check unique
-        # noinspection PyTupleAssignmentBalance
-        _, counts = np.unique(data, return_counts=True)
-        if np.any(counts > 1):
-            raise ValueError('values are not unique')
-
     def __init__(self, data, copy=False, dtype=object, **kwargs):
         super(UniqueIndex, self).__init__(data, copy=copy, dtype=dtype, **kwargs)
-        self.lookup = {v: i for i, v in enumerate(data)}
+        check_ndim(self.values, 1)
+        # check unique
+        # noinspection PyTupleAssignmentBalance
+        _, counts = np.unique(self.values, return_counts=True)
+        if np.any(counts > 1):
+            raise ValueError('values are not unique')
+        self.lookup = {v: i for i, v in enumerate(self.values)}
 
     def __getitem__(self, item):
         s = self.values[item]

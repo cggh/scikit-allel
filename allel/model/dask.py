@@ -114,6 +114,7 @@ class GenotypesDask(DaskArrayWrapper):
 
     def __init__(self, data, chunks=None, name=None, lock=False):
         super(GenotypesDask, self).__init__(data, chunks=chunks, name=name, lock=lock)
+        check_integer_dtype(self.values)
         self._mask = None
         self._is_phased = None
 
@@ -242,14 +243,9 @@ class GenotypeDaskVector(GenotypesDask, DisplayAs1D):
 
     array_cls = GenotypeVector
 
-    @classmethod
-    def check_values(cls, data):
-        super(GenotypeDaskVector, cls).check_values(data)
-        check_ndim(data, 2)
-        check_integer_dtype(data)
-
     def __init__(self, data, chunks=None, name=None, lock=False):
         super(GenotypeDaskVector, self).__init__(data, chunks=chunks, name=name, lock=lock)
+        check_ndim(self.values, 2)
 
     def __getitem__(self, item):
         return index_genotype_vector(self, item, cls=type(self))
@@ -302,14 +298,9 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
 
     array_cls = GenotypeArray
 
-    @classmethod
-    def check_values(cls, data):
-        super(GenotypeDaskArray, cls).check_values(data)
-        check_ndim(data, 3)
-        check_integer_dtype(data)
-
     def __init__(self, data, chunks=None, name=None, lock=False):
         super(GenotypeDaskArray, self).__init__(data, chunks=chunks, name=name, lock=lock)
+        check_ndim(self.values, 3)
 
     def __getitem__(self, item):
         return index_genotype_array(self, item, array_cls=type(self),
@@ -495,14 +486,10 @@ copy_method_doc(GenotypeDaskArray.concatenate, GenotypeArray.concatenate)
 
 class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
 
-    @classmethod
-    def check_values(cls, data):
-        super(HaplotypeDaskArray, cls).check_values(data)
-        check_ndim(data, 2)
-        check_integer_dtype(data)
-
     def __init__(self, data, chunks=None, name=None, lock=False):
         super(HaplotypeDaskArray, self).__init__(data, chunks=chunks, name=name, lock=lock)
+        check_ndim(self.values, 2)
+        check_integer_dtype(self.values)
 
     def __getitem__(self, item):
         return index_haplotype_array(self, item, cls=type(self))
@@ -645,14 +632,10 @@ copy_method_doc(HaplotypeDaskArray.map_alleles, HaplotypeArray.map_alleles)
 
 class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
 
-    @classmethod
-    def check_values(cls, data):
-        super(AlleleCountsDaskArray, cls).check_values(data)
-        check_ndim(data, 2)
-        check_integer_dtype(data)
-
     def __init__(self, data, chunks=None, name=None, lock=False):
         super(AlleleCountsDaskArray, self).__init__(data, chunks=chunks, name=name, lock=lock)
+        check_ndim(self.values, 2)
+        check_integer_dtype(self.values)
 
     def __getitem__(self, item):
         return index_allele_counts_array(self, item, cls=type(self))
