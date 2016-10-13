@@ -679,14 +679,14 @@ class GenotypeArrayInterface(object):
         aeq(expect, actual)
 
     def test_to_packed(self):
-
         expect = np.array([[0, 1, 239],
                            [2, 17, 239],
                            [16, 33, 239],
                            [34, 239, 239],
                            [239, 239, 239]], dtype='u1')
-        actual = self.setup_instance(diploid_genotype_data).to_packed()
-        aeq(expect, actual)
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
+            actual = self.setup_instance(diploid_genotype_data, dtype=dtype).to_packed()
+            aeq(expect, actual)
 
     def test_from_packed(self):
         packed_data = np.array([[0, 1, 239],
@@ -759,7 +759,7 @@ class GenotypeArrayInterface(object):
 
     def test_count_alleles(self):
 
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             # make sure we test the optimisations too
 
             # diploid
@@ -786,7 +786,7 @@ class GenotypeArrayInterface(object):
             eq(3, actual.n_alleles)
 
     def test_count_alleles_subpop(self):
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             # make sure we test the optimisations too
             g = self.setup_instance(diploid_genotype_data, dtype=dtype)
             expect = np.array([[2, 0, 0],
@@ -800,7 +800,7 @@ class GenotypeArrayInterface(object):
             eq(3, actual.n_alleles)
 
     def test_count_alleles_subpops(self):
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             # make sure we test the optimisations too
             g = self.setup_instance(diploid_genotype_data, dtype=dtype)
             subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
@@ -824,7 +824,7 @@ class GenotypeArrayInterface(object):
 
     def test_count_alleles_max_allele(self):
 
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             # make sure we test the optimisations too
 
             # diploid
@@ -867,20 +867,21 @@ class GenotypeArrayInterface(object):
             aeq(expect[:, :1], actual)
 
     def test_map_alleles(self):
-        a = np.array(diploid_genotype_data, dtype=np.int8)
-        g = self.setup_instance(a)
-        mapping = np.array([[0, 1, 2],
-                            [2, 0, 1],
-                            [1, 2, 0],
-                            [2, 1, 0],
-                            [2, 0, 1]], dtype=np.int8)
-        expect = [[[0, 0], [0, 1], [-1, -1]],
-                  [[2, 1], [0, 0], [-1, -1]],
-                  [[2, 1], [0, 2], [-1, -1]],
-                  [[0, 0], [-1, -1], [-1, -1]],
-                  [[-1, -1], [-1, -1], [-1, -1]]]
-        actual = g.map_alleles(mapping)
-        aeq(expect, actual)
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
+            a = np.array(diploid_genotype_data, dtype=dtype)
+            g = self.setup_instance(a)
+            mapping = np.array([[0, 1, 2],
+                                [2, 0, 1],
+                                [1, 2, 0],
+                                [2, 1, 0],
+                                [2, 0, 1]], dtype='i1')
+            expect = [[[0, 0], [0, 1], [-1, -1]],
+                      [[2, 1], [0, 0], [-1, -1]],
+                      [[2, 1], [0, 2], [-1, -1]],
+                      [[0, 0], [-1, -1], [-1, -1]],
+                      [[-1, -1], [-1, -1], [-1, -1]]]
+            actual = g.map_alleles(mapping)
+            aeq(expect, actual)
 
     def test_set_mask(self):
 
@@ -1227,7 +1228,7 @@ class HaplotypeArrayInterface(object):
                            [0, 2, 0],
                            [0, 0, 1],
                            [0, 0, 0]])
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             h = self.setup_instance(haplotype_data, dtype=dtype)
             actual = h.count_alleles()
             aeq(expect, actual)
@@ -1239,7 +1240,7 @@ class HaplotypeArrayInterface(object):
                            [0, 1, 0],
                            [0, 0, 1],
                            [0, 0, 0]])
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             h = self.setup_instance(haplotype_data, dtype=dtype)
             actual = h.count_alleles(subpop=[0, 2])
             aeq(expect, actual)
@@ -1255,7 +1256,7 @@ class HaplotypeArrayInterface(object):
                                 [0, 1, 0],
                                 [0, 0, 0],
                                 [0, 0, 0]])
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             h = self.setup_instance(haplotype_data, dtype=dtype)
             subpops = {'sub1': [0, 2], 'sub2': [1, 2]}
             actual = h.count_alleles_subpops(subpops=subpops)
@@ -1271,7 +1272,7 @@ class HaplotypeArrayInterface(object):
                            [0, 2, 0],
                            [0, 0, 1],
                            [0, 0, 0]])
-        for dtype in None, 'i1', 'i2':
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
             h = self.setup_instance(haplotype_data, dtype=dtype)
             actual = h.count_alleles()
             eq(3, actual.n_alleles)
@@ -1288,7 +1289,6 @@ class HaplotypeArrayInterface(object):
 
     def test_map_alleles(self):
 
-        # generalised implementation
         a = np.array(haplotype_data)
         h = self.setup_instance(a)
         mapping = np.array([[0, 1, 2],
@@ -1302,12 +1302,12 @@ class HaplotypeArrayInterface(object):
         actual = h.map_alleles(mapping)
         aeq(expect, actual)
 
-        # optimised implementation
-        a = np.array(haplotype_data, dtype='i1')
-        h = self.setup_instance(a)
-        mapping = np.array(mapping, dtype='i1')
-        actual = h.map_alleles(mapping)
-        aeq(expect, actual)
+        for dtype in None, 'i1', 'i2', 'i4', 'i8':
+            a = np.array(haplotype_data, dtype=dtype)
+            h = self.setup_instance(a)
+            mapping = np.array(mapping, dtype=dtype)
+            actual = h.map_alleles(mapping)
+            aeq(expect, actual)
 
     def test_concatenate(self):
         a = np.array(haplotype_data, dtype=np.int8)
