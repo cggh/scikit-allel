@@ -1,4 +1,3 @@
-gcc
 cython
 numpy
 scipy
