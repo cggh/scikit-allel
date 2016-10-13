@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
-from allel.util import asarray_ndim
+from allel.util import asarray_ndim, check_integer_dtype
 
 
 def sfs(dac):
@@ -27,6 +27,10 @@ def sfs(dac):
 
     # check input
     dac = asarray_ndim(dac, 1)
+    check_integer_dtype(dac)
+
+    # need integer for bincount
+    dac = dac.astype('i8', copy=False)
 
     # compute site frequency spectrum
     s = np.bincount(dac)
@@ -54,9 +58,13 @@ def sfs_folded(ac):
     # check input
     ac = asarray_ndim(ac, 2)
     assert ac.shape[1] == 2, 'only biallelic variants are supported'
+    check_integer_dtype(ac)
 
     # compute minor allele counts
     mac = np.amin(ac, axis=1)
+
+    # need integer for bincount
+    mac = mac.astype('i8', copy=False)
 
     # compute folded site frequency spectrum
     s = np.bincount(mac)
@@ -190,11 +198,17 @@ def joint_sfs(dac1, dac2):
     # check inputs
     dac1 = asarray_ndim(dac1, 1)
     dac2 = asarray_ndim(dac2, 1)
+    check_integer_dtype(dac1)
+    check_integer_dtype(dac2)
 
     # compute site frequency spectrum
     n = np.max(dac1) + 1
     m = np.max(dac2) + 1
-    s = np.bincount(dac1 * m + dac2)
+
+    # ensure integer for bincount
+    tmp = (dac1 * m + dac2).astype('i8', copy=False)
+
+    s = np.bincount(tmp)
     s.resize((n, m))
     return s
 
@@ -224,6 +238,8 @@ def joint_sfs_folded(ac1, ac2):
     ac2 = asarray_ndim(ac2, 2)
     assert ac1.shape[1] == ac2.shape[1] == 2, \
         'only biallelic variants are supported'
+    check_integer_dtype(ac1)
+    check_integer_dtype(ac2)
 
     # compute minor allele counts
     mac1 = np.amin(ac1, axis=1)
@@ -232,7 +248,8 @@ def joint_sfs_folded(ac1, ac2):
     # compute site frequency spectrum
     m = np.max(mac1) + 1
     n = np.max(mac2) + 1
-    s = np.bincount(mac1 * n + mac2)
+    tmp = (mac1 * n + mac2).astype('i8', copy=False)
+    s = np.bincount(tmp)
     s.resize((m, n))
     return s
 

@@ -696,15 +696,27 @@ class TestSF(unittest.TestCase):
         expect = [1, 2, 1]
         actual = allel.sfs(dac)
         aeq(expect, actual)
+        for dtype in 'u2', 'i2', 'u8', 'i8':
+            daca = np.asarray(dac, dtype=dtype)
+            actual = allel.sfs(daca)
+            aeq(expect, actual)
 
     def test_sfs_folded(self):
         ac = [[0, 3], [1, 2], [2, 1]]
         expect = [1, 2]
         actual = allel.sfs_folded(ac)
         aeq(expect, actual)
+        for dtype in 'u2', 'i2', 'u8', 'i8':
+            aca = np.asarray(ac, dtype=dtype)
+            actual = allel.sfs_folded(aca)
+            aeq(expect, actual)
 
     def test_sfs_scaled(self):
         dac = [0, 1, 2, 1]
         expect = [0, 2, 2]
         actual = allel.sfs_scaled(dac)
         aeq(expect, actual)
+        for dtype in 'u2', 'i2', 'u8', 'i8':
+            daca = np.asarray(dac, dtype=dtype)
+            actual = allel.sfs_scaled(daca)
+            aeq(expect, actual)
