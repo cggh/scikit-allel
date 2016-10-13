@@ -802,7 +802,7 @@ class ChunkedTableWrapper(DisplayAsTable):
             return type(self)(columns, names=item)
 
         else:
-            raise NotImplementedError('item not suppored: %r' % item)
+            raise IndexError('item not supported for indexing: %s' % repr(item))
 
     def __array__(self, *args):
         a = np.asarray(self[:])

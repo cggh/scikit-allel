@@ -476,6 +476,10 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
         self.assertNotIsInstance(s, VariantTable)
         self.assertIsInstance(s, chunked.ChunkedArrayWrapper)
 
+        # bad access
+        with assert_raises(IndexError):
+            _ = vt[:, 0]
+
     def test_take(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = VariantChunkedTable(a)
