@@ -54,6 +54,7 @@ def asarray_ndim(a, *ndims, **kwargs):
         if len(ndims) > 1:
             expect_str = 'one of %s' % str(ndims)
         else:
+            # noinspection PyUnresolvedReferences
             expect_str = '%s' % ndims[0]
         raise TypeError('bad number of dimensions: expected %s; found %s' %
                         (expect_str, a.ndim))
@@ -163,16 +164,18 @@ def _make_key(args, kwds, typed,
               fasttypes={int, str, frozenset, type(None)},
               sorted=sorted, tuple=tuple, type=type, len=len):
     key = args
+    kwd_items = sorted(kwds.items())
     if kwds:
-        sorted_items = sorted(kwds.items())
         key += kwd_mark
-        for item in sorted_items:
+        for item in kwd_items:
             key += item
     if typed:
         key += tuple(type(v) for v in args)
         if kwds:
-            key += tuple(type(v) for k, v in sorted_items)
-    elif len(key) == 1 and type(key[0]) in fasttypes:
+            key += tuple(type(v) for _, v in kwd_items)
+    else:
+        key = args
+    if len(key) == 1 and type(key[0]) in fasttypes:
         return key[0]
     return _HashedSeq(key)
 
@@ -402,3 +405,17 @@ def contains_newaxis(item):
     elif isinstance(item, tuple):
         return any((i is None or i is np.newaxis) for i in item)
     return False
+
+
+def check_ploidy(expect, actual):
+    if expect != actual:
+        raise ValueError(
+            'expected ploidy %s, found %s' % (expect, actual)
+        )
+
+
+def check_min_samples(expect, actual):
+    if actual < expect:
+        raise ValueError(
+            'expected at least %s samples, found %s' % (expect, actual)
+        )

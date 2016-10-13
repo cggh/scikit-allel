@@ -12,4 +12,4 @@ from . import chunked
 from . import constants
 from . import util
 
-__version__ = '0.22.0.dev0'
+__version__ = '1.0.0.dev0'

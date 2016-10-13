@@ -11,8 +11,7 @@ import numpy as np
 
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
-    check_dim0_aligned
-from allel.util import check_ndim, asarray_ndim
+    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
 from allel.compat import PY2
 from allel.io import write_vcf, iter_gff3, recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
@@ -826,9 +825,6 @@ class Genotypes(NumpyArrayWrapper):
 
         return gt
 
-    def map_alleles(self, mapping, copy=True):
-        pass  # TODO
-
     def copy(self, *args, **kwargs):
         data = self.values.copy(*args, **kwargs)
         out = type(self)(data)
@@ -837,6 +833,63 @@ class Genotypes(NumpyArrayWrapper):
         if self.is_phased is not None:
             out.is_phased = self.is_phased.copy()
         return out
+
+    def map_alleles(self, mapping, copy=True):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+        copy : bool, optional
+            If True, return a new array; if False, apply mapping in place
+            (only applies for arrays with dtype int8; all other dtypes
+            require a copy).
+
+        Returns
+        -------
+        gm : GenotypeArray
+
+        Notes
+        -----
+        If a mask has been set, it is ignored by this function.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[1, 2], [2, 1]],
+        ...                          [[2, 2], [-1, -1]]], dtype='i1')
+        >>> mapping = np.array([[1, 2, 0],
+        ...                     [2, 0, 1],
+        ...                     [2, 1, 0],
+        ...                     [0, 2, 1]], dtype='i1')
+        >>> g.map_alleles(mapping)
+        <GenotypeArray shape=(4, 2, 2) dtype=int8>
+        1/1 1/2
+        2/1 0/0
+        1/0 0/1
+        1/1 ./.
+
+        Notes
+        -----
+        For arrays with dtype int8 an optimised implementation is used which is
+        faster and uses far less memory. It is recommended to convert arrays to
+        dtype int8 where possible before calling this method.
+
+        See Also
+        --------
+        create_allele_mapping
+
+        """
+
+        h = self.to_haplotypes()
+        hm = h.map_alleles(mapping, copy=copy)
+        gm = hm.to_genotypes(ploidy=self.ploidy)
+        return gm
 
 
 class GenotypeVector(Genotypes, DisplayAs1D):
@@ -1145,9 +1198,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         """
 
-        # TODO use check_ploidy
-        if self.shape[2] != 2:
-            raise ValueError('can only pack diploid calls')
+        check_ploidy(2, self.ploidy)
 
         if boundscheck:
             amx = self.max()
@@ -1476,63 +1527,6 @@ class GenotypeArray(Genotypes, DisplayAs2D):
                for name, subpop in subpops.items()}
 
         return out
-
-    def map_alleles(self, mapping, copy=True):
-        """Transform alleles via a mapping.
-
-        Parameters
-        ----------
-        mapping : ndarray, int8, shape (n_variants, max_allele)
-            An array defining the allele mapping for each variant.
-        copy : bool, optional
-            If True, return a new array; if False, apply mapping in place
-            (only applies for arrays with dtype int8; all other dtypes
-            require a copy).
-
-        Returns
-        -------
-        gm : GenotypeArray
-
-        Notes
-        -----
-        If a mask has been set, it is ignored by this function.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> import numpy as np
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[1, 2], [2, 1]],
-        ...                          [[2, 2], [-1, -1]]], dtype='i1')
-        >>> mapping = np.array([[1, 2, 0],
-        ...                     [2, 0, 1],
-        ...                     [2, 1, 0],
-        ...                     [0, 2, 1]], dtype='i1')
-        >>> g.map_alleles(mapping)
-        <GenotypeArray shape=(4, 2, 2) dtype=int8>
-        1/1 1/2
-        2/1 0/0
-        1/0 0/1
-        1/1 ./.
-
-        Notes
-        -----
-        For arrays with dtype int8 an optimised implementation is used which is
-        faster and uses far less memory. It is recommended to convert arrays to
-        dtype int8 where possible before calling this method.
-
-        See Also
-        --------
-        create_allele_mapping
-
-        """
-
-        h = self.to_haplotypes()
-        hm = h.map_alleles(mapping, copy=copy)
-        gm = hm.to_genotypes(ploidy=self.shape[2])
-        return gm
 
 
 class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):

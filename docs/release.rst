@@ -1,6 +1,19 @@
 Release notes
 =============
 
+Mendelian errors and phasing by transmission
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This release includes a new :mod:`allel.stats.mendel` module with functions to 
+help with analysis of related individuals. The function 
+:func:`allel.stats.mendel.mendel_errors` locates genotype calls within a trio 
+or cross that are not consistent with Mendelian segregation of alleles. The 
+function :func:`allel.stats.mendel.phase_by_transmission` will resolve unphased 
+diploid genotypes into phased haplotypes for a trio or cross using Mendelian 
+transmission rules. The function :func:`allel.stats.mendel.paint_transmission` 
+can help with evaluating and visualizing the results of phasing a trio or 
+cross.
+
 v0.21.2
 -------
 
