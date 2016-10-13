@@ -718,6 +718,21 @@ class ChunkedArrayWrapper(ArrayWrapper):
     def __truediv__(self, other, **kwargs):
         return self.binary_op(operator.truediv, other, **kwargs)
 
+    def __and__(self, other, **kwargs):
+        return self.binary_op(operator.and_, other, **kwargs)
+
+    def __lshift__(self, other, **kwargs):
+        return self.binary_op(operator.lshift, other, **kwargs)
+
+    def __or__(self, other, **kwargs):
+        return self.binary_op(operator.or_, other, **kwargs)
+
+    def __rshift__(self, other, **kwargs):
+        return self.binary_op(operator.rshift, other, **kwargs)
+
+    def __xor__(self, other, **kwargs):
+        return self.binary_op(operator.xor, other, **kwargs)
+
 
 class ChunkedTableWrapper(DisplayAsTable):
     """Wrapper class for chunked table-like data.
