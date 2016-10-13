@@ -2276,6 +2276,20 @@ class FeatureTableInterface(object):
             r = ft.query(expr, vm=vm)
             aeq(a.take([2, 3]), r)
 
+    def test_from_gff3(self):
+        ft = self._class.from_gff3('fixture/sample.gff')
+        eq(177, len(ft))
+
+    def test_from_gff3_region(self):
+        ft = self._class.from_gff3('fixture/sample.sorted.gff.gz', region='apidb|MAL1')
+        eq(44, len(ft))
+        ft = self._class.from_gff3('fixture/sample.sorted.gff.gz',
+                                   region='apidb|MAL1:42000-50000')
+        eq(7, len(ft))
+        with assert_raises(ValueError):
+            # should be empty
+            self._class.from_gff3('fixture/sample.sorted.gff.gz', region='foo')
+
 
 def test_create_allele_mapping():
 

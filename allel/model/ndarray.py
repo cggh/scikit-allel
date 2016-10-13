@@ -3780,6 +3780,8 @@ class FeatureTable(NumpyRecArrayWrapper):
             if attributes is not None:
                 names += tuple(attributes)
             recs_sample = list(itertools.islice(recs, 1000))
+            if not recs_sample:
+                raise ValueError('no records found')
             a = np.rec.array(recs_sample, names=names)
             dtype = a.dtype
             recs = itertools.chain(recs_sample, recs)

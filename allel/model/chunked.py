@@ -825,6 +825,8 @@ class FeatureChunkedTable(ChunkedTableWrapper):
 
         # read a sample to determine dtype, blen
         recs_sample = list(itertools.islice(recs, 1000))
+        if not recs_sample:
+            raise ValueError('no records found')
         names = 'seqid', 'source', 'type', 'start', 'end', 'score', 'strand', \
                 'phase'
         if attributes:
