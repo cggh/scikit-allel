@@ -5,6 +5,7 @@
 from . import model
 from .model.ndarray import *
 from .model.chunked import *
+from .model.util import *
 try:
     import dask
 except ImportError:
