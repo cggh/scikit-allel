@@ -11,16 +11,17 @@ from nose.tools import assert_raises, eq_ as eq
 
 
 from allel import GenotypeArray, HaplotypeArray, AlleleCountsArray, VariantTable, \
-    FeatureTable, GenotypeVector
+    FeatureTable, GenotypeVector, GenotypeAlleleCountsArray, GenotypeAlleleCountsVector
 from allel import GenotypeChunkedArray, HaplotypeChunkedArray, AlleleCountsChunkedArray, \
-    VariantChunkedTable, FeatureChunkedTable
+    VariantChunkedTable, FeatureChunkedTable, GenotypeAlleleCountsChunkedArray
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.model.test_api import GenotypeArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, HaplotypeArrayInterface, \
     haplotype_data, allele_counts_data, AlleleCountsArrayInterface, \
     VariantTableInterface, variant_table_data, variant_table_dtype, \
     variant_table_names, feature_table_data, feature_table_dtype, \
-    feature_table_names, FeatureTableInterface
+    feature_table_names, FeatureTableInterface, GenotypeAlleleCountsArrayInterface, \
+    diploid_genotype_ac_data, triploid_genotype_ac_data
 from allel import chunked
 from allel.chunked.storage_zarr import ZarrTable
 
@@ -418,6 +419,93 @@ class AlleleCountsChunkedArrayTestsHDF5Mem(AlleleCountsChunkedArrayTests):
     def setup_instance(self, data):
         data = chunked.storage_registry['default'].array(data)
         return AlleleCountsChunkedArray(data)
+
+
+class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface, unittest.TestCase):
+
+    _class = GenotypeAlleleCountsChunkedArray
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+
+    def setup_instance(self, data, **kwargs):
+        data = chunked.storage_registry['default'].array(data, chunklen=2, **kwargs)
+        return GenotypeAlleleCountsChunkedArray(data)
+
+    def test_constructor(self):
+
+        # missing data arg
+        with assert_raises(TypeError):
+            # noinspection PyArgumentList
+            GenotypeAlleleCountsChunkedArray()
+
+        # data has wrong dtype
+        data = 'foo bar'
+        with assert_raises(TypeError):
+            GenotypeAlleleCountsChunkedArray(data)
+
+        # data has wrong dtype
+        data = np.array([4., 5., 3.7])
+        with assert_raises(TypeError):
+            GenotypeAlleleCountsChunkedArray(data)
+
+        # data has wrong dimensions
+        data = np.array([1, 2, 3])
+        with assert_raises(TypeError):
+            GenotypeAlleleCountsChunkedArray(data)
+
+        # data has wrong dimensions
+        data = np.array([[1, 2], [3, 4]])  # use HaplotypeChunkedArray instead
+        with assert_raises(TypeError):
+            GenotypeAlleleCountsChunkedArray(data)
+
+        # diploid data (typed)
+        g = self.setup_instance(np.array(diploid_genotype_ac_data, dtype='i1'))
+        aeq(diploid_genotype_ac_data, g)
+        eq(np.int8, g.dtype)
+
+        # polyploid data (typed)
+        g = self.setup_instance(np.array(triploid_genotype_ac_data, dtype='i1'))
+        aeq(triploid_genotype_ac_data, g)
+        eq(np.int8, g.dtype)
+
+    def test_storage(self):
+        g = self.setup_instance(np.array(diploid_genotype_ac_data))
+        # default is bcolz mem
+        assert isinstance(g.values, bcolz.carray)
+        assert g.values.rootdir is None, g.values.rootdir
+
+    def test_slice_types(self):
+
+        g = self.setup_instance(np.array(diploid_genotype_ac_data, dtype='i1'))
+
+        # total slice
+        s = g[:]
+        self.assertIsInstance(s, GenotypeAlleleCountsArray)
+
+        # row slice
+        s = g[1:]
+        self.assertIsInstance(s, GenotypeAlleleCountsArray)
+
+        # col slice
+        s = g[:, 1:]
+        self.assertIsInstance(s, GenotypeAlleleCountsArray)
+
+        # row index
+        s = g[0]
+        self.assertIsInstance(s, GenotypeAlleleCountsVector)
+
+        # col index
+        s = g[:, 0]
+        self.assertIsInstance(s, GenotypeAlleleCountsVector)
+
+        # ploidy index
+        s = g[:, :, 0]
+        self.assertIsInstance(s, np.ndarray)
+
+        # item
+        s = g[0, 0, 0]
+        self.assertIsInstance(s, np.int8)
 
 
 class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):

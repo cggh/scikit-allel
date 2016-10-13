@@ -27,16 +27,20 @@ import dask.array as da
 from allel.util import check_shape, check_dtype, check_ndim, check_integer_dtype
 from allel.abc import ArrayWrapper, DisplayAs2D, DisplayAs1D
 from allel.compat import copy_method_doc
-from .ndarray import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector
+from .ndarray import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector, \
+    GenotypeAlleleCountsVector, GenotypeAlleleCountsArray
 from .generic import index_genotype_vector, index_genotype_array, index_haplotype_array, \
     index_allele_counts_array, compress_genotypes, concatenate_genotypes, take_genotypes, \
     subset_genotype_array, compress_haplotype_array, concatenate_haplotype_array, \
     take_haplotype_array, compress_allele_counts_array, concatenate_allele_counts_array, \
-    take_allele_counts_array, subset_haplotype_array
+    take_allele_counts_array, subset_haplotype_array, index_genotype_ac_vector, \
+    index_genotype_ac_array, compress_genotype_ac, take_genotype_ac, \
+    subset_genotype_ac_array, concatenate_genotype_ac
 
 
 __all__ = ['GenotypeDaskVector', 'GenotypeDaskArray', 'HaplotypeDaskArray',
-           'AlleleCountsDaskArray']
+           'AlleleCountsDaskArray', 'GenotypeAlleleCountsDaskArray',
+           'GenotypeAlleleCountsDaskVector']
 
 
 def get_chunks(data, chunks=None):
@@ -140,7 +144,7 @@ class GenotypesDask(DaskArrayWrapper):
     @mask.setter
     def mask(self, mask):
         if mask is not None:
-            mask = ensure_dask_array(mask, self.chunks)
+            mask = ensure_dask_array(mask, self.chunks[:-1])
             check_shape(mask, self.shape[:-1])
             check_dtype(mask, bool)
         self._mask = mask
@@ -152,7 +156,7 @@ class GenotypesDask(DaskArrayWrapper):
     @is_phased.setter
     def is_phased(self, is_phased):
         if is_phased is not None:
-            is_phased = ensure_dask_array(is_phased, self.chunks)
+            is_phased = ensure_dask_array(is_phased, self.chunks[:-1])
             check_shape(is_phased, self.shape[:-1])
             check_dtype(is_phased, bool)
         self._is_phased = is_phased
@@ -426,7 +430,9 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
             max_allele = self.max().compute()[()]
 
         chunks = (self.chunks[0], self.chunks[1], (max_allele + 1,))
-        return self._method('to_allele_counts', chunks=chunks, max_allele=max_allele)
+        out = self._method('to_allele_counts', chunks=chunks, max_allele=max_allele)
+        out = GenotypeAlleleCountsDaskArray(out)
+        return out
 
     def to_gt(self, max_allele=None):
         return self._method_drop_ploidy('to_gt', max_allele=max_allele)
@@ -780,3 +786,170 @@ copy_method_doc(AlleleCountsDaskArray.is_singleton, AlleleCountsArray.is_singlet
 copy_method_doc(AlleleCountsDaskArray.is_doubleton, AlleleCountsArray.is_doubleton)
 copy_method_doc(AlleleCountsDaskArray.is_biallelic, AlleleCountsArray.is_biallelic)
 copy_method_doc(AlleleCountsDaskArray.is_biallelic_01, AlleleCountsArray.is_biallelic_01)
+
+
+class GenotypeAlleleCountsDask(DaskArrayWrapper):
+
+    array_cls = None
+
+    def __init__(self, data, chunks=None, name=None, lock=False):
+        super(GenotypeAlleleCountsDask, self).__init__(data, chunks=chunks, name=name,
+                                                       lock=lock)
+        check_integer_dtype(self.values)
+
+    def is_called(self):
+        return self._method_drop_ploidy('is_called')
+
+    def is_missing(self):
+        return self._method_drop_ploidy('is_missing')
+
+    def is_hom(self, allele=None):
+        return self._method_drop_ploidy('is_hom', allele=allele)
+
+    def is_hom_ref(self):
+        return self._method_drop_ploidy('is_hom_ref')
+
+    def is_hom_alt(self):
+        return self._method_drop_ploidy('is_hom_alt')
+
+    def is_het(self, allele=None):
+        return self._method_drop_ploidy('is_het', allele=allele)
+
+    def str_items(self):
+        return self.compute().str_items()
+
+
+class GenotypeAlleleCountsDaskVector(GenotypeAlleleCountsDask, DisplayAs1D):
+
+    array_cls = GenotypeAlleleCountsVector
+
+    def __init__(self, data, chunks=None, name=None, lock=False):
+        super(GenotypeAlleleCountsDaskVector, self).__init__(data, chunks=chunks, name=name,
+                                                             lock=lock)
+        check_ndim(self.values, 2)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_vector(self, item, cls=type(self))
+
+    @property
+    def n_calls(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[1]
+
+    def compute(self, **kwargs):
+        out = super(GenotypeAlleleCountsDaskVector, self).compute(**kwargs)
+        return GenotypeAlleleCountsVector(out)
+
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.chunks
+        array_cls = self.array_cls
+
+        def f(block):
+            g = array_cls(block)
+            method = getattr(g, method_name)
+            return method(**kwargs)
+        out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis)
+
+        return out
+
+    def _method_drop_ploidy(self, method_name, **kwargs):
+        chunks = self.chunks[:-1]
+        return self._method(method_name, chunks=chunks, drop_axis=1, **kwargs)
+
+    def compress(self, condition, axis=0, **kwargs):
+        return compress_genotype_ac(self, condition, axis=axis, wrap_axes={0},
+                                    cls=type(self), compress=da.compress, **kwargs)
+
+    def take(self, indices, axis=0, **kwargs):
+        return take_genotype_ac(self, indices, axis=axis, wrap_axes={0}, cls=type(self),
+                                take=da.take, **kwargs)
+
+    def concatenate(self, others, axis=0, **kwargs):
+        return concatenate_genotype_ac(self, others, axis=axis, wrap_axes={0},
+                                       cls=type(self), concatenate=da.concatenate,
+                                       **kwargs)
+
+
+class GenotypeAlleleCountsDaskArray(GenotypeAlleleCountsDask, DisplayAs2D):
+
+    array_cls = GenotypeAlleleCountsArray
+
+    def __init__(self, data, chunks=None, name=None, lock=False):
+        super(GenotypeAlleleCountsDaskArray, self).__init__(data, chunks=chunks, name=name,
+                                                            lock=lock)
+        check_ndim(self.values, 3)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_array(self, item, array_cls=type(self),
+                                       vector_cls=GenotypeAlleleCountsDaskVector)
+
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples."""
+        return self.shape[1]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[2]
+
+    def compute(self, **kwargs):
+        out = super(GenotypeAlleleCountsDaskArray, self).compute(**kwargs)
+        return GenotypeAlleleCountsArray(out)
+
+    def _method(self, method_name, chunks=None, drop_axis=None, **kwargs):
+        if chunks is None:
+            # no shape change
+            chunks = self.chunks
+        array_cls = self.array_cls
+
+        def f(block):
+            g = array_cls(block)
+            method = getattr(g, method_name)
+            return method(**kwargs)
+        out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis)
+
+        return out
+
+    def _method_drop_ploidy(self, method_name, **kwargs):
+        chunks = self.chunks[:-1]
+        return self._method(method_name, chunks=chunks, drop_axis=2, **kwargs)
+
+    def count_alleles(self, subpop=None):
+
+        # deal with subpop
+        if subpop:
+            gd = self.take(subpop, axis=1).values
+        else:
+            gd = self.values
+
+        out = gd.sum(axis=1)
+        return AlleleCountsDaskArray(out)
+
+    def compress(self, condition, axis=0):
+        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
+                                    cls=type(self), compress=da.compress)
+
+    def take(self, indices, axis=0):
+        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
+                                cls=type(self), take=da.take)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
+                                       cls=type(self), concatenate=da.concatenate)
+
+    def subset(self, sel0=None, sel1=None):
+        return subset_genotype_ac_array(self, sel0, sel1, cls=type(self),
+                                        subset=da_subset)

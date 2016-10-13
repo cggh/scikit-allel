@@ -19,7 +19,9 @@ from .generic import index_genotype_vector, compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
     subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
-    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array
+    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array,\
+    index_genotype_ac_array, index_genotype_ac_vector, compress_genotype_ac, \
+    take_genotype_ac, concatenate_genotype_ac, subset_genotype_ac_array
 from allel.opt.model import genotype_array_pack_diploid, genotype_array_count_alleles, \
     genotype_array_count_alleles_masked, genotype_array_count_alleles_subpop, \
     genotype_array_count_alleles_subpop_masked, genotype_array_unpack_diploid, \
@@ -28,7 +30,8 @@ from allel.opt.model import genotype_array_pack_diploid, genotype_array_count_al
 
 
 __all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
-           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+           'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector', 'SortedIndex', 'UniqueIndex',
+           'SortedMultiIndex', 'VariantTable', 'FeatureTable']
 
 
 def subset(data, sel0, sel1):
@@ -410,8 +413,8 @@ class Genotypes(NumpyArrayWrapper):
         """
 
         if allele is None:
-            allele1 = self[..., 0, np.newaxis]
-            other_alleles = self[..., 1:]
+            allele1 = self.values[..., 0, np.newaxis]
+            other_alleles = self.values[..., 1:]
             tmp = (allele1 >= 0) & (allele1 == other_alleles)
             out = np.all(tmp, axis=-1)
         else:
@@ -472,8 +475,8 @@ class Genotypes(NumpyArrayWrapper):
 
         """
 
-        allele1 = self[..., 0, np.newaxis]
-        other_alleles = self[..., 1:]
+        allele1 = self.values[..., 0, np.newaxis]
+        other_alleles = self.values[..., 1:]
         tmp = (allele1 > 0) & (allele1 == other_alleles)
         out = np.all(tmp, axis=-1)
 
@@ -512,8 +515,8 @@ class Genotypes(NumpyArrayWrapper):
 
         """
 
-        allele1 = self[..., 0, np.newaxis]
-        other_alleles = self[..., 1:]
+        allele1 = self.values[..., 0, np.newaxis]
+        other_alleles = self.values[..., 1:]
         out = np.all(self >= 0, axis=-1) & np.any(allele1 != other_alleles, axis=-1)
         if allele is not None:
             out &= np.any(self == allele, axis=-1)
@@ -732,12 +735,10 @@ class Genotypes(NumpyArrayWrapper):
         ...                          [[0, 2], [1, 1]],
         ...                          [[2, 2], [-1, -1]]])
         >>> g.to_allele_counts()
-        array([[[2, 0, 0],
-                [1, 1, 0]],
-               [[1, 0, 1],
-                [0, 2, 0]],
-               [[0, 0, 2],
-                [0, 0, 0]]], dtype=uint8)
+        <GenotypeAlleleCountsArray shape=(3, 2, 3) dtype=uint8>
+        2:0:0 1:1:0
+        1:0:1 0:2:0
+        0:0:2 0:0:0
 
         """
 
@@ -756,6 +757,11 @@ class Genotypes(NumpyArrayWrapper):
             if self.mask is not None:
                 allele_match &= ~self.mask[..., np.newaxis]
             np.sum(allele_match, axis=-1, out=out[..., allele])
+
+        if self.ndim == 2:
+            out = GenotypeAlleleCountsVector(out)
+        elif self.ndim == 3:
+            out = GenotypeAlleleCountsArray(out)
 
         return out
 
@@ -1970,7 +1976,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
     def prefix_argsort(self):
         """Return indices that would sort the haplotypes by prefix."""
-        return np.lexsort(self[::-1])
+        return np.lexsort(self.values[::-1])
 
     def distinct(self):
         """Return sets of indices for each distinct haplotype."""
@@ -1982,7 +1988,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         for i in range(self.shape[1]):
 
             # hash the haplotype
-            k = hash(self[:, i].tobytes())
+            k = hash(self.values[:, i].tobytes())
 
             # collect
             d[k].add(i)
@@ -1994,7 +2000,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         """Return counts for each distinct haplotype."""
 
         # hash the haplotypes
-        k = [hash(self[:, i].tobytes()) for i in range(self.shape[1])]
+        k = [hash(self.values[:, i].tobytes()) for i in range(self.shape[1])]
 
         # count and sort
         # noinspection PyArgumentList
@@ -2093,12 +2099,12 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
     @property
     def n_variants(self):
-        """Number of variants (length of first array dimension)."""
+        """Number of variants."""
         return self.shape[0]
 
     @property
     def n_alleles(self):
-        """Number of alleles (length of second array dimension)."""
+        """Number of alleles."""
         return self.shape[1]
 
     def __getitem__(self, item):
@@ -2208,7 +2214,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         out = np.empty(self.shape[0], dtype='i1')
         out.fill(-1)
         for i in range(self.shape[1]):
-            d = self[:, i] > 0
+            d = self.values[:, i] > 0
             out[d] = i
         return out
 
@@ -2235,7 +2241,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return np.any(self[:, 1:] > 0, axis=1)
+        return np.any(self.values[:, 1:] > 0, axis=1)
 
     def is_non_variant(self):
         """Find variants with no non-reference allele calls.
@@ -2260,7 +2266,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return np.all(self[:, 1:] == 0, axis=1)
+        return np.all(self.values[:, 1:] == 0, axis=1)
 
     def is_segregating(self):
         """Find segregating variants (where more than one allele is observed).
@@ -2321,7 +2327,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         if allele is None:
             return self.allelism() <= 1
         else:
-            return (self.allelism() == 1) & (self[:, allele] > 0)
+            return (self.allelism() == 1) & (self.values[:, allele] > 0)
 
     def is_singleton(self, allele):
         """Find variants with a single call for the given allele.
@@ -2353,7 +2359,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return self[:, allele] == 1
+        return self.values[:, allele] == 1
 
     def is_doubleton(self, allele):
         """Find variants with exactly two calls for the given allele.
@@ -2385,7 +2391,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return self[:, allele] == 2
+        return self.values[:, allele] == 2
 
     def is_biallelic(self):
         """Find biallelic variants.
@@ -2417,7 +2423,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         """
         loc = self.is_biallelic() & (self.max_allele() == 1)
         if min_mac is not None:
-            loc = loc & (self[:, :2].min(axis=1) >= min_mac)
+            loc = loc & (self.values[:, :2].min(axis=1) >= min_mac)
         return loc
 
     def count_variant(self):
@@ -2495,9 +2501,200 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         return type(self)(out)
 
 
-class GenotypeAlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
+class GenotypeAlleleCounts(NumpyArrayWrapper):
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeAlleleCounts, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+
+    def is_missing(self):
+        return np.sum(self.values, axis=-1) == 0
+
+    def is_called(self):
+        return np.sum(self.values, axis=-1) > 0
+
+    def is_hom(self, allele=None):
+        out = np.sum(self.values > 0, axis=-1) == 1
+        if allele is not None:
+            out = out & (self.values[..., allele] > 0)
+        return out
+
+    def is_hom_ref(self):
+        return self.is_hom(0)
+
+    def is_hom_alt(self):
+        out = np.sum(self.values > 0, axis=-1) == 1
+        out = out & (self.values[..., 0] == 0)
+        return out
+
+    def is_het(self, allele=None):
+        out = np.sum(self.values > 0, axis=-1) > 1
+        if allele is not None:
+            out = out & (self.values[..., allele] > 0)
+        return out
+
+    def to_frequencies(self, fill=np.nan):
+        n = np.sum(self, axis=-1)[..., np.newaxis]
+        with ignore_invalid():
+            af = np.where(n > 0, self / n, fill)
+        return af
+
+    def allelism(self):
+        return np.sum(self > 0, axis=-1)
+
+    def max_allele(self):
+        out = np.empty(self.shape[:-1], dtype='i1')
+        out.fill(-1)
+        for i in range(self.shape[-1]):
+            d = self.values[..., i] > 0
+            out[d] = i
+        return out
+
+    def is_variant(self):
+        return np.any(self.values[..., 1:] > 0, axis=-1)
+
+    def is_non_variant(self):
+        return np.all(self.values[..., 1:] == 0, axis=-1)
+
+    def is_segregating(self):
+        return self.allelism() > 1
+
+    def is_non_segregating(self, allele=None):
+        if allele is None:
+            return self.allelism() <= 1
+        else:
+            return (self.allelism() == 1) & (self.values[:, allele] > 0)
+
+    def is_biallelic(self):
+        return self.allelism() == 2
+
+    def is_biallelic_01(self):
+        loc = self.is_biallelic() & (self.max_allele() == 1)
+        return loc
+
+    def to_gt(self, max_count=None):
+
+        # how many characters needed per allele?
+        if max_count is None:
+            max_count = np.max(self)
+        nchar = int(np.floor(np.log10(max_count))) + 1
+
+        # convert to string
+        a = self.astype((np.string_, nchar)).view(np.chararray)
+
+        # determine allele count separator
+        sep = b':'
+
+        # join via separator
+        gt = a[..., 0]
+        for i in range(1, self.shape[-1]):
+            gt = gt + sep + a[..., i]
+
+        return gt
+
+
+class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
     """TODO"""
-    pass
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeAlleleCountsVector, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 2)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_vector(self, item, cls=type(self))
+
+    @property
+    def n_calls(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[1]
+
+    def compress(self, condition, axis=0):
+        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0},
+                                    cls=type(self), compress=np.compress)
+
+    def take(self, indices, axis=0):
+        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0},
+                                cls=type(self), take=np.take)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0},
+                                       cls=type(self), concatenate=np.concatenate)
+
+    def str_items(self):
+        gt = self.to_gt()
+        if PY2:
+            out = list(gt)
+        else:
+            out = [str(x, 'ascii') for x in gt]
+        return out
+
+
+class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
+    """TODO"""
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeAlleleCountsArray, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 3)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_array(self, item, array_cls=type(self),
+                                       vector_cls=GenotypeAlleleCountsVector)
+
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples."""
+        return self.shape[1]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[2]
+
+    def count_alleles(self, subpop=None):
+
+        # deal with subpop
+        if subpop:
+            g = self.take(subpop, axis=1).values
+        else:
+            g = self.values
+
+        out = g.sum(axis=1)
+        out = AlleleCountsArray(out)
+        return out
+
+    def compress(self, condition, axis=0):
+        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
+                                    cls=type(self), compress=np.compress)
+
+    def take(self, indices, axis=0):
+        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
+                                cls=type(self), take=np.take)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
+                                       cls=type(self), concatenate=np.concatenate)
+
+    def subset(self, sel0=None, sel1=None):
+        return subset_genotype_ac_array(self, sel0, sel1, cls=type(self), subset=subset)
+
+    def str_items(self):
+        gt = self.to_gt()
+        n = gt.dtype.itemsize
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in gt]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        return out
 
 
 class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
@@ -2547,7 +2744,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
     def is_unique(self):
         """True if no duplicate entries."""
         if self._is_unique is None:
-            self._is_unique = ~np.any(self[:-1] == self[1:])
+            self._is_unique = ~np.any(self.values[:-1] == self.values[1:])
         return self._is_unique
 
     def __getitem__(self, item):
@@ -2569,7 +2766,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         return out
 
     def str_items(self):
-        tmp = self[:]
+        tmp = self.values[:]
         max_value = np.max(tmp)
         if max_value <= 0:
             max_value = 1
@@ -2816,7 +3013,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         try:
             loc = self.locate_range(start=start, stop=stop)
         except KeyError:
-            return self[0:0]
+            return self.values[0:0]
         else:
             return self[loc]
 

@@ -28,17 +28,21 @@ from allel.io import write_vcf_header, write_vcf_data, iter_gff3
 from allel.util import check_ndim, check_integer_dtype
 from allel.abc import DisplayAs2D
 from .ndarray import GenotypeVector, GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    VariantTable, FeatureTable, SortedIndex, SortedMultiIndex
+    VariantTable, FeatureTable, SortedIndex, SortedMultiIndex, GenotypeAlleleCountsArray, \
+    GenotypeAlleleCountsVector
 from .generic import compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
     subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
-    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array
+    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array,\
+    compress_genotype_ac, take_genotype_ac, concatenate_genotype_ac, \
+    subset_genotype_ac_array, index_genotype_ac_array
 
 
 __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
            'AlleleCountsChunkedArray', 'VariantChunkedTable',
-           'FeatureChunkedTable', 'AlleleCountsChunkedTable']
+           'FeatureChunkedTable', 'AlleleCountsChunkedTable',
+           'GenotypeAlleleCountsChunkedArray']
 
 
 class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
@@ -256,6 +260,7 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         out = self.apply_method('to_allele_counts',
                                 kwargs=dict(max_allele=max_allele),
                                 **kwargs)
+        out = GenotypeAlleleCountsChunkedArray(out)
         return out
 
     def to_packed(self, boundscheck=True, **kwargs):
@@ -642,6 +647,77 @@ copy_method_doc(AlleleCountsChunkedArray.is_singleton, AlleleCountsArray.is_sing
 copy_method_doc(AlleleCountsChunkedArray.is_doubleton, AlleleCountsArray.is_doubleton)
 copy_method_doc(AlleleCountsChunkedArray.is_biallelic, AlleleCountsArray.is_biallelic)
 copy_method_doc(AlleleCountsChunkedArray.is_biallelic_01, AlleleCountsArray.is_biallelic_01)
+
+
+class GenotypeAlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
+
+    def __init__(self, data):
+        super(GenotypeAlleleCountsChunkedArray, self).__init__(data)
+        check_ndim(self.values, 3)
+        check_integer_dtype(self.values)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_array(self, item, array_cls=GenotypeAlleleCountsArray,
+                                       vector_cls=GenotypeAlleleCountsVector)
+
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples."""
+        return self.shape[1]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[2]
+
+    def is_called(self, **kwargs):
+        return self.apply_method('is_called', **kwargs)
+
+    def is_missing(self, **kwargs):
+        return self.apply_method('is_missing', **kwargs)
+
+    def is_hom(self, allele=None, **kwargs):
+        return self.apply_method('is_hom', kwargs=dict(allele=allele),
+                                 **kwargs)
+
+    def is_hom_ref(self, **kwargs):
+        return self.apply_method('is_hom_ref', **kwargs)
+
+    def is_hom_alt(self, **kwargs):
+        return self.apply_method('is_hom_alt', **kwargs)
+
+    def is_het(self, allele=None, **kwargs):
+        return self.apply_method('is_het', kwargs=dict(allele=allele),
+                                 **kwargs)
+
+    def count_alleles(self, subpop=None, **kwargs):
+        out = self.apply_method('count_alleles', kwargs=dict(subpop=subpop), **kwargs)
+        return AlleleCountsChunkedArray(out)
+
+    def to_gt(self, max_allele=None, **kwargs):
+        out = self.apply_method('to_gt', kwargs=dict(max_allele=max_allele), **kwargs)
+        return out
+
+    def compress(self, condition, axis=0):
+        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
+                                    cls=type(self), compress=_chunked.compress)
+
+    def take(self, indices, axis=0):
+        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
+                                cls=type(self), take=_chunked.take)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
+                                       cls=type(self), concatenate=_chunked.concatenate)
+
+    def subset(self, sel0=None, sel1=None):
+        return subset_genotype_ac_array(self, sel0, sel1, cls=type(self),
+                                        subset=_chunked.subset)
 
 
 class VariantChunkedTable(ChunkedTableWrapper):
