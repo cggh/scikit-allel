@@ -20,6 +20,11 @@ from .generic import index_genotype_vector, compress_genotypes, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
     subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
     compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array
+from allel.opt.model import genotype_array_pack_diploid, genotype_array_count_alleles, \
+    genotype_array_count_alleles_masked, genotype_array_count_alleles_subpop, \
+    genotype_array_count_alleles_subpop_masked, genotype_array_unpack_diploid, \
+    haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
+    haplotype_array_map_alleles
 
 
 __all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
@@ -1208,16 +1213,8 @@ class GenotypeArray(Genotypes, DisplayAs2D):
             if amn < -1:
                 raise ValueError('min allele for packing is -1, found %s' % amn)
 
-        from allel.opt.model import genotype_pack_diploid
-
-        # ensure int8 dtype
-        if self.dtype.type == np.int8:
-            data = self.values
-        else:
-            data = self.astype(dtype=np.int8)
-
         # pack data
-        packed = genotype_pack_diploid(data)
+        packed = genotype_array_pack_diploid(self.values)
 
         return packed
 
@@ -1257,8 +1254,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         check_ndim(packed, 2)
         check_dtype(packed, 'u1')
 
-        from allel.opt.model import genotype_unpack_diploid
-        data = genotype_unpack_diploid(packed)
+        data = genotype_array_unpack_diploid(packed)
         return cls(data)
 
     # noinspection PyShadowingBuiltins
@@ -1463,42 +1459,36 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         if max_allele is None:
             max_allele = self.max()
 
-        if self.dtype == np.dtype('i1'):
-            # use optimisations
-            from allel.opt.model import genotype_int8_count_alleles, \
-                genotype_int8_count_alleles_masked, \
-                genotype_int8_count_alleles_subpop, \
-                genotype_int8_count_alleles_subpop_masked
-
-            if subpop is None and self.mask is None:
-                ac = genotype_int8_count_alleles(self.values, max_allele)
-            elif subpop is None:
-                ac = genotype_int8_count_alleles_masked(
-                    self.values, self.mask.view(dtype='u1'), max_allele
-                )
-            elif self.mask is None:
-                ac = genotype_int8_count_alleles_subpop(self.values, max_allele, subpop)
-            else:
-                ac = genotype_int8_count_alleles_subpop_masked(
-                    self.values, self.mask.view(dtype='u1'), max_allele, subpop
-                )
-
+        # use optimisations
+        if subpop is None and self.mask is None:
+            ac = genotype_array_count_alleles(self.values, max_allele)
+        elif subpop is None:
+            ac = genotype_array_count_alleles_masked(
+                self.values, self.mask.view(dtype='u1'), max_allele
+            )
+        elif self.mask is None:
+            ac = genotype_array_count_alleles_subpop(self.values, max_allele, subpop)
         else:
-            # set up output array
-            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
+            ac = genotype_array_count_alleles_subpop_masked(
+                self.values, self.mask.view(dtype='u1'), max_allele, subpop
+            )
 
-            # extract subpop
-            g = self
-            if subpop is not None:
-                g = g[:, subpop]
-
-            # count alleles
-            alleles = list(range(max_allele + 1))
-            for allele in alleles:
-                allele_match = g == allele
-                if g.mask is not None:
-                    allele_match &= ~g.mask[:, :, None]
-                np.sum(allele_match, axis=(1, 2), out=ac[:, allele])
+        # else:
+        #     # set up output array
+        #     ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
+        #
+        #     # extract subpop
+        #     g = self
+        #     if subpop is not None:
+        #         g = g[:, subpop]
+        #
+        #     # count alleles
+        #     alleles = list(range(max_allele + 1))
+        #     for allele in alleles:
+        #         allele_match = g == allele
+        #         if g.mask is not None:
+        #             allele_match &= ~g.mask[:, :, None]
+        #         np.sum(allele_match, axis=(1, 2), out=ac[:, allele])
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -1925,30 +1915,27 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         if max_allele is None:
             max_allele = self.max()
 
-        if self.dtype == np.dtype('i1'):
-            # use optimisations
-            from allel.opt.model import haplotype_int8_count_alleles, \
-                haplotype_int8_count_alleles_subpop
-            if subpop is None:
-                ac = haplotype_int8_count_alleles(self.values, max_allele)
-
-            else:
-                ac = haplotype_int8_count_alleles_subpop(self.values, max_allele, subpop)
+        # use optimisations
+        if subpop is None:
+            ac = haplotype_array_count_alleles(self.values, max_allele)
 
         else:
-            # set up output array
-            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
+            ac = haplotype_array_count_alleles_subpop(self.values, max_allele, subpop)
 
-            # extract subpop
-            if subpop is not None:
-                h = self[:, subpop]
-            else:
-                h = self
-
-            # count alleles
-            alleles = list(range(max_allele + 1))
-            for allele in alleles:
-                np.sum(h == allele, axis=1, out=ac[:, allele])
+        # else:
+        #     # set up output array
+        #     ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
+        #
+        #     # extract subpop
+        #     if subpop is not None:
+        #         h = self[:, subpop]
+        #     else:
+        #         h = self
+        #
+        #     # count alleles
+        #     alleles = list(range(max_allele + 1))
+        #     for allele in alleles:
+        #         np.sum(h == allele, axis=1, out=ac[:, allele])
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -2029,17 +2016,15 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         mapping = asarray_ndim(mapping, 2)
         check_dim0_aligned(self, mapping)
 
-        if self.dtype == np.dtype('i1'):
-            # use optimisation
-            mapping = np.asarray(mapping, dtype='i1')
-            from allel.opt.model import haplotype_int8_map_alleles
-            data = haplotype_int8_map_alleles(self.values, mapping, copy=copy)
+        # use optimisation
+        mapping = np.asarray(mapping, dtype=self.dtype)
+        data = haplotype_array_map_alleles(self.values, mapping, copy=copy)
 
-        else:
-            # use numpy indexing
-            i = np.arange(self.shape[0]).reshape((-1, 1))
-            data = mapping[i, self]
-            data[self < 0] = -1
+        # else:
+        #     # use numpy indexing
+        #     i = np.arange(self.shape[0]).reshape((-1, 1))
+        #     data = mapping[i, self]
+        #     data[self < 0] = -1
 
         return HaplotypeArray(data, copy=False)
 
