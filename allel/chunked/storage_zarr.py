@@ -83,6 +83,7 @@ class ZarrTmpStorage(ZarrStorage):
         kwargs = super(ZarrTmpStorage, self)._set_defaults(kwargs)
         suffix = kwargs.pop('suffix', '.zarr')
         prefix = kwargs.pop('prefix', 'scikit_allel_')
+        # noinspection PyShadowingBuiltins
         dir = kwargs.pop('dir', None)
         kwargs.setdefault('store', zarr.TempStore(suffix=suffix,
                                                   prefix=prefix, dir=dir))

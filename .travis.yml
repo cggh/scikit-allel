@@ -25,10 +25,12 @@ install:
   # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
+  - conda install --yes gcc
   - conda install --yes --name=test-environment --file=requirements_ci.txt
+  - pip install bcolz
 
 script:
   - python setup.py build_ext --inplace
   - nosetests -v allel
-  - flake8 allel
+  - flake8 --max-line-length=95 allel
   - python setup.py bdist_wheel

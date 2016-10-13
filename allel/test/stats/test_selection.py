@@ -7,7 +7,7 @@ from nose.tools import eq_ as eq, assert_is_instance, assert_raises
 from allel.test.tools import assert_array_equal, assert_array_nanclose
 
 
-from allel.stats import ihs, xpehh, nsl, xpnsl
+from allel import ihs, xpehh, nsl, xpnsl
 from allel.opt.stats import ssl01_scan_int8, nsl01_scan_int8, ihh01_scan_int8,\
     ssl2ihh, ihh_scan_int8
 

@@ -524,6 +524,7 @@ def plot_sfs(s, yscale='log', bins=None, n=None,
     return ax
 
 
+# noinspection PyIncorrectDocstring
 def plot_sfs_folded(*args, **kwargs):
     """Plot a folded site frequency spectrum.
 
@@ -563,6 +564,7 @@ def plot_sfs_folded(*args, **kwargs):
     return ax
 
 
+# noinspection PyIncorrectDocstring
 def plot_sfs_scaled(*args, **kwargs):
     """Plot a scaled site frequency spectrum.
 
@@ -598,6 +600,7 @@ def plot_sfs_scaled(*args, **kwargs):
     return ax
 
 
+# noinspection PyIncorrectDocstring
 def plot_sfs_folded_scaled(*args, **kwargs):
     """Plot a folded scaled site frequency spectrum.
 
@@ -687,6 +690,7 @@ def plot_joint_sfs(s, ax=None, imshow_kwargs=None):
     return ax
 
 
+# noinspection PyIncorrectDocstring
 def plot_joint_sfs_folded(*args, **kwargs):
     """Plot a joint site frequency spectrum.
 
@@ -711,6 +715,7 @@ def plot_joint_sfs_folded(*args, **kwargs):
     return ax
 
 
+# noinspection PyIncorrectDocstring
 def plot_joint_sfs_scaled(*args, **kwargs):
     """Plot a scaled joint site frequency spectrum.
 
@@ -736,6 +741,7 @@ def plot_joint_sfs_scaled(*args, **kwargs):
     return ax
 
 
+# noinspection PyIncorrectDocstring
 def plot_joint_sfs_folded_scaled(*args, **kwargs):
     """Plot a scaled folded joint site frequency spectrum.
 

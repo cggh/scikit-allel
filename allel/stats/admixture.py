@@ -420,7 +420,7 @@ def average_patterson_d(aca, acb, acc, acd, blen):
     # assume that is rare enough to be negligible.
 
     # calculate overall estimate
-    d = np.nansum(num) / np.nansum(den)
+    d_avg = np.nansum(num) / np.nansum(den)
 
     # compute the numerator and denominator within each block
     num_bsum = moving_statistic(num, statistic=np.nansum, size=blen)
@@ -434,9 +434,9 @@ def average_patterson_d(aca, acb, acc, acd, blen):
                           statistic=lambda n, d: np.sum(n) / np.sum(d))
 
     # compute Z score
-    z = d / se
+    z = d_avg / se
 
-    return d, se, z, vb, vj
+    return d_avg, se, z, vb, vj
 
 
 # backwards compatibility

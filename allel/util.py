@@ -51,8 +51,38 @@ def asarray_ndim(a, *ndims, **kwargs):
         return None
     a = np.array(a, **kwargs)
     if a.ndim not in ndims:
-        raise ValueError('invalid number of dimensions: %s' % a.ndim)
+        if len(ndims) > 1:
+            expect_str = 'one of %s' % str(ndims)
+        else:
+            expect_str = '%s' % ndims[0]
+        raise TypeError('bad number of dimensions: expected %s; found %s' %
+                        (expect_str, a.ndim))
     return a
+
+
+def check_ndim(a, ndim):
+    if a.ndim != ndim:
+        raise TypeError('bad number of dimensions: expected %s; found %s' % (ndim, a.ndim))
+
+
+def check_shape(a, shape):
+    if a.shape != shape:
+        raise TypeError('bad shape: expected %s; found %s' % (shape, a.shape))
+
+
+def check_dtype(a, *dtypes):
+    dtypes = [np.dtype(t) for t in dtypes]
+    if a.dtype not in dtypes:
+        raise TypeError('bad dtype: expected on of %s; found %s' % (dtypes, a.dtype))
+
+
+def check_dtype_kind(a, *kinds):
+    if a.dtype.kind not in kinds:
+        raise TypeError('bad dtype kind: expected on of %s; found %s' % (kinds, a.dtype.kind))
+
+
+def check_integer_dtype(a):
+    check_dtype_kind(a, 'u', 'i')
 
 
 def check_dim0_aligned(*arrays):
@@ -362,3 +392,13 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
         return update_wrapper(wrapper, user_function)
 
     return decorator
+
+
+def contains_newaxis(item):
+    if item is None:
+        return True
+    elif item is np.newaxis:
+        return True
+    elif isinstance(item, tuple):
+        return any((i is None or i is np.newaxis) for i in item)
+    return False
