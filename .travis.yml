@@ -24,17 +24,15 @@ install:
   - source activate test-environment
   - conda install --yes gcc
   - conda install --yes --name=test-environment --file=requirements_ci.txt
-  - pip install bcolz hmmlearn
+  - pip install bcolz==1.1.0 hmmlearn
 
 script:
   - python setup.py build_ext --inplace
   - export PYTHONHASHSEED=42
-# need to get bcolz updated in conda before we can do doctests
-#  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
-#      nosetests allel -v --with-doctest --doctest-options=+NORMALIZE_WHITESPACE;
-#    else
-#      nosetests allel -v;
-#    fi
-  - nosetests -v allel
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+      nosetests allel -v --exclude=from_gff3_region --with-doctest --doctest-options=+NORMALIZE_WHITESPACE;
+    else
+      nosetests allel -v --exclude=from_gff3_region;
+    fi
   - flake8 --max-line-length=95 allel
   - python setup.py bdist_wheel
