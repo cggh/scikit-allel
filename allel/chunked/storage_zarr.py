@@ -46,7 +46,6 @@ class ZarrStorage(object):
 
     # noinspection PyUnusedLocal
     def array(self, data, expectedlen=None, **kwargs):
-        # ignore expectedlen
 
         # setup
         data = _util.ensure_array_like(data)
@@ -61,7 +60,6 @@ class ZarrStorage(object):
         return z
 
     def table(self, data, names=None, expectedlen=None, **kwargs):
-        # ignore expectedlen
 
         # setup
         names, columns = _util.check_table_like(data, names=names)
