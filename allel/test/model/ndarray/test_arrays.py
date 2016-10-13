@@ -251,8 +251,11 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
         eq(np.uint8, ac.dtype)
 
     def test_slice_types(self):
-
         ac = AlleleCountsArray(allele_counts_data, dtype='u1')
+
+        # total slice
+        s = ac[:]
+        assert_is_instance(s, AlleleCountsArray)
 
         # row slice
         s = ac[1:]
@@ -261,22 +264,25 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
         # col slice
         s = ac[:, 1:]
         assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, AlleleCountsArray)
 
         # row index
         s = ac[0]
         assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, AlleleCountsArray)
 
         # col index
         s = ac[:, 0]
         assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, AlleleCountsArray)
 
         # item
         s = ac[0, 0]
         assert_is_instance(s, np.uint8)
-        assert_not_is_instance(s, AlleleCountsArray)
+
+    def test_reduce_types(self):
+        ac = AlleleCountsArray(allele_counts_data, dtype='u1')
+
+        for m in 'sum', 'max', 'argmax':
+            x = getattr(ac, m)(axis=1)
+            assert_is_instance(x, np.ndarray)
 
 
 # noinspection PyMethodMayBeStatic
