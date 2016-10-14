@@ -9,7 +9,7 @@ from allel.model.ndarray import GenotypeVector
 from allel.util import asarray_ndim, check_dim0_aligned
 
 
-def roh_mhmm(g, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6,
+def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6,
              min_roh=0, is_accessible=None, contig_size=None):
 
     """Call ROH (runs of homozygosity) in a single individual given a genotype vector.
@@ -24,24 +24,22 @@ def roh_mhmm(g, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6
 
     Parameters
     ----------
-    g : array_like, int, shape (n_variants, ploidy)
+    gv : array_like, int, shape (n_variants, ploidy)
         Genotype vector.
     pos: array_like, int, shape (n_variants,)
         Positions of variants, same 0th dimension as `g`.
     phet_roh: float, optional
         Probability of observing a heterozygote in a ROH. Appropriate values
-        will depend on de novo mutation rate, frequency of sequencing error &
-        spurious het calls due to misalignment.
+        will depend on de novo mutation rate and genotype error rate.
     phet_nonroh: tuple of floats, optional
         One or more probabilites of observing a heterozygote outside of ROH.
         Appropriate values will depend primarily on nucleotide diversity within
-        the population, but also frequency of sequencing error, mutation rate,
-        and spurious het calls due to misalignment.
+        the population, but also on mutation rate and genotype error rate.
     transition: float, optional
         Probability of moving between states.
     min_roh: integer, optional
         Minimum size (bp) to condsider as a ROH. Will depend on contig size
-        and recombination rate. In humans typically > 1Mbp.
+        and recombination rate.
     is_accessible: array_like, bool, shape (`contig_size`,), optional
         Boolean array for each position in contig describing whether accessible
         or not.
@@ -56,6 +54,10 @@ def roh_mhmm(g, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6
     froh: float
         Proportion of genome in a ROH.
 
+    Notes
+    -----
+    This function currently requires around 4GB for a contig size of ~50Mbp.
+
     """
 
     from hmmlearn import hmm
@@ -63,9 +65,9 @@ def roh_mhmm(g, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6
     # setup inputs
     if isinstance(phet_nonroh, float):
         phet_nonroh = phet_nonroh,
-    g = GenotypeVector(g)
+    gv = GenotypeVector(gv)
     pos = asarray_ndim(pos, 1)
-    check_dim0_aligned(g, pos)
+    check_dim0_aligned(gv, pos)
     is_accessible = asarray_ndim(is_accessible, 1, dtype=bool)
 
     # heterozygote probabilities
@@ -98,7 +100,7 @@ def roh_mhmm(g, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6
     roh_hmm.emissionprob_ = emission_mx
 
     # locate heterozygous calls
-    is_het = g.is_het()
+    is_het = gv.is_het()
 
     # predict ROH state
     pred, obs = _mhmm_predict_roh_state(roh_hmm, is_het, pos, is_accessible, contig_size)
@@ -119,7 +121,7 @@ def roh_mhmm(g, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6
 def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
 
     # construct observations, one per position in contig
-    observations = np.zeros((contig_size, 1), dtype='int')
+    observations = np.zeros((contig_size, 1), dtype='i1')
 
     # these are hets
     observations[np.compress(is_het, pos) - 1] = 1

@@ -444,7 +444,7 @@ def equally_accessible_windows(is_accessible, size):
         Window start/stop positions (1-based).
 
     """
-    pos_accessible, = np.nonzero(is_accessible)[0]
+    pos_accessible, = np.nonzero(is_accessible)
     pos_accessible += 1  # convert to 1-based coordinates
     windows = moving_statistic(pos_accessible, lambda v: [v[0], v[-1]],
                                size=size)
