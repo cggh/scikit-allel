@@ -14,7 +14,7 @@ part of the final data set will be executed.
 This module is experimental, if you find a bug please `raise an issue on GitHub
 <https://github.com/cggh/scikit-allel/issues/new>`_.
 
-This module requires Dask >= 0.7.6.
+This module requires dask >= 0.11.1.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -84,7 +84,7 @@ def ensure_dask_array(data, chunks=None, name=None, lock=False):
         if isinstance(data, ArrayWrapper):
             data = data.values
         chunks = get_chunks(data, chunks)
-        return da.from_array(data, chunks=chunks, name=name, lock=lock)
+        return da.from_array(data, chunks=chunks, name=name, lock=lock, fancy=False)
 
 
 def da_subset(d, sel0, sel1):

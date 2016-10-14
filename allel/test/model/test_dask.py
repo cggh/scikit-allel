@@ -7,6 +7,7 @@ import numpy as np
 import dask.array as da
 import dask.async
 from nose.tools import assert_raises, eq_ as eq
+import zarr
 
 
 from allel import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector
@@ -205,8 +206,7 @@ class HaplotypeDaskArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         self.assertIsInstance(s.compute()[()], np.int8)
 
 
-class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface,
-                                 unittest.TestCase):
+class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
 
     _class = AlleleCountsDaskArray
 
@@ -286,3 +286,24 @@ class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface,
         self.assertIsInstance(s, da.Array)
         self.assertNotIsInstance(s.compute(), AlleleCountsArray)
         self.assertIsInstance(s.compute()[()], np.uint16)
+
+
+class GenotypeDaskZarrArrayTests(GenotypeDaskArrayTests):
+
+    def setup_instance(self, data, dtype=None):
+        z = zarr.array(data, dtype=dtype, chunks=(2, 2, None))
+        return GenotypeDaskArray(z)
+
+
+class HaplotypeDaskZarrArrayTests(HaplotypeDaskArrayTests):
+
+    def setup_instance(self, data, dtype=None):
+        z = zarr.array(data, dtype=dtype, chunks=(2, 2))
+        return HaplotypeDaskArray(z)
+
+
+class AlleleCountsDaskZarrArrayTests(AlleleCountsDaskArrayTests):
+
+    def setup_instance(self, data):
+        z = zarr.array(data, chunks=(2, None))
+        return AlleleCountsDaskArray(z)
