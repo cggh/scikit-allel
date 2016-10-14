@@ -398,7 +398,7 @@ class DisplayAsTable(DisplayableArray):
 
     def str_items(self):
         tmp = self[:]
-        items = [[repr(x) for x in row] for row in tmp]
+        items = [[str(x) for x in row] for row in tmp]
         return items
 
     def get_display_items(self, threshold=6, edgeitems=3):
