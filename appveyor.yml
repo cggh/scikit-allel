@@ -59,6 +59,9 @@ test_script:
   - "%CMD_IN_ENV% conda create --yes -n test-environment python=%PYTHON_VERSION%"
   - "%CMD_IN_ENV% activate test-environment"
   - "%CMD_IN_ENV% conda install --yes --file=requirements_ci.txt"
+  # dask 0.11.1 not in conda-forge yet
+  - "%CMD_IN_ENV% conda uninstall --yes dask"
+  - "%CMD_IN_ENV% pip install 'dask>=0.11.1'"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
   - "%CMD_IN_ENV% nosetests -v allel --exclude=from_gff3_region"
 

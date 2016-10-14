@@ -15,15 +15,15 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  # Useful for debugging any issues with conda
   - conda config --add channels conda-forge
   - conda info -a
-
-  # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
   - conda install --yes gcc
   - conda install --yes --name=test-environment --file=requirements_ci.txt
+  # dask 0.11.1 not in conda-forge yet
+  - conda uninstall --yes dask
+  - pip install "dask>=0.11.1"
 
 script:
   - python setup.py build_ext --inplace
