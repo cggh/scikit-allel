@@ -173,9 +173,10 @@ def arr1d_to_html(indices, items, caption):
     # N.B., table captions don't render in jupyter notebooks on GitHub,
     # so put caption outside table element
 
+    html = '<div class="allel allel-DisplayAs1D">'
     # sanitize caption
-    caption = caption.replace('<', '&lt;')
-    html = caption
+    caption = caption.replace('<', '&lt;').replace('>', '&gt;')
+    html += '<span>%s</span>' % caption
 
     # build table
     html += '<table>'
@@ -188,6 +189,7 @@ def arr1d_to_html(indices, items, caption):
         html += '<td style="text-align: center">%s</td>' % item
     html += '</tr>'
     html += '</table>'
+    html += '</div>'
 
     return html
 
@@ -196,9 +198,10 @@ def arr2d_to_html(row_indices, col_indices, items, caption):
     # N.B., table captions don't render in jupyter notebooks on GitHub,
     # so put caption outside table element
 
+    html = '<div class="allel allel-DisplayAs2D">'
     # sanitize caption
-    caption = caption.replace('<', '&lt;')
-    html = caption
+    caption = caption.replace('<', '&lt;').replace('>', '&gt;')
+    html += '<span>%s</span>' % caption
 
     # build table
     html += '<table>'
@@ -209,7 +212,7 @@ def arr2d_to_html(row_indices, col_indices, items, caption):
     for row_index, row in zip(row_indices, items):
         if row_index == ' ... ':
             html += '<tr><th style="text-align: center">...</th>' \
-                    '<td style="text-align: center" colspan=%s>...</td></tr>' % \
+                    '<td style="text-align: center" colspan="%s">...</td></tr>' % \
                     (len(col_indices) + 1)
         else:
             html += '<tr><th style="text-align: center">%s</th>' % row_index
@@ -217,6 +220,7 @@ def arr2d_to_html(row_indices, col_indices, items, caption):
                 html += '<td style="text-align: center">%s</td>' % item
             html += '</tr>'
     html += '</table>'
+    html += '</div>'
 
     return html
 
@@ -225,9 +229,10 @@ def recarr_to_html(names, indices, items, caption):
     # N.B., table captions don't render in jupyter notebooks on GitHub,
     # so put caption outside table element
 
+    html = '<div class="allel allel-DisplayAsTable">'
     # sanitize caption
-    caption = caption.replace('<', '&lt;')
-    html = caption
+    caption = caption.replace('<', '&lt;').replace('>', '&gt;')
+    html += '<span>%s</span>' % caption
 
     # build table
     html += '<table>'
@@ -238,7 +243,7 @@ def recarr_to_html(names, indices, items, caption):
     for row_index, row in zip(indices, items):
         if row_index == ' ... ':
             html += '<tr><th style="text-align: center">...</th>' \
-                    '<td style="text-align: center" colspan=%s>...</td></tr>' % \
+                    '<td style="text-align: center" colspan="%s">...</td></tr>' % \
                     (len(names) + 1)
         else:
             html += '<tr><th style="text-align: center">%s</th>' % row_index
@@ -246,6 +251,7 @@ def recarr_to_html(names, indices, items, caption):
                 html += '<td style="text-align: center">%s</td>' % item
             html += '</tr>'
     html += '</table>'
+    html += '</div>'
 
     return html
 
