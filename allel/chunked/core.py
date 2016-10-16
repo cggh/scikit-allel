@@ -92,7 +92,7 @@ def copy_table(tbl, start=0, stop=None, blen=None, storage=None,
     return out
 
 
-def apply(data, f, blen=None, storage=None, create='array', **kwargs):
+def map_blocks(data, f, blen=None, storage=None, create='array', **kwargs):
     """Apply function `f` block-wise over `data`."""
 
     # setup
@@ -478,7 +478,7 @@ def concatenate(tup, axis=0, blen=None, storage=None, create='array', **kwargs):
         def f(*blocks):
             return np.concatenate(blocks, axis=axis)
 
-        out = apply(tup, f, blen=blen, storage=storage, create=create, **kwargs)
+        out = map_blocks(tup, f, blen=blen, storage=storage, create=create, **kwargs)
 
     return out
 
@@ -494,13 +494,12 @@ def binary_op(data, op, other, blen=None, storage=None, create='array',
     if np.isscalar(other):
         def f(block):
             return op(block, other)
-        return apply(data, f, blen=blen, storage=storage, create=create,
-                     **kwargs)
+        return map_blocks(data, f, blen=blen, storage=storage, create=create, **kwargs)
 
     elif len(data) == len(other):
         def f(a, b):
             return op(a, b)
-        return apply((data, other), f, blen=blen, storage=storage,
+        return map_blocks((data, other), f, blen=blen, storage=storage,
                      create=create, **kwargs)
 
     else:
@@ -642,18 +641,13 @@ class ChunkedArrayWrapper(ArrayWrapper):
 
     # outputs from these methods are not wrapped
     store = store
-    reduce_axis = reduce_axis
-    max = amax
-    min = amin
-    sum = asum
     count_nonzero = count_nonzero
 
-    def apply(self, f, blen=None, storage=None, create='array', **kwargs):
-        out = apply(self, f, blen=blen, storage=storage, create=create, **kwargs)
-        # don't wrap, leave this up to user
-        return out
+    def map_blocks(self, f, blen=None, storage=None, create='array', **kwargs):
+        out = map_blocks(self, f, blen=blen, storage=storage, create=create, **kwargs)
+        return ChunkedArrayWrapper(out)
 
-    def apply_method(self, method_name, kwargs=None, **storage_kwargs):
+    def map_blocks_method(self, method_name, kwargs=None, **storage_kwargs):
         if kwargs is None:
             kwargs = dict()
 
@@ -661,22 +655,21 @@ class ChunkedArrayWrapper(ArrayWrapper):
             method = getattr(block, method_name)
             return method(**kwargs)
 
-        out = self.apply(f, **storage_kwargs)
-        # don't wrap, leave this up to user
+        out = self.map_blocks(f, **storage_kwargs)
         return out
 
     def copy(self, start=0, stop=None, blen=None, storage=None, create='array',
              **kwargs):
         out = copy(self, start=start, stop=stop, blen=blen, storage=storage,
                    create=create, **kwargs)
-        # can always wrap this
+        # can always wrap this as sub-class
         return type(self)(out)
 
     def binary_op(self, op, other, blen=None, storage=None, create='array',
                   **kwargs):
         out = binary_op(self, op, other, blen=blen, storage=storage,
                         create=create, **kwargs)
-        return out
+        return ChunkedArrayWrapper(out)
 
     def __eq__(self, other, **kwargs):
         return self.binary_op(operator.eq, other, **kwargs)
@@ -731,6 +724,46 @@ class ChunkedArrayWrapper(ArrayWrapper):
 
     def __xor__(self, other, **kwargs):
         return self.binary_op(operator.xor, other, **kwargs)
+
+    def compress(self, condition, axis=0, **kwargs):
+        out = compress(condition, self.values, axis=axis, **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def take(self, indices, axis=0, **kwargs):
+        out = take(self.values, indices, axis=axis, **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def subset(self, sel0=None, sel1=None, **kwargs):
+        out = subset(self.values, sel0, sel1, **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def concatenate(self, others, axis=0, **kwargs):
+        if not isinstance(others, (tuple, list)):
+            others = others,
+        tup = (self,) + tuple(others)
+        out = concatenate(tup, axis=axis, **kwargs)
+        return ChunkedArrayWrapper(out)
+
+    def max(self, axis=None, **kwargs):
+        out = amax(self, axis=axis, **kwargs)
+        if np.isscalar(out):
+            return out
+        else:
+            return ChunkedArrayWrapper(out)
+
+    def min(self, axis=None, **kwargs):
+        out = amin(self, axis=axis, **kwargs)
+        if np.isscalar(out):
+            return out
+        else:
+            return ChunkedArrayWrapper(out)
+
+    def sum(self, axis=None, **kwargs):
+        out = asum(self, axis=axis, **kwargs)
+        if np.isscalar(out):
+            return out
+        else:
+            return ChunkedArrayWrapper(out)
 
 
 class ChunkedTableWrapper(DisplayAsTable):
@@ -804,7 +837,7 @@ class ChunkedTableWrapper(DisplayAsTable):
             raise IndexError('item not supported for indexing: %s' % repr(item))
 
     def __array__(self, *args):
-        a = np.asarray(self[:])
+        a = np.asanyarray(self[:])
         if args:
             a = a.astype(args[0])
         return a
