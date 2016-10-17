@@ -499,8 +499,8 @@ def binary_op(data, op, other, blen=None, storage=None, create='array',
     elif len(data) == len(other):
         def f(a, b):
             return op(a, b)
-        return map_blocks((data, other), f, blen=blen, storage=storage,
-                     create=create, **kwargs)
+        return map_blocks((data, other), f, blen=blen, storage=storage, create=create,
+                          **kwargs)
 
     else:
         raise NotImplementedError('argument type not supported')
