@@ -27,10 +27,7 @@ class ArrayWrapper(object):
         return '<%s shape=%s dtype=%s>' % (type(self).__name__, self.shape, self.dtype)
 
     def __repr__(self):
-        return self.caption + '\n' + str(self)
-
-    def __str__(self):
-        return str(self.values)
+        return self.caption
 
     def __getattr__(self, item):
         if item in {'__array_struct__', '__array_interface__'}:
@@ -53,7 +50,7 @@ class ArrayWrapper(object):
 
     def __array__(self, *args):
         v = self.values[:]
-        a = np.asarray(v)
+        a = np.asanyarray(v)
         if args:
             a = a.astype(args[0])
         return a
@@ -169,6 +166,9 @@ class ArrayWrapper(object):
         return self.values ^ other
 
 
+ellipsis_str = '...'
+
+
 def arr1d_to_html(indices, items, caption):
     # N.B., table captions don't render in jupyter notebooks on GitHub,
     # so put caption outside table element
@@ -210,7 +210,7 @@ def arr2d_to_html(row_indices, col_indices, items, caption):
         html += '<th style="text-align: center">%s</th>' % i
     html += '</tr>'
     for row_index, row in zip(row_indices, items):
-        if row_index == ' ... ':
+        if row_index == ellipsis_str:
             html += '<tr><th style="text-align: center">...</th>' \
                     '<td style="text-align: center" colspan="%s">...</td></tr>' % \
                     (len(col_indices) + 1)
@@ -241,7 +241,7 @@ def recarr_to_html(names, indices, items, caption):
         html += '<th style="text-align: center">%s</th>' % n
     html += '</tr>'
     for row_index, row in zip(indices, items):
-        if row_index == ' ... ':
+        if row_index == ellipsis_str:
             html += '<tr><th style="text-align: center">...</th>' \
                     '<td style="text-align: center" colspan="%s">...</td></tr>' % \
                     (len(names) + 1)
@@ -258,6 +258,9 @@ def recarr_to_html(names, indices, items, caption):
 
 class DisplayableArray(ArrayWrapper):
 
+    def __repr__(self):
+        return self.caption + '\n' + str(self)
+
     def __str__(self):
         return self.to_str()
 
@@ -267,6 +270,10 @@ class DisplayableArray(ArrayWrapper):
 
 # noinspection PyAbstractClass
 class DisplayAs1D(DisplayableArray):
+
+    def str_items(self):
+        # can be overridden in sub-class to provide custom display behaviour
+        return [repr(i) for i in self]
 
     def get_display_items(self, threshold=10, edgeitems=5):
 
@@ -280,12 +287,12 @@ class DisplayAs1D(DisplayableArray):
         # determine indices of items to show
         if self.shape[0] > threshold:
             indices = (
-                list(range(edgeitems)) + [' ... '] +
+                list(range(edgeitems)) + [ellipsis_str] +
                 list(range(self.shape[0] - edgeitems, self.shape[0], 1))
             )
             head = self[:edgeitems].str_items()
             tail = self[self.shape[0] - edgeitems:].str_items()
-            items = head + [' ... '] + tail
+            items = head + [ellipsis_str] + tail
         else:
             indices = list(range(self.shape[0]))
             items = self[:].str_items()
@@ -294,7 +301,7 @@ class DisplayAs1D(DisplayableArray):
 
     def to_str(self, threshold=10, edgeitems=5):
         _, items = self.get_display_items(threshold, edgeitems)
-        s = ' '.join(items)
+        s = '[' + ', '.join(items) + ']'
         return s
 
     def to_html(self, threshold=10, edgeitems=5, caption=None):
@@ -315,8 +322,11 @@ class DisplayAs1D(DisplayableArray):
 # noinspection PyAbstractClass
 class DisplayAs2D(DisplayableArray):
 
-    def get_display_items(self, row_threshold, col_threshold, row_edgeitems,
-                          col_edgeitems):
+    def str_items(self):
+        # can be overridden in sub-class to provide custom display behaviour
+        return [[repr(i) for i in row] for row in self]
+
+    def get_display_items(self, row_threshold, col_threshold, row_edgeitems, col_edgeitems):
 
         # ensure threshold
         if row_threshold is None:
@@ -331,12 +341,12 @@ class DisplayAs2D(DisplayableArray):
         # determine row indices of items to show
         if self.shape[0] > row_threshold:
             row_indices = (
-                list(range(row_edgeitems)) + [' ... '] +
+                list(range(row_edgeitems)) + [ellipsis_str] +
                 list(range(self.shape[0] - row_edgeitems, self.shape[0], 1))
             )
             head = self[:row_edgeitems].str_items()
             tail = self[self.shape[0] - row_edgeitems:].str_items()
-            items = head + [' ... '] + tail
+            items = head + [ellipsis_str] + tail
         else:
             row_indices = list(range(self.shape[0]))
             items = self[:].str_items()
@@ -344,12 +354,12 @@ class DisplayAs2D(DisplayableArray):
         # determine col indices of items to show
         if self.shape[1] > col_threshold:
             col_indices = (
-                list(range(col_edgeitems)) + [' ... '] +
+                list(range(col_edgeitems)) + [ellipsis_str] +
                 list(range(self.shape[1] - col_edgeitems, self.shape[1], 1))
             )
             items = [
-                row if row == ' ... ' else
-                (row[:col_edgeitems] + [' ... '] + row[self.shape[1] - col_edgeitems:])
+                row if row == ellipsis_str else
+                (row[:col_edgeitems] + [ellipsis_str] + row[self.shape[1] - col_edgeitems:])
                 for row in items
             ]
         else:
@@ -363,7 +373,7 @@ class DisplayAs2D(DisplayableArray):
                                              col_edgeitems)
         s = ''
         for row in items:
-            if row == ' ... ':
+            if row == ellipsis_str:
                 s += row + '\n'
             else:
                 s += ' '.join(row) + '\n'
@@ -413,12 +423,12 @@ class DisplayAsTable(DisplayableArray):
         # determine indices of items to show
         if self.shape[0] > threshold:
             indices = (
-                list(range(edgeitems)) + [' ... '] +
+                list(range(edgeitems)) + [ellipsis_str] +
                 list(range(self.shape[0] - edgeitems, self.shape[0], 1))
             )
             head = self[:edgeitems].str_items()
             tail = self[self.shape[0] - edgeitems:].str_items()
-            items = head + [' ... '] + tail
+            items = head + [ellipsis_str] + tail
         else:
             indices = list(range(self.shape[0]))
             items = self[:].str_items()

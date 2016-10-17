@@ -925,6 +925,11 @@ class GenotypeVector(Genotypes, DisplayAs1D):
             out = [str(x, 'ascii') for x in gt]
         return out
 
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
+        return s
+
 
 class GenotypeArray(Genotypes, DisplayAs2D):
     """Array of discrete genotype calls.
@@ -2717,16 +2722,16 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
     --------
 
     >>> import allel
-    >>> idx = allel.SortedIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> idx = allel.SortedIndex([2, 5, 8, 14, 15, 23, 42, 42, 61, 77, 103], dtype='i4')
     >>> idx
-    <SortedIndex shape=(7,) dtype=int32>
-    [ 2  5 14 15 42 42 77]
+    <SortedIndex shape=(11,) dtype=int32>
+    [2, 5, 8, 14, 15, ..., 42, 42, 61, 77, 103]
     >>> idx.dtype
     dtype('int32')
     >>> idx.ndim
     1
     >>> idx.shape
-    (7,)
+    (11,)
     >>> idx.is_unique
     False
 
@@ -2764,22 +2769,6 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         if axis == 0:
             out = type(self)(out)
         return out
-
-    def str_items(self):
-        tmp = self.values[:]
-        max_value = np.max(tmp)
-        if max_value <= 0:
-            max_value = 1
-        n = int(np.floor(np.log10(max_value))) + 1
-        t = tmp.astype((np.string_, n))
-        if PY2:
-            out = [x.rjust(n) for x in t]
-        else:
-            out = [str(x, 'ascii').rjust(n) for x in t]
-        return out
-
-    def __str__(self):
-        return str(self.values)
 
     def locate_key(self, key):
         """Get index location for the requested key.
@@ -2852,10 +2841,10 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         array([False,  True,  True, False], dtype=bool)
         >>> idx1[loc1]
         <SortedIndex shape=(2,) dtype=int64>
-        [ 6 20]
+        [6, 20]
         >>> idx2[loc2]
         <SortedIndex shape=(2,) dtype=int64>
-        [ 6 20]
+        [6, 20]
 
         """
 
@@ -2895,7 +2884,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc]
         <SortedIndex shape=(2,) dtype=int64>
-        [ 6 20]
+        [6, 20]
 
         """
 
@@ -2931,7 +2920,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
         >>> idx1.intersect(idx2)
         <SortedIndex shape=(2,) dtype=int64>
-        [ 6 20]
+        [6, 20]
 
         """
 
@@ -2964,7 +2953,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         slice(1, 4, None)
         >>> idx[loc]
         <SortedIndex shape=(3,) dtype=int64>
-        [ 6 11 20]
+        [6, 11, 20]
 
         """
 
@@ -3006,7 +2995,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
         >>> idx.intersect_range(4, 32)
         <SortedIndex shape=(3,) dtype=int64>
-        [ 6 11 20]
+        [6, 11, 20]
 
         """
 
@@ -3052,7 +3041,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx[loc]
         <SortedIndex shape=(3,) dtype=int64>
-        [ 6 11 35]
+        [6, 11, 35]
         >>> ranges[loc_ranges]
         array([[ 6, 17],
                [31, 35]])
@@ -3110,7 +3099,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         array([False,  True,  True, False,  True], dtype=bool)
         >>> idx[loc]
         <SortedIndex shape=(3,) dtype=int64>
-        [ 6 11 35]
+        [6, 11, 35]
 
         """
 
@@ -3147,7 +3136,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> stops = ranges[:, 1]
         >>> idx.intersect_ranges(starts, stops)
         <SortedIndex shape=(3,) dtype=int64>
-        [ 6 11 35]
+        [6, 11, 35]
 
         """
 
@@ -3155,7 +3144,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         return self.compress(loc, axis=0)
 
 
-class UniqueIndex(NumpyArrayWrapper):
+class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
     """Array of unique values (e.g., variant or sample identifiers).
 
     Parameters
@@ -3180,7 +3169,7 @@ class UniqueIndex(NumpyArrayWrapper):
     >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
     >>> idx
     <UniqueIndex shape=(4,) dtype=object>
-    ['A' 'C' 'B' 'F']
+    ['A', 'C', 'B', 'F']
     >>> idx.dtype
     dtype('O')
     >>> idx.ndim
@@ -3279,10 +3268,10 @@ class UniqueIndex(NumpyArrayWrapper):
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc1]
         <UniqueIndex shape=(2,) dtype=object>
-        ['C' 'F']
+        ['C', 'F']
         >>> idx2[loc2]
         <UniqueIndex shape=(2,) dtype=object>
-        ['F' 'C']
+        ['F', 'C']
 
         """
 
@@ -3354,10 +3343,10 @@ class UniqueIndex(NumpyArrayWrapper):
         >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
         >>> idx1.intersect(idx2)
         <UniqueIndex shape=(2,) dtype=object>
-        ['C' 'F']
+        ['C', 'F']
         >>> idx2.intersect(idx1)
         <UniqueIndex shape=(2,) dtype=object>
-        ['F' 'C']
+        ['F', 'C']
 
         """
 
