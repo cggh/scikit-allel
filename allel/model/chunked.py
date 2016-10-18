@@ -306,13 +306,14 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         out = _chunked.map_blocks(domain, f, **kwargs)
         return GenotypeChunkedArray(out)
 
-    def compress(self, condition, axis=0, **kwargs):
+    def compress(self, condition, axis=0, out=None, **kwargs):
         return compress_genotypes(self, condition, axis=axis, wrap_axes={0, 1},
-                                  cls=type(self), compress=_chunked.compress, **kwargs)
+                                  cls=type(self), compress=_chunked.compress, out=out,
+                                  **kwargs)
 
-    def take(self, indices, axis=0, **kwargs):
+    def take(self, indices, axis=0, out=None, mode='raise', **kwargs):
         return take_genotypes(self, indices, axis=axis, wrap_axes={0, 1}, cls=type(self),
-                              take=_chunked.take, **kwargs)
+                              take=_chunked.take, out=out, mode=mode, **kwargs)
 
     def subset(self, sel0=None, sel1=None, **kwargs):
         return subset_genotype_array(self, sel0, sel1, cls=type(self),
@@ -462,13 +463,13 @@ class HaplotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         out = _chunked.map_blocks(domain, f, **kwargs)
         return HaplotypeChunkedArray(out)
 
-    def compress(self, condition, axis=0, **kwargs):
+    def compress(self, condition, axis=0, out=None, **kwargs):
         return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
-                                        compress=_chunked.compress, **kwargs)
+                                        compress=_chunked.compress, out=out, **kwargs)
 
-    def take(self, indices, axis=0, **kwargs):
+    def take(self, indices, axis=0, out=None, mode='raise', **kwargs):
         return take_haplotype_array(self, indices, axis=axis, cls=type(self),
-                                    take=_chunked.take, **kwargs)
+                                    take=_chunked.take, out=out, mode=mode, **kwargs)
 
     def subset(self, sel0=None, sel1=None, **kwargs):
         return subset_haplotype_array(self, sel0, sel1, cls=type(self),
@@ -621,13 +622,13 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         out = _chunked.map_blocks(domain, f, **kwargs)
         return AlleleCountsChunkedArray(out)
 
-    def compress(self, condition, axis=0, **kwargs):
+    def compress(self, condition, axis=0, out=None, **kwargs):
         return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
-                                            compress=_chunked.compress, **kwargs)
+                                            compress=_chunked.compress, out=out, **kwargs)
 
-    def take(self, indices, axis=0, **kwargs):
+    def take(self, indices, axis=0, out=None, mode='raise', **kwargs):
         return take_allele_counts_array(self, indices, axis=axis, cls=type(self),
-                                        take=_chunked.take, **kwargs)
+                                        take=_chunked.take, out=out, mode=mode, **kwargs)
 
     def concatenate(self, others, axis=0, **kwargs):
         return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
@@ -703,21 +704,24 @@ class GenotypeAlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         out = self.map_blocks_method('to_gt', kwargs=dict(max_allele=max_allele), **kwargs)
         return out
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None, **kwargs):
         return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
-                                    cls=type(self), compress=_chunked.compress)
+                                    cls=type(self), compress=_chunked.compress, out=out,
+                                    **kwargs)
 
-    def take(self, indices, axis=0):
+    def take(self, indices, axis=0, out=None, mode='raise', **kwargs):
         return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
-                                cls=type(self), take=_chunked.take)
+                                cls=type(self), take=_chunked.take, out=out, mode=mode,
+                                **kwargs)
 
-    def concatenate(self, others, axis=0):
+    def concatenate(self, others, axis=0, **kwargs):
         return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
-                                       cls=type(self), concatenate=_chunked.concatenate)
+                                       cls=type(self), concatenate=_chunked.concatenate,
+                                       **kwargs)
 
-    def subset(self, sel0=None, sel1=None):
+    def subset(self, sel0=None, sel1=None, **kwargs):
         return subset_genotype_ac_array(self, sel0, sel1, cls=type(self),
-                                        subset=_chunked.subset)
+                                        subset=_chunked.subset, **kwargs)
 
 
 class VariantChunkedTable(ChunkedTableWrapper):

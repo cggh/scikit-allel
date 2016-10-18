@@ -218,10 +218,14 @@ def count_nonzero(data, mapper=None, blen=None, storage=None,
                        blen=blen, storage=storage, create=create, **kwargs)
 
 
-def compress(condition, data, axis=0, blen=None, storage=None, create='array', **kwargs):
+def compress(condition, data, axis=0, out=None, blen=None, storage=None, create='array',
+             **kwargs):
     """Return selected slices of an array along given axis."""
 
     # setup
+    if out is not None:
+        # argument is only there for numpy API compatibility
+        raise NotImplementedError('out argument is not supported')
     storage = _util.get_storage(storage)
     blen = _util.get_blen_array(data, blen)
     length = len(data)
@@ -240,8 +244,7 @@ def compress(condition, data, axis=0, blen=None, storage=None, create='array', *
                 block = np.asarray(data[i:j])
                 res = np.compress(bcond, block, axis=0)
                 if out is None:
-                    out = getattr(storage, create)(res, expectedlen=nnz,
-                                                   **kwargs)
+                    out = getattr(storage, create)(res, expectedlen=nnz, **kwargs)
                 else:
                     out.append(res)
         return out
@@ -267,11 +270,14 @@ def compress(condition, data, axis=0, blen=None, storage=None, create='array', *
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def take(data, indices, axis=0, blen=None, storage=None,
+def take(data, indices, axis=0, out=None, mode='raise', blen=None, storage=None,
          create='array', **kwargs):
     """Take elements from an array along an axis."""
 
     # setup
+    if out is not None:
+        # argument is only there for numpy API compatibility
+        raise NotImplementedError('out argument is not supported')
     length = len(data)
 
     if axis == 0:
@@ -300,7 +306,7 @@ def take(data, indices, axis=0, blen=None, storage=None,
         for i in range(0, length, blen):
             j = min(i+blen, length)
             block = data[i:j]
-            res = np.take(block, indices, axis=1)
+            res = np.take(block, indices, axis=1, mode=mode)
             if out is None:
                 out = getattr(storage, create)(res, expectedlen=length,
                                                **kwargs)
@@ -312,10 +318,16 @@ def take(data, indices, axis=0, blen=None, storage=None,
         raise NotImplementedError('axis not supported: %s' % axis)
 
 
-def compress_table(condition, tbl, blen=None, storage=None, create='table', **kwargs):
+def compress_table(condition, tbl, axis=None, out=None, blen=None, storage=None,
+                   create='table', **kwargs):
     """Return selected rows of a table."""
 
     # setup
+    if axis is not None and axis != 0:
+        raise NotImplementedError('only axis 0 is supported')
+    if out is not None:
+        # argument is only there for numpy API compatibility
+        raise NotImplementedError('out argument is not supported')
     storage = _util.get_storage(storage)
     names, columns = _util.check_table_like(tbl)
     blen = _util.get_blen_table(tbl, blen)
@@ -340,11 +352,18 @@ def compress_table(condition, tbl, blen=None, storage=None, create='table', **kw
     return out
 
 
-def take_table(tbl, indices, blen=None, storage=None, create='table',
-               **kwargs):
+def take_table(tbl, indices, axis=None, out=None, mode='raise', blen=None, storage=None,
+               create='table', **kwargs):
     """Return selected rows of a table."""
 
     # setup
+    if axis is not None and axis != 0:
+        raise NotImplementedError('only axis 0 is supported')
+    if out is not None:
+        # argument is only there for numpy API compatibility
+        raise NotImplementedError('out argument is not supported')
+    if mode is not None and mode != 'raise':
+        raise NotImplementedError('only mode=raise is supported')
     names, columns = _util.check_table_like(tbl)
     length = len(columns[0])
 
@@ -725,12 +744,12 @@ class ChunkedArrayWrapper(ArrayWrapper):
     def __xor__(self, other, **kwargs):
         return self.binary_op(operator.xor, other, **kwargs)
 
-    def compress(self, condition, axis=0, **kwargs):
-        out = compress(condition, self.values, axis=axis, **kwargs)
+    def compress(self, condition, axis=0, out=None, **kwargs):
+        out = compress(condition, self.values, axis=axis, out=out, **kwargs)
         return ChunkedArrayWrapper(out)
 
-    def take(self, indices, axis=0, **kwargs):
-        out = take(self.values, indices, axis=axis, **kwargs)
+    def take(self, indices, axis=0, out=None, **kwargs):
+        out = take(self.values, indices, axis=axis, out=out, **kwargs)
         return ChunkedArrayWrapper(out)
 
     def subset(self, sel0=None, sel1=None, **kwargs):
@@ -930,12 +949,14 @@ class ChunkedTableWrapper(DisplayAsTable):
         # should already be wrapped
         return out
 
-    def compress(self, condition, blen=None, storage=None, create='table', **kwargs):
-        out = compress_table(condition, self, blen=blen, storage=storage, create=create,
-                             **kwargs)
+    def compress(self, condition, axis=None, out=None, blen=None, storage=None, create='table',
+                 **kwargs):
+        out = compress_table(condition, self, axis=axis, out=out, blen=blen, storage=storage,
+                             create=create, **kwargs)
         return type(self)(out)
 
-    def take(self, indices, blen=None, storage=None, create='table', **kwargs):
-        out = take_table(self, indices, blen=blen, storage=storage, create=create,
-                         **kwargs)
+    def take(self, indices, axis=None, out=None, mode='raise', blen=None, storage=None,
+             create='table', **kwargs):
+        out = take_table(self, indices, axis=axis, out=out, mode=mode, blen=blen,
+                         storage=storage, create=create, **kwargs)
         return type(self)(out)

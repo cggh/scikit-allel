@@ -145,14 +145,14 @@ class NumpyRecArrayWrapper(DisplayAsTable):
         # can always wrap this as sub-class type
         return type(self)(data)
 
-    def compress(self, condition, axis=0):
-        out = self.values.compress(condition, axis=axis)
+    def compress(self, condition, axis=0, out=None):
+        out = self.values.compress(condition, axis=axis, out=out)
         if axis == 0:
             out = type(self)(out)
         return out
 
-    def take(self, indices, axis=0):
-        out = self.values.take(indices, axis=axis)
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        out = self.values.take(indices, axis=axis, out=out, mode=mode)
         if axis == 0:
             out = type(self)(out)
         return out
@@ -902,13 +902,13 @@ class GenotypeVector(Genotypes, DisplayAs1D):
     def __getitem__(self, item):
         return index_genotype_vector(self, item, type(self))
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None):
         return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0},
-                                  cls=type(self), compress=np.compress)
+                                  cls=type(self), compress=np.compress, out=out)
 
-    def take(self, indices, axis=0):
+    def take(self, indices, axis=0, out=None, mode='raise'):
         return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0}, cls=type(self),
-                              take=np.take)
+                              take=np.take, out=out, mode=mode)
 
     def concatenate(self, others, axis=0):
         return concatenate_genotypes(self, others=others, axis=axis, wrap_axes={0},
@@ -1064,15 +1064,15 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         """Number of samples."""
         return self.shape[1]
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None):
         """TODO"""
         return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0, 1},
-                                  cls=type(self), compress=np.compress)
+                                  cls=type(self), compress=np.compress, out=out)
 
-    def take(self, indices, axis=0):
+    def take(self, indices, axis=0, out=None, mode='raise'):
         """TODO"""
         return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0, 1},
-                              cls=type(self), take=np.take)
+                              cls=type(self), take=np.take, out=out, mode=mode)
 
     def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and samples.
@@ -1600,14 +1600,15 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
     def __getitem__(self, item):
         return index_haplotype_array(self, item, type(self))
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None):
         """TODO"""
         return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
-                                        compress=np.compress)
+                                        compress=np.compress, out=out)
 
-    def take(self, indices, axis=0):
+    def take(self, indices, axis=0, out=None, mode='raise'):
         """TODO"""
-        return take_haplotype_array(self, indices, axis=axis, cls=type(self), take=np.take)
+        return take_haplotype_array(self, indices, axis=axis, cls=type(self), take=np.take,
+                                    out=out, mode=mode)
 
     def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and haplotypes.
@@ -2115,12 +2116,13 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     def __getitem__(self, item):
         return index_allele_counts_array(self, item, type(self))
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None):
         return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
-                                            compress=np.compress)
+                                            compress=np.compress, out=out)
 
-    def take(self, indices, axis=0):
-        return take_allele_counts_array(self, indices, axis=axis, cls=type(self), take=np.take)
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        return take_allele_counts_array(self, indices, axis=axis, cls=type(self),
+                                        take=np.take, out=out, mode=mode)
 
     def concatenate(self, others, axis=0):
         return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
@@ -2618,13 +2620,13 @@ class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
         """Number of alleles."""
         return self.shape[1]
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None):
         return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0},
-                                    cls=type(self), compress=np.compress)
+                                    cls=type(self), compress=np.compress, out=out)
 
-    def take(self, indices, axis=0):
+    def take(self, indices, axis=0, out=None, mode='raise'):
         return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0},
-                                cls=type(self), take=np.take)
+                                cls=type(self), take=np.take, out=out, mode=mode)
 
     def concatenate(self, others, axis=0):
         return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0},
@@ -2677,13 +2679,13 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
         out = AlleleCountsArray(out)
         return out
 
-    def compress(self, condition, axis=0):
+    def compress(self, condition, axis=0, out=None):
         return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
-                                    cls=type(self), compress=np.compress)
+                                    cls=type(self), compress=np.compress, out=out)
 
-    def take(self, indices, axis=0):
+    def take(self, indices, axis=0, out=None, mode='raise'):
         return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
-                                cls=type(self), take=np.take)
+                                cls=type(self), take=np.take, out=out, mode=mode)
 
     def concatenate(self, others, axis=0):
         return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
@@ -2758,14 +2760,14 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
             return type(self)(s)
         return s
 
-    def compress(self, condition, axis=0):
-        out = self.values.compress(condition, axis=axis)
+    def compress(self, condition, axis=0, out=None):
+        out = self.values.compress(condition, axis=axis, out=out)
         if axis == 0:
             out = type(self)(out)
         return out
 
-    def take(self, indices, axis=0):
-        out = self.values.take(indices, axis=axis)
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        out = self.values.take(indices, axis=axis, out=out, mode=mode)
         if axis == 0:
             out = type(self)(out)
         return out
@@ -3195,14 +3197,14 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
             return type(self)(s)
         return s
 
-    def compress(self, condition, axis=0):
-        out = self.values.compress(condition, axis=axis)
+    def compress(self, condition, axis=0, out=None):
+        out = self.values.compress(condition, axis=axis, out=out)
         if axis == 0:
             out = type(self)(out)
         return out
 
-    def take(self, indices, axis=0):
-        out = self.values.take(indices, axis=axis)
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        out = self.values.take(indices, axis=axis, out=out, mode=mode)
         if axis == 0:
             out = type(self)(out)
         return out
@@ -3354,7 +3356,7 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
         return self.compress(loc, axis=0)
 
 
-class SortedMultiIndex(object):
+class SortedMultiIndex(DisplayAs1D):
     """Two-level index of sorted values, e.g., variant positions from two or
     more chromosomes/contigs.
 
@@ -3374,6 +3376,9 @@ class SortedMultiIndex(object):
     >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
     >>> pos = [1, 4, 2, 5, 5, 3]
     >>> idx = allel.SortedMultiIndex(chrom, pos)
+    >>> idx
+    <SortedMultiIndex shape=(6,), dtype=<U4/int64>
+    chr1:1 chr1:4 chr2:2 chr2:5 chr2:5 chr3:3
     >>> len(idx)
     6
 
@@ -3390,10 +3395,38 @@ class SortedMultiIndex(object):
     def __repr__(self):
         s = '<SortedMultiIndex shape=(%s,), dtype=%s/%s>' % \
             (len(self), self.l1.dtype, self.l2.dtype)
+        s += '\n' + str(self)
+        return s
+
+    def str_items(self):
+        return ['%s:%s' % (x, y) for x, y in zip(self.l1, self.l2)]
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
         return s
 
     def __len__(self):
         return len(self.l1)
+
+    def __getitem__(self, item):
+        l1 = self.l1[item]
+        l2 = self.l2[item]
+        return SortedMultiIndex(l1, l2, copy=False)
+
+    def compress(self, condition, axis=0, out=None):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.l1.compress(condition, axis=axis)
+        l2 = self.l2.compress(condition, axis=axis)
+        return SortedMultiIndex(l1, l2, copy=False)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.l1.take(indices, axis=axis, mode=mode)
+        l2 = self.l2.take(indices, axis=axis, mode=mode)
+        return SortedMultiIndex(l1, l2, copy=False)
 
     @property
     def shape(self):

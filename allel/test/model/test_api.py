@@ -199,30 +199,30 @@ class GenotypeArrayInterface(object):
 
         # take variants
         indices = [0, 2]
-        t = g.take(indices, axis=0)
-        eq(2, t.n_variants)
-        eq(g.n_samples, t.n_samples)
-        eq(g.ploidy, t.ploidy)
-        expect = np.array(diploid_genotype_data).take(indices, axis=0)
-        aeq(expect, t)
+        for t in g.take(indices, axis=0), np.take(g, indices, axis=0):
+            eq(2, t.n_variants)
+            eq(g.n_samples, t.n_samples)
+            eq(g.ploidy, t.ploidy)
+            expect = np.array(diploid_genotype_data).take(indices, axis=0)
+            aeq(expect, t)
 
         # take samples
         indices = [0, 2]
-        t = g.take(indices, axis=1)
-        eq(g.n_variants, t.n_variants)
-        eq(2, t.n_samples)
-        eq(g.ploidy, t.ploidy)
-        expect = np.array(diploid_genotype_data).take(indices, axis=1)
-        aeq(expect, t)
+        for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
+            eq(g.n_variants, t.n_variants)
+            eq(2, t.n_samples)
+            eq(g.ploidy, t.ploidy)
+            expect = np.array(diploid_genotype_data).take(indices, axis=1)
+            aeq(expect, t)
 
         # take samples not in original order
         indices = [2, 0]
-        t = g.take(indices, axis=1)
-        eq(g.n_variants, t.n_variants)
-        eq(2, t.n_samples)
-        eq(g.ploidy, t.ploidy)
-        expect = np.array(diploid_genotype_data).take(indices, axis=1)
-        aeq(expect, t)
+        for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
+            eq(g.n_variants, t.n_variants)
+            eq(2, t.n_samples)
+            eq(g.ploidy, t.ploidy)
+            expect = np.array(diploid_genotype_data).take(indices, axis=1)
+            aeq(expect, t)
 
     def test_compress(self):
         # Test the compress() method.
@@ -231,21 +231,22 @@ class GenotypeArrayInterface(object):
 
         # compress variants
         condition = [True, False, True, False, False]
-        t = g.compress(condition, axis=0)
-        eq(2, t.n_variants)
-        eq(g.n_samples, t.n_samples)
-        eq(g.ploidy, t.ploidy)
-        expect = np.array(diploid_genotype_data).compress(condition, axis=0)
-        aeq(expect, t)
+        for t in g.compress(condition, axis=0), np.compress(condition, g, axis=0):
+            t = g.compress(condition, axis=0)
+            eq(2, t.n_variants)
+            eq(g.n_samples, t.n_samples)
+            eq(g.ploidy, t.ploidy)
+            expect = np.array(diploid_genotype_data).compress(condition, axis=0)
+            aeq(expect, t)
 
         # compress samples
         condition = [True, False, True]
-        t = g.compress(condition, axis=1)
-        eq(g.n_variants, t.n_variants)
-        eq(2, t.n_samples)
-        eq(g.ploidy, t.ploidy)
-        expect = np.array(diploid_genotype_data).compress(condition, axis=1)
-        aeq(expect, t)
+        for t in g.compress(condition, axis=1), np.compress(condition, g, axis=1):
+            eq(g.n_variants, t.n_variants)
+            eq(2, t.n_samples)
+            eq(g.ploidy, t.ploidy)
+            expect = np.array(diploid_genotype_data).compress(condition, axis=1)
+            aeq(expect, t)
 
     def test_subset(self):
         # Test the subset() method.
@@ -998,8 +999,10 @@ class GenotypeArrayInterface(object):
         g1 = self.setup_instance(a)
         g2 = self.setup_instance(a)
         for axis in 0, 1:
-            actual = g1.concatenate(g2, axis=axis)
             expect = np.concatenate([a, a], axis=axis)
+            actual = g1.concatenate(g2, axis=axis)
+            aeq(expect, actual)
+            actual = np.concatenate([g1, g2], axis=axis)
             aeq(expect, actual)
 
 
@@ -1070,19 +1073,19 @@ class HaplotypeArrayInterface(object):
 
         # take variants
         indices = [0, 2]
-        t = h.take(indices, axis=0)
-        eq(2, t.n_variants)
-        eq(h.n_haplotypes, t.n_haplotypes)
-        expect = np.array(haplotype_data).take(indices, axis=0)
-        aeq(expect, t)
+        for t in h.take(indices, axis=0), np.take(h, indices, axis=0):
+            eq(2, t.n_variants)
+            eq(h.n_haplotypes, t.n_haplotypes)
+            expect = np.array(haplotype_data).take(indices, axis=0)
+            aeq(expect, t)
 
         # take samples
         indices = [0, 2]
-        t = h.take(indices, axis=1)
-        eq(h.n_variants, t.n_variants)
-        eq(2, t.n_haplotypes)
-        expect = np.array(haplotype_data).take(indices, axis=1)
-        aeq(expect, t)
+        for t in h.take(indices, axis=1), np.take(h, indices, axis=1):
+            eq(h.n_variants, t.n_variants)
+            eq(2, t.n_haplotypes)
+            expect = np.array(haplotype_data).take(indices, axis=1)
+            aeq(expect, t)
 
     def test_compress(self):
         # Test the compress() method.
@@ -1091,19 +1094,19 @@ class HaplotypeArrayInterface(object):
 
         # compress variants
         condition = [True, False, True, False]
-        t = h.compress(condition, axis=0)
-        eq(2, t.n_variants)
-        eq(h.n_haplotypes, t.n_haplotypes)
-        expect = np.array(haplotype_data).compress(condition, axis=0)
-        aeq(expect, t)
+        for t in h.compress(condition, axis=0), np.compress(condition, h, axis=0):
+            eq(2, t.n_variants)
+            eq(h.n_haplotypes, t.n_haplotypes)
+            expect = np.array(haplotype_data).compress(condition, axis=0)
+            aeq(expect, t)
 
         # compress samples
         condition = [True, False, True]
-        t = h.compress(condition, axis=1)
-        eq(h.n_variants, t.n_variants)
-        eq(2, t.n_haplotypes)
-        expect = np.array(haplotype_data).compress(condition, axis=1)
-        aeq(expect, t)
+        for t in h.compress(condition, axis=1), np.compress(condition, h, axis=1):
+            eq(h.n_variants, t.n_variants)
+            eq(2, t.n_haplotypes)
+            expect = np.array(haplotype_data).compress(condition, axis=1)
+            aeq(expect, t)
 
     def test_subset(self):
         # Test the subset() method.
@@ -1396,20 +1399,20 @@ class AlleleCountsArrayInterface(object):
 
         # take variants
         indices = [0, 2]
-        t = ac.take(indices, axis=0)
-        eq(2, t.n_variants)
-        eq(ac.n_alleles, t.n_alleles)
-        expect = np.array(allele_counts_data).take(indices, axis=0)
-        aeq(expect, t)
+        for t in ac.take(indices, axis=0), np.take(ac, indices, axis=0):
+            eq(2, t.n_variants)
+            eq(ac.n_alleles, t.n_alleles)
+            expect = np.array(allele_counts_data).take(indices, axis=0)
+            aeq(expect, t)
 
     def test_compress(self):
         ac = self.setup_instance(allele_counts_data)
         condition = [True, False, True, False, True, False]
-        t = ac.compress(condition, axis=0)
-        eq(3, t.n_variants)
-        eq(ac.n_alleles, t.n_alleles)
-        expect = np.array(allele_counts_data).compress(condition, axis=0)
-        aeq(expect, t)
+        for t in ac.compress(condition, axis=0), np.compress(condition, ac, axis=0):
+            eq(3, t.n_variants)
+            eq(ac.n_alleles, t.n_alleles)
+            expect = np.array(allele_counts_data).compress(condition, axis=0)
+            aeq(expect, t)
 
     def test_to_frequencies(self):
         ac = self.setup_instance(allele_counts_data)
@@ -1625,30 +1628,30 @@ class GenotypeAlleleCountsArrayInterface(object):
 
         # take variants
         indices = [0, 2]
-        t = g.take(indices, axis=0)
-        eq(2, t.n_variants)
-        eq(g.n_samples, t.n_samples)
-        eq(g.n_alleles, t.n_alleles)
-        expect = np.array(diploid_genotype_ac_data).take(indices, axis=0)
-        aeq(expect, t)
+        for t in g.take(indices, axis=0), np.take(g, indices, axis=0):
+            eq(2, t.n_variants)
+            eq(g.n_samples, t.n_samples)
+            eq(g.n_alleles, t.n_alleles)
+            expect = np.array(diploid_genotype_ac_data).take(indices, axis=0)
+            aeq(expect, t)
 
         # take samples
         indices = [0, 2]
-        t = g.take(indices, axis=1)
-        eq(g.n_variants, t.n_variants)
-        eq(2, t.n_samples)
-        eq(g.n_alleles, t.n_alleles)
-        expect = np.array(diploid_genotype_ac_data).take(indices, axis=1)
-        aeq(expect, t)
+        for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
+            eq(g.n_variants, t.n_variants)
+            eq(2, t.n_samples)
+            eq(g.n_alleles, t.n_alleles)
+            expect = np.array(diploid_genotype_ac_data).take(indices, axis=1)
+            aeq(expect, t)
 
         # take samples not in original order
         indices = [2, 0]
-        t = g.take(indices, axis=1)
-        eq(g.n_variants, t.n_variants)
-        eq(2, t.n_samples)
-        eq(g.n_alleles, t.n_alleles)
-        expect = np.array(diploid_genotype_ac_data).take(indices, axis=1)
-        aeq(expect, t)
+        for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
+            eq(g.n_variants, t.n_variants)
+            eq(2, t.n_samples)
+            eq(g.n_alleles, t.n_alleles)
+            expect = np.array(diploid_genotype_ac_data).take(indices, axis=1)
+            aeq(expect, t)
 
     def test_compress(self):
         # Test the compress() method.
@@ -1657,21 +1660,21 @@ class GenotypeAlleleCountsArrayInterface(object):
 
         # compress variants
         condition = [True, False, True, False, False]
-        t = g.compress(condition, axis=0)
-        eq(2, t.n_variants)
-        eq(g.n_samples, t.n_samples)
-        eq(g.n_alleles, t.n_alleles)
-        expect = np.array(diploid_genotype_ac_data).compress(condition, axis=0)
-        aeq(expect, t)
+        for t in g.compress(condition, axis=0), np.compress(condition, g, axis=0):
+            eq(2, t.n_variants)
+            eq(g.n_samples, t.n_samples)
+            eq(g.n_alleles, t.n_alleles)
+            expect = np.array(diploid_genotype_ac_data).compress(condition, axis=0)
+            aeq(expect, t)
 
         # compress samples
         condition = [True, False, True]
-        t = g.compress(condition, axis=1)
-        eq(g.n_variants, t.n_variants)
-        eq(2, t.n_samples)
-        eq(g.n_alleles, t.n_alleles)
-        expect = np.array(diploid_genotype_ac_data).compress(condition, axis=1)
-        aeq(expect, t)
+        for t in g.compress(condition, axis=1), np.compress(condition, g, axis=1):
+            eq(g.n_variants, t.n_variants)
+            eq(2, t.n_samples)
+            eq(g.n_alleles, t.n_alleles)
+            expect = np.array(diploid_genotype_ac_data).compress(condition, axis=1)
+            aeq(expect, t)
 
     def test_subset(self):
         # Test the subset() method.
@@ -2304,11 +2307,11 @@ class VariantTableInterface(object):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
         indices = [0, 2]
-        t = vt.take(indices)
-        expect = a.take(indices)
-        aeq(expect, t)
-        eq(2, t.n_variants)
-        eq(variant_table_names, t.names)
+        for t in vt.take(indices), np.take(vt, indices):
+            expect = a.take(indices)
+            aeq(expect, t)
+            eq(2, t.n_variants)
+            eq(variant_table_names, t.names)
 
     def test_compress(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2319,6 +2322,11 @@ class VariantTableInterface(object):
         aeq(expect, t)
         eq(2, t.n_variants)
         assert_sequence_equal(variant_table_names, t.names)
+        t = np.compress(condition, vt)
+        expect = a.compress(condition)
+        aeq(expect, t)
+        eq(2, t.shape[0])
+        assert_sequence_equal(variant_table_names, t.dtype.names)
 
     def test_eval(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2633,6 +2641,11 @@ class FeatureTableInterface(object):
         aeq(expect, t)
         eq(2, t.n_features)
         assert_sequence_equal(feature_table_names, t.names)
+        t = np.take(ft, indices)
+        expect = a.take(indices)
+        aeq(expect, t)
+        eq(2, t.shape[0])
+        assert_sequence_equal(feature_table_names, t.dtype.names)
 
     def test_compress(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
@@ -2643,6 +2656,11 @@ class FeatureTableInterface(object):
         aeq(expect, t)
         eq(2, t.n_features)
         assert_sequence_equal(feature_table_names, t.names)
+        t = np.compress(condition, ft)
+        expect = a.compress(condition)
+        aeq(expect, t)
+        eq(2, t.shape[0])
+        assert_sequence_equal(feature_table_names, t.dtype.names)
 
     def test_eval(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)

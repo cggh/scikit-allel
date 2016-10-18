@@ -705,3 +705,23 @@ class FeatureChunkedTableTestsZarrStorage(FeatureChunkedTableTests):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
         ft = self.setup_instance(a)
         assert isinstance(ft.values, ZarrTable)
+
+
+class AlleleCountsChunkedTableTests(unittest.TestCase):
+
+    def setUp(self):
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
+
+    def test_count_alleles_subpops(self):
+
+        data = chunked.storage_registry['default'].array(diploid_genotype_data, chunklen=2)
+        g = GenotypeChunkedArray(data)
+        subpops = {'foo': [0, 2], 'bar': [1]}
+        ac_subpops = g.count_alleles_subpops(subpops)
+        for p in subpops.keys():
+            ac = g.take(subpops[p], axis=1).count_alleles()
+            aeq(ac, ac_subpops[p])
+
+        loc = np.array([True, False, True, False, True])
+        t = ac_subpops.compress(loc)
+        eq(3, len(t))
