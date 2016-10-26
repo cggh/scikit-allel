@@ -60,7 +60,7 @@ Functions
 
 .. autofunction:: allel.chunked.core.store
 .. autofunction:: allel.chunked.core.copy
-.. autofunction:: allel.chunked.core.apply
+.. autofunction:: allel.chunked.core.map_blocks
 .. autofunction:: allel.chunked.core.reduce_axis
 .. autofunction:: allel.chunked.core.amax
 .. autofunction:: allel.chunked.core.amin
@@ -69,17 +69,16 @@ Functions
 .. autofunction:: allel.chunked.core.compress
 .. autofunction:: allel.chunked.core.take
 .. autofunction:: allel.chunked.core.subset
-.. autofunction:: allel.chunked.core.hstack
-.. autofunction:: allel.chunked.core.vstack
+.. autofunction:: allel.chunked.core.concatenate
 .. autofunction:: allel.chunked.core.binary_op
 .. autofunction:: allel.chunked.core.copy_table
 .. autofunction:: allel.chunked.core.compress_table
 .. autofunction:: allel.chunked.core.take_table
-.. autofunction:: allel.chunked.core.vstack_table
+.. autofunction:: allel.chunked.core.concatenate_table
 .. autofunction:: allel.chunked.core.eval_table
 
 Classes
 -------
 
-.. autoclass:: allel.chunked.core.ChunkedArray
-.. autoclass:: allel.chunked.core.ChunkedTable
+.. autoclass:: allel.chunked.core.ChunkedArrayWrapper
+.. autoclass:: allel.chunked.core.ChunkedTableWrapper

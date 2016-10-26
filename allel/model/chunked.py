@@ -30,13 +30,13 @@ from allel.abc import DisplayAs2D
 from .ndarray import GenotypeVector, GenotypeArray, HaplotypeArray, AlleleCountsArray, \
     VariantTable, FeatureTable, SortedIndex, SortedMultiIndex, GenotypeAlleleCountsArray, \
     GenotypeAlleleCountsVector
-from .generic import compress_genotypes, \
-    take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
-    index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
-    subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
-    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array,\
-    compress_genotype_ac, take_genotype_ac, concatenate_genotype_ac, \
-    subset_genotype_ac_array, index_genotype_ac_array
+from .generic import compress_genotypes, take_genotypes, concatenate_genotypes, \
+    index_genotype_array, subset_genotype_array, index_haplotype_array, \
+    compress_haplotype_array, take_haplotype_array, subset_haplotype_array, \
+    concatenate_haplotype_array, index_allele_counts_array, compress_allele_counts_array, \
+    take_allele_counts_array, concatenate_allele_counts_array, compress_genotype_ac, \
+    take_genotype_ac, concatenate_genotype_ac, subset_genotype_ac_array, \
+    index_genotype_ac_array
 
 
 __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',

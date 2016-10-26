@@ -12,7 +12,7 @@ import numpy as np
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
     check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
-from allel.compat import PY2
+from allel.compat import PY2, copy_method_doc, integer_types
 from allel.io import write_vcf, iter_gff3, recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from .generic import index_genotype_vector, compress_genotypes, \
@@ -22,11 +22,6 @@ from .generic import index_genotype_vector, compress_genotypes, \
     compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array,\
     index_genotype_ac_array, index_genotype_ac_vector, compress_genotype_ac, \
     take_genotype_ac, concatenate_genotype_ac, subset_genotype_ac_array
-from allel.opt.model import genotype_array_pack_diploid, genotype_array_count_alleles, \
-    genotype_array_count_alleles_masked, genotype_array_count_alleles_subpop, \
-    genotype_array_count_alleles_subpop_masked, genotype_array_unpack_diploid, \
-    haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
-    haplotype_array_map_alleles
 
 
 __all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
@@ -193,13 +188,11 @@ class Genotypes(NumpyArrayWrapper):
 
     @property
     def mask(self):
-        """A boolean mask associated with this genotype array, indicating
-        genotype calls that should be filtered (i.e., excluded) from
-        genotype and allele counting operations.
+        """A boolean mask, indicating genotype calls that should be filtered (i.e.,
+        excluded) from genotype and allele counting operations.
 
         Examples
         --------
-
         >>> import allel
         >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
         ...                          [[0, 1], [1, 1]],
@@ -216,6 +209,12 @@ class Genotypes(NumpyArrayWrapper):
         3 1 0
         1 3 0
         1 0 1
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int8>
+        0/1 1/1 ./.
+        >>> v.is_called()
+        array([ True,  True, False], dtype=bool)
         >>> mask = [[True, False], [False, True], [False, False]]
         >>> g.mask = mask
         >>> g
@@ -230,6 +229,12 @@ class Genotypes(NumpyArrayWrapper):
         1 1 0
         1 1 0
         1 0 1
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int8>
+        0/1 ./. ./.
+        >>> v.is_called()
+        array([ True, False, False], dtype=bool)
 
         Notes
         -----
@@ -238,13 +243,6 @@ class Genotypes(NumpyArrayWrapper):
         taken into account by the genotype and allele counting methods of this
         class, and is ignored by any of the generic methods on the ndarray
         class or by any numpy ufuncs.
-
-        Note also that the mask may not survive any slicing, indexing or
-        other subsetting procedures (e.g., call to :func:`numpy.compress` or
-        :func:`numpy.take`). I.e., the mask will have to be similarly indexed
-        then reapplied. The only exceptions are simple slicing operations
-        that preserve the dimensionality and ploidy of the array, and the
-        subset() method, both of which **will** preserve the mask if present.
 
         """
         return self._mask
@@ -258,7 +256,27 @@ class Genotypes(NumpyArrayWrapper):
 
     @property
     def is_phased(self):
-        """TODO"""
+        """A Boolean array indicating which genotype calls are phased and which are not.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+        >>> g.is_phased = [[True, True], [False, True], [False, False]]
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0|0 0|1
+        0/1 1|1
+        0/2 ./.
+
+        """
         return self._is_phased
 
     @is_phased.setter
@@ -338,6 +356,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[ True,  True],
                [ True,  True],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/1 1/1 ./.
+        >>> v.is_called()
+        array([ True,  True, False], dtype=bool)
 
         """
 
@@ -369,6 +393,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[False, False],
                [False, False],
                [False,  True]], dtype=bool)
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/1 1/1 ./.
+        >>> v.is_missing()
+        array([False, False,  True], dtype=bool)
 
         """
 
@@ -409,6 +439,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[False, False],
                [False,  True],
                [False, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 2/2
+        >>> v.is_hom()
+        array([ True, False,  True], dtype=bool)
 
         """
 
@@ -446,6 +482,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[ True, False],
                [False, False],
                [False, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.is_hom_ref()
+        array([ True, False, False], dtype=bool)
 
         """
 
@@ -472,6 +514,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[False, False],
                [False,  True],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/1 1/1 ./.
+        >>> v.is_hom_alt()
+        array([False,  True, False], dtype=bool)
 
         """
 
@@ -512,6 +560,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[False, False],
                [False, False],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.is_het()
+        array([False,  True,  True], dtype=bool)
 
         """
 
@@ -551,12 +605,18 @@ class Genotypes(NumpyArrayWrapper):
         array([[False, False],
                [False, False],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.is_call((0, 2))
+        array([False, False,  True], dtype=bool)
 
         """
 
         # guard conditions
-        if not len(call) == self.shape[2]:
-            raise ValueError('invalid call: %r', call)
+        if not len(call) == self.shape[-1]:
+            raise ValueError('invalid call ploidy: %s', repr(call))
 
         if self.ndim == 2:
             call = np.asarray(call)[np.newaxis, :]
@@ -571,30 +631,92 @@ class Genotypes(NumpyArrayWrapper):
         return out
 
     def count_called(self, axis=None):
+        """Count called genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_called()
         return np.sum(b, axis=axis)
 
     def count_missing(self, axis=None):
+        """Count missing genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_missing()
         return np.sum(b, axis=axis)
 
     def count_hom(self, allele=None, axis=None):
+        """Count homozygous genotypes.
+
+        Parameters
+        ----------
+        allele : int, optional
+            Allele index.
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_hom(allele=allele)
         return np.sum(b, axis=axis)
 
     def count_hom_ref(self, axis=None):
+        """Count homozygous reference genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_hom_ref()
         return np.sum(b, axis=axis)
 
     def count_hom_alt(self, axis=None):
+        """Count homozygous alternate genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_hom_alt()
         return np.sum(b, axis=axis)
 
     def count_het(self, allele=None, axis=None):
+        """Count heterozygous genotypes.
+
+        Parameters
+        ----------
+        allele : int, optional
+            Allele index.
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_het(allele=allele)
         return np.sum(b, axis=axis)
 
     def count_call(self, call, axis=None):
+        """Count genotypes with a given call.
+
+        Parameters
+        ----------
+        call : array_like, int, shape (ploidy,)
+            The genotype call to find.
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
 
@@ -635,6 +757,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[ 2,  1],
                [ 1,  0],
                [ 0, -1]], dtype=int8)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/2 2/2
+        >>> v.to_n_ref()
+        array([2, 1, 0], dtype=int8)
 
         """
 
@@ -694,6 +822,12 @@ class Genotypes(NumpyArrayWrapper):
         array([[ 0,  1],
                [ 1,  2],
                [ 2, -1]], dtype=int8)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/2 2/2
+        >>> v.to_n_alt()
+        array([0, 1, 2], dtype=int8)
 
         """
 
@@ -739,6 +873,13 @@ class Genotypes(NumpyArrayWrapper):
         2:0:0 1:1:0
         1:0:1 0:2:0
         0:0:2 0:0:0
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/2 2/2
+        >>> v.to_allele_counts()
+        <GenotypeAlleleCountsVector shape=(3, 3) dtype=uint8>
+        2:0:0 1:0:1 0:0:2
 
         """
 
@@ -786,12 +927,26 @@ class Genotypes(NumpyArrayWrapper):
                [b'1/2', b'2/1'],
                [b'2/2', b'./.']],
               dtype='|S3')
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(4, 2) dtype=int64>
+        0/0 0/2 1/2 2/2
+        >>> v.to_gt()
+        chararray([b'0/0', b'0/2', b'1/2', b'2/2'],
+              dtype='|S3')
         >>> g.is_phased = np.ones(g.shape[:-1], dtype=bool)
         >>> g.to_gt()
         chararray([[b'0|0', b'0|1'],
                [b'0|2', b'1|1'],
                [b'1|2', b'2|1'],
                [b'2|2', b'.|.']],
+              dtype='|S3')
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(4, 2) dtype=int64>
+        0|0 0|2 1|2 2|2
+        >>> v.to_gt()
+        chararray([b'0|0', b'0|2', b'1|2', b'2|2'],
               dtype='|S3')
 
         """
@@ -874,6 +1029,13 @@ class Genotypes(NumpyArrayWrapper):
         2/1 0/0
         1/0 0/1
         1/1 ./.
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(4, 2) dtype=int8>
+        0/0 0/2 1/2 2/2
+        >>> v.map_alleles(mapping)
+        <GenotypeVector shape=(4, 2) dtype=int8>
+        1/1 2/1 1/0 1/1
 
         Notes
         -----
@@ -889,8 +1051,195 @@ class Genotypes(NumpyArrayWrapper):
 
         h = self.to_haplotypes()
         hm = h.map_alleles(mapping, copy=copy)
-        gm = hm.to_genotypes(ploidy=self.ploidy)
+        if self.ndim == 2:
+            gm = GenotypeVector(hm)
+        else:
+            gm = hm.to_genotypes(ploidy=self.ploidy)
         return gm
+
+    def to_haplotypes(self, copy=False):
+        """Reshape a genotype array to view it as haplotypes.
+
+        Parameters
+        ----------
+        copy : bool, optional
+            If True, copy data.
+
+        Returns
+        -------
+        h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
+            Haplotype array.
+
+        Notes
+        -----
+        If genotype calls are unphased, the haplotypes returned by
+        this function will bear no resemblance to the true haplotypes.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.to_haplotypes()
+        <HaplotypeArray shape=(3, 4) dtype=int64>
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.to_haplotypes()
+        <HaplotypeArray shape=(3, 2) dtype=int64>
+        0 0
+        0 1
+        0 2
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+    def compress(self, condition, axis=0, out=None):
+        """Return selected slices of an array along given axis.
+
+        Parameters
+        ----------
+        condition : array_like, bool
+            Array that selects which entries to return. N.B., if len(condition)
+            is less than the size of the given axis, then output is truncated to the length
+            of the condition array.
+        axis : int, optional
+            Axis along which to take slices. If None, work on the flattened array.
+        out : ndarray, optional
+            Output array.  Its type is preserved and it must be of the right
+            shape to hold the output.
+
+        Returns
+        -------
+        out : GenotypeArray or GenotypeVector
+            A copy of the array without the slices along axis for which `condition`
+            is false.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.compress([True, False, True], axis=0)
+        <GenotypeArray shape=(2, 2, 2) dtype=int64>
+        0/0 0/1
+        0/2 ./.
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.compress([True, False, True], axis=0)
+        <GenotypeVector shape=(2, 2) dtype=int64>
+        0/0 0/2
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        """Take elements from an array along an axis.
+
+        This function does the same thing as "fancy" indexing (indexing arrays
+        using arrays); however, it can be easier to use if you need elements
+        along a given axis.
+
+        Parameters
+        ----------
+        indices : array_like
+            The indices of the values to extract.
+        axis : int, optional
+            The axis over which to select values.
+        out : ndarray, optional
+            If provided, the result will be placed in this array. It should
+            be of the appropriate shape and dtype.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+
+            * 'raise' -- raise an error (default)
+            * 'wrap' -- wrap around
+            * 'clip' -- clip to the range
+
+            'clip' mode means that all indices that are too large are replaced
+            by the index that addresses the last element along that axis. Note
+            that this disables indexing with negative numbers.
+
+        Returns
+        -------
+        subarray : ndarray
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.take([0, 2], axis=0)
+        <GenotypeArray shape=(2, 2, 2) dtype=int64>
+        0/0 0/1
+        0/2 ./.
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.take([0, 2], axis=0)
+        <GenotypeVector shape=(2, 2) dtype=int64>
+        0/0 0/2
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+    def concatenate(self, others, axis=0):
+        """Join a sequence of arrays along an existing axis.
+
+        Parameters
+        ----------
+        others : sequence of array_like
+            The arrays must have the same shape, except in the dimension
+            corresponding to `axis` (the first, by default).
+        axis : int, optional
+            The axis along which the arrays will be joined.  Default is 0.
+
+        Returns
+        -------
+        res : ndarray
+            The concatenated array.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.concatenate([g], axis=0)
+        <GenotypeArray shape=(6, 2, 2) dtype=int64>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+        >>> g.concatenate([g], axis=1)
+        <GenotypeArray shape=(3, 4, 2) dtype=int64>
+        0/0 0/1 0/0 0/1
+        0/1 1/1 0/1 1/1
+        0/2 ./. 0/2 ./.
+        >>> v1 = g[:, 0]
+        >>> v2 = g[:, 1]
+        >>> v1.concatenate([v2], axis=0)
+        <GenotypeVector shape=(6, 2) dtype=int64>
+        0/0 0/1 0/2 0/1 1/1 ./.
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
 
 
 class GenotypeVector(Genotypes, DisplayAs1D):
@@ -929,6 +1278,12 @@ class GenotypeVector(Genotypes, DisplayAs1D):
         _, items = self.get_display_items(threshold, edgeitems)
         s = ' '.join(items)
         return s
+
+
+copy_method_doc(GenotypeVector.compress, Genotypes.compress)
+copy_method_doc(GenotypeVector.take, Genotypes.take)
+copy_method_doc(GenotypeVector.concatenate, Genotypes.concatenate)
+copy_method_doc(GenotypeVector.to_haplotypes, Genotypes.to_haplotypes)
 
 
 class GenotypeArray(Genotypes, DisplayAs2D):
@@ -1065,12 +1420,10 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         return self.shape[1]
 
     def compress(self, condition, axis=0, out=None):
-        """TODO"""
         return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0, 1},
                                   cls=type(self), compress=np.compress, out=out)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
-        """TODO"""
         return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0, 1},
                               cls=type(self), take=np.take, out=out, mode=mode)
 
@@ -1102,50 +1455,16 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         See Also
         --------
-        GenotypeArray.take, GenotypeArray.compress
+        Genotypes.take, Genotypes.compress
 
         """
         return subset_genotype_array(self, sel0, sel1, cls=type(self), subset=subset)
 
     def concatenate(self, others, axis=0):
-        """TODO"""
         return concatenate_genotypes(self, others=others, axis=axis, wrap_axes={0, 1},
                                      cls=type(self), concatenate=np.concatenate)
 
     def to_haplotypes(self, copy=False):
-        """Reshape a genotype array to view it as haplotypes by
-        dropping the ploidy dimension.
-
-        Parameters
-        ----------
-        copy : bool, optional
-            If True, copy data.
-
-        Returns
-        -------
-        h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
-            Haplotype array.
-
-        Notes
-        -----
-        If genotype calls are unphased, the haplotypes returned by
-        this function will bear no resemblance to the true haplotypes.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
-        >>> g.to_haplotypes()
-        <HaplotypeArray shape=(3, 4) dtype=int64>
-        0 0 0 1
-        0 1 1 1
-        0 2 . .
-
-        """
-
         # reshape, preserving size of variants dimension
         newshape = (self.shape[0], -1)
         data = np.reshape(self, newshape)
@@ -1196,6 +1515,8 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         """
 
+        from allel.opt.model import genotype_array_pack_diploid
+
         check_ploidy(self.ploidy, 2)
 
         if boundscheck:
@@ -1241,6 +1562,8 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         2/2 ./.
 
         """
+
+        from allel.opt.model import genotype_array_unpack_diploid
 
         # check arguments
         packed = np.asarray(packed)
@@ -1440,6 +1763,10 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         """
 
+        from allel.opt.model import genotype_array_count_alleles, \
+            genotype_array_count_alleles_masked, genotype_array_count_alleles_subpop, \
+            genotype_array_count_alleles_subpop_masked
+
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
         if subpop is not None:
@@ -1493,6 +1820,12 @@ class GenotypeArray(Genotypes, DisplayAs2D):
                for name, subpop in subpops.items()}
 
         return out
+
+
+copy_method_doc(GenotypeArray.compress, Genotypes.compress)
+copy_method_doc(GenotypeArray.take, Genotypes.take)
+copy_method_doc(GenotypeArray.concatenate, Genotypes.concatenate)
+copy_method_doc(GenotypeArray.to_haplotypes, Genotypes.to_haplotypes)
 
 
 class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
@@ -1876,6 +2209,9 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
+        from allel.opt.model import haplotype_array_count_alleles, \
+            haplotype_array_count_alleles_subpop
+
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
         if subpop is not None:
@@ -1941,7 +2277,6 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         Examples
         --------
-
         >>> import allel
         >>> import numpy as np
         >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
@@ -1958,17 +2293,17 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         Notes
         -----
-
         For arrays with dtype int8 an optimised implementation is used which is
         faster and uses far less memory. It is recommended to convert arrays to
         dtype int8 where possible before calling this method.
 
         See Also
         --------
-
-        create_allele_mapping
+        allel.model.util.create_allele_mapping
 
         """
+
+        from allel.opt.model import haplotype_array_map_alleles
 
         # check inputs
         mapping = asarray_ndim(mapping, 2)
@@ -2080,9 +2415,17 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     Calculate the total number of alleles called for each variant:
 
         >>> import numpy as np
-        >>> n = np.sum(ac, axis=1)
-        >>> n
+        >>> an = np.sum(ac, axis=1)
+        >>> an
         array([4, 4, 2])
+
+    Add allele counts from two populations:
+
+        >>> ac + ac
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        6 2 0
+        2 6 0
+        2 0 2
 
     """
 
@@ -2168,9 +2511,9 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        n = np.sum(self, axis=1)[:, None]
+        an = np.sum(self, axis=1)[:, None]
         with ignore_invalid():
-            af = np.where(n > 0, self / n, fill)
+            af = np.where(an > 0, self / an, fill)
 
         return af
 
@@ -2509,6 +2852,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
 
 class GenotypeAlleleCounts(NumpyArrayWrapper):
+    """TODO"""
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeAlleleCounts, self).__init__(data, copy=copy, **kwargs)
@@ -2541,9 +2885,9 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
         return out
 
     def to_frequencies(self, fill=np.nan):
-        n = np.sum(self, axis=-1)[..., np.newaxis]
+        an = np.sum(self, axis=-1)[..., np.newaxis]
         with ignore_invalid():
-            af = np.where(n > 0, self / n, fill)
+            af = np.where(an > 0, self / an, fill)
         return af
 
     def allelism(self):
@@ -2599,6 +2943,18 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
 
         return gt
 
+    def compress(self, condition, axis=0, out=None):
+        # implement in sub-class
+        raise NotImplementedError
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        # implement in sub-class
+        raise NotImplementedError
+
+    def concatenate(self, others, axis=0):
+        # implement in sub-class
+        raise NotImplementedError
+
 
 class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
     """TODO"""
@@ -2639,6 +2995,11 @@ class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
         else:
             out = [str(x, 'ascii') for x in gt]
         return out
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
+        return s
 
 
 class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
@@ -3356,6 +3717,7 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
         return self.compress(loc, axis=0)
 
 
+# noinspection PyMissingConstructor
 class SortedMultiIndex(DisplayAs1D):
     """Two-level index of sorted values, e.g., variant positions from two or
     more chromosomes/contigs.
@@ -3412,7 +3774,10 @@ class SortedMultiIndex(DisplayAs1D):
     def __getitem__(self, item):
         l1 = self.l1[item]
         l2 = self.l2[item]
-        return SortedMultiIndex(l1, l2, copy=False)
+        if isinstance(item, integer_types):
+            return l1, l2
+        else:
+            return SortedMultiIndex(l1, l2, copy=False)
 
     def compress(self, condition, axis=0, out=None):
         if out is not None:

@@ -1,18 +1,101 @@
 Release notes
 =============
 
+v1.0.0
+------
+
+This release includes some subtle but important changes to the architecture of
+the data structures modules (:mod:`allel.model.ndarray`,
+:mod:`allel.model.chunked`, :mod:`allel.model.dask`). These changes are mostly
+backwards-compatible but in some cases could break existing code, hence the
+major version number has been incremented. Also included in this release are
+some new functions related to Mendelian inheritance and calling runs of
+homozygosity, further details below.
+
 Mendelian errors and phasing by transmission
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This release includes a new :mod:`allel.stats.mendel` module with functions to 
-help with analysis of related individuals. The function 
-:func:`allel.stats.mendel.mendel_errors` locates genotype calls within a trio 
-or cross that are not consistent with Mendelian segregation of alleles. The 
-function :func:`allel.stats.mendel.phase_by_transmission` will resolve unphased 
-diploid genotypes into phased haplotypes for a trio or cross using Mendelian 
-transmission rules. The function :func:`allel.stats.mendel.paint_transmission` 
-can help with evaluating and visualizing the results of phasing a trio or 
-cross.
+This release includes a new :mod:`allel.stats.mendel` module with functions to
+help with analysis of related individuals. The function
+:func:`allel.stats.mendel.mendel_errors` locates genotype calls within a trio or
+cross that are not consistent with Mendelian segregation of alleles. The
+function :func:`allel.stats.mendel.phase_by_transmission` will resolve unphased
+diploid genotypes into phased haplotypes for a trio or cross using Mendelian
+transmission rules. The function :func:`allel.stats.mendel.paint_transmission`
+can help with evaluating and visualizing the results of phasing a trio or cross.
+
+Runs of homozygosity
+~~~~~~~~~~~~~~~~~~~~
+
+A new :func:`allel.stats.roh.roh_mhmm` function provides support for locating
+long runs of homozygosity within a single sample. The function uses a
+multinomial hidden Markov model to predict runs of homozygosity based on the
+rate of heterozygosity over the genome. The function can also incorporate
+information about which positions in the genome are not accessible to variant
+calling and hence where there is no information about heterozygosity, to reduce
+false calling of ROH in regions where there is patchy data. We've run this on
+data from the Ag1000G project but have not performed a comprehensive evaluation
+with other species, feedback is very welcome.
+
+Changes to data structures
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :mod:`allel.model.ndarray` module includes a new
+:class:`allel.model.ndarray.GenotypeVector` class. This class represents an
+array of genotype calls for a single variant in multiple samples, or for a
+single sample at multiple variants.  This class makes it easier, for example, to
+locate all variants which are heterozygous in a single sample.
+
+Also in the same module are two new classes
+:class:`allel.model.ndarray.GenotypeAlleleCountsArray` and
+:class:`allel.model.ndarray.GenotypeAlleleCountsVector`. These classes provide
+support for an alternative encoding of genotype calls, where each call is stored
+as the counts of each allele observed. This allows encoding of genotype calls
+where samples may have different ploidy for a given chromosome (e.g.,
+*Leishmania*) and/or where samples carry structural variation within some genome
+regions, altering copy number (and hence effective ploidy) with respect to the
+reference sequence.
+
+There have also been architectural changes to all data structures modules. The
+most important change is that all classes in the :mod:`allel.model.ndarray`
+module now **wrap** numpy arrays and are no longer direct sub-classes of the
+numpy `ndarray` class. These classes still **behave** like numpy arrays in most
+respects, and so in most cases this change should not impact existing code. If
+you need a plain numpy array for any reason you can always use `np.asarray`
+or access the `.values` property, e.g.::
+
+    >>> import allel
+    >>> import numpy as np
+    >>> g = allel.GenotypeArray([[[0, 1], [0, 0]], [[0, 2], [1, 1]]])
+    >>> isinstance(g, np.ndarray)
+    False
+    >>> a = np.asarray(g)
+    >>> isinstance(a, np.ndarray)
+    True
+    >>> isinstance(g.values, np.ndarray)
+    True
+
+This change was made because there are a number of complexities that arise when
+sub-classing `ndarray` and these were proving tricky to manage and maintain.
+
+The :mod:`allel.model.chunked` and :mod:`allel.model.dask` modules also follow
+the same wrapper pattern. For the :mod:`allel.model.dask` module this means a
+change in the way that classes are instantiated. For example, to create a
+`GenotypeDaskArray`, pass the underlying data directly into the class
+constructor, e.g.::
+
+    >>> import allel
+    >>> import h5py
+    >>> h5f = h5py.File('callset.h5', mode='r')
+    >>> h5d = h5f['3R/calldata/genotype']
+    >>> genotypes = allel.GenotypeDaskArray(h5d)
+
+If the underlying data is chunked then there is no need to specify the chunks
+manually when instantiating a dask array, the native chunk shape will be used.
+
+Finally, the `allel.model.bcolz` module has been removed, use either
+the :mod:`allel.model.chunked` or :mod:`allel.model.dask` module
+instead.
 
 v0.21.2
 -------

@@ -11,9 +11,36 @@ GenotypeArray
     .. autoattribute:: n_variants
     .. autoattribute:: n_samples
     .. autoattribute:: ploidy
-    .. autoattribute:: mask
-    .. automethod:: fill_masked
+    .. autoattribute:: n_calls
+    .. autoattribute:: n_allele_calls
+    .. automethod:: count_alleles
+    .. automethod:: count_alleles_subpops
+    .. automethod:: to_packed
+    .. automethod:: from_packed
+    .. automethod:: to_sparse
+    .. automethod:: from_sparse
+    .. automethod:: haploidify_samples
     .. automethod:: subset
+
+GenotypeVector
+--------------
+
+.. autoclass:: GenotypeVector
+
+    .. autoattribute:: n_calls
+    .. autoattribute:: ploidy
+    .. autoattribute:: n_allele_calls
+
+Genotypes
+---------
+
+Methods available on both :class:`GenotypeArray` and :class:`GenotypeVector` classes:
+
+.. autoclass:: Genotypes
+
+    .. autoattribute:: mask
+    .. autoattribute:: is_phased
+    .. automethod:: fill_masked
     .. automethod:: is_called
     .. automethod:: is_missing
     .. automethod:: is_hom
@@ -28,22 +55,14 @@ GenotypeArray
     .. automethod:: count_hom_alt
     .. automethod:: count_het
     .. automethod:: count_call
-    .. automethod:: count_alleles
-    .. automethod:: count_alleles_subpops
-    .. automethod:: map_alleles
-    .. automethod:: to_haplotypes
     .. automethod:: to_n_ref
     .. automethod:: to_n_alt
     .. automethod:: to_allele_counts
-    .. automethod:: to_packed
-    .. automethod:: from_packed
-    .. automethod:: to_sparse
-    .. automethod:: from_sparse
     .. automethod:: to_gt
-    .. automethod:: haploidify_samples
-    .. automethod:: vstack
-    .. automethod:: hstack
-
+    .. automethod:: map_alleles
+    .. automethod:: compress
+    .. automethod:: take
+    .. automethod:: concatenate
 
 HaplotypeArray
 --------------
@@ -73,8 +92,10 @@ HaplotypeArray
     .. automethod:: distinct
     .. automethod:: distinct_counts
     .. automethod:: distinct_frequencies
-    .. automethod:: vstack
-    .. automethod:: hstack
+    .. automethod:: compress
+    .. automethod:: take
+    .. automethod:: subset
+    .. automethod:: concatenate
 
 
 AlleleCountsArray
@@ -102,8 +123,46 @@ AlleleCountsArray
     .. automethod:: count_doubleton
     .. automethod:: to_frequencies
     .. automethod:: map_alleles
-    .. automethod:: vstack
-    .. automethod:: hstack
+    .. automethod:: compress
+    .. automethod:: take
+    .. automethod:: concatenate
+
+GenotypeAlleleCountsArray
+-------------------------
+
+.. autoclass:: GenotypeAlleleCountsArray
+
+    .. autoattribute:: n_variants
+    .. autoattribute:: n_samples
+    .. autoattribute:: n_alleles
+    .. automethod:: count_alleles
+    .. automethod:: subset
+
+GenotypeAlleleCountsVector
+--------------------------
+
+.. autoclass:: GenotypeAlleleCountsVector
+
+    .. autoattribute:: n_calls
+    .. autoattribute:: n_alleles
+
+GenotypeAlleleCounts
+--------------------
+
+Methods available on both :class:`GenotypeAlleleCountsArray` and
+:class:`GenotypeAlleleCountsVector` classes:
+
+.. autoclass:: GenotypeAlleleCounts
+
+    .. automethod:: is_called
+    .. automethod:: is_missing
+    .. automethod:: is_hom
+    .. automethod:: is_hom_ref
+    .. automethod:: is_hom_alt
+    .. automethod:: is_het
+    .. automethod:: compress
+    .. automethod:: take
+    .. automethod:: concatenate
 
 VariantTable
 ------------
@@ -147,6 +206,14 @@ SortedIndex
     .. automethod:: intersect_ranges
 
 
+SortedMultiIndex
+----------------
+
+.. autoclass:: SortedMultiIndex
+
+    .. automethod:: locate_key
+    .. automethod:: locate_range
+
 UniqueIndex
 -----------
 
@@ -156,19 +223,3 @@ UniqueIndex
     .. automethod:: locate_keys
     .. automethod:: locate_intersection
     .. automethod:: intersect
-
-SortedMultiIndex
-----------------
-
-.. autoclass:: SortedMultiIndex
-
-    .. automethod:: locate_key
-    .. automethod:: locate_range
-
-Utility functions
------------------
-
-.. autofunction:: create_allele_mapping
-.. autofunction:: locate_fixed_differences
-.. autofunction:: locate_private_alleles
-.. autofunction:: sample_to_haplotype_selection

@@ -7,7 +7,7 @@ import numpy as np
 
 
 # internal imports
-from allel.util import contains_newaxis
+from allel.util import contains_newaxis, check_ndim
 
 
 def index_genotype_vector(g, item, cls):
@@ -158,7 +158,22 @@ def index_allele_counts_array(ac, item, cls):
     return out
 
 
+def _check_condition_length(a, condition, axis):
+    # check the length of the condition array - here we deviate from numpy behaviour,
+    # because numpy allows condition to be shorter than the axis under selection,
+    # however we've found this allows mistakes to creep through and so we'll be stricter here
+    if axis is not None:
+        l = a.shape[axis]
+        k = condition.shape[0]
+        if k != l:
+            raise ValueError('bad length of condition; expected %s, found %s' % (l, k))
+
+
 def compress_genotypes(g, condition, axis, wrap_axes, cls, compress, **kwargs):
+
+    condition = np.asarray(condition, dtype=bool)
+    check_ndim(condition, 1)
+    _check_condition_length(g, condition, axis)
 
     # apply compress operation on the underlying values
     out = compress(condition, g.values, axis=axis, **kwargs)
@@ -224,6 +239,9 @@ def subset_genotype_array(g, sel0, sel1, cls, subset, **kwargs):
 
 
 def compress_haplotype_array(h, condition, axis, cls, compress, **kwargs):
+    condition = np.asarray(condition, dtype=bool)
+    check_ndim(condition, 1)
+    _check_condition_length(h, condition, axis)
     out = compress(condition, h.values, axis=axis, **kwargs)
     return cls(out)
 
@@ -248,6 +266,9 @@ def concatenate_haplotype_array(h, others, axis, cls, concatenate, **kwargs):
 
 
 def compress_allele_counts_array(ac, condition, axis, cls, compress, **kwargs):
+    condition = np.asarray(condition, dtype=bool)
+    check_ndim(condition, 1)
+    _check_condition_length(ac, condition, axis)
     out = compress(condition, ac.values, axis=axis, **kwargs)
     if axis == 0:
         out = cls(out)
@@ -272,6 +293,9 @@ def concatenate_allele_counts_array(ac, others, axis, cls, concatenate, **kwargs
 
 
 def compress_genotype_ac(g, condition, axis, wrap_axes, cls, compress, **kwargs):
+    condition = np.asarray(condition, dtype=bool)
+    check_ndim(condition, 1)
+    _check_condition_length(g, condition, axis)
     out = compress(condition, g.values, axis=axis, **kwargs)
     if axis in wrap_axes:
         out = cls(out)
