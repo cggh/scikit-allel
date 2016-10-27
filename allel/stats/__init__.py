@@ -51,10 +51,13 @@ from allel.stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
     plot_sfs_folded_scaled, plot_joint_sfs, plot_joint_sfs_folded, \
     plot_joint_sfs_scaled, plot_joint_sfs_folded_scaled
 
-from allel.stats.misc import plot_variant_locator
+from allel.stats.misc import plot_variant_locator, tabulate_state_transitions, \
+    tabulate_state_blocks
 
 from allel.stats.mendel import mendel_errors, paint_transmission, \
     phase_progeny_by_transmission, phase_parents_by_transmission, \
-    phase_by_transmission
+    phase_by_transmission, INHERIT_MISSING, INHERIT_NONPARENTAL, INHERIT_NONSEG_ALT, \
+    INHERIT_NONSEG_REF, INHERIT_PARENT1, INHERIT_PARENT2, INHERIT_PARENT_MISSING, \
+    INHERIT_UNDETERMINED
 
 from allel.stats.roh import roh_mhmm

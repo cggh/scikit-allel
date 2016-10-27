@@ -7,6 +7,7 @@ import numpy as np
 
 from allel.model.ndarray import GenotypeVector
 from allel.util import asarray_ndim, check_dim0_aligned
+from allel.stats.misc import tabulate_state_blocks
 
 
 def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6,
@@ -49,8 +50,9 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
 
     Returns
     -------
-    roh: ndarray, int, shape (n_roh, 2)
-        Span windows of ROH.
+    df_roh: DataFrame
+        Data frame where each row describes a run of homozygosity. Columns are 'start',
+        'stop', 'length' and 'is_marginal'. Start and stop are 1-based, stop-inclusive.
     froh: float
         Proportion of genome in a ROH.
 
@@ -77,7 +79,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     start_prob = np.repeat(1/het_px.size, het_px.size)
 
     # transition between underlying states
-    transition_mx = _mhmm_derive_transition_mx(transition, het_px.size)
+    transition_mx = _mhmm_derive_transition_matrix(transition, het_px.size)
 
     # probability of inaccessible
     if is_accessible is None:
@@ -86,11 +88,11 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
         p_accessible = 1.0
     else:
         p_accessible = is_accessible.mean()
-        assert contig_size is None, "Contig size only specified when " \
+        assert contig_size is None, "contig_size should only provided when " \
                                     "is_accessible is not provided"
         contig_size = is_accessible.size
 
-    emission_mx = _mhmm_derive_emission_mx(het_px, p_accessible)
+    emission_mx = _mhmm_derive_emission_matrix(het_px, p_accessible)
 
     # initialize HMM
     roh_hmm = hmm.MultinomialHMM(n_components=het_px.size)
@@ -106,16 +108,27 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     pred, obs = _mhmm_predict_roh_state(roh_hmm, is_het, pos, is_accessible, contig_size)
 
     # find ROH windows
-    homozygous_windows = _mhmm_get_state_windows(pred, state=0)
+    df_blocks = tabulate_state_blocks(pred, states=list(range(len(het_px))))
+    df_roh = df_blocks[(df_blocks.state == 0)].reset_index(drop=True)
+    # adapt the dataframe for ROH
+    for col in 'state', 'support', 'start_lidx', 'stop_ridx', 'size_max':
+        del df_roh[col]
+    df_roh.rename(columns={'start_ridx': 'start',
+                           'stop_lidx': 'stop',
+                           'size_min': 'length'},
+                  inplace=True)
+    # make coordinates 1-based
+    df_roh['start'] = df_roh['start'] + 1
+    df_roh['stop'] = df_roh['stop'] + 1
 
     # filter by ROH size
-    roh_sizes = np.diff(homozygous_windows, axis=1).flatten()
-    roh = np.compress(roh_sizes >= min_roh, homozygous_windows, axis=0)
+    if min_roh > 0:
+        df_roh = df_roh[df_roh.length >= min_roh]
 
     # compute FROH
-    froh = np.diff(roh, axis=1).sum() / contig_size
+    froh = df_roh.length.sum() / contig_size
 
-    return roh, froh
+    return df_roh, froh
 
 
 def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
@@ -134,16 +147,16 @@ def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
     return predictions, observations
 
 
-def _mhmm_derive_emission_mx(het_px, p_accessible):
+def _mhmm_derive_emission_matrix(het_px, p_accessible):
     # one row per p in prob
     # hom, het, unobserved
     mx = [[(1 - p) * p_accessible, p * p_accessible, 1 - p_accessible] for p in het_px]
-    mxe = np.array(mx)
-    assert mxe.shape == (het_px.size, 3)
-    return mxe
+    mx = np.array(mx)
+    assert mx.shape == (het_px.size, 3)
+    return mx
 
 
-def _mhmm_derive_transition_mx(transition, nstates):
+def _mhmm_derive_transition_matrix(transition, nstates):
     # this is a symmetric matrix
     mx = np.zeros((nstates, nstates))
     effective_tp = transition / (nstates - 1)
@@ -154,28 +167,3 @@ def _mhmm_derive_transition_mx(transition, nstates):
             else:
                 mx[i, j] = effective_tp
     return mx
-
-
-def _mhmm_get_state_windows(predicted_state, state=0):
-    """Translates the yes/no into a set of windows."""
-
-    wh = np.where(predicted_state == state)[0]
-    if wh.size == 0:
-        # then there are no things of interest
-        return np.empty((0, 2))
-    elif wh.size == predicted_state.size:
-        # the whole thing is one big thing of interest
-        return np.array([1, predicted_state.size])
-    else:
-        intervals = list()
-        iv_start = wh[0]
-
-        for i, pos in enumerate(wh[1:]):
-            if (pos - wh[i]) > 1:
-                intervals.append([iv_start, wh[i]])
-                iv_start = pos
-        # final interval
-        intervals.append([iv_start, pos])
-        roh = np.array(intervals)
-        # correct for fact that pos 1 is in index 0.
-        return roh + 1

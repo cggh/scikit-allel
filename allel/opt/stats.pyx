@@ -14,6 +14,20 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 
 
+ctypedef fused integral_t:
+    short
+    int
+    long
+    cnp.int8_t
+    cnp.int16_t
+    cnp.int32_t
+    cnp.int64_t
+    cnp.uint8_t
+    cnp.uint16_t
+    cnp.uint32_t
+    cnp.uint64_t
+
+
 # work around NAN undeclared in windows
 cdef:
     cnp.float32_t nan32 = np.nan
@@ -1070,3 +1084,94 @@ def phase_parents_by_transmission_int8(cnp.int8_t[:, :, :] g,
                     is_phased[i, parent] = 1
                     g[i, parent, 0] = a2
                     g[i, parent, 1] = a1
+
+
+def state_transitions(integral_t[:] x, states):
+    """Find state transitions in a sequence of state values.
+
+    Parameters
+    ----------
+    x : array_like, int
+        1-dimensional array of state values.
+    states : set
+        Set of states of interest. Any state value not in this set will be ignored.
+
+    Returns
+    -------
+    switch_points : ndarray, int
+        2-dimensional array of switch points, where the first column contains indices of
+        values on the left side of a switch and the second column contains indices of values
+        on the right side of a switch.
+    transitions : ndarray, int
+        2-dimensional array of state transitions, where the first column contains state
+        values on the left side of a switch and the second column contains state values
+        on the right side of a switch.
+    observations : ndarray, int
+        1-dimensional array with numbers of state observations on the left side of each switch.
+
+    Notes
+    -----
+    N.B., includes rows for the left and right-hand boundaries, which are not true state
+    transitions but capture the first and last state observations.
+
+    """
+
+    cdef:
+        Py_ssize_t cur_idx, prv_idx, n, observed
+        integral_t cur, prv
+        list switch_points, transitions, observations
+        cnp.uint8_t[:] is_state
+
+    # setup intermediates
+    states = sorted(set(states))
+    if any([s < 0 for s in states]):
+        raise ValueError('all states must be >= 0')
+    max_state = max(states)
+    is_state = np.zeros(max_state + 1, dtype='u1')
+    np.asarray(is_state)[states] = 1
+    n = x.shape[0]
+    prv_idx = -1
+    prv = -1
+    observed = 0
+
+    # setup outputs
+    switch_points = list()
+    transitions = list()
+    observations = list()
+
+    # iterate over state values
+    for cur_idx in range(n):
+
+        # access current state
+        cur = x[cur_idx]
+
+        # check if it's a state we're not interested in
+        if cur < 0 or cur > max_state or not is_state[cur]:
+            continue
+
+        elif cur != prv:
+            # record a state transition
+            switch = prv_idx, cur_idx
+            switch_points.append(switch)
+            transition = prv, cur
+            transitions.append(transition)
+            observations.append(observed)
+            observed = 0
+
+        # advance
+        prv = cur
+        prv_idx = cur_idx
+        observed += 1
+
+    # add final transition at right-hand boundary
+    switch = prv_idx, -1
+    switch_points.append(switch)
+    transition = prv, -1
+    transitions.append(transition)
+    observations.append(observed)
+
+    return (
+        np.array(switch_points, dtype=int),
+        np.array(transitions, dtype=np.asarray(x).dtype),
+        np.array(observations, dtype=int)
+    )
