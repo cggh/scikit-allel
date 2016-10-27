@@ -22,9 +22,6 @@ install:
   - conda clean --lock
   - conda install --yes gcc
   - conda install --yes --name=test-environment --file=requirements_ci.txt
-  # dask 0.11.1 not in conda-forge yet
-  - conda uninstall --yes dask
-  - pip install "dask>=0.11.1"
 
 script:
   - python setup.py build_ext --inplace
