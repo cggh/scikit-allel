@@ -59,10 +59,10 @@ reference sequence.
 There have also been architectural changes to all data structures modules. The
 most important change is that all classes in the :mod:`allel.model.ndarray`
 module now **wrap** numpy arrays and are no longer direct sub-classes of the
-numpy `ndarray` class. These classes still **behave** like numpy arrays in most
-respects, and so in most cases this change should not impact existing code. If
-you need a plain numpy array for any reason you can always use `np.asarray`
-or access the `.values` property, e.g.::
+numpy :class:`numpy.ndarray` class. These classes still **behave** like numpy
+arrays in most respects, and so in most cases this change should not impact
+existing code. If you need a plain numpy array for any reason you can always use
+:func:`numpy.asarray` or access the ``.values`` property, e.g.::
 
     >>> import allel
     >>> import numpy as np
@@ -76,13 +76,14 @@ or access the `.values` property, e.g.::
     True
 
 This change was made because there are a number of complexities that arise when
-sub-classing `ndarray` and these were proving tricky to manage and maintain.
+sub-classing class:`numpy.ndarray` and these were proving tricky to manage and
+maintain.
 
 The :mod:`allel.model.chunked` and :mod:`allel.model.dask` modules also follow
 the same wrapper pattern. For the :mod:`allel.model.dask` module this means a
 change in the way that classes are instantiated. For example, to create a
-`GenotypeDaskArray`, pass the underlying data directly into the class
-constructor, e.g.::
+:class:`allel.model.dask.GenotypeDaskArray`, pass the underlying data directly
+into the class constructor, e.g.::
 
     >>> import allel
     >>> import h5py

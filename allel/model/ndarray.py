@@ -163,7 +163,13 @@ class NumpyRecArrayWrapper(DisplayAsTable):
 
 
 class Genotypes(NumpyArrayWrapper):
-    """Base class for wrapping a NumPy array of genotype calls."""
+    """Base class for wrapping a NumPy array of genotype calls.
+
+    See Also
+    --------
+    GenotypeArray, GenotypeVector
+
+    """
 
     def __init__(self, data, copy=False, **kwargs):
         super(Genotypes, self).__init__(data, copy=copy, **kwargs)
@@ -1254,6 +1260,10 @@ class GenotypeVector(Genotypes, DisplayAs1D):
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
 
+    See Also
+    --------
+    Genotypes, GenotypeArray, HaplotypeArray, GenotypeAlleleCountsArray
+
     """
 
     def __init__(self, data, copy=False, **kwargs):
@@ -1411,7 +1421,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
     See Also
     --------
-    GenotypeVector, HaplotypeArray, GenotypeAlleleCountsArray
+    Genotypes, GenotypeVector, HaplotypeArray, GenotypeAlleleCountsArray
 
     """
 
@@ -1924,6 +1934,10 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         0/0 0/1
         0/1 1/1
         0/2 ./.
+
+    See Also
+    --------
+    Genotypes, GenotypeArray, GenotypeVector
 
     """
 
@@ -2983,7 +2997,13 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
 class GenotypeAlleleCounts(NumpyArrayWrapper):
     """Base class for wrapping a NumPy array of genotype calls, stored as allele counts per
-    call."""
+    call.
+
+    See Also
+    --------
+    GenotypeAlleleCountsArray, GenotypeAlleleCountsVector
+
+    """
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeAlleleCounts, self).__init__(data, copy=copy, **kwargs)
@@ -3099,6 +3119,10 @@ class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
         If True, make a copy of `data`.
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
+
+    See Also
+    --------
+    GenotypeAlleleCounts, GenotypeAlleleCountsArray, GenotypeVector
 
     """
 
@@ -3225,7 +3249,7 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
 
     See Also
     --------
-    GenotypeArray, HaplotypeArray, GenotypeAlleleCountsVector
+    GenotypeAlleleCounts, GenotypeAlleleCountsVector, GenotypeArray
 
     """
 
@@ -3321,6 +3345,10 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
     (11,)
     >>> idx.is_unique
     False
+
+    See Also
+    --------
+    SortedMultiIndex, UniqueIndex
 
     """
 
@@ -3764,6 +3792,10 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
     >>> idx.shape
     (4,)
 
+    See Also
+    --------
+    SortedIndex, SortedMultiIndex
+
     """
 
     def __init__(self, data, copy=False, dtype=object, **kwargs):
@@ -3967,6 +3999,10 @@ class SortedMultiIndex(DisplayAs1D):
     chr1:1 chr1:4 chr2:2 chr2:5 chr2:5 chr3:3
     >>> len(idx)
     6
+
+    See Also
+    --------
+    SortedIndex, UniqueIndex
 
     """
 
