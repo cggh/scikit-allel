@@ -14,6 +14,7 @@ Statistics and plotting
     stats/admixture
     stats/selection
     stats/mendel
+    stats/roh
     stats/window
     stats/preprocessing
     stats/misc

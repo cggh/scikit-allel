@@ -28,7 +28,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     gv : array_like, int, shape (n_variants, ploidy)
         Genotype vector.
     pos: array_like, int, shape (n_variants,)
-        Positions of variants, same 0th dimension as `g`.
+        Positions of variants, same 0th dimension as `gv`.
     phet_roh: float, optional
         Probability of observing a heterozygote in a ROH. Appropriate values
         will depend on de novo mutation rate and genotype error rate.
@@ -58,7 +58,10 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
 
     Notes
     -----
-    This function currently requires around 4GB for a contig size of ~50Mbp.
+    This function requires `hmmlearn <http://hmmlearn.readthedocs.io/en/latest/>`_ to be
+    installed.
+
+    This function currently requires around 4GB memory for a contig size of ~50Mbp.
 
     """
 
