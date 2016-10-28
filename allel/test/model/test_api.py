@@ -1199,7 +1199,25 @@ class HaplotypeArrayInterface(object):
         actual = self.setup_instance(haplotype_data).is_call(2)
         aeq(expect, actual)
 
-    # TODO test to_genotypes()
+    def test_to_genotypes(self):
+        haplotype_data = [
+            [0, 1, 1, 2],
+            [1, 1, -1, -1],
+            [2, -1, -1, -1],
+            [-1, -1, -1, -1]
+        ]
+        expect = [[[0, 1], [1, 2]],
+                  [[1, 1], [-1, -1]],
+                  [[2, -1], [-1, -1]],
+                  [[-1, -1], [-1, -1]]]
+        actual = self.setup_instance(haplotype_data).to_genotypes(ploidy=2)
+        aeq(expect, actual)
+        expect = [[[0, 1, 1, 2]],
+                  [[1, 1, -1, -1]],
+                  [[2, -1, -1, -1]],
+                  [[-1, -1, -1, -1]]]
+        actual = self.setup_instance(haplotype_data).to_genotypes(ploidy=4)
+        aeq(expect, actual)
 
     def test_max(self):
 

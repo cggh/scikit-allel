@@ -1117,7 +1117,7 @@ class Genotypes(NumpyArrayWrapper):
 
         Returns
         -------
-        out : GenotypeArray or GenotypeVector
+        out : Genotypes
             A copy of the array without the slices along axis for which `condition`
             is false.
 
@@ -1243,6 +1243,18 @@ class Genotypes(NumpyArrayWrapper):
 
 
 class GenotypeVector(Genotypes, DisplayAs1D):
+    """Array of genotype calls for a sequence of variants or samples.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    """
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeVector, self).__init__(data, copy=copy, **kwargs)
@@ -1287,7 +1299,7 @@ copy_method_doc(GenotypeVector.to_haplotypes, Genotypes.to_haplotypes)
 
 
 class GenotypeArray(Genotypes, DisplayAs2D):
-    """Array of discrete genotype calls.
+    """Array of discrete genotype calls for a matrix of variants and samples.
 
     Parameters
     ----------
@@ -1301,7 +1313,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
     Notes
     -----
     This class represents data on discrete genotype calls as a
-    3-dimensional numpy array of integers. By convention the first
+    3-dimensional numpy array of integers. By convention, the first
     dimension corresponds to the variants genotyped, the second
     dimension corresponds to the samples genotyped, and the third
     dimension corresponds to the ploidy of the samples.
@@ -1328,15 +1340,13 @@ class GenotypeArray(Genotypes, DisplayAs2D):
     A genotype array can store genotype calls with any ploidy > 1. For
     haploid calls, use a :class:`HaplotypeArray`. Note that genotype
     arrays are not capable of storing calls for samples with differing
-    or variable ploidy.
+    or variable ploidy, see :class:`GenotypeAlleleCountsArray` instead.
 
     With genotype data on large numbers of variants and/or samples,
     storing the genotype calls in memory as an uncompressed numpy
     array if integers may be impractical. For working with large
-    arrays of genotype data, see the
-    :class:`allel.model.chunked.GenotypeChunkedArray` class, which provides an
-    alternative implementation of this interface using chunked compressed
-    arrays.
+    arrays of genotype data, see the :mod:`allel.model.chunked` and
+    :mod:`allel.model.dask` modules.
 
     Examples
     --------
@@ -1399,6 +1409,10 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         0/1/1 1/1/1
         0/1/2 ././.
 
+    See Also
+    --------
+    GenotypeVector, HaplotypeArray, GenotypeAlleleCountsArray
+
     """
 
     def __init__(self, data, copy=False, **kwargs):
@@ -1433,9 +1447,9 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         Parameters
         ----------
         sel0 : array_like
-            Boolean array or list of indices selecting variants.
+            Boolean array or array of indices selecting variants.
         sel1 : array_like
-            Boolean array or list of indices selecting samples.
+            Boolean array or array of indices selecting samples.
 
         Returns
         -------
@@ -1857,10 +1871,8 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
     With data on large numbers of variants and/or haplotypes,
     storing the data in memory as an uncompressed numpy
     array if integers may be impractical. For working with large
-    arrays of haplotype data, see the
-    :class:`allel.model.chunked.HaplotypeChunkedArray` class, which provides an
-    alternative implementation of this interface using chunked compressed
-    arrays.
+    arrays of haplotype data, see the :mod:`allel.model.chunked` and
+    :mod:`allel.model.dask` modules.
 
     Examples
     --------
@@ -1934,12 +1946,95 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         return index_haplotype_array(self, item, type(self))
 
     def compress(self, condition, axis=0, out=None):
-        """TODO"""
+        """Return selected slices of an array along given axis.
+
+        Parameters
+        ----------
+        condition : array_like, bool
+            Array that selects which entries to return. N.B., if len(condition)
+            is less than the size of the given axis, then output is truncated to the length
+            of the condition array.
+        axis : int, optional
+            Axis along which to take slices. If None, work on the flattened array.
+        out : ndarray, optional
+            Output array.  Its type is preserved and it must be of the right
+            shape to hold the output.
+
+        Returns
+        -------
+        out : HaplotypeArray
+            A copy of the array without the slices along axis for which `condition`
+            is false.
+
+        Examples
+        --------
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.compress([True, False, True], axis=0)
+        <HaplotypeArray shape=(2, 4) dtype=int8>
+        0 0 0 1
+        0 2 . .
+        >>> h.compress([True, False, True, False], axis=1)
+        <HaplotypeArray shape=(3, 2) dtype=int8>
+        0 0
+        0 1
+        0 .
+
+        """
         return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
                                         compress=np.compress, out=out)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
-        """TODO"""
+        """Take elements from an array along an axis.
+
+        This function does the same thing as "fancy" indexing (indexing arrays
+        using arrays); however, it can be easier to use if you need elements
+        along a given axis.
+
+        Parameters
+        ----------
+        indices : array_like
+            The indices of the values to extract.
+        axis : int, optional
+            The axis over which to select values.
+        out : ndarray, optional
+            If provided, the result will be placed in this array. It should
+            be of the appropriate shape and dtype.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+
+            * 'raise' -- raise an error (default)
+            * 'wrap' -- wrap around
+            * 'clip' -- clip to the range
+
+            'clip' mode means that all indices that are too large are replaced
+            by the index that addresses the last element along that axis. Note
+            that this disables indexing with negative numbers.
+
+        Returns
+        -------
+        subarray : ndarray
+
+        Examples
+        --------
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.take([0, 2], axis=0)
+        <HaplotypeArray shape=(2, 4) dtype=int8>
+        0 0 0 1
+        0 2 . .
+        >>> h.take([0, 2], axis=1)
+        <HaplotypeArray shape=(3, 2) dtype=int8>
+        0 0
+        0 1
+        0 .
+
+        """
+
         return take_haplotype_array(self, indices, axis=axis, cls=type(self), take=np.take,
                                     out=out, mode=mode)
 
@@ -1949,9 +2044,9 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         Parameters
         ----------
         sel0 : array_like
-            Boolean array or list of indices selecting variants.
+            Boolean array or array of indices selecting variants.
         sel1 : array_like
-            Boolean array or list of indices selecting haplotypes.
+            Boolean array or array of indices selecting haplotypes.
 
         Returns
         -------
@@ -1965,7 +2060,42 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         return subset_haplotype_array(self, sel0, sel1, cls=type(self), subset=subset)
 
     def concatenate(self, others, axis=0):
-        """TODO"""
+        """Join a sequence of arrays along an existing axis.
+
+        Parameters
+        ----------
+        others : sequence of array_like
+            The arrays must have the same shape, except in the dimension
+            corresponding to `axis` (the first, by default).
+        axis : int, optional
+            The axis along which the arrays will be joined.  Default is 0.
+
+        Returns
+        -------
+        res : ndarray
+            The concatenated array.
+
+        Examples
+        --------
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.concatenate([h], axis=0)
+        <HaplotypeArray shape=(6, 4) dtype=int8>
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
+        >>> h.concatenate([h], axis=1)
+        <HaplotypeArray shape=(3, 8) dtype=int8>
+        0 0 0 1 0 0 0 1
+        0 1 1 1 0 1 1 1
+        0 2 . . 0 2 . .
+
+        """
         return concatenate_haplotype_array(self, others, axis=axis, cls=type(self),
                                            concatenate=np.concatenate)
 
@@ -2852,7 +2982,8 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
 
 class GenotypeAlleleCounts(NumpyArrayWrapper):
-    """TODO"""
+    """Base class for wrapping a NumPy array of genotype calls, stored as allele counts per
+    call."""
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeAlleleCounts, self).__init__(data, copy=copy, **kwargs)
@@ -2957,7 +3088,19 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
 
 
 class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
-    """TODO"""
+    """Array of genotype calls for a sequence of variants or samples, stored as allele
+    counts per call.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    """
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeAlleleCountsVector, self).__init__(data, copy=copy, **kwargs)
@@ -3003,7 +3146,88 @@ class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
 
 
 class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
-    """TODO"""
+    """Array of genotype calls for a matrix of variants and samples, stored as allele counts
+    per call.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+    This class provides an alternative representation of genotype calls, allowing for
+    variable copy number (effective ploidy) between chromosomes and/or genome regions.
+    Genotype calls are represented as a 3-dimensional array of integers. By convention, the
+    first dimension corresponds to the variants genotyped, the second dimension corresponds
+    to the samples genotyped, and the third dimension corresponds to the alleles genotyped
+    in index order. Each integer in the array records the **count** for the given in allele in
+    the given variant and sample.
+
+    Examples
+    --------
+    Instantiate an array::
+
+        >>> import allel
+        >>> g = allel.GenotypeAlleleCountsArray([[[2, 0, 0], [0, 2, 0]],
+        ...                                      [[1, 1, 0], [0, 1, 1]],
+        ...                                      [[0, 0, 4], [0, 0, 0]]],
+        ...                                     dtype='u1')
+        >>> g.dtype
+        dtype('uint8')
+        >>> g.ndim
+        3
+        >>> g.shape
+        (3, 2, 3)
+        >>> g.n_variants
+        3
+        >>> g.n_samples
+        2
+        >>> g.n_alleles
+        3
+        >>> g
+        <GenotypeAlleleCountsArray shape=(3, 2, 3) dtype=uint8>
+        2:0:0 0:2:0
+        1:1:0 0:1:1
+        0:0:4 0:0:0
+
+    Genotype calls for a single variant at all samples can be obtained
+    by indexing the first dimension, e.g.::
+
+        >>> g[1]
+        <GenotypeAlleleCountsVector shape=(2, 3) dtype=uint8>
+        1:1:0 0:1:1
+
+    Genotype calls for a single sample at all variants can be obtained
+    by indexing the second dimension, e.g.::
+
+        >>> g[:, 1]
+        <GenotypeAlleleCountsVector shape=(3, 3) dtype=uint8>
+        0:2:0 0:1:1 0:0:0
+
+    A genotype call for a single sample at a single variant can be
+    obtained by indexing the first and second dimensions, e.g.::
+
+        >>> g[1, 0]
+        array([1, 1, 0], dtype=uint8)
+
+    Copy number (effective ploidy) may vary between calls::
+
+        >>> cn = g.sum(axis=2)
+        >>> cn
+        array([[2, 2],
+               [2, 2],
+               [4, 0]], dtype=uint64)
+
+    See Also
+    --------
+    GenotypeArray, HaplotypeArray, GenotypeAlleleCountsVector
+
+    """
 
     def __init__(self, data, copy=False, **kwargs):
         super(GenotypeAlleleCountsArray, self).__init__(data, copy=copy, **kwargs)
