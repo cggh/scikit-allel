@@ -1,40 +1,36 @@
 # -*- coding: utf-8 -*-
-"""This module defines NumPy array classes for variant call data.
-
-Please note, functions and command line utilities for converting variant call
-data from the VCF file format into NumPy arrays and HDF5 files are available
-from the `vcfnp <https://github.com/alimanfoo/vcfnp>`_ package.
-
-"""
 from __future__ import absolute_import, print_function, division
-
-
-import logging
-import itertools
-import bisect
 import collections
+import bisect
+import itertools
 
 
+# third-party imports
 import numpy as np
 
 
-from allel.compat import PY2
-from allel.constants import DIM_PLOIDY, DIPLOID
-from allel.util import ignore_invalid, asarray_ndim, check_dim0_aligned, \
-    ensure_dim1_aligned
-from allel.io import write_vcf, iter_gff3
+# internal imports
+from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
+    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
+from allel.compat import PY2, copy_method_doc, integer_types
+from allel.io import write_vcf, iter_gff3, recarray_from_hdf5_group, recarray_to_hdf5_group
+from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
+from .generic import index_genotype_vector, compress_genotypes, \
+    take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
+    index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
+    subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
+    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array,\
+    index_genotype_ac_array, index_genotype_ac_vector, compress_genotype_ac, \
+    take_genotype_ac, concatenate_genotype_ac, subset_genotype_ac_array
 
 
-__all__ = ['GenotypeArray', 'HaplotypeArray', 'AlleleCountsArray',
-           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable',
-           'FeatureTable']
-
-
-logger = logging.getLogger(__name__)
-debug = logger.debug
+__all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
+           'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector', 'SortedIndex',
+           'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
 
 
 def subset(data, sel0, sel1):
+    """Apply selections on first and second axes."""
 
     # check inputs
     data = np.asarray(data)
@@ -45,13 +41,13 @@ def subset(data, sel0, sel1):
 
     # ensure indices
     if sel0 is not None and sel0.dtype.kind == 'b':
-        sel0 = np.nonzero(sel0)[0]
+        sel0, = np.nonzero(sel0)
     if sel1 is not None and sel1.dtype.kind == 'b':
-        sel1 = np.nonzero(sel1)[0]
+        sel1, = np.nonzero(sel1)
 
     # ensure leading dimension indices can be broadcast correctly
     if sel0 is not None and sel1 is not None:
-        sel0 = sel0[:, None]
+        sel0 = sel0[:, np.newaxis]
 
     # deal with None arguments
     if sel0 is None:
@@ -62,69 +58,28 @@ def subset(data, sel0, sel1):
     return data[sel0, sel1]
 
 
-class ArrayAug(np.ndarray):
+class NumpyArrayWrapper(ArrayWrapper):
+    """Abstract base class that wraps a NumPy array."""
 
-    def __repr__(self):
-        s = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape,
-                                    self.dtype)
-        s += str(self)
+    def __init__(self, data, copy=False, **kwargs):
+        values = np.array(data, copy=copy, **kwargs)
+        super(NumpyArrayWrapper, self).__init__(values)
+
+
+class NumpyRecArrayWrapper(DisplayAsTable):
+
+    def __init__(self, data, copy=False, **kwargs):
+        values = np.rec.array(data, copy=copy, **kwargs)
+        check_ndim(values, 1)
+        if not values.dtype.names:
+            raise ValueError('expected recarray')
+        super(NumpyRecArrayWrapper, self).__init__(values)
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
         return s
-
-    def hstack(self, *others):
-        """Stack arrays in sequence horizontally (column wise)."""
-        tup = (self,) + others
-        a = np.hstack(tup)
-        return type(self)(a, copy=False)
-
-    def vstack(self, *others):
-        """Stack arrays in sequence vertically (row wise)."""
-        tup = (self,) + others
-        a = np.vstack(tup)
-        return type(self)(a, copy=False)
-
-    def reshape(self, *args, **kwargs):
-        # return as vanilla array
-        a = super(ArrayAug, self).reshape(*args, **kwargs)
-        return np.asarray(a)
-
-    def flatten(self, *args, **kwargs):
-        # return as vanilla array
-        a = super(ArrayAug, self).flatten(*args, **kwargs)
-        return np.asarray(a)
-
-    def ravel(self, *args, **kwargs):
-        # return as vanilla array
-        a = super(ArrayAug, self).ravel(*args, **kwargs)
-        return np.asarray(a)
-
-    def transpose(self, *args, **kwargs):
-        # return as vanilla array
-        a = super(ArrayAug, self).transpose(*args, **kwargs)
-        return np.asarray(a)
-
-    @property
-    def T(self):
-        # return as vanilla array
-        a = super(ArrayAug, self).T
-        return np.asarray(a)
-
-
-class RecArrayAug(np.recarray):
-
-    def __repr__(self):
-        s = '%s(%s, dtype=%s)\n' % (type(self).__name__, self.shape,
-                                    self.dtype)
-        s += str(self)
-        return s
-
-    def _repr_html_(self):
-        return recarray_to_html_str(self)
-
-    def display(self, limit=5, **kwargs):
-        return recarray_display(self, limit=limit, **kwargs)
-
-    def displayall(self, **kwargs):
-        return self.display(limit=None, **kwargs)
 
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
@@ -180,296 +135,112 @@ class RecArrayAug(np.recarray):
         condition = self.eval(expression, vm=vm)
         return self.compress(condition)
 
+    def copy(self, *args, **kwargs):
+        data = self.values.copy(*args, **kwargs)
+        # can always wrap this as sub-class type
+        return type(self)(data)
 
-class IntegerArray(ArrayAug):
+    def compress(self, condition, axis=0, out=None):
+        out = self.values.compress(condition, axis=axis, out=out)
+        if axis == 0:
+            out = type(self)(out)
+        return out
 
-    def astype(self, dtype, *args, **kwargs):
-        x = super(IntegerArray, self).astype(dtype, *args, **kwargs)
-        if x.dtype.kind not in 'iu':
-            x = np.asarray(x)
-        return x
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        out = self.values.take(indices, axis=axis, out=out, mode=mode)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def concatenate(self, others):
+        """Concatenate arrays."""
+        if not isinstance(others, (list, tuple)):
+            others = others,
+        tup = (self.values,) + tuple(o.values for o in others)
+        out = np.concatenate(tup, axis=0)
+        out = type(self)(out)
+        return out
 
 
-class GenotypeArray(IntegerArray):
-    """Array of discrete genotype calls.
+class Genotypes(NumpyArrayWrapper):
+    """Base class for wrapping a NumPy array of genotype calls.
 
-    Parameters
-    ----------
-    data : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype data.
-    **kwargs : keyword arguments
-        All keyword arguments are passed through to :func:`numpy.array`.
-
-    Notes
-    -----
-    This class represents data on discrete genotype calls as a
-    3-dimensional numpy array of integers. By convention the first
-    dimension corresponds to the variants genotyped, the second
-    dimension corresponds to the samples genotyped, and the third
-    dimension corresponds to the ploidy of the samples.
-
-    Each integer within the array corresponds to an **allele index**,
-    where 0 is the reference allele, 1 is the first alternate allele,
-    2 is the second alternate allele, ... and -1 (or any other
-    negative integer) is a missing allele call. A single byte integer
-    dtype (int8) can represent up to 127 distinct alleles, which is
-    usually sufficient.  The actual alleles (i.e., the alternate
-    nucleotide sequences) and the physical positions of the variants
-    within the genome of an organism are stored in separate arrays,
-    discussed elsewhere.
-
-    Arrays of this class can store either **phased or unphased**
-    genotype calls. If the genotypes are phased (i.e., haplotypes have
-    been resolved) then individual haplotypes can be extracted by
-    converting to a :class:`HaplotypeArray` then indexing the second
-    dimension. If the genotype calls are unphased then the ordering of
-    alleles along the third (ploidy) dimension is arbitrary. N.B.,
-    this means that an unphased diploid heterozygous call could be
-    stored as (0, 1) or equivalently as (1, 0).
-
-    A genotype array can store genotype calls with any ploidy > 1. For
-    haploid calls, use a :class:`HaplotypeArray`. Note that genotype
-    arrays are not capable of storing calls for samples with differing
-    or variable ploidy.
-
-    With genotype data on large numbers of variants and/or samples,
-    storing the genotype calls in memory as an uncompressed numpy
-    array if integers may be impractical. For working with large
-    arrays of genotype data, see the
-    :class:`allel.model.chunked.GenotypeChunkedArray` class, which provides an
-    alternative implementation of this interface using chunked compressed
-    arrays.
-
-    Examples
+    See Also
     --------
-
-    Instantiate a genotype array::
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]], dtype='i1')
-        >>> g.dtype
-        dtype('int8')
-        >>> g.ndim
-        3
-        >>> g.shape
-        (3, 2, 2)
-        >>> g.n_variants
-        3
-        >>> g.n_samples
-        2
-        >>> g.ploidy
-        2
-
-    Genotype calls for a single variant at all samples can be obtained
-    by indexing the first dimension, e.g.::
-
-        >>> g[1]
-        array([[0, 1],
-               [1, 1]], dtype=int8)
-
-    Genotype calls for a single sample at all variants can be obtained
-    by indexing the second dimension, e.g.::
-
-        >>> g[:, 1]
-        array([[ 0,  1],
-               [ 1,  1],
-               [-1, -1]], dtype=int8)
-
-    A genotype call for a single sample at a single variant can be
-    obtained by indexing the first and second dimensions, e.g.::
-
-        >>> g[1, 0]
-        array([0, 1], dtype=int8)
-
-    A genotype array can store polyploid calls, e.g.::
-
-        >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
-        ...                          [[0, 1, 1], [1, 1, 1]],
-        ...                          [[0, 1, 2], [-1, -1, -1]]],
-        ...                         dtype='i1')
-        >>> g.ploidy
-        3
+    GenotypeArray, GenotypeVector
 
     """
 
-    @staticmethod
-    def _check_input_data(obj):
-
-        # check dtype
-        if obj.dtype.kind not in 'ui':
-            raise TypeError('integer dtype required')
-
-        # check dimensionality
-        if obj.ndim != 3:
-            raise TypeError('array with 3 dimensions required')
-
-        # check length of ploidy dimension
-        if obj.shape[DIM_PLOIDY] == 1:
-            raise ValueError('use HaplotypeArray for haploid calls')
-
-    def __new__(cls, data, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.array(data, **kwargs)
-        cls._check_input_data(obj)
-        obj = obj.view(cls)
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, GenotypeArray):
-            return
-
-        # called after view
-        GenotypeArray._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 3 and self.shape[2] == s.shape[2]:
-                # dimensionality and ploidy preserved
-                if hasattr(self, 'mask') and self.mask is not None:
-                    # attempt to slice mask
-                    m = self.mask.__getslice__(*args)
-                    s.mask = m
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
-
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 3 and self.shape[2] == s.shape[2]:
-                # dimensionality and ploidy preserved
-                if hasattr(self, 'mask') and self.mask is not None:
-                    # attempt to slice mask
-                    m = self.mask.__getitem__(*args)
-                    s.mask = m
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
-
-    def to_html_str(self, limit=5, caption=None, cols=None):
-        import petl as etl
-        n, m, _ = self.shape
-
-        # choose how many variants to display
-        limit = min(n, limit)
-
-        # choose which columns to display
-        if cols is None:
-            if m <= 10:
-                # display all
-                cidx = list(range(m))
-            else:
-                # display subset
-                cidx = [0, 1, 2, 3, 4, m-5, m-4, m-3, m-2, m-1]
-        else:
-            cidx = cols
-
-        # prepare data for display
-        gt = self[:limit+1][:, cidx].to_gt()
-        if not PY2:
-            gt = [[str(v, 'ascii') for v in row] for row in gt]
-
-        # prepare table
-        tbl = (
-            etl
-            .wrap(gt)
-            .pushheader(cidx)
-            .addrownumbers(start=0)
-            .rename('row', '')
-        )
-
-        if cols is None and m > 10:
-            # insert a spacer column
-            tbl = tbl.addcolumn('...', ['...'] * limit, index=6)
-
-        # construct caption
-        if caption is None:
-            caption = 'GenotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
-        caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
-
-        # build HTML
-        # noinspection PyProtectedMember
-        html = etl.util.vis._display_html(tbl,
-                                          caption=caption,
-                                          limit=limit,
-                                          td_styles={'': 'font-weight: bold'},
-                                          index_header=False)
-        return html
-
-    def _repr_html_(self):
-        return self.to_html_str()
-
-    @property
-    def n_variants(self):
-        """Number of variants (length of first array dimension)."""
-        return self.shape[0]
-
-    @property
-    def n_samples(self):
-        """Number of samples (length of second array dimension)."""
-        return self.shape[1]
+    def __init__(self, data, copy=False, **kwargs):
+        super(Genotypes, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+        self._mask = None
+        self._is_phased = None
 
     @property
     def ploidy(self):
-        """Sample ploidy (length of third array dimension)."""
-        return self.shape[2]
-
-    @property
-    def n_calls(self):
-        """Total number of genotype calls (n_variants * n_samples)."""
-        return self.shape[0] * self.shape[1]
+        """Sample ploidy."""
+        return self.shape[-1]
 
     @property
     def n_allele_calls(self):
-        """Total number of allele calls (n_variants * n_samples * ploidy)."""
-        return self.shape[0] * self.shape[1] * self.shape[2]
+        """Total number of allele calls."""
+        return np.prod(self.shape)
+
+    @property
+    def n_calls(self):
+        """Total number of genotype calls."""
+        return self.n_allele_calls // self.ploidy
 
     @property
     def mask(self):
-        """A boolean mask associated with this genotype array, indicating
-        genotype calls that should be filtered (i.e., excluded) from
-        genotype and allele counting operations.
+        """A boolean mask, indicating genotype calls that should be filtered (i.e.,
+        excluded) from genotype and allele counting operations.
 
         Examples
         --------
-
         >>> import allel
         >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
         ...                          [[0, 1], [1, 1]],
         ...                          [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
         >>> g.count_called()
         5
         >>> g.count_alleles()
-        AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 3 0]
-         [1 0 1]]
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        3 1 0
+        1 3 0
+        1 0 1
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int8>
+        0/1 1/1 ./.
+        >>> v.is_called()
+        array([ True,  True, False], dtype=bool)
         >>> mask = [[True, False], [False, True], [False, False]]
         >>> g.mask = mask
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        ./. 0/1
+        0/1 ./.
+        0/2 ./.
         >>> g.count_called()
         3
         >>> g.count_alleles()
-        AlleleCountsArray((3, 3), dtype=int32)
-        [[1 1 0]
-         [1 1 0]
-         [1 0 1]]
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        1 1 0
+        1 1 0
+        1 0 1
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int8>
+        0/1 ./. ./.
+        >>> v.is_called()
+        array([ True, False, False], dtype=bool)
 
         Notes
         -----
@@ -479,41 +250,55 @@ class GenotypeArray(IntegerArray):
         class, and is ignored by any of the generic methods on the ndarray
         class or by any numpy ufuncs.
 
-        Note also that the mask may not survive any slicing, indexing or
-        other subsetting procedures (e.g., call to :func:`numpy.compress` or
-        :func:`numpy.take`). I.e., the mask will have to be similarly indexed
-        then reapplied. The only exceptions are simple slicing operations
-        that preserve the dimensionality and ploidy of the array, and the
-        subset() method, both of which **will** preserve the mask if present.
-
         """
-        if hasattr(self, '_mask'):
-            return self._mask
-        else:
-            return None
+        return self._mask
 
     @mask.setter
     def mask(self, mask):
-
-        # check input
         if mask is not None:
-            mask = asarray_ndim(mask, 2)
-            if mask.shape != self.shape[:2]:
-                raise ValueError('mask has incorrect shape')
-
-        # store
+            mask = np.asarray(mask, dtype=bool)
+            check_shape(mask, self.shape[:-1])
         self._mask = mask
 
-    def fill_masked(self, value=-1, mask=None, copy=True):
+    @property
+    def is_phased(self):
+        """A Boolean array indicating which genotype calls are phased and which are not.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+        >>> g.is_phased = [[True, True], [False, True], [False, False]]
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0|0 0|1
+        0/1 1|1
+        0/2 ./.
+
+        """
+        return self._is_phased
+
+    @is_phased.setter
+    def is_phased(self, is_phased):
+        if is_phased is not None:
+            is_phased = np.asarray(is_phased, dtype=bool)
+            check_shape(is_phased, self.shape[:-1])
+        self._is_phased = is_phased
+
+    def fill_masked(self, value=-1, copy=True):
         """Fill masked genotype calls with a given value.
 
         Parameters
         ----------
         value : int, optional
             The fill value.
-        mask : array_like, bool, shape (n_variants, n_samples), optional
-            A boolean array where True elements indicate genotype calls to be
-            filled. If not provided, value of the `mask` property will be used.
         copy : bool, optional
             If False, modify the array in place.
 
@@ -530,78 +315,33 @@ class GenotypeArray(IntegerArray):
         ...                          [[0, 2], [-1, -1]]], dtype='i1')
         >>> mask = [[True, False], [False, True], [False, False]]
         >>> g.mask = mask
-        >>> g.fill_masked()
-        GenotypeArray((3, 2, 2), dtype=int8)
-        [[[-1 -1]
-          [ 0  1]]
-         [[ 0  1]
-          [-1 -1]]
-         [[ 0  2]
-          [-1 -1]]]
+        >>> g.fill_masked().values
+        array([[[-1, -1],
+                [ 0,  1]],
+               [[ 0,  1],
+                [-1, -1]],
+               [[ 0,  2],
+                [-1, -1]]], dtype=int8)
 
         """
 
-        # determine mask
-        if mask is None and self.mask is None:
-            raise ValueError('no mask found')
-        mask = mask if mask is not None else self.mask
-        mask = asarray_ndim(mask, 2)
-        if mask.shape != self.shape[:2]:
-            raise ValueError('mask has incorrect shape')
-
-        # decide whether to copy
-        if copy:
-            a = self.copy()
-        else:
-            a = self
+        if self.mask is None:
+            raise ValueError('no mask is set')
 
         # apply the mask
-        a[mask, ...] = value
+        data = np.array(self.values, copy=copy)
+        data[self.mask, ...] = value
 
-        return a.view(GenotypeArray)
+        if copy:
+            out = type(self)(data)  # wrap
+            out.is_phased = self.is_phased
+            # don't set mask because it has been filled in
+        else:
+            out = self
+            out.mask = None  # reset mask
 
-    def subset(self, sel0=None, sel1=None):
-        """Make a sub-selection of variants and samples.
+        return out
 
-        Parameters
-        ----------
-        sel0 : array_like
-            Boolean array or list of indices selecting variants.
-        sel0 : array_like
-            Boolean array or list of indices selecting samples.
-
-        Returns
-        -------
-        out : GenotypeArray
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
-        ...                          [[0, 1], [1, 1], [1, 2]],
-        ...                          [[0, 2], [-1, -1], [-1, -1]]])
-        >>> g.subset([0, 1], [0, 2])
-        GenotypeArray((2, 2, 2), dtype=int64)
-        [[[0 0]
-          [1 1]]
-         [[0 1]
-          [1 2]]]
-
-        See Also
-        --------
-        numpy.take, numpy.compress
-
-        """
-
-        data = subset(self, sel0, sel1)
-        g = GenotypeArray(data, copy=False)
-        if hasattr(self, 'mask') and self.mask is not None:
-            m = subset(self.mask, sel0, sel1)
-            g.mask = m
-        return g
-
-    # noinspection PyUnusedLocal
     def is_called(self):
         """Find non-missing genotype calls.
 
@@ -622,28 +362,23 @@ class GenotypeArray(IntegerArray):
         array([[ True,  True],
                [ True,  True],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/1 1/1 ./.
+        >>> v.is_called()
+        array([ True,  True, False], dtype=bool)
 
         """
-        import numexpr as ne
 
-        # special case diploid
-        if self.shape[2] == DIPLOID:
-            allele1 = self[..., 0]  # noqa
-            allele2 = self[..., 1]  # noqa
-            expr = '(allele1 >= 0) & (allele2 >= 0)'
-            out = ne.evaluate(expr)
-
-        # general ploidy case
-        else:
-            out = np.all(self >= 0, axis=2)
+        out = np.all(self >= 0, axis=-1)
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out &= ~self.mask
 
         return out
 
-    # noinspection PyUnusedLocal
     def is_missing(self):
         """Find missing genotype calls.
 
@@ -664,30 +399,23 @@ class GenotypeArray(IntegerArray):
         array([[False, False],
                [False, False],
                [False,  True]], dtype=bool)
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/1 1/1 ./.
+        >>> v.is_missing()
+        array([False, False,  True], dtype=bool)
 
         """
-        import numexpr as ne
 
-        # special case diploid
-        if self.shape[2] == DIPLOID:
-            allele1 = self[..., 0]  # noqa
-            allele2 = self[..., 1]  # noqa
-            # call is missing if either allele is missing
-            ex = '(allele1 < 0) | (allele2 < 0)'
-            out = ne.evaluate(ex)
-
-        # general ploidy case
-        else:
-            # call is missing if any allele is missing
-            out = np.any(self < 0, axis=2)
+        out = np.any(self < 0, axis=-1)
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out |= self.mask
 
         return out
 
-    # noinspection PyUnusedLocal
     def is_hom(self, allele=None):
         """Find genotype calls that are homozygous.
 
@@ -717,32 +445,25 @@ class GenotypeArray(IntegerArray):
         array([[False, False],
                [False,  True],
                [False, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 2/2
+        >>> v.is_hom()
+        array([ True, False,  True], dtype=bool)
 
         """
-        import numexpr as ne
 
-        # special case diploid
-        if self.shape[2] == DIPLOID:
-            allele1 = self[..., 0]  # noqa
-            allele2 = self[..., 1]  # noqa
-            if allele is None:
-                ex = '(allele1 >= 0) & (allele1  == allele2)'
-            else:
-                ex = '(allele1 == {0}) & (allele2 == {0})'.format(allele)
-            out = ne.evaluate(ex)
-
-        # general ploidy case
+        if allele is None:
+            allele1 = self.values[..., 0, np.newaxis]
+            other_alleles = self.values[..., 1:]
+            tmp = (allele1 >= 0) & (allele1 == other_alleles)
+            out = np.all(tmp, axis=-1)
         else:
-            if allele is None:
-                allele1 = self[..., 0, None]  # noqa
-                other_alleles = self[..., 1:]  # noqa
-                ex = '(allele1 >= 0) & (allele1 == other_alleles)'
-                out = np.all(ne.evaluate(ex), axis=2)
-            else:
-                out = np.all(self == allele, axis=2)
+            out = np.all(self == allele, axis=-1)
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out &= ~self.mask
 
         return out
@@ -767,12 +488,17 @@ class GenotypeArray(IntegerArray):
         array([[ True, False],
                [False, False],
                [False, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.is_hom_ref()
+        array([ True, False, False], dtype=bool)
 
         """
 
         return self.is_hom(allele=0)
 
-    # noinspection PyUnusedLocal
     def is_hom_alt(self):
         """Find genotype calls that are homozygous for any alternate (i.e.,
         non-reference) allele.
@@ -794,31 +520,26 @@ class GenotypeArray(IntegerArray):
         array([[False, False],
                [False,  True],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 1]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/1 1/1 ./.
+        >>> v.is_hom_alt()
+        array([False,  True, False], dtype=bool)
 
         """
-        import numexpr as ne
 
-        # special case diploid
-        if self.shape[2] == DIPLOID:
-            allele1 = self[..., 0]  # noqa
-            allele2 = self[..., 1]  # noqa
-            ex = '(allele1 > 0) & (allele1  == allele2)'
-            out = ne.evaluate(ex)
-
-        # general ploidy case
-        else:
-            allele1 = self[..., 0, None]  # noqa
-            other_alleles = self[..., 1:]  # noqa
-            ex = '(allele1 > 0) & (allele1 == other_alleles)'
-            out = np.all(ne.evaluate(ex), axis=2)
+        allele1 = self.values[..., 0, np.newaxis]
+        other_alleles = self.values[..., 1:]
+        tmp = (allele1 > 0) & (allele1 == other_alleles)
+        out = np.all(tmp, axis=-1)
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out &= ~self.mask
 
         return out
 
-    # noinspection PyUnusedLocal
     def is_het(self, allele=None):
         """Find genotype calls that are heterozygous.
 
@@ -845,38 +566,29 @@ class GenotypeArray(IntegerArray):
         array([[False, False],
                [False, False],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.is_het()
+        array([False,  True,  True], dtype=bool)
 
         """
-        import numexpr as ne
 
-        # special case diploid
-        if self.shape[2] == DIPLOID:
-            allele1 = self[..., 0]  # noqa
-            allele2 = self[..., 1]  # noqa
-            ex = '(allele1 >= 0) & (allele2  >= 0) & (allele1 != allele2)'
-            if allele is not None:
-                ex += ' & ((allele1 == {0}) | (allele2 == {0}))' \
-                    .format(allele)
-            out = ne.evaluate(ex)
-
-        # general ploidy case
-        else:
-            allele1 = self[..., 0, None]  # noqa
-            other_alleles = self[..., 1:]  # noqa
-            out = np.all(self >= 0, axis=2) \
-                & np.any(allele1 != other_alleles, axis=2)
-            if allele is not None:
-                out &= np.any(self == allele, axis=2)
+        allele1 = self.values[..., 0, np.newaxis]
+        other_alleles = self.values[..., 1:]
+        out = np.all(self >= 0, axis=-1) & np.any(allele1 != other_alleles, axis=-1)
+        if allele is not None:
+            out &= np.any(self == allele, axis=-1)
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out &= ~self.mask
 
         return out
 
-    # noinspection PyUnusedLocal
     def is_call(self, call):
-        """Find genotypes with a given call.
+        """Locate genotypes with a given call.
 
         Parameters
         ----------
@@ -899,214 +611,120 @@ class GenotypeArray(IntegerArray):
         array([[False, False],
                [False, False],
                [ True, False]], dtype=bool)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.is_call((0, 2))
+        array([False, False,  True], dtype=bool)
 
         """
-        import numexpr as ne
 
-        # special case diploid
-        if self.shape[2] == DIPLOID:
-            if not len(call) == DIPLOID:
-                raise ValueError('invalid call: %r', call)
-            allele1 = self[..., 0]  # noqa
-            allele2 = self[..., 1]  # noqa
-            ex = '(allele1 == {0}) & (allele2  == {1})'.format(*call)
-            out = ne.evaluate(ex)
+        # guard conditions
+        if not len(call) == self.shape[-1]:
+            raise ValueError('invalid call ploidy: %s', repr(call))
 
-        # general ploidy case
+        if self.ndim == 2:
+            call = np.asarray(call)[np.newaxis, :]
         else:
-            if not len(call) == self.shape[2]:
-                raise ValueError('invalid call: %r', call)
-            call = np.asarray(call)[None, None, :]
-            out = np.all(self == call, axis=2)
+            call = np.asarray(call)[np.newaxis, np.newaxis, :]
+        out = np.all(self == call, axis=-1)
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out &= ~self.mask
 
         return out
 
     def count_called(self, axis=None):
+        """Count called genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_called()
         return np.sum(b, axis=axis)
 
     def count_missing(self, axis=None):
+        """Count missing genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_missing()
         return np.sum(b, axis=axis)
 
     def count_hom(self, allele=None, axis=None):
+        """Count homozygous genotypes.
+
+        Parameters
+        ----------
+        allele : int, optional
+            Allele index.
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_hom(allele=allele)
         return np.sum(b, axis=axis)
 
     def count_hom_ref(self, axis=None):
+        """Count homozygous reference genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_hom_ref()
         return np.sum(b, axis=axis)
 
     def count_hom_alt(self, axis=None):
+        """Count homozygous alternate genotypes.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_hom_alt()
         return np.sum(b, axis=axis)
 
     def count_het(self, allele=None, axis=None):
+        """Count heterozygous genotypes.
+
+        Parameters
+        ----------
+        allele : int, optional
+            Allele index.
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_het(allele=allele)
         return np.sum(b, axis=axis)
 
     def count_call(self, call, axis=None):
+        """Count genotypes with a given call.
+
+        Parameters
+        ----------
+        call : array_like, int, shape (ploidy,)
+            The genotype call to find.
+        axis : int, optional
+            Axis over which to count, or None to perform overall count.
+
+        """
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
-
-    def count_alleles(self, max_allele=None, subpop=None):
-        """Count the number of calls of each allele per variant.
-
-        Parameters
-        ----------
-        max_allele : int, optional
-            The highest allele index to count. Alleles above this will be
-            ignored.
-        subpop : sequence of ints, optional
-            Indices of samples to include in count.
-
-        Returns
-        -------
-        ac : AlleleCountsArray
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[2, 2], [-1, -1]]])
-        >>> g.count_alleles()
-        AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 2 1]
-         [0 0 2]]
-        >>> g.count_alleles(max_allele=1)
-        AlleleCountsArray((3, 2), dtype=int32)
-        [[3 1]
-         [1 2]
-         [0 0]]
-
-        """
-
-        # check inputs
-        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
-        if subpop is not None:
-            if np.any(subpop >= self.shape[1]):
-                raise ValueError('index out of bounds')
-            if np.any(subpop < 0):
-                raise ValueError('negative indices not supported')
-
-        # determine alleles to count
-        if max_allele is None:
-            max_allele = self.max()
-
-        if self.dtype.type == np.int8:
-            # use optimisations
-            from allel.opt.model import genotype_int8_count_alleles, \
-                genotype_int8_count_alleles_masked, \
-                genotype_int8_count_alleles_subpop, \
-                genotype_int8_count_alleles_subpop_masked
-
-            if subpop is None:
-                if hasattr(self, 'mask') and self.mask is not None:
-                    ac = genotype_int8_count_alleles_masked(
-                        self, self.mask.view(dtype='u1'), max_allele
-                    )
-                else:
-                    ac = genotype_int8_count_alleles(self, max_allele)
-
-            else:
-                if hasattr(self, 'mask') and self.mask is not None:
-                    ac = genotype_int8_count_alleles_subpop_masked(
-                        self, self.mask.view(dtype='u1'), max_allele, subpop
-                    )
-                else:
-                    ac = genotype_int8_count_alleles_subpop(
-                        self, max_allele, subpop
-                    )
-
-        else:
-            # set up output array
-            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
-
-            # extract subpop
-            if subpop is not None:
-                g = self[:, subpop]
-            else:
-                g = self
-
-            # count alleles
-            alleles = list(range(max_allele + 1))
-            for allele in alleles:
-                allele_match = g == allele
-                if g.mask is not None:
-                    allele_match &= ~g.mask[:, :, None]
-                np.sum(allele_match, axis=(1, 2), out=ac[:, allele])
-
-        return AlleleCountsArray(ac, copy=False)
-
-    def count_alleles_subpops(self, subpops, max_allele=None):
-        """Count alleles for multiple subpopulations simultaneously.
-
-        Parameters
-        ----------
-        subpops : dict (string -> sequence of ints)
-            Mapping of subpopulation names to sample indices.
-        max_allele : int, optional
-            The highest allele index to count. Alleles above this will be
-            ignored.
-
-        Returns
-        -------
-        out : dict (string -> AlleleCountsArray)
-            A mapping of subpopulation names to allele counts arrays.
-
-        """
-
-        if max_allele is None:
-            max_allele = self.max()
-
-        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
-               for name, subpop in subpops.items()}
-
-        return out
-
-    def to_haplotypes(self, copy=False):
-        """Reshape a genotype array to view it as haplotypes by
-        dropping the ploidy dimension.
-
-        Returns
-        -------
-        h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
-            Haplotype array.
-        copy : bool, optional
-            If True, make a copy of the data.
-
-        Notes
-        -----
-        If genotype calls are unphased, the haplotypes returned by
-        this function will bear no resemblance to the true haplotypes.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 1], [1, 1]],
-        ...                          [[0, 2], [-1, -1]]])
-        >>> g.to_haplotypes()
-        HaplotypeArray((3, 4), dtype=int64)
-        [[ 0  0  0  1]
-         [ 0  1  1  1]
-         [ 0  2 -1 -1]]
-
-        """
-
-        # reshape, preserving size of variants dimension
-        newshape = (self.shape[0], -1)
-        data = np.reshape(self, newshape)
-        h = HaplotypeArray(data, copy=copy)
-        return h
 
     def to_n_ref(self, fill=0, dtype='i1'):
         """Transform each genotype call into the number of
@@ -1116,10 +734,12 @@ class GenotypeArray(IntegerArray):
         ----------
         fill : int, optional
             Use this value to represent missing calls.
+        dtype : dtype, optional
+            Output dtype.
 
         Returns
         -------
-        out : ndarray, int, shape (n_variants, n_samples)
+        out : ndarray, int8, shape (n_variants, n_samples)
             Array of ref alleles per genotype call.
 
         Notes
@@ -1143,12 +763,18 @@ class GenotypeArray(IntegerArray):
         array([[ 2,  1],
                [ 1,  0],
                [ 0, -1]], dtype=int8)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/2 2/2
+        >>> v.to_n_ref()
+        array([2, 1, 0], dtype=int8)
 
         """
 
         # count number of alternate alleles
-        out = np.empty((self.shape[0], self.shape[1]), dtype=dtype)
-        np.sum(self == 0, axis=2, out=out)
+        out = np.empty(self.shape[:-1], dtype=dtype)
+        np.sum(self == 0, axis=-1, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -1156,7 +782,7 @@ class GenotypeArray(IntegerArray):
             out[m] = fill
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out[self.mask] = fill
 
         return out
@@ -1169,6 +795,8 @@ class GenotypeArray(IntegerArray):
         ----------
         fill : int, optional
             Use this value to represent missing calls.
+        dtype : dtype, optional
+            Output dtype.
 
         Returns
         -------
@@ -1200,12 +828,18 @@ class GenotypeArray(IntegerArray):
         array([[ 0,  1],
                [ 1,  2],
                [ 2, -1]], dtype=int8)
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/2 2/2
+        >>> v.to_n_alt()
+        array([0, 1, 2], dtype=int8)
 
         """
 
         # count number of alternate alleles
-        out = np.empty((self.shape[0], self.shape[1]), dtype=dtype)
-        np.sum(self > 0, axis=2, out=out)
+        out = np.empty(self.shape[:-1], dtype=dtype)
+        np.sum(self > 0, axis=-1, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -1213,19 +847,20 @@ class GenotypeArray(IntegerArray):
             out[m] = fill
 
         # handle mask
-        if hasattr(self, 'mask') and self.mask is not None:
+        if self.mask is not None:
             out[self.mask] = fill
 
         return out
 
-    def to_allele_counts(self, alleles=None):
+    def to_allele_counts(self, max_allele=None, dtype='u1'):
         """Transform genotype calls into allele counts per call.
 
         Parameters
         ----------
-        alleles : sequence of ints, optional
-            If not None, count only the given alleles. (By default, count all
-            alleles.)
+        max_allele : int, optional
+            Highest allele index. Provide this value to speed up computation.
+        dtype : dtype, optional
+            Output dtype.
 
         Returns
         -------
@@ -1240,38 +875,633 @@ class GenotypeArray(IntegerArray):
         ...                          [[0, 2], [1, 1]],
         ...                          [[2, 2], [-1, -1]]])
         >>> g.to_allele_counts()
-        array([[[2, 0, 0],
-                [1, 1, 0]],
-               [[1, 0, 1],
-                [0, 2, 0]],
-               [[0, 0, 2],
-                [0, 0, 0]]], dtype=uint8)
-        >>> g.to_allele_counts(alleles=(0, 1))
-        array([[[2, 0],
-                [1, 1]],
-               [[1, 0],
-                [0, 2]],
-               [[0, 0],
-                [0, 0]]], dtype=uint8)
+        <GenotypeAlleleCountsArray shape=(3, 2, 3) dtype=uint8>
+        2:0:0 1:1:0
+        1:0:1 0:2:0
+        0:0:2 0:0:0
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/2 2/2
+        >>> v.to_allele_counts()
+        <GenotypeAlleleCountsVector shape=(3, 3) dtype=uint8>
+        2:0:0 1:0:1 0:0:2
 
         """
 
         # determine alleles to count
-        if alleles is None:
-            m = self.max()
-            alleles = list(range(m+1))
+        if max_allele is None:
+            max_allele = self.max()
+        alleles = list(range(max_allele + 1))
 
         # set up output array
-        outshape = (self.shape[0], self.shape[1], len(alleles))
-        out = np.zeros(outshape, dtype='u1')
+        outshape = self.shape[:-1] + (len(alleles),)
+        out = np.zeros(outshape, dtype=dtype)
 
-        for i, allele in enumerate(alleles):
+        for allele in alleles:
             # count alleles along ploidy dimension
             allele_match = self == allele
-            if hasattr(self, 'mask') and self.mask is not None:
-                allele_match &= ~self.mask[:, :, None]
-            np.sum(allele_match, axis=2, out=out[..., i])
+            if self.mask is not None:
+                allele_match &= ~self.mask[..., np.newaxis]
+            np.sum(allele_match, axis=-1, out=out[..., allele])
 
+        if self.ndim == 2:
+            out = GenotypeAlleleCountsVector(out)
+        elif self.ndim == 3:
+            out = GenotypeAlleleCountsArray(out)
+
+        return out
+
+    def to_gt(self, max_allele=None):
+        """Convert genotype calls to VCF-style string representation.
+
+        Returns
+        -------
+        gt : ndarray, string, shape (n_variants, n_samples)
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[1, 2], [2, 1]],
+        ...                          [[2, 2], [-1, -1]]])
+        >>> g.to_gt()
+        chararray([[b'0/0', b'0/1'],
+               [b'0/2', b'1/1'],
+               [b'1/2', b'2/1'],
+               [b'2/2', b'./.']],
+              dtype='|S3')
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(4, 2) dtype=int64>
+        0/0 0/2 1/2 2/2
+        >>> v.to_gt()
+        chararray([b'0/0', b'0/2', b'1/2', b'2/2'],
+              dtype='|S3')
+        >>> g.is_phased = np.ones(g.shape[:-1], dtype=bool)
+        >>> g.to_gt()
+        chararray([[b'0|0', b'0|1'],
+               [b'0|2', b'1|1'],
+               [b'1|2', b'2|1'],
+               [b'2|2', b'.|.']],
+              dtype='|S3')
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(4, 2) dtype=int64>
+        0|0 0|2 1|2 2|2
+        >>> v.to_gt()
+        chararray([b'0|0', b'0|2', b'1|2', b'2|2'],
+              dtype='|S3')
+
+        """
+
+        # how many characters needed per allele call?
+        if max_allele is None:
+            max_allele = np.max(self)
+        if max_allele <= 0:
+            max_allele = 1
+        nchar = int(np.floor(np.log10(max_allele))) + 1
+
+        # convert to string
+        a = self.astype((np.string_, nchar)).view(np.chararray)
+
+        # recode missing alleles
+        a[self < 0] = b'.'
+        if self.mask is not None:
+            a[self.mask] = b'.'
+
+        # determine allele call separator
+        if self.is_phased is None:
+            sep = b'/'
+        else:
+            sep = np.empty(self.shape[:-1], dtype='S1').view(np.chararray)
+            sep[self.is_phased] = b'|'
+            sep[~self.is_phased] = b'/'
+
+        # join via separator, coping with any ploidy
+        gt = a[..., 0]
+        for i in range(1, self.ploidy):
+            gt = gt + sep + a[..., i]
+
+        return gt
+
+    def copy(self, *args, **kwargs):
+        data = self.values.copy(*args, **kwargs)
+        out = type(self)(data)
+        if self.mask is not None:
+            out.mask = self.mask.copy()
+        if self.is_phased is not None:
+            out.is_phased = self.is_phased.copy()
+        return out
+
+    def map_alleles(self, mapping, copy=True):
+        """Transform alleles via a mapping.
+
+        Parameters
+        ----------
+        mapping : ndarray, int8, shape (n_variants, max_allele)
+            An array defining the allele mapping for each variant.
+        copy : bool, optional
+            If True, return a new array; if False, apply mapping in place
+            (only applies for arrays with dtype int8; all other dtypes
+            require a copy).
+
+        Returns
+        -------
+        gm : GenotypeArray
+
+        Notes
+        -----
+        If a mask has been set, it is ignored by this function.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> import numpy as np
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 2], [1, 1]],
+        ...                          [[1, 2], [2, 1]],
+        ...                          [[2, 2], [-1, -1]]], dtype='i1')
+        >>> mapping = np.array([[1, 2, 0],
+        ...                     [2, 0, 1],
+        ...                     [2, 1, 0],
+        ...                     [0, 2, 1]], dtype='i1')
+        >>> g.map_alleles(mapping)
+        <GenotypeArray shape=(4, 2, 2) dtype=int8>
+        1/1 1/2
+        2/1 0/0
+        1/0 0/1
+        1/1 ./.
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(4, 2) dtype=int8>
+        0/0 0/2 1/2 2/2
+        >>> v.map_alleles(mapping)
+        <GenotypeVector shape=(4, 2) dtype=int8>
+        1/1 2/1 1/0 1/1
+
+        Notes
+        -----
+        For arrays with dtype int8 an optimised implementation is used which is
+        faster and uses far less memory. It is recommended to convert arrays to
+        dtype int8 where possible before calling this method.
+
+        See Also
+        --------
+        create_allele_mapping
+
+        """
+
+        h = self.to_haplotypes()
+        hm = h.map_alleles(mapping, copy=copy)
+        if self.ndim == 2:
+            gm = GenotypeVector(hm)
+        else:
+            gm = hm.to_genotypes(ploidy=self.ploidy)
+        return gm
+
+    def to_haplotypes(self, copy=False):
+        """Reshape a genotype array to view it as haplotypes.
+
+        Parameters
+        ----------
+        copy : bool, optional
+            If True, copy data.
+
+        Returns
+        -------
+        h : HaplotypeArray, shape (n_variants, n_samples * ploidy)
+            Haplotype array.
+
+        Notes
+        -----
+        If genotype calls are unphased, the haplotypes returned by
+        this function will bear no resemblance to the true haplotypes.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.to_haplotypes()
+        <HaplotypeArray shape=(3, 4) dtype=int64>
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.to_haplotypes()
+        <HaplotypeArray shape=(3, 2) dtype=int64>
+        0 0
+        0 1
+        0 2
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+    def compress(self, condition, axis=0, out=None):
+        """Return selected slices of an array along given axis.
+
+        Parameters
+        ----------
+        condition : array_like, bool
+            Array that selects which entries to return. N.B., if len(condition)
+            is less than the size of the given axis, then output is truncated to the length
+            of the condition array.
+        axis : int, optional
+            Axis along which to take slices. If None, work on the flattened array.
+        out : ndarray, optional
+            Output array.  Its type is preserved and it must be of the right
+            shape to hold the output.
+
+        Returns
+        -------
+        out : Genotypes
+            A copy of the array without the slices along axis for which `condition`
+            is false.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.compress([True, False, True], axis=0)
+        <GenotypeArray shape=(2, 2, 2) dtype=int64>
+        0/0 0/1
+        0/2 ./.
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.compress([True, False, True], axis=0)
+        <GenotypeVector shape=(2, 2) dtype=int64>
+        0/0 0/2
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        """Take elements from an array along an axis.
+
+        This function does the same thing as "fancy" indexing (indexing arrays
+        using arrays); however, it can be easier to use if you need elements
+        along a given axis.
+
+        Parameters
+        ----------
+        indices : array_like
+            The indices of the values to extract.
+        axis : int, optional
+            The axis over which to select values.
+        out : ndarray, optional
+            If provided, the result will be placed in this array. It should
+            be of the appropriate shape and dtype.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+
+            * 'raise' -- raise an error (default)
+            * 'wrap' -- wrap around
+            * 'clip' -- clip to the range
+
+            'clip' mode means that all indices that are too large are replaced
+            by the index that addresses the last element along that axis. Note
+            that this disables indexing with negative numbers.
+
+        Returns
+        -------
+        subarray : ndarray
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.take([0, 2], axis=0)
+        <GenotypeArray shape=(2, 2, 2) dtype=int64>
+        0/0 0/1
+        0/2 ./.
+        >>> v = g[:, 0]
+        >>> v
+        <GenotypeVector shape=(3, 2) dtype=int64>
+        0/0 0/1 0/2
+        >>> v.take([0, 2], axis=0)
+        <GenotypeVector shape=(2, 2) dtype=int64>
+        0/0 0/2
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+    def concatenate(self, others, axis=0):
+        """Join a sequence of arrays along an existing axis.
+
+        Parameters
+        ----------
+        others : sequence of array_like
+            The arrays must have the same shape, except in the dimension
+            corresponding to `axis` (the first, by default).
+        axis : int, optional
+            The axis along which the arrays will be joined.  Default is 0.
+
+        Returns
+        -------
+        res : ndarray
+            The concatenated array.
+
+        Examples
+        --------
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]])
+        >>> g.concatenate([g], axis=0)
+        <GenotypeArray shape=(6, 2, 2) dtype=int64>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+        >>> g.concatenate([g], axis=1)
+        <GenotypeArray shape=(3, 4, 2) dtype=int64>
+        0/0 0/1 0/0 0/1
+        0/1 1/1 0/1 1/1
+        0/2 ./. 0/2 ./.
+        >>> v1 = g[:, 0]
+        >>> v2 = g[:, 1]
+        >>> v1.concatenate([v2], axis=0)
+        <GenotypeVector shape=(6, 2) dtype=int64>
+        0/0 0/1 0/2 0/1 1/1 ./.
+
+        """
+        # implement in sub-class
+        raise NotImplementedError
+
+
+class GenotypeVector(Genotypes, DisplayAs1D):
+    """Array of genotype calls for a sequence of variants or samples.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    See Also
+    --------
+    Genotypes, GenotypeArray, HaplotypeArray, GenotypeAlleleCountsArray
+
+    """
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeVector, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 2)
+
+    def __getitem__(self, item):
+        return index_genotype_vector(self, item, type(self))
+
+    def compress(self, condition, axis=0, out=None):
+        return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0},
+                                  cls=type(self), compress=np.compress, out=out)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0}, cls=type(self),
+                              take=np.take, out=out, mode=mode)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotypes(self, others=others, axis=axis, wrap_axes={0},
+                                     cls=type(self), concatenate=np.concatenate)
+
+    def to_haplotypes(self, copy=False):
+        return HaplotypeArray(self.values, copy=copy)
+
+    def str_items(self):
+        gt = self.to_gt()
+        if PY2:
+            out = list(gt)
+        else:
+            out = [str(x, 'ascii') for x in gt]
+        return out
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
+        return s
+
+
+copy_method_doc(GenotypeVector.compress, Genotypes.compress)
+copy_method_doc(GenotypeVector.take, Genotypes.take)
+copy_method_doc(GenotypeVector.concatenate, Genotypes.concatenate)
+copy_method_doc(GenotypeVector.to_haplotypes, Genotypes.to_haplotypes)
+
+
+class GenotypeArray(Genotypes, DisplayAs2D):
+    """Array of discrete genotype calls for a matrix of variants and samples.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+    This class represents data on discrete genotype calls as a
+    3-dimensional numpy array of integers. By convention, the first
+    dimension corresponds to the variants genotyped, the second
+    dimension corresponds to the samples genotyped, and the third
+    dimension corresponds to the ploidy of the samples.
+
+    Each integer within the array corresponds to an **allele index**,
+    where 0 is the reference allele, 1 is the first alternate allele,
+    2 is the second alternate allele, ... and -1 (or any other
+    negative integer) is a missing allele call. A single byte integer
+    dtype (int8) can represent up to 127 distinct alleles, which is
+    usually sufficient.  The actual alleles (i.e., the alternate
+    nucleotide sequences) and the physical positions of the variants
+    within the genome of an organism are stored in separate arrays,
+    discussed elsewhere.
+
+    Arrays of this class can store either **phased or unphased**
+    genotype calls. If the genotypes are phased (i.e., haplotypes have
+    been resolved) then individual haplotypes can be extracted by
+    converting to a :class:`HaplotypeArray` then indexing the second
+    dimension. If the genotype calls are unphased then the ordering of
+    alleles along the third (ploidy) dimension is arbitrary. N.B.,
+    this means that an unphased diploid heterozygous call could be
+    stored as (0, 1) or equivalently as (1, 0).
+
+    A genotype array can store genotype calls with any ploidy > 1. For
+    haploid calls, use a :class:`HaplotypeArray`. Note that genotype
+    arrays are not capable of storing calls for samples with differing
+    or variable ploidy, see :class:`GenotypeAlleleCountsArray` instead.
+
+    With genotype data on large numbers of variants and/or samples,
+    storing the genotype calls in memory as an uncompressed numpy
+    array if integers may be impractical. For working with large
+    arrays of genotype data, see the :mod:`allel.model.chunked` and
+    :mod:`allel.model.dask` modules.
+
+    Examples
+    --------
+
+    Instantiate a genotype array::
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
+        ...                          [[0, 1], [1, 1]],
+        ...                          [[0, 2], [-1, -1]]], dtype='i1')
+        >>> g.dtype
+        dtype('int8')
+        >>> g.ndim
+        3
+        >>> g.shape
+        (3, 2, 2)
+        >>> g.n_variants
+        3
+        >>> g.n_samples
+        2
+        >>> g.ploidy
+        2
+        >>> g
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+
+    Genotype calls for a single variant at all samples can be obtained
+    by indexing the first dimension, e.g.::
+
+        >>> g[1]
+        <GenotypeVector shape=(2, 2) dtype=int8>
+        0/1 1/1
+
+    Genotype calls for a single sample at all variants can be obtained
+    by indexing the second dimension, e.g.::
+
+        >>> g[:, 1]
+        <GenotypeVector shape=(3, 2) dtype=int8>
+        0/1 1/1 ./.
+
+    A genotype call for a single sample at a single variant can be
+    obtained by indexing the first and second dimensions, e.g.::
+
+        >>> g[1, 0]
+        array([0, 1], dtype=int8)
+
+    A genotype array can store polyploid calls, e.g.::
+
+        >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
+        ...                          [[0, 1, 1], [1, 1, 1]],
+        ...                          [[0, 1, 2], [-1, -1, -1]]],
+        ...                         dtype='i1')
+        >>> g.ploidy
+        3
+        >>> g
+        <GenotypeArray shape=(3, 2, 3) dtype=int8>
+        0/0/0 0/0/1
+        0/1/1 1/1/1
+        0/1/2 ././.
+
+    See Also
+    --------
+    Genotypes, GenotypeVector, HaplotypeArray, GenotypeAlleleCountsArray
+
+    """
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeArray, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 3)
+
+    def __getitem__(self, item):
+        return index_genotype_array(self, item, array_cls=type(self),
+                                    vector_cls=GenotypeVector)
+
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples."""
+        return self.shape[1]
+
+    def compress(self, condition, axis=0, out=None):
+        return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0, 1},
+                                  cls=type(self), compress=np.compress, out=out)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0, 1},
+                              cls=type(self), take=np.take, out=out, mode=mode)
+
+    def subset(self, sel0=None, sel1=None):
+        """Make a sub-selection of variants and samples.
+
+        Parameters
+        ----------
+        sel0 : array_like
+            Boolean array or array of indices selecting variants.
+        sel1 : array_like
+            Boolean array or array of indices selecting samples.
+
+        Returns
+        -------
+        out : GenotypeArray
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> g = allel.GenotypeArray([[[0, 0], [0, 1], [1, 1]],
+        ...                          [[0, 1], [1, 1], [1, 2]],
+        ...                          [[0, 2], [-1, -1], [-1, -1]]])
+        >>> g.subset([0, 1], [0, 2])
+        <GenotypeArray shape=(2, 2, 2) dtype=int64>
+        0/0 1/1
+        0/1 1/2
+
+        See Also
+        --------
+        Genotypes.take, Genotypes.compress
+
+        """
+        return subset_genotype_array(self, sel0, sel1, cls=type(self), subset=subset)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotypes(self, others=others, axis=axis, wrap_axes={0, 1},
+                                     cls=type(self), concatenate=np.concatenate)
+
+    def to_haplotypes(self, copy=False):
+        # reshape, preserving size of variants dimension
+        newshape = (self.shape[0], -1)
+        data = np.reshape(self, newshape)
+        h = HaplotypeArray(data, copy=copy)
+        return h
+
+    def str_items(self):
+        gt = self.to_gt()
+        n = gt.dtype.itemsize
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in gt]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
         return out
 
     def to_packed(self, boundscheck=True):
@@ -1309,34 +1539,25 @@ class GenotypeArray(IntegerArray):
 
         """
 
-        if self.shape[2] != 2:
-            raise ValueError('can only pack diploid calls')
+        from allel.opt.model import genotype_array_pack_diploid
+
+        check_ploidy(self.ploidy, 2)
 
         if boundscheck:
             amx = self.max()
             if amx > 14:
-                raise ValueError('max allele for packing is 14, found %s'
-                                 % amx)
+                raise ValueError('max allele for packing is 14, found %s' % amx)
             amn = self.min()
             if amn < -1:
-                raise ValueError('min allele for packing is -1, found %s'
-                                 % amn)
-
-        from allel.opt.model import genotype_pack_diploid
-
-        # ensure int8 dtype
-        if self.dtype.type == np.int8:
-            data = self
-        else:
-            data = self.astype(dtype=np.int8)
+                raise ValueError('min allele for packing is -1, found %s' % amn)
 
         # pack data
-        packed = genotype_pack_diploid(data)
+        packed = genotype_array_pack_diploid(self.values)
 
         return packed
 
-    @staticmethod
-    def from_packed(packed):
+    @classmethod
+    def from_packed(cls, packed):
         """Unpack diploid genotypes that have been bit-packed into single
         bytes.
 
@@ -1359,27 +1580,24 @@ class GenotypeArray(IntegerArray):
         ...                    [2, 17],
         ...                    [34, 239]], dtype='u1')
         >>> allel.GenotypeArray.from_packed(packed)
-        GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  2]
-          [ 1  1]]
-         [[ 2  2]
-          [-1 -1]]]
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/2 1/1
+        2/2 ./.
 
         """
 
+        from allel.opt.model import genotype_array_unpack_diploid
+
         # check arguments
         packed = np.asarray(packed)
-        if packed.ndim != 2:
-            raise ValueError('packed array must have 2 dimensions')
-        if packed.dtype != np.uint8:
-            packed = packed.astype(np.uint8)
+        check_ndim(packed, 2)
+        check_dtype(packed, 'u1')
 
-        from allel.opt.model import genotype_unpack_diploid
-        data = genotype_unpack_diploid(packed)
-        return GenotypeArray(data)
+        data = genotype_array_unpack_diploid(packed)
+        return cls(data)
 
+    # noinspection PyShadowingBuiltins
     def to_sparse(self, format='csr', **kwargs):
         """Convert into a sparse matrix.
 
@@ -1458,15 +1676,11 @@ class GenotypeArray(IntegerArray):
         >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
         >>> g = allel.GenotypeArray.from_sparse(m, ploidy=2)
         >>> g
-        GenotypeArray((4, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  0]]
-         [[ 0  1]
-          [ 0  1]]
-         [[ 1  1]
-          [ 0  0]]
-         [[ 0  0]
-          [-1 -1]]]
+        <GenotypeArray shape=(4, 2, 2) dtype=int8>
+        0/0 0/0
+        0/1 0/1
+        1/1 0/0
+        0/0 ./.
 
         """
 
@@ -1497,67 +1711,61 @@ class GenotypeArray(IntegerArray):
         ...                          [[1, 2], [2, 1]],
         ...                          [[2, 2], [-1, -1]]])
         >>> g.haploidify_samples()
-        HaplotypeArray((4, 2), dtype=int64)
-        [[ 0  1]
-         [ 0  1]
-         [ 1  1]
-         [ 2 -1]]
+        <HaplotypeArray shape=(4, 2) dtype=int64>
+        0 1
+        0 1
+        1 1
+        2 .
         >>> g = allel.GenotypeArray([[[0, 0, 0], [0, 0, 1]],
         ...                          [[0, 1, 1], [1, 1, 1]],
         ...                          [[0, 1, 2], [-1, -1, -1]]])
         >>> g.haploidify_samples()
-        HaplotypeArray((3, 2), dtype=int64)
-        [[ 0  0]
-         [ 1  1]
-         [ 2 -1]]
+        <HaplotypeArray shape=(3, 2) dtype=int64>
+        0 0
+        1 1
+        2 .
 
         """
 
-        # N.B., this implementation is obscure and uses more memory that
+        # N.B., this implementation is obscure and uses more memory than
         # necessary, TODO review
 
         # define the range of possible indices, e.g., diploid => (0, 1)
-        index_range = np.arange(0, self.shape[2], dtype='u1')
+        index_range = np.arange(0, self.ploidy, dtype='u1')
 
         # create a random index for each genotype call
-        indices = np.random.choice(index_range,
-                                   size=(self.shape[0] * self.shape[1]),
-                                   replace=True)
+        indices = np.random.choice(index_range, size=self.n_calls, replace=True)
 
         # reshape genotype data so it's suitable for passing to np.choose
         # by merging the variants and samples dimensions
-        choices = self.reshape(-1, self.shape[2]).T
+        choices = self.reshape(-1, self.ploidy).T
 
         # now use random indices to haploidify
         data = np.choose(indices, choices)
 
         # reshape the haploidified data to restore the variants and samples
         # dimensions
-        data = data.reshape((self.shape[0], self.shape[1]))
+        data = data.reshape((self.n_variants, self.n_samples))
 
         # view as haplotype array
         h = HaplotypeArray(data, copy=False)
 
         return h
 
-    # noinspection PyUnusedLocal
-    def to_gt(self, phased=False, max_allele=None):
-        """Convert genotype calls to VCF-style string representation.
+    def count_alleles(self, max_allele=None, subpop=None):
+        """Count the number of calls of each allele per variant.
 
         Parameters
         ----------
-        phased : bool, optional
-            Determines separator.
         max_allele : int, optional
-            Manually specify max allele index.
+            The highest allele index to count. Alleles above this will be
+            ignored.
+        subpop : sequence of ints, optional
+            Indices of samples to include in count.
 
         Returns
         -------
-        gt : ndarray, string, shape (n_variants, n_samples)
-
-        Notes
-        -----
-        If a mask has been set, it is ignored by this function.
+        ac : AlleleCountsArray
 
         Examples
         --------
@@ -1565,113 +1773,86 @@ class GenotypeArray(IntegerArray):
         >>> import allel
         >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
         ...                          [[0, 2], [1, 1]],
-        ...                          [[1, 2], [2, 1]],
         ...                          [[2, 2], [-1, -1]]])
-        >>> g.to_gt()
-        chararray([[b'0/0', b'0/1'],
-               [b'0/2', b'1/1'],
-               [b'1/2', b'2/1'],
-               [b'2/2', b'./.']],
-              dtype='|S3')
-        >>> g.to_gt(phased=True)
-        chararray([[b'0|0', b'0|1'],
-               [b'0|2', b'1|1'],
-               [b'1|2', b'2|1'],
-               [b'2|2', b'.|.']],
-              dtype='|S3')
+        >>> g.count_alleles()
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        3 1 0
+        1 2 1
+        0 0 2
+        >>> g.count_alleles(max_allele=1)
+        <AlleleCountsArray shape=(3, 2) dtype=int32>
+        3 1
+        1 2
+        0 0
 
         """
 
-        # determine separator
-        if phased:
-            sep = b'|'  # noqa
-        else:
-            sep = b'/'  # noqa
+        from allel.opt.model import genotype_array_count_alleles, \
+            genotype_array_count_alleles_masked, genotype_array_count_alleles_subpop, \
+            genotype_array_count_alleles_subpop_masked
 
-        # how many characters needed?
+        # check inputs
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
+            if np.any(subpop >= self.shape[1]):
+                raise ValueError('index out of bounds')
+            if np.any(subpop < 0):
+                raise ValueError('negative indices not supported')
+
+        # determine alleles to count
         if max_allele is None:
-            max_allele = np.max(self)
-        if max_allele <= 0:
-            max_allele = 1
-        nchar = int(np.floor(np.log10(max_allele))) + 1
+            max_allele = self.max()
 
-        # convert to string
-        a = self.astype((np.string_, nchar)).view(np.chararray)
+        # use optimisations
+        if subpop is None and self.mask is None:
+            ac = genotype_array_count_alleles(self.values, max_allele)
+        elif subpop is None:
+            ac = genotype_array_count_alleles_masked(
+                self.values, self.mask.view(dtype='u1'), max_allele
+            )
+        elif self.mask is None:
+            ac = genotype_array_count_alleles_subpop(self.values, max_allele, subpop)
+        else:
+            ac = genotype_array_count_alleles_subpop_masked(
+                self.values, self.mask.view(dtype='u1'), max_allele, subpop
+            )
 
-        # recode missing alleles
-        a[a.startswith(b'-')] = b'.'
+        return AlleleCountsArray(ac, copy=False)
 
-        # join via separator
-        expr = "a[..., 0]"
-        for i in range(1, self.shape[2]):
-            expr += " + sep + a[..., %s]" % i
-        gt = eval(expr)
-
-        return gt
-
-    def map_alleles(self, mapping, copy=True):
-        """Transform alleles via a mapping.
+    def count_alleles_subpops(self, subpops, max_allele=None):
+        """Count alleles for multiple subpopulations simultaneously.
 
         Parameters
         ----------
-        mapping : ndarray, int8, shape (n_variants, max_allele)
-            An array defining the allele mapping for each variant.
-        copy : bool, optional
-            If True, return a new array; if False, apply mapping in place
-            (only applies for arrays with dtype int8; all other dtypes
-            require a copy).
+        subpops : dict (string -> sequence of ints)
+            Mapping of subpopulation names to sample indices.
+        max_allele : int, optional
+            The highest allele index to count. Alleles above this will be
+            ignored.
 
         Returns
         -------
-        gm : GenotypeArray
-
-        Notes
-        -----
-        If a mask has been set, it is ignored by this function.
-
-        Examples
-        --------
-
-        >>> import allel
-        >>> import numpy as np
-        >>> g = allel.GenotypeArray([[[0, 0], [0, 1]],
-        ...                          [[0, 2], [1, 1]],
-        ...                          [[1, 2], [2, 1]],
-        ...                          [[2, 2], [-1, -1]]], dtype='i1')
-        >>> mapping = np.array([[1, 2, 0],
-        ...                     [2, 0, 1],
-        ...                     [2, 1, 0],
-        ...                     [0, 2, 1]], dtype='i1')
-        >>> g.map_alleles(mapping)
-        GenotypeArray((4, 2, 2), dtype=int8)
-        [[[ 1  1]
-          [ 1  2]]
-         [[ 2  1]
-          [ 0  0]]
-         [[ 1  0]
-          [ 0  1]]
-         [[ 1  1]
-          [-1 -1]]]
-
-        Notes
-        -----
-        For arrays with dtype int8 an optimised implementation is used which is
-        faster and uses far less memory. It is recommended to convert arrays to
-        dtype int8 where possible before calling this method.
-
-        See Also
-        --------
-        create_allele_mapping
+        out : dict (string -> AlleleCountsArray)
+            A mapping of subpopulation names to allele counts arrays.
 
         """
 
-        h = self.to_haplotypes()
-        hm = h.map_alleles(mapping, copy=copy)
-        gm = hm.to_genotypes(ploidy=self.shape[2])
-        return gm
+        if max_allele is None:
+            max_allele = self.max()
+
+        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+               for name, subpop in subpops.items()}
+
+        return out
 
 
-class HaplotypeArray(IntegerArray):
+copy_method_doc(GenotypeArray.compress, Genotypes.compress)
+copy_method_doc(GenotypeArray.take, Genotypes.take)
+copy_method_doc(GenotypeArray.concatenate, Genotypes.concatenate)
+copy_method_doc(GenotypeArray.to_haplotypes, Genotypes.to_haplotypes)
+
+
+class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
     """Array of haplotypes.
 
     Parameters
@@ -1700,10 +1881,8 @@ class HaplotypeArray(IntegerArray):
     With data on large numbers of variants and/or haplotypes,
     storing the data in memory as an uncompressed numpy
     array if integers may be impractical. For working with large
-    arrays of haplotype data, see the
-    :class:`allel.model.chunked.HaplotypeChunkedArray` class, which provides an
-    alternative implementation of this interface using chunked compressed
-    arrays.
+    arrays of haplotype data, see the :mod:`allel.model.chunked` and
+    :mod:`allel.model.dask` modules.
 
     Examples
     --------
@@ -1724,6 +1903,11 @@ class HaplotypeArray(IntegerArray):
         3
         >>> h.n_haplotypes
         4
+        >>> h
+        <HaplotypeArray shape=(3, 4) dtype=int8>
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
 
     Allele calls for a single variant at all haplotypes can be obtained
     by indexing the first dimension, e.g.::
@@ -1746,131 +1930,127 @@ class HaplotypeArray(IntegerArray):
     View haplotypes as diploid genotypes::
 
         >>> h.to_genotypes(ploidy=2)
-        GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  1]
-          [ 1  1]]
-         [[ 0  2]
-          [-1 -1]]]
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
+
+    See Also
+    --------
+    Genotypes, GenotypeArray, GenotypeVector
 
     """
 
-    @staticmethod
-    def _check_input_data(obj):
-
-        # check dtype
-        if obj.dtype.kind not in 'ui':
-            raise TypeError('integer dtype required')
-
-        # check dimensionality
-        if obj.ndim != 2:
-            raise TypeError('array with 2 dimensions required')
-
-    def __new__(cls, data, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.array(data, **kwargs)
-        cls._check_input_data(obj)
-        obj = obj.view(cls)
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, HaplotypeArray):
-            return
-
-        # called after view
-        HaplotypeArray._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 2:
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
-
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 2:
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
-
-    def to_html_str(self, limit=5, caption=None, cols=None):
-        import petl as etl
-        n, m = self.shape
-
-        # choose how many variants to display
-        limit = min(n, limit)
-
-        # choose which columns to display
-        if cols is None:
-            if m <= 10:
-                # display all
-                cidx = list(range(m))
-            else:
-                # display subset
-                cidx = [0, 1, 2, 3, 4, m-5, m-4, m-3, m-2, m-1]
-        else:
-            cidx = cols
-
-        # prepare data for display
-        h = self[:limit+1][:, cidx]
-
-        # prepare table
-        tbl = (
-            etl
-            .wrap(h)
-            .pushheader(cidx)
-            .addrownumbers(start=0)
-            .rename('row', '')
-        )
-
-        if cols is None and m > 10:
-            # insert a spacer column
-            tbl = tbl.addcolumn('...', ['...'] * limit, index=6)
-
-        # construct caption
-        if caption is None:
-            caption = 'HaplotypeArray(%s, dtype=%s)' % (self.shape, self.dtype)
-        caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
-
-        # build HTML
-        # noinspection PyProtectedMember
-        html = etl.util.vis._display_html(tbl,
-                                          caption=caption,
-                                          limit=limit,
-                                          td_styles={'': 'font-weight: bold'},
-                                          index_header=False)
-        return html
-
-    def _repr_html_(self):
-        return self.to_html_str()
+    def __init__(self, data, copy=False, **kwargs):
+        super(HaplotypeArray, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+        check_ndim(self.values, 2)
 
     @property
     def n_variants(self):
-        """Number of variants (length of first dimension)."""
+        """Number of variants."""
         return self.shape[0]
 
     @property
     def n_haplotypes(self):
-        """Number of haplotypes (length of second dimension)."""
+        """Number of haplotypes."""
         return self.shape[1]
+
+    def __getitem__(self, item):
+        return index_haplotype_array(self, item, type(self))
+
+    def compress(self, condition, axis=0, out=None):
+        """Return selected slices of an array along given axis.
+
+        Parameters
+        ----------
+        condition : array_like, bool
+            Array that selects which entries to return. N.B., if len(condition)
+            is less than the size of the given axis, then output is truncated to the length
+            of the condition array.
+        axis : int, optional
+            Axis along which to take slices. If None, work on the flattened array.
+        out : ndarray, optional
+            Output array.  Its type is preserved and it must be of the right
+            shape to hold the output.
+
+        Returns
+        -------
+        out : HaplotypeArray
+            A copy of the array without the slices along axis for which `condition`
+            is false.
+
+        Examples
+        --------
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.compress([True, False, True], axis=0)
+        <HaplotypeArray shape=(2, 4) dtype=int8>
+        0 0 0 1
+        0 2 . .
+        >>> h.compress([True, False, True, False], axis=1)
+        <HaplotypeArray shape=(3, 2) dtype=int8>
+        0 0
+        0 1
+        0 .
+
+        """
+        return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
+                                        compress=np.compress, out=out)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        """Take elements from an array along an axis.
+
+        This function does the same thing as "fancy" indexing (indexing arrays
+        using arrays); however, it can be easier to use if you need elements
+        along a given axis.
+
+        Parameters
+        ----------
+        indices : array_like
+            The indices of the values to extract.
+        axis : int, optional
+            The axis over which to select values.
+        out : ndarray, optional
+            If provided, the result will be placed in this array. It should
+            be of the appropriate shape and dtype.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+
+            * 'raise' -- raise an error (default)
+            * 'wrap' -- wrap around
+            * 'clip' -- clip to the range
+
+            'clip' mode means that all indices that are too large are replaced
+            by the index that addresses the last element along that axis. Note
+            that this disables indexing with negative numbers.
+
+        Returns
+        -------
+        subarray : ndarray
+
+        Examples
+        --------
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.take([0, 2], axis=0)
+        <HaplotypeArray shape=(2, 4) dtype=int8>
+        0 0 0 1
+        0 2 . .
+        >>> h.take([0, 2], axis=1)
+        <HaplotypeArray shape=(3, 2) dtype=int8>
+        0 0
+        0 1
+        0 .
+
+        """
+
+        return take_haplotype_array(self, indices, axis=axis, cls=type(self), take=np.take,
+                                    out=out, mode=mode)
 
     def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and haplotypes.
@@ -1878,9 +2058,9 @@ class HaplotypeArray(IntegerArray):
         Parameters
         ----------
         sel0 : array_like
-            Boolean array or list of indices selecting variants.
+            Boolean array or array of indices selecting variants.
         sel1 : array_like
-            Boolean array or list of indices selecting haplotypes.
+            Boolean array or array of indices selecting haplotypes.
 
         Returns
         -------
@@ -1888,11 +2068,65 @@ class HaplotypeArray(IntegerArray):
 
         See Also
         --------
-        numpy.take, numpy.compress
+        HaplotypeArray.take, HaplotypeArray.compress
 
         """
+        return subset_haplotype_array(self, sel0, sel1, cls=type(self), subset=subset)
 
-        return HaplotypeArray(subset(self, sel0, sel1), copy=False)
+    def concatenate(self, others, axis=0):
+        """Join a sequence of arrays along an existing axis.
+
+        Parameters
+        ----------
+        others : sequence of array_like
+            The arrays must have the same shape, except in the dimension
+            corresponding to `axis` (the first, by default).
+        axis : int, optional
+            The axis along which the arrays will be joined.  Default is 0.
+
+        Returns
+        -------
+        res : ndarray
+            The concatenated array.
+
+        Examples
+        --------
+        >>> import allel
+        >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
+        ...                           [0, 1, 1, 1],
+        ...                           [0, 2, -1, -1]], dtype='i1')
+        >>> h.concatenate([h], axis=0)
+        <HaplotypeArray shape=(6, 4) dtype=int8>
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
+        0 0 0 1
+        0 1 1 1
+        0 2 . .
+        >>> h.concatenate([h], axis=1)
+        <HaplotypeArray shape=(3, 8) dtype=int8>
+        0 0 0 1 0 0 0 1
+        0 1 1 1 0 1 1 1
+        0 2 . . 0 2 . .
+
+        """
+        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self),
+                                           concatenate=np.concatenate)
+
+    def str_items(self):
+        values = self.values
+        max_allele = np.max(values)
+        if max_allele <= 0:
+            max_allele = 1
+        n = int(np.floor(np.log10(max_allele))) + 1
+        t = values.astype((np.string_, n))
+        # recode missing alleles
+        t[values < 0] = b'.'
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in t]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        return out
 
     def is_called(self):
         return self >= 0
@@ -1940,6 +2174,8 @@ class HaplotypeArray(IntegerArray):
         ----------
         ploidy : int
             The sample ploidy.
+        copy : bool, optional
+            If True, make a copy of data.
 
         Returns
         -------
@@ -1956,13 +2192,10 @@ class HaplotypeArray(IntegerArray):
         ...                           [0, 1, 1, 1],
         ...                           [0, 2, -1, -1]], dtype='i1')
         >>> h.to_genotypes(ploidy=2)
-        GenotypeArray((3, 2, 2), dtype=int8)
-        [[[ 0  0]
-          [ 0  1]]
-         [[ 0  1]
-          [ 1  1]]
-         [[ 0  2]
-          [-1 -1]]]
+        <GenotypeArray shape=(3, 2, 2) dtype=int8>
+        0/0 0/1
+        0/1 1/1
+        0/2 ./.
 
         """
 
@@ -1979,6 +2212,7 @@ class HaplotypeArray(IntegerArray):
 
         return g
 
+    # noinspection PyShadowingBuiltins
     def to_sparse(self, format='csr', **kwargs):
         """Convert into a sparse matrix.
 
@@ -2066,11 +2300,11 @@ class HaplotypeArray(IntegerArray):
         >>> m = scipy.sparse.csr_matrix((data, indices, indptr))
         >>> h = allel.HaplotypeArray.from_sparse(m)
         >>> h
-        HaplotypeArray((4, 4), dtype=int8)
-        [[ 0  0  0  0]
-         [ 0  1  0  1]
-         [ 1  1  0  0]
-         [ 0  0 -1 -1]]
+        <HaplotypeArray shape=(4, 4) dtype=int8>
+        0 0 0 0
+        0 1 0 1
+        1 1 0 0
+        0 0 . .
 
         """
 
@@ -2112,12 +2346,15 @@ class HaplotypeArray(IntegerArray):
         ...                           [0, 2, -1, -1]], dtype='i1')
         >>> ac = h.count_alleles()
         >>> ac
-        AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 3 0]
-         [1 0 1]]
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        3 1 0
+        1 3 0
+        1 0 1
 
         """
+
+        from allel.opt.model import haplotype_array_count_alleles, \
+            haplotype_array_count_alleles_subpop
 
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
@@ -2131,31 +2368,12 @@ class HaplotypeArray(IntegerArray):
         if max_allele is None:
             max_allele = self.max()
 
-        if self.dtype.type == np.int8:
-            # use optimisations
-            from allel.opt.model import haplotype_int8_count_alleles, \
-                haplotype_int8_count_alleles_subpop
-            if subpop is None:
-                ac = haplotype_int8_count_alleles(self, max_allele)
-
-            else:
-                ac = haplotype_int8_count_alleles_subpop(self, max_allele,
-                                                         subpop)
+        # use optimisations
+        if subpop is None:
+            ac = haplotype_array_count_alleles(self.values, max_allele)
 
         else:
-            # set up output array
-            ac = np.zeros((self.shape[0], max_allele + 1), dtype='i4')
-
-            # extract subpop
-            if subpop is not None:
-                h = self[:, subpop]
-            else:
-                h = self
-
-            # count alleles
-            alleles = list(range(max_allele + 1))
-            for allele in alleles:
-                np.sum(h == allele, axis=1, out=ac[:, allele])
+            ac = haplotype_array_count_alleles_subpop(self.values, max_allele, subpop)
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -2203,7 +2421,6 @@ class HaplotypeArray(IntegerArray):
 
         Examples
         --------
-
         >>> import allel
         >>> import numpy as np
         >>> h = allel.HaplotypeArray([[0, 0, 0, 1],
@@ -2213,46 +2430,38 @@ class HaplotypeArray(IntegerArray):
         ...                     [2, 0, 1],
         ...                     [2, 1, 0]], dtype='i1')
         >>> h.map_alleles(mapping)
-        HaplotypeArray((3, 4), dtype=int8)
-        [[ 1  1  1  2]
-         [ 2  0  0  0]
-         [ 2  0 -1 -1]]
+        <HaplotypeArray shape=(3, 4) dtype=int8>
+        1 1 1 2
+        2 0 0 0
+        2 0 . .
 
         Notes
         -----
-
         For arrays with dtype int8 an optimised implementation is used which is
         faster and uses far less memory. It is recommended to convert arrays to
         dtype int8 where possible before calling this method.
 
         See Also
         --------
-
-        create_allele_mapping
+        allel.model.util.create_allele_mapping
 
         """
+
+        from allel.opt.model import haplotype_array_map_alleles
 
         # check inputs
         mapping = asarray_ndim(mapping, 2)
         check_dim0_aligned(self, mapping)
 
-        if self.dtype.type == np.int8:
-            # use optimisation
-            mapping = np.asarray(mapping, dtype='i1')
-            from allel.opt.model import haplotype_int8_map_alleles
-            data = haplotype_int8_map_alleles(self, mapping, copy=copy)
-
-        else:
-            # use numpy indexing
-            i = np.arange(self.shape[0]).reshape((-1, 1))
-            data = mapping[i, self]
-            data[self < 0] = -1
+        # use optimisation
+        mapping = np.asarray(mapping, dtype=self.dtype)
+        data = haplotype_array_map_alleles(self.values, mapping, copy=copy)
 
         return HaplotypeArray(data, copy=False)
 
     def prefix_argsort(self):
         """Return indices that would sort the haplotypes by prefix."""
-        return np.lexsort(self[::-1])
+        return np.lexsort(self.values[::-1])
 
     def distinct(self):
         """Return sets of indices for each distinct haplotype."""
@@ -2264,7 +2473,7 @@ class HaplotypeArray(IntegerArray):
         for i in range(self.shape[1]):
 
             # hash the haplotype
-            k = hash(self[:, i].tobytes())
+            k = hash(self.values[:, i].tobytes())
 
             # collect
             d[k].add(i)
@@ -2276,9 +2485,10 @@ class HaplotypeArray(IntegerArray):
         """Return counts for each distinct haplotype."""
 
         # hash the haplotypes
-        k = [hash(self[:, i].tobytes()) for i in range(self.shape[1])]
+        k = [hash(self.values[:, i].tobytes()) for i in range(self.shape[1])]
 
         # count and sort
+        # noinspection PyArgumentList
         counts = sorted(collections.Counter(k).values(), reverse=True)
 
         return np.asarray(counts)
@@ -2291,13 +2501,15 @@ class HaplotypeArray(IntegerArray):
         return c / n
 
 
-class AlleleCountsArray(IntegerArray):
+class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     """Array of allele counts.
 
     Parameters
     ----------
     data : array_like, int, shape (n_variants, n_alleles)
         Allele counts data.
+    copy : bool, optional
+        If True, make a copy of `data`.
     **kwargs : keyword arguments
         All keyword arguments are passed through to :func:`numpy.array`.
 
@@ -2319,10 +2531,10 @@ class AlleleCountsArray(IntegerArray):
         ...                          [[0, 2], [-1, -1]]], dtype='i1')
         >>> ac = g.count_alleles()
         >>> ac
-        AlleleCountsArray((3, 3), dtype=int32)
-        [[3 1 0]
-         [1 3 0]
-         [1 0 1]]
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        3 1 0
+        1 3 0
+        1 0 1
         >>> ac.dtype
         dtype('int32')
         >>> ac.shape
@@ -2347,115 +2559,74 @@ class AlleleCountsArray(IntegerArray):
     Calculate the total number of alleles called for each variant:
 
         >>> import numpy as np
-        >>> n = np.sum(ac, axis=1)
-        >>> n
+        >>> an = np.sum(ac, axis=1)
+        >>> an
         array([4, 4, 2])
+
+    Add allele counts from two populations:
+
+        >>> ac + ac
+        <AlleleCountsArray shape=(3, 3) dtype=int32>
+        6 2 0
+        2 6 0
+        2 0 2
 
     """
 
-    @staticmethod
-    def _check_input_data(obj):
-
-        # check dtype
-        if obj.dtype.kind not in 'ui':
-            raise TypeError('integer dtype required')
-
-        # check dimensionality
-        if obj.ndim != 2:
-            raise TypeError('array with 2 dimensions required')
-
-    def __new__(cls, data, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.array(data, **kwargs)
-        cls._check_input_data(obj)
-        obj = obj.view(cls)
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, AlleleCountsArray):
-            return
-
-        # called after view
-        AlleleCountsArray._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim') and s.ndim > 0:
-            if s.ndim == 2 and s.shape[1] == self.shape[1]:
-                # wrap only if number of alleles is preserved
-                return AlleleCountsArray(s, copy=False)
-            return np.asarray(s)
-        return s
-
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim') and s.ndim > 0:
-            if s.ndim == 2 and s.shape[1] == self.shape[1]:
-                # wrap only if number of alleles is preserved
-                return AlleleCountsArray(s, copy=False)
-            return np.asarray(s)
-        return s
+    def __init__(self, data, copy=False, **kwargs):
+        super(AlleleCountsArray, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+        check_ndim(self.values, 2)
 
     def __add__(self, other):
         ret = super(AlleleCountsArray, self).__add__(other)
-        if hasattr(other, 'shape') and other.shape == self.shape:
+        if hasattr(ret, 'shape') and ret.shape == self.shape:
             ret = AlleleCountsArray(ret)
         return ret
 
     def __sub__(self, other):
         ret = super(AlleleCountsArray, self).__sub__(other)
-        if hasattr(other, 'shape') and other.shape == self.shape:
+        if hasattr(ret, 'shape') and ret.shape == self.shape:
             ret = AlleleCountsArray(ret)
         return ret
 
-    def to_html_str(self, limit=5, caption=None):
-        import petl as etl
-        ac = self[:limit+1]
-        tbl = (
-            etl
-            .wrap(ac)
-            .pushheader(list(range(ac.shape[1])))
-            .addrownumbers(start=0)
-            .rename('row', '')
-        )
-
-        if caption is None:
-            caption = 'AlleleCountsArray(%s, dtype=%s)' \
-                      % (self.shape, self.dtype)
-        caption = caption.replace('<', '&lt;')
-        caption = caption.replace('\n', '<br/>')
-
-        # noinspection PyProtectedMember
-        html = etl.util.vis._display_html(tbl,
-                                          caption=caption,
-                                          limit=limit,
-                                          td_styles={'': 'font-weight: bold'},
-                                          index_header=False)
-        return html
-
-    def _repr_html_(self):
-        return self.to_html_str()
-
     @property
     def n_variants(self):
-        """Number of variants (length of first array dimension)."""
+        """Number of variants."""
         return self.shape[0]
 
     @property
     def n_alleles(self):
-        """Number of alleles (length of second array dimension)."""
+        """Number of alleles."""
         return self.shape[1]
+
+    def __getitem__(self, item):
+        return index_allele_counts_array(self, item, type(self))
+
+    def compress(self, condition, axis=0, out=None):
+        return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
+                                            compress=np.compress, out=out)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        return take_allele_counts_array(self, indices, axis=axis, cls=type(self),
+                                        take=np.take, out=out, mode=mode)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
+                                               concatenate=np.concatenate)
+
+    def str_items(self):
+        values = self.values
+        max_allele = np.max(values)
+        if max_allele <= 0:
+            max_allele = 1
+        n = int(np.floor(np.log10(max_allele))) + 1
+        t = values.astype((np.string_, n))
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in t]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        return out
 
     def to_frequencies(self, fill=np.nan):
         """Compute allele frequencies.
@@ -2484,9 +2655,9 @@ class AlleleCountsArray(IntegerArray):
 
         """
 
-        n = np.sum(self, axis=1)[:, None]
+        an = np.sum(self, axis=1)[:, None]
         with ignore_invalid():
-            af = np.where(n > 0, self / n, fill)
+            af = np.where(an > 0, self / an, fill)
 
         return af
 
@@ -2537,7 +2708,7 @@ class AlleleCountsArray(IntegerArray):
         out = np.empty(self.shape[0], dtype='i1')
         out.fill(-1)
         for i in range(self.shape[1]):
-            d = self[:, i] > 0
+            d = self.values[:, i] > 0
             out[d] = i
         return out
 
@@ -2564,7 +2735,7 @@ class AlleleCountsArray(IntegerArray):
 
         """
 
-        return np.any(self[:, 1:] > 0, axis=1)
+        return np.any(self.values[:, 1:] > 0, axis=1)
 
     def is_non_variant(self):
         """Find variants with no non-reference allele calls.
@@ -2589,7 +2760,7 @@ class AlleleCountsArray(IntegerArray):
 
         """
 
-        return np.all(self[:, 1:] == 0, axis=1)
+        return np.all(self.values[:, 1:] == 0, axis=1)
 
     def is_segregating(self):
         """Find segregating variants (where more than one allele is observed).
@@ -2650,7 +2821,7 @@ class AlleleCountsArray(IntegerArray):
         if allele is None:
             return self.allelism() <= 1
         else:
-            return (self.allelism() == 1) & (self[:, allele] > 0)
+            return (self.allelism() == 1) & (self.values[:, allele] > 0)
 
     def is_singleton(self, allele):
         """Find variants with a single call for the given allele.
@@ -2682,7 +2853,7 @@ class AlleleCountsArray(IntegerArray):
 
         """
 
-        return self[:, allele] == 1
+        return self.values[:, allele] == 1
 
     def is_doubleton(self, allele):
         """Find variants with exactly two calls for the given allele.
@@ -2714,7 +2885,7 @@ class AlleleCountsArray(IntegerArray):
 
         """
 
-        return self[:, allele] == 2
+        return self.values[:, allele] == 2
 
     def is_biallelic(self):
         """Find biallelic variants.
@@ -2744,10 +2915,9 @@ class AlleleCountsArray(IntegerArray):
             condition.
 
         """
-        loc = (self.is_biallelic() &
-               (self.max_allele() == 1))
+        loc = self.is_biallelic() & (self.max_allele() == 1)
         if min_mac is not None:
-            loc = loc & (self[:, :2].min(axis=1) >= min_mac)
+            loc = loc & (self.values[:, :2].min(axis=1) >= min_mac)
         return loc
 
     def count_variant(self):
@@ -2790,21 +2960,21 @@ class AlleleCountsArray(IntegerArray):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac
-        AlleleCountsArray((4, 3), dtype=int32)
-        [[4 0 0]
-         [3 1 0]
-         [1 2 1]
-         [0 0 2]]
+        <AlleleCountsArray shape=(4, 3) dtype=int32>
+        4 0 0
+        3 1 0
+        1 2 1
+        0 0 2
         >>> mapping = [[1, 0, 2],
         ...            [1, 0, 2],
         ...            [2, 1, 0],
         ...            [1, 2, 0]]
         >>> ac.map_alleles(mapping)
-        AlleleCountsArray((4, 3), dtype=int64)
-        [[0 4 0]
-         [1 3 0]
-         [1 2 1]
-         [2 0 0]]
+        <AlleleCountsArray shape=(4, 3) dtype=int64>
+        0 4 0
+        1 3 0
+        1 2 1
+        2 0 0
 
         See Also
         --------
@@ -2822,10 +2992,328 @@ class AlleleCountsArray(IntegerArray):
         i = np.arange(self.shape[0]).reshape((-1, 1))
         out[i, mapping] = self
 
-        return AlleleCountsArray(out)
+        return type(self)(out)
 
 
-class SortedIndex(ArrayAug):
+class GenotypeAlleleCounts(NumpyArrayWrapper):
+    """Base class for wrapping a NumPy array of genotype calls, stored as allele counts per
+    call.
+
+    See Also
+    --------
+    GenotypeAlleleCountsArray, GenotypeAlleleCountsVector
+
+    """
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeAlleleCounts, self).__init__(data, copy=copy, **kwargs)
+        check_integer_dtype(self.values)
+
+    def is_missing(self):
+        return np.sum(self.values, axis=-1) == 0
+
+    def is_called(self):
+        return np.sum(self.values, axis=-1) > 0
+
+    def is_hom(self, allele=None):
+        out = np.sum(self.values > 0, axis=-1) == 1
+        if allele is not None:
+            out = out & (self.values[..., allele] > 0)
+        return out
+
+    def is_hom_ref(self):
+        return self.is_hom(0)
+
+    def is_hom_alt(self):
+        out = np.sum(self.values > 0, axis=-1) == 1
+        out = out & (self.values[..., 0] == 0)
+        return out
+
+    def is_het(self, allele=None):
+        out = np.sum(self.values > 0, axis=-1) > 1
+        if allele is not None:
+            out = out & (self.values[..., allele] > 0)
+        return out
+
+    def to_frequencies(self, fill=np.nan):
+        an = np.sum(self, axis=-1)[..., np.newaxis]
+        with ignore_invalid():
+            af = np.where(an > 0, self / an, fill)
+        return af
+
+    def allelism(self):
+        return np.sum(self > 0, axis=-1)
+
+    def max_allele(self):
+        out = np.empty(self.shape[:-1], dtype='i1')
+        out.fill(-1)
+        for i in range(self.shape[-1]):
+            d = self.values[..., i] > 0
+            out[d] = i
+        return out
+
+    def is_variant(self):
+        return np.any(self.values[..., 1:] > 0, axis=-1)
+
+    def is_non_variant(self):
+        return np.all(self.values[..., 1:] == 0, axis=-1)
+
+    def is_segregating(self):
+        return self.allelism() > 1
+
+    def is_non_segregating(self, allele=None):
+        if allele is None:
+            return self.allelism() <= 1
+        else:
+            return (self.allelism() == 1) & (self.values[:, allele] > 0)
+
+    def is_biallelic(self):
+        return self.allelism() == 2
+
+    def is_biallelic_01(self):
+        loc = self.is_biallelic() & (self.max_allele() == 1)
+        return loc
+
+    def to_gt(self, max_count=None):
+
+        # how many characters needed per allele?
+        if max_count is None:
+            max_count = np.max(self)
+        nchar = int(np.floor(np.log10(max_count))) + 1
+
+        # convert to string
+        a = self.astype((np.string_, nchar)).view(np.chararray)
+
+        # determine allele count separator
+        sep = b':'
+
+        # join via separator
+        gt = a[..., 0]
+        for i in range(1, self.shape[-1]):
+            gt = gt + sep + a[..., i]
+
+        return gt
+
+    def compress(self, condition, axis=0, out=None):
+        # implement in sub-class
+        raise NotImplementedError
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        # implement in sub-class
+        raise NotImplementedError
+
+    def concatenate(self, others, axis=0):
+        # implement in sub-class
+        raise NotImplementedError
+
+
+class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
+    """Array of genotype calls for a sequence of variants or samples, stored as allele
+    counts per call.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    See Also
+    --------
+    GenotypeAlleleCounts, GenotypeAlleleCountsArray, GenotypeVector
+
+    """
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeAlleleCountsVector, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 2)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_vector(self, item, cls=type(self))
+
+    @property
+    def n_calls(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[1]
+
+    def compress(self, condition, axis=0, out=None):
+        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0},
+                                    cls=type(self), compress=np.compress, out=out)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0},
+                                cls=type(self), take=np.take, out=out, mode=mode)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0},
+                                       cls=type(self), concatenate=np.concatenate)
+
+    def str_items(self):
+        gt = self.to_gt()
+        if PY2:
+            out = list(gt)
+        else:
+            out = [str(x, 'ascii') for x in gt]
+        return out
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
+        return s
+
+
+class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
+    """Array of genotype calls for a matrix of variants and samples, stored as allele counts
+    per call.
+
+    Parameters
+    ----------
+    data : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype data.
+    copy : bool, optional
+        If True, make a copy of `data`.
+    **kwargs : keyword arguments
+        All keyword arguments are passed through to :func:`numpy.array`.
+
+    Notes
+    -----
+    This class provides an alternative representation of genotype calls, allowing for
+    variable copy number (effective ploidy) between chromosomes and/or genome regions.
+    Genotype calls are represented as a 3-dimensional array of integers. By convention, the
+    first dimension corresponds to the variants genotyped, the second dimension corresponds
+    to the samples genotyped, and the third dimension corresponds to the alleles genotyped
+    in index order. Each integer in the array records the **count** for the given in allele in
+    the given variant and sample.
+
+    Examples
+    --------
+    Instantiate an array::
+
+        >>> import allel
+        >>> g = allel.GenotypeAlleleCountsArray([[[2, 0, 0], [0, 2, 0]],
+        ...                                      [[1, 1, 0], [0, 1, 1]],
+        ...                                      [[0, 0, 4], [0, 0, 0]]],
+        ...                                     dtype='u1')
+        >>> g.dtype
+        dtype('uint8')
+        >>> g.ndim
+        3
+        >>> g.shape
+        (3, 2, 3)
+        >>> g.n_variants
+        3
+        >>> g.n_samples
+        2
+        >>> g.n_alleles
+        3
+        >>> g
+        <GenotypeAlleleCountsArray shape=(3, 2, 3) dtype=uint8>
+        2:0:0 0:2:0
+        1:1:0 0:1:1
+        0:0:4 0:0:0
+
+    Genotype calls for a single variant at all samples can be obtained
+    by indexing the first dimension, e.g.::
+
+        >>> g[1]
+        <GenotypeAlleleCountsVector shape=(2, 3) dtype=uint8>
+        1:1:0 0:1:1
+
+    Genotype calls for a single sample at all variants can be obtained
+    by indexing the second dimension, e.g.::
+
+        >>> g[:, 1]
+        <GenotypeAlleleCountsVector shape=(3, 3) dtype=uint8>
+        0:2:0 0:1:1 0:0:0
+
+    A genotype call for a single sample at a single variant can be
+    obtained by indexing the first and second dimensions, e.g.::
+
+        >>> g[1, 0]
+        array([1, 1, 0], dtype=uint8)
+
+    Copy number (effective ploidy) may vary between calls::
+
+        >>> cn = g.sum(axis=2)
+        >>> cn
+        array([[2, 2],
+               [2, 2],
+               [4, 0]], dtype=uint64)
+
+    See Also
+    --------
+    GenotypeAlleleCounts, GenotypeAlleleCountsVector, GenotypeArray
+
+    """
+
+    def __init__(self, data, copy=False, **kwargs):
+        super(GenotypeAlleleCountsArray, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 3)
+
+    def __getitem__(self, item):
+        return index_genotype_ac_array(self, item, array_cls=type(self),
+                                       vector_cls=GenotypeAlleleCountsVector)
+
+    @property
+    def n_variants(self):
+        """Number of variants."""
+        return self.shape[0]
+
+    @property
+    def n_samples(self):
+        """Number of samples."""
+        return self.shape[1]
+
+    @property
+    def n_alleles(self):
+        """Number of alleles."""
+        return self.shape[2]
+
+    def count_alleles(self, subpop=None):
+
+        # deal with subpop
+        if subpop:
+            g = self.take(subpop, axis=1).values
+        else:
+            g = self.values
+
+        out = g.sum(axis=1)
+        out = AlleleCountsArray(out)
+        return out
+
+    def compress(self, condition, axis=0, out=None):
+        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
+                                    cls=type(self), compress=np.compress, out=out)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
+                                cls=type(self), take=np.take, out=out, mode=mode)
+
+    def concatenate(self, others, axis=0):
+        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
+                                       cls=type(self), concatenate=np.concatenate)
+
+    def subset(self, sel0=None, sel1=None):
+        return subset_genotype_ac_array(self, sel0, sel1, cls=type(self), subset=subset)
+
+    def str_items(self):
+        gt = self.to_gt()
+        n = gt.dtype.itemsize
+        if PY2:
+            out = [[x.rjust(n) for x in row] for row in gt]
+        else:
+            out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        return out
+
+
+class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
     """Index of sorted values, e.g., positions from a single chromosome or
     contig.
 
@@ -2845,78 +3333,57 @@ class SortedIndex(ArrayAug):
     --------
 
     >>> import allel
-    >>> idx = allel.SortedIndex([2, 5, 14, 15, 42, 42, 77], dtype='i4')
+    >>> idx = allel.SortedIndex([2, 5, 8, 14, 15, 23, 42, 42, 61, 77, 103], dtype='i4')
+    >>> idx
+    <SortedIndex shape=(11,) dtype=int32>
+    [2, 5, 8, 14, 15, ..., 42, 42, 61, 77, 103]
     >>> idx.dtype
     dtype('int32')
     >>> idx.ndim
     1
     >>> idx.shape
-    (7,)
+    (11,)
     >>> idx.is_unique
     False
 
+    See Also
+    --------
+    SortedMultiIndex, UniqueIndex
+
     """
 
-    @staticmethod
-    def _check_input_data(obj):
-
-        # check dimensionality
-        if obj.ndim != 1:
-            raise TypeError('array with 1 dimension required')
-
+    def __init__(self, data, copy=False, **kwargs):
+        super(SortedIndex, self).__init__(data, copy=copy, **kwargs)
+        check_ndim(self.values, 1)
         # check sorted ascending
-        if np.any(obj[:-1] > obj[1:]):
-            raise ValueError('array is not monotonically increasing')
-
-    def __new__(cls, data, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.array(data, **kwargs)
-        cls._check_input_data(obj)
-        obj = obj.view(cls)
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, SortedIndex):
-            return
-
-        # called after view
-        SortedIndex._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 1:
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
-
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 1:
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
+        if np.any(self.values[:-1] > self.values[1:]):
+            raise ValueError('values must be monotonically increasing')
+        self._is_unique = None
 
     @property
     def is_unique(self):
         """True if no duplicate entries."""
-        if not hasattr(self, '_is_unique'):
-            self._is_unique = ~np.any(self[:-1] == self[1:])
+        if self._is_unique is None:
+            self._is_unique = ~np.any(self.values[:-1] == self.values[1:])
         return self._is_unique
+
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
+        return s
+
+    def compress(self, condition, axis=0, out=None):
+        out = self.values.compress(condition, axis=axis, out=out)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        out = self.values.take(indices, axis=axis, out=out, mode=mode)
+        if axis == 0:
+            out = type(self)(out)
+        return out
 
     def locate_key(self, key):
         """Get index location for the requested key.
@@ -2951,7 +3418,7 @@ class SortedIndex(ArrayAug):
 
         """
 
-        left = np.searchsorted(self, key, side='left')
+        left = bisect.bisect_left(self, key)
         right = bisect.bisect_right(self, key)
         diff = right - left
         if diff == 0:
@@ -2988,11 +3455,11 @@ class SortedIndex(ArrayAug):
         >>> loc2
         array([False,  True,  True, False], dtype=bool)
         >>> idx1[loc1]
-        SortedIndex((2,), dtype=int64)
-        [ 6 20]
+        <SortedIndex shape=(2,) dtype=int64>
+        [6, 20]
         >>> idx2[loc2]
-        SortedIndex((2,), dtype=int64)
-        [ 6 20]
+        <SortedIndex shape=(2,) dtype=int64>
+        [6, 20]
 
         """
 
@@ -3031,8 +3498,8 @@ class SortedIndex(ArrayAug):
         >>> loc
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc]
-        SortedIndex((2,), dtype=int64)
-        [ 6 20]
+        <SortedIndex shape=(2,) dtype=int64>
+        [6, 20]
 
         """
 
@@ -3067,13 +3534,13 @@ class SortedIndex(ArrayAug):
         >>> idx1 = allel.SortedIndex([3, 6, 11, 20, 35])
         >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
         >>> idx1.intersect(idx2)
-        SortedIndex((2,), dtype=int64)
-        [ 6 20]
+        <SortedIndex shape=(2,) dtype=int64>
+        [6, 20]
 
         """
 
         loc = self.locate_keys(other, strict=False)
-        return np.compress(loc, self)
+        return self.compress(loc, axis=0)
 
     def locate_range(self, start=None, stop=None):
         """Locate slice of index containing all entries within `start` and
@@ -3100,8 +3567,8 @@ class SortedIndex(ArrayAug):
         >>> loc
         slice(1, 4, None)
         >>> idx[loc]
-        SortedIndex((3,), dtype=int64)
-        [ 6 11 20]
+        <SortedIndex shape=(3,) dtype=int64>
+        [6, 11, 20]
 
         """
 
@@ -3142,15 +3609,15 @@ class SortedIndex(ArrayAug):
         >>> import allel
         >>> idx = allel.SortedIndex([3, 6, 11, 20, 35])
         >>> idx.intersect_range(4, 32)
-        SortedIndex((3,), dtype=int64)
-        [ 6 11 20]
+        <SortedIndex shape=(3,) dtype=int64>
+        [6, 11, 20]
 
         """
 
         try:
             loc = self.locate_range(start=start, stop=stop)
         except KeyError:
-            return self[0:0]
+            return self.values[0:0]
         else:
             return self[loc]
 
@@ -3188,8 +3655,8 @@ class SortedIndex(ArrayAug):
         >>> loc_ranges
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx[loc]
-        SortedIndex((3,), dtype=int64)
-        [ 6 11 35]
+        <SortedIndex shape=(3,) dtype=int64>
+        [6, 11, 35]
         >>> ranges[loc_ranges]
         array([[ 6, 17],
                [31, 35]])
@@ -3246,8 +3713,8 @@ class SortedIndex(ArrayAug):
         >>> loc
         array([False,  True,  True, False,  True], dtype=bool)
         >>> idx[loc]
-        SortedIndex((3,), dtype=int64)
-        [ 6 11 35]
+        <SortedIndex shape=(3,) dtype=int64>
+        [6, 11, 35]
 
         """
 
@@ -3283,16 +3750,16 @@ class SortedIndex(ArrayAug):
         >>> starts = ranges[:, 0]
         >>> stops = ranges[:, 1]
         >>> idx.intersect_ranges(starts, stops)
-        SortedIndex((3,), dtype=int64)
-        [ 6 11 35]
+        <SortedIndex shape=(3,) dtype=int64>
+        [6, 11, 35]
 
         """
 
         loc = self.locate_ranges(starts, stops, strict=False)
-        return np.compress(loc, self)
+        return self.compress(loc, axis=0)
 
 
-class UniqueIndex(ArrayAug):
+class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
     """Array of unique values (e.g., variant or sample identifiers).
 
     Parameters
@@ -3315,72 +3782,49 @@ class UniqueIndex(ArrayAug):
 
     >>> import allel
     >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
+    >>> idx
+    <UniqueIndex shape=(4,) dtype=object>
+    ['A', 'C', 'B', 'F']
     >>> idx.dtype
-    dtype('<U1')
+    dtype('O')
     >>> idx.ndim
     1
     >>> idx.shape
     (4,)
 
+    See Also
+    --------
+    SortedIndex, SortedMultiIndex
+
     """
 
-    @staticmethod
-    def _check_input_data(obj):
-
-        # check dimensionality
-        if obj.ndim != 1:
-            raise TypeError('array with 1 dimension required')
-
+    def __init__(self, data, copy=False, dtype=object, **kwargs):
+        super(UniqueIndex, self).__init__(data, copy=copy, dtype=dtype, **kwargs)
+        check_ndim(self.values, 1)
         # check unique
         # noinspection PyTupleAssignmentBalance
-        _, counts = np.unique(obj, return_counts=True)
+        _, counts = np.unique(self.values, return_counts=True)
         if np.any(counts > 1):
             raise ValueError('values are not unique')
+        self.lookup = {v: i for i, v in enumerate(self.values)}
 
-    def __new__(cls, data, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.array(data, **kwargs)
-        cls._check_input_data(obj)
-        obj = obj.view(cls)
-        lookup = {v: i for i, v in enumerate(obj)}
-        obj.lookup = lookup
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, UniqueIndex):
-            return
-
-        # called after view
-        UniqueIndex._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 1:
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
+    def __getitem__(self, item):
+        s = self.values[item]
+        if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
+            return type(self)(s)
         return s
 
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim'):
-            if s.ndim == 1:
-                return s
-            elif s.ndim > 0:
-                return np.asarray(s)
-        return s
+    def compress(self, condition, axis=0, out=None):
+        out = self.values.compress(condition, axis=axis, out=out)
+        if axis == 0:
+            out = type(self)(out)
+        return out
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        out = self.values.take(indices, axis=axis, out=out, mode=mode)
+        if axis == 0:
+            out = type(self)(out)
+        return out
 
     def locate_key(self, key):
         """Get index location for the requested key.
@@ -3434,19 +3878,19 @@ class UniqueIndex(ArrayAug):
         --------
 
         >>> import allel
-        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'])
-        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'], dtype=object)
+        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
         >>> loc1, loc2 = idx1.locate_intersection(idx2)
         >>> loc1
         array([False,  True, False,  True], dtype=bool)
         >>> loc2
         array([False,  True, False,  True, False], dtype=bool)
         >>> idx1[loc1]
-        UniqueIndex((2,), dtype=<U1)
-        ['C' 'F']
+        <UniqueIndex shape=(2,) dtype=object>
+        ['C', 'F']
         >>> idx2[loc2]
-        UniqueIndex((2,), dtype=<U1)
-        ['F' 'C']
+        <UniqueIndex shape=(2,) dtype=object>
+        ['F', 'C']
 
         """
 
@@ -3514,22 +3958,23 @@ class UniqueIndex(ArrayAug):
         --------
 
         >>> import allel
-        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'])
-        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'])
+        >>> idx1 = allel.UniqueIndex(['A', 'C', 'B', 'F'], dtype=object)
+        >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
         >>> idx1.intersect(idx2)
-        UniqueIndex((2,), dtype=<U1)
-        ['C' 'F']
+        <UniqueIndex shape=(2,) dtype=object>
+        ['C', 'F']
         >>> idx2.intersect(idx1)
-        UniqueIndex((2,), dtype=<U1)
-        ['F' 'C']
+        <UniqueIndex shape=(2,) dtype=object>
+        ['F', 'C']
 
         """
 
         loc = self.locate_keys(other, strict=False)
-        return np.compress(loc, self)
+        return self.compress(loc, axis=0)
 
 
-class SortedMultiIndex(object):
+# noinspection PyMissingConstructor
+class SortedMultiIndex(DisplayAs1D):
     """Two-level index of sorted values, e.g., variant positions from two or
     more chromosomes/contigs.
 
@@ -3549,26 +3994,68 @@ class SortedMultiIndex(object):
     >>> chrom = ['chr1', 'chr1', 'chr2', 'chr2', 'chr2', 'chr3']
     >>> pos = [1, 4, 2, 5, 5, 3]
     >>> idx = allel.SortedMultiIndex(chrom, pos)
+    >>> idx
+    <SortedMultiIndex shape=(6,), dtype=<U4/int64>
+    chr1:1 chr1:4 chr2:2 chr2:5 chr2:5 chr3:3
     >>> len(idx)
     6
+
+    See Also
+    --------
+    SortedIndex, UniqueIndex
 
     """
 
     def __init__(self, l1, l2, copy=False):
         l1 = SortedIndex(l1, copy=copy)
         l2 = np.array(l2, copy=copy)
-        l2 = asarray_ndim(l2, 1)
+        check_ndim(l2, 1)
         check_dim0_aligned(l1, l2)
         self.l1 = l1
         self.l2 = l2
 
     def __repr__(self):
-        s = ('SortedMultiIndex(%s)\n' % len(self))
+        s = '<SortedMultiIndex shape=(%s,), dtype=%s/%s>' % \
+            (len(self), self.l1.dtype, self.l2.dtype)
+        s += '\n' + str(self)
         return s
 
-    def __str__(self):
-        s = ('SortedMultiIndex(%s)\n' % len(self))
+    def str_items(self):
+        return ['%s:%s' % (x, y) for x, y in zip(self.l1, self.l2)]
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
         return s
+
+    def __len__(self):
+        return len(self.l1)
+
+    def __getitem__(self, item):
+        l1 = self.l1[item]
+        l2 = self.l2[item]
+        if isinstance(item, integer_types):
+            return l1, l2
+        else:
+            return SortedMultiIndex(l1, l2, copy=False)
+
+    def compress(self, condition, axis=0, out=None):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.l1.compress(condition, axis=axis)
+        l2 = self.l2.compress(condition, axis=axis)
+        return SortedMultiIndex(l1, l2, copy=False)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.l1.take(indices, axis=axis, mode=mode)
+        l2 = self.l2.take(indices, axis=axis, mode=mode)
+        return SortedMultiIndex(l1, l2, copy=False)
+
+    @property
+    def shape(self):
+        return len(self),
 
     def locate_key(self, k1, k2=None):
         """
@@ -3634,7 +4121,7 @@ class SortedMultiIndex(object):
                 raise KeyError(k1, k2)
         return loc
 
-    def locate_range(self, k1, start=None, stop=None):
+    def locate_range(self, key, start=None, stop=None):
         """Locate slice of index containing all entries within the range
         `key`:`start`-`stop` **inclusive**.
 
@@ -3673,7 +4160,7 @@ class SortedMultiIndex(object):
 
         """
 
-        loc1 = self.l1.locate_key(k1)
+        loc1 = self.l1.locate_key(key)
         if start is None and stop is None:
             loc = loc1
         elif isinstance(loc1, slice):
@@ -3682,7 +4169,7 @@ class SortedMultiIndex(object):
             try:
                 loc2 = idx.locate_range(start, stop)
             except KeyError:
-                raise KeyError(k1, start, stop)
+                raise KeyError(key, start, stop)
             else:
                 loc = slice(offset + loc2.start, offset + loc2.stop)
         else:
@@ -3691,17 +4178,14 @@ class SortedMultiIndex(object):
             if start <= v <= stop:
                 loc = loc1
             else:
-                raise KeyError(k1, start, stop)
+                raise KeyError(key, start, stop)
         # ensure slice is always returned
         if not isinstance(loc, slice):
             loc = slice(loc, loc + 1)
         return loc
 
-    def __len__(self):
-        return len(self.l1)
 
-
-class VariantTable(RecArrayAug):
+class VariantTable(NumpyRecArrayWrapper):
     """Table (catalogue) of variants.
 
     Parameters
@@ -3747,7 +4231,7 @@ class VariantTable(RecArrayAug):
     Access multiple columns::
 
         >>> vt[['DP', 'QD']]  # doctest: +ELLIPSIS
-        VariantTable((5,), dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8...
+        <VariantTable shape=(5,) dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8')])>
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
     Access a row::
@@ -3758,7 +4242,7 @@ class VariantTable(RecArrayAug):
     Access multiple rows::
 
         >>> vt[2:4]  # doctest: +ELLIPSIS
-        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        <VariantTable shape=(2,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
 
     Evaluate expressions against the table::
@@ -3773,76 +4257,31 @@ class VariantTable(RecArrayAug):
     Query the table::
 
         >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
-        VariantTable((3,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        <VariantTable shape=(3,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
         [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
          (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
         >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
-        VariantTable((1,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        <VariantTable shape=(1,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
         [(b'chr1', 2, 35, 4.5, array([1, 2]))]
 
     Use the index to query variants::
 
         >>> vt.query_region(b'chr2', 1, 10)  # doctest: +ELLIPSIS
-        VariantTable((2,), dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '...
+        <VariantTable shape=(2,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
         [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
 
     """
 
-    def __new__(cls, data, index=None, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.rec.array(data, **kwargs)
-        obj = obj.view(cls)
-        # initialise index
-        # noinspection PyArgumentList
-        cls.set_index(obj, index)
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, VariantTable):
-            return
-
-        # called after view - nothing to do
-        # VariantTable._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim') and s.ndim > 0:
-            if s.dtype.names is not None:
-                return VariantTable(s, copy=False)
-            else:
-                return np.asarray(s)
-        return s
-
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim') and s.ndim > 0:
-            if s.dtype.names is not None:
-                return VariantTable(s, copy=False)
-            else:
-                return np.asarray(s)
-        return s
+    def __init__(self, data, index=None, copy=False, **kwargs):
+        super(VariantTable, self).__init__(data, copy=copy, **kwargs)
+        self.set_index(index)
 
     @property
     def n_variants(self):
         """Number of variants (length of first dimension)."""
         return self.shape[0]
 
-    @property
-    def names(self):
-        """Column names."""
-        return self.dtype.names
-
+    # noinspection PyAttributeOutsideInit
     def set_index(self, index):
         """Set or reset the index.
 
@@ -3936,6 +4375,8 @@ class VariantTable(RecArrayAug):
             Descriptions for the INFO and FILTER headers.
         fill : dict, optional
             Fill values used for missing data in the table.
+        write_header : bool, optional
+            If True write VCF header.
 
         Examples
         --------
@@ -3944,7 +4385,7 @@ class VariantTable(RecArrayAug):
             >>> import allel
             >>> chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
             >>> pos = [2, 6, 3, 8, 1]
-            >>> id = ['a', 'b', 'c', 'd', 'e']
+            >>> ids = ['a', 'b', 'c', 'd', 'e']
             >>> ref = [b'A', b'C', b'T', b'G', b'N']
             >>> alt = [(b'T', b'.'),
             ...        (b'G', b'.'),
@@ -3960,14 +4401,14 @@ class VariantTable(RecArrayAug):
             >>> ac = [(1, -1), (3, -1), (5, 6), (7, 8), (9, -1)]
             >>> xx = [(1.2, 2.3), (3.4, 4.5), (5.6, 6.7), (7.8, 8.9),
             ...       (9.0, 9.9)]
-            >>> columns = [chrom, pos, id, ref, alt, qual, filter_dp,
+            >>> columns = [chrom, pos, ids, ref, alt, qual, filter_dp,
             ...            filter_qd, dp, qd, flg, ac, xx]
             >>> records = list(zip(*columns))
-            >>> dtype = [('chrom', 'S4'),
-            ...          ('pos', 'u4'),
+            >>> dtype = [('CHROM', 'S4'),
+            ...          ('POS', 'u4'),
             ...          ('ID', 'S1'),
-            ...          ('ref', 'S1'),
-            ...          ('alt', ('S1', 2)),
+            ...          ('REF', 'S1'),
+            ...          ('ALT', ('S1', 2)),
             ...          ('qual', 'f4'),
             ...          ('filter_dp', bool),
             ...          ('filter_qd', bool),
@@ -4011,90 +4452,28 @@ class VariantTable(RecArrayAug):
                   write_header=write_header)
 
 
-def sample_to_haplotype_selection(indices, ploidy):
-    return [(i * ploidy) + n for i in indices for n in range(ploidy)]
-
-
-# TODO factor out common table code
-
-
-class FeatureTable(RecArrayAug):
+class FeatureTable(NumpyRecArrayWrapper):
     """Table of genomic features (e.g., genes, exons, etc.).
 
     Parameters
     ----------
     data : array_like, structured, shape (n_variants,)
         Variant records.
-    index : pair or triplet of strings, optional
-        Names of columns to use for positional index, e.g., ('start',
-        'stop') if table contains 'start' and 'stop' columns and records
-        from a single chromosome/contig, or ('seqid', 'start', 'end') if table
-        contains records from multiple chromosomes/contigs.
+    copy : bool, optional
+        If True, make a copy of `data`.
     **kwargs : keyword arguments, optional
         Further keyword arguments are passed through to
         :func:`numpy.rec.array`.
 
     """
 
-    def __new__(cls, data, index=None, **kwargs):
-        kwargs.setdefault('copy', False)
-        obj = np.rec.array(data, **kwargs)
-        obj = obj.view(cls)
-        # TODO initialise interval index
-        return obj
-
-    def __array_finalize__(self, obj):
-
-        # called after constructor
-        if obj is None:
-            return
-
-        # called after slice (new-from-template)
-        if isinstance(obj, FeatureTable):
-            return
-
-        # called after view - nothing to do
-        # VariantTable._check_input_data(obj)
-
-    # noinspection PyUnusedLocal
-    def __array_wrap__(self, out_arr, context=None):
-        # don't wrap results of any ufuncs
-        return np.asarray(out_arr)
-
-    def __getslice__(self, *args, **kwargs):
-        s = np.ndarray.__getslice__(self, *args, **kwargs)
-        if hasattr(s, 'ndim') and s.ndim > 0:
-            if s.dtype.names is not None:
-                return FeatureTable(s, copy=False)
-            else:
-                return np.asarray(s)
-        return s
-
-    def __getitem__(self, *args, **kwargs):
-        s = np.ndarray.__getitem__(self, *args, **kwargs)
-        if hasattr(s, 'ndim') and s.ndim > 0:
-            if s.dtype.names is not None:
-                return FeatureTable(s, copy=False)
-            else:
-                return np.asarray(s)
-        return s
+    def __init__(self, data, copy=False, **kwargs):
+        super(FeatureTable, self).__init__(data, copy=copy, **kwargs)
 
     @property
     def n_features(self):
         """Number of features (length of first dimension)."""
         return self.shape[0]
-
-    @property
-    def names(self):
-        """Column names."""
-        return self.dtype.names
-
-    def query_region(self, chrom=None, start=None, stop=None):
-        """TODO
-
-        """
-        # TODO use interval index
-        pass
 
     def to_mask(self, size, start_name='start', stop_name='end'):
         """Construct a mask array where elements are True if the fall within
@@ -4122,9 +4501,8 @@ class FeatureTable(RecArrayAug):
         return m
 
     @staticmethod
-    def from_gff3(path, attributes=None, region=None,
-                  score_fill=-1, phase_fill=-1, attributes_fill=b'.',
-                  dtype=None):
+    def from_gff3(path, attributes=None, region=None, score_fill=-1, phase_fill=-1,
+                  attributes_fill=b'.', dtype=None):
         """Read a feature table from a GFF3 format file.
 
         Parameters
@@ -4164,6 +4542,8 @@ class FeatureTable(RecArrayAug):
             if attributes is not None:
                 names += tuple(attributes)
             recs_sample = list(itertools.islice(recs, 1000))
+            if not recs_sample:
+                raise ValueError('no records found')
             a = np.rec.array(recs_sample, names=names)
             dtype = a.dtype
             recs = itertools.chain(recs_sample, recs)
@@ -4171,415 +4551,3 @@ class FeatureTable(RecArrayAug):
         a = np.fromiter(recs, dtype=dtype)
         ft = FeatureTable(a, copy=False)
         return ft
-
-
-def create_allele_mapping(ref, alt, alleles, dtype='i1'):
-    """Create an array mapping variant alleles into a different allele index
-    system.
-
-    Parameters
-    ----------
-    ref : array_like, S1, shape (n_variants,)
-        Reference alleles.
-    alt : array_like, S1, shape (n_variants, n_alt_alleles)
-        Alternate alleles.
-    alleles : array_like, S1, shape (n_variants, n_alleles)
-        Alleles defining the new allele indexing.
-
-    Returns
-    -------
-    mapping : ndarray, int8, shape (n_variants, n_alt_alleles + 1)
-
-    Examples
-    --------
-    Example with biallelic variants::
-
-        >>> import allel
-        >>> from allel.model.ndarray import create_allele_mapping
-        >>> ref = [b'A', b'C', b'T', b'G']
-        >>> alt = [b'T', b'G', b'C', b'A']
-        >>> alleles = [[b'A', b'T'],  # no transformation
-        ...            [b'G', b'C'],  # swap
-        ...            [b'T', b'A'],  # 1 missing
-        ...            [b'A', b'C']]  # 1 missing
-        >>> mapping = create_allele_mapping(ref, alt, alleles)
-        >>> mapping
-        array([[ 0,  1],
-               [ 1,  0],
-               [ 0, -1],
-               [-1,  0]], dtype=int8)
-
-    Example with multiallelic variants::
-
-        >>> ref = [b'A', b'C', b'T']
-        >>> alt = [[b'T', b'G'],
-        ...        [b'A', b'T'],
-        ...        [b'G', b'.']]
-        >>> alleles = [[b'A', b'T'],
-        ...            [b'C', b'T'],
-        ...            [b'G', b'A']]
-        >>> mapping = create_allele_mapping(ref, alt, alleles)
-        >>> mapping
-        array([[ 0,  1, -1],
-               [ 0, -1,  1],
-               [-1,  0, -1]], dtype=int8)
-
-    See Also
-    --------
-    GenotypeArray.map_alleles, HaplotypeArray.map_alleles,
-    AlleleCountsArray.map_alleles
-
-    """
-
-    ref = asarray_ndim(ref, 1)
-    alt = asarray_ndim(alt, 1, 2)
-    alleles = asarray_ndim(alleles, 1, 2)
-    check_dim0_aligned(ref, alt, alleles)
-
-    # reshape for convenience
-    ref = ref[:, None]
-    if alt.ndim == 1:
-        alt = alt[:, None]
-    if alleles.ndim == 1:
-        alleles = alleles[:, None]
-    source_alleles = np.append(ref, alt, axis=1)
-
-    # setup output array
-    out = np.empty(source_alleles.shape, dtype=dtype)
-    out.fill(-1)
-
-    # find matches
-    for ai in range(source_alleles.shape[1]):
-        match = source_alleles[:, ai, None] == alleles
-        match_i, match_j = match.nonzero()
-        out[match_i, ai] = match_j
-
-    return out
-
-
-def locate_fixed_differences(ac1, ac2):
-    """Locate variants with no shared alleles between two populations.
-
-    Parameters
-    ----------
-    ac1 : array_like, int, shape (n_variants, n_alleles)
-        Allele counts array from the first population.
-    ac2 : array_like, int, shape (n_variants, n_alleles)
-        Allele counts array from the second population.
-
-    Returns
-    -------
-    loc : ndarray, bool, shape (n_variants,)
-
-    See Also
-    --------
-    allel.stats.diversity.windowed_df
-
-    Examples
-    --------
-
-    >>> import allel
-    >>> from allel.model.ndarray import locate_fixed_differences
-    >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
-    ...                          [[0, 1], [0, 1], [0, 1], [0, 1]],
-    ...                          [[0, 1], [0, 1], [1, 1], [1, 1]],
-    ...                          [[0, 0], [0, 0], [1, 1], [2, 2]],
-    ...                          [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
-    >>> ac1 = g.count_alleles(subpop=[0, 1])
-    >>> ac2 = g.count_alleles(subpop=[2, 3])
-    >>> loc_df = locate_fixed_differences(ac1, ac2)
-    >>> loc_df
-    array([ True, False, False,  True,  True], dtype=bool)
-
-    """
-
-    # check inputs
-    ac1 = asarray_ndim(ac1, 2)
-    ac2 = asarray_ndim(ac2, 2)
-    check_dim0_aligned(ac1, ac2)
-    ac1, ac2 = ensure_dim1_aligned(ac1, ac2)
-
-    # stack allele counts for convenience
-    pac = np.dstack([ac1, ac2])
-
-    # count numbers of alleles called in each population
-    pan = np.sum(pac, axis=1)
-
-    # count the numbers of populations with each allele
-    npa = np.sum(pac > 0, axis=2)
-
-    # locate variants with allele calls in both populations
-    non_missing = np.all(pan > 0, axis=1)
-
-    # locate variants where all alleles are only found in a single population
-    no_shared_alleles = np.all(npa <= 1, axis=1)
-
-    return non_missing & no_shared_alleles
-
-
-def locate_private_alleles(*acs):
-    """Locate alleles that are found only in a single population.
-
-    Parameters
-    ----------
-    *acs : array_like, int, shape (n_variants, n_alleles)
-        Allele counts arrays from each population.
-
-    Returns
-    -------
-    loc : ndarray, bool, shape (n_variants, n_alleles)
-        Boolean array where elements are True if allele is private to a
-        single population.
-
-    Examples
-    --------
-
-    >>> import allel
-    >>> from allel.model.ndarray import locate_private_alleles
-    >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [1, 1], [1, 1]],
-    ...                          [[0, 1], [0, 1], [0, 1], [0, 1]],
-    ...                          [[0, 1], [0, 1], [1, 1], [1, 1]],
-    ...                          [[0, 0], [0, 0], [1, 1], [2, 2]],
-    ...                          [[0, 0], [-1, -1], [1, 1], [-1, -1]]])
-    >>> ac1 = g.count_alleles(subpop=[0, 1])
-    >>> ac2 = g.count_alleles(subpop=[2])
-    >>> ac3 = g.count_alleles(subpop=[3])
-    >>> loc_private_alleles = locate_private_alleles(ac1, ac2, ac3)
-    >>> loc_private_alleles
-    array([[ True, False, False],
-           [False, False, False],
-           [ True, False, False],
-           [ True,  True,  True],
-           [ True,  True, False]], dtype=bool)
-    >>> loc_private_variants = np.any(loc_private_alleles, axis=1)
-    >>> loc_private_variants
-    array([ True, False,  True,  True,  True], dtype=bool)
-
-    """
-
-    # check inputs
-    acs = [asarray_ndim(ac, 2) for ac in acs]
-    debug([ac.shape for ac in acs])
-    check_dim0_aligned(*acs)
-    debug([ac.shape for ac in acs])
-    acs = ensure_dim1_aligned(*acs)
-    debug([ac.shape for ac in acs])
-
-    # stack allele counts for convenience
-    pac = np.dstack(acs)
-    debug(pac.shape)
-
-    # count the numbers of populations with each allele
-    npa = np.sum(pac > 0, axis=2)
-
-    # locate alleles found only in a single population
-    loc_pa = npa == 1
-
-    return loc_pa
-
-
-def array_to_hdf5(a, parent, name, **kwargs):
-    """Write a Numpy array to an HDF5 dataset.
-
-    Parameters
-    ----------
-    a : ndarray
-        Data to write.
-    parent : string or h5py group
-        Parent HDF5 file or group. If a string, will be treated as HDF5 file
-        name.
-    name : string
-        Name or path of dataset to write data into.
-    kwargs : keyword arguments
-        Passed through to h5py require_dataset() function.
-
-    Returns
-    -------
-    h5d : h5py dataset
-
-    """
-
-    import h5py
-
-    h5f = None
-
-    if isinstance(parent, str):
-        h5f = h5py.File(parent, mode='a')
-        parent = h5f
-
-    try:
-
-        kwargs.setdefault('chunks', True)  # auto-chunking
-        kwargs.setdefault('dtype', a.dtype)
-        kwargs.setdefault('compression', 'gzip')
-        h5d = parent.require_dataset(name, shape=a.shape, **kwargs)
-        h5d[...] = a
-        return h5d
-
-    finally:
-        if h5f is not None:
-            h5f.close()
-
-
-def recarray_to_html_str(ra, limit=5, caption=None):
-    # use implementation from petl
-    import petl as etl
-    tbl = etl.fromarray(ra)
-    if caption is None:
-        caption = '%s(%s, dtype=%s)' \
-                  % (type(ra).__name__, ra.shape, ra.dtype)
-    caption = caption.replace('<', '&lt;')
-    caption = caption.replace('\n', '<br/>')
-    # noinspection PyProtectedMember
-    html = etl.util.vis._display_html(tbl,
-                                      caption=caption,
-                                      limit=limit,
-                                      index_header=False)
-    return html
-
-
-def recarray_display(ra, limit=5, caption=None, **kwargs):
-    # use implementation from petl
-    import petl as etl
-    tbl = etl.fromarray(ra)
-    kwargs.setdefault('index_header', False)
-    if caption is None:
-        caption = '%s(%s, dtype=%s)' \
-                  % (type(ra).__name__, ra.shape, ra.dtype)
-    caption = caption.replace('<', '&lt;')
-    caption = caption.replace('\n', '<br/>')
-    return tbl.display(limit=limit, caption=caption, **kwargs)
-
-
-def recarray_from_hdf5_group(*args, **kwargs):
-    """Load a recarray from columns stored as separate datasets with an
-    HDF5 group.
-
-    Either provide an h5py group as a single positional argument,
-    or provide two positional arguments giving the HDF5 file path and the
-    group node path within the file.
-
-    The following optional parameters may be given.
-
-    Parameters
-    ----------
-    start : int, optional
-        Index to start loading from.
-    stop : int, optional
-        Index to finish loading at.
-    condition : array_like, bool, optional
-        A 1-dimensional boolean array of the same length as the columns of the
-        table to load, indicating a selection of rows to load.
-
-    """
-
-    import h5py
-
-    h5f = None
-
-    if len(args) == 1:
-        group = args[0]
-
-    elif len(args) == 2:
-        file_path, node_path = args
-        h5f = h5py.File(file_path, mode='r')
-        try:
-            group = h5f[node_path]
-        except:
-            h5f.close()
-            raise
-
-    else:
-        raise ValueError('bad arguments; expected group or (file_path, '
-                         'node_path), found %s' % repr(args))
-
-    try:
-
-        if not isinstance(group, h5py.Group):
-            raise ValueError('expected group, found %r' % group)
-
-        # determine dataset names to load
-        available_dataset_names = [n for n in group.keys()
-                                   if isinstance(group[n], h5py.Dataset)]
-        names = kwargs.pop('names', available_dataset_names)
-        names = [str(n) for n in names]  # needed for PY2
-        for n in names:
-            if n not in set(group.keys()):
-                raise ValueError('name not found: %s' % n)
-            if not isinstance(group[n], h5py.Dataset):
-                raise ValueError('name does not refer to a dataset: %s, %r'
-                                 % (n, group[n]))
-
-        # check datasets are aligned
-        datasets = [group[n] for n in names]
-        length = datasets[0].shape[0]
-        for d in datasets[1:]:
-            if d.shape[0] != length:
-                raise ValueError('datasets must be of equal length')
-
-        # determine start and stop parameters for load
-        start = kwargs.pop('start', 0)
-        stop = kwargs.pop('stop', length)
-
-        # check condition
-        condition = kwargs.pop('condition', None)
-        condition = asarray_ndim(condition, 1, allow_none=True)
-        if condition is not None and condition.size != length:
-            raise ValueError('length of condition does not match length '
-                             'of datasets')
-
-        # setup output data
-        dtype = [(n, d.dtype, d.shape[1:]) for n, d in zip(names, datasets)]
-        ra = np.empty(length, dtype=dtype)
-
-        for n, d in zip(names, datasets):
-            a = d[start:stop]
-            if condition is not None:
-                a = np.compress(condition[start:stop], a, axis=0)
-            ra[n] = a
-
-        return ra
-
-    finally:
-        if h5f is not None:
-            h5f.close()
-
-
-def recarray_to_hdf5_group(ra, parent, name, **kwargs):
-    """Write each column in a recarray to a dataset in an HDF5 group.
-
-    Parameters
-    ----------
-    parent : string or h5py group
-        Parent HDF5 file or group. If a string, will be treated as HDF5 file
-        name.
-    name : string
-        Name or path of group to write data into.
-    kwargs : keyword arguments
-        Passed through to h5py require_dataset() function.
-
-    Returns
-    -------
-    h5g : h5py group
-
-    """
-
-    import h5py
-
-    h5f = None
-
-    if isinstance(parent, str):
-        h5f = h5py.File(parent, mode='a')
-        parent = h5f
-
-    try:
-
-        h5g = parent.require_group(name)
-        for n in ra.dtype.names:
-            array_to_hdf5(ra[n], h5g, n, **kwargs)
-
-        return h5g
-
-    finally:
-        if h5f is not None:
-            h5f.close()

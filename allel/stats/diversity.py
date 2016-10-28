@@ -8,8 +8,8 @@ import logging
 import numpy as np
 
 
-from allel.model.ndarray import SortedIndex, \
-    locate_fixed_differences, AlleleCountsArray
+from allel.model.ndarray import SortedIndex, AlleleCountsArray
+from allel.model.util import locate_fixed_differences
 from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned, \
     ensure_dim1_aligned
 from allel.stats.window import windowed_statistic, per_base, moving_statistic
@@ -295,6 +295,12 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
         Allele counts array for the first population.
     ac2 : array_like, int, shape (n_variants, n_alleles)
         Allele counts array for the second population.
+    an1 : array_like, int, shape (n_variants,), optional
+        Allele numbers for the first population. If not provided, will be
+        calculated from `ac1`.
+    an2 : array_like, int, shape (n_variants,), optional
+        Allele numbers for the second population. If not provided, will be
+        calculated from `ac2`.
     start : int, optional
         The position at which to start (1-based).
     stop : int, optional
@@ -1062,7 +1068,7 @@ def moving_tajima_d(ac, size, start=0, stop=None, step=None):
 
     Returns
     -------
-    D : ndarray, float, shape (n_windows,)
+    d : ndarray, float, shape (n_windows,)
         Tajima's D.
 
     Examples
@@ -1085,6 +1091,6 @@ def moving_tajima_d(ac, size, start=0, stop=None, step=None):
 
     """
 
-    D = moving_statistic(values=ac, statistic=tajima_d, size=size,
-                          start=start, stop=stop, step=step)
-    return D
+    d = moving_statistic(values=ac, statistic=tajima_d, size=size, start=start, stop=stop,
+                         step=step)
+    return d

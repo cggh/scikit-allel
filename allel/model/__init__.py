@@ -3,19 +3,19 @@
 from __future__ import absolute_import, print_function, division
 
 
-from allel.model import ndarray
-from allel.model import chunked
+from . import ndarray
+from .ndarray import *
+from . import chunked
+from .chunked import *
+from . import util
+from .util import *
 
-# experimental
 try:
-    import dask.array as _da
-    from allel.model import dask
+    # dask support is optional
+    # noinspection PyUnresolvedReferences
+    import dask.array
 except ImportError:
     pass
-
-# deprecated
-try:
-    import bcolz as _bcolz
-    from allel.model import bcolz
-except ImportError:
-    pass
+else:
+    from . import dask
+    from .dask import *

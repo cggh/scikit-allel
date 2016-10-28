@@ -23,6 +23,7 @@ if PY2:
     from urllib import unquote_plus
 
     def copy_method_doc(m, n):
+        """Copy docstring from `n` to `m`."""
         m.__func__.__doc__ = n.__doc__
 
 else:
@@ -39,4 +40,5 @@ else:
     from urllib.parse import unquote_plus
 
     def copy_method_doc(m, n):
+        """Copy docstring from `n` to `m`."""
         m.__doc__ = n.__doc__

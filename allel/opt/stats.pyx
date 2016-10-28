@@ -6,32 +6,47 @@ from __future__ import absolute_import, print_function, division
 
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
+import cython
 cimport cython
 from libc.math cimport sqrt, fabs, fmin
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 
 
+ctypedef fused integral_t:
+    short
+    int
+    long
+    cnp.int8_t
+    cnp.int16_t
+    cnp.int32_t
+    cnp.int64_t
+    cnp.uint8_t
+    cnp.uint16_t
+    cnp.uint32_t
+    cnp.uint64_t
+
+
 # work around NAN undeclared in windows
 cdef:
-    np.float32_t nan32 = np.nan
-    np.float64_t nan64 = np.nan
+    cnp.float32_t nan32 = np.nan
+    cnp.float64_t nan64 = np.nan
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef inline np.float32_t gn_corrcoef_int8(np.int8_t[:] gn0,
-                                           np.int8_t[:] gn1,
-                                           np.int8_t[:] gn0_sq,
-                                           np.int8_t[:] gn1_sq,
-                                           np.float32_t fill) nogil:
+cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
+                                            cnp.int8_t[:] gn1,
+                                            cnp.int8_t[:] gn0_sq,
+                                            cnp.int8_t[:] gn1_sq,
+                                            cnp.float32_t fill) nogil:
     cdef:
-        np.int8_t x, y, xsq, ysq
+        cnp.int8_t x, y, xsq, ysq
         Py_ssize_t i
         int n
-        np.float32_t m0, m1, v0, v1, cov, r
+        cnp.float32_t m0, m1, v0, v1, cov, r
 
     # initialise variables
     m0 = m1 = v0 = v1 = cov = n = 0
@@ -72,15 +87,15 @@ cpdef inline np.float32_t gn_corrcoef_int8(np.int8_t[:] gn0,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn not None,
-                              np.float32_t fill=nan32):
+def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn not None,
+                              cnp.float32_t fill=nan32):
     cdef:
         Py_ssize_t i, j, k, n
-        np.float32_t r
+        cnp.float32_t r
         # correlation matrix in condensed form
-        np.float32_t[:] out
-        np.int8_t[:, :] gn_sq
-        np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+        cnp.float32_t[:] out
+        cnp.int8_t[:, :] gn_sq
+        cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
@@ -109,16 +124,16 @@ def gn_pairwise_corrcoef_int8(np.int8_t[:, :] gn not None,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna not None,
-                               np.int8_t[:, :] gnb not None,
-                               np.float32_t fill=nan32):
+def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna not None,
+                               cnp.int8_t[:, :] gnb not None,
+                               cnp.float32_t fill=nan32):
     cdef:
         Py_ssize_t i, j, k, m, n
-        np.float32_t r
+        cnp.float32_t r
         # correlation matrix in condensed form
-        np.float32_t[:, :] out
-        np.int8_t[:, :] gna_sq, gnb_sq
-        np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+        cnp.float32_t[:, :] out
+        cnp.int8_t[:, :] gna_sq, gnb_sq
+        cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
 
     # cache square calculation to improve performance
     gna_sq = np.power(gna, 2)
@@ -145,18 +160,18 @@ def gn_pairwise2_corrcoef_int8(np.int8_t[:, :] gna not None,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def gn_locate_unlinked_int8(np.int8_t[:, :] gn not None,
-                            np.uint8_t[:] loc not None,
+def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn not None,
+                            cnp.uint8_t[:] loc not None,
                             Py_ssize_t size, Py_ssize_t step,
-                            np.float32_t threshold):
+                            cnp.float32_t threshold):
     cdef:
         Py_ssize_t window_start, window_stop, i, j, n_variants
-        np.float32_t r_squared
-        np.int8_t[:, :] gn_sq
-        np.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
+        cnp.float32_t r_squared
+        cnp.int8_t[:, :] gn_sq
+        cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
         int overlap = size - step
         bint last
-        np.float32_t fill = nan32
+        cnp.float32_t fill = nan32
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
@@ -220,8 +235,8 @@ def gn_locate_unlinked_int8(np.int8_t[:, :] gn not None,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef Py_ssize_t shared_prefix_length_int8(np.int8_t[:] a,
-                                           np.int8_t[:] b) nogil:
+cpdef Py_ssize_t shared_prefix_length_int8(cnp.int8_t[:] a,
+                                           cnp.int8_t[:] b) nogil:
     """Compute the length of the shared prefix between two arrays."""
 
     cdef:
@@ -241,13 +256,13 @@ cpdef Py_ssize_t shared_prefix_length_int8(np.int8_t[:] a,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef pairwise_shared_prefix_lengths_int8(np.int8_t[:, :] h):
+cpdef pairwise_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
     """Compute the length of the shared prefix between all pairs of
     columns in a 2-dimensional array."""
 
     cdef:
         Py_ssize_t i, j, k, n, n_pairs
-        np.int32_t[:] lengths
+        cnp.int32_t[:] lengths
 
     # initialise variables
     n = h.shape[1]
@@ -267,13 +282,13 @@ cpdef pairwise_shared_prefix_lengths_int8(np.int8_t[:, :] h):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
+cpdef neighbour_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
     """Compute the length of the shared prefix between neighbouring
     columns in a 2-dimensional array."""
 
     cdef:
         Py_ssize_t i, n
-        np.int32_t[:] lengths
+        cnp.int32_t[:] lengths
 
     # initialise variables
     n = h.shape[1]
@@ -289,14 +304,14 @@ cpdef neighbour_shared_prefix_lengths_int8(np.int8_t[:, :] h):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
-                                                    np.int64_t[:] indices):
+cpdef neighbour_shared_prefix_lengths_unsorted_int8(cnp.int8_t[:, :] h,
+                                                    cnp.int64_t[:] indices):
     """Compute the length of the shared prefix between neighbouring
     columns in a 2-dimensional array."""
 
     cdef:
         Py_ssize_t i, n, ix, jx
-        np.int32_t[:] lengths
+        cnp.int32_t[:] lengths
 
     # initialise variables
     n = h.shape[1]
@@ -314,7 +329,7 @@ cpdef neighbour_shared_prefix_lengths_unsorted_int8(np.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x) nogil:
+cpdef inline Py_ssize_t bisect_left_int8(cnp.int8_t[:] s, int x) nogil:
     """Optimized implementation of bisect_left."""
     cdef:
         Py_ssize_t l, u, m, v
@@ -341,7 +356,7 @@ cpdef inline Py_ssize_t bisect_left_int8(np.int8_t[:] s, int x) nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
+def paint_shared_prefixes_int8(cnp.int8_t[:, :] h not None):
     """Paint each shared prefix with a different number. N.B., `h` must be
     already sorted by prefix.
 
@@ -349,9 +364,9 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, pp_start, pp_stop, pp_size, n0, n1
-        np.int32_t pp_color, next_color
-        np.int32_t[:, :] painting
-        np.int8_t[:] s
+        cnp.int32_t pp_color, next_color
+        cnp.int32_t[:, :] painting
+        cnp.int8_t[:] s
 
     # initialise variables
     n_variants = h.shape[0]
@@ -419,12 +434,12 @@ def paint_shared_prefixes_int8(np.int8_t[:, :] h not None):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
-                           np.int32_t l_max,
-                           Py_ssize_t variant_idx,
-                           np.float64_t[:] gaps,
-                           np.float64_t min_ehh=0,
-                           bint include_edges=False) nogil:
+cpdef cnp.float64_t ssl2ihh(cnp.int32_t[:] ssl,
+                            cnp.int32_t l_max,
+                            Py_ssize_t variant_idx,
+                            cnp.float64_t[:] gaps,
+                            cnp.float64_t min_ehh=0,
+                            bint include_edges=False) nogil:
     """Compute integrated haplotype homozygosity from shared suffix lengths.
 
     Parameters
@@ -452,8 +467,8 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 
     cdef:
         Py_ssize_t i, j, gap_idx, n_pairs
-        np.int32_t l
-        np.float64_t ehh_prv, ehh_cur, ihh, ret, gap, n_pairs_ident
+        cnp.int32_t l
+        cnp.float64_t ehh_prv, ehh_cur, ihh, ret, gap, n_pairs_ident
         int *hh_breaks
 
     # initialize
@@ -523,20 +538,20 @@ cpdef np.float64_t ssl2ihh(np.int32_t[:] ssl,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ihh_scan_int8(np.int8_t[:, :] h,
-                  np.float64_t[:] gaps,
-                  np.float64_t min_ehh=0,
+def ihh_scan_int8(cnp.int8_t[:, :] h,
+                  cnp.float64_t[:] gaps,
+                  cnp.float64_t min_ehh=0,
                   bint include_edges=False):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, s
-        np.int32_t[:] ssl
-        np.int32_t l, l_max
-        np.int8_t a1, a2
-        np.float64_t[:] vihh
-        np.float64_t ihh
+        cnp.int32_t[:] ssl
+        cnp.int32_t l, l_max
+        cnp.int8_t a1, a2
+        cnp.float64_t[:] vihh
+        cnp.float64_t ihh
 
     n_variants = h.shape[0]
     # initialise
@@ -587,17 +602,17 @@ def ihh_scan_int8(np.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def nsl_scan_int8(np.int8_t[:, :] h):
+def nsl_scan_int8(cnp.int8_t[:, :] h):
     """Scan forwards over haplotypes, computing NSL backwards for each variant."""
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, s
-        np.int32_t[:] ssl
-        np.int64_t ssl_sum
-        np.int32_t l
-        np.int8_t a1, a2
-        np.float64_t[:] vnsl
-        np.float64_t nsl
+        cnp.int32_t[:] ssl
+        cnp.int64_t ssl_sum
+        cnp.int32_t l
+        cnp.int8_t a1, a2
+        cnp.float64_t[:] vnsl
+        cnp.float64_t nsl
 
     # initialise
     n_variants = h.shape[0]
@@ -644,17 +659,17 @@ def nsl_scan_int8(np.int8_t[:, :] h):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ssl01_scan_int8(np.int8_t[:, :] h, stat, **kwargs):
+def ssl01_scan_int8(cnp.int8_t[:, :] h, stat, **kwargs):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
     reference (0) and alternate (1) alleles separately."""
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11
-        np.int32_t l
-        np.int32_t[:] ssl, ssl00, ssl11
-        np.int8_t a1, a2
-        np.float64_t[:] vstat0, vstat1
+        cnp.int32_t l
+        cnp.int32_t[:] ssl, ssl00, ssl11
+        cnp.int8_t a1, a2
+        cnp.float64_t[:] vstat0, vstat1
 
     # initialise
     n_variants = h.shape[0]
@@ -711,10 +726,10 @@ def ssl01_scan_int8(np.int8_t[:, :] h, stat, **kwargs):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ihh01_scan_int8(np.int8_t[:, :] h,
-                    np.float64_t[:] gaps,
-                    np.float64_t min_ehh=0,
-                    np.float64_t min_maf=0,
+def ihh01_scan_int8(cnp.int8_t[:, :] h,
+                    cnp.float64_t[:] gaps,
+                    cnp.float64_t min_ehh=0,
+                    cnp.float64_t min_maf=0,
                     bint include_edges=False):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
@@ -723,11 +738,11 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11, \
             c0, c1
-        np.int32_t l, l_max_00, l_max_11
-        np.int32_t[:] ssl, ssl00, ssl11
-        np.int8_t a1, a2
-        np.float64_t[:] vstat0, vstat1
-        np.float64_t maf
+        cnp.int32_t l, l_max_00, l_max_11
+        cnp.int32_t[:] ssl, ssl00, ssl11
+        cnp.int8_t a1, a2
+        cnp.float64_t[:] vstat0, vstat1
+        cnp.float64_t maf
 
     # initialise
     n_variants = h.shape[0]
@@ -808,18 +823,18 @@ def ihh01_scan_int8(np.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def nsl01_scan_int8(np.int8_t[:, :] h):
+def nsl01_scan_int8(cnp.int8_t[:, :] h):
     """Scan forwards over haplotypes, computing the number of segregating
     sites by length backwards for each variant for the reference (0) and
     alternate (1) alleles separately."""
 
     cdef:
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11
-        np.int32_t l
-        np.int32_t[:] ssl
-        np.int64_t ssl00_sum, ssl11_sum
-        np.int8_t a1, a2
-        np.float64_t[:] vstat0, vstat1
+        cnp.int32_t l
+        cnp.int32_t[:] ssl
+        cnp.int64_t ssl00_sum, ssl11_sum
+        cnp.int8_t a1, a2
+        cnp.float64_t[:] vstat0, vstat1
 
     # initialise
     n_variants = h.shape[0]
@@ -873,3 +888,290 @@ def nsl01_scan_int8(np.int8_t[:, :] h):
                 vstat1[i] = nan64
 
     return np.asarray(vstat0), np.asarray(vstat1)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def phase_progeny_by_transmission_int8(cnp.int8_t[:, :, :] g):
+    # N.B., here we will modify g in-place
+
+    cdef:
+        Py_ssize_t n_variants, n_samples, n_progeny, i, j, max_allele
+        cnp.uint8_t[:, :] is_phased
+        cnp.int8_t a1, a2, ma1, ma2, pa1, pa2
+        cnp.uint8_t[:] mac, pac
+
+    # guard conditions
+    assert g.shape[2] == 2
+
+    n_variants = g.shape[0]
+    n_samples = g.shape[1]
+    n_progeny = n_samples - 2
+    max_allele = np.max(g)
+
+    # setup intermediates
+    mac = np.zeros(max_allele + 1, dtype='u1')  # maternal allele counts
+    pac = np.zeros(max_allele + 1, dtype='u1')  # paternal allele counts
+
+    # setup outputs
+    is_phased = np.zeros((n_variants, n_samples), dtype='u1')
+
+    # iterate over variants
+    for i in range(n_variants):
+
+        # access parental genotypes
+        ma1 = g[i, 0, 0]  # maternal allele 1
+        ma2 = g[i, 0, 1]  # maternal allele 2
+        pa1 = g[i, 1, 0]  # paternal allele 1
+        pa2 = g[i, 1, 1]  # paternal allele 2
+
+        # check for any missing calls in parents
+        if ma1 < 0 or ma2 < 0 or pa1 < 0 or pa2 < 0:
+            continue
+
+        # parental allele counts
+        mac[:] = 0  # reset to zero
+        pac[:] = 0  # reset to zero
+        mac[ma1] = 1
+        mac[ma2] = 1
+        pac[pa1] = 1
+        pac[pa2] = 1
+
+        # iterate over progeny
+        for j in range(2, n_progeny + 2):
+
+            # access progeny alleles
+            a1 = g[i, j, 0]
+            a2 = g[i, j, 1]
+
+            if a1 < 0 or a2 < 0:  # child is missing
+                continue
+
+            elif a1 == a2:  # child is homozygous
+
+                if mac[a1] > 0 and pac[a1] > 0:  # Mendelian consistent
+                    # trivially phase the child
+                    is_phased[i, j] = 1
+
+            else:  # child is heterozygous
+
+                if mac[a1] > 0 and pac[a1] == 0 and pac[a2] > 0:
+                    # allele 1 is unique to mother, no need to swap
+                    is_phased[i, j] = 1
+
+                elif mac[a2] > 0 and pac[a2] == 0 and pac[a1] > 0:
+                    # allele 2 is unique to mother, swap child alleles
+                    g[i, j, 0] = a2
+                    g[i, j, 1] = a1
+                    is_phased[i, j] = 1
+
+                elif pac[a1] > 0 and mac[a1] == 0 and mac[a2] > 0:
+                    # allele 1 is unique to father, swap child alleles
+                    g[i, j, 0] = a2
+                    g[i, j, 1] = a1
+                    is_phased[i, j] = 1
+
+                elif pac[a2] > 0 and mac[a2] == 0 and mac[a1] > 0:
+                    # allele 2 is unique to father, no need to swap
+                    is_phased[i, j] = 1
+
+    return is_phased
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def phase_parents_by_transmission_int8(cnp.int8_t[:, :, :] g,
+                                       cnp.uint8_t[:, :] is_phased,
+                                       Py_ssize_t window_size):
+    # N.B., here we will modify g and is_phased in-place
+
+    cdef:
+        Py_ssize_t i, parent, ii, n_variants, n_samples, keep, flip, n_inf
+        cnp.int8_t a1, a2, max_allele, pa1, pa2, x, y
+        cnp.uint32_t[:] block_start
+        cnp.uint32_t[:] n_progeny_phased
+        cnp.uint32_t[:, :] linkage
+
+    # guard conditions
+    assert g.shape[2] == 2
+    assert g.shape[0] == is_phased.shape[0]
+    assert g.shape[1] == is_phased.shape[1]
+
+    # setup intermediates
+    n_variants = g.shape[0]
+    n_samples = g.shape[1]
+    max_allele = np.max(g)
+    linkage = np.zeros((max_allele + 1, max_allele + 1), dtype='u4')
+    n_progeny_phased = np.sum(is_phased[:, 2:], axis=1).astype('u4')
+
+    # iterate over variants
+    for i in range(n_variants):
+
+        if n_progeny_phased[i] == 0:
+            # no progeny genotypes phased, cannot phase parent
+            continue
+
+        # iterate over parents
+        for parent in range(2):
+
+            if is_phased[i, parent]:
+                # parent already phased somehow, not expected but skip anyway
+                continue
+
+            # access parent's alleles
+            a1 = g[i, parent, 0]
+            a2 = g[i, parent, 1]
+
+            if a1 < 0 or a2 < 0:
+                # missing call, skip
+                continue
+
+            elif a1 == a2:
+                # parent is homozygous, trivially phase
+                is_phased[i, parent] = 1
+
+            elif n_progeny_phased[i] > 0:
+                # parent is het and some progeny are phased, so should be
+                # able to phase parent
+
+                # setup accumulators for evidence on whether to swap alleles
+                keep = flip = 0
+
+                # keep track of how many informative variants are visited
+                n_inf = 0
+
+                # setup index for back-tracking
+                ii = i - 1
+
+                # look back and collect linkage evidence from previous variants
+                while ii >= 0 and n_inf < window_size:
+
+                    # access alleles for previous variant
+                    pa1 = g[ii, parent, 0]
+                    pa2 = g[ii, parent, 1]
+
+                    if (is_phased[ii, parent] and
+                            (pa1 != pa2) and
+                            (n_progeny_phased[ii] > 0)):
+
+                        # variant is phase informative, accumulate
+                        n_inf += 1
+
+                        # collect linkage information
+                        linkage[:, :] = 0
+                        for j in range(2, n_samples):
+                            if is_phased[ii, j] and is_phased[i, j]:
+                                x = g[ii, j, parent]
+                                y = g[i, j, parent]
+                                linkage[x, y] += 1
+
+                        # accumulate evidence
+                        keep += linkage[pa1, a1] + linkage[pa2, a2]
+                        flip += linkage[pa1, a2] + linkage[pa2, a1]
+
+                    ii -= 1
+
+                # make a decision
+                if n_inf == 0:
+                    # no previous informative variants, start of data,
+                    # phase arbitrarily
+                    is_phased[i, parent] = 1
+
+                elif keep > flip:
+                    is_phased[i, parent] = 1
+
+                elif flip > keep:
+                    is_phased[i, parent] = 1
+                    g[i, parent, 0] = a2
+                    g[i, parent, 1] = a1
+
+
+def state_transitions(integral_t[:] x, states):
+    """Find state transitions in a sequence of state values.
+
+    Parameters
+    ----------
+    x : array_like, int
+        1-dimensional array of state values.
+    states : set
+        Set of states of interest. Any state value not in this set will be ignored.
+
+    Returns
+    -------
+    switch_points : ndarray, int
+        2-dimensional array of switch points, where the first column contains indices of
+        values on the left side of a switch and the second column contains indices of values
+        on the right side of a switch.
+    transitions : ndarray, int
+        2-dimensional array of state transitions, where the first column contains state
+        values on the left side of a switch and the second column contains state values
+        on the right side of a switch.
+    observations : ndarray, int
+        1-dimensional array with numbers of state observations on the left side of each switch.
+
+    Notes
+    -----
+    N.B., includes rows for the left and right-hand boundaries, which are not true state
+    transitions but capture the first and last state observations.
+
+    """
+
+    cdef:
+        Py_ssize_t cur_idx, prv_idx, n, observed
+        integral_t cur, prv
+        list switch_points, transitions, observations
+        cnp.uint8_t[:] is_state
+
+    # setup intermediates
+    states = sorted(set(states))
+    if any([s < 0 for s in states]):
+        raise ValueError('all states must be >= 0')
+    max_state = max(states)
+    is_state = np.zeros(max_state + 1, dtype='u1')
+    np.asarray(is_state)[states] = 1
+    n = x.shape[0]
+    prv_idx = -1
+    prv = -1
+    observed = 0
+
+    # setup outputs
+    switch_points = list()
+    transitions = list()
+    observations = list()
+
+    # iterate over state values
+    for cur_idx in range(n):
+
+        # access current state
+        cur = x[cur_idx]
+
+        # check if it's a state we're not interested in
+        if cur < 0 or cur > max_state or not is_state[cur]:
+            continue
+
+        elif cur != prv:
+            # record a state transition
+            switch = prv_idx, cur_idx
+            switch_points.append(switch)
+            transition = prv, cur
+            transitions.append(transition)
+            observations.append(observed)
+            observed = 0
+
+        # advance
+        prv = cur
+        prv_idx = cur_idx
+        observed += 1
+
+    # add final transition at right-hand boundary
+    switch = prv_idx, -1
+    switch_points.append(switch)
+    transition = prv, -1
+    transitions.append(transition)
+    observations.append(observed)
+
+    return (
+        np.array(switch_points, dtype=int),
+        np.array(transitions, dtype=np.asarray(x).dtype),
+        np.array(observations, dtype=int)
+    )

@@ -5,8 +5,7 @@ scikit-learn
 numexpr
 dask
 h5py
-bcolz
 zarr
 nose
 flake8
-petl
+bcolz

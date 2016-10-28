@@ -223,9 +223,9 @@ def pcoa(dist):
 
     # perform scaling
     e_matrix = (dist ** 2) / -2
-    row_means = e_matrix.mean(axis=1, keepdims=True)
-    col_means = e_matrix.mean(axis=0, keepdims=True)
-    matrix_mean = e_matrix.mean()
+    row_means = np.mean(e_matrix, axis=1, keepdims=True)
+    col_means = np.mean(e_matrix, axis=0, keepdims=True)
+    matrix_mean = np.mean(e_matrix)
     f_matrix = e_matrix - row_means - col_means + matrix_mean
     eigvals, eigvecs = scipy.linalg.eigh(f_matrix)
 

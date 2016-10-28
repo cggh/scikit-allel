@@ -75,7 +75,7 @@ class HDF5Storage(object):
         # override in sub-classes
         raise NotImplementedError('group must be provided')
 
-    def create_dataset(self, h5g, data=None, **kwargs):
+    def create_dataset(self, h5g, data=None, expectedlen=None, **kwargs):
 
         # set defaults
         kwargs.setdefault('name', 'data')
@@ -91,6 +91,9 @@ class HDF5Storage(object):
                                                    data.shape[1:], 1)
             # 1Mb chunks
             chunklen = max(1, (2**20) // rowsize)
+            if expectedlen is not None:
+                # ensure chunks not bigger than expected length
+                chunklen = min(chunklen, expectedlen)
             chunks = (chunklen,) + data.shape[1:]
             kwargs.setdefault('chunks', chunks)
 
@@ -108,7 +111,6 @@ class HDF5Storage(object):
 
     # noinspection PyUnusedLocal
     def array(self, data, expectedlen=None, **kwargs):
-        # ignore expectedlen for now
 
         # setup
         data = _util.ensure_array_like(data)
@@ -120,7 +122,8 @@ class HDF5Storage(object):
             h5g, kwargs = self.open_file(**kwargs)
 
         # create dataset
-        h5d = self.create_dataset(h5g, data=data, **kwargs)
+        h5d = self.create_dataset(h5g, data=data, expectedlen=expectedlen,
+                                  **kwargs)
 
         # patch in append method
         h5d.append = MethodType(_dataset_append, h5d)
@@ -129,7 +132,6 @@ class HDF5Storage(object):
 
     # noinspection PyUnusedLocal
     def table(self, data, names=None, expectedlen=None, **kwargs):
-        # ignore expectedlen for now
 
         # setup
         names, columns = _util.check_table_like(data, names=names)
@@ -142,7 +144,8 @@ class HDF5Storage(object):
 
         # create columns
         for n, c in zip(names, columns):
-            self.create_dataset(h5g, data=c, name=n, **kwargs)
+            self.create_dataset(h5g, data=c, name=n, expectedlen=expectedlen,
+                                **kwargs)
 
         # patch in append method
         h5g.append = MethodType(_table_append, h5g)

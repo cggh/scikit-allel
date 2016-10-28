@@ -1,14 +1,16 @@
+cython
 numpy
 scipy
 matplotlib
 pandas
 scikit-learn
+hmmlearn
 numexpr
 nose
-petl
 seaborn
 toolz
 dask
+ipython
 h5py --no-binary :all:
 bcolz --no-binary :all:
 zarr --no-binary :all:

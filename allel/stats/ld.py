@@ -16,14 +16,14 @@ def rogers_huff_r(gn, fill=np.nan):
 
     Parameters
     ----------
-
     gn : array_like, int8, shape (n_variants, n_samples)
         Diploid genotypes at biallelic variants, coded as the number of
         alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
+    fill : float, optional
+        Value to use where r cannot be calculated.
 
     Returns
     -------
-
     r : ndarray, float, shape (n_variants * (n_variants - 1) // 2,)
         Matrix in condensed form.
 
@@ -42,10 +42,10 @@ def rogers_huff_r(gn, fill=np.nan):
            [ 2,  0,  2],
            [ 0,  1, -1]], dtype=int8)
     >>> r = allel.stats.rogers_huff_r(gn)
-    >>> r
-    array([ 1.        , -1.00000012,  1.        , -1.00000012,  1.        , -1.        ], dtype=float32)
-    >>> r ** 2
-    array([ 1.        ,  1.00000024,  1.        ,  1.00000024,  1.        ,  1.        ], dtype=float32)
+    >>> r  # doctest: +ELLIPSIS
+    array([ 1.        , -1.00000012,  1.        , -1.00000012,  1.        , -1.        ], ...
+    >>> r ** 2  # doctest: +ELLIPSIS
+    array([ 1.        ,  1.00000024,  1.        ,  1.00000024,  1.        ,  1.        ], ...
     >>> from scipy.spatial.distance import squareform
     >>> squareform(r ** 2)
     array([[ 0.        ,  1.        ,  1.00000024,  1.        ],
@@ -53,7 +53,7 @@ def rogers_huff_r(gn, fill=np.nan):
            [ 1.00000024,  1.00000024,  0.        ,  1.        ],
            [ 1.        ,  1.        ,  1.        ,  0.        ]])
 
-    """  # flake8: noqa
+    """
 
     # check inputs
     gn = asarray_ndim(gn, 2, dtype='i1')
@@ -76,14 +76,14 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
 
     Parameters
     ----------
-
     gna, gnb : array_like, int8, shape (n_variants, n_samples)
         Diploid genotypes at biallelic variants, coded as the number of
         alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
+    fill : float, optional
+        Value to use where r cannot be calculated.
 
     Returns
     -------
-
     r : ndarray, float, shape (m_variants, n_variants )
         Matrix in rectangular form.
 
@@ -104,14 +104,12 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
     return r
 
 
-def locate_unlinked(gn, size=100, step=20, threshold=.1, chunked=False,
-                    blen=None):
+def locate_unlinked(gn, size=100, step=20, threshold=.1, blen=None):
     """Locate variants in approximate linkage equilibrium, where r**2 is
     below the given `threshold`.
 
     Parameters
     ----------
-
     gn : array_like, int8, shape (n_variants, n_samples)
         Diploid genotypes at biallelic variants, coded as the number of
         alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
@@ -126,14 +124,12 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1, chunked=False,
 
     Returns
     -------
-
     loc : ndarray, bool, shape (n_variants)
         Boolean array where True items locate variants in approximate
         linkage equilibrium.
 
     Notes
     -----
-
     The value of r**2 between each pair of variants is calculated using the
     method of Rogers and Huff (2008).
 
@@ -171,7 +167,6 @@ def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
 
     Parameters
     ----------
-
     pos : array_like, int, shape (n_items,)
         The item positions in ascending order, using 1-based coordinates..
     gn : array_like, int8, shape (n_variants, n_samples)
@@ -197,7 +192,6 @@ def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
 
     Returns
     -------
-
     out : ndarray, shape (n_windows,)
         The value of the statistic for each window.
     windows : ndarray, int, shape (n_windows, 2)
@@ -208,7 +202,6 @@ def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
 
     Notes
     -----
-
     Linkage disequilibrium (r**2) is calculated using the method of Rogers
     and Huff (2008).
 

@@ -54,11 +54,18 @@ such as the different nucleotides observed at a single nucleotide polymorphism
 Installation
 ------------
 
-This package requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
-scikit-learn_, h5py_, numexpr_, bcolz_, zarr_, dask_ and petl_. Please install
-these dependencies first, then use pip to install scikit-allel::
+Install pre-built binaries via conda::
 
-    $ pip install -U scikit-allel
+    $ conda install -c conda-forge scikit-allel
+
+Install and compile source code via pip::
+
+    $ pip install scikit-allel
+
+N.B., this package requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
+scikit-learn_, h5py_, numexpr_, bcolz_, zarr_ and dask_. If installing via conda, these
+should be installed automatically. If installing via pip, please install these dependencies
+first, then use pip to install scikit-allel.
 
 Contents
 --------

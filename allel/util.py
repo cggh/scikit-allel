@@ -51,8 +51,39 @@ def asarray_ndim(a, *ndims, **kwargs):
         return None
     a = np.array(a, **kwargs)
     if a.ndim not in ndims:
-        raise ValueError('invalid number of dimensions: %s' % a.ndim)
+        if len(ndims) > 1:
+            expect_str = 'one of %s' % str(ndims)
+        else:
+            # noinspection PyUnresolvedReferences
+            expect_str = '%s' % ndims[0]
+        raise TypeError('bad number of dimensions: expected %s; found %s' %
+                        (expect_str, a.ndim))
     return a
+
+
+def check_ndim(a, ndim):
+    if a.ndim != ndim:
+        raise TypeError('bad number of dimensions: expected %s; found %s' % (ndim, a.ndim))
+
+
+def check_shape(a, shape):
+    if a.shape != shape:
+        raise TypeError('bad shape: expected %s; found %s' % (shape, a.shape))
+
+
+def check_dtype(a, *dtypes):
+    dtypes = [np.dtype(t) for t in dtypes]
+    if a.dtype not in dtypes:
+        raise TypeError('bad dtype: expected on of %s; found %s' % (dtypes, a.dtype))
+
+
+def check_dtype_kind(a, *kinds):
+    if a.dtype.kind not in kinds:
+        raise TypeError('bad dtype kind: expected on of %s; found %s' % (kinds, a.dtype.kind))
+
+
+def check_integer_dtype(a):
+    check_dtype_kind(a, 'u', 'i')
 
 
 def check_dim0_aligned(*arrays):
@@ -133,16 +164,18 @@ def _make_key(args, kwds, typed,
               fasttypes={int, str, frozenset, type(None)},
               sorted=sorted, tuple=tuple, type=type, len=len):
     key = args
+    kwd_items = sorted(kwds.items())
     if kwds:
-        sorted_items = sorted(kwds.items())
         key += kwd_mark
-        for item in sorted_items:
+        for item in kwd_items:
             key += item
     if typed:
         key += tuple(type(v) for v in args)
         if kwds:
-            key += tuple(type(v) for k, v in sorted_items)
-    elif len(key) == 1 and type(key[0]) in fasttypes:
+            key += tuple(type(v) for _, v in kwd_items)
+    else:
+        key = args
+    if len(key) == 1 and type(key[0]) in fasttypes:
         return key[0]
     return _HashedSeq(key)
 
@@ -362,3 +395,32 @@ def hdf5_cache(filepath=None, parent=None, group=None, names=None, typed=False,
         return update_wrapper(wrapper, user_function)
 
     return decorator
+
+
+def contains_newaxis(item):
+    if item is None:
+        return True
+    elif item is np.newaxis:
+        return True
+    elif isinstance(item, tuple):
+        return any((i is None or i is np.newaxis) for i in item)
+    return False
+
+
+def check_ploidy(actual, expect):
+    if expect != actual:
+        raise ValueError(
+            'expected ploidy %s, found %s' % (expect, actual)
+        )
+
+
+def check_min_samples(actual, expect):
+    if actual < expect:
+        raise ValueError(
+            'expected at least %s samples, found %s' % (expect, actual)
+        )
+
+
+def check_type(obj, expected):
+    if not isinstance(obj, expected):
+        raise TypeError('bad argument type, expected %s, found %s' % (expected, type(obj)))

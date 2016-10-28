@@ -60,7 +60,7 @@ test_script:
   - "%CMD_IN_ENV% activate test-environment"
   - "%CMD_IN_ENV% conda install --yes --file=requirements_ci.txt"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
-  - "%CMD_IN_ENV% nosetests -v allel"
+  - "%CMD_IN_ENV% nosetests -v allel --exclude=from_gff3_region"
 
 after_test:
   - "%CMD_IN_ENV% python setup.py bdist_wheel"

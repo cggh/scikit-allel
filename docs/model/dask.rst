@@ -1,5 +1,5 @@
-Dask arrays (experimental)
-==========================
+Dask arrays
+===========
 
 .. automodule:: allel.model.dask
 

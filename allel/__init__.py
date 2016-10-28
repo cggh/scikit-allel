@@ -2,30 +2,22 @@
 # flake8: noqa
 
 
-from allel import model
-from allel import stats
-from allel import plot
-from allel import io
-from allel import chunked
-from allel import constants
-from allel import util
-
-# convenient shortcuts
-from allel.model.ndarray import *
-from allel.model.chunked import *
-
-# experimental
+from . import model
+from .model.ndarray import *
+from .model.chunked import *
+from .model.util import *
 try:
-    import dask.array as _da
-    from allel.model.dask import *
+    import dask
 except ImportError:
     pass
+else:
+    from .model.dask import *
+from . import stats
+from .stats import *
+from . import plot
+from . import io
+from . import chunked
+from . import constants
+from . import util
 
-# deprecated
-try:
-    import bcolz as _bcolz
-    from allel.model.bcolz import *
-except ImportError:
-    pass
-
-__version__ = '0.21.2'
+__version__ = '1.0.0'
