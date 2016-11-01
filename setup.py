@@ -115,7 +115,7 @@ def setup_package():
         version=VERSION,
         package_dir={'': '.'},
         packages=['allel', 'allel.model', 'allel.chunked', 'allel.stats',
-                  'allel.opt', 'allel.test'],
+                  'allel.opt', 'allel.test', 'allel.test.model', 'allel.test.stats'],
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
     )
