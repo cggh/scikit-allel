@@ -7,6 +7,8 @@ import numpy as np
 
 from allel.model.ndarray import GenotypeArray, HaplotypeArray
 from allel.util import check_ploidy, check_min_samples, check_type, check_dtype
+from allel.opt.stats import phase_progeny_by_transmission_int8, \
+    phase_parents_by_transmission_int8
 
 
 def mendel_errors(parent_genotypes, progeny_genotypes):
@@ -394,7 +396,6 @@ def phase_progeny_by_transmission(g):
     check_min_samples(g.n_samples, 3)
 
     # run the phasing
-    from allel.opt.stats import phase_progeny_by_transmission_int8
     is_phased = phase_progeny_by_transmission_int8(g.values)
     g.is_phased = np.asarray(is_phased).view(bool)
 
@@ -432,7 +433,6 @@ def phase_parents_by_transmission(g, window_size):
     check_min_samples(g.n_samples, 3)
 
     # run the phasing
-    from allel.opt.stats import phase_parents_by_transmission_int8
     is_phased = g.is_phased.view('u1')
     phase_parents_by_transmission_int8(g.values, is_phased, window_size)
 
@@ -471,12 +471,10 @@ def phase_by_transmission(g, window_size, copy=True):
     check_min_samples(g.n_samples, 3)
 
     # phase the progeny
-    from allel.opt.stats import phase_progeny_by_transmission_int8
     is_phased = phase_progeny_by_transmission_int8(g.values)
     g.is_phased = np.asarray(is_phased).view(bool)
 
     # phase the parents
-    from allel.opt.stats import phase_parents_by_transmission_int8
     phase_parents_by_transmission_int8(g.values, is_phased, window_size)
 
     return g

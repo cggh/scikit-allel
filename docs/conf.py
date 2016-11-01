@@ -22,50 +22,20 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
+
 MOCK_MODULES = ['scipy', 'scipy.stats', 'scipy.spatial', 'scipy.linalg',
                 'scipy.spatial.distance', 'matplotlib', 'matplotlib.pyplot',
-                'matplotlib.image', 'ipython', 'numexpr', 'sklearn',
-                'sklearn.decomposition', 'h5py', 'rpy2', 'rpy2.robjects',
-                'rpy2.robjects.numpy2ri', 'rpy2.robjects.packages',
-                'sklearn.manifold', 'scipy.special', 'pandas', 'bcolz']
+                'matplotlib.image', 'ipython', 'numexpr', 'sklearn', 'sklearn.decomposition',
+                'h5py', 'rpy2', 'rpy2.robjects', 'rpy2.robjects.numpy2ri',
+                'rpy2.robjects.packages', 'sklearn.manifold', 'scipy.special', 'pandas',
+                'bcolz', 'dask', 'dask.array']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
-
-# need to special-case numpy because we are sub-classing ndarray and recarray
-
-class MockNumpy(object):
-
-    class ndarray(object):
-        pass
-
-    class recarray(object):
-        pass
-
-    nan = Mock()
-    nan.__repr__ = lambda self: 'nan'
-
-sys.modules['numpy'] = MockNumpy()
-
-
-# need to special-case dask because we are sub-classing Array
-
-class MockDaskArray(object):
-
-    class Array(object):
-        pass
-
-
-class MockDask(object):
-    array = MockDaskArray()
-
-sys.modules['dask'] = MockDask()
-sys.modules['dask.array'] = MockDaskArray()
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
+# sys.path.insert(0, os.path.abspath('..'))
 
 # monkey-patch to avoid non-local URI warnings
 # http://stackoverflow.com/questions/12772927/specifying-an-online-image-in-sphinx-restructuredtext-format
@@ -324,7 +294,7 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     # 'http://docs.python.org/': None,
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    # 'numpy': ('http://docs.scipy.org/doc/numpy/', None),
     # 'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     # 'matplotlib': ('http://matplotlib.sourceforge.net/', None)
 }

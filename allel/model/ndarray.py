@@ -15,6 +15,11 @@ from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_inv
 from allel.compat import PY2, copy_method_doc, integer_types
 from allel.io import write_vcf, iter_gff3, recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
+from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
+    genotype_array_count_alleles, genotype_array_count_alleles_masked, \
+    genotype_array_count_alleles_subpop, genotype_array_count_alleles_subpop_masked, \
+    haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
+    haplotype_array_map_alleles
 from .generic import index_genotype_vector, compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
@@ -1539,8 +1544,6 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         """
 
-        from allel.opt.model import genotype_array_pack_diploid
-
         check_ploidy(self.ploidy, 2)
 
         if boundscheck:
@@ -1586,8 +1589,6 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         2/2 ./.
 
         """
-
-        from allel.opt.model import genotype_array_unpack_diploid
 
         # check arguments
         packed = np.asarray(packed)
@@ -1786,10 +1787,6 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         0 0
 
         """
-
-        from allel.opt.model import genotype_array_count_alleles, \
-            genotype_array_count_alleles_masked, genotype_array_count_alleles_subpop, \
-            genotype_array_count_alleles_subpop_masked
 
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
@@ -2353,9 +2350,6 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        from allel.opt.model import haplotype_array_count_alleles, \
-            haplotype_array_count_alleles_subpop
-
         # check inputs
         subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
         if subpop is not None:
@@ -2446,8 +2440,6 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         allel.model.util.create_allele_mapping
 
         """
-
-        from allel.opt.model import haplotype_array_map_alleles
 
         # check inputs
         mapping = asarray_ndim(mapping, 2)

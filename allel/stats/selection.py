@@ -11,6 +11,8 @@ from allel.util import asarray_ndim, check_dim0_aligned, check_ndim
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
 from allel.stats.diversity import moving_tajima_d
+from allel.opt.stats import pairwise_shared_prefix_lengths_int8, paint_shared_prefixes_int8, \
+    ihh01_scan_int8, ihh_scan_int8, nsl01_scan_int8, nsl_scan_int8
 
 
 def ehh_decay(h, truncate=False):
@@ -30,8 +32,6 @@ def ehh_decay(h, truncate=False):
         EHH at successive variants from the first variant.
 
     """
-
-    from allel.opt.stats import pairwise_shared_prefix_lengths_int8
 
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
@@ -76,8 +76,6 @@ def voight_painting(h):
         Haplotype indices after sorting by prefix.
 
     """
-
-    from allel.opt.stats import paint_shared_prefixes_int8
 
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
@@ -386,8 +384,6 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
 
     """
 
-    from allel.opt.stats import ihh01_scan_int8
-
     # check inputs
     h = np.asarray(h, dtype='i1')
     check_ndim(h, 2)
@@ -506,8 +502,6 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
 
     """
 
-    from allel.opt.stats import ihh_scan_int8
-
     # check inputs
     h1 = np.asarray(h1, dtype='i1')
     h2 = np.asarray(h2, dtype='i1')
@@ -611,8 +605,6 @@ def nsl(h, use_threads=True):
 
     """
 
-    from allel.opt.stats import nsl01_scan_int8
-
     # check inputs
     h = np.asarray(h, dtype='i1')
     check_ndim(h, 2)
@@ -678,7 +670,6 @@ def xpnsl(h1, h2, use_threads=True):
         Unstandardized XPNSL scores.
 
     """
-    from allel.opt.stats import nsl_scan_int8
 
     # check inputs
     h1 = np.asarray(h1, dtype='i1')

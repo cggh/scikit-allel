@@ -8,6 +8,8 @@ import numpy as np
 from allel.stats.window import windowed_statistic
 from allel.util import asarray_ndim, ensure_square
 from allel.chunked import get_blen_array
+from allel.opt.stats import gn_pairwise_corrcoef_int8, gn_pairwise2_corrcoef_int8, \
+    gn_locate_unlinked_int8
 
 
 def rogers_huff_r(gn, fill=np.nan):
@@ -59,7 +61,6 @@ def rogers_huff_r(gn, fill=np.nan):
     gn = asarray_ndim(gn, 2, dtype='i1')
 
     # compute correlation coefficients
-    from allel.opt.stats import gn_pairwise_corrcoef_int8
     r = gn_pairwise_corrcoef_int8(gn, fill)
 
     # convenience for singletons
@@ -94,7 +95,6 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
     gnb = asarray_ndim(gnb, 2, dtype='i1')
 
     # compute correlation coefficients
-    from allel.opt.stats import gn_pairwise2_corrcoef_int8
     r = gn_pairwise2_corrcoef_int8(gna, gnb, fill)
 
     # convenience for singletons
@@ -134,8 +134,6 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1, blen=None):
     method of Rogers and Huff (2008).
 
     """
-
-    from allel.opt.stats import gn_locate_unlinked_int8
 
     # check inputs
     if not hasattr(gn, 'shape') or not hasattr(gn, 'dtype'):

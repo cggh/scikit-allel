@@ -7,6 +7,7 @@ import numpy as np
 
 from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype
+from allel.opt.stats import state_transitions
 
 
 def jackknife(values, statistic):
@@ -216,7 +217,6 @@ def tabulate_state_transitions(x, states, pos=None):
     check_integer_dtype(x)
 
     # find state transitions
-    from allel.opt.stats import state_transitions
     switch_points, transitions, _ = state_transitions(x, states)
 
     # start to build a dataframe
@@ -298,7 +298,6 @@ def tabulate_state_blocks(x, states, pos=None):
     check_integer_dtype(x)
 
     # find state transitions
-    from allel.opt.stats import state_transitions
     switch_points, transitions, observations = state_transitions(x, states)
 
     # setup some helpers
