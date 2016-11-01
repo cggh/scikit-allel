@@ -1,6 +1,22 @@
 Release notes
 =============
 
+v1.0.3
+------
+
+Fix test compatibility with numpy 1.10.
+
+v1.0.2
+------
+
+Move cython function imports outside of functions to work around bug found when using
+scikit-allel with dask.
+
+v1.0.1
+------
+
+Add missing test packages so full test suite can be run to verify install.
+
 v1.0.0
 ------
 
