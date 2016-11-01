@@ -448,8 +448,7 @@ def test_ssl2ihh_h():
 def test_ihs():
     n_variants = 1000
     n_haplotypes = 20
-    h = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
-                          dtype='i1')
+    h = np.random.randint(0, 2, size=(n_variants, n_haplotypes)).astype('i1')
     pos = np.arange(0, n_variants * 10, 10)
 
     for use_threads in True, False:
@@ -531,10 +530,8 @@ def test_ihs_data():
 def test_xpehh():
     n_variants = 1000
     n_haplotypes = 20
-    h1 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
-                           dtype='i1')
-    h2 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
-                           dtype='i1')
+    h1 = np.random.randint(0, 2, size=(n_variants, n_haplotypes)).astype('i1')
+    h2 = np.random.randint(0, 2, size=(n_variants, n_haplotypes)).astype('i1')
     pos = np.arange(0, n_variants * 10, 10)
 
     for use_threads in True, False:
@@ -575,8 +572,7 @@ def test_xpehh_data():
 def test_nsl():
     n_variants = 1000
     n_haplotypes = 20
-    h = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
-                          dtype='i1')
+    h = np.random.randint(0, 2, size=(n_variants, n_haplotypes)).astype('i1')
 
     for use_threads in True, False:
         score = nsl(h, use_threads=use_threads)
@@ -588,10 +584,8 @@ def test_nsl():
 def test_xpnsl():
     n_variants = 1000
     n_haplotypes = 20
-    h1 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
-                           dtype='i1')
-    h2 = np.random.randint(0, 2, size=(n_variants, n_haplotypes),
-                           dtype='i1')
+    h1 = np.random.randint(0, 2, size=(n_variants, n_haplotypes)).astype('i1')
+    h2 = np.random.randint(0, 2, size=(n_variants, n_haplotypes)).astype('i1')
 
     for use_threads in True, False:
         score = xpnsl(h1, h2, use_threads=use_threads)
