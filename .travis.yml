@@ -37,7 +37,7 @@ install:
 script:
   - python setup.py build_ext --inplace
   - export PYTHONHASHSEED=42
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
       nosetests allel -v --with-doctest --doctest-options=+NORMALIZE_WHITESPACE,+ELLIPSIS;
       flake8 --max-line-length=100 allel;
     else
