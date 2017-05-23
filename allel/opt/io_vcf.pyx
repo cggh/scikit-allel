@@ -1,9 +1,14 @@
+# cython: language_level=3
 # cython: profile=True
 # cython: linetrace=True
 # cython: binding=True
+# distutils: define_macros=CYTHON_TRACE=1
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
+"""
+"""
 
 
+import sys
 import gzip
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
 from libc.stdlib cimport strtol, strtof
@@ -19,10 +24,103 @@ cdef char HASH = b'#'
 cdef char COLON = b':'
 cdef char PERIOD = b'.'
 cdef char COMMA = b','
+cdef char SLASH = b'/'
+cdef char PIPE = b'|'
+
+
+def debug(*msg):
+    print(*msg, file=sys.stderr)
+    sys.stderr.flush()
+
+
+cdef class BufferedInputStream(object):
+
+    cdef object fileobj
+    cdef int buffer_size
+    cdef bytes buffer
+    cdef char* stream
+    cdef char* stream_end
+
+    def __cinit__(self, fileobj, buffer_size):
+        self.fileobj = fileobj
+        self.buffer_size = buffer_size
+        BufferedInputStream_fill_buffer(self)
+
+
+# break out method as function for profiling
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+# @cython.profile(False)
+cpdef inline void BufferedInputStream_fill_buffer(BufferedInputStream self):
+    cdef:
+        int l
+    self.buffer = self.fileobj.read(self.buffer_size)
+    l = len(self.buffer)
+    if l > 0:
+        self.stream = PyBytes_AS_STRING(self.buffer)
+        self.stream_end = self.stream + l
+    else:
+        self.stream = NULL
+
+
+# break out method as function for profiling
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+# @cython.profile(False)
+cpdef inline char BufferedInputStream_next(BufferedInputStream self):
+    cdef:
+        char c
+    if self.stream == self.stream_end:
+        BufferedInputStream_fill_buffer(self)
+    if self.stream == NULL:
+        return 0
+    c = self.stream[0]
+    self.stream += 1
+    return c
+
+
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def spike_read_len(fn, buffer_size):
+    """Foo."""
+    cdef:
+        BufferedInputStream input_stream
+        char c
+        int i = 0
+    with gzip.open(fn, mode='rb') as fileobj:
+        input_stream = BufferedInputStream(fileobj, buffer_size=buffer_size)
+        c = BufferedInputStream_next(input_stream)
+        while c != 0:
+            c = BufferedInputStream_next(input_stream)
+            i += 1
+    return i
+
+
+def foo():
+    pass
+
+
+def spike_read(fn, buffer_size, limit):
+    cdef:
+        BufferedInputStream input_stream
+        char c
+        int i = 0
+    with gzip.open(fn, mode='rb') as fileobj:
+        input_stream = BufferedInputStream(fileobj, buffer_size=buffer_size)
+        c = BufferedInputStream_next(input_stream)
+        while c != 0 and i < limit:
+            debug(i, <bytes>c)
+            c = BufferedInputStream_next(input_stream)
+            i += 1
 
 
 cdef enum ParserState:
-    HEADER_NEWLINE,
     HEADER,
     CHROM,
     POS,
@@ -39,18 +137,22 @@ cdef enum ParserState:
 cdef class ParserContext(object):
     cdef int state
     cdef char* input_stream
+    cdef int n_samples
     cdef int variant_index
     cdef int block_variant_index
     cdef int sample_index
     cdef list formats
     cdef int format_index
+    cdef char* header_start
 
     def __cinit__(self):
-        self.state = ParserState.HEADER_NEWLINE
+        self.state = ParserState.HEADER
+        self.n_samples = 0
         self.variant_index = 0
         self.block_variant_index = 0
         self.sample_index = 0
         self.format_index = 0
+        self.header_start = NULL
 
 
 cdef class Parser(object):
@@ -68,6 +170,55 @@ def check_string_dtype(dtype):
     if dtype.kind != 'S':
         raise ValueError('expected byte string ("S") dtype, found: %r' % dtype)
     return dtype
+
+
+cdef class HeaderParser(Parser):
+
+    def __cinit__(self):
+        pass
+
+    cdef malloc(self):
+        pass
+
+    cdef parse(self, ParserContext context):
+        HeaderParser_parse(self, context)
+
+
+cpdef HeaderParser_parse(HeaderParser self, ParserContext context):
+    cdef:
+        char c = context.input_stream[0]
+
+    debug('HeaderParser_parse', <int>(context.input_stream), c)
+
+    # if context.header_start == NULL:
+    #
+    #     if c == HASH:
+    #         context.header_start = context.input_stream
+    #
+    #
+    # if c != HASH:
+    #
+    #     # TODO review this
+    #     raise RuntimeError('missing final header line?')
+    #
+    # while c != NEWLINE:
+    #     context.input_stream += 1
+    #     c = context.input_stream[0]
+    #
+    # header_len = context.input_stream - header_start
+    # debug(header_len)
+    # header_line = PyBytes_FromStringAndSize(header_start, header_len)
+    # debug(header_line)
+    #
+    # if header_line.startswith(b'#CHROM'):
+    #
+    #     # record number of samples
+    #     context.n_samples = len(header_line.split(b'\t')) - 9
+    #
+    #     # advance state
+    #     context.state = ParserState.CHROM
+    #
+    # context.input_stream += 1
 
 
 cdef class StringParser(Parser):
@@ -94,6 +245,10 @@ cdef class StringParser(Parser):
 
 
 # break out method as function for profiling
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef StringParser_parse(StringParser self, ParserContext context):
     cdef:
         # current character in input buffer
@@ -143,6 +298,10 @@ cdef class PosInt32Parser(Parser):
 
 
 # break out method as function for profiling
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef PosInt32Parser_parse(PosInt32Parser self, ParserContext context):
     cdef:
         long value
@@ -191,7 +350,11 @@ cdef class AltParser(Parser):
 
 
 # break out method as function for profiling
-cdef AltParser_parse(AltParser self, ParserContext context):
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef AltParser_parse(AltParser self, ParserContext context):
     cdef:
         # current character in input buffer
         char c = context.input_stream[0]
@@ -252,6 +415,10 @@ cdef class QualFloat32Parser(Parser):
 
 
 # break out method as function for profiling
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef QualFloat32Parser_parse(QualFloat32Parser self,
                                     ParserContext context):
     cdef:
@@ -297,7 +464,7 @@ cdef class FilterParser(Parser):
 
     def __cinit__(self, block_size, filters):
         self.block_size = block_size
-        self.filters = filters
+        self.filters = tuple(filters)
         # PASS comes first
         self.filter_position = {f: i + 1 for i, f in enumerate(self.filters)}
         self.filter_position[b'PASS'] = 0
@@ -313,13 +480,18 @@ cdef class FilterParser(Parser):
         FilterParser_store(self, context, filter_start, filter_len)
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef FilterParser_store(FilterParser self,
-                               ParserContext context,
-                               char* filter_start,
-                               int filter_len):
+                         ParserContext context,
+                         char* filter_start,
+                         int filter_len):
         # TODO needs optimising?
         cdef:
             bytes f
+            int filter_index
 
         # read filter into byte string
         f = PyBytes_FromStringAndSize(filter_start, filter_len)
@@ -334,6 +506,10 @@ cpdef FilterParser_store(FilterParser self,
         self.memory[context.block_variant_index, filter_index] = 1
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef FilterParser_parse(FilterParser self, ParserContext context):
     cdef:
         char c = context.input_stream[0]
@@ -385,7 +561,7 @@ cpdef FilterParser_parse(FilterParser self, ParserContext context):
 
 cdef class InfoParser(Parser):
 
-    def __cinit__(self, size):
+    def __cinit__(self, block_size):
         pass
 
     cdef malloc(self):
@@ -395,6 +571,10 @@ cdef class InfoParser(Parser):
         InfoParser_parse(self, context)
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef InfoParser_parse(InfoParser self, ParserContext context):
     # TODO
     cdef:
@@ -419,6 +599,10 @@ cdef class FormatParser(Parser):
         FormatParser_parse(self, context)
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef FormatParser_parse(FormatParser self, ParserContext context):
     cdef:
         char c = context.input_stream[0]
@@ -463,10 +647,14 @@ cdef class CalldataParser(Parser):
 
     cdef dict parsers
 
-    def __cinit__(self, formats):
+    def __cinit__(self, block_size, formats, n_samples, ploidy):
+        self.parsers = dict()
         for f in formats:
-            if f == 'GT':
-                self.parsers[f] = GenotypeInt8Parser()
+            if f == b'GT':
+                self.parsers[f] = GenotypeInt8Parser(block_size=block_size,
+                                                     n_samples=n_samples,
+                                                     ploidy=ploidy,
+                                                     fill=-1)
             else:
                 self.parsers[f] = DummyCalldataParser()
             # TODO initialise parsers for all fields
@@ -479,6 +667,10 @@ cdef class CalldataParser(Parser):
         CalldataParser_parse(self, context)
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef CalldataParser_parse(CalldataParser self, ParserContext context):
     cdef:
         list parsers
@@ -498,8 +690,6 @@ cpdef CalldataParser_parse(CalldataParser self, ParserContext context):
         if c == NEWLINE:
 
             context.input_stream += 1
-            context.variant_index += 1
-            context.block_variant_index += 1
             break
 
         elif c == TAB:
@@ -546,6 +736,10 @@ cdef class GenotypeInt8Parser(Parser):
         GenotypeInt8Parser_parse(self, context)
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):
     cdef:
         int allele_index = 0
@@ -596,6 +790,10 @@ cdef class DummyCalldataParser(Parser):
         DummyCalldataParser_parse(self, context)
 
 
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef DummyCalldataParser_parse(DummyCalldataParser self, ParserContext context):
     cdef:
         char c = context.input_stream[0]
@@ -615,6 +813,7 @@ def vcf_block_iter(fileobj, buffer_size, block_size):
     cdef:
         ParserContext context
         char* stream_end
+        Parser header_parser
         Parser chrom_parser
         Parser pos_parser
         Parser id_parser
@@ -628,7 +827,18 @@ def vcf_block_iter(fileobj, buffer_size, block_size):
 
     # setup
     context = ParserContext()
-    chrom_parser = StringParser()
+    # TODO user-provided dtypes
+    header_parser = HeaderParser()
+    chrom_parser = StringParser(block_size=block_size, dtype='S12')
+    pos_parser = PosInt32Parser(block_size=block_size)
+    id_parser = StringParser(block_size=block_size, dtype='S12')
+    ref_parser = StringParser(block_size=block_size, dtype='S12')
+    alt_parser = AltParser(block_size=block_size, dtype='S1', arity=3)
+    qual_parser = QualFloat32Parser(block_size=block_size)
+    format_parser = FormatParser()
+
+    # TODO yield blocks
+    blocks = []
 
     # read in first buffer
     buffer = fileobj.read(buffer_size)
@@ -644,56 +854,112 @@ def vcf_block_iter(fileobj, buffer_size, block_size):
         # iterate character by character until end of buffer
         while context.input_stream < stream_end:
 
-            if context.state == ParserState.HEADER_NEWLINE:
+            if context.state == ParserState.HEADER:
+                header_parser.parse(context)
 
-                parse_header_newline(parser)
+                # detect transition from header to body
+                if context.state == ParserState.CHROM:
+                    # TODO discover filters from header
+                    filter_parser = FilterParser(block_size=block_size, filters=[])
+                    # TODO discuver INFO fields from header
+                    info_parser = InfoParser(block_size=block_size)
+                    # TODO handle all format fields
+                    calldata_parser = CalldataParser(block_size=block_size,
+                                                     formats=[b'GT'],
+                                                     n_samples=context.n_samples,
+                                                     ploidy=2)
 
-            elif parser.state == States.HEADER:
+            elif context.state == ParserState.CHROM:
+                chrom_parser.parse(context)
+                context.state = ParserState.POS
 
-                parse_header(parser)
+            elif context.state == ParserState.POS:
+                pos_parser.parse(context)
+                context.state = ParserState.ID
 
-            elif parser.state == States.CHROM:
+            elif context.state == ParserState.ID:
+                id_parser.parse(context)
+                context.state = ParserState.REF
 
-                parse_chrom(parser)
+            elif context.state == ParserState.REF:
+                ref_parser.parse(context)
+                context.state = ParserState.ALT
 
-            elif parser.state == States.POS:
+            elif context.state == ParserState.ALT:
+                alt_parser.parse(context)
+                context.state = ParserState.QUAL
 
-                parse_pos(parser)
+            elif context.state == ParserState.QUAL:
+                qual_parser.parse(context)
+                context.state = ParserState.FILTER
 
-            elif parser.state == States.ID:
+            elif context.state == ParserState.FILTER:
+                filter_parser.parse(context)
+                context.state = ParserState.INFO
 
-                parse_id(parser)
+            elif context.state == ParserState.INFO:
+                info_parser.parse(context)
+                context.state = ParserState.FORMAT
 
-            elif parser.state == States.REF:
+            elif context.state == ParserState.FORMAT:
+                format_parser.parse(context)
+                context.state = ParserState.CALLDATA
 
-                parse_ref(parser)
+            elif context.state == ParserState.CALLDATA:
+                calldata_parser.parse(context)
+                context.state = ParserState.CHROM
 
-            elif parser.state == States.ALT:
-
-                parse_alt(parser)
-
-            elif parser.state == States.QUAL:
-
-                parse_qual(parser)
-
-            elif parser.state == States.FILTER:
-
-                parse_filter(parser)
-
-            elif parser.state == States.INFO:
-
-                parse_info(parser)
-
-            elif parser.state == States.FORMAT:
-
-                parse_format(parser)
-
-            elif parser.state == States.CALLDATA:
-
-                parse_calldata(parser)
+                context.variant_index += 1
+                if context.block_variant_index < block_size:
+                    context.block_variant_index += 1
+                else:
+                    context.block_variant_index = 0
+                    block = {
+                        'variants/CHROM': chrom_parser.values,
+                        'variants/POS': pos_parser.values,
+                        'variants/REF': ref_parser.values,
+                        'variants/ALT': alt_parser.values,
+                        'variants/QUAL': qual_parser.values,
+                        'variants/FILTER': filter_parser.values,
+                        # TODO INFO
+                        'calldata/GT': calldata_parser.parsers['GT'].values,
+                        # TODO other calldata
+                    }
+                    blocks.append(block)
 
             else:
                 raise Exception('unexpected parser state')
 
         # read in next buffer
         buffer = fileobj.read(buffer_size)
+
+    # left-over block
+    l = context.block_variant_index + 1
+    block = {
+        'variants/CHROM': chrom_parser.values[:l],
+        'variants/POS': pos_parser.values[:l],
+        'variants/REF': ref_parser.values[:l],
+        'variants/ALT': alt_parser.values[:l],
+        'variants/QUAL': qual_parser.values[:l],
+        'variants/FILTER': filter_parser.values[:l],
+        # TODO INFO
+        'calldata/GT': calldata_parser.parsers['GT'].values[:l],
+        # TODO other calldata
+    }
+    blocks.append(block)
+
+    return blocks
+
+
+def vcf_block_read(path, buffer_size, block_size):
+
+    if isinstance(path, str) and path.endswith('gz'):
+        with gzip.open(path, mode='rb') as fileobj:
+            return vcf_block_iter(fileobj, buffer_size=buffer_size, block_size=block_size)
+
+    elif isinstance(path, str):
+        with open(path, mode='rb') as fileobj:
+            return vcf_block_iter(fileobj, buffer_size=buffer_size, block_size=block_size)
+
+    else:
+        return vcf_block_iter(path, buffer_size=buffer_size, block_size=block_size)
