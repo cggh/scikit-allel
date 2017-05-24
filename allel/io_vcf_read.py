@@ -6,7 +6,7 @@ TODO:
 * DONE Inintial implementation of vcf_to_npz
 * DONE Initial implementation of vcf_to_hdf5
 * DONE Add samples to output of read_vcf and store in vcf_to_... functions
-* Implement vcf_to_zarr
+* DONE Initial implementation of vcf_to_zarr
 * Parse FILTERS from header
 * Return filters as separate arrays in read_vcf
 * Store filters as separate arrays/datasets in vcf_to_... functions
@@ -159,7 +159,7 @@ def vcf_to_hdf5(input_path, output_path,
             else:
                 # TODO right exception class?
                 raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
-        root[group].create_dataset(name, data=np.array(samples))
+        root[group].create_dataset(name, data=np.array(samples), chunks=None)
 
         # read first chunk
         chunk = next(chunks, None)
@@ -190,9 +190,9 @@ def vcf_to_hdf5(input_path, output_path,
                     # TODO right exception class?
                     raise ValueError('dataset exists at path %r; use overwrite=True to replace' % k)
 
-            shape = data.shape
-            maxshape = (None,) + shape[1:]
-            root[group].create_dataset(name, shape=data.shape, maxshape=maxshape,
+            shape = (0,) + data.shape[1:]
+            maxshape = (None,) + data.shape[1:]
+            root[group].create_dataset(name, shape=shape, maxshape=maxshape,
                                        chunks=chunk_shape, dtype=data.dtype,
                                        compression=compression,
                                        compression_opts=compression_opts, shuffle=shuffle)
@@ -227,6 +227,77 @@ def vcf_to_hdf5(input_path, output_path,
 
             # move offset
             offset = new_length
+
+
+def vcf_to_zarr(input_path, output_path,
+                group='/',
+                compressor='default',
+                fill_value=0,
+                order='C',
+                overwrite=False,
+                buffer_size=DEFAULT_BUFFER_SIZE,
+                chunk_length=DEFAULT_CHUNK_LENGTH,
+                chunk_width=DEFAULT_CHUNK_WIDTH,
+                temp_max_size=DEFAULT_TEMP_SIZE):
+    """TODO"""
+
+    import zarr
+
+    # open root group
+    root = zarr.open_group(output_path, mode='a', path=group)
+
+    # ensure sub-groups
+    root.require_group('variants')
+    root.require_group('calldata')
+
+    # setup chunk iterator
+    samples, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
+                                      chunk_length=chunk_length,
+                                      temp_max_size=temp_max_size)
+    # TODO this won't be necessary when using generators
+    chunks = iter(chunks)
+
+    # store samples
+    root[group].create_dataset('samples', data=np.array(samples), compressor=None,
+                               overwrite=overwrite)
+
+    # read first chunk
+    chunk = next(chunks, None)
+
+    # handle no input
+    if chunk is None:
+        raise RuntimeError('input file has no data?')
+
+    # setup datasets
+    keys = sorted(chunk.keys())
+    for k in keys:
+
+        # obtain initial data
+        data = chunk[k]
+
+        # determine chunk shape
+        if data.ndim == 1:
+            chunk_shape = (chunk_length,)
+        else:
+            chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
+
+        # create dataset
+        shape = (0,) + data.shape[1:]
+        root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
+                            compressor=compressor, overwrite=overwrite, fill_value=fill_value,
+                            order=order)
+
+    # reconstitute chunks iterator
+    chunks = itertools.chain([chunk], chunks)
+
+    # load chunks
+    for chunk_index, chunk in enumerate(chunks):
+
+        # load arrays
+        for k in keys:
+
+            # append data
+            root[k].append(chunk[k], axis=0)
 
 
 def read_vcf_chunks(path,
