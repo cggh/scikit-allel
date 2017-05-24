@@ -8,8 +8,8 @@ TODO:
 * DONE Add samples to output of read_vcf and store in vcf_to_... functions
 * DONE Initial implementation of vcf_to_zarr
 * DONE Parse FILTERS from header
-* Return filters as separate arrays in read_vcf
-* Store filters as separate arrays/datasets in vcf_to_... functions
+* DONE Return filters as separate arrays in read_vcf
+* DONE Store filters as separate arrays/datasets in vcf_to_... functions
 * Parse INFO fields
 * Parse other FORMAT fields
 * Read from region via tabix
@@ -48,6 +48,7 @@ DEFAULT_TEMP_SIZE = 2**15
 
 
 def read_vcf(path,
+             fields=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              temp_max_size=DEFAULT_TEMP_SIZE):
@@ -56,6 +57,8 @@ def read_vcf(path,
     Parameters
     ----------
     path : str
+        TODO
+    fields : sequence of str
         TODO
     buffer_size : int
         TODO
@@ -72,7 +75,7 @@ def read_vcf(path,
     """
 
     # setup
-    headers, chunks = read_vcf_chunks(path=path, buffer_size=buffer_size,
+    headers, chunks = read_vcf_chunks(path=path, fields=fields, buffer_size=buffer_size,
                                       chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     # read all chunks into a list
@@ -97,6 +100,7 @@ def read_vcf(path,
 def vcf_to_npz(input_path, output_path,
                compressed=True,
                overwrite=False,
+               fields=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                temp_max_size=DEFAULT_TEMP_SIZE):
@@ -108,8 +112,8 @@ def vcf_to_npz(input_path, output_path,
         raise ValueError('file exists at path %r; use overwrite=True to replace' % output_path)
 
     # read all data into memory
-    data = read_vcf(path=input_path, buffer_size=buffer_size, chunk_length=chunk_length,
-                    temp_max_size=temp_max_size)
+    data = read_vcf(path=input_path, fields=fields, buffer_size=buffer_size,
+                    chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     # setup save function
     if compressed:
@@ -127,6 +131,7 @@ def vcf_to_hdf5(input_path, output_path,
                 compression_opts=1,
                 shuffle=False,
                 overwrite=False,
+                fields=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -148,9 +153,8 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        headers, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
-                                          chunk_length=chunk_length,
-                                          temp_max_size=temp_max_size)
+        headers, chunks = read_vcf_chunks(input_path, fields=fields, buffer_size=buffer_size,
+                                          chunk_length=chunk_length, temp_max_size=temp_max_size)
         # TODO this won't be necessary when using generators
         chunks = iter(chunks)
 
@@ -238,6 +242,7 @@ def vcf_to_zarr(input_path, output_path,
                 fill_value=0,
                 order='C',
                 overwrite=False,
+                fields=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -254,9 +259,8 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    headers, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
-                                      chunk_length=chunk_length,
-                                      temp_max_size=temp_max_size)
+    headers, chunks = read_vcf_chunks(input_path, fields=fields, buffer_size=buffer_size,
+                                      chunk_length=chunk_length, temp_max_size=temp_max_size)
     # TODO this won't be necessary when using generators
     chunks = iter(chunks)
 
@@ -304,6 +308,7 @@ def vcf_to_zarr(input_path, output_path,
 
 
 def read_vcf_chunks(path,
+                    fields=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
                     chunk_length=DEFAULT_CHUNK_LENGTH,
                     temp_max_size=DEFAULT_TEMP_SIZE):
@@ -312,28 +317,137 @@ def read_vcf_chunks(path,
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
         with gzip.open(path, mode='rb') as binary_file:
-            return _read_vcf(binary_file, buffer_size=buffer_size, chunk_length=chunk_length,
-                             temp_max_size=temp_max_size)
+            return _read_vcf(binary_file, fields=fields, buffer_size=buffer_size,
+                             chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     elif isinstance(path, str):
         # assume no compression
         with open(path, mode='rb', buffering=0) as binary_file:
-            return _read_vcf(binary_file, buffer_size=buffer_size, chunk_length=chunk_length,
-                             temp_max_size=temp_max_size)
+            return _read_vcf(binary_file, fields=fields, buffer_size=buffer_size,
+                             chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     else:
         # assume some other binary file-like object
         binary_file = path
-        return _read_vcf(binary_file, buffer_size=buffer_size, chunk_length=chunk_length,
-                         temp_max_size=temp_max_size)
+        return _read_vcf(binary_file, fields=fields, buffer_size=buffer_size,
+                         chunk_length=chunk_length, temp_max_size=temp_max_size)
 
 
-def _read_vcf(fileobj, buffer_size, chunk_length, temp_max_size):
+FIXED_FIELDS = (
+    b'variants/CHROM',
+    b'variants/POS',
+    b'variants/ID',
+    b'variants/REF',
+    b'variants/ALT',
+    b'variants/QUAL',
+)
+
+
+def normalize_fields(fields, headers):
+
+    # setup normalized fields
+    normed_fields = set()
+
+    for f in fields:
+
+        # ensure bytes
+        if isinstance(f, str):
+            f = f.encode('ascii')
+
+        # special-case: user requests all variants fields
+        if f == b'variants' or f == b'variants*' or f == b'variants/*':
+
+            # all fixed fields
+            for k in FIXED_FIELDS:
+                normed_fields.add(k)
+
+            # all FILTER fields
+            normed_fields.add(b'variants/FILTER_PASS')
+            for k in headers.filters:
+                normed_fields.add(b'variants/FILTER_' + k)
+
+            # all INFO fields
+            for k in headers.infos:
+                normed_fields.add(b'variants/' + k)
+
+            continue
+
+        # special-case: user requests all calldata fields
+        if f == b'calldata' or f == b'calldata*' or f == b'calldata/*':
+            
+            # all FORMAT fields
+            for k in headers.formats:
+                normed_fields.add(b'calldata/' + k)
+
+            continue
+
+        # normalize prefix
+        if not f.startswith(b'variants/') and not f.startswith(b'calldata/'):
+            # assume variants field
+            f = b'variants/' + f
+
+        if f in FIXED_FIELDS:
+            # no need for further checks
+            normed_fields.add(f)
+
+        # special-case: user requests all filters
+        elif f == b'variants/FILTER' or f == b'variants/FILTER*':
+
+            # add all filter fields
+            normed_fields.add(b'variants/FILTER_PASS')
+            for k in sorted(headers.filters):
+                normed_fields.add(b'variants/FILTER_' + k)
+
+        # special-case: user requests all INFO fields
+        elif f == b'variants/INFO' or f == b'variants/INFO*':
+            pass
+            # TODO
+
+        elif f.startswith(b'variants/'):
+
+            # check it's declared in INFO header
+            k = f.split(b'/')[1]
+            if k not in headers.infos:
+                raise ValueError('field not declared in INFO header: %r' % str(f, 'ascii'))
+            normed_fields.add(f)
+
+        elif f.startswith(b'calldata/'):
+
+            # check it's declared in FORMAT header
+            k = f.split(b'/')[1]
+            if k not in headers.formats:
+                raise ValueError('field not declared in FORMAT header: %r' % str(f, 'ascii'))
+            normed_fields.add(f)
+
+        else:
+            raise RuntimeError('unexpected field: %r' + f)
+
+    return normed_fields
+
+
+def _read_vcf(fileobj, fields, buffer_size, chunk_length, temp_max_size):
+
+    # read VCF headers
     headers = read_vcf_headers(fileobj)
-    n_samples = len(headers.samples)
-    filters = sorted(headers.filters)
+
+    # setup fields to read
+    if fields is None:
+
+        # choose default fields to parse
+        fields = list(FIXED_FIELDS)
+        # add in all FILTER fields by default
+        for f in sorted(headers.filters):
+            fields.append(b'variants/FILTER_' + f)
+        # add in GT field by default
+        fields.append(b'calldata/GT')
+
+    else:
+        fields = normalize_fields(fields, headers)
+
+    # setup chunks iterator
     chunks = iter_vcf(fileobj, buffer_size=buffer_size, chunk_length=chunk_length,
-                      temp_max_size=temp_max_size, n_samples=n_samples, filters=filters)
+                      temp_max_size=temp_max_size, headers=headers, fields=fields)
+
     return headers, chunks
 
 
@@ -347,7 +461,12 @@ def _binary_readline(binary_file):
 
 
 # pre-compile some regular expressions
-re_filter_header = re.compile(b'##FILTER=<ID=([^,]+),Description="([^"]+)">')
+re_filter_header = \
+    re.compile(b'##FILTER=<ID=([^,]+),Description="([^"]+)">')
+re_info_header = \
+    re.compile(b'##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+re_format_header = \
+    re.compile(b'##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
 
 
 VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
@@ -376,10 +495,38 @@ def read_vcf_headers(binary_file):
             if match is None:
                 raise RuntimeError('bad FILTER header: %r' % header)
             else:
-                k, desc = match.groups()
+                k, d = match.groups()
                 filters[k] = {
                     'ID': k,
-                    'Description': desc
+                    'Description': d
+                }
+
+        elif header.startswith(b'##INFO'):
+
+            match = re_info_header.match(header)
+            if match is None:
+                raise RuntimeError('bad INFO header: %r' % header)
+            else:
+                k, n, t, d = match.groups()
+                infos[k] = {
+                    'ID': k,
+                    'Number': n,
+                    'Type': t,
+                    'Description': d
+                }
+
+        elif header.startswith(b'##FORMAT'):
+
+            match = re_format_header.match(header)
+            if match is None:
+                raise RuntimeError('bad FORMAT header: %r' % header)
+            else:
+                k, n, t, d = match.groups()
+                formats[k] = {
+                    'ID': k,
+                    'Number': n,
+                    'Type': t,
+                    'Description': d
                 }
 
         elif header.startswith(b'#CHROM'):
@@ -388,7 +535,7 @@ def read_vcf_headers(binary_file):
             samples = header.split(b'\t')[9:]
             break
 
-        # read next header
+        # read next header line
         header = _binary_readline(binary_file)
 
     # check if we saw the mandatory header line or not

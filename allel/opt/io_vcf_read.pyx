@@ -35,7 +35,7 @@ cdef char SLASH = b'/'
 cdef char PIPE = b'|'
 
 
-def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, n_samples, filters):
+def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fields):
     cdef:
         ParserContext context
         StringParser chrom_parser
@@ -56,6 +56,7 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, n_samples, f
     reader = BufferedReader(binary_file, buffer_size=buffer_size)
 
     # setup context
+    n_samples = len(headers.samples)
     context = ParserContext(reader, temp_max_size=temp_max_size, n_samples=n_samples)
 
     # read in first character
@@ -68,11 +69,19 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, n_samples, f
     ref_parser = StringParser(field_name='REF', chunk_length=chunk_length, dtype='S1')
     alt_parser = AltParser(chunk_length=chunk_length, dtype='S1', arity=3)
     qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
-    # TODO discover filters from header
+
+    # setup FILTER parser
+    filters = sorted(headers.filters)
     filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
+
+    # setup INFO parsers
     # TODO discuver INFO fields from header
     info_parser = InfoParser(chunk_length=chunk_length)
+
+    # setup FORMAT parser
     format_parser = FormatParser()
+
+    # setup calldata parsers
     # # TODO handle all FORMAT fields
     calldata_parser = CalldataParser(chunk_length=chunk_length,
                                      formats=[b'GT'],
