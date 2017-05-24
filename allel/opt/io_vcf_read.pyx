@@ -35,7 +35,7 @@ cdef char SLASH = b'/'
 cdef char PIPE = b'|'
 
 
-def iter_vcf(binary_file, buffer_size, chunk_length, n_samples, temp_max_size):
+def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, n_samples, filters):
     cdef:
         ParserContext context
         StringParser chrom_parser
@@ -69,7 +69,7 @@ def iter_vcf(binary_file, buffer_size, chunk_length, n_samples, temp_max_size):
     alt_parser = AltParser(chunk_length=chunk_length, dtype='S1', arity=3)
     qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
     # TODO discover filters from header
-    filter_parser = FilterParser(chunk_length=chunk_length, filters=[])
+    filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
     # TODO discuver INFO fields from header
     info_parser = InfoParser(chunk_length=chunk_length)
     format_parser = FormatParser()
@@ -129,23 +129,27 @@ def iter_vcf(binary_file, buffer_size, chunk_length, n_samples, temp_max_size):
             context.variant_index += 1
             if context.chunk_variant_index < chunk_length - 1:
                 context.chunk_variant_index += 1
+
             else:
-                # debug('start new chunk')
-                chunk = {
-                    'variants/CHROM': chrom_parser.values,
-                    'variants/POS': pos_parser.values,
-                    'variants/ID': id_parser.values,
-                    'variants/REF': ref_parser.values,
-                    'variants/ALT': alt_parser.values,
-                    'variants/QUAL': qual_parser.values,
-                    'variants/FILTER': filter_parser.values,
-                    # TODO INFO
-                    'calldata/GT': calldata_parser.get_parser(b'GT').values,
-                    # TODO other calldata
-                }
+
+                # build chunk for output
+                chunk = dict()
+                chunk['variants/CHROM'] = chrom_parser.values
+                chunk['variants/POS'] = pos_parser.values
+                chunk['variants/ID'] = id_parser.values
+                chunk['variants/REF'] = ref_parser.values
+                chunk['variants/ALT'] = alt_parser.values
+                chunk['variants/QUAL'] = qual_parser.values
+                chunk['variants/FILTER_PASS'] = filter_parser.values[:, 0]
+                for i, f in enumerate(filters):
+                    chunk['variants/FILTER_' + str(f, 'ascii')] = filter_parser.values[:, i+1]
+                # TODO INFO
+                chunk['calldata/GT'] = calldata_parser.get_parser(b'GT').values
+                # TODO other calldata
+                chunks.append(chunk)
+
                 # setup next chunk
                 context.chunk_variant_index = 0
-                chunks.append(chunk)
                 chrom_parser.malloc()
                 pos_parser.malloc()
                 id_parser.malloc()
@@ -162,18 +166,19 @@ def iter_vcf(binary_file, buffer_size, chunk_length, n_samples, temp_max_size):
     # left-over chunk
     l = context.chunk_variant_index
     if l > 0:
-        chunk = {
-            'variants/CHROM': chrom_parser.values[:l],
-            'variants/POS': pos_parser.values[:l],
-            'variants/ID': id_parser.values[:l],
-            'variants/REF': ref_parser.values[:l],
-            'variants/ALT': alt_parser.values[:l],
-            'variants/QUAL': qual_parser.values[:l],
-            'variants/FILTER': filter_parser.values[:l],
-            # TODO INFO
-            'calldata/GT': calldata_parser.get_parser(b'GT').values[:l],
-            # TODO other calldata
-        }
+        chunk = dict()
+        chunk['variants/CHROM'] = chrom_parser.values[:l]
+        chunk['variants/POS'] = pos_parser.values[:l]
+        chunk['variants/ID'] = id_parser.values[:l]
+        chunk['variants/REF'] = ref_parser.values[:l]
+        chunk['variants/ALT'] = alt_parser.values[:l]
+        chunk['variants/QUAL'] = qual_parser.values[:l]
+        chunk['variants/FILTER_PASS'] = filter_parser.values[:l, 0]
+        for i, f in enumerate(filters):
+            chunk['variants/FILTER_' + str(f, 'ascii')] = filter_parser.values[:l, i+1]
+        # TODO INFO
+        chunk['calldata/GT'] = calldata_parser.get_parser(b'GT').values[:l]
+        # TODO other calldata
         chunks.append(chunk)
 
     # TODO yield

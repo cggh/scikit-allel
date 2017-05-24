@@ -7,7 +7,7 @@ TODO:
 * DONE Initial implementation of vcf_to_hdf5
 * DONE Add samples to output of read_vcf and store in vcf_to_... functions
 * DONE Initial implementation of vcf_to_zarr
-* Parse FILTERS from header
+* DONE Parse FILTERS from header
 * Return filters as separate arrays in read_vcf
 * Store filters as separate arrays/datasets in vcf_to_... functions
 * Parse INFO fields
@@ -18,6 +18,7 @@ TODO:
 * User-controlled dtypes
 * User-controlled fill values
 * User-controlled arities
+* User-specified samples to parse
 
 """
 from __future__ import absolute_import, print_function, division
@@ -25,6 +26,8 @@ import gzip
 import sys
 import itertools
 import os
+import re
+from collections import namedtuple
 
 
 import numpy as np
@@ -69,7 +72,7 @@ def read_vcf(path,
     """
 
     # setup
-    samples, chunks = read_vcf_chunks(path=path, buffer_size=buffer_size,
+    headers, chunks = read_vcf_chunks(path=path, buffer_size=buffer_size,
                                       chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     # read all chunks into a list
@@ -77,7 +80,7 @@ def read_vcf(path,
 
     # setup output
     output = dict()
-    output['samples'] = np.array(samples)
+    output['samples'] = np.array(headers.samples)
 
     if chunks:
 
@@ -145,7 +148,7 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        samples, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
+        headers, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
                                           chunk_length=chunk_length,
                                           temp_max_size=temp_max_size)
         # TODO this won't be necessary when using generators
@@ -159,7 +162,7 @@ def vcf_to_hdf5(input_path, output_path,
             else:
                 # TODO right exception class?
                 raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
-        root[group].create_dataset(name, data=np.array(samples), chunks=None)
+        root[group].create_dataset(name, data=np.array(headers.samples), chunks=None)
 
         # read first chunk
         chunk = next(chunks, None)
@@ -251,14 +254,14 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    samples, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
+    headers, chunks = read_vcf_chunks(input_path, buffer_size=buffer_size,
                                       chunk_length=chunk_length,
                                       temp_max_size=temp_max_size)
     # TODO this won't be necessary when using generators
     chunks = iter(chunks)
 
     # store samples
-    root[group].create_dataset('samples', data=np.array(samples), compressor=None,
+    root[group].create_dataset('samples', data=np.array(headers.samples), compressor=None,
                                overwrite=overwrite)
 
     # read first chunk
@@ -326,11 +329,12 @@ def read_vcf_chunks(path,
 
 
 def _read_vcf(fileobj, buffer_size, chunk_length, temp_max_size):
-    headers, samples = _read_vcf_headers(fileobj)
-    # debug(samples)
+    headers = read_vcf_headers(fileobj)
+    n_samples = len(headers.samples)
+    filters = sorted(headers.filters)
     chunks = iter_vcf(fileobj, buffer_size=buffer_size, chunk_length=chunk_length,
-                      temp_max_size=temp_max_size, n_samples=len(samples))
-    return samples, chunks
+                      temp_max_size=temp_max_size, n_samples=n_samples, filters=filters)
+    return headers, chunks
 
 
 def _binary_readline(binary_file):
@@ -342,11 +346,21 @@ def _binary_readline(binary_file):
     return b''.join(line)
 
 
-def _read_vcf_headers(binary_file):
+# pre-compile some regular expressions
+re_filter_header = re.compile(b'##FILTER=<ID=([^,]+),Description="([^"]+)">')
+
+
+VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
+
+
+def read_vcf_headers(binary_file):
 
     # setup
     headers = []
     samples = None
+    filters = dict()
+    infos = dict()
+    formats = dict()
 
     # read first header line
     header = _binary_readline(binary_file)
@@ -356,19 +370,29 @@ def _read_vcf_headers(binary_file):
 
         headers.append(header)
 
-        if header.startswith(b'#CHROM'):
+        if header.startswith(b'##FILTER'):
+
+            match = re_filter_header.match(header)
+            if match is None:
+                raise RuntimeError('bad FILTER header: %r' % header)
+            else:
+                k, desc = match.groups()
+                filters[k] = {
+                    'ID': k,
+                    'Description': desc
+                }
+
+        elif header.startswith(b'#CHROM'):
 
             # parse out samples
             samples = header.split(b'\t')[9:]
             break
 
-        else:
-
-            # read next header
-            header = _binary_readline(binary_file)
+        # read next header
+        header = _binary_readline(binary_file)
 
     # check if we saw the mandatory header line or not
     if samples is None:
         raise RuntimeError('VCF file is missing mandatory header line ("#CHROM...")')
 
-    return headers, samples
+    return VCFHeaders(headers, filters, infos, formats, samples)
