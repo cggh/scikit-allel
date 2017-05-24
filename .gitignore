@@ -61,4 +61,5 @@ target/
 example.*
 *.h5
 *.zarr
+*.npz
 

@@ -35,7 +35,7 @@ cdef char SLASH = b'/'
 cdef char PIPE = b'|'
 
 
-def iter_vcf(binary_file, buffer_size, block_size, n_samples, temp_max_size):
+def iter_vcf(binary_file, buffer_size, chunk_length, n_samples, temp_max_size):
     cdef:
         ParserContext context
         StringParser chrom_parser
@@ -50,7 +50,7 @@ def iter_vcf(binary_file, buffer_size, block_size, n_samples, temp_max_size):
         CalldataParser calldata_parser
 
     # setup output
-    blocks = []
+    chunks = []
 
     # setup reader
     reader = BufferedReader(binary_file, buffer_size=buffer_size)
@@ -62,19 +62,19 @@ def iter_vcf(binary_file, buffer_size, block_size, n_samples, temp_max_size):
     ParserContext_next(context)
 
     # TODO setup parsers
-    chrom_parser = StringParser(field_name='CHROM', block_size=block_size, dtype='S12')
-    pos_parser = PosInt32Parser(block_size=block_size)
-    id_parser = StringParser(field_name='ID', block_size=block_size, dtype='S12')
-    ref_parser = StringParser(field_name='REF', block_size=block_size, dtype='S1')
-    alt_parser = AltParser(block_size=block_size, dtype='S1', arity=3)
-    qual_parser = QualFloat32Parser(block_size=block_size, fill=-1)
+    chrom_parser = StringParser(field_name='CHROM', chunk_length=chunk_length, dtype='S12')
+    pos_parser = PosInt32Parser(chunk_length=chunk_length)
+    id_parser = StringParser(field_name='ID', chunk_length=chunk_length, dtype='S12')
+    ref_parser = StringParser(field_name='REF', chunk_length=chunk_length, dtype='S1')
+    alt_parser = AltParser(chunk_length=chunk_length, dtype='S1', arity=3)
+    qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
     # TODO discover filters from header
-    filter_parser = FilterParser(block_size=block_size, filters=[])
+    filter_parser = FilterParser(chunk_length=chunk_length, filters=[])
     # TODO discuver INFO fields from header
-    info_parser = InfoParser(block_size=block_size)
+    info_parser = InfoParser(chunk_length=chunk_length)
     format_parser = FormatParser()
     # # TODO handle all FORMAT fields
-    calldata_parser = CalldataParser(block_size=block_size,
+    calldata_parser = CalldataParser(chunk_length=chunk_length,
                                      formats=[b'GT'],
                                      n_samples=context.n_samples,
                                      ploidy=2)
@@ -127,11 +127,11 @@ def iter_vcf(binary_file, buffer_size, block_size, n_samples, temp_max_size):
             # setup next variant
             # debug('setup next variant')
             context.variant_index += 1
-            if context.block_variant_index < block_size - 1:
-                context.block_variant_index += 1
+            if context.chunk_variant_index < chunk_length - 1:
+                context.chunk_variant_index += 1
             else:
-                # debug('start new block')
-                block = {
+                # debug('start new chunk')
+                chunk = {
                     'variants/CHROM': chrom_parser.values,
                     'variants/POS': pos_parser.values,
                     'variants/ID': id_parser.values,
@@ -143,9 +143,9 @@ def iter_vcf(binary_file, buffer_size, block_size, n_samples, temp_max_size):
                     'calldata/GT': calldata_parser.get_parser(b'GT').values,
                     # TODO other calldata
                 }
-                # setup next block
-                context.block_variant_index = 0
-                blocks.append(block)
+                # setup next chunk
+                context.chunk_variant_index = 0
+                chunks.append(chunk)
                 chrom_parser.malloc()
                 pos_parser.malloc()
                 id_parser.malloc()
@@ -159,24 +159,25 @@ def iter_vcf(binary_file, buffer_size, block_size, n_samples, temp_max_size):
         else:
             raise Exception('unexpected parser state')
 
-    # left-over block
-    l = context.block_variant_index + 1
-    block = {
-        'variants/CHROM': chrom_parser.values[:l],
-        'variants/POS': pos_parser.values[:l],
-        'variants/ID': id_parser.values[:l],
-        'variants/REF': ref_parser.values[:l],
-        'variants/ALT': alt_parser.values[:l],
-        'variants/QUAL': qual_parser.values[:l],
-        'variants/FILTER': filter_parser.values[:l],
-        # TODO INFO
-        'calldata/GT': calldata_parser.get_parser(b'GT').values[:l],
-        # TODO other calldata
-    }
-    blocks.append(block)
+    # left-over chunk
+    l = context.chunk_variant_index
+    if l > 0:
+        chunk = {
+            'variants/CHROM': chrom_parser.values[:l],
+            'variants/POS': pos_parser.values[:l],
+            'variants/ID': id_parser.values[:l],
+            'variants/REF': ref_parser.values[:l],
+            'variants/ALT': alt_parser.values[:l],
+            'variants/QUAL': qual_parser.values[:l],
+            'variants/FILTER': filter_parser.values[:l],
+            # TODO INFO
+            'calldata/GT': calldata_parser.get_parser(b'GT').values[:l],
+            # TODO other calldata
+        }
+        chunks.append(chunk)
 
     # TODO yield
-    return blocks
+    return chunks
 
 
 def debug(*msg):
@@ -249,7 +250,7 @@ cdef class ParserContext(object):
     cdef BufferedReader reader
     cdef int n_samples
     cdef int variant_index
-    cdef int block_variant_index
+    cdef int chunk_variant_index
     cdef int sample_index
     cdef list formats
     cdef int format_index
@@ -263,7 +264,7 @@ cdef class ParserContext(object):
         self.temp_size = 0
         self.n_samples = n_samples
         self.variant_index = 0
-        self.block_variant_index = 0
+        self.chunk_variant_index = 0
         self.sample_index = 0
         self.format_index = 0
 
@@ -282,7 +283,7 @@ cdef class Parser(object):
     """Abstract base class."""
 
     cdef object values
-    cdef int block_size
+    cdef int chunk_length
 
     cdef parse(self, ParserContext context):
         pass
@@ -306,15 +307,15 @@ cdef class StringParser(Parser):
     cdef np.uint8_t[:] memory
     cdef object field_name
 
-    def __cinit__(self, field_name, block_size, dtype):
+    def __cinit__(self, field_name, chunk_length, dtype):
         self.field_name = field_name
-        self.block_size = block_size
+        self.chunk_length = chunk_length
         self.dtype = check_string_dtype(dtype)
         self.itemsize = self.dtype.itemsize
         self.malloc()
 
     cdef malloc(self):
-        self.values = np.zeros(self.block_size, dtype=self.dtype)
+        self.values = np.zeros(self.chunk_length, dtype=self.dtype)
         self.memory = self.values.view('u1')
 
     cdef parse(self, ParserContext context):
@@ -336,7 +337,7 @@ cdef inline void StringParser_parse(StringParser self, ParserContext context):
     # debug('StringParser_parse', self.field_name)
 
     # initialise memory index
-    memory_index = context.block_variant_index * self.itemsize
+    memory_index = context.chunk_variant_index * self.itemsize
 
     # read characters until tab
     while context.c != TAB:
@@ -353,7 +354,7 @@ cdef inline void StringParser_parse(StringParser self, ParserContext context):
     # advance input stream beyond tab
     ParserContext_next(context)
 
-    # debug(context.variant_index, self.field_name, self.values[context.block_variant_index],
+    # debug(context.variant_index, self.field_name, self.values[context.chunk_variant_index],
     #       chars_stored)
 
 
@@ -362,12 +363,12 @@ cdef class PosInt32Parser(Parser):
 
     cdef np.int32_t[:] memory
 
-    def __cinit__(self, block_size):
-        self.block_size = block_size
+    def __cinit__(self, chunk_length):
+        self.chunk_length = chunk_length
         self.malloc()
 
     cdef malloc(self):
-        self.values = np.zeros(self.block_size, dtype='i4')
+        self.values = np.zeros(self.chunk_length, dtype='i4')
         self.memory = self.values
 
     cdef parse(self, ParserContext context):
@@ -403,7 +404,7 @@ cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context
     if str_end > context.temp:
 
         # store value
-        self.memory[context.block_variant_index] = value
+        self.memory[context.chunk_variant_index] = value
 
         # advance input stream
         ParserContext_next(context)
@@ -421,15 +422,15 @@ cdef class AltParser(Parser):
     cdef int arity
     cdef np.uint8_t[:] memory
 
-    def __cinit__(self, block_size, dtype, arity):
-        self.block_size = block_size
+    def __cinit__(self, chunk_length, dtype, arity):
+        self.chunk_length = chunk_length
         self.dtype = check_string_dtype(dtype)
         self.itemsize = self.dtype.itemsize
         self.arity = arity
         self.malloc()
 
     cdef malloc(self):
-        self.values = np.zeros((self.block_size, self.arity), dtype=self.dtype, order='C')
+        self.values = np.zeros((self.chunk_length, self.arity), dtype=self.dtype, order='C')
         self.memory = self.values.reshape(-1).view('u1')
 
     cdef parse(self, ParserContext context):
@@ -451,7 +452,7 @@ cdef inline void AltParser_parse(AltParser self, ParserContext context):
         int chars_stored = 0
 
     # initialise memory offset and index
-    memory_offset = context.block_variant_index * self.itemsize * self.arity
+    memory_offset = context.chunk_variant_index * self.itemsize * self.arity
     memory_index = memory_offset
 
     # read characters until tab
@@ -476,7 +477,7 @@ cdef inline void AltParser_parse(AltParser self, ParserContext context):
         # advance input stream
         ParserContext_next(context)
 
-    # debug(context.variant_index, 'ALT', self.values[context.block_variant_index])
+    # debug(context.variant_index, 'ALT', self.values[context.chunk_variant_index])
 
 
 cdef class QualFloat32Parser(Parser):
@@ -484,15 +485,15 @@ cdef class QualFloat32Parser(Parser):
     cdef np.float32_t fill
     cdef np.float32_t[:] memory
 
-    def __cinit__(self, block_size, fill):
+    def __cinit__(self, chunk_length, fill):
         # debug('QualFloat32Parser __cinit__()')
-        self.block_size = block_size
+        self.chunk_length = chunk_length
         self.fill = fill
         self.malloc()
 
     cdef malloc(self):
         # debug('QualFloat32Parser malloc()')
-        self.values = np.empty(self.block_size, dtype='f4')
+        self.values = np.empty(self.chunk_length, dtype='f4')
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -539,7 +540,7 @@ cdef inline void QualFloat32Parser_parse(QualFloat32Parser self, ParserContext c
         if str_end > context.temp:
 
             # store value
-            self.memory[context.block_variant_index] = value
+            self.memory[context.chunk_variant_index] = value
 
             # advance input stream
             ParserContext_next(context)
@@ -555,8 +556,8 @@ cdef class FilterParser(Parser):
     cdef dict filter_position
     cdef np.uint8_t[:, :] memory
 
-    def __cinit__(self, block_size, filters):
-        self.block_size = block_size
+    def __cinit__(self, chunk_length, filters):
+        self.chunk_length = chunk_length
         self.filters = tuple(filters)
         # PASS comes first
         self.filter_position = {f: i + 1 for i, f in enumerate(self.filters)}
@@ -564,7 +565,7 @@ cdef class FilterParser(Parser):
         self.malloc()
 
     cdef malloc(self):
-        self.values = np.zeros((self.block_size, len(self.filters) + 1), dtype=bool)
+        self.values = np.zeros((self.chunk_length, len(self.filters) + 1), dtype=bool)
         self.memory = self.values.view('u1')
 
     cdef parse(self, ParserContext context):
@@ -615,7 +616,7 @@ cdef inline void FilterParser_parse(FilterParser self, ParserContext context):
     # advance to next field
     ParserContext_next(context)
 
-    # debug(context.variant_index, 'FILTER', self.values[context.block_variant_index])
+    # debug(context.variant_index, 'FILTER', self.values[context.chunk_variant_index])
 
 
 cdef inline void FilterParser_store(FilterParser self, ParserContext context):
@@ -632,14 +633,14 @@ cdef inline void FilterParser_store(FilterParser self, ParserContext context):
 
     # store value
     if filter_index >= 0:
-        self.memory[context.block_variant_index, filter_index] = 1
+        self.memory[context.chunk_variant_index, filter_index] = 1
 
     # debug(context.variant_index, 'FILTER', f)
 
 
 cdef class InfoParser(Parser):
 
-    def __cinit__(self, block_size):
+    def __cinit__(self, chunk_length):
         pass
 
     cdef malloc(self):
@@ -743,11 +744,11 @@ cdef class CalldataParser(Parser):
     cdef dict parsers
     cdef Parser dummy_parser
 
-    def __cinit__(self, block_size, formats, n_samples, ploidy):
+    def __cinit__(self, chunk_length, formats, n_samples, ploidy):
         self.parsers = dict()
         for f in formats:
             if f == b'GT':
-                self.parsers[f] = GenotypeInt8Parser(block_size=block_size,
+                self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,
                                                      n_samples=n_samples,
                                                      ploidy=ploidy,
                                                      fill=-1)
@@ -818,15 +819,15 @@ cdef class GenotypeInt8Parser(Parser):
     cdef np.int8_t[:, :, :] memory
     cdef np.int8_t fill
 
-    def __cinit__(self, block_size, n_samples, ploidy, fill):
-        self.block_size = block_size
+    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
+        self.chunk_length = chunk_length
         self.n_samples = n_samples
         self.ploidy = ploidy
         self.fill = fill
         self.malloc()
 
     cdef malloc(self):
-        self.values = np.empty((self.block_size, self.n_samples, self.ploidy), dtype='i1')
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='i1')
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -874,7 +875,7 @@ cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext
         ParserContext_next(context)
 
     # debug(context.variant_index, context.sample_index, 'GT',
-    #       self.values[context.block_variant_index, context.sample_index])
+    #       self.values[context.chunk_variant_index, context.sample_index])
 
 
 @cython.boundscheck(False)
@@ -911,7 +912,7 @@ cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext
 
         # store value
         if str_end > context.temp:
-            self.memory[context.block_variant_index, context.sample_index, allele_index] = allele
+            self.memory[context.chunk_variant_index, context.sample_index, allele_index] = allele
 
         else:
             raise RuntimeError('error %s parsing genotype at variant index %s, sample index '
