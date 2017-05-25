@@ -12,6 +12,9 @@
 
 
 import sys
+import warnings
+
+
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
 from libc.stdlib cimport strtol, strtof
 import numpy as np
@@ -29,10 +32,12 @@ cdef char TAB = b'\t'
 cdef char NEWLINE = b'\n'
 cdef char HASH = b'#'
 cdef char COLON = b':'
+cdef char SEMICOLON = b';'
 cdef char PERIOD = b'.'
 cdef char COMMA = b','
 cdef char SLASH = b'/'
 cdef char PIPE = b'|'
+cdef char EQUALS = b'='
 
 
 CHROM_FIELD = 'variants/CHROM'
@@ -124,25 +129,46 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
             filter = field[16:].encode('ascii')
             filters.append(filter)
             fields.remove(field)
-    # TODO skip FILTER if no filters requested
-    filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
+    if filters:
+        filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
+    else:
+        filter_parser = SkipParser()
 
     # setup INFO parsers
-    # TODO discuver INFO fields from header
-    # TODO skip INFO if no INFO requested
-    info_parser = InfoParser(chunk_length=chunk_length)
+    infos = list()
+    # assume any variants fields left are INFO
+    for field in list(fields):
+        group, name = field.split('/')
+        if group == 'variants':
+            info = name.encode('ascii')
+            infos.append(info)
+            fields.remove(field)
+    if infos:
+        info_parser = InfoParser(chunk_length=chunk_length, infos=infos)
+    else:
+        info_parser = SkipParser()
 
-    # setup FORMAT parser
-    # TODO skip format if no calldata requested
-    format_parser = FormatParser()
+    # setup FORMAT and calldata parsers
+    formats = list()
+    for field in list(fields):
+        group, name = field.split('/')
+        if group == 'calldata':
+            format = name.encode('ascii')
+            formats.append(format)
+            fields.remove(field)
+    if formats:
+        format_parser = FormatParser()
+        calldata_parser = CalldataParser(chunk_length=chunk_length,
+                                         formats=formats,
+                                         n_samples=context.n_samples,
+                                         ploidy=2)
+    else:
+        format_parser = SkipParser()
+        calldata_parser = SkipParser()
 
-    # setup calldata parsers
-    # # TODO handle all FORMAT fields
-    # TODO skip calldata if none requested
-    calldata_parser = CalldataParser(chunk_length=chunk_length,
-                                     formats=[b'GT'],
-                                     n_samples=context.n_samples,
-                                     ploidy=2)
+    if fields:
+        # shouldn't ever be any left over
+        raise RuntimeError('unexpected fields left over: %r' % set(fields))
 
     while True:
 
@@ -178,6 +204,7 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
             context.state = ParserState.INFO
 
         elif context.state == ParserState.INFO:
+            # debug(context.variant_index, 'parse INFO')
             info_parser.parse(context)
             context.state = ParserState.FORMAT
 
@@ -206,25 +233,17 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
                 alt_parser.mkchunk(chunk)
                 qual_parser.mkchunk(chunk)
                 filter_parser.mkchunk(chunk)
-                # TODO INFO
+                info_parser.mkchunk(chunk)
                 calldata_parser.mkchunk(chunk)
-                # TODO other calldata
+                # TODO yield
                 chunks.append(chunk)
 
                 # setup next chunk
                 context.chunk_variant_index = 0
-                chrom_parser.malloc()
-                pos_parser.malloc()
-                id_parser.malloc()
-                ref_parser.malloc()
-                alt_parser.malloc()
-                qual_parser.malloc()
-                filter_parser.malloc()
-                info_parser.malloc()
-                calldata_parser.malloc()
 
         else:
-            raise Exception('unexpected parser state')
+            # shouldn't ever happen
+            raise RuntimeError('unexpected parser state')
 
     # left-over chunk
     limit = context.chunk_variant_index
@@ -237,9 +256,9 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
         alt_parser.mkchunk(chunk, limit=limit)
         qual_parser.mkchunk(chunk, limit=limit)
         filter_parser.mkchunk(chunk, limit=limit)
-        # TODO INFO
+        info_parser.mkchunk(chunk, limit=limit)
         calldata_parser.mkchunk(chunk, limit=limit)
-        # TODO other calldata
+        # TODO yield
         chunks.append(chunk)
 
     # TODO yield
@@ -392,6 +411,7 @@ cdef class StringParser(Parser):
 
     cdef mkchunk(self, chunk, limit=None):
         chunk[self.field] = self.values[:limit]
+        self.malloc()
 
 
 # break out method as function for profiling
@@ -481,6 +501,7 @@ cdef class PosInt32Parser(Parser):
 
     cdef mkchunk(self, chunk, limit=None):
         chunk[POS_FIELD] = self.values[:limit]
+        self.malloc()
 
 
 # break out method as function for profiling
@@ -502,6 +523,8 @@ cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context
         context.temp_size += 1
         ParserContext_next(context)
 
+    # TODO handle temporary buffer overflow - highly unlikely, but you never know
+
     # parse string as integer
     context.temp[context.temp_size] = 0
     value = strtol(context.temp, &str_end, 10)
@@ -514,12 +537,15 @@ cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context
         # store value
         self.memory[context.chunk_variant_index] = value
 
-        # advance input stream
-        ParserContext_next(context)
-
     else:
-        raise RuntimeError('error %s parsing POS at variant index %s' %
-                           (value, context.variant_index))
+
+        b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+        warnings.warn('error %s parsing POS value %r at variant index %s' %
+                      (value, b, context.variant_index))
+
+    # advance input stream
+    ParserContext_next(context)
+
 
 
 cdef class SkipPosParser(Parser):
@@ -610,6 +636,7 @@ cdef class AltParser(Parser):
 
     cdef mkchunk(self, chunk, limit=None):
         chunk[ALT_FIELD] = self.values[:limit]
+        self.malloc()
 
 
 # break out method as function for profiling
@@ -677,6 +704,7 @@ cdef class QualFloat32Parser(Parser):
 
     cdef mkchunk(self, chunk, limit=None):
         chunk[QUAL_FIELD] = self.values[:limit]
+        self.malloc()
 
 
 # break out method as function for profiling
@@ -755,6 +783,7 @@ cdef class FilterParser(Parser):
             field = 'variants/FILTER_' + str(filter, 'ascii')
             # TODO any need to make it a contiguous array?
             chunk[field] = self.values[:limit, i]
+        self.malloc()
 
 
 # break out method as function for profiling
@@ -822,32 +851,181 @@ cdef inline void FilterParser_store(FilterParser self, ParserContext context):
 
 cdef class InfoParser(Parser):
 
-    def __cinit__(self, chunk_length):
-        pass
+    cdef tuple infos
+    cdef dict parsers
+    cdef Parser skip_parser
 
-    cdef malloc(self):
-        pass
+    def __cinit__(self, chunk_length, infos):
+        self.chunk_length = chunk_length
+        self.infos = tuple(infos)
+        self.parsers = dict()
+        for key in self.infos:
+            # TODO other types
+            # debug('setting up INFO parser for key %r' % key)
+            self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
+        self.skip_parser = SkipInfoParser()
 
     cdef parse(self, ParserContext context):
+        # debug(context.variant_index, 'InfoParser.parse')
         InfoParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        cdef Parser parser
+        for parser in self.parsers.values():
+            parser.mkchunk(chunk, limit=limit)
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.nonecheck(False)
+# @cython.initializedcheck(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 cdef inline void InfoParser_parse(InfoParser self, ParserContext context):
-    # TODO
-    # debug('InfoParser_parse()')
+    cdef:
+        bytes key
+        Parser parser
 
-    while context.c != TAB:
-        # debug('INFO', context.c)
-        ParserContext_next(context)
+    # debug(context.variant_index, 'InfoParser_parse')
 
+    # reset temporary buffer
+    context.temp_size = 0
+
+    while context.temp_size < context.temp_max_size:
+
+        if context.c == TAB or context.c == NEWLINE or context.c == 0:
+            # debug(context.variant_index, 'end of INFO')
+            # handle flags
+            if context.temp_size > 0:
+                key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+                parser = self.parsers[key]
+                parser.parse(context)
+            break
+
+        elif context.c == PERIOD:
+            # TODO check safety here
+            ParserContext_next(context)
+
+        elif context.c == EQUALS:
+            # debug(context.variant_index, 'INFO =')
+            ParserContext_next(context)
+            if context.temp_size > 0:
+                key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+                # debug(context.variant_index, 'INFO parsing value for key', key)
+                parser = self.parsers.get(key, self.skip_parser)
+                parser.parse(context)
+                context.temp_size = 0
+            else:
+                warnings.warn('error parsing INFO field at variants index %s: missing key' %
+                              (context.variant_index,))
+                # advance to next sub-field
+                while context.c != TAB and context.c != SEMICOLON and context.c != 0:
+                    ParserContext_next(context)
+
+        elif context.c == SEMICOLON:
+            # debug(context.variant_index, 'end of INFO subfield')
+            # handle flags
+            if context.temp_size > 0:
+                key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+                parser = self.parsers[key]
+                parser.parse(context)
+                context.temp_size = 0
+            else:
+                ParserContext_next(context)
+
+        else:
+            # debug(context.variant_index, 'storing INFO key character', bytes([context.c]))
+            context.temp[context.temp_size] = context.c
+            context.temp_size += 1
+            ParserContext_next(context)
+
+    # advance to next field
     ParserContext_next(context)
 
-    # debug(context.variant_index, 'INFO')
+
+cdef class InfoInt64Parser(Parser):
+
+    cdef np.int64_t[:] memory
+    cdef np.int64_t fill
+    cdef bytes key
+
+    def __cinit__(self, key, fill, chunk_length):
+        self.key = key
+        self.fill = fill
+        self.chunk_length = chunk_length
+        self.malloc()
+
+    cdef parse(self, ParserContext context):
+        InfoInt64Parser_parse(self, context)
+
+    cdef malloc(self):
+        self.values = np.empty(self.chunk_length, dtype='i8')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef mkchunk(self, chunk, limit=None):
+        field = 'variants/' + str(self.key, 'ascii')
+        chunk[field] = self.values[:limit]
+        self.malloc()
+
+
+# break out method as function for profiling
+# @cython.nonecheck(False)
+# @cython.initializedcheck(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+cdef inline void InfoInt64Parser_parse(InfoInt64Parser self, ParserContext context):
+    cdef:
+        long value
+        char* str_end
+
+    # debug(context.variant_index, 'InfoInt64Parser_parse', self.key)
+
+    # reset temporary buffer
+    context.temp_size = 0
+
+    while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
+        context.temp[context.temp_size] = context.c
+        context.temp_size += 1
+        ParserContext_next(context)
+
+    # TODO handle temporary buffer overflow - highly unlikely, but you never know
+
+    # debugging
+    # b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+    # debug(context.variant_index, 'temp', b, context.temp_size)
+
+    # fail fast
+    if context.temp_size == 0:
+        warnings.warn('no value for INFO key %r at variant index %s' %
+                      (self.key, context.variant_index))
+        ParserContext_next(context)
+        return
+
+    # parse string as integer
+    context.temp[context.temp_size] = 0
+    value = strtol(context.temp, &str_end, 10)
+
+    # debug(context.variant_index, 'parsed characters', str_end - context.temp)
+
+    # check success
+    if str_end > context.temp:
+
+        # store value
+        self.memory[context.chunk_variant_index] = value
+        # debug(context.variant_index, self.key, value)
+
+    else:
+
+        b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+        warnings.warn('error %s parsing INFO key %r value %r as Int64 at variant index %s' %
+                      (value, self.key, b, context.variant_index))
+
+    # reset temporary buffer here to indicate new field
+    context.temp_size = 0
+
+    # advance input stream
+    # if context.c == SEMICOLON:
+    #     ParserContext_next(context)
 
 
 cdef class FormatParser(Parser):
@@ -924,7 +1102,7 @@ cdef inline void FormatParser_parse(FormatParser self, ParserContext context):
 cdef class CalldataParser(Parser):
 
     cdef dict parsers
-    cdef Parser dummy_parser
+    cdef Parser skip_parser
 
     def __cinit__(self, chunk_length, formats, n_samples, ploidy):
         self.parsers = dict()
@@ -935,12 +1113,7 @@ cdef class CalldataParser(Parser):
                                                      ploidy=ploidy,
                                                      fill=-1)
             # TODO initialise parsers for all fields
-        self.dummy_parser = DummyCalldataParser()
-
-    cdef malloc(self):
-        cdef Parser parser
-        for parser in self.parsers.values():
-            parser.malloc()
+        self.skip_parser = SkipCalldataParser()
 
     cdef parse(self, ParserContext context):
         CalldataParser_parse(self, context)
@@ -966,7 +1139,7 @@ cdef inline void CalldataParser_parse(CalldataParser self, ParserContext context
     context.format_index = 0
 
     # initialise format parsers in correct order for this variant
-    parsers = [self.parsers.get(f, self.dummy_parser) for f in context.formats]
+    parsers = [self.parsers.get(f, self.skip_parser) for f in context.formats]
     parser = <Parser> parsers[0]
 
     while True:
@@ -1023,6 +1196,7 @@ cdef class GenotypeInt8Parser(Parser):
 
     cdef mkchunk(self, chunk, limit=None):
         chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
 
 
 @cython.boundscheck(False)
@@ -1106,7 +1280,26 @@ cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext
                                '%s' % (allele, context.variant_index, context.sample_index))
 
 
-cdef class DummyCalldataParser(Parser):
+cdef class SkipInfoParser(Parser):
+
+    def __cinit__(self):
+        pass
+
+    cdef parse(self, ParserContext context):
+        SkipInfoParser_parse(self, context)
+
+
+# break out method as function for profiling
+# @cython.nonecheck(False)
+# @cython.initializedcheck(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+cdef inline void SkipInfoParser_parse(SkipInfoParser self, ParserContext context):
+    while context.c != SEMICOLON and context.c != TAB and context.c != 0:
+        ParserContext_next(context)
+
+
+cdef class SkipCalldataParser(Parser):
 
     def __cinit__(self):
         pass
@@ -1115,7 +1308,7 @@ cdef class DummyCalldataParser(Parser):
         pass
 
     cdef parse(self, ParserContext context):
-        DummyCalldataParser_parse(self, context)
+        SkipCalldataParser_parse(self, context)
 
     cdef mkchunk(self, chunk, limit=None):
         pass
@@ -1126,8 +1319,8 @@ cdef class DummyCalldataParser(Parser):
 @cython.initializedcheck(False)
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef inline void DummyCalldataParser_parse(DummyCalldataParser self, ParserContext context):
-    # debug('DummyCalldataParser_parse')
+cdef inline void SkipCalldataParser_parse(SkipCalldataParser self, ParserContext context):
+    # debug('SkipCalldataParser_parse')
     while True:
 
         if context.c == COLON or context.c == TAB or context.c == NEWLINE or context.c == 0:

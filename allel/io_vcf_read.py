@@ -23,6 +23,7 @@ TODO:
 * Specialised parser for ANN
 * Unit tests
 * PY2 compatibility?
+* Report CHROM and POS in warnings
 
 """
 from __future__ import absolute_import, print_function, division
