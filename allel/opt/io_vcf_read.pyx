@@ -35,21 +35,30 @@ cdef char SLASH = b'/'
 cdef char PIPE = b'|'
 
 
+CHROM_FIELD = 'variants/CHROM'
+POS_FIELD = 'variants/POS'
+ID_FIELD = 'variants/ID'
+REF_FIELD = 'variants/REF'
+ALT_FIELD = 'variants/ALT'
+QUAL_FIELD = 'variants/QUAL'
+
+
 def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fields):
     cdef:
         ParserContext context
-        StringParser chrom_parser
+        Parser chrom_parser
         Parser pos_parser
-        StringParser id_parser
-        StringParser ref_parser
-        AltParser alt_parser
+        Parser id_parser
+        Parser ref_parser
+        Parser alt_parser
         Parser qual_parser
-        FilterParser filter_parser
-        InfoParser info_parser
-        FormatParser format_parser
-        CalldataParser calldata_parser
+        Parser filter_parser
+        Parser info_parser
+        Parser format_parser
+        Parser calldata_parser
 
     # setup output
+    # TODO yield chunks
     chunks = []
 
     # setup reader
@@ -62,27 +71,74 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
     # read in first character
     ParserContext_next(context)
 
-    # TODO setup parsers
-    chrom_parser = StringParser(field_name='CHROM', chunk_length=chunk_length, dtype='S12')
-    pos_parser = PosInt32Parser(chunk_length=chunk_length)
-    id_parser = StringParser(field_name='ID', chunk_length=chunk_length, dtype='S12')
-    ref_parser = StringParser(field_name='REF', chunk_length=chunk_length, dtype='S1')
-    alt_parser = AltParser(chunk_length=chunk_length, dtype='S1', arity=3)
-    qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
+    # copy so we don't modify someone else's data
+    fields = set(fields)
+
+    # setup CHROM parser
+    if CHROM_FIELD in fields:
+        chrom_parser = StringParser(field=CHROM_FIELD, chunk_length=chunk_length,
+                                    dtype='S12')
+        fields.remove(CHROM_FIELD)
+    else:
+        chrom_parser = SkipChromParser()
+
+    # setup POS parser
+    if POS_FIELD in fields:
+        pos_parser = PosInt32Parser(chunk_length=chunk_length)
+        fields.remove(POS_FIELD)
+    else:
+        pos_parser = SkipPosParser()
+
+    # setup ID parser
+    if ID_FIELD in fields:
+        id_parser = StringParser(field=ID_FIELD, chunk_length=chunk_length, dtype='S12')
+        fields.remove(ID_FIELD)
+    else:
+        id_parser = SkipParser()
+
+    # setup REF parser
+    if REF_FIELD in fields:
+        ref_parser = StringParser(field=REF_FIELD, chunk_length=chunk_length, dtype='S1')
+        fields.remove(REF_FIELD)
+    else:
+        ref_parser = SkipParser()
+
+    # setup ALT parser
+    if ALT_FIELD in fields:
+        alt_parser = AltParser(chunk_length=chunk_length, dtype='S1', arity=3)
+        fields.remove(ALT_FIELD)
+    else:
+        alt_parser = SkipParser()
+
+    # setup QUAL parser
+    if QUAL_FIELD in fields:
+        qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
+        fields.remove(QUAL_FIELD)
+    else:
+        qual_parser = SkipParser()
 
     # setup FILTER parser
-    filters = sorted(headers.filters)
+    filters = list()
+    for field in list(fields):
+        if field.startswith('variants/FILTER_'):
+            filter = field[16:].encode('ascii')
+            filters.append(filter)
+            fields.remove(field)
+    # TODO skip FILTER if no filters requested
     filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
 
     # setup INFO parsers
     # TODO discuver INFO fields from header
+    # TODO skip INFO if no INFO requested
     info_parser = InfoParser(chunk_length=chunk_length)
 
     # setup FORMAT parser
+    # TODO skip format if no calldata requested
     format_parser = FormatParser()
 
     # setup calldata parsers
     # # TODO handle all FORMAT fields
+    # TODO skip calldata if none requested
     calldata_parser = CalldataParser(chunk_length=chunk_length,
                                      formats=[b'GT'],
                                      n_samples=context.n_samples,
@@ -143,17 +199,15 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
 
                 # build chunk for output
                 chunk = dict()
-                chunk['variants/CHROM'] = chrom_parser.values
-                chunk['variants/POS'] = pos_parser.values
-                chunk['variants/ID'] = id_parser.values
-                chunk['variants/REF'] = ref_parser.values
-                chunk['variants/ALT'] = alt_parser.values
-                chunk['variants/QUAL'] = qual_parser.values
-                chunk['variants/FILTER_PASS'] = filter_parser.values[:, 0]
-                for i, f in enumerate(filters):
-                    chunk['variants/FILTER_' + str(f, 'ascii')] = filter_parser.values[:, i+1]
+                chrom_parser.mkchunk(chunk)
+                pos_parser.mkchunk(chunk)
+                id_parser.mkchunk(chunk)
+                ref_parser.mkchunk(chunk)
+                alt_parser.mkchunk(chunk)
+                qual_parser.mkchunk(chunk)
+                filter_parser.mkchunk(chunk)
                 # TODO INFO
-                chunk['calldata/GT'] = calldata_parser.get_parser(b'GT').values
+                calldata_parser.mkchunk(chunk)
                 # TODO other calldata
                 chunks.append(chunk)
 
@@ -173,20 +227,18 @@ def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fie
             raise Exception('unexpected parser state')
 
     # left-over chunk
-    l = context.chunk_variant_index
-    if l > 0:
+    limit = context.chunk_variant_index
+    if limit > 0:
         chunk = dict()
-        chunk['variants/CHROM'] = chrom_parser.values[:l]
-        chunk['variants/POS'] = pos_parser.values[:l]
-        chunk['variants/ID'] = id_parser.values[:l]
-        chunk['variants/REF'] = ref_parser.values[:l]
-        chunk['variants/ALT'] = alt_parser.values[:l]
-        chunk['variants/QUAL'] = qual_parser.values[:l]
-        chunk['variants/FILTER_PASS'] = filter_parser.values[:l, 0]
-        for i, f in enumerate(filters):
-            chunk['variants/FILTER_' + str(f, 'ascii')] = filter_parser.values[:l, i+1]
+        chrom_parser.mkchunk(chunk, limit=limit)
+        pos_parser.mkchunk(chunk, limit=limit)
+        id_parser.mkchunk(chunk, limit=limit)
+        ref_parser.mkchunk(chunk, limit=limit)
+        alt_parser.mkchunk(chunk, limit=limit)
+        qual_parser.mkchunk(chunk, limit=limit)
+        filter_parser.mkchunk(chunk, limit=limit)
         # TODO INFO
-        chunk['calldata/GT'] = calldata_parser.get_parser(b'GT').values[:l]
+        calldata_parser.mkchunk(chunk, limit=limit)
         # TODO other calldata
         chunks.append(chunk)
 
@@ -305,6 +357,9 @@ cdef class Parser(object):
     cdef malloc(self):
         pass
 
+    cdef mkchunk(self, chunk, limit=None):
+        pass
+
 
 def check_string_dtype(dtype):
     dtype = np.dtype(dtype)
@@ -319,10 +374,10 @@ cdef class StringParser(Parser):
     cdef object dtype
     cdef int itemsize
     cdef np.uint8_t[:] memory
-    cdef object field_name
+    cdef object field
 
-    def __cinit__(self, field_name, chunk_length, dtype):
-        self.field_name = field_name
+    def __cinit__(self, field, chunk_length, dtype):
+        self.field = field
         self.chunk_length = chunk_length
         self.dtype = check_string_dtype(dtype)
         self.itemsize = self.dtype.itemsize
@@ -334,6 +389,9 @@ cdef class StringParser(Parser):
 
     cdef parse(self, ParserContext context):
         StringParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        chunk[self.field] = self.values[:limit]
 
 
 # break out method as function for profiling
@@ -348,7 +406,7 @@ cdef inline void StringParser_parse(StringParser self, ParserContext context):
         # number of characters read into current value
         int chars_stored = 0
 
-    # debug('StringParser_parse', self.field_name)
+    # debug('StringParser_parse', self.field)
 
     # initialise memory index
     memory_index = context.chunk_variant_index * self.itemsize
@@ -368,8 +426,41 @@ cdef inline void StringParser_parse(StringParser self, ParserContext context):
     # advance input stream beyond tab
     ParserContext_next(context)
 
-    # debug(context.variant_index, self.field_name, self.values[context.chunk_variant_index],
+    # debug(context.variant_index, self.field, self.values[context.chunk_variant_index],
     #       chars_stored)
+
+
+cdef class SkipChromParser(Parser):
+    """Skip the CHROM field."""
+
+    def __cinit__(self):
+        pass
+
+    cdef malloc(self):
+        pass
+
+    cdef parse(self, ParserContext context):
+        SkipChromParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        pass
+
+
+# break out method as function for profiling
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef inline void SkipChromParser_parse(SkipChromParser self, ParserContext context):
+
+    # TODO store chrom on context
+
+    # read characters until tab
+    while context.c != TAB:
+        ParserContext_next(context)
+
+    # advance input stream beyond tab
+    ParserContext_next(context)
 
 
 cdef class PosInt32Parser(Parser):
@@ -387,6 +478,9 @@ cdef class PosInt32Parser(Parser):
 
     cdef parse(self, ParserContext context):
         PosInt32Parser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        chunk[POS_FIELD] = self.values[:limit]
 
 
 # break out method as function for profiling
@@ -428,6 +522,70 @@ cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context
                            (value, context.variant_index))
 
 
+cdef class SkipPosParser(Parser):
+    """Skip the POS field."""
+
+    def __cinit__(self):
+        pass
+
+    cdef malloc(self):
+        pass
+
+    cdef parse(self, ParserContext context):
+        SkipPosParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        pass
+
+
+# break out method as function for profiling
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef inline void SkipPosParser_parse(SkipPosParser self, ParserContext context):
+
+    # TODO store pos on context
+
+    # read characters until tab
+    while context.c != TAB:
+        ParserContext_next(context)
+
+    # advance input stream beyond tab
+    ParserContext_next(context)
+
+
+cdef class SkipParser(Parser):
+    """Skip a field."""
+
+    def __cinit__(self):
+        pass
+
+    cdef malloc(self):
+        pass
+
+    cdef parse(self, ParserContext context):
+        SkipParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        pass
+
+
+# break out method as function for profiling
+@cython.nonecheck(False)
+@cython.initializedcheck(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef inline void SkipParser_parse(SkipParser self, ParserContext context):
+
+    # read characters until tab or newline
+    while context.c != TAB and context.c != NEWLINE and context.c != 0:
+        ParserContext_next(context)
+
+    # advance input stream beyond tab or newline
+    ParserContext_next(context)
+
+
 cdef class AltParser(Parser):
     """Parser for ALT field."""
 
@@ -449,6 +607,9 @@ cdef class AltParser(Parser):
 
     cdef parse(self, ParserContext context):
         AltParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        chunk[ALT_FIELD] = self.values[:limit]
 
 
 # break out method as function for profiling
@@ -514,6 +675,9 @@ cdef class QualFloat32Parser(Parser):
     cdef parse(self, ParserContext context):
         QualFloat32Parser_parse(self, context)
 
+    cdef mkchunk(self, chunk, limit=None):
+        chunk[QUAL_FIELD] = self.values[:limit]
+
 
 # break out method as function for profiling
 @cython.nonecheck(False)
@@ -573,9 +737,7 @@ cdef class FilterParser(Parser):
     def __cinit__(self, chunk_length, filters):
         self.chunk_length = chunk_length
         self.filters = tuple(filters)
-        # PASS comes first
-        self.filter_position = {f: i + 1 for i, f in enumerate(self.filters)}
-        self.filter_position[b'PASS'] = 0
+        self.filter_position = {f: i for i, f in enumerate(self.filters)}
         self.malloc()
 
     cdef malloc(self):
@@ -587,6 +749,12 @@ cdef class FilterParser(Parser):
 
     cdef store(self, ParserContext context):
         FilterParser_store(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        for i, filter in enumerate(self.filters):
+            field = 'variants/FILTER_' + str(filter, 'ascii')
+            # TODO any need to make it a contiguous array?
+            chunk[field] = self.values[:limit, i]
 
 
 # break out method as function for profiling
@@ -777,8 +945,10 @@ cdef class CalldataParser(Parser):
     cdef parse(self, ParserContext context):
         CalldataParser_parse(self, context)
 
-    cdef Parser get_parser(self, bytes format):
-        return <Parser> self.parsers.get(format, self.dummy_parser)
+    cdef mkchunk(self, chunk, limit=None):
+        cdef Parser parser
+        for parser in self.parsers.values():
+            parser.mkchunk(chunk, limit=limit)
 
 
 # break out method as function for profiling
@@ -850,6 +1020,9 @@ cdef class GenotypeInt8Parser(Parser):
 
     cdef store(self, ParserContext context, int allele_index):
         GenotypeInt8Parser_store(self, context, allele_index)
+
+    cdef mkchunk(self, chunk, limit=None):
+        chunk['calldata/GT'] = self.values[:limit]
 
 
 @cython.boundscheck(False)
@@ -943,6 +1116,9 @@ cdef class DummyCalldataParser(Parser):
 
     cdef parse(self, ParserContext context):
         DummyCalldataParser_parse(self, context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        pass
 
 
 # break out method as function for profiling

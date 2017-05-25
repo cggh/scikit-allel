@@ -19,6 +19,10 @@ TODO:
 * User-controlled fill values
 * User-controlled arities
 * User-specified samples to parse
+* Specialised parser for EFF
+* Specialised parser for ANN
+* Unit tests
+* PY2 compatibility?
 
 """
 from __future__ import absolute_import, print_function, division
@@ -28,6 +32,7 @@ import itertools
 import os
 import re
 from collections import namedtuple
+import warnings
 
 
 import numpy as np
@@ -83,7 +88,8 @@ def read_vcf(path,
 
     # setup output
     output = dict()
-    output['samples'] = np.array(headers.samples)
+    # use binary string type for cross-platform compatibility
+    output['samples'] = np.array(headers.samples).astype('S')
 
     if chunks:
 
@@ -166,7 +172,8 @@ def vcf_to_hdf5(input_path, output_path,
             else:
                 # TODO right exception class?
                 raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
-        root[group].create_dataset(name, data=np.array(headers.samples), chunks=None)
+        root[group].create_dataset(name, data=np.array(headers.samples).astype('S'),
+                                   chunks=None)
 
         # read first chunk
         chunk = next(chunks, None)
@@ -265,8 +272,8 @@ def vcf_to_zarr(input_path, output_path,
     chunks = iter(chunks)
 
     # store samples
-    root[group].create_dataset('samples', data=np.array(headers.samples), compressor=None,
-                               overwrite=overwrite)
+    root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
+                               compressor=None, overwrite=overwrite)
 
     # read first chunk
     chunk = next(chunks, None)
@@ -333,14 +340,115 @@ def read_vcf_chunks(path,
                          chunk_length=chunk_length, temp_max_size=temp_max_size)
 
 
-FIXED_FIELDS = (
-    b'variants/CHROM',
-    b'variants/POS',
-    b'variants/ID',
-    b'variants/REF',
-    b'variants/ALT',
-    b'variants/QUAL',
+FIXED_VARIANTS_FIELDS = (
+    'CHROM',
+    'POS',
+    'ID',
+    'REF',
+    'ALT',
+    'QUAL',
 )
+
+
+def normalize_field_prefix(field, headers):
+    """TODO"""
+
+    # already contains prefix?
+    if field.startswith('variants/') or field.startswith('calldata/'):
+        return field
+
+    # try to find in fixed fields first
+    elif field in FIXED_VARIANTS_FIELDS:
+        return 'variants/' + field
+
+    # try to find in FILTER next
+    elif field.startswith('FILTER_'):
+        return 'variants/' + field
+
+    # try to find in FILTER next
+    elif field in headers.filters:
+        return 'variants/FILTER_' + field
+
+    # try to find in INFO next
+    elif field in headers.infos:
+        return 'variants/' + field
+
+    # try to find in FORMAT next
+    elif field in headers.formats:
+        return 'calldata/' + field
+
+    else:
+        # assume anything else in variants, even if not declared in header
+        return 'variants/' + field
+
+
+def check_field(field, headers):
+    """TODO"""
+
+    # assume field is already normalized for prefix
+    group, name = field.split('/')
+
+    if group == 'variants':
+
+        if name in FIXED_VARIANTS_FIELDS:
+            return
+
+        elif name.startswith('FILTER_'):
+            filter_name = name[7:]
+            if filter_name in headers.filters:
+                return
+            else:
+                warnings.warn('FILTER not declared in header: %r' % filter_name)
+
+        elif name in headers.infos:
+            return
+
+        else:
+            warnings.warn('INFO not declared in header: %r' % name)
+
+    elif group == 'calldata':
+
+        if name in headers.formats:
+            return
+
+        else:
+            warnings.warn('FORMAT not declared in header: %r' % name)
+
+    else:
+        # should never be reached
+        raise ValueError('invalid field specification: %r' % field)
+
+
+def add_all_fields(fields, headers):
+    add_all_variants_fields(fields, headers)
+    add_all_calldata_fields(fields, headers)
+
+
+def add_all_variants_fields(fields, headers):
+    add_all_fixed_variants_fields(fields)
+    add_all_info_fields(fields, headers)
+    add_all_filter_fields(fields, headers)
+
+
+def add_all_fixed_variants_fields(fields):
+    for f in FIXED_VARIANTS_FIELDS:
+        fields.add('variants/' + f)
+
+
+def add_all_info_fields(fields, headers):
+    for f in headers.infos:
+        fields.add('variants/' + f)
+
+
+def add_all_filter_fields(fields, headers):
+    fields.add('variants/FILTER_PASS')
+    for f in headers.filters:
+        fields.add('variants/FILTER_' + f)
+
+
+def add_all_calldata_fields(fields, headers):
+    for f in headers.formats:
+        fields.add('calldata/' + f)
 
 
 def normalize_fields(fields, headers):
@@ -348,79 +456,38 @@ def normalize_fields(fields, headers):
     # setup normalized fields
     normed_fields = set()
 
+    # special case, single field specification
+    if isinstance(fields, str):
+        fields = [fields]
+
     for f in fields:
 
-        # ensure bytes
-        if isinstance(f, str):
-            f = f.encode('ascii')
+        # special cases: be lenient about how to specify
 
-        # special-case: user requests all variants fields
-        if f == b'variants' or f == b'variants*' or f == b'variants/*':
+        if f == '*':
+            add_all_fields(normed_fields, headers)
 
-            # all fixed fields
-            for k in FIXED_FIELDS:
-                normed_fields.add(k)
+        elif f in ['variants', 'variants*', 'variants/*']:
+            add_all_variants_fields(normed_fields, headers)
 
-            # all FILTER fields
-            normed_fields.add(b'variants/FILTER_PASS')
-            for k in headers.filters:
-                normed_fields.add(b'variants/FILTER_' + k)
+        elif f in ['calldata', 'calldata*', 'calldata/*']:
+            add_all_calldata_fields(normed_fields, headers)
 
-            # all INFO fields
-            for k in headers.infos:
-                normed_fields.add(b'variants/' + k)
+        elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*', 'variants/INFO/*']:
+            add_all_info_fields(normed_fields, headers)
 
-            continue
+        elif f in ['FILTER', 'FILTER*', 'FILTER_*', 'variants/FILTER', 'variants/FILTER*',
+                   'variants/FILTER/*']:
+            add_all_filter_fields(normed_fields, headers)
 
-        # special-case: user requests all calldata fields
-        if f == b'calldata' or f == b'calldata*' or f == b'calldata/*':
-            
-            # all FORMAT fields
-            for k in headers.formats:
-                normed_fields.add(b'calldata/' + k)
-
-            continue
-
-        # normalize prefix
-        if not f.startswith(b'variants/') and not f.startswith(b'calldata/'):
-            # assume variants field
-            f = b'variants/' + f
-
-        if f in FIXED_FIELDS:
-            # no need for further checks
-            normed_fields.add(f)
-
-        # special-case: user requests all filters
-        elif f == b'variants/FILTER' or f == b'variants/FILTER*':
-
-            # add all filter fields
-            normed_fields.add(b'variants/FILTER_PASS')
-            for k in sorted(headers.filters):
-                normed_fields.add(b'variants/FILTER_' + k)
-
-        # special-case: user requests all INFO fields
-        elif f == b'variants/INFO' or f == b'variants/INFO*':
-            pass
-            # TODO
-
-        elif f.startswith(b'variants/'):
-
-            # check it's declared in INFO header
-            k = f.split(b'/')[1]
-            if k not in headers.infos:
-                raise ValueError('field not declared in INFO header: %r' % str(f, 'ascii'))
-            normed_fields.add(f)
-
-        elif f.startswith(b'calldata/'):
-
-            # check it's declared in FORMAT header
-            k = f.split(b'/')[1]
-            if k not in headers.formats:
-                raise ValueError('field not declared in FORMAT header: %r' % str(f, 'ascii'))
-            normed_fields.add(f)
+        # exact field specification
 
         else:
-            raise RuntimeError('unexpected field: %r' + f)
+
+            # normalize field specification
+            f = normalize_field_prefix(f, headers)
+            check_field(f, headers)
+            normed_fields.add(f)
 
     return normed_fields
 
@@ -433,13 +500,11 @@ def _read_vcf(fileobj, fields, buffer_size, chunk_length, temp_max_size):
     # setup fields to read
     if fields is None:
 
-        # choose default fields to parse
-        fields = list(FIXED_FIELDS)
-        # add in all FILTER fields by default
-        for f in sorted(headers.filters):
-            fields.append(b'variants/FILTER_' + f)
-        # add in GT field by default
-        fields.append(b'calldata/GT')
+        # choose default fields
+        fields = set()
+        add_all_fixed_variants_fields(fields)
+        fields.add('variants/FILTER_PASS')
+        fields.add('calldata/GT')
 
     else:
         fields = normalize_fields(fields, headers)
@@ -452,21 +517,25 @@ def _read_vcf(fileobj, fields, buffer_size, chunk_length, temp_max_size):
 
 
 def _binary_readline(binary_file):
+    # N.B., cannot do this with standard library text I/O because we don't want to advance the
+    # underlying stream beyond exactly the number of bytes read for the header
     line = []
     c = binary_file.read(1)
     while c and c != b'\n':
         line.append(c)
         c = binary_file.read(1)
-    return b''.join(line)
+    line = b''.join(line)
+    line = str(line, 'ascii')
+    return line
 
 
 # pre-compile some regular expressions
 re_filter_header = \
-    re.compile(b'##FILTER=<ID=([^,]+),Description="([^"]+)">')
+    re.compile('##FILTER=<ID=([^,]+),Description="([^"]+)">')
 re_info_header = \
-    re.compile(b'##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+    re.compile('##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
 re_format_header = \
-    re.compile(b'##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+    re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
 
 
 VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
@@ -484,16 +553,16 @@ def read_vcf_headers(binary_file):
     # read first header line
     header = _binary_readline(binary_file)
 
-    while header and header[0] == ord(b'#'):
+    while header and header[0] == '#':
         # debug('found header', header)
 
         headers.append(header)
 
-        if header.startswith(b'##FILTER'):
+        if header.startswith('##FILTER'):
 
             match = re_filter_header.match(header)
             if match is None:
-                raise RuntimeError('bad FILTER header: %r' % header)
+                warnings.warn('invalid FILTER header: %r' % header)
             else:
                 k, d = match.groups()
                 filters[k] = {
@@ -501,11 +570,11 @@ def read_vcf_headers(binary_file):
                     'Description': d
                 }
 
-        elif header.startswith(b'##INFO'):
+        elif header.startswith('##INFO'):
 
             match = re_info_header.match(header)
             if match is None:
-                raise RuntimeError('bad INFO header: %r' % header)
+                warnings.warn('invalid INFO header: %r' % header)
             else:
                 k, n, t, d = match.groups()
                 infos[k] = {
@@ -515,11 +584,11 @@ def read_vcf_headers(binary_file):
                     'Description': d
                 }
 
-        elif header.startswith(b'##FORMAT'):
+        elif header.startswith('##FORMAT'):
 
             match = re_format_header.match(header)
             if match is None:
-                raise RuntimeError('bad FORMAT header: %r' % header)
+                warnings.warn('invalid FORMAT header: %r' % header)
             else:
                 k, n, t, d = match.groups()
                 formats[k] = {
@@ -529,10 +598,10 @@ def read_vcf_headers(binary_file):
                     'Description': d
                 }
 
-        elif header.startswith(b'#CHROM'):
+        elif header.startswith('#CHROM'):
 
             # parse out samples
-            samples = header.split(b'\t')[9:]
+            samples = header.split('\t')[9:]
             break
 
         # read next header line
@@ -540,6 +609,7 @@ def read_vcf_headers(binary_file):
 
     # check if we saw the mandatory header line or not
     if samples is None:
+        # can't warn about this, it's fatal
         raise RuntimeError('VCF file is missing mandatory header line ("#CHROM...")')
 
     return VCFHeaders(headers, filters, infos, formats, samples)
