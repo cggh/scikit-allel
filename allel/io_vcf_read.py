@@ -10,12 +10,12 @@ TODO:
 * DONE Parse FILTERS from header
 * DONE Return filters as separate arrays in read_vcf
 * DONE Store filters as separate arrays/datasets in vcf_to_... functions
-* Parse INFO fields
+* DONE Parse INFO fields single values
 ** DONE Integer
 ** DONE Float
-** Flag
-** String
-** Multiple values
+** DONE Flag
+** DONE String
+* Parse INFO multiple values
 * Parse other FORMAT fields
 ** Integer
 ** Float
@@ -27,7 +27,7 @@ TODO:
 * Progress logging in vcf_to_... functions
 * User-controlled dtypes
 * User-controlled fill values
-* User-controlled arities
+* User-controlled arities to ALT, INFO, calldata, ...
 * User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN

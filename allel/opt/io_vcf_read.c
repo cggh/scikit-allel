@@ -999,6 +999,8 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser;
 struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt64Parser;
 struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat32Parser;
 struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat64Parser;
+struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser;
+struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser;
 struct __pyx_obj_5allel_3opt_11io_vcf_read_FormatParser;
 struct __pyx_obj_5allel_3opt_11io_vcf_read_CalldataParser;
 struct __pyx_obj_5allel_3opt_11io_vcf_read_GenotypeInt8Parser;
@@ -1058,11 +1060,13 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_15InfoInt32Parser_mkchunk;
 struct __pyx_opt_args_5allel_3opt_11io_vcf_read_15InfoInt64Parser_mkchunk;
 struct __pyx_opt_args_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk;
 struct __pyx_opt_args_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk;
+struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk;
+struct __pyx_opt_args_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk;
 struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk;
 struct __pyx_opt_args_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_mkchunk;
 struct __pyx_opt_args_5allel_3opt_11io_vcf_read_18SkipCalldataParser_mkchunk;
 
-/* "allel/opt/io_vcf_read.pyx":336
+/* "allel/opt/io_vcf_read.pyx":338
  * 
  * 
  * cdef enum ParserState:             # <<<<<<<<<<<<<<
@@ -1106,7 +1110,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_12StringParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":487
+/* "allel/opt/io_vcf_read.pyx":483
  *         SkipChromParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1118,7 +1122,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_15SkipChromParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":524
+/* "allel/opt/io_vcf_read.pyx":516
  *         PosInt32Parser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1130,7 +1134,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14PosInt32Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":584
+/* "allel/opt/io_vcf_read.pyx":572
  *         SkipPosParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1142,7 +1146,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_13SkipPosParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":617
+/* "allel/opt/io_vcf_read.pyx":601
  *         SkipParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1154,7 +1158,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_10SkipParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":658
+/* "allel/opt/io_vcf_read.pyx":638
  *         AltParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1166,7 +1170,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_9AltParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":726
+/* "allel/opt/io_vcf_read.pyx":702
  *         QualFloat32Parser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1178,7 +1182,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_17QualFloat32Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":802
+/* "allel/opt/io_vcf_read.pyx":774
  *         FilterParser_store(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1190,7 +1194,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":901
+/* "allel/opt/io_vcf_read.pyx":874
  *         InfoParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1202,7 +1206,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":994
+/* "allel/opt/io_vcf_read.pyx":963
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1214,7 +1218,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_15InfoInt32Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":1020
+/* "allel/opt/io_vcf_read.pyx":989
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1226,7 +1230,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_15InfoInt64Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":1108
+/* "allel/opt/io_vcf_read.pyx":1069
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1238,7 +1242,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":1134
+/* "allel/opt/io_vcf_read.pyx":1095
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1250,7 +1254,31 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":1291
+/* "allel/opt/io_vcf_read.pyx":1173
+ *         self.memory = self.values
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit].view(bool)
+ */
+struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk {
+  int __pyx_n;
+  PyObject *limit;
+};
+
+/* "allel/opt/io_vcf_read.pyx":1219
+ *             ParserContext_next(context)
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit]
+ */
+struct __pyx_opt_args_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk {
+  int __pyx_n;
+  PyObject *limit;
+};
+
+/* "allel/opt/io_vcf_read.pyx":1312
  *         CalldataParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1262,7 +1290,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":1367
+/* "allel/opt/io_vcf_read.pyx":1384
  *         GenotypeInt8Parser_store(self, context, allele_index)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1274,7 +1302,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":1485
+/* "allel/opt/io_vcf_read.pyx":1490
  *         SkipCalldataParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -1286,7 +1314,7 @@ struct __pyx_opt_args_5allel_3opt_11io_vcf_read_18SkipCalldataParser_mkchunk {
   PyObject *limit;
 };
 
-/* "allel/opt/io_vcf_read.pyx":295
+/* "allel/opt/io_vcf_read.pyx":297
  * 
  * 
  * cdef class BufferedReader(object):             # <<<<<<<<<<<<<<
@@ -1303,7 +1331,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_BufferedReader {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":349
+/* "allel/opt/io_vcf_read.pyx":351
  * 
  * 
  * cdef class ParserContext(object):             # <<<<<<<<<<<<<<
@@ -1359,7 +1387,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_StringParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":475
+/* "allel/opt/io_vcf_read.pyx":471
  * 
  * 
  * cdef class SkipChromParser(Parser):             # <<<<<<<<<<<<<<
@@ -1371,7 +1399,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_SkipChromParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":508
+/* "allel/opt/io_vcf_read.pyx":500
  * 
  * 
  * cdef class PosInt32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1384,7 +1412,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_PosInt32Parser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":572
+/* "allel/opt/io_vcf_read.pyx":560
  * 
  * 
  * cdef class SkipPosParser(Parser):             # <<<<<<<<<<<<<<
@@ -1396,7 +1424,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_SkipPosParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":605
+/* "allel/opt/io_vcf_read.pyx":589
  * 
  * 
  * cdef class SkipParser(Parser):             # <<<<<<<<<<<<<<
@@ -1408,7 +1436,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_SkipParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":636
+/* "allel/opt/io_vcf_read.pyx":616
  * 
  * 
  * cdef class AltParser(Parser):             # <<<<<<<<<<<<<<
@@ -1424,7 +1452,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_AltParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":706
+/* "allel/opt/io_vcf_read.pyx":682
  * 
  * 
  * cdef class QualFloat32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1438,7 +1466,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_QualFloat32Parser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":780
+/* "allel/opt/io_vcf_read.pyx":752
  * 
  * 
  * cdef class FilterParser(Parser):             # <<<<<<<<<<<<<<
@@ -1453,7 +1481,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_FilterParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":872
+/* "allel/opt/io_vcf_read.pyx":840
  * 
  * 
  * cdef class InfoParser(Parser):             # <<<<<<<<<<<<<<
@@ -1468,7 +1496,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":974
+/* "allel/opt/io_vcf_read.pyx":943
  * 
  * 
  * cdef class InfoInt32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1478,12 +1506,12 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoParser {
 struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser {
   struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser __pyx_base;
   __Pyx_memviewslice memory;
-  __pyx_t_5numpy_int32_t fill;
   PyObject *key;
+  PyObject *fill;
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1000
+/* "allel/opt/io_vcf_read.pyx":969
  * 
  * 
  * cdef class InfoInt64Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1498,7 +1526,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt64Parser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1088
+/* "allel/opt/io_vcf_read.pyx":1049
  * 
  * 
  * cdef class InfoFloat32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1513,7 +1541,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat32Parser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1114
+/* "allel/opt/io_vcf_read.pyx":1075
  * 
  * 
  * cdef class InfoFloat64Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1528,7 +1556,37 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat64Parser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1200
+/* "allel/opt/io_vcf_read.pyx":1153
+ * 
+ * 
+ * cdef class InfoFlagParser(Parser):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef np.uint8_t[:] memory
+ */
+struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser {
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser __pyx_base;
+  __Pyx_memviewslice memory;
+  PyObject *key;
+};
+
+
+/* "allel/opt/io_vcf_read.pyx":1179
+ * 
+ * 
+ * cdef class InfoStringParser(Parser):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef bytes key
+ */
+struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser {
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser __pyx_base;
+  PyObject *key;
+  PyObject *dtype;
+  int itemsize;
+  __Pyx_memviewslice memory;
+};
+
+
+/* "allel/opt/io_vcf_read.pyx":1225
  * 
  * 
  * cdef class FormatParser(Parser):             # <<<<<<<<<<<<<<
@@ -1540,7 +1598,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_FormatParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1271
+/* "allel/opt/io_vcf_read.pyx":1292
  * 
  * # noinspection PyShadowingBuiltins
  * cdef class CalldataParser(Parser):             # <<<<<<<<<<<<<<
@@ -1554,7 +1612,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_CalldataParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1342
+/* "allel/opt/io_vcf_read.pyx":1359
  * 
  * 
  * cdef class GenotypeInt8Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1570,7 +1628,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_GenotypeInt8Parser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1453
+/* "allel/opt/io_vcf_read.pyx":1462
  * 
  * 
  * cdef class SkipInfoParser(Parser):             # <<<<<<<<<<<<<<
@@ -1582,7 +1640,7 @@ struct __pyx_obj_5allel_3opt_11io_vcf_read_SkipInfoParser {
 };
 
 
-/* "allel/opt/io_vcf_read.pyx":1474
+/* "allel/opt/io_vcf_read.pyx":1479
  * 
  * 
  * cdef class SkipCalldataParser(Parser):             # <<<<<<<<<<<<<<
@@ -1702,7 +1760,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_StringParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_StringParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_StringParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":475
+/* "allel/opt/io_vcf_read.pyx":471
  * 
  * 
  * cdef class SkipChromParser(Parser):             # <<<<<<<<<<<<<<
@@ -1716,7 +1774,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipChromParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipChromParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipChromParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":508
+/* "allel/opt/io_vcf_read.pyx":500
  * 
  * 
  * cdef class PosInt32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1730,7 +1788,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_PosInt32Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_PosInt32Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_PosInt32Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":572
+/* "allel/opt/io_vcf_read.pyx":560
  * 
  * 
  * cdef class SkipPosParser(Parser):             # <<<<<<<<<<<<<<
@@ -1744,7 +1802,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipPosParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipPosParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipPosParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":605
+/* "allel/opt/io_vcf_read.pyx":589
  * 
  * 
  * cdef class SkipParser(Parser):             # <<<<<<<<<<<<<<
@@ -1758,7 +1816,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":636
+/* "allel/opt/io_vcf_read.pyx":616
  * 
  * 
  * cdef class AltParser(Parser):             # <<<<<<<<<<<<<<
@@ -1772,7 +1830,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_AltParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_AltParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_AltParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":706
+/* "allel/opt/io_vcf_read.pyx":682
  * 
  * 
  * cdef class QualFloat32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1786,7 +1844,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_QualFloat32Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_QualFloat32Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_QualFloat32Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":780
+/* "allel/opt/io_vcf_read.pyx":752
  * 
  * 
  * cdef class FilterParser(Parser):             # <<<<<<<<<<<<<<
@@ -1801,7 +1859,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FilterParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FilterParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_FilterParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":872
+/* "allel/opt/io_vcf_read.pyx":840
  * 
  * 
  * cdef class InfoParser(Parser):             # <<<<<<<<<<<<<<
@@ -1815,7 +1873,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":974
+/* "allel/opt/io_vcf_read.pyx":943
  * 
  * 
  * cdef class InfoInt32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1829,7 +1887,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt32Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt32Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt32Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1000
+/* "allel/opt/io_vcf_read.pyx":969
  * 
  * 
  * cdef class InfoInt64Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1843,7 +1901,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt64Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt64Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt64Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1088
+/* "allel/opt/io_vcf_read.pyx":1049
  * 
  * 
  * cdef class InfoFloat32Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1857,7 +1915,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat32Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat32Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat32Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1114
+/* "allel/opt/io_vcf_read.pyx":1075
  * 
  * 
  * cdef class InfoFloat64Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1871,7 +1929,35 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat64Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat64Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat64Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1200
+/* "allel/opt/io_vcf_read.pyx":1153
+ * 
+ * 
+ * cdef class InfoFlagParser(Parser):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef np.uint8_t[:] memory
+ */
+
+struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFlagParser {
+  struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser __pyx_base;
+};
+static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFlagParser;
+
+
+/* "allel/opt/io_vcf_read.pyx":1179
+ * 
+ * 
+ * cdef class InfoStringParser(Parser):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef bytes key
+ */
+
+struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoStringParser {
+  struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser __pyx_base;
+};
+static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoStringParser;
+
+
+/* "allel/opt/io_vcf_read.pyx":1225
  * 
  * 
  * cdef class FormatParser(Parser):             # <<<<<<<<<<<<<<
@@ -1885,7 +1971,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FormatParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FormatParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_FormatParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1271
+/* "allel/opt/io_vcf_read.pyx":1292
  * 
  * # noinspection PyShadowingBuiltins
  * cdef class CalldataParser(Parser):             # <<<<<<<<<<<<<<
@@ -1899,7 +1985,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_CalldataParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_CalldataParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_CalldataParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1342
+/* "allel/opt/io_vcf_read.pyx":1359
  * 
  * 
  * cdef class GenotypeInt8Parser(Parser):             # <<<<<<<<<<<<<<
@@ -1914,7 +2000,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_GenotypeInt8Parser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_GenotypeInt8Parser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1453
+/* "allel/opt/io_vcf_read.pyx":1462
  * 
  * 
  * cdef class SkipInfoParser(Parser):             # <<<<<<<<<<<<<<
@@ -1928,7 +2014,7 @@ struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipInfoParser {
 static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_SkipInfoParser *__pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipInfoParser;
 
 
-/* "allel/opt/io_vcf_read.pyx":1474
+/* "allel/opt/io_vcf_read.pyx":1479
  * 
  * 
  * cdef class SkipCalldataParser(Parser):             # <<<<<<<<<<<<<<
@@ -2268,9 +2354,6 @@ static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, long intval, 
 
 /* dict_getitem_default.proto */
 static PyObject* __Pyx_PyDict_GetItemDefault(PyObject* d, PyObject* key, PyObject* default_value);
-
-/* BufferIndexError.proto */
-static void __Pyx_RaiseBufferIndexError(int axis);
 
 /* PyObjectCallMethod0.proto */
 static PyObject* __Pyx_PyObject_CallMethod0(PyObject* obj, PyObject* method_name);
@@ -2734,6 +2817,12 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk(s
 static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat64Parser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context); /* proto*/
 static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat64Parser *__pyx_v_self); /* proto*/
 static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat64Parser *__pyx_v_self, PyObject *__pyx_v_chunk, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk *__pyx_optional_args); /* proto*/
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context); /* proto*/
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_malloc(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self); /* proto*/
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self, PyObject *__pyx_v_chunk, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk *__pyx_optional_args); /* proto*/
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_malloc(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self); /* proto*/
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context); /* proto*/
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self, PyObject *__pyx_v_chunk, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk *__pyx_optional_args); /* proto*/
 static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_malloc(CYTHON_UNUSED struct __pyx_obj_5allel_3opt_11io_vcf_read_FormatParser *__pyx_v_self); /* proto*/
 static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_FormatParser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context); /* proto*/
 static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_CalldataParser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context); /* proto*/
@@ -2809,6 +2898,8 @@ static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt32Parser = 0;
 static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt64Parser = 0;
 static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat32Parser = 0;
 static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat64Parser = 0;
+static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFlagParser = 0;
+static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_InfoStringParser = 0;
 static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_FormatParser = 0;
 static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_CalldataParser = 0;
 static PyTypeObject *__pyx_ptype_5allel_3opt_11io_vcf_read_GenotypeInt8Parser = 0;
@@ -3083,6 +3174,7 @@ static const char __pyx_k_got_differing_extents_in_dimensi[] = "got differing ex
 static const char __pyx_k_ndarray_is_not_Fortran_contiguou[] = "ndarray is not Fortran contiguous";
 static const char __pyx_k_no_value_for_INFO_key_r_at_varia[] = "no value for INFO key %r at variant index %s";
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
+static const char __pyx_k_type_s_not_supported_for_INFO_fi[] = "type %s not supported for INFO field %r, field will be skipped";
 static const char __pyx_k_unable_to_allocate_shape_and_str[] = "unable to allocate shape and strides.";
 static const char __pyx_k_Format_string_allocated_too_shor_2[] = "Format string allocated too short.";
 static const char __pyx_k_error_s_parsing_INFO_key_r_value_2[] = "error %s parsing INFO key %r value %r as float at variant index %s";
@@ -3240,6 +3332,7 @@ static PyObject *__pyx_n_s_struct;
 static PyObject *__pyx_n_s_sys;
 static PyObject *__pyx_n_s_temp_max_size;
 static PyObject *__pyx_n_s_test;
+static PyObject *__pyx_kp_u_type_s_not_supported_for_INFO_fi;
 static PyObject *__pyx_n_s_types;
 static PyObject *__pyx_n_u_u1;
 static PyObject *__pyx_kp_s_unable_to_allocate_array_data;
@@ -3280,6 +3373,8 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt32Parser___cinit__(struct
 static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt64Parser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt64Parser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_fill, PyObject *__pyx_v_chunk_length); /* proto */
 static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat32Parser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat32Parser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_fill, PyObject *__pyx_v_chunk_length); /* proto */
 static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat64Parser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFloat64Parser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_fill, PyObject *__pyx_v_chunk_length); /* proto */
+static int __pyx_pf_5allel_3opt_11io_vcf_read_14InfoFlagParser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_chunk_length); /* proto */
+static int __pyx_pf_5allel_3opt_11io_vcf_read_16InfoStringParser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_chunk_length, PyObject *__pyx_v_dtype); /* proto */
 static int __pyx_pf_5allel_3opt_11io_vcf_read_12FormatParser___cinit__(CYTHON_UNUSED struct __pyx_obj_5allel_3opt_11io_vcf_read_FormatParser *__pyx_v_self); /* proto */
 static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_CalldataParser *__pyx_v_self, PyObject *__pyx_v_chunk_length, PyObject *__pyx_v_formats, CYTHON_UNUSED PyObject *__pyx_v_types, PyObject *__pyx_v_n_samples, PyObject *__pyx_v_ploidy); /* proto */
 static int __pyx_pf_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *__pyx_v_self, PyObject *__pyx_v_chunk_length, PyObject *__pyx_v_n_samples, PyObject *__pyx_v_ploidy, PyObject *__pyx_v_fill); /* proto */
@@ -3335,6 +3430,8 @@ static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoInt32Parser(PyTypeOb
 static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoInt64Parser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoFloat32Parser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoFloat64Parser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoFlagParser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoStringParser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_FormatParser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_CalldataParser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_GenotypeInt8Parser(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -3358,9 +3455,9 @@ static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__8;
 static PyObject *__pyx_tuple__9;
-static PyObject *__pyx_slice__36;
 static PyObject *__pyx_slice__37;
 static PyObject *__pyx_slice__38;
+static PyObject *__pyx_slice__39;
 static PyObject *__pyx_tuple__10;
 static PyObject *__pyx_tuple__11;
 static PyObject *__pyx_tuple__12;
@@ -3387,20 +3484,21 @@ static PyObject *__pyx_tuple__32;
 static PyObject *__pyx_tuple__33;
 static PyObject *__pyx_tuple__34;
 static PyObject *__pyx_tuple__35;
-static PyObject *__pyx_tuple__39;
+static PyObject *__pyx_tuple__36;
 static PyObject *__pyx_tuple__40;
-static PyObject *__pyx_tuple__42;
-static PyObject *__pyx_tuple__44;
-static PyObject *__pyx_tuple__46;
+static PyObject *__pyx_tuple__41;
+static PyObject *__pyx_tuple__43;
+static PyObject *__pyx_tuple__45;
 static PyObject *__pyx_tuple__47;
 static PyObject *__pyx_tuple__48;
 static PyObject *__pyx_tuple__49;
 static PyObject *__pyx_tuple__50;
-static PyObject *__pyx_codeobj__41;
-static PyObject *__pyx_codeobj__43;
-static PyObject *__pyx_codeobj__45;
+static PyObject *__pyx_tuple__51;
+static PyObject *__pyx_codeobj__42;
+static PyObject *__pyx_codeobj__44;
+static PyObject *__pyx_codeobj__46;
 
-/* "allel/opt/io_vcf_read.pyx":67
+/* "allel/opt/io_vcf_read.pyx":69
  * 
  * 
  * def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fields, types):             # <<<<<<<<<<<<<<
@@ -3447,36 +3545,36 @@ static PyObject *__pyx_pw_5allel_3opt_11io_vcf_read_1iter_vcf(PyObject *__pyx_se
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_buffer_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 1); __PYX_ERR(0, 67, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 1); __PYX_ERR(0, 69, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 2); __PYX_ERR(0, 67, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 2); __PYX_ERR(0, 69, __pyx_L3_error)
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_temp_max_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 3); __PYX_ERR(0, 67, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 3); __PYX_ERR(0, 69, __pyx_L3_error)
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_headers)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 4); __PYX_ERR(0, 67, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 4); __PYX_ERR(0, 69, __pyx_L3_error)
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fields)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 5); __PYX_ERR(0, 67, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 5); __PYX_ERR(0, 69, __pyx_L3_error)
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_types)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 6); __PYX_ERR(0, 67, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, 6); __PYX_ERR(0, 69, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "iter_vcf") < 0)) __PYX_ERR(0, 67, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "iter_vcf") < 0)) __PYX_ERR(0, 69, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 7) {
       goto __pyx_L5_argtuple_error;
@@ -3499,7 +3597,7 @@ static PyObject *__pyx_pw_5allel_3opt_11io_vcf_read_1iter_vcf(PyObject *__pyx_se
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 67, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("iter_vcf", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 69, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.iter_vcf", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -3556,80 +3654,80 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __Pyx_RefNannySetupContext("iter_vcf", 0);
   __Pyx_INCREF(__pyx_v_fields);
 
-  /* "allel/opt/io_vcf_read.pyx":83
+  /* "allel/opt/io_vcf_read.pyx":85
  *     # setup output
  *     # TODO yield chunks
  *     chunks = []             # <<<<<<<<<<<<<<
  * 
  *     # setup reader
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 85, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_chunks = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":86
+  /* "allel/opt/io_vcf_read.pyx":88
  * 
  *     # setup reader
  *     reader = BufferedReader(binary_file, buffer_size=buffer_size)             # <<<<<<<<<<<<<<
  * 
  *     # setup context
  */
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_binary_file);
   __Pyx_GIVEREF(__pyx_v_binary_file);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_binary_file);
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_buffer_size, __pyx_v_buffer_size) < 0) __PYX_ERR(0, 86, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_BufferedReader), __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 86, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_buffer_size, __pyx_v_buffer_size) < 0) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_BufferedReader), __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_reader = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_BufferedReader *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":89
+  /* "allel/opt/io_vcf_read.pyx":91
  * 
  *     # setup context
  *     n_samples = len(headers.samples)             # <<<<<<<<<<<<<<
  *     context = ParserContext(reader, temp_max_size=temp_max_size, n_samples=n_samples)
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 89, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyObject_Length(__pyx_t_3); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 89, __pyx_L1_error)
+  __pyx_t_4 = PyObject_Length(__pyx_t_3); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_n_samples = __pyx_t_4;
 
-  /* "allel/opt/io_vcf_read.pyx":90
+  /* "allel/opt/io_vcf_read.pyx":92
  *     # setup context
  *     n_samples = len(headers.samples)
  *     context = ParserContext(reader, temp_max_size=temp_max_size, n_samples=n_samples)             # <<<<<<<<<<<<<<
  * 
  *     # read in first character
  */
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 90, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(((PyObject *)__pyx_v_reader));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_reader));
   PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)__pyx_v_reader));
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 90, __pyx_L1_error)
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_temp_max_size, __pyx_v_temp_max_size) < 0) __PYX_ERR(0, 90, __pyx_L1_error)
-  __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_n_samples); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 90, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_temp_max_size, __pyx_v_temp_max_size) < 0) __PYX_ERR(0, 92, __pyx_L1_error)
+  __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_n_samples); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_n_samples, __pyx_t_1) < 0) __PYX_ERR(0, 90, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_n_samples, __pyx_t_1) < 0) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_ParserContext), __pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 90, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_ParserContext), __pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_context = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":93
+  /* "allel/opt/io_vcf_read.pyx":95
  * 
  *     # read in first character
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -3638,85 +3736,85 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":96
+  /* "allel/opt/io_vcf_read.pyx":98
  * 
  *     # copy so we don't modify someone else's data
  *     fields = set(fields)             # <<<<<<<<<<<<<<
  * 
  *     # setup CHROM parser
  */
-  __pyx_t_1 = PySet_New(__pyx_v_fields); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L1_error)
+  __pyx_t_1 = PySet_New(__pyx_v_fields); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF_SET(__pyx_v_fields, __pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":99
+  /* "allel/opt/io_vcf_read.pyx":101
  * 
  *     # setup CHROM parser
  *     if CHROM_FIELD in fields:             # <<<<<<<<<<<<<<
  *         chrom_parser = StringParser(field=CHROM_FIELD, chunk_length=chunk_length,
  *                                     dtype=types[CHROM_FIELD])
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 99, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 101, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 99, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 101, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_6 = (__pyx_t_5 != 0);
   if (__pyx_t_6) {
 
-    /* "allel/opt/io_vcf_read.pyx":100
+    /* "allel/opt/io_vcf_read.pyx":102
  *     # setup CHROM parser
  *     if CHROM_FIELD in fields:
  *         chrom_parser = StringParser(field=CHROM_FIELD, chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                     dtype=types[CHROM_FIELD])
  *         fields.remove(CHROM_FIELD)
  */
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_field, __pyx_t_2) < 0) __PYX_ERR(0, 100, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_field, __pyx_t_2) < 0) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 100, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 102, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":101
+    /* "allel/opt/io_vcf_read.pyx":103
  *     if CHROM_FIELD in fields:
  *         chrom_parser = StringParser(field=CHROM_FIELD, chunk_length=chunk_length,
  *                                     dtype=types[CHROM_FIELD])             # <<<<<<<<<<<<<<
  *         fields.remove(CHROM_FIELD)
  *     else:
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 101, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 103, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyObject_GetItem(__pyx_v_types, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 101, __pyx_L1_error)
+    __pyx_t_3 = PyObject_GetItem(__pyx_v_types, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 103, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 100, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":100
+    /* "allel/opt/io_vcf_read.pyx":102
  *     # setup CHROM parser
  *     if CHROM_FIELD in fields:
  *         chrom_parser = StringParser(field=CHROM_FIELD, chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                     dtype=types[CHROM_FIELD])
  *         fields.remove(CHROM_FIELD)
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_StringParser), __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_StringParser), __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_v_chrom_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":102
+    /* "allel/opt/io_vcf_read.pyx":104
  *         chrom_parser = StringParser(field=CHROM_FIELD, chunk_length=chunk_length,
  *                                     dtype=types[CHROM_FIELD])
  *         fields.remove(CHROM_FIELD)             # <<<<<<<<<<<<<<
  *     else:
  *         chrom_parser = SkipChromParser()
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_CHROM_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_7 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -3729,14 +3827,14 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_GOTREF(__pyx_t_3);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_2};
-        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3745,20 +3843,20 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_2};
-        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 102, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 104, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_2);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_2);
         __pyx_t_2 = 0;
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_8, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_8, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -3766,7 +3864,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":99
+    /* "allel/opt/io_vcf_read.pyx":101
  * 
  *     # setup CHROM parser
  *     if CHROM_FIELD in fields:             # <<<<<<<<<<<<<<
@@ -3776,7 +3874,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L3;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":104
+  /* "allel/opt/io_vcf_read.pyx":106
  *         fields.remove(CHROM_FIELD)
  *     else:
  *         chrom_parser = SkipChromParser()             # <<<<<<<<<<<<<<
@@ -3784,53 +3882,53 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup POS parser
  */
   /*else*/ {
-    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipChromParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipChromParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 106, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_v_chrom_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3);
     __pyx_t_3 = 0;
   }
   __pyx_L3:;
 
-  /* "allel/opt/io_vcf_read.pyx":107
+  /* "allel/opt/io_vcf_read.pyx":109
  * 
  *     # setup POS parser
  *     if POS_FIELD in fields:             # <<<<<<<<<<<<<<
  *         # TODO user-provided type
  *         pos_parser = PosInt32Parser(chunk_length=chunk_length)
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_POS_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_POS_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 109, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_t_3, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_t_3, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 109, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_5 = (__pyx_t_6 != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":109
+    /* "allel/opt/io_vcf_read.pyx":111
  *     if POS_FIELD in fields:
  *         # TODO user-provided type
  *         pos_parser = PosInt32Parser(chunk_length=chunk_length)             # <<<<<<<<<<<<<<
  *         fields.remove(POS_FIELD)
  *     else:
  */
-    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 109, __pyx_L1_error)
+    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 109, __pyx_L1_error)
-    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_PosInt32Parser), __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_PosInt32Parser), __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_v_pos_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":110
+    /* "allel/opt/io_vcf_read.pyx":112
  *         # TODO user-provided type
  *         pos_parser = PosInt32Parser(chunk_length=chunk_length)
  *         fields.remove(POS_FIELD)             # <<<<<<<<<<<<<<
  *     else:
  *         pos_parser = SkipPosParser()
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_POS_FIELD); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_POS_FIELD); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __pyx_t_2 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -3843,14 +3941,14 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_8};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -3859,20 +3957,20 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_8};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       } else
       #endif
       {
-        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 110, __pyx_L1_error)
+        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 112, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_GIVEREF(__pyx_t_8);
         PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_8);
         __pyx_t_8 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       }
@@ -3880,7 +3978,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":107
+    /* "allel/opt/io_vcf_read.pyx":109
  * 
  *     # setup POS parser
  *     if POS_FIELD in fields:             # <<<<<<<<<<<<<<
@@ -3890,7 +3988,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L4;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":112
+  /* "allel/opt/io_vcf_read.pyx":114
  *         fields.remove(POS_FIELD)
  *     else:
  *         pos_parser = SkipPosParser()             # <<<<<<<<<<<<<<
@@ -3898,80 +3996,80 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup ID parser
  */
   /*else*/ {
-    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipPosParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipPosParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_pos_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1);
     __pyx_t_1 = 0;
   }
   __pyx_L4:;
 
-  /* "allel/opt/io_vcf_read.pyx":115
+  /* "allel/opt/io_vcf_read.pyx":117
  * 
  *     # setup ID parser
  *     if ID_FIELD in fields:             # <<<<<<<<<<<<<<
  *         id_parser = StringParser(field=ID_FIELD, chunk_length=chunk_length,
  *                                  dtype=types[ID_FIELD])
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_t_1, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 117, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_6 = (__pyx_t_5 != 0);
   if (__pyx_t_6) {
 
-    /* "allel/opt/io_vcf_read.pyx":116
+    /* "allel/opt/io_vcf_read.pyx":118
  *     # setup ID parser
  *     if ID_FIELD in fields:
  *         id_parser = StringParser(field=ID_FIELD, chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                  dtype=types[ID_FIELD])
  *         fields.remove(ID_FIELD)
  */
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 116, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_field, __pyx_t_3) < 0) __PYX_ERR(0, 116, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_field, __pyx_t_3) < 0) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 116, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 118, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":117
+    /* "allel/opt/io_vcf_read.pyx":119
  *     if ID_FIELD in fields:
  *         id_parser = StringParser(field=ID_FIELD, chunk_length=chunk_length,
  *                                  dtype=types[ID_FIELD])             # <<<<<<<<<<<<<<
  *         fields.remove(ID_FIELD)
  *     else:
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 117, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 119, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = PyObject_GetItem(__pyx_v_types, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 117, __pyx_L1_error)
+    __pyx_t_7 = PyObject_GetItem(__pyx_v_types, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 119, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 116, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":116
+    /* "allel/opt/io_vcf_read.pyx":118
  *     # setup ID parser
  *     if ID_FIELD in fields:
  *         id_parser = StringParser(field=ID_FIELD, chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                  dtype=types[ID_FIELD])
  *         fields.remove(ID_FIELD)
  */
-    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_StringParser), __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 116, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_StringParser), __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_v_id_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_7);
     __pyx_t_7 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":118
+    /* "allel/opt/io_vcf_read.pyx":120
  *         id_parser = StringParser(field=ID_FIELD, chunk_length=chunk_length,
  *                                  dtype=types[ID_FIELD])
  *         fields.remove(ID_FIELD)             # <<<<<<<<<<<<<<
  *     else:
  *         id_parser = SkipParser()
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 118, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 118, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ID_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_8 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -3984,14 +4082,14 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
     }
     if (!__pyx_t_8) {
-      __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_7);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_3};
-        __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -4000,20 +4098,20 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_3};
-        __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       } else
       #endif
       {
-        __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 118, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 120, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_8); __pyx_t_8 = NULL;
         __Pyx_GIVEREF(__pyx_t_3);
         PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_3);
         __pyx_t_3 = 0;
-        __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       }
@@ -4021,7 +4119,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":115
+    /* "allel/opt/io_vcf_read.pyx":117
  * 
  *     # setup ID parser
  *     if ID_FIELD in fields:             # <<<<<<<<<<<<<<
@@ -4031,7 +4129,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L5;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":120
+  /* "allel/opt/io_vcf_read.pyx":122
  *         fields.remove(ID_FIELD)
  *     else:
  *         id_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -4039,80 +4137,80 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup REF parser
  */
   /*else*/ {
-    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 122, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_v_id_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_7);
     __pyx_t_7 = 0;
   }
   __pyx_L5:;
 
-  /* "allel/opt/io_vcf_read.pyx":123
+  /* "allel/opt/io_vcf_read.pyx":125
  * 
  *     # setup REF parser
  *     if REF_FIELD in fields:             # <<<<<<<<<<<<<<
  *         ref_parser = StringParser(field=REF_FIELD, chunk_length=chunk_length,
  *                                   dtype=types[REF_FIELD])
  */
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 123, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 125, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_t_7, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 123, __pyx_L1_error)
+  __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_t_7, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 125, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_5 = (__pyx_t_6 != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":124
+    /* "allel/opt/io_vcf_read.pyx":126
  *     # setup REF parser
  *     if REF_FIELD in fields:
  *         ref_parser = StringParser(field=REF_FIELD, chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                   dtype=types[REF_FIELD])
  *         fields.remove(REF_FIELD)
  */
-    __pyx_t_7 = PyDict_New(); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __pyx_t_7 = PyDict_New(); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_field, __pyx_t_1) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_field, __pyx_t_1) < 0) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 126, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":125
+    /* "allel/opt/io_vcf_read.pyx":127
  *     if REF_FIELD in fields:
  *         ref_parser = StringParser(field=REF_FIELD, chunk_length=chunk_length,
  *                                   dtype=types[REF_FIELD])             # <<<<<<<<<<<<<<
  *         fields.remove(REF_FIELD)
  *     else:
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 125, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 127, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = PyObject_GetItem(__pyx_v_types, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 125, __pyx_L1_error)
+    __pyx_t_2 = PyObject_GetItem(__pyx_v_types, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":124
+    /* "allel/opt/io_vcf_read.pyx":126
  *     # setup REF parser
  *     if REF_FIELD in fields:
  *         ref_parser = StringParser(field=REF_FIELD, chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                   dtype=types[REF_FIELD])
  *         fields.remove(REF_FIELD)
  */
-    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_StringParser), __pyx_empty_tuple, __pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_StringParser), __pyx_empty_tuple, __pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_v_ref_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":126
+    /* "allel/opt/io_vcf_read.pyx":128
  *         ref_parser = StringParser(field=REF_FIELD, chunk_length=chunk_length,
  *                                   dtype=types[REF_FIELD])
  *         fields.remove(REF_FIELD)             # <<<<<<<<<<<<<<
  *     else:
  *         ref_parser = SkipParser()
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 128, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_REF_FIELD); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 128, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_3 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
@@ -4125,14 +4223,14 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
     }
     if (!__pyx_t_3) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_7)) {
         PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_1};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -4141,20 +4239,20 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
         PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_1};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 126, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 128, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_3); __pyx_t_3 = NULL;
         __Pyx_GIVEREF(__pyx_t_1);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_1);
         __pyx_t_1 = 0;
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_8, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_8, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -4162,7 +4260,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":123
+    /* "allel/opt/io_vcf_read.pyx":125
  * 
  *     # setup REF parser
  *     if REF_FIELD in fields:             # <<<<<<<<<<<<<<
@@ -4172,7 +4270,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L6;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":128
+  /* "allel/opt/io_vcf_read.pyx":130
  *         fields.remove(REF_FIELD)
  *     else:
  *         ref_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -4180,61 +4278,61 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup ALT parser
  */
   /*else*/ {
-    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_v_ref_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_2);
     __pyx_t_2 = 0;
   }
   __pyx_L6:;
 
-  /* "allel/opt/io_vcf_read.pyx":131
+  /* "allel/opt/io_vcf_read.pyx":133
  * 
  *     # setup ALT parser
  *     if ALT_FIELD in fields:             # <<<<<<<<<<<<<<
  *         alt_parser = AltParser(chunk_length=chunk_length, dtype=types[ALT_FIELD], number=3)
  *         fields.remove(ALT_FIELD)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_t_2, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_t_2, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 133, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_6 = (__pyx_t_5 != 0);
   if (__pyx_t_6) {
 
-    /* "allel/opt/io_vcf_read.pyx":132
+    /* "allel/opt/io_vcf_read.pyx":134
  *     # setup ALT parser
  *     if ALT_FIELD in fields:
  *         alt_parser = AltParser(chunk_length=chunk_length, dtype=types[ALT_FIELD], number=3)             # <<<<<<<<<<<<<<
  *         fields.remove(ALT_FIELD)
  *     else:
  */
-    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 132, __pyx_L1_error)
+    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 132, __pyx_L1_error)
-    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 132, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 134, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_8 = PyObject_GetItem(__pyx_v_types, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 132, __pyx_L1_error)
+    __pyx_t_8 = PyObject_GetItem(__pyx_v_types, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_8) < 0) __PYX_ERR(0, 132, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_8) < 0) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_number, __pyx_int_3) < 0) __PYX_ERR(0, 132, __pyx_L1_error)
-    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_AltParser), __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 132, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_number, __pyx_int_3) < 0) __PYX_ERR(0, 134, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_AltParser), __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_v_alt_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_8);
     __pyx_t_8 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":133
+    /* "allel/opt/io_vcf_read.pyx":135
  *     if ALT_FIELD in fields:
  *         alt_parser = AltParser(chunk_length=chunk_length, dtype=types[ALT_FIELD], number=3)
  *         fields.remove(ALT_FIELD)             # <<<<<<<<<<<<<<
  *     else:
  *         alt_parser = SkipParser()
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 135, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 135, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_1 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4247,14 +4345,14 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
     }
     if (!__pyx_t_1) {
-      __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 133, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_GOTREF(__pyx_t_8);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_7};
-        __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 133, __pyx_L1_error)
+        __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -4263,20 +4361,20 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_7};
-        __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 133, __pyx_L1_error)
+        __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       } else
       #endif
       {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 133, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 135, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
         __Pyx_GIVEREF(__pyx_t_7);
         PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_7);
         __pyx_t_7 = 0;
-        __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 133, __pyx_L1_error)
+        __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
@@ -4284,7 +4382,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":131
+    /* "allel/opt/io_vcf_read.pyx":133
  * 
  *     # setup ALT parser
  *     if ALT_FIELD in fields:             # <<<<<<<<<<<<<<
@@ -4294,7 +4392,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L7;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":135
+  /* "allel/opt/io_vcf_read.pyx":137
  *         fields.remove(ALT_FIELD)
  *     else:
  *         alt_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -4302,54 +4400,54 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup QUAL parser
  */
   /*else*/ {
-    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 137, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __pyx_v_alt_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_8);
     __pyx_t_8 = 0;
   }
   __pyx_L7:;
 
-  /* "allel/opt/io_vcf_read.pyx":138
+  /* "allel/opt/io_vcf_read.pyx":140
  * 
  *     # setup QUAL parser
  *     if QUAL_FIELD in fields:             # <<<<<<<<<<<<<<
  *         # TODO user-provided type
  *         qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
  */
-  __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_QUAL_FIELD); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_QUAL_FIELD); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 140, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_t_8, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_t_8, __pyx_v_fields, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 140, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __pyx_t_5 = (__pyx_t_6 != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":140
+    /* "allel/opt/io_vcf_read.pyx":142
  *     if QUAL_FIELD in fields:
  *         # TODO user-provided type
  *         qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)             # <<<<<<<<<<<<<<
  *         fields.remove(QUAL_FIELD)
  *     else:
  */
-    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 140, __pyx_L1_error)
+    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 142, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 140, __pyx_L1_error)
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 140, __pyx_L1_error)
-    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_QualFloat32Parser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 140, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 142, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 142, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_QualFloat32Parser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 142, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_v_qual_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":141
+    /* "allel/opt/io_vcf_read.pyx":143
  *         # TODO user-provided type
  *         qual_parser = QualFloat32Parser(chunk_length=chunk_length, fill=-1)
  *         fields.remove(QUAL_FIELD)             # <<<<<<<<<<<<<<
  *     else:
  *         qual_parser = SkipParser()
  */
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 141, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 143, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_QUAL_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 141, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_QUAL_FIELD); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 143, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_7 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
@@ -4362,14 +4460,14 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_3};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -4378,20 +4476,20 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_3};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       } else
       #endif
       {
-        __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 141, __pyx_L1_error)
+        __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_3);
         PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_t_3);
         __pyx_t_3 = 0;
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       }
@@ -4399,7 +4497,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":138
+    /* "allel/opt/io_vcf_read.pyx":140
  * 
  *     # setup QUAL parser
  *     if QUAL_FIELD in fields:             # <<<<<<<<<<<<<<
@@ -4409,7 +4507,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L8;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":143
+  /* "allel/opt/io_vcf_read.pyx":145
  *         fields.remove(QUAL_FIELD)
  *     else:
  *         qual_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -4417,98 +4515,98 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup FILTER parser
  */
   /*else*/ {
-    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_v_qual_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_2);
     __pyx_t_2 = 0;
   }
   __pyx_L8:;
 
-  /* "allel/opt/io_vcf_read.pyx":146
+  /* "allel/opt/io_vcf_read.pyx":148
  * 
  *     # setup FILTER parser
  *     filters = list()             # <<<<<<<<<<<<<<
  *     for field in list(fields):
  *         if field.startswith('variants/FILTER_'):
  */
-  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 146, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_filters = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":147
+  /* "allel/opt/io_vcf_read.pyx":149
  *     # setup FILTER parser
  *     filters = list()
  *     for field in list(fields):             # <<<<<<<<<<<<<<
  *         if field.startswith('variants/FILTER_'):
  *             filter = field[16:].encode('ascii')
  */
-  __pyx_t_2 = PySequence_List(__pyx_v_fields); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_2 = PySequence_List(__pyx_v_fields); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_8 = __pyx_t_2; __Pyx_INCREF(__pyx_t_8); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   for (;;) {
     if (__pyx_t_4 >= PyList_GET_SIZE(__pyx_t_8)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_2 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_4); __Pyx_INCREF(__pyx_t_2); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 147, __pyx_L1_error)
+    __pyx_t_2 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_4); __Pyx_INCREF(__pyx_t_2); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 149, __pyx_L1_error)
     #else
-    __pyx_t_2 = PySequence_ITEM(__pyx_t_8, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
+    __pyx_t_2 = PySequence_ITEM(__pyx_t_8, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_field, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":148
+    /* "allel/opt/io_vcf_read.pyx":150
  *     filters = list()
  *     for field in list(fields):
  *         if field.startswith('variants/FILTER_'):             # <<<<<<<<<<<<<<
  *             filter = field[16:].encode('ascii')
  *             filters.append(filter)
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_field, __pyx_n_s_startswith); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_field, __pyx_n_s_startswith); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":149
+      /* "allel/opt/io_vcf_read.pyx":151
  *     for field in list(fields):
  *         if field.startswith('variants/FILTER_'):
  *             filter = field[16:].encode('ascii')             # <<<<<<<<<<<<<<
  *             filters.append(filter)
  *             fields.remove(field)
  */
-      __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_field, 16, 0, NULL, NULL, &__pyx_slice__2, 1, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_field, 16, 0, NULL, NULL, &__pyx_slice__2, 1, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 151, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_XDECREF_SET(__pyx_v_filter, __pyx_t_1);
       __pyx_t_1 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":150
+      /* "allel/opt/io_vcf_read.pyx":152
  *         if field.startswith('variants/FILTER_'):
  *             filter = field[16:].encode('ascii')
  *             filters.append(filter)             # <<<<<<<<<<<<<<
  *             fields.remove(field)
  *     if filters:
  */
-      __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_filters, __pyx_v_filter); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 150, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_filters, __pyx_v_filter); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 152, __pyx_L1_error)
 
-      /* "allel/opt/io_vcf_read.pyx":151
+      /* "allel/opt/io_vcf_read.pyx":153
  *             filter = field[16:].encode('ascii')
  *             filters.append(filter)
  *             fields.remove(field)             # <<<<<<<<<<<<<<
  *     if filters:
  *         filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 151, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 153, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_3 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4521,13 +4619,13 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         }
       }
       if (!__pyx_t_3) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_field); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_field); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_field};
-          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_GOTREF(__pyx_t_1);
         } else
@@ -4535,19 +4633,19 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_field};
-          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_GOTREF(__pyx_t_1);
         } else
         #endif
         {
-          __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 151, __pyx_L1_error)
+          __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 153, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_7);
           __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_3); __pyx_t_3 = NULL;
           __Pyx_INCREF(__pyx_v_field);
           __Pyx_GIVEREF(__pyx_v_field);
           PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_field);
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
         }
@@ -4555,7 +4653,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":148
+      /* "allel/opt/io_vcf_read.pyx":150
  *     filters = list()
  *     for field in list(fields):
  *         if field.startswith('variants/FILTER_'):             # <<<<<<<<<<<<<<
@@ -4564,7 +4662,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":147
+    /* "allel/opt/io_vcf_read.pyx":149
  *     # setup FILTER parser
  *     filters = list()
  *     for field in list(fields):             # <<<<<<<<<<<<<<
@@ -4574,7 +4672,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   }
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":152
+  /* "allel/opt/io_vcf_read.pyx":154
  *             filters.append(filter)
  *             fields.remove(field)
  *     if filters:             # <<<<<<<<<<<<<<
@@ -4584,24 +4682,24 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __pyx_t_5 = (__pyx_v_filters != Py_None) && (PyList_GET_SIZE(__pyx_v_filters) != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":153
+    /* "allel/opt/io_vcf_read.pyx":155
  *             fields.remove(field)
  *     if filters:
  *         filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)             # <<<<<<<<<<<<<<
  *     else:
  *         filter_parser = SkipParser()
  */
-    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 153, __pyx_L1_error)
+    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 155, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 153, __pyx_L1_error)
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_filters, __pyx_v_filters) < 0) __PYX_ERR(0, 153, __pyx_L1_error)
-    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_FilterParser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 155, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_filters, __pyx_v_filters) < 0) __PYX_ERR(0, 155, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_FilterParser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_v_filter_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":152
+    /* "allel/opt/io_vcf_read.pyx":154
  *             filters.append(filter)
  *             fields.remove(field)
  *     if filters:             # <<<<<<<<<<<<<<
@@ -4611,7 +4709,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L12;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":155
+  /* "allel/opt/io_vcf_read.pyx":157
  *         filter_parser = FilterParser(chunk_length=chunk_length, filters=filters)
  *     else:
  *         filter_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -4619,69 +4717,69 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup INFO parsers
  */
   /*else*/ {
-    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 157, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_filter_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1);
     __pyx_t_1 = 0;
   }
   __pyx_L12:;
 
-  /* "allel/opt/io_vcf_read.pyx":158
+  /* "allel/opt/io_vcf_read.pyx":160
  * 
  *     # setup INFO parsers
  *     infos = list()             # <<<<<<<<<<<<<<
  *     info_types = dict()
  *     # assume any variants fields left are INFO
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 158, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 160, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_infos = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":159
+  /* "allel/opt/io_vcf_read.pyx":161
  *     # setup INFO parsers
  *     infos = list()
  *     info_types = dict()             # <<<<<<<<<<<<<<
  *     # assume any variants fields left are INFO
  *     for field in list(fields):
  */
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 159, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_info_types = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":161
+  /* "allel/opt/io_vcf_read.pyx":163
  *     info_types = dict()
  *     # assume any variants fields left are INFO
  *     for field in list(fields):             # <<<<<<<<<<<<<<
  *         group, name = field.split('/')
  *         if group == 'variants':
  */
-  __pyx_t_1 = PySequence_List(__pyx_v_fields); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __pyx_t_1 = PySequence_List(__pyx_v_fields); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_8 = __pyx_t_1; __Pyx_INCREF(__pyx_t_8); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   for (;;) {
     if (__pyx_t_4 >= PyList_GET_SIZE(__pyx_t_8)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_1 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_4); __Pyx_INCREF(__pyx_t_1); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 161, __pyx_L1_error)
+    __pyx_t_1 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_4); __Pyx_INCREF(__pyx_t_1); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 163, __pyx_L1_error)
     #else
-    __pyx_t_1 = PySequence_ITEM(__pyx_t_8, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
+    __pyx_t_1 = PySequence_ITEM(__pyx_t_8, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_field, __pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":162
+    /* "allel/opt/io_vcf_read.pyx":164
  *     # assume any variants fields left are INFO
  *     for field in list(fields):
  *         group, name = field.split('/')             # <<<<<<<<<<<<<<
  *         if group == 'variants':
  *             info = name.encode('ascii')
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_field, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_field, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 164, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 164, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if ((likely(PyTuple_CheckExact(__pyx_t_2))) || (PyList_CheckExact(__pyx_t_2))) {
@@ -4694,7 +4792,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 162, __pyx_L1_error)
+        __PYX_ERR(0, 164, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -4707,15 +4805,15 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_INCREF(__pyx_t_1);
       __Pyx_INCREF(__pyx_t_7);
       #else
-      __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 164, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_7 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_7 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 164, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       #endif
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_3 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_3 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 164, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_10 = Py_TYPE(__pyx_t_3)->tp_iternext;
@@ -4723,7 +4821,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_GOTREF(__pyx_t_1);
       index = 1; __pyx_t_7 = __pyx_t_10(__pyx_t_3); if (unlikely(!__pyx_t_7)) goto __pyx_L15_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_7);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_3), 2) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_3), 2) < 0) __PYX_ERR(0, 164, __pyx_L1_error)
       __pyx_t_10 = NULL;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       goto __pyx_L16_unpacking_done;
@@ -4731,7 +4829,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __pyx_t_10 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 162, __pyx_L1_error)
+      __PYX_ERR(0, 164, __pyx_L1_error)
       __pyx_L16_unpacking_done:;
     }
     __Pyx_XDECREF_SET(__pyx_v_group, __pyx_t_1);
@@ -4739,48 +4837,48 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_XDECREF_SET(__pyx_v_name, __pyx_t_7);
     __pyx_t_7 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":163
+    /* "allel/opt/io_vcf_read.pyx":165
  *     for field in list(fields):
  *         group, name = field.split('/')
  *         if group == 'variants':             # <<<<<<<<<<<<<<
  *             info = name.encode('ascii')
  *             infos.append(info)
  */
-    __pyx_t_5 = (__Pyx_PyUnicode_Equals(__pyx_v_group, __pyx_n_u_variants, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 163, __pyx_L1_error)
+    __pyx_t_5 = (__Pyx_PyUnicode_Equals(__pyx_v_group, __pyx_n_u_variants, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 165, __pyx_L1_error)
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":164
+      /* "allel/opt/io_vcf_read.pyx":166
  *         group, name = field.split('/')
  *         if group == 'variants':
  *             info = name.encode('ascii')             # <<<<<<<<<<<<<<
  *             infos.append(info)
  *             fields.remove(field)
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_name, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 164, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_name, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 164, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_XDECREF_SET(__pyx_v_info, __pyx_t_7);
       __pyx_t_7 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":165
+      /* "allel/opt/io_vcf_read.pyx":167
  *         if group == 'variants':
  *             info = name.encode('ascii')
  *             infos.append(info)             # <<<<<<<<<<<<<<
  *             fields.remove(field)
  *             info_types[info] = types[field]
  */
-      __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_infos, __pyx_v_info); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 165, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_infos, __pyx_v_info); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 167, __pyx_L1_error)
 
-      /* "allel/opt/io_vcf_read.pyx":166
+      /* "allel/opt/io_vcf_read.pyx":168
  *             info = name.encode('ascii')
  *             infos.append(info)
  *             fields.remove(field)             # <<<<<<<<<<<<<<
  *             info_types[info] = types[field]
  *     if infos:
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_1 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4793,13 +4891,13 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         }
       }
       if (!__pyx_t_1) {
-        __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_field); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_field); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 168, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_field};
-          __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
+          __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
           __Pyx_GOTREF(__pyx_t_7);
         } else
@@ -4807,19 +4905,19 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_field};
-          __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
+          __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
           __Pyx_GOTREF(__pyx_t_7);
         } else
         #endif
         {
-          __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 166, __pyx_L1_error)
+          __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
           __Pyx_INCREF(__pyx_v_field);
           __Pyx_GIVEREF(__pyx_v_field);
           PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_field);
-          __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
+          __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_7);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         }
@@ -4827,19 +4925,19 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":167
+      /* "allel/opt/io_vcf_read.pyx":169
  *             infos.append(info)
  *             fields.remove(field)
  *             info_types[info] = types[field]             # <<<<<<<<<<<<<<
  *     if infos:
  *         info_parser = InfoParser(chunk_length=chunk_length, infos=infos, types=info_types)
  */
-      __pyx_t_7 = PyObject_GetItem(__pyx_v_types, __pyx_v_field); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 167, __pyx_L1_error)
+      __pyx_t_7 = PyObject_GetItem(__pyx_v_types, __pyx_v_field); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 169, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      if (unlikely(PyDict_SetItem(__pyx_v_info_types, __pyx_v_info, __pyx_t_7) < 0)) __PYX_ERR(0, 167, __pyx_L1_error)
+      if (unlikely(PyDict_SetItem(__pyx_v_info_types, __pyx_v_info, __pyx_t_7) < 0)) __PYX_ERR(0, 169, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":163
+      /* "allel/opt/io_vcf_read.pyx":165
  *     for field in list(fields):
  *         group, name = field.split('/')
  *         if group == 'variants':             # <<<<<<<<<<<<<<
@@ -4848,7 +4946,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":161
+    /* "allel/opt/io_vcf_read.pyx":163
  *     info_types = dict()
  *     # assume any variants fields left are INFO
  *     for field in list(fields):             # <<<<<<<<<<<<<<
@@ -4858,7 +4956,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   }
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":168
+  /* "allel/opt/io_vcf_read.pyx":170
  *             fields.remove(field)
  *             info_types[info] = types[field]
  *     if infos:             # <<<<<<<<<<<<<<
@@ -4868,25 +4966,25 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __pyx_t_5 = (__pyx_v_infos != Py_None) && (PyList_GET_SIZE(__pyx_v_infos) != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":169
+    /* "allel/opt/io_vcf_read.pyx":171
  *             info_types[info] = types[field]
  *     if infos:
  *         info_parser = InfoParser(chunk_length=chunk_length, infos=infos, types=info_types)             # <<<<<<<<<<<<<<
  *     else:
  *         info_parser = SkipParser()
  */
-    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 169, __pyx_L1_error)
+    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 171, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 169, __pyx_L1_error)
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_infos, __pyx_v_infos) < 0) __PYX_ERR(0, 169, __pyx_L1_error)
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_types, __pyx_v_info_types) < 0) __PYX_ERR(0, 169, __pyx_L1_error)
-    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoParser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 169, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_infos, __pyx_v_infos) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_types, __pyx_v_info_types) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoParser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 171, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_v_info_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_7);
     __pyx_t_7 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":168
+    /* "allel/opt/io_vcf_read.pyx":170
  *             fields.remove(field)
  *             info_types[info] = types[field]
  *     if infos:             # <<<<<<<<<<<<<<
@@ -4896,7 +4994,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L18;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":171
+  /* "allel/opt/io_vcf_read.pyx":173
  *         info_parser = InfoParser(chunk_length=chunk_length, infos=infos, types=info_types)
  *     else:
  *         info_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -4904,57 +5002,57 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # setup FORMAT and calldata parsers
  */
   /*else*/ {
-    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 171, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_v_info_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_7);
     __pyx_t_7 = 0;
   }
   __pyx_L18:;
 
-  /* "allel/opt/io_vcf_read.pyx":174
+  /* "allel/opt/io_vcf_read.pyx":176
  * 
  *     # setup FORMAT and calldata parsers
  *     formats = list()             # <<<<<<<<<<<<<<
  *     for field in list(fields):
  *         group, name = field.split('/')
  */
-  __pyx_t_7 = PyList_New(0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 174, __pyx_L1_error)
+  __pyx_t_7 = PyList_New(0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 176, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __pyx_v_formats = ((PyObject*)__pyx_t_7);
   __pyx_t_7 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":175
+  /* "allel/opt/io_vcf_read.pyx":177
  *     # setup FORMAT and calldata parsers
  *     formats = list()
  *     for field in list(fields):             # <<<<<<<<<<<<<<
  *         group, name = field.split('/')
  *         if group == 'calldata':
  */
-  __pyx_t_7 = PySequence_List(__pyx_v_fields); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 175, __pyx_L1_error)
+  __pyx_t_7 = PySequence_List(__pyx_v_fields); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 177, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __pyx_t_8 = __pyx_t_7; __Pyx_INCREF(__pyx_t_8); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   for (;;) {
     if (__pyx_t_4 >= PyList_GET_SIZE(__pyx_t_8)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_7 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_4); __Pyx_INCREF(__pyx_t_7); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 175, __pyx_L1_error)
+    __pyx_t_7 = PyList_GET_ITEM(__pyx_t_8, __pyx_t_4); __Pyx_INCREF(__pyx_t_7); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 177, __pyx_L1_error)
     #else
-    __pyx_t_7 = PySequence_ITEM(__pyx_t_8, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 175, __pyx_L1_error)
+    __pyx_t_7 = PySequence_ITEM(__pyx_t_8, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 177, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_field, __pyx_t_7);
     __pyx_t_7 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":176
+    /* "allel/opt/io_vcf_read.pyx":178
  *     formats = list()
  *     for field in list(fields):
  *         group, name = field.split('/')             # <<<<<<<<<<<<<<
  *         if group == 'calldata':
  *             format = name.encode('ascii')
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_field, __pyx_n_s_split); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 176, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_field, __pyx_n_s_split); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 178, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     if ((likely(PyTuple_CheckExact(__pyx_t_2))) || (PyList_CheckExact(__pyx_t_2))) {
@@ -4967,7 +5065,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 176, __pyx_L1_error)
+        __PYX_ERR(0, 178, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -4980,15 +5078,15 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_INCREF(__pyx_t_7);
       __Pyx_INCREF(__pyx_t_3);
       #else
-      __pyx_t_7 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 176, __pyx_L1_error)
+      __pyx_t_7 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 178, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_3 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 176, __pyx_L1_error)
+      __pyx_t_3 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 178, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       #endif
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
+      __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_10 = Py_TYPE(__pyx_t_1)->tp_iternext;
@@ -4996,7 +5094,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_GOTREF(__pyx_t_7);
       index = 1; __pyx_t_3 = __pyx_t_10(__pyx_t_1); if (unlikely(!__pyx_t_3)) goto __pyx_L21_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_3);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_1), 2) < 0) __PYX_ERR(0, 176, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_1), 2) < 0) __PYX_ERR(0, 178, __pyx_L1_error)
       __pyx_t_10 = NULL;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       goto __pyx_L22_unpacking_done;
@@ -5004,7 +5102,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __pyx_t_10 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 176, __pyx_L1_error)
+      __PYX_ERR(0, 178, __pyx_L1_error)
       __pyx_L22_unpacking_done:;
     }
     __Pyx_XDECREF_SET(__pyx_v_group, __pyx_t_7);
@@ -5012,48 +5110,48 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __Pyx_XDECREF_SET(__pyx_v_name, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":177
+    /* "allel/opt/io_vcf_read.pyx":179
  *     for field in list(fields):
  *         group, name = field.split('/')
  *         if group == 'calldata':             # <<<<<<<<<<<<<<
  *             format = name.encode('ascii')
  *             formats.append(format)
  */
-    __pyx_t_5 = (__Pyx_PyUnicode_Equals(__pyx_v_group, __pyx_n_u_calldata, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_5 = (__Pyx_PyUnicode_Equals(__pyx_v_group, __pyx_n_u_calldata, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 179, __pyx_L1_error)
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":178
+      /* "allel/opt/io_vcf_read.pyx":180
  *         group, name = field.split('/')
  *         if group == 'calldata':
  *             format = name.encode('ascii')             # <<<<<<<<<<<<<<
  *             formats.append(format)
  *             fields.remove(field)
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_name, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_name, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 178, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_XDECREF_SET(__pyx_v_format, __pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":179
+      /* "allel/opt/io_vcf_read.pyx":181
  *         if group == 'calldata':
  *             format = name.encode('ascii')
  *             formats.append(format)             # <<<<<<<<<<<<<<
  *             fields.remove(field)
  *     if formats:
  */
-      __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_formats, __pyx_v_format); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 179, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_formats, __pyx_v_format); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 181, __pyx_L1_error)
 
-      /* "allel/opt/io_vcf_read.pyx":180
+      /* "allel/opt/io_vcf_read.pyx":182
  *             format = name.encode('ascii')
  *             formats.append(format)
  *             fields.remove(field)             # <<<<<<<<<<<<<<
  *     if formats:
  *         format_parser = FormatParser()
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_fields, __pyx_n_s_remove); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 182, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_7 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -5066,13 +5164,13 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         }
       }
       if (!__pyx_t_7) {
-        __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_field); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_field};
-          __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
           __Pyx_GOTREF(__pyx_t_3);
         } else
@@ -5080,19 +5178,19 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_field};
-          __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
           __Pyx_GOTREF(__pyx_t_3);
         } else
         #endif
         {
-          __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+          __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 182, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_7); __pyx_t_7 = NULL;
           __Pyx_INCREF(__pyx_v_field);
           __Pyx_GIVEREF(__pyx_v_field);
           PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_v_field);
-          __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         }
@@ -5100,7 +5198,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":177
+      /* "allel/opt/io_vcf_read.pyx":179
  *     for field in list(fields):
  *         group, name = field.split('/')
  *         if group == 'calldata':             # <<<<<<<<<<<<<<
@@ -5109,7 +5207,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":175
+    /* "allel/opt/io_vcf_read.pyx":177
  *     # setup FORMAT and calldata parsers
  *     formats = list()
  *     for field in list(fields):             # <<<<<<<<<<<<<<
@@ -5119,7 +5217,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   }
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":181
+  /* "allel/opt/io_vcf_read.pyx":183
  *             formats.append(format)
  *             fields.remove(field)
  *     if formats:             # <<<<<<<<<<<<<<
@@ -5129,66 +5227,66 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __pyx_t_5 = (__pyx_v_formats != Py_None) && (PyList_GET_SIZE(__pyx_v_formats) != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":182
+    /* "allel/opt/io_vcf_read.pyx":184
  *             fields.remove(field)
  *     if formats:
  *         format_parser = FormatParser()             # <<<<<<<<<<<<<<
  *         calldata_parser = CalldataParser(chunk_length=chunk_length,
  *                                          formats=formats, types=types,
  */
-    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_FormatParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 182, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_FormatParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __pyx_v_format_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_8);
     __pyx_t_8 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":183
+    /* "allel/opt/io_vcf_read.pyx":185
  *     if formats:
  *         format_parser = FormatParser()
  *         calldata_parser = CalldataParser(chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                          formats=formats, types=types,
  *                                          n_samples=context.n_samples,
  */
-    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":184
+    /* "allel/opt/io_vcf_read.pyx":186
  *         format_parser = FormatParser()
  *         calldata_parser = CalldataParser(chunk_length=chunk_length,
  *                                          formats=formats, types=types,             # <<<<<<<<<<<<<<
  *                                          n_samples=context.n_samples,
  *                                          ploidy=2)
  */
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_formats, __pyx_v_formats) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_types, __pyx_v_types) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_formats, __pyx_v_formats) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_types, __pyx_v_types) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":185
+    /* "allel/opt/io_vcf_read.pyx":187
  *         calldata_parser = CalldataParser(chunk_length=chunk_length,
  *                                          formats=formats, types=types,
  *                                          n_samples=context.n_samples,             # <<<<<<<<<<<<<<
  *                                          ploidy=2)
  *     else:
  */
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_context->n_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_context->n_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_n_samples, __pyx_t_3) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_n_samples, __pyx_t_3) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_ploidy, __pyx_int_2) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_ploidy, __pyx_int_2) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":183
+    /* "allel/opt/io_vcf_read.pyx":185
  *     if formats:
  *         format_parser = FormatParser()
  *         calldata_parser = CalldataParser(chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                          formats=formats, types=types,
  *                                          n_samples=context.n_samples,
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_CalldataParser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_CalldataParser), __pyx_empty_tuple, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 185, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __pyx_v_calldata_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":181
+    /* "allel/opt/io_vcf_read.pyx":183
  *             formats.append(format)
  *             fields.remove(field)
  *     if formats:             # <<<<<<<<<<<<<<
@@ -5198,7 +5296,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     goto __pyx_L24;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":188
+  /* "allel/opt/io_vcf_read.pyx":190
  *                                          ploidy=2)
  *     else:
  *         format_parser = SkipParser()             # <<<<<<<<<<<<<<
@@ -5206,60 +5304,60 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  * 
  */
   /*else*/ {
-    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 188, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 190, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_v_format_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":189
+    /* "allel/opt/io_vcf_read.pyx":191
  *     else:
  *         format_parser = SkipParser()
  *         calldata_parser = SkipParser()             # <<<<<<<<<<<<<<
  * 
  *     if fields:
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 189, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_v_calldata_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3);
     __pyx_t_3 = 0;
   }
   __pyx_L24:;
 
-  /* "allel/opt/io_vcf_read.pyx":191
+  /* "allel/opt/io_vcf_read.pyx":193
  *         calldata_parser = SkipParser()
  * 
  *     if fields:             # <<<<<<<<<<<<<<
  *         # shouldn't ever be any left over
  *         raise RuntimeError('unexpected fields left over: %r' % set(fields))
  */
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_fields); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 191, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_fields); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 193, __pyx_L1_error)
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":193
+    /* "allel/opt/io_vcf_read.pyx":195
  *     if fields:
  *         # shouldn't ever be any left over
  *         raise RuntimeError('unexpected fields left over: %r' % set(fields))             # <<<<<<<<<<<<<<
  * 
  *     while True:
  */
-    __pyx_t_3 = PySet_New(__pyx_v_fields); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 193, __pyx_L1_error)
+    __pyx_t_3 = PySet_New(__pyx_v_fields); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 195, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_8 = PyUnicode_Format(__pyx_kp_u_unexpected_fields_left_over_r, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 193, __pyx_L1_error)
+    __pyx_t_8 = PyUnicode_Format(__pyx_kp_u_unexpected_fields_left_over_r, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 195, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 193, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 195, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_8);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_8);
     __pyx_t_8 = 0;
-    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_3, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 193, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_3, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 195, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_Raise(__pyx_t_8, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __PYX_ERR(0, 193, __pyx_L1_error)
+    __PYX_ERR(0, 195, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":191
+    /* "allel/opt/io_vcf_read.pyx":193
  *         calldata_parser = SkipParser()
  * 
  *     if fields:             # <<<<<<<<<<<<<<
@@ -5268,7 +5366,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":195
+  /* "allel/opt/io_vcf_read.pyx":197
  *         raise RuntimeError('unexpected fields left over: %r' % set(fields))
  * 
  *     while True:             # <<<<<<<<<<<<<<
@@ -5277,7 +5375,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
   while (1) {
 
-    /* "allel/opt/io_vcf_read.pyx":197
+    /* "allel/opt/io_vcf_read.pyx":199
  *     while True:
  * 
  *         if context.c == 0:             # <<<<<<<<<<<<<<
@@ -5287,7 +5385,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->c == 0) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":198
+      /* "allel/opt/io_vcf_read.pyx":200
  * 
  *         if context.c == 0:
  *             break             # <<<<<<<<<<<<<<
@@ -5296,7 +5394,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       goto __pyx_L27_break;
 
-      /* "allel/opt/io_vcf_read.pyx":197
+      /* "allel/opt/io_vcf_read.pyx":199
  *     while True:
  * 
  *         if context.c == 0:             # <<<<<<<<<<<<<<
@@ -5305,7 +5403,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":200
+    /* "allel/opt/io_vcf_read.pyx":202
  *             break
  * 
  *         elif context.state == ParserState.CHROM:             # <<<<<<<<<<<<<<
@@ -5315,18 +5413,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_CHROM) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":201
+      /* "allel/opt/io_vcf_read.pyx":203
  * 
  *         elif context.state == ParserState.CHROM:
  *             chrom_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.POS
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_chrom_parser->__pyx_vtab)->parse(__pyx_v_chrom_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_chrom_parser->__pyx_vtab)->parse(__pyx_v_chrom_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 203, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":202
+      /* "allel/opt/io_vcf_read.pyx":204
  *         elif context.state == ParserState.CHROM:
  *             chrom_parser.parse(context)
  *             context.state = ParserState.POS             # <<<<<<<<<<<<<<
@@ -5335,7 +5433,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_POS;
 
-      /* "allel/opt/io_vcf_read.pyx":200
+      /* "allel/opt/io_vcf_read.pyx":202
  *             break
  * 
  *         elif context.state == ParserState.CHROM:             # <<<<<<<<<<<<<<
@@ -5345,7 +5443,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":204
+    /* "allel/opt/io_vcf_read.pyx":206
  *             context.state = ParserState.POS
  * 
  *         elif context.state == ParserState.POS:             # <<<<<<<<<<<<<<
@@ -5355,18 +5453,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_POS) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":205
+      /* "allel/opt/io_vcf_read.pyx":207
  * 
  *         elif context.state == ParserState.POS:
  *             pos_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.ID
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_pos_parser->__pyx_vtab)->parse(__pyx_v_pos_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_pos_parser->__pyx_vtab)->parse(__pyx_v_pos_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 207, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":206
+      /* "allel/opt/io_vcf_read.pyx":208
  *         elif context.state == ParserState.POS:
  *             pos_parser.parse(context)
  *             context.state = ParserState.ID             # <<<<<<<<<<<<<<
@@ -5375,7 +5473,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_ID;
 
-      /* "allel/opt/io_vcf_read.pyx":204
+      /* "allel/opt/io_vcf_read.pyx":206
  *             context.state = ParserState.POS
  * 
  *         elif context.state == ParserState.POS:             # <<<<<<<<<<<<<<
@@ -5385,7 +5483,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":208
+    /* "allel/opt/io_vcf_read.pyx":210
  *             context.state = ParserState.ID
  * 
  *         elif context.state == ParserState.ID:             # <<<<<<<<<<<<<<
@@ -5395,18 +5493,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_ID) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":209
+      /* "allel/opt/io_vcf_read.pyx":211
  * 
  *         elif context.state == ParserState.ID:
  *             id_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.REF
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_id_parser->__pyx_vtab)->parse(__pyx_v_id_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 209, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_id_parser->__pyx_vtab)->parse(__pyx_v_id_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":210
+      /* "allel/opt/io_vcf_read.pyx":212
  *         elif context.state == ParserState.ID:
  *             id_parser.parse(context)
  *             context.state = ParserState.REF             # <<<<<<<<<<<<<<
@@ -5415,7 +5513,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_REF;
 
-      /* "allel/opt/io_vcf_read.pyx":208
+      /* "allel/opt/io_vcf_read.pyx":210
  *             context.state = ParserState.ID
  * 
  *         elif context.state == ParserState.ID:             # <<<<<<<<<<<<<<
@@ -5425,7 +5523,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":212
+    /* "allel/opt/io_vcf_read.pyx":214
  *             context.state = ParserState.REF
  * 
  *         elif context.state == ParserState.REF:             # <<<<<<<<<<<<<<
@@ -5435,18 +5533,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_REF) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":213
+      /* "allel/opt/io_vcf_read.pyx":215
  * 
  *         elif context.state == ParserState.REF:
  *             ref_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.ALT
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_ref_parser->__pyx_vtab)->parse(__pyx_v_ref_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 213, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_ref_parser->__pyx_vtab)->parse(__pyx_v_ref_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 215, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":214
+      /* "allel/opt/io_vcf_read.pyx":216
  *         elif context.state == ParserState.REF:
  *             ref_parser.parse(context)
  *             context.state = ParserState.ALT             # <<<<<<<<<<<<<<
@@ -5455,7 +5553,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_ALT;
 
-      /* "allel/opt/io_vcf_read.pyx":212
+      /* "allel/opt/io_vcf_read.pyx":214
  *             context.state = ParserState.REF
  * 
  *         elif context.state == ParserState.REF:             # <<<<<<<<<<<<<<
@@ -5465,7 +5563,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":216
+    /* "allel/opt/io_vcf_read.pyx":218
  *             context.state = ParserState.ALT
  * 
  *         elif context.state == ParserState.ALT:             # <<<<<<<<<<<<<<
@@ -5475,18 +5573,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_ALT) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":217
+      /* "allel/opt/io_vcf_read.pyx":219
  * 
  *         elif context.state == ParserState.ALT:
  *             alt_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.QUAL
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_alt_parser->__pyx_vtab)->parse(__pyx_v_alt_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 217, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_alt_parser->__pyx_vtab)->parse(__pyx_v_alt_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 219, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":218
+      /* "allel/opt/io_vcf_read.pyx":220
  *         elif context.state == ParserState.ALT:
  *             alt_parser.parse(context)
  *             context.state = ParserState.QUAL             # <<<<<<<<<<<<<<
@@ -5495,7 +5593,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_QUAL;
 
-      /* "allel/opt/io_vcf_read.pyx":216
+      /* "allel/opt/io_vcf_read.pyx":218
  *             context.state = ParserState.ALT
  * 
  *         elif context.state == ParserState.ALT:             # <<<<<<<<<<<<<<
@@ -5505,7 +5603,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":220
+    /* "allel/opt/io_vcf_read.pyx":222
  *             context.state = ParserState.QUAL
  * 
  *         elif context.state == ParserState.QUAL:             # <<<<<<<<<<<<<<
@@ -5515,18 +5613,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_QUAL) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":221
+      /* "allel/opt/io_vcf_read.pyx":223
  * 
  *         elif context.state == ParserState.QUAL:
  *             qual_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.FILTER
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_qual_parser->__pyx_vtab)->parse(__pyx_v_qual_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 221, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_qual_parser->__pyx_vtab)->parse(__pyx_v_qual_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 223, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":222
+      /* "allel/opt/io_vcf_read.pyx":224
  *         elif context.state == ParserState.QUAL:
  *             qual_parser.parse(context)
  *             context.state = ParserState.FILTER             # <<<<<<<<<<<<<<
@@ -5535,7 +5633,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_FILTER;
 
-      /* "allel/opt/io_vcf_read.pyx":220
+      /* "allel/opt/io_vcf_read.pyx":222
  *             context.state = ParserState.QUAL
  * 
  *         elif context.state == ParserState.QUAL:             # <<<<<<<<<<<<<<
@@ -5545,7 +5643,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":224
+    /* "allel/opt/io_vcf_read.pyx":226
  *             context.state = ParserState.FILTER
  * 
  *         elif context.state == ParserState.FILTER:             # <<<<<<<<<<<<<<
@@ -5555,18 +5653,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_FILTER) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":225
+      /* "allel/opt/io_vcf_read.pyx":227
  * 
  *         elif context.state == ParserState.FILTER:
  *             filter_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.INFO
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_filter_parser->__pyx_vtab)->parse(__pyx_v_filter_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 225, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_filter_parser->__pyx_vtab)->parse(__pyx_v_filter_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 227, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":226
+      /* "allel/opt/io_vcf_read.pyx":228
  *         elif context.state == ParserState.FILTER:
  *             filter_parser.parse(context)
  *             context.state = ParserState.INFO             # <<<<<<<<<<<<<<
@@ -5575,7 +5673,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_INFO;
 
-      /* "allel/opt/io_vcf_read.pyx":224
+      /* "allel/opt/io_vcf_read.pyx":226
  *             context.state = ParserState.FILTER
  * 
  *         elif context.state == ParserState.FILTER:             # <<<<<<<<<<<<<<
@@ -5585,7 +5683,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":228
+    /* "allel/opt/io_vcf_read.pyx":230
  *             context.state = ParserState.INFO
  * 
  *         elif context.state == ParserState.INFO:             # <<<<<<<<<<<<<<
@@ -5595,18 +5693,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_INFO) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":230
+      /* "allel/opt/io_vcf_read.pyx":232
  *         elif context.state == ParserState.INFO:
  *             # debug(context.variant_index, 'parse INFO')
  *             info_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.FORMAT
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_info_parser->__pyx_vtab)->parse(__pyx_v_info_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 230, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_info_parser->__pyx_vtab)->parse(__pyx_v_info_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 232, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":231
+      /* "allel/opt/io_vcf_read.pyx":233
  *             # debug(context.variant_index, 'parse INFO')
  *             info_parser.parse(context)
  *             context.state = ParserState.FORMAT             # <<<<<<<<<<<<<<
@@ -5615,7 +5713,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_FORMAT;
 
-      /* "allel/opt/io_vcf_read.pyx":228
+      /* "allel/opt/io_vcf_read.pyx":230
  *             context.state = ParserState.INFO
  * 
  *         elif context.state == ParserState.INFO:             # <<<<<<<<<<<<<<
@@ -5625,7 +5723,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":233
+    /* "allel/opt/io_vcf_read.pyx":235
  *             context.state = ParserState.FORMAT
  * 
  *         elif context.state == ParserState.FORMAT:             # <<<<<<<<<<<<<<
@@ -5635,18 +5733,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_FORMAT) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":234
+      /* "allel/opt/io_vcf_read.pyx":236
  * 
  *         elif context.state == ParserState.FORMAT:
  *             format_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.CALLDATA
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_format_parser->__pyx_vtab)->parse(__pyx_v_format_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 234, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_format_parser->__pyx_vtab)->parse(__pyx_v_format_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":235
+      /* "allel/opt/io_vcf_read.pyx":237
  *         elif context.state == ParserState.FORMAT:
  *             format_parser.parse(context)
  *             context.state = ParserState.CALLDATA             # <<<<<<<<<<<<<<
@@ -5655,7 +5753,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_CALLDATA;
 
-      /* "allel/opt/io_vcf_read.pyx":233
+      /* "allel/opt/io_vcf_read.pyx":235
  *             context.state = ParserState.FORMAT
  * 
  *         elif context.state == ParserState.FORMAT:             # <<<<<<<<<<<<<<
@@ -5665,7 +5763,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":237
+    /* "allel/opt/io_vcf_read.pyx":239
  *             context.state = ParserState.CALLDATA
  * 
  *         elif context.state == ParserState.CALLDATA:             # <<<<<<<<<<<<<<
@@ -5675,18 +5773,18 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
     __pyx_t_5 = ((__pyx_v_context->state == __pyx_e_5allel_3opt_11io_vcf_read_CALLDATA) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":238
+      /* "allel/opt/io_vcf_read.pyx":240
  * 
  *         elif context.state == ParserState.CALLDATA:
  *             calldata_parser.parse(context)             # <<<<<<<<<<<<<<
  *             context.state = ParserState.CHROM
  * 
  */
-      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_calldata_parser->__pyx_vtab)->parse(__pyx_v_calldata_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 238, __pyx_L1_error)
+      __pyx_t_8 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_calldata_parser->__pyx_vtab)->parse(__pyx_v_calldata_parser, __pyx_v_context); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 240, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":239
+      /* "allel/opt/io_vcf_read.pyx":241
  *         elif context.state == ParserState.CALLDATA:
  *             calldata_parser.parse(context)
  *             context.state = ParserState.CHROM             # <<<<<<<<<<<<<<
@@ -5695,7 +5793,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->state = __pyx_e_5allel_3opt_11io_vcf_read_CHROM;
 
-      /* "allel/opt/io_vcf_read.pyx":243
+      /* "allel/opt/io_vcf_read.pyx":245
  *             # setup next variant
  *             # debug('setup next variant')
  *             context.variant_index += 1             # <<<<<<<<<<<<<<
@@ -5704,25 +5802,25 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
       __pyx_v_context->variant_index = (__pyx_v_context->variant_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":244
+      /* "allel/opt/io_vcf_read.pyx":246
  *             # debug('setup next variant')
  *             context.variant_index += 1
  *             if context.chunk_variant_index < chunk_length - 1:             # <<<<<<<<<<<<<<
  *                 context.chunk_variant_index += 1
  * 
  */
-      __pyx_t_8 = __Pyx_PyInt_From_int(__pyx_v_context->chunk_variant_index); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyInt_From_int(__pyx_v_context->chunk_variant_index); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 246, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_3 = __Pyx_PyInt_SubtractObjC(__pyx_v_chunk_length, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyInt_SubtractObjC(__pyx_v_chunk_length, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 246, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_2 = PyObject_RichCompare(__pyx_t_8, __pyx_t_3, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_2 = PyObject_RichCompare(__pyx_t_8, __pyx_t_3, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 246, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 246, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       if (__pyx_t_5) {
 
-        /* "allel/opt/io_vcf_read.pyx":245
+        /* "allel/opt/io_vcf_read.pyx":247
  *             context.variant_index += 1
  *             if context.chunk_variant_index < chunk_length - 1:
  *                 context.chunk_variant_index += 1             # <<<<<<<<<<<<<<
@@ -5731,7 +5829,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
         __pyx_v_context->chunk_variant_index = (__pyx_v_context->chunk_variant_index + 1);
 
-        /* "allel/opt/io_vcf_read.pyx":244
+        /* "allel/opt/io_vcf_read.pyx":246
  *             # debug('setup next variant')
  *             context.variant_index += 1
  *             if context.chunk_variant_index < chunk_length - 1:             # <<<<<<<<<<<<<<
@@ -5741,7 +5839,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
         goto __pyx_L29;
       }
 
-      /* "allel/opt/io_vcf_read.pyx":250
+      /* "allel/opt/io_vcf_read.pyx":252
  * 
  *                 # build chunk for output
  *                 chunk = dict()             # <<<<<<<<<<<<<<
@@ -5749,120 +5847,120 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *                 pos_parser.mkchunk(chunk)
  */
       /*else*/ {
-        __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 250, __pyx_L1_error)
+        __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 252, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_XDECREF_SET(__pyx_v_chunk, ((PyObject*)__pyx_t_2));
         __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":251
+        /* "allel/opt/io_vcf_read.pyx":253
  *                 # build chunk for output
  *                 chunk = dict()
  *                 chrom_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 pos_parser.mkchunk(chunk)
  *                 id_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_chrom_parser->__pyx_vtab)->mkchunk(__pyx_v_chrom_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 251, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_chrom_parser->__pyx_vtab)->mkchunk(__pyx_v_chrom_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 253, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":252
+        /* "allel/opt/io_vcf_read.pyx":254
  *                 chunk = dict()
  *                 chrom_parser.mkchunk(chunk)
  *                 pos_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 id_parser.mkchunk(chunk)
  *                 ref_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_pos_parser->__pyx_vtab)->mkchunk(__pyx_v_pos_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 252, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_pos_parser->__pyx_vtab)->mkchunk(__pyx_v_pos_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 254, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":253
+        /* "allel/opt/io_vcf_read.pyx":255
  *                 chrom_parser.mkchunk(chunk)
  *                 pos_parser.mkchunk(chunk)
  *                 id_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 ref_parser.mkchunk(chunk)
  *                 alt_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_id_parser->__pyx_vtab)->mkchunk(__pyx_v_id_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 253, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_id_parser->__pyx_vtab)->mkchunk(__pyx_v_id_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 255, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":254
+        /* "allel/opt/io_vcf_read.pyx":256
  *                 pos_parser.mkchunk(chunk)
  *                 id_parser.mkchunk(chunk)
  *                 ref_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 alt_parser.mkchunk(chunk)
  *                 qual_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_ref_parser->__pyx_vtab)->mkchunk(__pyx_v_ref_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 254, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_ref_parser->__pyx_vtab)->mkchunk(__pyx_v_ref_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 256, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":255
+        /* "allel/opt/io_vcf_read.pyx":257
  *                 id_parser.mkchunk(chunk)
  *                 ref_parser.mkchunk(chunk)
  *                 alt_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 qual_parser.mkchunk(chunk)
  *                 filter_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_alt_parser->__pyx_vtab)->mkchunk(__pyx_v_alt_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 255, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_alt_parser->__pyx_vtab)->mkchunk(__pyx_v_alt_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 257, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":256
+        /* "allel/opt/io_vcf_read.pyx":258
  *                 ref_parser.mkchunk(chunk)
  *                 alt_parser.mkchunk(chunk)
  *                 qual_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 filter_parser.mkchunk(chunk)
  *                 info_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_qual_parser->__pyx_vtab)->mkchunk(__pyx_v_qual_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 256, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_qual_parser->__pyx_vtab)->mkchunk(__pyx_v_qual_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 258, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":257
+        /* "allel/opt/io_vcf_read.pyx":259
  *                 alt_parser.mkchunk(chunk)
  *                 qual_parser.mkchunk(chunk)
  *                 filter_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 info_parser.mkchunk(chunk)
  *                 calldata_parser.mkchunk(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_filter_parser->__pyx_vtab)->mkchunk(__pyx_v_filter_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 257, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_filter_parser->__pyx_vtab)->mkchunk(__pyx_v_filter_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 259, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":258
+        /* "allel/opt/io_vcf_read.pyx":260
  *                 qual_parser.mkchunk(chunk)
  *                 filter_parser.mkchunk(chunk)
  *                 info_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 calldata_parser.mkchunk(chunk)
  *                 # TODO yield
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_info_parser->__pyx_vtab)->mkchunk(__pyx_v_info_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 258, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_info_parser->__pyx_vtab)->mkchunk(__pyx_v_info_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 260, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":259
+        /* "allel/opt/io_vcf_read.pyx":261
  *                 filter_parser.mkchunk(chunk)
  *                 info_parser.mkchunk(chunk)
  *                 calldata_parser.mkchunk(chunk)             # <<<<<<<<<<<<<<
  *                 # TODO yield
  *                 chunks.append(chunk)
  */
-        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_calldata_parser->__pyx_vtab)->mkchunk(__pyx_v_calldata_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 259, __pyx_L1_error)
+        __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_calldata_parser->__pyx_vtab)->mkchunk(__pyx_v_calldata_parser, __pyx_v_chunk, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 261, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":261
+        /* "allel/opt/io_vcf_read.pyx":263
  *                 calldata_parser.mkchunk(chunk)
  *                 # TODO yield
  *                 chunks.append(chunk)             # <<<<<<<<<<<<<<
  * 
  *                 # setup next chunk
  */
-        __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_v_chunk); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 261, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_v_chunk); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 263, __pyx_L1_error)
 
-        /* "allel/opt/io_vcf_read.pyx":264
+        /* "allel/opt/io_vcf_read.pyx":266
  * 
  *                 # setup next chunk
  *                 context.chunk_variant_index = 0             # <<<<<<<<<<<<<<
@@ -5873,7 +5971,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       }
       __pyx_L29:;
 
-      /* "allel/opt/io_vcf_read.pyx":237
+      /* "allel/opt/io_vcf_read.pyx":239
  *             context.state = ParserState.CALLDATA
  * 
  *         elif context.state == ParserState.CALLDATA:             # <<<<<<<<<<<<<<
@@ -5883,7 +5981,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
       goto __pyx_L28;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":268
+    /* "allel/opt/io_vcf_read.pyx":270
  *         else:
  *             # shouldn't ever happen
  *             raise RuntimeError('unexpected parser state')             # <<<<<<<<<<<<<<
@@ -5891,17 +5989,17 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  *     # left-over chunk
  */
     /*else*/ {
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 268, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 270, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_Raise(__pyx_t_2, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __PYX_ERR(0, 268, __pyx_L1_error)
+      __PYX_ERR(0, 270, __pyx_L1_error)
     }
     __pyx_L28:;
   }
   __pyx_L27_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":271
+  /* "allel/opt/io_vcf_read.pyx":273
  * 
  *     # left-over chunk
  *     limit = context.chunk_variant_index             # <<<<<<<<<<<<<<
@@ -5911,7 +6009,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __pyx_t_11 = __pyx_v_context->chunk_variant_index;
   __pyx_v_limit = __pyx_t_11;
 
-  /* "allel/opt/io_vcf_read.pyx":272
+  /* "allel/opt/io_vcf_read.pyx":274
  *     # left-over chunk
  *     limit = context.chunk_variant_index
  *     if limit > 0:             # <<<<<<<<<<<<<<
@@ -5921,172 +6019,172 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __pyx_t_5 = ((__pyx_v_limit > 0) != 0);
   if (__pyx_t_5) {
 
-    /* "allel/opt/io_vcf_read.pyx":273
+    /* "allel/opt/io_vcf_read.pyx":275
  *     limit = context.chunk_variant_index
  *     if limit > 0:
  *         chunk = dict()             # <<<<<<<<<<<<<<
  *         chrom_parser.mkchunk(chunk, limit=limit)
  *         pos_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 273, __pyx_L1_error)
+    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 275, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_chunk, ((PyObject*)__pyx_t_2));
     __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":274
+    /* "allel/opt/io_vcf_read.pyx":276
  *     if limit > 0:
  *         chunk = dict()
  *         chrom_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         pos_parser.mkchunk(chunk, limit=limit)
  *         id_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 276, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_2;
-    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_chrom_parser->__pyx_vtab)->mkchunk(__pyx_v_chrom_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 274, __pyx_L1_error)
+    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_chrom_parser->__pyx_vtab)->mkchunk(__pyx_v_chrom_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 276, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":275
+    /* "allel/opt/io_vcf_read.pyx":277
  *         chunk = dict()
  *         chrom_parser.mkchunk(chunk, limit=limit)
  *         pos_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         id_parser.mkchunk(chunk, limit=limit)
  *         ref_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 275, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 277, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_3;
-    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_pos_parser->__pyx_vtab)->mkchunk(__pyx_v_pos_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 275, __pyx_L1_error)
+    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_pos_parser->__pyx_vtab)->mkchunk(__pyx_v_pos_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 277, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":276
+    /* "allel/opt/io_vcf_read.pyx":278
  *         chrom_parser.mkchunk(chunk, limit=limit)
  *         pos_parser.mkchunk(chunk, limit=limit)
  *         id_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         ref_parser.mkchunk(chunk, limit=limit)
  *         alt_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 276, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 278, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_2;
-    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_id_parser->__pyx_vtab)->mkchunk(__pyx_v_id_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 276, __pyx_L1_error)
+    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_id_parser->__pyx_vtab)->mkchunk(__pyx_v_id_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":277
+    /* "allel/opt/io_vcf_read.pyx":279
  *         pos_parser.mkchunk(chunk, limit=limit)
  *         id_parser.mkchunk(chunk, limit=limit)
  *         ref_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         alt_parser.mkchunk(chunk, limit=limit)
  *         qual_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 277, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_3;
-    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_ref_parser->__pyx_vtab)->mkchunk(__pyx_v_ref_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 277, __pyx_L1_error)
+    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_ref_parser->__pyx_vtab)->mkchunk(__pyx_v_ref_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 279, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":278
+    /* "allel/opt/io_vcf_read.pyx":280
  *         id_parser.mkchunk(chunk, limit=limit)
  *         ref_parser.mkchunk(chunk, limit=limit)
  *         alt_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         qual_parser.mkchunk(chunk, limit=limit)
  *         filter_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 278, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 280, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_2;
-    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_alt_parser->__pyx_vtab)->mkchunk(__pyx_v_alt_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_alt_parser->__pyx_vtab)->mkchunk(__pyx_v_alt_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":279
+    /* "allel/opt/io_vcf_read.pyx":281
  *         ref_parser.mkchunk(chunk, limit=limit)
  *         alt_parser.mkchunk(chunk, limit=limit)
  *         qual_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         filter_parser.mkchunk(chunk, limit=limit)
  *         info_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_3;
-    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_qual_parser->__pyx_vtab)->mkchunk(__pyx_v_qual_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 279, __pyx_L1_error)
+    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_qual_parser->__pyx_vtab)->mkchunk(__pyx_v_qual_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 281, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":280
+    /* "allel/opt/io_vcf_read.pyx":282
  *         alt_parser.mkchunk(chunk, limit=limit)
  *         qual_parser.mkchunk(chunk, limit=limit)
  *         filter_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         info_parser.mkchunk(chunk, limit=limit)
  *         calldata_parser.mkchunk(chunk, limit=limit)
  */
-    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 282, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_2;
-    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_filter_parser->__pyx_vtab)->mkchunk(__pyx_v_filter_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_filter_parser->__pyx_vtab)->mkchunk(__pyx_v_filter_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":281
+    /* "allel/opt/io_vcf_read.pyx":283
  *         qual_parser.mkchunk(chunk, limit=limit)
  *         filter_parser.mkchunk(chunk, limit=limit)
  *         info_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         calldata_parser.mkchunk(chunk, limit=limit)
  *         # TODO yield
  */
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 283, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_3;
-    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_info_parser->__pyx_vtab)->mkchunk(__pyx_v_info_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_info_parser->__pyx_vtab)->mkchunk(__pyx_v_info_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 283, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":282
+    /* "allel/opt/io_vcf_read.pyx":284
  *         filter_parser.mkchunk(chunk, limit=limit)
  *         info_parser.mkchunk(chunk, limit=limit)
  *         calldata_parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
  *         # TODO yield
  *         chunks.append(chunk)
  */
-    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_limit); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 284, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_12.__pyx_n = 1;
     __pyx_t_12.limit = __pyx_t_2;
-    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_calldata_parser->__pyx_vtab)->mkchunk(__pyx_v_calldata_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_calldata_parser->__pyx_vtab)->mkchunk(__pyx_v_calldata_parser, __pyx_v_chunk, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 284, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":284
+    /* "allel/opt/io_vcf_read.pyx":286
  *         calldata_parser.mkchunk(chunk, limit=limit)
  *         # TODO yield
  *         chunks.append(chunk)             # <<<<<<<<<<<<<<
  * 
  *     # TODO yield
  */
-    __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_v_chunk); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 284, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_v_chunk); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(0, 286, __pyx_L1_error)
 
-    /* "allel/opt/io_vcf_read.pyx":272
+    /* "allel/opt/io_vcf_read.pyx":274
  *     # left-over chunk
  *     limit = context.chunk_variant_index
  *     if limit > 0:             # <<<<<<<<<<<<<<
@@ -6095,7 +6193,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":287
+  /* "allel/opt/io_vcf_read.pyx":289
  * 
  *     # TODO yield
  *     return chunks             # <<<<<<<<<<<<<<
@@ -6107,7 +6205,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   __pyx_r = __pyx_v_chunks;
   goto __pyx_L0;
 
-  /* "allel/opt/io_vcf_read.pyx":67
+  /* "allel/opt/io_vcf_read.pyx":69
  * 
  * 
  * def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fields, types):             # <<<<<<<<<<<<<<
@@ -6155,7 +6253,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_iter_vcf(CYTHON_UNUSED PyObj
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":290
+/* "allel/opt/io_vcf_read.pyx":292
  * 
  * 
  * def debug(*msg):             # <<<<<<<<<<<<<<
@@ -6190,40 +6288,40 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_2debug(CYTHON_UNUSED PyObjec
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("debug", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":291
+  /* "allel/opt/io_vcf_read.pyx":293
  * 
  * def debug(*msg):
  *     print(*msg, file=sys.stderr)             # <<<<<<<<<<<<<<
  *     sys.stderr.flush()
  * 
  */
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_stderr); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_stderr); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_file, __pyx_t_3) < 0) __PYX_ERR(0, 291, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_file, __pyx_t_3) < 0) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_v_msg, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_v_msg, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":292
+  /* "allel/opt/io_vcf_read.pyx":294
  * def debug(*msg):
  *     print(*msg, file=sys.stderr)
  *     sys.stderr.flush()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 294, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_stderr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 292, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_stderr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 294, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_flush); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_flush); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 294, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -6237,16 +6335,16 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_2debug(CYTHON_UNUSED PyObjec
     }
   }
   if (__pyx_t_2) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 292, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 294, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   } else {
-    __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 292, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 294, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":290
+  /* "allel/opt/io_vcf_read.pyx":292
  * 
  * 
  * def debug(*msg):             # <<<<<<<<<<<<<<
@@ -6269,7 +6367,7 @@ static PyObject *__pyx_pf_5allel_3opt_11io_vcf_read_2debug(CYTHON_UNUSED PyObjec
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":303
+/* "allel/opt/io_vcf_read.pyx":305
  *     cdef char* stream_end
  * 
  *     def __cinit__(self, binary_file, buffer_size):             # <<<<<<<<<<<<<<
@@ -6305,11 +6403,11 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_14BufferedReader_1__cinit__(PyObje
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_buffer_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 303, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 305, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 303, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 305, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -6322,7 +6420,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_14BufferedReader_1__cinit__(PyObje
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 303, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 305, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.BufferedReader.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6343,7 +6441,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14BufferedReader___cinit__(struct 
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":304
+  /* "allel/opt/io_vcf_read.pyx":306
  * 
  *     def __cinit__(self, binary_file, buffer_size):
  *         self.binary_file = binary_file             # <<<<<<<<<<<<<<
@@ -6356,29 +6454,29 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14BufferedReader___cinit__(struct 
   __Pyx_DECREF(__pyx_v_self->binary_file);
   __pyx_v_self->binary_file = __pyx_v_binary_file;
 
-  /* "allel/opt/io_vcf_read.pyx":305
+  /* "allel/opt/io_vcf_read.pyx":307
  *     def __cinit__(self, binary_file, buffer_size):
  *         self.binary_file = binary_file
  *         self.buffer_size = buffer_size             # <<<<<<<<<<<<<<
  *         self.buffer = bytearray(buffer_size)
  *         BufferedReader_fill_buffer(self)
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_buffer_size); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_buffer_size); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 307, __pyx_L1_error)
   __pyx_v_self->buffer_size = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":306
+  /* "allel/opt/io_vcf_read.pyx":308
  *         self.binary_file = binary_file
  *         self.buffer_size = buffer_size
  *         self.buffer = bytearray(buffer_size)             # <<<<<<<<<<<<<<
  *         BufferedReader_fill_buffer(self)
  * 
  */
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 306, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 308, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_v_buffer_size);
   __Pyx_GIVEREF(__pyx_v_buffer_size);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_buffer_size);
-  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 306, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 308, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_GIVEREF(__pyx_t_3);
@@ -6387,7 +6485,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14BufferedReader___cinit__(struct 
   __pyx_v_self->buffer = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":307
+  /* "allel/opt/io_vcf_read.pyx":309
  *         self.buffer_size = buffer_size
  *         self.buffer = bytearray(buffer_size)
  *         BufferedReader_fill_buffer(self)             # <<<<<<<<<<<<<<
@@ -6396,7 +6494,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14BufferedReader___cinit__(struct 
  */
   __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_buffer(__pyx_v_self);
 
-  /* "allel/opt/io_vcf_read.pyx":303
+  /* "allel/opt/io_vcf_read.pyx":305
  *     cdef char* stream_end
  * 
  *     def __cinit__(self, binary_file, buffer_size):             # <<<<<<<<<<<<<<
@@ -6417,7 +6515,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14BufferedReader___cinit__(struct 
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":311
+/* "allel/opt/io_vcf_read.pyx":313
  * 
  * # break out method as function for profiling
  * cdef inline void BufferedReader_fill_buffer(BufferedReader self):             # <<<<<<<<<<<<<<
@@ -6436,14 +6534,14 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
   int __pyx_t_6;
   __Pyx_RefNannySetupContext("BufferedReader_fill_buffer", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":314
+  /* "allel/opt/io_vcf_read.pyx":316
  *     cdef:
  *         int l
  *     l = self.binary_file.readinto(self.buffer)             # <<<<<<<<<<<<<<
  *     # debug(l, self.buffer)
  *     if l > 0:
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->binary_file, __pyx_n_s_readinto); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 314, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->binary_file, __pyx_n_s_readinto); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 316, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -6456,13 +6554,13 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->buffer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 314, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->buffer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 316, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_self->buffer};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 314, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 316, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -6470,29 +6568,29 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_self->buffer};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 314, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 316, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 314, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 316, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_self->buffer);
       __Pyx_GIVEREF(__pyx_v_self->buffer);
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_self->buffer);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 314, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 316, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 314, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 316, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_l = __pyx_t_5;
 
-  /* "allel/opt/io_vcf_read.pyx":316
+  /* "allel/opt/io_vcf_read.pyx":318
  *     l = self.binary_file.readinto(self.buffer)
  *     # debug(l, self.buffer)
  *     if l > 0:             # <<<<<<<<<<<<<<
@@ -6502,7 +6600,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
   __pyx_t_6 = ((__pyx_v_l > 0) != 0);
   if (__pyx_t_6) {
 
-    /* "allel/opt/io_vcf_read.pyx":317
+    /* "allel/opt/io_vcf_read.pyx":319
  *     # debug(l, self.buffer)
  *     if l > 0:
  *         self.stream = PyByteArray_AS_STRING(self.buffer)             # <<<<<<<<<<<<<<
@@ -6514,7 +6612,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
     __pyx_v_self->stream = PyByteArray_AS_STRING(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":318
+    /* "allel/opt/io_vcf_read.pyx":320
  *     if l > 0:
  *         self.stream = PyByteArray_AS_STRING(self.buffer)
  *         self.stream_end = self.stream + l             # <<<<<<<<<<<<<<
@@ -6523,7 +6621,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
  */
     __pyx_v_self->stream_end = (__pyx_v_self->stream + __pyx_v_l);
 
-    /* "allel/opt/io_vcf_read.pyx":316
+    /* "allel/opt/io_vcf_read.pyx":318
  *     l = self.binary_file.readinto(self.buffer)
  *     # debug(l, self.buffer)
  *     if l > 0:             # <<<<<<<<<<<<<<
@@ -6533,7 +6631,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
     goto __pyx_L3;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":320
+  /* "allel/opt/io_vcf_read.pyx":322
  *         self.stream_end = self.stream + l
  *     else:
  *         self.stream = NULL             # <<<<<<<<<<<<<<
@@ -6545,7 +6643,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
   }
   __pyx_L3:;
 
-  /* "allel/opt/io_vcf_read.pyx":311
+  /* "allel/opt/io_vcf_read.pyx":313
  * 
  * # break out method as function for profiling
  * cdef inline void BufferedReader_fill_buffer(BufferedReader self):             # <<<<<<<<<<<<<<
@@ -6565,7 +6663,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":324
+/* "allel/opt/io_vcf_read.pyx":326
  * 
  * # break out method as function for profiling
  * cdef inline char BufferedReader_read(BufferedReader self):             # <<<<<<<<<<<<<<
@@ -6580,7 +6678,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("BufferedReader_read", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":327
+  /* "allel/opt/io_vcf_read.pyx":329
  *     cdef:
  *         char c
  *     if self.stream == self.stream_end:             # <<<<<<<<<<<<<<
@@ -6590,7 +6688,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
   __pyx_t_1 = ((__pyx_v_self->stream == __pyx_v_self->stream_end) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":328
+    /* "allel/opt/io_vcf_read.pyx":330
  *         char c
  *     if self.stream == self.stream_end:
  *         BufferedReader_fill_buffer(self)             # <<<<<<<<<<<<<<
@@ -6599,7 +6697,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
  */
     __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_fill_buffer(__pyx_v_self);
 
-    /* "allel/opt/io_vcf_read.pyx":327
+    /* "allel/opt/io_vcf_read.pyx":329
  *     cdef:
  *         char c
  *     if self.stream == self.stream_end:             # <<<<<<<<<<<<<<
@@ -6608,7 +6706,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":329
+  /* "allel/opt/io_vcf_read.pyx":331
  *     if self.stream == self.stream_end:
  *         BufferedReader_fill_buffer(self)
  *     if self.stream == NULL:             # <<<<<<<<<<<<<<
@@ -6618,7 +6716,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
   __pyx_t_1 = ((__pyx_v_self->stream == NULL) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":330
+    /* "allel/opt/io_vcf_read.pyx":332
  *         BufferedReader_fill_buffer(self)
  *     if self.stream == NULL:
  *         return 0             # <<<<<<<<<<<<<<
@@ -6628,7 +6726,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
     __pyx_r = 0;
     goto __pyx_L0;
 
-    /* "allel/opt/io_vcf_read.pyx":329
+    /* "allel/opt/io_vcf_read.pyx":331
  *     if self.stream == self.stream_end:
  *         BufferedReader_fill_buffer(self)
  *     if self.stream == NULL:             # <<<<<<<<<<<<<<
@@ -6637,7 +6735,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":331
+  /* "allel/opt/io_vcf_read.pyx":333
  *     if self.stream == NULL:
  *         return 0
  *     c = self.stream[0]             # <<<<<<<<<<<<<<
@@ -6646,7 +6744,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
  */
   __pyx_v_c = (__pyx_v_self->stream[0]);
 
-  /* "allel/opt/io_vcf_read.pyx":332
+  /* "allel/opt/io_vcf_read.pyx":334
  *         return 0
  *     c = self.stream[0]
  *     self.stream += 1             # <<<<<<<<<<<<<<
@@ -6655,7 +6753,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
  */
   __pyx_v_self->stream = (__pyx_v_self->stream + 1);
 
-  /* "allel/opt/io_vcf_read.pyx":333
+  /* "allel/opt/io_vcf_read.pyx":335
  *     c = self.stream[0]
  *     self.stream += 1
  *     return c             # <<<<<<<<<<<<<<
@@ -6665,7 +6763,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
   __pyx_r = __pyx_v_c;
   goto __pyx_L0;
 
-  /* "allel/opt/io_vcf_read.pyx":324
+  /* "allel/opt/io_vcf_read.pyx":326
  * 
  * # break out method as function for profiling
  * cdef inline char BufferedReader_read(BufferedReader self):             # <<<<<<<<<<<<<<
@@ -6679,7 +6777,7 @@ static CYTHON_INLINE char __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":365
+/* "allel/opt/io_vcf_read.pyx":367
  *     cdef int format_index
  * 
  *     def __cinit__(self, reader, temp_max_size, n_samples):             # <<<<<<<<<<<<<<
@@ -6717,16 +6815,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_13ParserContext_1__cinit__(PyObjec
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_temp_max_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 365, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 367, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_n_samples)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 365, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 367, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 365, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 367, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -6741,7 +6839,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_13ParserContext_1__cinit__(PyObjec
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 365, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 367, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.ParserContext.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6762,14 +6860,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
   int __pyx_t_3;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":366
+  /* "allel/opt/io_vcf_read.pyx":368
  * 
  *     def __cinit__(self, reader, temp_max_size, n_samples):
  *         self.reader = reader             # <<<<<<<<<<<<<<
  *         self.state = ParserState.CHROM
  *         self.temp_bytes = PyBytes_FromStringAndSize(NULL, temp_max_size)
  */
-  if (!(likely(((__pyx_v_reader) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_reader, __pyx_ptype_5allel_3opt_11io_vcf_read_BufferedReader))))) __PYX_ERR(0, 366, __pyx_L1_error)
+  if (!(likely(((__pyx_v_reader) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_reader, __pyx_ptype_5allel_3opt_11io_vcf_read_BufferedReader))))) __PYX_ERR(0, 368, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_reader;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -6778,7 +6876,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
   __pyx_v_self->reader = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_BufferedReader *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":367
+  /* "allel/opt/io_vcf_read.pyx":369
  *     def __cinit__(self, reader, temp_max_size, n_samples):
  *         self.reader = reader
  *         self.state = ParserState.CHROM             # <<<<<<<<<<<<<<
@@ -6787,15 +6885,15 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
  */
   __pyx_v_self->state = __pyx_e_5allel_3opt_11io_vcf_read_CHROM;
 
-  /* "allel/opt/io_vcf_read.pyx":368
+  /* "allel/opt/io_vcf_read.pyx":370
  *         self.reader = reader
  *         self.state = ParserState.CHROM
  *         self.temp_bytes = PyBytes_FromStringAndSize(NULL, temp_max_size)             # <<<<<<<<<<<<<<
  *         self.temp = PyBytes_AS_STRING(self.temp_bytes)
  *         self.temp_max_size = temp_max_size
  */
-  __pyx_t_2 = __Pyx_PyIndex_AsSsize_t(__pyx_v_temp_max_size); if (unlikely((__pyx_t_2 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 368, __pyx_L1_error)
-  __pyx_t_1 = PyBytes_FromStringAndSize(NULL, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 368, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyIndex_AsSsize_t(__pyx_v_temp_max_size); if (unlikely((__pyx_t_2 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 370, __pyx_L1_error)
+  __pyx_t_1 = PyBytes_FromStringAndSize(NULL, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 370, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __Pyx_GOTREF(__pyx_v_self->temp_bytes);
@@ -6803,7 +6901,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
   __pyx_v_self->temp_bytes = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":369
+  /* "allel/opt/io_vcf_read.pyx":371
  *         self.state = ParserState.CHROM
  *         self.temp_bytes = PyBytes_FromStringAndSize(NULL, temp_max_size)
  *         self.temp = PyBytes_AS_STRING(self.temp_bytes)             # <<<<<<<<<<<<<<
@@ -6815,17 +6913,17 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
   __pyx_v_self->temp = PyBytes_AS_STRING(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":370
+  /* "allel/opt/io_vcf_read.pyx":372
  *         self.temp_bytes = PyBytes_FromStringAndSize(NULL, temp_max_size)
  *         self.temp = PyBytes_AS_STRING(self.temp_bytes)
  *         self.temp_max_size = temp_max_size             # <<<<<<<<<<<<<<
  *         self.temp_size = 0
  *         self.n_samples = n_samples
  */
-  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_temp_max_size); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 370, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_temp_max_size); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 372, __pyx_L1_error)
   __pyx_v_self->temp_max_size = __pyx_t_3;
 
-  /* "allel/opt/io_vcf_read.pyx":371
+  /* "allel/opt/io_vcf_read.pyx":373
  *         self.temp = PyBytes_AS_STRING(self.temp_bytes)
  *         self.temp_max_size = temp_max_size
  *         self.temp_size = 0             # <<<<<<<<<<<<<<
@@ -6834,17 +6932,17 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
  */
   __pyx_v_self->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":372
+  /* "allel/opt/io_vcf_read.pyx":374
  *         self.temp_max_size = temp_max_size
  *         self.temp_size = 0
  *         self.n_samples = n_samples             # <<<<<<<<<<<<<<
  *         self.variant_index = 0
  *         self.chunk_variant_index = 0
  */
-  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_n_samples); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 372, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_n_samples); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 374, __pyx_L1_error)
   __pyx_v_self->n_samples = __pyx_t_3;
 
-  /* "allel/opt/io_vcf_read.pyx":373
+  /* "allel/opt/io_vcf_read.pyx":375
  *         self.temp_size = 0
  *         self.n_samples = n_samples
  *         self.variant_index = 0             # <<<<<<<<<<<<<<
@@ -6853,7 +6951,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
  */
   __pyx_v_self->variant_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":374
+  /* "allel/opt/io_vcf_read.pyx":376
  *         self.n_samples = n_samples
  *         self.variant_index = 0
  *         self.chunk_variant_index = 0             # <<<<<<<<<<<<<<
@@ -6862,7 +6960,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
  */
   __pyx_v_self->chunk_variant_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":375
+  /* "allel/opt/io_vcf_read.pyx":377
  *         self.variant_index = 0
  *         self.chunk_variant_index = 0
  *         self.sample_index = 0             # <<<<<<<<<<<<<<
@@ -6871,7 +6969,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
  */
   __pyx_v_self->sample_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":376
+  /* "allel/opt/io_vcf_read.pyx":378
  *         self.chunk_variant_index = 0
  *         self.sample_index = 0
  *         self.format_index = 0             # <<<<<<<<<<<<<<
@@ -6880,7 +6978,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
  */
   __pyx_v_self->format_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":365
+  /* "allel/opt/io_vcf_read.pyx":367
  *     cdef int format_index
  * 
  *     def __cinit__(self, reader, temp_max_size, n_samples):             # <<<<<<<<<<<<<<
@@ -6901,8 +6999,8 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13ParserContext___cinit__(struct _
 }
 
 /* "allel/opt/io_vcf_read.pyx":381
- * @cython.nonecheck(False)
- * @cython.initializedcheck(False)
+ * 
+ * 
  * cdef inline void ParserContext_next(ParserContext self):             # <<<<<<<<<<<<<<
  *     cdef:
  *         BufferedReader reader
@@ -6936,8 +7034,8 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(s
   __pyx_v_self->c = __pyx_f_5allel_3opt_11io_vcf_read_BufferedReader_read(__pyx_v_reader);
 
   /* "allel/opt/io_vcf_read.pyx":381
- * @cython.nonecheck(False)
- * @cython.initializedcheck(False)
+ * 
+ * 
  * cdef inline void ParserContext_next(ParserContext self):             # <<<<<<<<<<<<<<
  *     cdef:
  *         BufferedReader reader
@@ -7508,7 +7606,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12StringParser_mkchunk(struct
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 435, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 435, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_self->field, __pyx_t_1) < 0)) __PYX_ERR(0, 435, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -7545,9 +7643,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12StringParser_mkchunk(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":444
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":440
+ * 
+ * # break out method as function for profiling
  * cdef inline void StringParser_parse(StringParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         # index into memory view
@@ -7562,7 +7660,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
   Py_ssize_t __pyx_t_3;
   __Pyx_RefNannySetupContext("StringParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":449
+  /* "allel/opt/io_vcf_read.pyx":445
  *         int memory_index
  *         # number of characters read into current value
  *         int chars_stored = 0             # <<<<<<<<<<<<<<
@@ -7571,7 +7669,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  */
   __pyx_v_chars_stored = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":454
+  /* "allel/opt/io_vcf_read.pyx":450
  * 
  *     # initialise memory index
  *     memory_index = context.chunk_variant_index * self.itemsize             # <<<<<<<<<<<<<<
@@ -7580,7 +7678,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  */
   __pyx_v_memory_index = (__pyx_v_context->chunk_variant_index * __pyx_v_self->itemsize);
 
-  /* "allel/opt/io_vcf_read.pyx":457
+  /* "allel/opt/io_vcf_read.pyx":453
  * 
  *     # read characters until tab
  *     while context.c != TAB:             # <<<<<<<<<<<<<<
@@ -7591,7 +7689,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
     __pyx_t_1 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":458
+    /* "allel/opt/io_vcf_read.pyx":454
  *     # read characters until tab
  *     while context.c != TAB:
  *         if chars_stored < self.itemsize:             # <<<<<<<<<<<<<<
@@ -7601,7 +7699,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
     __pyx_t_1 = ((__pyx_v_chars_stored < __pyx_v_self->itemsize) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":460
+      /* "allel/opt/io_vcf_read.pyx":456
  *         if chars_stored < self.itemsize:
  *             # store value
  *             self.memory[memory_index] = context.c             # <<<<<<<<<<<<<<
@@ -7609,10 +7707,11 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  *             memory_index += 1
  */
       __pyx_t_2 = __pyx_v_context->c;
+      if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 456, __pyx_L1_error)}
       __pyx_t_3 = __pyx_v_memory_index;
       *((__pyx_t_5numpy_uint8_t *) ( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_3 * __pyx_v_self->memory.strides[0]) )) = __pyx_t_2;
 
-      /* "allel/opt/io_vcf_read.pyx":462
+      /* "allel/opt/io_vcf_read.pyx":458
  *             self.memory[memory_index] = context.c
  *             # advance memory index
  *             memory_index += 1             # <<<<<<<<<<<<<<
@@ -7621,7 +7720,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  */
       __pyx_v_memory_index = (__pyx_v_memory_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":464
+      /* "allel/opt/io_vcf_read.pyx":460
  *             memory_index += 1
  *             # advance number of characters stored
  *             chars_stored += 1             # <<<<<<<<<<<<<<
@@ -7630,7 +7729,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  */
       __pyx_v_chars_stored = (__pyx_v_chars_stored + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":458
+      /* "allel/opt/io_vcf_read.pyx":454
  *     # read characters until tab
  *     while context.c != TAB:
  *         if chars_stored < self.itemsize:             # <<<<<<<<<<<<<<
@@ -7639,7 +7738,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":466
+    /* "allel/opt/io_vcf_read.pyx":462
  *             chars_stored += 1
  *         # advance input stream
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -7649,7 +7748,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":469
+  /* "allel/opt/io_vcf_read.pyx":465
  * 
  *     # advance input stream beyond tab
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -7658,19 +7757,23 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_StringParser_parse(s
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":444
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":440
+ * 
+ * # break out method as function for profiling
  * cdef inline void StringParser_parse(StringParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         # index into memory view
  */
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_WriteUnraisable("allel.opt.io_vcf_read.StringParser_parse", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":478
+/* "allel/opt/io_vcf_read.pyx":474
  *     """Skip the CHROM field."""
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -7705,7 +7808,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15SkipChromParser___cinit__(CYTHON
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":481
+/* "allel/opt/io_vcf_read.pyx":477
  *         pass
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -7725,7 +7828,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_malloc(CYTH
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":484
+/* "allel/opt/io_vcf_read.pyx":480
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -7738,7 +7841,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_parse(struc
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":485
+  /* "allel/opt/io_vcf_read.pyx":481
  * 
  *     cdef parse(self, ParserContext context):
  *         SkipChromParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -7747,7 +7850,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_parse(struc
  */
   __pyx_f_5allel_3opt_11io_vcf_read_SkipChromParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":484
+  /* "allel/opt/io_vcf_read.pyx":480
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -7762,7 +7865,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_parse(struc
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":487
+/* "allel/opt/io_vcf_read.pyx":483
  *         SkipChromParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -7784,9 +7887,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_mkchunk(CYT
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":496
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":488
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipChromParser_parse(SkipChromParser self, ParserContext context):             # <<<<<<<<<<<<<<
  * 
  *     # TODO store chrom on context
@@ -7797,7 +7900,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipChromParser_pars
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("SkipChromParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":501
+  /* "allel/opt/io_vcf_read.pyx":493
  * 
  *     # read characters until tab
  *     while context.c != TAB:             # <<<<<<<<<<<<<<
@@ -7808,7 +7911,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipChromParser_pars
     __pyx_t_1 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":502
+    /* "allel/opt/io_vcf_read.pyx":494
  *     # read characters until tab
  *     while context.c != TAB:
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -7818,7 +7921,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipChromParser_pars
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":505
+  /* "allel/opt/io_vcf_read.pyx":497
  * 
  *     # advance input stream beyond tab
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -7827,9 +7930,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipChromParser_pars
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":496
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":488
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipChromParser_parse(SkipChromParser self, ParserContext context):             # <<<<<<<<<<<<<<
  * 
  *     # TODO store chrom on context
@@ -7839,7 +7942,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipChromParser_pars
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":513
+/* "allel/opt/io_vcf_read.pyx":505
  *     cdef np.int32_t[:] memory
  * 
  *     def __cinit__(self, chunk_length):             # <<<<<<<<<<<<<<
@@ -7872,7 +7975,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_14PosInt32Parser_1__cinit__(PyObje
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 513, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 505, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -7883,7 +7986,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_14PosInt32Parser_1__cinit__(PyObje
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 513, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 505, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.PosInt32Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -7903,28 +8006,28 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14PosInt32Parser___cinit__(struct 
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":514
+  /* "allel/opt/io_vcf_read.pyx":506
  * 
  *     def __cinit__(self, chunk_length):
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 514, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 506, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":515
+  /* "allel/opt/io_vcf_read.pyx":507
  *     def __cinit__(self, chunk_length):
  *         self.chunk_length = chunk_length
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef malloc(self):
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_PosInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 515, __pyx_L1_error)
+  __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_PosInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 507, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":513
+  /* "allel/opt/io_vcf_read.pyx":505
  *     cdef np.int32_t[:] memory
  * 
  *     def __cinit__(self, chunk_length):             # <<<<<<<<<<<<<<
@@ -7944,7 +8047,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14PosInt32Parser___cinit__(struct 
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":517
+/* "allel/opt/io_vcf_read.pyx":509
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -7962,29 +8065,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_malloc(struc
   __Pyx_memviewslice __pyx_t_5 = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":518
+  /* "allel/opt/io_vcf_read.pyx":510
  * 
  *     cdef malloc(self):
  *         self.values = np.zeros(self.chunk_length, dtype='i4')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 518, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 510, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 518, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 510, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 518, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 510, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 518, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 510, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 518, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 510, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_i4) < 0) __PYX_ERR(0, 518, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 518, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_i4) < 0) __PYX_ERR(0, 510, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 510, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -7995,7 +8098,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_malloc(struc
   __pyx_v_self->__pyx_base.values = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":519
+  /* "allel/opt/io_vcf_read.pyx":511
  *     cdef malloc(self):
  *         self.values = np.zeros(self.chunk_length, dtype='i4')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -8003,13 +8106,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_malloc(struc
  *     cdef parse(self, ParserContext context):
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_int32_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 519, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 511, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":517
+  /* "allel/opt/io_vcf_read.pyx":509
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -8034,7 +8137,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_malloc(struc
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":521
+/* "allel/opt/io_vcf_read.pyx":513
  *         self.memory = self.values
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -8047,7 +8150,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_parse(struct
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":522
+  /* "allel/opt/io_vcf_read.pyx":514
  * 
  *     cdef parse(self, ParserContext context):
  *         PosInt32Parser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -8056,7 +8159,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_parse(struct
  */
   __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":521
+  /* "allel/opt/io_vcf_read.pyx":513
  *         self.memory = self.values
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -8071,7 +8174,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_parse(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":524
+/* "allel/opt/io_vcf_read.pyx":516
  *         PosInt32Parser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -8092,33 +8195,33 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_mkchunk(stru
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":525
+  /* "allel/opt/io_vcf_read.pyx":517
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk[POS_FIELD] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 517, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_POS_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_POS_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 517, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 525, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 517, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":526
+  /* "allel/opt/io_vcf_read.pyx":518
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk[POS_FIELD] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_PosInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 526, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_PosInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 518, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":524
+  /* "allel/opt/io_vcf_read.pyx":516
  *         PosInt32Parser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -8140,9 +8243,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_mkchunk(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":534
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":522
+ * 
+ * # break out method as function for profiling
  * cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         long value
@@ -8164,7 +8267,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
   PyObject *__pyx_t_9 = NULL;
   __Pyx_RefNannySetupContext("PosInt32Parser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":540
+  /* "allel/opt/io_vcf_read.pyx":528
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -8173,7 +8276,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":543
+  /* "allel/opt/io_vcf_read.pyx":531
  * 
  *     # read into temporary buffer until tab
  *     while context.c != TAB and context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -8192,7 +8295,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":544
+    /* "allel/opt/io_vcf_read.pyx":532
  *     # read into temporary buffer until tab
  *     while context.c != TAB and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -8202,7 +8305,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
     __pyx_t_3 = __pyx_v_context->c;
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-    /* "allel/opt/io_vcf_read.pyx":545
+    /* "allel/opt/io_vcf_read.pyx":533
  *     while context.c != TAB and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -8211,7 +8314,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
  */
     __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-    /* "allel/opt/io_vcf_read.pyx":546
+    /* "allel/opt/io_vcf_read.pyx":534
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -8221,7 +8324,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":551
+  /* "allel/opt/io_vcf_read.pyx":539
  * 
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -8230,7 +8333,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
  */
   (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":552
+  /* "allel/opt/io_vcf_read.pyx":540
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0
  *     value = strtol(context.temp, &str_end, 10)             # <<<<<<<<<<<<<<
@@ -8239,7 +8342,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
  */
   __pyx_v_value = strtol(__pyx_v_context->temp, (&__pyx_v_str_end), 10);
 
-  /* "allel/opt/io_vcf_read.pyx":557
+  /* "allel/opt/io_vcf_read.pyx":545
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -8249,17 +8352,18 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
   __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":560
+    /* "allel/opt/io_vcf_read.pyx":548
  * 
  *         # store value
  *         self.memory[context.chunk_variant_index] = value             # <<<<<<<<<<<<<<
  * 
  *     else:
  */
+    if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 548, __pyx_L1_error)}
     __pyx_t_4 = __pyx_v_context->chunk_variant_index;
     *((__pyx_t_5numpy_int32_t *) ( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_4 * __pyx_v_self->memory.strides[0]) )) = __pyx_v_value;
 
-    /* "allel/opt/io_vcf_read.pyx":557
+    /* "allel/opt/io_vcf_read.pyx":545
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -8269,7 +8373,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
     goto __pyx_L7;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":564
+  /* "allel/opt/io_vcf_read.pyx":552
  *     else:
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
@@ -8277,36 +8381,36 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
  *                       (value, b, context.variant_index))
  */
   /*else*/ {
-    __pyx_t_5 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 564, __pyx_L1_error)
+    __pyx_t_5 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 552, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_v_b = ((PyObject*)__pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":565
+    /* "allel/opt/io_vcf_read.pyx":553
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing POS value %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, b, context.variant_index))
  * 
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 565, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 553, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 565, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 553, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":566
+    /* "allel/opt/io_vcf_read.pyx":554
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing POS value %r at variant index %s' %
  *                       (value, b, context.variant_index))             # <<<<<<<<<<<<<<
  * 
  *     # advance input stream
  */
-    __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 566, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 554, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 566, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 554, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_9 = PyTuple_New(3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 566, __pyx_L1_error)
+    __pyx_t_9 = PyTuple_New(3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 554, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_GIVEREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_6);
@@ -8318,14 +8422,14 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
     __pyx_t_6 = 0;
     __pyx_t_8 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":565
+    /* "allel/opt/io_vcf_read.pyx":553
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing POS value %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, b, context.variant_index))
  * 
  */
-    __pyx_t_8 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_POS_value_r_at_v, __pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 565, __pyx_L1_error)
+    __pyx_t_8 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_POS_value_r_at_v, __pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 553, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __pyx_t_9 = NULL;
@@ -8339,14 +8443,14 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
       }
     }
     if (!__pyx_t_9) {
-      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 565, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 553, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_5);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_7)) {
         PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_8};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 565, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 553, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -8355,20 +8459,20 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
         PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_8};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 565, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 553, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 565, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 553, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_9); __pyx_t_9 = NULL;
         __Pyx_GIVEREF(__pyx_t_8);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_8);
         __pyx_t_8 = 0;
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 565, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 553, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -8378,7 +8482,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
   }
   __pyx_L7:;
 
-  /* "allel/opt/io_vcf_read.pyx":569
+  /* "allel/opt/io_vcf_read.pyx":557
  * 
  *     # advance input stream
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -8387,9 +8491,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":534
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":522
+ * 
+ * # break out method as function for profiling
  * cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         long value
@@ -8409,7 +8513,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_PosInt32Parser_parse
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":575
+/* "allel/opt/io_vcf_read.pyx":563
  *     """Skip the POS field."""
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -8444,7 +8548,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_13SkipPosParser___cinit__(CYTHON_U
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":578
+/* "allel/opt/io_vcf_read.pyx":566
  *         pass
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -8464,7 +8568,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_malloc(CYTHON
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":581
+/* "allel/opt/io_vcf_read.pyx":569
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -8477,7 +8581,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_parse(struct 
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":582
+  /* "allel/opt/io_vcf_read.pyx":570
  * 
  *     cdef parse(self, ParserContext context):
  *         SkipPosParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -8486,7 +8590,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_parse(struct 
  */
   __pyx_f_5allel_3opt_11io_vcf_read_SkipPosParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":581
+  /* "allel/opt/io_vcf_read.pyx":569
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -8501,7 +8605,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_parse(struct 
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":584
+/* "allel/opt/io_vcf_read.pyx":572
  *         SkipPosParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -8523,9 +8627,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_mkchunk(CYTHO
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":593
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":577
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipPosParser_parse(SkipPosParser self, ParserContext context):             # <<<<<<<<<<<<<<
  * 
  *     # TODO store pos on context
@@ -8536,7 +8640,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipPosParser_parse(
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("SkipPosParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":598
+  /* "allel/opt/io_vcf_read.pyx":582
  * 
  *     # read characters until tab
  *     while context.c != TAB:             # <<<<<<<<<<<<<<
@@ -8547,7 +8651,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipPosParser_parse(
     __pyx_t_1 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":599
+    /* "allel/opt/io_vcf_read.pyx":583
  *     # read characters until tab
  *     while context.c != TAB:
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -8557,7 +8661,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipPosParser_parse(
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":602
+  /* "allel/opt/io_vcf_read.pyx":586
  * 
  *     # advance input stream beyond tab
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -8566,9 +8670,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipPosParser_parse(
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":593
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":577
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipPosParser_parse(SkipPosParser self, ParserContext context):             # <<<<<<<<<<<<<<
  * 
  *     # TODO store pos on context
@@ -8578,7 +8682,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipPosParser_parse(
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":608
+/* "allel/opt/io_vcf_read.pyx":592
  *     """Skip a field."""
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -8613,7 +8717,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10SkipParser___cinit__(CYTHON_UNUS
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":611
+/* "allel/opt/io_vcf_read.pyx":595
  *         pass
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -8633,7 +8737,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_malloc(CYTHON_UN
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":614
+/* "allel/opt/io_vcf_read.pyx":598
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -8646,7 +8750,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_parse(struct __p
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":615
+  /* "allel/opt/io_vcf_read.pyx":599
  * 
  *     cdef parse(self, ParserContext context):
  *         SkipParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -8655,7 +8759,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_parse(struct __p
  */
   __pyx_f_5allel_3opt_11io_vcf_read_SkipParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":614
+  /* "allel/opt/io_vcf_read.pyx":598
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -8670,7 +8774,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_parse(struct __p
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":617
+/* "allel/opt/io_vcf_read.pyx":601
  *         SkipParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -8692,9 +8796,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_mkchunk(CYTHON_U
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":626
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":606
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipParser_parse(SkipParser self, ParserContext context):             # <<<<<<<<<<<<<<
  * 
  *     # read characters until tab or newline
@@ -8706,7 +8810,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipParser_parse(CYT
   int __pyx_t_2;
   __Pyx_RefNannySetupContext("SkipParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":629
+  /* "allel/opt/io_vcf_read.pyx":609
  * 
  *     # read characters until tab or newline
  *     while context.c != TAB and context.c != NEWLINE and context.c != 0:             # <<<<<<<<<<<<<<
@@ -8731,7 +8835,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipParser_parse(CYT
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":630
+    /* "allel/opt/io_vcf_read.pyx":610
  *     # read characters until tab or newline
  *     while context.c != TAB and context.c != NEWLINE and context.c != 0:
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -8741,7 +8845,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipParser_parse(CYT
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":633
+  /* "allel/opt/io_vcf_read.pyx":613
  * 
  *     # advance input stream beyond tab or newline
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -8750,9 +8854,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipParser_parse(CYT
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":626
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":606
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipParser_parse(SkipParser self, ParserContext context):             # <<<<<<<<<<<<<<
  * 
  *     # read characters until tab or newline
@@ -8762,7 +8866,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipParser_parse(CYT
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":644
+/* "allel/opt/io_vcf_read.pyx":624
  *     cdef np.uint8_t[:] memory
  * 
  *     def __cinit__(self, chunk_length, dtype, number):             # <<<<<<<<<<<<<<
@@ -8800,16 +8904,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_9AltParser_1__cinit__(PyObject *__
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_dtype)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 644, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 624, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_number)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 644, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 624, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 644, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 624, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -8824,7 +8928,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_9AltParser_1__cinit__(PyObject *__
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 644, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 624, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.AltParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -8847,24 +8951,24 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_9AltParser___cinit__(struct __pyx_
   PyObject *__pyx_t_5 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":645
+  /* "allel/opt/io_vcf_read.pyx":625
  * 
  *     def __cinit__(self, chunk_length, dtype, number):
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.dtype = check_string_dtype(dtype)
  *         self.itemsize = self.dtype.itemsize
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 645, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 625, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":646
+  /* "allel/opt/io_vcf_read.pyx":626
  *     def __cinit__(self, chunk_length, dtype, number):
  *         self.chunk_length = chunk_length
  *         self.dtype = check_string_dtype(dtype)             # <<<<<<<<<<<<<<
  *         self.itemsize = self.dtype.itemsize
  *         self.number = number
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_check_string_dtype); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 646, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_check_string_dtype); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 626, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -8877,13 +8981,13 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_9AltParser___cinit__(struct __pyx_
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_dtype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 646, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_dtype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 626, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_dtype};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 646, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 626, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
@@ -8891,19 +8995,19 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_9AltParser___cinit__(struct __pyx_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_dtype};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 646, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 626, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
     #endif
     {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 646, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 626, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
       __Pyx_INCREF(__pyx_v_dtype);
       __Pyx_GIVEREF(__pyx_v_dtype);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_dtype);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 646, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 626, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
@@ -8915,41 +9019,41 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_9AltParser___cinit__(struct __pyx_
   __pyx_v_self->dtype = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":647
+  /* "allel/opt/io_vcf_read.pyx":627
  *         self.chunk_length = chunk_length
  *         self.dtype = check_string_dtype(dtype)
  *         self.itemsize = self.dtype.itemsize             # <<<<<<<<<<<<<<
  *         self.number = number
  *         self.malloc()
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 647, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 627, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 647, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 627, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_self->itemsize = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":648
+  /* "allel/opt/io_vcf_read.pyx":628
  *         self.dtype = check_string_dtype(dtype)
  *         self.itemsize = self.dtype.itemsize
  *         self.number = number             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_number); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 648, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_number); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 628, __pyx_L1_error)
   __pyx_v_self->number = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":649
+  /* "allel/opt/io_vcf_read.pyx":629
  *         self.itemsize = self.dtype.itemsize
  *         self.number = number
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef malloc(self):
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_AltParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 649, __pyx_L1_error)
+  __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_AltParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 629, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":644
+  /* "allel/opt/io_vcf_read.pyx":624
  *     cdef np.uint8_t[:] memory
  * 
  *     def __cinit__(self, chunk_length, dtype, number):             # <<<<<<<<<<<<<<
@@ -8972,7 +9076,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_9AltParser___cinit__(struct __pyx_
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":651
+/* "allel/opt/io_vcf_read.pyx":631
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -8990,23 +9094,23 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_malloc(struct __py
   __Pyx_memviewslice __pyx_t_5 = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":652
+  /* "allel/opt/io_vcf_read.pyx":632
  * 
  *     cdef malloc(self):
  *         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype, order='C')             # <<<<<<<<<<<<<<
  *         self.memory = self.values.reshape(-1).view('u1')
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_self->number); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_self->number); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1);
@@ -9014,16 +9118,16 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_malloc(struct __py
   PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3);
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 652, __pyx_L1_error)
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_v_self->dtype) < 0) __PYX_ERR(0, 652, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_order, __pyx_n_u_C) < 0) __PYX_ERR(0, 652, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 652, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_v_self->dtype) < 0) __PYX_ERR(0, 632, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_order, __pyx_n_u_C) < 0) __PYX_ERR(0, 632, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -9034,33 +9138,33 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_malloc(struct __py
   __pyx_v_self->__pyx_base.values = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":653
+  /* "allel/opt/io_vcf_read.pyx":633
  *     cdef malloc(self):
  *         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype, order='C')
  *         self.memory = self.values.reshape(-1).view('u1')             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->__pyx_base.values, __pyx_n_s_reshape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 653, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->__pyx_base.values, __pyx_n_s_reshape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 653, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 653, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__12, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 653, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__12, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_uint8_t(__pyx_t_4);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 653, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":651
+  /* "allel/opt/io_vcf_read.pyx":631
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -9085,7 +9189,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_malloc(struct __py
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":655
+/* "allel/opt/io_vcf_read.pyx":635
  *         self.memory = self.values.reshape(-1).view('u1')
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -9098,7 +9202,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_parse(struct __pyx
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":656
+  /* "allel/opt/io_vcf_read.pyx":636
  * 
  *     cdef parse(self, ParserContext context):
  *         AltParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -9107,7 +9211,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_parse(struct __pyx
  */
   __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":655
+  /* "allel/opt/io_vcf_read.pyx":635
  *         self.memory = self.values.reshape(-1).view('u1')
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -9122,7 +9226,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_parse(struct __pyx
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":658
+/* "allel/opt/io_vcf_read.pyx":638
  *         AltParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -9143,33 +9247,33 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_mkchunk(struct __p
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":659
+  /* "allel/opt/io_vcf_read.pyx":639
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk[ALT_FIELD] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 659, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 639, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 659, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ALT_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 639, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 659, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 639, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":660
+  /* "allel/opt/io_vcf_read.pyx":640
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk[ALT_FIELD] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_AltParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 660, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_AltParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 640, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":658
+  /* "allel/opt/io_vcf_read.pyx":638
  *         AltParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -9191,9 +9295,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_mkchunk(struct __p
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":668
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":644
+ * 
+ * # break out method as function for profiling
  * cdef inline void AltParser_parse(AltParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         # index of alt values
@@ -9210,7 +9314,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
   Py_ssize_t __pyx_t_3;
   __Pyx_RefNannySetupContext("AltParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":671
+  /* "allel/opt/io_vcf_read.pyx":647
  *     cdef:
  *         # index of alt values
  *         int alt_index = 0             # <<<<<<<<<<<<<<
@@ -9219,7 +9323,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
   __pyx_v_alt_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":675
+  /* "allel/opt/io_vcf_read.pyx":651
  *         int memory_offset, memory_index
  *         # number of characters read into current value
  *         int chars_stored = 0             # <<<<<<<<<<<<<<
@@ -9228,7 +9332,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
   __pyx_v_chars_stored = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":678
+  /* "allel/opt/io_vcf_read.pyx":654
  * 
  *     # initialise memory offset and index
  *     memory_offset = context.chunk_variant_index * self.itemsize * self.number             # <<<<<<<<<<<<<<
@@ -9237,7 +9341,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
   __pyx_v_memory_offset = ((__pyx_v_context->chunk_variant_index * __pyx_v_self->itemsize) * __pyx_v_self->number);
 
-  /* "allel/opt/io_vcf_read.pyx":679
+  /* "allel/opt/io_vcf_read.pyx":655
  *     # initialise memory offset and index
  *     memory_offset = context.chunk_variant_index * self.itemsize * self.number
  *     memory_index = memory_offset             # <<<<<<<<<<<<<<
@@ -9246,7 +9350,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
   __pyx_v_memory_index = __pyx_v_memory_offset;
 
-  /* "allel/opt/io_vcf_read.pyx":682
+  /* "allel/opt/io_vcf_read.pyx":658
  * 
  *     # read characters until tab
  *     while True:             # <<<<<<<<<<<<<<
@@ -9255,7 +9359,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
   while (1) {
 
-    /* "allel/opt/io_vcf_read.pyx":683
+    /* "allel/opt/io_vcf_read.pyx":659
  *     # read characters until tab
  *     while True:
  *         if context.c == TAB:             # <<<<<<<<<<<<<<
@@ -9265,7 +9369,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":684
+      /* "allel/opt/io_vcf_read.pyx":660
  *     while True:
  *         if context.c == TAB:
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -9274,7 +9378,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":685
+      /* "allel/opt/io_vcf_read.pyx":661
  *         if context.c == TAB:
  *             ParserContext_next(context)
  *             break             # <<<<<<<<<<<<<<
@@ -9283,7 +9387,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       goto __pyx_L4_break;
 
-      /* "allel/opt/io_vcf_read.pyx":683
+      /* "allel/opt/io_vcf_read.pyx":659
  *     # read characters until tab
  *     while True:
  *         if context.c == TAB:             # <<<<<<<<<<<<<<
@@ -9292,7 +9396,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":686
+    /* "allel/opt/io_vcf_read.pyx":662
  *             ParserContext_next(context)
  *             break
  *         elif context.c == COMMA:             # <<<<<<<<<<<<<<
@@ -9302,7 +9406,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_COMMA) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":688
+      /* "allel/opt/io_vcf_read.pyx":664
  *         elif context.c == COMMA:
  *             # advance value index
  *             alt_index += 1             # <<<<<<<<<<<<<<
@@ -9311,7 +9415,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       __pyx_v_alt_index = (__pyx_v_alt_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":690
+      /* "allel/opt/io_vcf_read.pyx":666
  *             alt_index += 1
  *             # set memory index to beginning of next item
  *             memory_index = memory_offset + (alt_index * self.itemsize)             # <<<<<<<<<<<<<<
@@ -9320,7 +9424,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       __pyx_v_memory_index = (__pyx_v_memory_offset + (__pyx_v_alt_index * __pyx_v_self->itemsize));
 
-      /* "allel/opt/io_vcf_read.pyx":692
+      /* "allel/opt/io_vcf_read.pyx":668
  *             memory_index = memory_offset + (alt_index * self.itemsize)
  *             # reset chars stored
  *             chars_stored = 0             # <<<<<<<<<<<<<<
@@ -9329,7 +9433,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       __pyx_v_chars_stored = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":686
+      /* "allel/opt/io_vcf_read.pyx":662
  *             ParserContext_next(context)
  *             break
  *         elif context.c == COMMA:             # <<<<<<<<<<<<<<
@@ -9339,7 +9443,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":693
+    /* "allel/opt/io_vcf_read.pyx":669
  *             # reset chars stored
  *             chars_stored = 0
  *         elif chars_stored < self.itemsize:             # <<<<<<<<<<<<<<
@@ -9349,7 +9453,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
     __pyx_t_1 = ((__pyx_v_chars_stored < __pyx_v_self->itemsize) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":695
+      /* "allel/opt/io_vcf_read.pyx":671
  *         elif chars_stored < self.itemsize:
  *             # store value
  *             self.memory[memory_index] = context.c             # <<<<<<<<<<<<<<
@@ -9357,10 +9461,11 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  *             memory_index += 1
  */
       __pyx_t_2 = __pyx_v_context->c;
+      if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 671, __pyx_L1_error)}
       __pyx_t_3 = __pyx_v_memory_index;
       *((__pyx_t_5numpy_uint8_t *) ( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_3 * __pyx_v_self->memory.strides[0]) )) = __pyx_t_2;
 
-      /* "allel/opt/io_vcf_read.pyx":697
+      /* "allel/opt/io_vcf_read.pyx":673
  *             self.memory[memory_index] = context.c
  *             # advance memory index
  *             memory_index += 1             # <<<<<<<<<<<<<<
@@ -9369,7 +9474,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       __pyx_v_memory_index = (__pyx_v_memory_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":699
+      /* "allel/opt/io_vcf_read.pyx":675
  *             memory_index += 1
  *             # advance number of characters stored
  *             chars_stored += 1             # <<<<<<<<<<<<<<
@@ -9378,7 +9483,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
  */
       __pyx_v_chars_stored = (__pyx_v_chars_stored + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":693
+      /* "allel/opt/io_vcf_read.pyx":669
  *             # reset chars stored
  *             chars_stored = 0
  *         elif chars_stored < self.itemsize:             # <<<<<<<<<<<<<<
@@ -9388,7 +9493,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
     }
     __pyx_L5:;
 
-    /* "allel/opt/io_vcf_read.pyx":701
+    /* "allel/opt/io_vcf_read.pyx":677
  *             chars_stored += 1
  *         # advance input stream
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -9399,19 +9504,23 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_AltParser_parse(stru
   }
   __pyx_L4_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":668
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":644
+ * 
+ * # break out method as function for profiling
  * cdef inline void AltParser_parse(AltParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         # index of alt values
  */
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_WriteUnraisable("allel.opt.io_vcf_read.AltParser_parse", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":711
+/* "allel/opt/io_vcf_read.pyx":687
  *     cdef np.float32_t[:] memory
  * 
  *     def __cinit__(self, chunk_length, fill):             # <<<<<<<<<<<<<<
@@ -9447,11 +9556,11 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_17QualFloat32Parser_1__cinit__(PyO
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fill)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 711, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 687, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 711, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 687, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -9464,7 +9573,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_17QualFloat32Parser_1__cinit__(PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 711, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 687, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.QualFloat32Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -9485,38 +9594,38 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17QualFloat32Parser___cinit__(stru
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":713
+  /* "allel/opt/io_vcf_read.pyx":689
  *     def __cinit__(self, chunk_length, fill):
  *         # debug('QualFloat32Parser __cinit__()')
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.fill = fill
  *         self.malloc()
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 713, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 689, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":714
+  /* "allel/opt/io_vcf_read.pyx":690
  *         # debug('QualFloat32Parser __cinit__()')
  *         self.chunk_length = chunk_length
  *         self.fill = fill             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_2 = __pyx_PyFloat_AsFloat(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_float32)-1)) && PyErr_Occurred())) __PYX_ERR(0, 714, __pyx_L1_error)
+  __pyx_t_2 = __pyx_PyFloat_AsFloat(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_float32)-1)) && PyErr_Occurred())) __PYX_ERR(0, 690, __pyx_L1_error)
   __pyx_v_self->fill = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":715
+  /* "allel/opt/io_vcf_read.pyx":691
  *         self.chunk_length = chunk_length
  *         self.fill = fill
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef malloc(self):
  */
-  __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_QualFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_QualFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 691, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":711
+  /* "allel/opt/io_vcf_read.pyx":687
  *     cdef np.float32_t[:] memory
  * 
  *     def __cinit__(self, chunk_length, fill):             # <<<<<<<<<<<<<<
@@ -9536,7 +9645,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17QualFloat32Parser___cinit__(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":717
+/* "allel/opt/io_vcf_read.pyx":693
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -9555,29 +9664,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc(st
   __pyx_t_5numpy_float32_t __pyx_t_6;
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":719
+  /* "allel/opt/io_vcf_read.pyx":695
  *     cdef malloc(self):
  *         # debug('QualFloat32Parser malloc()')
  *         self.values = np.empty(self.chunk_length, dtype='f4')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  *         self.memory[:] = self.fill
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 719, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 695, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 719, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 695, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 719, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 695, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 719, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 695, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 719, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 695, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_f4) < 0) __PYX_ERR(0, 719, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 719, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_f4) < 0) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 695, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -9588,7 +9697,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc(st
   __pyx_v_self->__pyx_base.values = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":720
+  /* "allel/opt/io_vcf_read.pyx":696
  *         # debug('QualFloat32Parser malloc()')
  *         self.values = np.empty(self.chunk_length, dtype='f4')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -9596,13 +9705,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc(st
  * 
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_float32_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 720, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 696, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":721
+  /* "allel/opt/io_vcf_read.pyx":697
  *         self.values = np.empty(self.chunk_length, dtype='f4')
  *         self.memory = self.values
  *         self.memory[:] = self.fill             # <<<<<<<<<<<<<<
@@ -9610,7 +9719,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc(st
  *     cdef parse(self, ParserContext context):
  */
   __pyx_t_6 = __pyx_v_self->fill;
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 721, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 697, __pyx_L1_error)}
   {
       __pyx_t_5numpy_float32_t __pyx_temp_scalar = __pyx_t_6;
       {
@@ -9626,7 +9735,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc(st
       }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":717
+  /* "allel/opt/io_vcf_read.pyx":693
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -9651,7 +9760,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc(st
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":723
+/* "allel/opt/io_vcf_read.pyx":699
  *         self.memory[:] = self.fill
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -9664,7 +9773,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_parse(str
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":724
+  /* "allel/opt/io_vcf_read.pyx":700
  * 
  *     cdef parse(self, ParserContext context):
  *         QualFloat32Parser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -9673,7 +9782,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_parse(str
  */
   __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":723
+  /* "allel/opt/io_vcf_read.pyx":699
  *         self.memory[:] = self.fill
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -9688,7 +9797,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_parse(str
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":726
+/* "allel/opt/io_vcf_read.pyx":702
  *         QualFloat32Parser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -9709,33 +9818,33 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_mkchunk(s
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":727
+  /* "allel/opt/io_vcf_read.pyx":703
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk[QUAL_FIELD] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 727, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 703, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_QUAL_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 727, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_QUAL_FIELD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 703, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 727, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 703, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":728
+  /* "allel/opt/io_vcf_read.pyx":704
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk[QUAL_FIELD] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_QualFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 728, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_QualFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 704, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":726
+  /* "allel/opt/io_vcf_read.pyx":702
  *         QualFloat32Parser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -9757,9 +9866,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_mkchunk(s
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":736
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":708
+ * 
+ * # break out method as function for profiling
  * cdef inline void QualFloat32Parser_parse(QualFloat32Parser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         float value
@@ -9778,7 +9887,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
   PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("QualFloat32Parser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":742
+  /* "allel/opt/io_vcf_read.pyx":714
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -9787,7 +9896,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":745
+  /* "allel/opt/io_vcf_read.pyx":717
  * 
  *     # read into temporary buffer until tab
  *     while context.c != TAB and context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -9806,7 +9915,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":746
+    /* "allel/opt/io_vcf_read.pyx":718
  *     # read into temporary buffer until tab
  *     while context.c != TAB and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -9816,7 +9925,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
     __pyx_t_3 = __pyx_v_context->c;
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-    /* "allel/opt/io_vcf_read.pyx":747
+    /* "allel/opt/io_vcf_read.pyx":719
  *     while context.c != TAB and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -9825,7 +9934,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
  */
     __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-    /* "allel/opt/io_vcf_read.pyx":748
+    /* "allel/opt/io_vcf_read.pyx":720
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -9835,7 +9944,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":750
+  /* "allel/opt/io_vcf_read.pyx":722
  *         ParserContext_next(context)
  * 
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -9847,7 +9956,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
     goto __pyx_L7;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":754
+  /* "allel/opt/io_vcf_read.pyx":726
  *         pass
  * 
  *     elif context.temp_size == 1 and context.temp[0] == PERIOD:             # <<<<<<<<<<<<<<
@@ -9867,7 +9976,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
     goto __pyx_L7;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":761
+  /* "allel/opt/io_vcf_read.pyx":733
  * 
  *         # parse string as float
  *         context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -9877,7 +9986,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
   /*else*/ {
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":762
+    /* "allel/opt/io_vcf_read.pyx":734
  *         # parse string as float
  *         context.temp[context.temp_size] = 0
  *         value = strtof(context.temp, &str_end)             # <<<<<<<<<<<<<<
@@ -9886,7 +9995,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
  */
     __pyx_v_value = strtof(__pyx_v_context->temp, (&__pyx_v_str_end));
 
-    /* "allel/opt/io_vcf_read.pyx":767
+    /* "allel/opt/io_vcf_read.pyx":739
  * 
  *         # check success
  *         if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -9896,17 +10005,18 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
     __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":770
+      /* "allel/opt/io_vcf_read.pyx":742
  * 
  *             # store value
  *             self.memory[context.chunk_variant_index] = value             # <<<<<<<<<<<<<<
  * 
  *             # advance input stream
  */
+      if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 742, __pyx_L1_error)}
       __pyx_t_4 = __pyx_v_context->chunk_variant_index;
       *((__pyx_t_5numpy_float32_t *) ( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_4 * __pyx_v_self->memory.strides[0]) )) = __pyx_v_value;
 
-      /* "allel/opt/io_vcf_read.pyx":773
+      /* "allel/opt/io_vcf_read.pyx":745
  * 
  *             # advance input stream
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -9915,7 +10025,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":767
+      /* "allel/opt/io_vcf_read.pyx":739
  * 
  *         # check success
  *         if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -9925,7 +10035,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
       goto __pyx_L10;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":776
+    /* "allel/opt/io_vcf_read.pyx":748
  * 
  *         else:
  *             raise RuntimeError('error %s parsing QUAL at variant index %s' %             # <<<<<<<<<<<<<<
@@ -9934,18 +10044,18 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
  */
     /*else*/ {
 
-      /* "allel/opt/io_vcf_read.pyx":777
+      /* "allel/opt/io_vcf_read.pyx":749
  *         else:
  *             raise RuntimeError('error %s parsing QUAL at variant index %s' %
  *                                (value, context.variant_index))             # <<<<<<<<<<<<<<
  * 
  * 
  */
-      __pyx_t_5 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 777, __pyx_L1_error)
+      __pyx_t_5 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 749, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 777, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 749, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 777, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 749, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_GIVEREF(__pyx_t_5);
       PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5);
@@ -9954,35 +10064,35 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
       __pyx_t_5 = 0;
       __pyx_t_6 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":776
+      /* "allel/opt/io_vcf_read.pyx":748
  * 
  *         else:
  *             raise RuntimeError('error %s parsing QUAL at variant index %s' %             # <<<<<<<<<<<<<<
  *                                (value, context.variant_index))
  * 
  */
-      __pyx_t_6 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_QUAL_at_variant, __pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 776, __pyx_L1_error)
+      __pyx_t_6 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_QUAL_at_variant, __pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 748, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 776, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 748, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_GIVEREF(__pyx_t_6);
       PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6);
       __pyx_t_6 = 0;
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_7, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 776, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_7, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 748, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_Raise(__pyx_t_6, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __PYX_ERR(0, 776, __pyx_L1_error)
+      __PYX_ERR(0, 748, __pyx_L1_error)
     }
     __pyx_L10:;
   }
   __pyx_L7:;
 
-  /* "allel/opt/io_vcf_read.pyx":736
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":708
+ * 
+ * # break out method as function for profiling
  * cdef inline void QualFloat32Parser_parse(QualFloat32Parser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         float value
@@ -9999,7 +10109,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_QualFloat32Parser_pa
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":786
+/* "allel/opt/io_vcf_read.pyx":758
  *     cdef np.uint8_t[:, :] memory
  * 
  *     def __cinit__(self, chunk_length, filters):             # <<<<<<<<<<<<<<
@@ -10035,11 +10145,11 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_12FilterParser_1__cinit__(PyObject
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_filters)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 786, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 758, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 786, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 758, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -10052,7 +10162,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_12FilterParser_1__cinit__(PyObject
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 786, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 758, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.FilterParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -10076,24 +10186,24 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FilterParser___cinit__(struct __
   PyObject *__pyx_t_6 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":787
+  /* "allel/opt/io_vcf_read.pyx":759
  * 
  *     def __cinit__(self, chunk_length, filters):
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.filters = tuple(filters)
  *         self.filter_position = {f: i for i, f in enumerate(self.filters)}
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 787, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 759, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":788
+  /* "allel/opt/io_vcf_read.pyx":760
  *     def __cinit__(self, chunk_length, filters):
  *         self.chunk_length = chunk_length
  *         self.filters = tuple(filters)             # <<<<<<<<<<<<<<
  *         self.filter_position = {f: i for i, f in enumerate(self.filters)}
  *         self.malloc()
  */
-  __pyx_t_2 = PySequence_Tuple(__pyx_v_filters); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 788, __pyx_L1_error)
+  __pyx_t_2 = PySequence_Tuple(__pyx_v_filters); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 760, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __Pyx_GOTREF(__pyx_v_self->filters);
@@ -10101,7 +10211,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FilterParser___cinit__(struct __
   __pyx_v_self->filters = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":789
+  /* "allel/opt/io_vcf_read.pyx":761
  *         self.chunk_length = chunk_length
  *         self.filters = tuple(filters)
  *         self.filter_position = {f: i for i, f in enumerate(self.filters)}             # <<<<<<<<<<<<<<
@@ -10111,7 +10221,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FilterParser___cinit__(struct __
   { /* enter inner scope */
     PyObject *__pyx_7genexpr__pyx_v_i = NULL;
     PyObject *__pyx_7genexpr__pyx_v_f = NULL;
-    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 789, __pyx_L5_error)
+    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 761, __pyx_L5_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_INCREF(__pyx_int_0);
     __pyx_t_3 = __pyx_int_0;
@@ -10119,21 +10229,21 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FilterParser___cinit__(struct __
     for (;;) {
       if (__pyx_t_5 >= PyTuple_GET_SIZE(__pyx_t_4)) break;
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-      __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_4, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 789, __pyx_L5_error)
+      __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_4, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 761, __pyx_L5_error)
       #else
-      __pyx_t_6 = PySequence_ITEM(__pyx_t_4, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 789, __pyx_L5_error)
+      __pyx_t_6 = PySequence_ITEM(__pyx_t_4, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 761, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_6);
       #endif
       __Pyx_XDECREF_SET(__pyx_7genexpr__pyx_v_f, __pyx_t_6);
       __pyx_t_6 = 0;
       __Pyx_INCREF(__pyx_t_3);
       __Pyx_XDECREF_SET(__pyx_7genexpr__pyx_v_i, __pyx_t_3);
-      __pyx_t_6 = __Pyx_PyInt_AddObjC(__pyx_t_3, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 789, __pyx_L5_error)
+      __pyx_t_6 = __Pyx_PyInt_AddObjC(__pyx_t_3, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 761, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_3);
       __pyx_t_3 = __pyx_t_6;
       __pyx_t_6 = 0;
-      if (unlikely(PyDict_SetItem(__pyx_t_2, (PyObject*)__pyx_7genexpr__pyx_v_f, (PyObject*)__pyx_7genexpr__pyx_v_i))) __PYX_ERR(0, 789, __pyx_L5_error)
+      if (unlikely(PyDict_SetItem(__pyx_t_2, (PyObject*)__pyx_7genexpr__pyx_v_f, (PyObject*)__pyx_7genexpr__pyx_v_i))) __PYX_ERR(0, 761, __pyx_L5_error)
     }
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -10152,18 +10262,18 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FilterParser___cinit__(struct __
   __pyx_v_self->filter_position = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":790
+  /* "allel/opt/io_vcf_read.pyx":762
  *         self.filters = tuple(filters)
  *         self.filter_position = {f: i for i, f in enumerate(self.filters)}
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef malloc(self):
  */
-  __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FilterParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 790, __pyx_L1_error)
+  __pyx_t_2 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FilterParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 762, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":786
+  /* "allel/opt/io_vcf_read.pyx":758
  *     cdef np.uint8_t[:, :] memory
  * 
  *     def __cinit__(self, chunk_length, filters):             # <<<<<<<<<<<<<<
@@ -10186,7 +10296,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FilterParser___cinit__(struct __
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":792
+/* "allel/opt/io_vcf_read.pyx":764
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -10205,31 +10315,31 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_malloc(struct 
   __Pyx_memviewslice __pyx_t_6 = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":793
+  /* "allel/opt/io_vcf_read.pyx":765
  * 
  *     cdef malloc(self):
  *         self.values = np.zeros((self.chunk_length, len(self.filters) + 1), dtype=bool)             # <<<<<<<<<<<<<<
  *         self.memory = self.values.view('u1')
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_3 = __pyx_v_self->filters;
   __Pyx_INCREF(__pyx_t_3);
   if (unlikely(__pyx_t_3 == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 793, __pyx_L1_error)
+    __PYX_ERR(0, 765, __pyx_L1_error)
   }
-  __pyx_t_4 = PyTuple_GET_SIZE(__pyx_t_3); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_GET_SIZE(__pyx_t_3); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyInt_FromSsize_t((__pyx_t_4 + 1)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_3 = PyInt_FromSsize_t((__pyx_t_4 + 1)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
@@ -10237,15 +10347,15 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_malloc(struct 
   PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_3);
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 793, __pyx_L1_error)
+  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, ((PyObject*)&PyBool_Type)) < 0) __PYX_ERR(0, 793, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 793, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, ((PyObject*)&PyBool_Type)) < 0) __PYX_ERR(0, 765, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 765, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -10256,27 +10366,27 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_malloc(struct 
   __pyx_v_self->__pyx_base.values = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":794
+  /* "allel/opt/io_vcf_read.pyx":766
  *     cdef malloc(self):
  *         self.values = np.zeros((self.chunk_length, len(self.filters) + 1), dtype=bool)
  *         self.memory = self.values.view('u1')             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->__pyx_base.values, __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 794, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->__pyx_base.values, __pyx_n_s_view); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 766, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 794, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 766, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_6 = __Pyx_PyObject_to_MemoryviewSlice_dsds_nn___pyx_t_5numpy_uint8_t(__pyx_t_5);
-  if (unlikely(!__pyx_t_6.memview)) __PYX_ERR(0, 794, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6.memview)) __PYX_ERR(0, 766, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_6;
   __pyx_t_6.memview = NULL;
   __pyx_t_6.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":792
+  /* "allel/opt/io_vcf_read.pyx":764
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -10301,7 +10411,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_malloc(struct 
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":796
+/* "allel/opt/io_vcf_read.pyx":768
  *         self.memory = self.values.view('u1')
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -10314,7 +10424,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_parse(struct _
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":797
+  /* "allel/opt/io_vcf_read.pyx":769
  * 
  *     cdef parse(self, ParserContext context):
  *         FilterParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -10323,7 +10433,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_parse(struct _
  */
   __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":796
+  /* "allel/opt/io_vcf_read.pyx":768
  *         self.memory = self.values.view('u1')
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -10338,7 +10448,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_parse(struct _
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":799
+/* "allel/opt/io_vcf_read.pyx":771
  *         FilterParser_parse(self, context)
  * 
  *     cdef store(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -10351,7 +10461,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_store(struct _
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("store", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":800
+  /* "allel/opt/io_vcf_read.pyx":772
  * 
  *     cdef store(self, ParserContext context):
  *         FilterParser_store(self, context)             # <<<<<<<<<<<<<<
@@ -10360,7 +10470,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_store(struct _
  */
   __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":799
+  /* "allel/opt/io_vcf_read.pyx":771
  *         FilterParser_parse(self, context)
  * 
  *     cdef store(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -10375,7 +10485,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_store(struct _
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":802
+/* "allel/opt/io_vcf_read.pyx":774
  *         FilterParser_store(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -10402,7 +10512,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk(struct
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":803
+  /* "allel/opt/io_vcf_read.pyx":775
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         for i, filter in enumerate(self.filters):             # <<<<<<<<<<<<<<
@@ -10415,29 +10525,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk(struct
   for (;;) {
     if (__pyx_t_3 >= PyTuple_GET_SIZE(__pyx_t_2)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_3); __Pyx_INCREF(__pyx_t_4); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 803, __pyx_L1_error)
+    __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_3); __Pyx_INCREF(__pyx_t_4); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 775, __pyx_L1_error)
     #else
-    __pyx_t_4 = PySequence_ITEM(__pyx_t_2, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 803, __pyx_L1_error)
+    __pyx_t_4 = PySequence_ITEM(__pyx_t_2, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 775, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_filter, __pyx_t_4);
     __pyx_t_4 = 0;
     __Pyx_INCREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_i, __pyx_t_1);
-    __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_t_1, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 803, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_t_1, __pyx_int_1, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 775, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1);
     __pyx_t_1 = __pyx_t_4;
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":804
+    /* "allel/opt/io_vcf_read.pyx":776
  *     cdef mkchunk(self, chunk, limit=None):
  *         for i, filter in enumerate(self.filters):
  *             field = 'variants/FILTER_' + str(filter, 'ascii')             # <<<<<<<<<<<<<<
  *             # TODO any need to make it a contiguous array?
  *             chunk[field] = self.values[:limit, i]
  */
-    __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 804, __pyx_L1_error)
+    __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 776, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_INCREF(__pyx_v_filter);
     __Pyx_GIVEREF(__pyx_v_filter);
@@ -10445,25 +10555,25 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk(struct
     __Pyx_INCREF(__pyx_n_u_ascii);
     __Pyx_GIVEREF(__pyx_n_u_ascii);
     PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_n_u_ascii);
-    __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 804, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 776, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_FILTER, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 804, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_FILTER, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 776, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_XDECREF_SET(__pyx_v_field, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":806
+    /* "allel/opt/io_vcf_read.pyx":778
  *             field = 'variants/FILTER_' + str(filter, 'ascii')
  *             # TODO any need to make it a contiguous array?
  *             chunk[field] = self.values[:limit, i]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-    __pyx_t_4 = PySlice_New(Py_None, __pyx_v_limit, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 806, __pyx_L1_error)
+    __pyx_t_4 = PySlice_New(Py_None, __pyx_v_limit, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 778, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 806, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 778, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_4);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4);
@@ -10471,13 +10581,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk(struct
     __Pyx_GIVEREF(__pyx_v_i);
     PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_v_i);
     __pyx_t_4 = 0;
-    __pyx_t_4 = PyObject_GetItem(__pyx_v_self->__pyx_base.values, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 806, __pyx_L1_error)
+    __pyx_t_4 = PyObject_GetItem(__pyx_v_self->__pyx_base.values, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 778, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_4) < 0)) __PYX_ERR(0, 806, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_4) < 0)) __PYX_ERR(0, 778, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":803
+    /* "allel/opt/io_vcf_read.pyx":775
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         for i, filter in enumerate(self.filters):             # <<<<<<<<<<<<<<
@@ -10488,18 +10598,18 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk(struct
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":807
+  /* "allel/opt/io_vcf_read.pyx":779
  *             # TODO any need to make it a contiguous array?
  *             chunk[field] = self.values[:limit, i]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FilterParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 807, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_FilterParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 779, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":802
+  /* "allel/opt/io_vcf_read.pyx":774
  *         FilterParser_store(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -10526,9 +10636,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":815
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":783
+ * 
+ * # break out method as function for profiling
  * cdef inline void FilterParser_parse(FilterParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         int filter_index
@@ -10542,7 +10652,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
   char __pyx_t_4;
   __Pyx_RefNannySetupContext("FilterParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":820
+  /* "allel/opt/io_vcf_read.pyx":788
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -10551,7 +10661,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":822
+  /* "allel/opt/io_vcf_read.pyx":790
  *     context.temp_size = 0
  * 
  *     while context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -10562,7 +10672,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
     __pyx_t_1 = ((__pyx_v_context->temp_size < __pyx_v_context->temp_max_size) != 0);
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":824
+    /* "allel/opt/io_vcf_read.pyx":792
  *     while context.temp_size < context.temp_max_size:
  * 
  *         if context.c == TAB:             # <<<<<<<<<<<<<<
@@ -10572,7 +10682,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":825
+      /* "allel/opt/io_vcf_read.pyx":793
  * 
  *         if context.c == TAB:
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -10582,7 +10692,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
       __pyx_t_1 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_1) {
 
-        /* "allel/opt/io_vcf_read.pyx":826
+        /* "allel/opt/io_vcf_read.pyx":794
  *         if context.c == TAB:
  *             if context.temp_size > 0:
  *                 FilterParser_store(self, context)             # <<<<<<<<<<<<<<
@@ -10591,7 +10701,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
         __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(__pyx_v_self, __pyx_v_context);
 
-        /* "allel/opt/io_vcf_read.pyx":825
+        /* "allel/opt/io_vcf_read.pyx":793
  * 
  *         if context.c == TAB:
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -10600,7 +10710,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
       }
 
-      /* "allel/opt/io_vcf_read.pyx":827
+      /* "allel/opt/io_vcf_read.pyx":795
  *             if context.temp_size > 0:
  *                 FilterParser_store(self, context)
  *             break             # <<<<<<<<<<<<<<
@@ -10609,7 +10719,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
       goto __pyx_L4_break;
 
-      /* "allel/opt/io_vcf_read.pyx":824
+      /* "allel/opt/io_vcf_read.pyx":792
  *     while context.temp_size < context.temp_max_size:
  * 
  *         if context.c == TAB:             # <<<<<<<<<<<<<<
@@ -10618,7 +10728,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":829
+    /* "allel/opt/io_vcf_read.pyx":797
  *             break
  * 
  *         elif context.c == COMMA:  # TODO semi-colon, colon?             # <<<<<<<<<<<<<<
@@ -10628,7 +10738,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_COMMA) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":830
+      /* "allel/opt/io_vcf_read.pyx":798
  * 
  *         elif context.c == COMMA:  # TODO semi-colon, colon?
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -10638,7 +10748,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
       __pyx_t_1 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_1) {
 
-        /* "allel/opt/io_vcf_read.pyx":831
+        /* "allel/opt/io_vcf_read.pyx":799
  *         elif context.c == COMMA:  # TODO semi-colon, colon?
  *             if context.temp_size > 0:
  *                 FilterParser_store(self, context)             # <<<<<<<<<<<<<<
@@ -10647,7 +10757,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
         __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(__pyx_v_self, __pyx_v_context);
 
-        /* "allel/opt/io_vcf_read.pyx":832
+        /* "allel/opt/io_vcf_read.pyx":800
  *             if context.temp_size > 0:
  *                 FilterParser_store(self, context)
  *                 context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -10656,7 +10766,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
         __pyx_v_context->temp_size = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":830
+        /* "allel/opt/io_vcf_read.pyx":798
  * 
  *         elif context.c == COMMA:  # TODO semi-colon, colon?
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -10666,7 +10776,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
         goto __pyx_L7;
       }
 
-      /* "allel/opt/io_vcf_read.pyx":834
+      /* "allel/opt/io_vcf_read.pyx":802
  *                 context.temp_size = 0
  *             else:
  *                 raise RuntimeError('found bad FILTER at variant index %s' %             # <<<<<<<<<<<<<<
@@ -10675,41 +10785,41 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
       /*else*/ {
 
-        /* "allel/opt/io_vcf_read.pyx":835
+        /* "allel/opt/io_vcf_read.pyx":803
  *             else:
  *                 raise RuntimeError('found bad FILTER at variant index %s' %
  *                                    context.variant_index)             # <<<<<<<<<<<<<<
  * 
  *         elif context.c == PERIOD:
  */
-        __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 835, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 803, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
 
-        /* "allel/opt/io_vcf_read.pyx":834
+        /* "allel/opt/io_vcf_read.pyx":802
  *                 context.temp_size = 0
  *             else:
  *                 raise RuntimeError('found bad FILTER at variant index %s' %             # <<<<<<<<<<<<<<
  *                                    context.variant_index)
  * 
  */
-        __pyx_t_3 = PyUnicode_Format(__pyx_kp_u_found_bad_FILTER_at_variant_inde, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 834, __pyx_L1_error)
+        __pyx_t_3 = PyUnicode_Format(__pyx_kp_u_found_bad_FILTER_at_variant_inde, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 802, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 834, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 802, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_GIVEREF(__pyx_t_3);
         PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
         __pyx_t_3 = 0;
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 834, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 802, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_Raise(__pyx_t_3, 0, 0, 0);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __PYX_ERR(0, 834, __pyx_L1_error)
+        __PYX_ERR(0, 802, __pyx_L1_error)
       }
       __pyx_L7:;
 
-      /* "allel/opt/io_vcf_read.pyx":829
+      /* "allel/opt/io_vcf_read.pyx":797
  *             break
  * 
  *         elif context.c == COMMA:  # TODO semi-colon, colon?             # <<<<<<<<<<<<<<
@@ -10719,7 +10829,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":837
+    /* "allel/opt/io_vcf_read.pyx":805
  *                                    context.variant_index)
  * 
  *         elif context.c == PERIOD:             # <<<<<<<<<<<<<<
@@ -10731,7 +10841,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":842
+    /* "allel/opt/io_vcf_read.pyx":810
  * 
  *         else:
  *             context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -10742,7 +10852,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
       __pyx_t_4 = __pyx_v_context->c;
       (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_4;
 
-      /* "allel/opt/io_vcf_read.pyx":843
+      /* "allel/opt/io_vcf_read.pyx":811
  *         else:
  *             context.temp[context.temp_size] = context.c
  *             context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -10753,7 +10863,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
     }
     __pyx_L5:;
 
-    /* "allel/opt/io_vcf_read.pyx":846
+    /* "allel/opt/io_vcf_read.pyx":814
  * 
  *         # advance to next character
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -10764,7 +10874,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
   }
   __pyx_L4_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":849
+  /* "allel/opt/io_vcf_read.pyx":817
  * 
  *     # advance to next field
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -10773,9 +10883,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":815
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":783
+ * 
+ * # break out method as function for profiling
  * cdef inline void FilterParser_parse(FilterParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         int filter_index
@@ -10791,7 +10901,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_parse(s
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":854
+/* "allel/opt/io_vcf_read.pyx":822
  * 
  * 
  * cdef inline void FilterParser_store(FilterParser self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -10810,19 +10920,19 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(s
   Py_ssize_t __pyx_t_5;
   __Pyx_RefNannySetupContext("FilterParser_store", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":860
+  /* "allel/opt/io_vcf_read.pyx":828
  * 
  *     # read filter into byte string
  *     f = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  * 
  *     # find filter position
  */
-  __pyx_t_1 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 860, __pyx_L1_error)
+  __pyx_t_1 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 828, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_f = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":863
+  /* "allel/opt/io_vcf_read.pyx":831
  * 
  *     # find filter position
  *     filter_index = self.filter_position.get(f, -1)             # <<<<<<<<<<<<<<
@@ -10831,15 +10941,15 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(s
  */
   if (unlikely(__pyx_v_self->filter_position == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "get");
-    __PYX_ERR(0, 863, __pyx_L1_error)
+    __PYX_ERR(0, 831, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->filter_position, __pyx_v_f, __pyx_int_neg_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 863, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->filter_position, __pyx_v_f, __pyx_int_neg_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 831, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 863, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 831, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_filter_index = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":866
+  /* "allel/opt/io_vcf_read.pyx":834
  * 
  *     # store value
  *     if filter_index >= 0:             # <<<<<<<<<<<<<<
@@ -10849,32 +10959,19 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(s
   __pyx_t_3 = ((__pyx_v_filter_index >= 0) != 0);
   if (__pyx_t_3) {
 
-    /* "allel/opt/io_vcf_read.pyx":867
+    /* "allel/opt/io_vcf_read.pyx":835
  *     # store value
  *     if filter_index >= 0:
  *         self.memory[context.chunk_variant_index, filter_index] = 1             # <<<<<<<<<<<<<<
  * 
  *     # debug(context.variant_index, 'FILTER', f)
  */
-    if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 867, __pyx_L1_error)}
+    if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 835, __pyx_L1_error)}
     __pyx_t_4 = __pyx_v_context->chunk_variant_index;
     __pyx_t_5 = __pyx_v_filter_index;
-    __pyx_t_2 = -1;
-    if (__pyx_t_4 < 0) {
-      __pyx_t_4 += __pyx_v_self->memory.shape[0];
-      if (unlikely(__pyx_t_4 < 0)) __pyx_t_2 = 0;
-    } else if (unlikely(__pyx_t_4 >= __pyx_v_self->memory.shape[0])) __pyx_t_2 = 0;
-    if (__pyx_t_5 < 0) {
-      __pyx_t_5 += __pyx_v_self->memory.shape[1];
-      if (unlikely(__pyx_t_5 < 0)) __pyx_t_2 = 1;
-    } else if (unlikely(__pyx_t_5 >= __pyx_v_self->memory.shape[1])) __pyx_t_2 = 1;
-    if (unlikely(__pyx_t_2 != -1)) {
-      __Pyx_RaiseBufferIndexError(__pyx_t_2);
-      __PYX_ERR(0, 867, __pyx_L1_error)
-    }
     *((__pyx_t_5numpy_uint8_t *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_4 * __pyx_v_self->memory.strides[0]) ) + __pyx_t_5 * __pyx_v_self->memory.strides[1]) )) = 1;
 
-    /* "allel/opt/io_vcf_read.pyx":866
+    /* "allel/opt/io_vcf_read.pyx":834
  * 
  *     # store value
  *     if filter_index >= 0:             # <<<<<<<<<<<<<<
@@ -10883,7 +10980,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(s
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":854
+  /* "allel/opt/io_vcf_read.pyx":822
  * 
  * 
  * cdef inline void FilterParser_store(FilterParser self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -10901,7 +10998,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FilterParser_store(s
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":878
+/* "allel/opt/io_vcf_read.pyx":846
  *     cdef Parser skip_parser
  * 
  *     def __cinit__(self, chunk_length, infos, types):             # <<<<<<<<<<<<<<
@@ -10939,16 +11036,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_10InfoParser_1__cinit__(PyObject *
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_infos)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 878, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 846, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_types)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 878, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 846, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 878, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 846, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -10963,7 +11060,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_10InfoParser_1__cinit__(PyObject *
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 878, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 846, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -10989,26 +11086,27 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   int __pyx_t_6;
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_9 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":879
+  /* "allel/opt/io_vcf_read.pyx":847
  * 
  *     def __cinit__(self, chunk_length, infos, types):
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.infos = tuple(infos)
  *         self.parsers = dict()
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 879, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 847, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":880
+  /* "allel/opt/io_vcf_read.pyx":848
  *     def __cinit__(self, chunk_length, infos, types):
  *         self.chunk_length = chunk_length
  *         self.infos = tuple(infos)             # <<<<<<<<<<<<<<
  *         self.parsers = dict()
  *         for key in self.infos:
  */
-  __pyx_t_2 = PySequence_Tuple(__pyx_v_infos); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 880, __pyx_L1_error)
+  __pyx_t_2 = PySequence_Tuple(__pyx_v_infos); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 848, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __Pyx_GOTREF(__pyx_v_self->infos);
@@ -11016,14 +11114,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   __pyx_v_self->infos = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":881
+  /* "allel/opt/io_vcf_read.pyx":849
  *         self.chunk_length = chunk_length
  *         self.infos = tuple(infos)
  *         self.parsers = dict()             # <<<<<<<<<<<<<<
  *         for key in self.infos:
  *             # TODO other types
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 881, __pyx_L1_error)
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 849, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __Pyx_GOTREF(__pyx_v_self->parsers);
@@ -11031,7 +11129,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   __pyx_v_self->parsers = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":882
+  /* "allel/opt/io_vcf_read.pyx":850
  *         self.infos = tuple(infos)
  *         self.parsers = dict()
  *         for key in self.infos:             # <<<<<<<<<<<<<<
@@ -11040,263 +11138,450 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
  */
   if (unlikely(__pyx_v_self->infos == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 882, __pyx_L1_error)
+    __PYX_ERR(0, 850, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_v_self->infos; __Pyx_INCREF(__pyx_t_2); __pyx_t_3 = 0;
   for (;;) {
     if (__pyx_t_3 >= PyTuple_GET_SIZE(__pyx_t_2)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_3); __Pyx_INCREF(__pyx_t_4); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 882, __pyx_L1_error)
+    __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_3); __Pyx_INCREF(__pyx_t_4); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 850, __pyx_L1_error)
     #else
-    __pyx_t_4 = PySequence_ITEM(__pyx_t_2, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 882, __pyx_L1_error)
+    __pyx_t_4 = PySequence_ITEM(__pyx_t_2, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 850, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_key, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":884
+    /* "allel/opt/io_vcf_read.pyx":852
  *         for key in self.infos:
  *             # TODO other types
  *             t = types[key]             # <<<<<<<<<<<<<<
  *             if t == np.dtype('i4'):
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
  */
-    __pyx_t_4 = PyObject_GetItem(__pyx_v_types, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 884, __pyx_L1_error)
+    __pyx_t_4 = PyObject_GetItem(__pyx_v_types, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 852, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_XDECREF_SET(__pyx_v_t, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":885
+    /* "allel/opt/io_vcf_read.pyx":853
  *             # TODO other types
  *             t = types[key]
  *             if t == np.dtype('i4'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):
+ *             elif t == np.dtype('i8'):
  */
-    __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__14, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 885, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__14, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 853, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = PyObject_RichCompare(__pyx_v_t, __pyx_t_4, Py_EQ); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 885, __pyx_L1_error)
+    __pyx_t_5 = PyObject_RichCompare(__pyx_v_t, __pyx_t_4, Py_EQ); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 853, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 885, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 853, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     if (__pyx_t_6) {
 
-      /* "allel/opt/io_vcf_read.pyx":886
+      /* "allel/opt/io_vcf_read.pyx":854
  *             t = types[key]
  *             if t == np.dtype('i4'):
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)             # <<<<<<<<<<<<<<
- *             if t == np.dtype('i8'):
+ *             elif t == np.dtype('i8'):
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  */
-      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 886, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 854, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_INCREF(__pyx_v_key);
       __Pyx_GIVEREF(__pyx_v_key);
       PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_key);
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 886, __pyx_L1_error)
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 854, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 886, __pyx_L1_error)
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 886, __pyx_L1_error)
-      __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt32Parser), __pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 886, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 854, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 854, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt32Parser), __pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 854, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       if (unlikely(__pyx_v_self->parsers == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 886, __pyx_L1_error)
+        __PYX_ERR(0, 854, __pyx_L1_error)
       }
-      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_7) < 0)) __PYX_ERR(0, 886, __pyx_L1_error)
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_7) < 0)) __PYX_ERR(0, 854, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":885
+      /* "allel/opt/io_vcf_read.pyx":853
  *             # TODO other types
  *             t = types[key]
  *             if t == np.dtype('i4'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):
+ *             elif t == np.dtype('i8'):
  */
+      goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":887
+    /* "allel/opt/io_vcf_read.pyx":855
  *             if t == np.dtype('i4'):
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):             # <<<<<<<<<<<<<<
+ *             elif t == np.dtype('i8'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):
  */
-    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__15, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 887, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__15, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 855, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_4 = PyObject_RichCompare(__pyx_v_t, __pyx_t_7, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 887, __pyx_L1_error)
+    __pyx_t_4 = PyObject_RichCompare(__pyx_v_t, __pyx_t_7, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 855, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 887, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 855, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (__pyx_t_6) {
 
-      /* "allel/opt/io_vcf_read.pyx":888
+      /* "allel/opt/io_vcf_read.pyx":856
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):
+ *             elif t == np.dtype('i8'):
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)             # <<<<<<<<<<<<<<
  *             elif t == np.dtype('f4'):
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  */
-      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 888, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 856, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_INCREF(__pyx_v_key);
       __Pyx_GIVEREF(__pyx_v_key);
       PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_v_key);
-      __pyx_t_7 = PyDict_New(); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 888, __pyx_L1_error)
+      __pyx_t_7 = PyDict_New(); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 856, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 888, __pyx_L1_error)
-      if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 888, __pyx_L1_error)
-      __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt64Parser), __pyx_t_4, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 888, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 856, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 856, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt64Parser), __pyx_t_4, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 856, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       if (unlikely(__pyx_v_self->parsers == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 888, __pyx_L1_error)
+        __PYX_ERR(0, 856, __pyx_L1_error)
       }
-      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_5) < 0)) __PYX_ERR(0, 888, __pyx_L1_error)
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_5) < 0)) __PYX_ERR(0, 856, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":887
+      /* "allel/opt/io_vcf_read.pyx":855
  *             if t == np.dtype('i4'):
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):             # <<<<<<<<<<<<<<
+ *             elif t == np.dtype('i8'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):
  */
-      goto __pyx_L6;
+      goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":889
- *             if t == np.dtype('i8'):
+    /* "allel/opt/io_vcf_read.pyx":857
+ *             elif t == np.dtype('i8'):
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):
  */
-    __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__16, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 889, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__16, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 857, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyObject_RichCompare(__pyx_v_t, __pyx_t_5, Py_EQ); __Pyx_XGOTREF(__pyx_t_7); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 889, __pyx_L1_error)
+    __pyx_t_7 = PyObject_RichCompare(__pyx_v_t, __pyx_t_5, Py_EQ); __Pyx_XGOTREF(__pyx_t_7); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 857, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 889, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 857, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     if (__pyx_t_6) {
 
-      /* "allel/opt/io_vcf_read.pyx":890
+      /* "allel/opt/io_vcf_read.pyx":858
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)             # <<<<<<<<<<<<<<
  *             elif t == np.dtype('f8'):
  *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
  */
-      __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 890, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_INCREF(__pyx_v_key);
       __Pyx_GIVEREF(__pyx_v_key);
       PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_v_key);
-      __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 890, __pyx_L1_error)
+      __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 890, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_nan); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 890, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_nan); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_fill, __pyx_t_8) < 0) __PYX_ERR(0, 890, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_fill, __pyx_t_8) < 0) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 890, __pyx_L1_error)
-      __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat32Parser), __pyx_t_7, __pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 890, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 858, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat32Parser), __pyx_t_7, __pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       if (unlikely(__pyx_v_self->parsers == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 890, __pyx_L1_error)
+        __PYX_ERR(0, 858, __pyx_L1_error)
       }
-      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_8) < 0)) __PYX_ERR(0, 890, __pyx_L1_error)
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_8) < 0)) __PYX_ERR(0, 858, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":889
- *             if t == np.dtype('i8'):
+      /* "allel/opt/io_vcf_read.pyx":857
+ *             elif t == np.dtype('i8'):
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):
  */
-      goto __pyx_L6;
+      goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":891
+    /* "allel/opt/io_vcf_read.pyx":859
  *             elif t == np.dtype('f4'):
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
- *             else:
+ *             elif t == np.dtype(bool):
  */
-    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__17, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 891, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_tuple__17, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 859, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_5 = PyObject_RichCompare(__pyx_v_t, __pyx_t_8, Py_EQ); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 891, __pyx_L1_error)
+    __pyx_t_5 = PyObject_RichCompare(__pyx_v_t, __pyx_t_8, Py_EQ); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 859, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 891, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 859, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     if (__pyx_t_6) {
 
-      /* "allel/opt/io_vcf_read.pyx":892
+      /* "allel/opt/io_vcf_read.pyx":860
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):
  *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)             # <<<<<<<<<<<<<<
- *             else:
- *                 pass  # TODO
+ *             elif t == np.dtype(bool):
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
  */
-      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 892, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_INCREF(__pyx_v_key);
       __Pyx_GIVEREF(__pyx_v_key);
       PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_key);
-      __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 892, __pyx_L1_error)
+      __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 892, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_nan); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 892, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_nan); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_fill, __pyx_t_4) < 0) __PYX_ERR(0, 892, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_fill, __pyx_t_4) < 0) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 892, __pyx_L1_error)
-      __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat64Parser), __pyx_t_5, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 892, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 860, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat64Parser), __pyx_t_5, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       if (unlikely(__pyx_v_self->parsers == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 892, __pyx_L1_error)
+        __PYX_ERR(0, 860, __pyx_L1_error)
       }
-      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_4) < 0)) __PYX_ERR(0, 892, __pyx_L1_error)
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_4) < 0)) __PYX_ERR(0, 860, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":891
+      /* "allel/opt/io_vcf_read.pyx":859
  *             elif t == np.dtype('f4'):
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
- *             else:
+ *             elif t == np.dtype(bool):
  */
-      goto __pyx_L6;
+      goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":894
+    /* "allel/opt/io_vcf_read.pyx":861
+ *             elif t == np.dtype('f8'):
  *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
+ *             elif t == np.dtype(bool):             # <<<<<<<<<<<<<<
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
+ *             elif t.kind == 'S':
+ */
+    __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 861, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_INCREF(((PyObject*)&PyBool_Type));
+    __Pyx_GIVEREF(((PyObject*)&PyBool_Type));
+    PyTuple_SET_ITEM(__pyx_t_4, 0, ((PyObject*)&PyBool_Type));
+    __pyx_t_8 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5numpy_dtype), __pyx_t_4, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 861, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_4 = PyObject_RichCompare(__pyx_v_t, __pyx_t_8, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 861, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 861, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (__pyx_t_6) {
+
+      /* "allel/opt/io_vcf_read.pyx":862
+ *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
+ *             elif t == np.dtype(bool):
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)             # <<<<<<<<<<<<<<
+ *             elif t.kind == 'S':
+ *                 self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)
+ */
+      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 862, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_INCREF(__pyx_v_key);
+      __Pyx_GIVEREF(__pyx_v_key);
+      PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_v_key);
+      __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 862, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 862, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoFlagParser), __pyx_t_4, __pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 862, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(__pyx_v_self->parsers == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 862, __pyx_L1_error)
+      }
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_5) < 0)) __PYX_ERR(0, 862, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+      /* "allel/opt/io_vcf_read.pyx":861
+ *             elif t == np.dtype('f8'):
+ *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
+ *             elif t == np.dtype(bool):             # <<<<<<<<<<<<<<
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
+ *             elif t.kind == 'S':
+ */
+      goto __pyx_L5;
+    }
+
+    /* "allel/opt/io_vcf_read.pyx":863
+ *             elif t == np.dtype(bool):
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
+ *             elif t.kind == 'S':             # <<<<<<<<<<<<<<
+ *                 self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)
  *             else:
- *                 pass  # TODO             # <<<<<<<<<<<<<<
+ */
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_t, __pyx_n_s_kind); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 863, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_6 = (__Pyx_PyUnicode_Equals(__pyx_t_5, __pyx_n_u_S, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 863, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    if (__pyx_t_6) {
+
+      /* "allel/opt/io_vcf_read.pyx":864
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
+ *             elif t.kind == 'S':
+ *                 self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)             # <<<<<<<<<<<<<<
+ *             else:
+ *                 warnings.warn('type %s not supported for INFO field %r, field will be skipped' %
+ */
+      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 864, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_v_key);
+      __Pyx_GIVEREF(__pyx_v_key);
+      PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_key);
+      __pyx_t_8 = PyDict_New(); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 864, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 864, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_dtype, __pyx_v_t) < 0) __PYX_ERR(0, 864, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_InfoStringParser), __pyx_t_5, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 864, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      if (unlikely(__pyx_v_self->parsers == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 864, __pyx_L1_error)
+      }
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_key, __pyx_t_4) < 0)) __PYX_ERR(0, 864, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+      /* "allel/opt/io_vcf_read.pyx":863
+ *             elif t == np.dtype(bool):
+ *                 self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
+ *             elif t.kind == 'S':             # <<<<<<<<<<<<<<
+ *                 self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)
+ *             else:
+ */
+      goto __pyx_L5;
+    }
+
+    /* "allel/opt/io_vcf_read.pyx":866
+ *                 self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)
+ *             else:
+ *                 warnings.warn('type %s not supported for INFO field %r, field will be skipped' %             # <<<<<<<<<<<<<<
+ *                               (t, key))
+ *         self.skip_parser = SkipInfoParser()
+ */
+    /*else*/ {
+      __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 866, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 866, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+      /* "allel/opt/io_vcf_read.pyx":867
+ *             else:
+ *                 warnings.warn('type %s not supported for INFO field %r, field will be skipped' %
+ *                               (t, key))             # <<<<<<<<<<<<<<
  *         self.skip_parser = SkipInfoParser()
  * 
  */
-    /*else*/ {
-    }
-    __pyx_L6:;
+      __pyx_t_8 = PyTuple_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 867, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_INCREF(__pyx_v_t);
+      __Pyx_GIVEREF(__pyx_v_t);
+      PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_v_t);
+      __Pyx_INCREF(__pyx_v_key);
+      __Pyx_GIVEREF(__pyx_v_key);
+      PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_v_key);
 
-    /* "allel/opt/io_vcf_read.pyx":882
+      /* "allel/opt/io_vcf_read.pyx":866
+ *                 self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)
+ *             else:
+ *                 warnings.warn('type %s not supported for INFO field %r, field will be skipped' %             # <<<<<<<<<<<<<<
+ *                               (t, key))
+ *         self.skip_parser = SkipInfoParser()
+ */
+      __pyx_t_7 = PyUnicode_Format(__pyx_kp_u_type_s_not_supported_for_INFO_fi, __pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 866, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __pyx_t_8 = NULL;
+      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+        __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_5);
+        if (likely(__pyx_t_8)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+          __Pyx_INCREF(__pyx_t_8);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_5, function);
+        }
+      }
+      if (!__pyx_t_8) {
+        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 866, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else {
+        #if CYTHON_FAST_PYCALL
+        if (PyFunction_Check(__pyx_t_5)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_7};
+          __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 866, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+          __Pyx_GOTREF(__pyx_t_4);
+          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+        } else
+        #endif
+        #if CYTHON_FAST_PYCCALL
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_7};
+          __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 866, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+          __Pyx_GOTREF(__pyx_t_4);
+          __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+        } else
+        #endif
+        {
+          __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 866, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_9);
+          __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
+          __Pyx_GIVEREF(__pyx_t_7);
+          PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_7);
+          __pyx_t_7 = 0;
+          __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 866, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_4);
+          __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+        }
+      }
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+    __pyx_L5:;
+
+    /* "allel/opt/io_vcf_read.pyx":850
  *         self.infos = tuple(infos)
  *         self.parsers = dict()
  *         for key in self.infos:             # <<<<<<<<<<<<<<
@@ -11306,14 +11591,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":895
- *             else:
- *                 pass  # TODO
+  /* "allel/opt/io_vcf_read.pyx":868
+ *                 warnings.warn('type %s not supported for INFO field %r, field will be skipped' %
+ *                               (t, key))
  *         self.skip_parser = SkipInfoParser()             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipInfoParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 895, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipInfoParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 868, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __Pyx_GOTREF(__pyx_v_self->skip_parser);
@@ -11321,7 +11606,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   __pyx_v_self->skip_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":878
+  /* "allel/opt/io_vcf_read.pyx":846
  *     cdef Parser skip_parser
  * 
  *     def __cinit__(self, chunk_length, infos, types):             # <<<<<<<<<<<<<<
@@ -11338,6 +11623,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_9);
   __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
@@ -11347,7 +11633,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_10InfoParser___cinit__(struct __py
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":897
+/* "allel/opt/io_vcf_read.pyx":870
  *         self.skip_parser = SkipInfoParser()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -11360,7 +11646,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_parse(struct __p
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":899
+  /* "allel/opt/io_vcf_read.pyx":872
  *     cdef parse(self, ParserContext context):
  *         # debug(context.variant_index, 'InfoParser.parse')
  *         InfoParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -11369,7 +11655,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_parse(struct __p
  */
   __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":897
+  /* "allel/opt/io_vcf_read.pyx":870
  *         self.skip_parser = SkipInfoParser()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -11384,7 +11670,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_parse(struct __p
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":901
+/* "allel/opt/io_vcf_read.pyx":874
  *         InfoParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -11411,7 +11697,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk(struct _
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":903
+  /* "allel/opt/io_vcf_read.pyx":876
  *     cdef mkchunk(self, chunk, limit=None):
  *         cdef Parser parser
  *         for parser in self.parsers.values():             # <<<<<<<<<<<<<<
@@ -11421,9 +11707,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk(struct _
   __pyx_t_2 = 0;
   if (unlikely(__pyx_v_self->parsers == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "values");
-    __PYX_ERR(0, 903, __pyx_L1_error)
+    __PYX_ERR(0, 876, __pyx_L1_error)
   }
-  __pyx_t_5 = __Pyx_dict_iterator(__pyx_v_self->parsers, 1, __pyx_n_s_values, (&__pyx_t_3), (&__pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 903, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_dict_iterator(__pyx_v_self->parsers, 1, __pyx_n_s_values, (&__pyx_t_3), (&__pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 876, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_1);
   __pyx_t_1 = __pyx_t_5;
@@ -11431,13 +11717,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk(struct _
   while (1) {
     __pyx_t_6 = __Pyx_dict_iter_next(__pyx_t_1, __pyx_t_3, &__pyx_t_2, NULL, &__pyx_t_5, NULL, __pyx_t_4);
     if (unlikely(__pyx_t_6 == 0)) break;
-    if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 903, __pyx_L1_error)
+    if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 876, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 903, __pyx_L1_error)
+    if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 876, __pyx_L1_error)
     __Pyx_XDECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_5));
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":904
+    /* "allel/opt/io_vcf_read.pyx":877
  *         cdef Parser parser
  *         for parser in self.parsers.values():
  *             parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
@@ -11446,13 +11732,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk(struct _
  */
     __pyx_t_7.__pyx_n = 1;
     __pyx_t_7.limit = __pyx_v_limit;
-    __pyx_t_5 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->mkchunk(__pyx_v_parser, __pyx_v_chunk, &__pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 904, __pyx_L1_error)
+    __pyx_t_5 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->mkchunk(__pyx_v_parser, __pyx_v_chunk, &__pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 877, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":901
+  /* "allel/opt/io_vcf_read.pyx":874
  *         InfoParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -11475,9 +11761,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk(struct _
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":912
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":881
+ * 
+ * # break out method as function for profiling
  * cdef inline void InfoParser_parse(InfoParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         bytes key
@@ -11497,7 +11783,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
   char __pyx_t_8;
   __Pyx_RefNannySetupContext("InfoParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":920
+  /* "allel/opt/io_vcf_read.pyx":889
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -11506,7 +11792,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":922
+  /* "allel/opt/io_vcf_read.pyx":891
  *     context.temp_size = 0
  * 
  *     while context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -11517,7 +11803,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
     __pyx_t_1 = ((__pyx_v_context->temp_size < __pyx_v_context->temp_max_size) != 0);
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":924
+    /* "allel/opt/io_vcf_read.pyx":893
  *     while context.temp_size < context.temp_max_size:
  * 
  *         if context.c == TAB or context.c == NEWLINE or context.c == 0:             # <<<<<<<<<<<<<<
@@ -11541,7 +11827,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
     __pyx_L6_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":927
+      /* "allel/opt/io_vcf_read.pyx":896
  *             # debug(context.variant_index, 'end of INFO')
  *             # handle flags
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -11551,19 +11837,19 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       __pyx_t_1 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_1) {
 
-        /* "allel/opt/io_vcf_read.pyx":928
+        /* "allel/opt/io_vcf_read.pyx":897
  *             # handle flags
  *             if context.temp_size > 0:
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 parser.parse(context)
  */
-        __pyx_t_3 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 928, __pyx_L1_error)
+        __pyx_t_3 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 897, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_XDECREF_SET(__pyx_v_key, ((PyObject*)__pyx_t_3));
         __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":929
+        /* "allel/opt/io_vcf_read.pyx":898
  *             if context.temp_size > 0:
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 parser = self.parsers.get(key, self.skip_parser)             # <<<<<<<<<<<<<<
@@ -11572,26 +11858,26 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
         if (unlikely(__pyx_v_self->parsers == Py_None)) {
           PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "get");
-          __PYX_ERR(0, 929, __pyx_L1_error)
+          __PYX_ERR(0, 898, __pyx_L1_error)
         }
-        __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_v_key, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 929, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_v_key, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 898, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
-        if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 929, __pyx_L1_error)
+        if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 898, __pyx_L1_error)
         __Pyx_XDECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3));
         __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":930
+        /* "allel/opt/io_vcf_read.pyx":899
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 parser.parse(context)             # <<<<<<<<<<<<<<
  *             break
  * 
  */
-        __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 930, __pyx_L1_error)
+        __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 899, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":927
+        /* "allel/opt/io_vcf_read.pyx":896
  *             # debug(context.variant_index, 'end of INFO')
  *             # handle flags
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -11600,7 +11886,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       }
 
-      /* "allel/opt/io_vcf_read.pyx":931
+      /* "allel/opt/io_vcf_read.pyx":900
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 parser.parse(context)
  *             break             # <<<<<<<<<<<<<<
@@ -11609,7 +11895,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       goto __pyx_L4_break;
 
-      /* "allel/opt/io_vcf_read.pyx":924
+      /* "allel/opt/io_vcf_read.pyx":893
  *     while context.temp_size < context.temp_max_size:
  * 
  *         if context.c == TAB or context.c == NEWLINE or context.c == 0:             # <<<<<<<<<<<<<<
@@ -11618,7 +11904,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":933
+    /* "allel/opt/io_vcf_read.pyx":902
  *             break
  * 
  *         elif context.c == PERIOD:             # <<<<<<<<<<<<<<
@@ -11628,7 +11914,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_PERIOD) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":935
+      /* "allel/opt/io_vcf_read.pyx":904
  *         elif context.c == PERIOD:
  *             # TODO check safety here
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -11637,7 +11923,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":933
+      /* "allel/opt/io_vcf_read.pyx":902
  *             break
  * 
  *         elif context.c == PERIOD:             # <<<<<<<<<<<<<<
@@ -11647,7 +11933,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":937
+    /* "allel/opt/io_vcf_read.pyx":906
  *             ParserContext_next(context)
  * 
  *         elif context.c == EQUALS:             # <<<<<<<<<<<<<<
@@ -11657,7 +11943,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_EQUALS) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":939
+      /* "allel/opt/io_vcf_read.pyx":908
  *         elif context.c == EQUALS:
  *             # debug(context.variant_index, 'INFO =')
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -11666,7 +11952,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":940
+      /* "allel/opt/io_vcf_read.pyx":909
  *             # debug(context.variant_index, 'INFO =')
  *             ParserContext_next(context)
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -11676,19 +11962,19 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       __pyx_t_1 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_1) {
 
-        /* "allel/opt/io_vcf_read.pyx":941
+        /* "allel/opt/io_vcf_read.pyx":910
  *             ParserContext_next(context)
  *             if context.temp_size > 0:
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *                 # debug(context.variant_index, 'INFO parsing value for key', key)
  *                 parser = self.parsers.get(key, self.skip_parser)
  */
-        __pyx_t_3 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 941, __pyx_L1_error)
+        __pyx_t_3 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 910, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_XDECREF_SET(__pyx_v_key, ((PyObject*)__pyx_t_3));
         __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":943
+        /* "allel/opt/io_vcf_read.pyx":912
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 # debug(context.variant_index, 'INFO parsing value for key', key)
  *                 parser = self.parsers.get(key, self.skip_parser)             # <<<<<<<<<<<<<<
@@ -11697,26 +11983,26 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
         if (unlikely(__pyx_v_self->parsers == Py_None)) {
           PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "get");
-          __PYX_ERR(0, 943, __pyx_L1_error)
+          __PYX_ERR(0, 912, __pyx_L1_error)
         }
-        __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_v_key, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 943, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_v_key, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 912, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
-        if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 943, __pyx_L1_error)
+        if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 912, __pyx_L1_error)
         __Pyx_XDECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3));
         __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":944
+        /* "allel/opt/io_vcf_read.pyx":913
  *                 # debug(context.variant_index, 'INFO parsing value for key', key)
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 parser.parse(context)             # <<<<<<<<<<<<<<
  *                 context.temp_size = 0
  *             else:
  */
-        __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 944, __pyx_L1_error)
+        __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 913, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":945
+        /* "allel/opt/io_vcf_read.pyx":914
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 parser.parse(context)
  *                 context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -11725,7 +12011,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
         __pyx_v_context->temp_size = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":940
+        /* "allel/opt/io_vcf_read.pyx":909
  *             # debug(context.variant_index, 'INFO =')
  *             ParserContext_next(context)
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -11735,7 +12021,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
         goto __pyx_L10;
       }
 
-      /* "allel/opt/io_vcf_read.pyx":947
+      /* "allel/opt/io_vcf_read.pyx":916
  *                 context.temp_size = 0
  *             else:
  *                 warnings.warn('error parsing INFO field at variants index %s: missing key' %             # <<<<<<<<<<<<<<
@@ -11743,35 +12029,35 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  *                 # advance to next sub-field
  */
       /*else*/ {
-        __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 947, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 916, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 947, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 916, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":948
+        /* "allel/opt/io_vcf_read.pyx":917
  *             else:
  *                 warnings.warn('error parsing INFO field at variants index %s: missing key' %
  *                               (context.variant_index,))             # <<<<<<<<<<<<<<
  *                 # advance to next sub-field
  *                 while context.c != TAB and context.c != SEMICOLON and context.c != 0:
  */
-        __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 948, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 917, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 948, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 917, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_4);
         PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4);
         __pyx_t_4 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":947
+        /* "allel/opt/io_vcf_read.pyx":916
  *                 context.temp_size = 0
  *             else:
  *                 warnings.warn('error parsing INFO field at variants index %s: missing key' %             # <<<<<<<<<<<<<<
  *                               (context.variant_index,))
  *                 # advance to next sub-field
  */
-        __pyx_t_4 = PyUnicode_Format(__pyx_kp_u_error_parsing_INFO_field_at_vari, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 947, __pyx_L1_error)
+        __pyx_t_4 = PyUnicode_Format(__pyx_kp_u_error_parsing_INFO_field_at_vari, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 916, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         __pyx_t_6 = NULL;
@@ -11785,14 +12071,14 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
           }
         }
         if (!__pyx_t_6) {
-          __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 947, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 916, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_3);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_5)) {
             PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
-            __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 947, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 916, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -11801,20 +12087,20 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
             PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
-            __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 947, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 916, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           } else
           #endif
           {
-            __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 947, __pyx_L1_error)
+            __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 916, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_7);
             __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
             __Pyx_GIVEREF(__pyx_t_4);
             PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_4);
             __pyx_t_4 = 0;
-            __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 947, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 916, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
           }
@@ -11822,7 +12108,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":950
+        /* "allel/opt/io_vcf_read.pyx":919
  *                               (context.variant_index,))
  *                 # advance to next sub-field
  *                 while context.c != TAB and context.c != SEMICOLON and context.c != 0:             # <<<<<<<<<<<<<<
@@ -11847,7 +12133,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
           __pyx_L13_bool_binop_done:;
           if (!__pyx_t_1) break;
 
-          /* "allel/opt/io_vcf_read.pyx":951
+          /* "allel/opt/io_vcf_read.pyx":920
  *                 # advance to next sub-field
  *                 while context.c != TAB and context.c != SEMICOLON and context.c != 0:
  *                     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -11859,7 +12145,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       }
       __pyx_L10:;
 
-      /* "allel/opt/io_vcf_read.pyx":937
+      /* "allel/opt/io_vcf_read.pyx":906
  *             ParserContext_next(context)
  * 
  *         elif context.c == EQUALS:             # <<<<<<<<<<<<<<
@@ -11869,7 +12155,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":953
+    /* "allel/opt/io_vcf_read.pyx":922
  *                     ParserContext_next(context)
  * 
  *         elif context.c == SEMICOLON:             # <<<<<<<<<<<<<<
@@ -11879,7 +12165,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
     __pyx_t_1 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_SEMICOLON) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":956
+      /* "allel/opt/io_vcf_read.pyx":925
  *             # debug(context.variant_index, 'end of INFO subfield')
  *             # handle flags
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -11889,19 +12175,19 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       __pyx_t_1 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_1) {
 
-        /* "allel/opt/io_vcf_read.pyx":957
+        /* "allel/opt/io_vcf_read.pyx":926
  *             # handle flags
  *             if context.temp_size > 0:
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 # debug(context.variant_index, 'detected flag', key, parser)
  */
-        __pyx_t_3 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 957, __pyx_L1_error)
+        __pyx_t_3 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 926, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_XDECREF_SET(__pyx_v_key, ((PyObject*)__pyx_t_3));
         __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":958
+        /* "allel/opt/io_vcf_read.pyx":927
  *             if context.temp_size > 0:
  *                 key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 parser = self.parsers.get(key, self.skip_parser)             # <<<<<<<<<<<<<<
@@ -11910,26 +12196,26 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
         if (unlikely(__pyx_v_self->parsers == Py_None)) {
           PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "get");
-          __PYX_ERR(0, 958, __pyx_L1_error)
+          __PYX_ERR(0, 927, __pyx_L1_error)
         }
-        __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_v_key, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 958, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_v_key, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 927, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
-        if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 958, __pyx_L1_error)
+        if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 927, __pyx_L1_error)
         __Pyx_XDECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_3));
         __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":960
+        /* "allel/opt/io_vcf_read.pyx":929
  *                 parser = self.parsers.get(key, self.skip_parser)
  *                 # debug(context.variant_index, 'detected flag', key, parser)
  *                 parser.parse(context)             # <<<<<<<<<<<<<<
  *                 context.temp_size = 0
  *             ParserContext_next(context)
  */
-        __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 960, __pyx_L1_error)
+        __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 929, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":961
+        /* "allel/opt/io_vcf_read.pyx":930
  *                 # debug(context.variant_index, 'detected flag', key, parser)
  *                 parser.parse(context)
  *                 context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -11938,7 +12224,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
         __pyx_v_context->temp_size = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":956
+        /* "allel/opt/io_vcf_read.pyx":925
  *             # debug(context.variant_index, 'end of INFO subfield')
  *             # handle flags
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -11947,7 +12233,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       }
 
-      /* "allel/opt/io_vcf_read.pyx":962
+      /* "allel/opt/io_vcf_read.pyx":931
  *                 parser.parse(context)
  *                 context.temp_size = 0
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -11956,7 +12242,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":953
+      /* "allel/opt/io_vcf_read.pyx":922
  *                     ParserContext_next(context)
  * 
  *         elif context.c == SEMICOLON:             # <<<<<<<<<<<<<<
@@ -11966,7 +12252,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":966
+    /* "allel/opt/io_vcf_read.pyx":935
  *         else:
  *             # debug(context.variant_index, 'storing INFO key character', bytes([context.c]))
  *             context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -11977,7 +12263,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
       __pyx_t_8 = __pyx_v_context->c;
       (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_8;
 
-      /* "allel/opt/io_vcf_read.pyx":967
+      /* "allel/opt/io_vcf_read.pyx":936
  *             # debug(context.variant_index, 'storing INFO key character', bytes([context.c]))
  *             context.temp[context.temp_size] = context.c
  *             context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -11986,7 +12272,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
       __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":968
+      /* "allel/opt/io_vcf_read.pyx":937
  *             context.temp[context.temp_size] = context.c
  *             context.temp_size += 1
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -11999,7 +12285,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
   }
   __pyx_L4_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":971
+  /* "allel/opt/io_vcf_read.pyx":940
  * 
  *     # advance to next field
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -12008,9 +12294,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":912
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":881
+ * 
+ * # break out method as function for profiling
  * cdef inline void InfoParser_parse(InfoParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         bytes key
@@ -12031,8 +12317,8 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_InfoParser_parse(str
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":980
- *     cdef bytes key
+/* "allel/opt/io_vcf_read.pyx":949
+ *     cdef object fill
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
  *         self.key = key
@@ -12069,16 +12355,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_15InfoInt32Parser_1__cinit__(PyObj
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fill)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 980, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 949, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 980, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 949, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 980, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 949, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -12093,7 +12379,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_15InfoInt32Parser_1__cinit__(PyObj
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 980, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 949, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoInt32Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -12110,18 +12396,17 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt32Parser___cinit__(struct
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  __pyx_t_5numpy_int32_t __pyx_t_2;
-  int __pyx_t_3;
+  int __pyx_t_2;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":981
+  /* "allel/opt/io_vcf_read.pyx":950
  * 
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key             # <<<<<<<<<<<<<<
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  */
-  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 981, __pyx_L1_error)
+  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 950, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_key;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -12130,39 +12415,42 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt32Parser___cinit__(struct
   __pyx_v_self->key = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":982
+  /* "allel/opt/io_vcf_read.pyx":951
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key
  *         self.fill = fill             # <<<<<<<<<<<<<<
  *         self.chunk_length = chunk_length
  *         self.malloc()
  */
-  __pyx_t_2 = __Pyx_PyInt_As_npy_int32(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_int32)-1)) && PyErr_Occurred())) __PYX_ERR(0, 982, __pyx_L1_error)
-  __pyx_v_self->fill = __pyx_t_2;
+  __Pyx_INCREF(__pyx_v_fill);
+  __Pyx_GIVEREF(__pyx_v_fill);
+  __Pyx_GOTREF(__pyx_v_self->fill);
+  __Pyx_DECREF(__pyx_v_self->fill);
+  __pyx_v_self->fill = __pyx_v_fill;
 
-  /* "allel/opt/io_vcf_read.pyx":983
+  /* "allel/opt/io_vcf_read.pyx":952
  *         self.key = key
  *         self.fill = fill
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 983, __pyx_L1_error)
-  __pyx_v_self->__pyx_base.chunk_length = __pyx_t_3;
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 952, __pyx_L1_error)
+  __pyx_v_self->__pyx_base.chunk_length = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":984
+  /* "allel/opt/io_vcf_read.pyx":953
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 984, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 953, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":980
- *     cdef bytes key
+  /* "allel/opt/io_vcf_read.pyx":949
+ *     cdef object fill
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
  *         self.key = key
@@ -12181,7 +12469,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt32Parser___cinit__(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":986
+/* "allel/opt/io_vcf_read.pyx":955
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -12195,7 +12483,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_parse(struc
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":987
+  /* "allel/opt/io_vcf_read.pyx":956
  * 
  *     cdef parse(self, ParserContext context):
  *         info_integer_parse(self.key, self.memory, context)             # <<<<<<<<<<<<<<
@@ -12204,11 +12492,11 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_parse(struc
  */
   __pyx_t_1 = __pyx_v_self->key;
   __Pyx_INCREF(__pyx_t_1);
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 987, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 956, __pyx_L1_error)}
   __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_integer_parse(((PyObject*)__pyx_t_1), __pyx_v_self->memory, __pyx_v_context);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":986
+  /* "allel/opt/io_vcf_read.pyx":955
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -12229,7 +12517,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_parse(struc
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":989
+/* "allel/opt/io_vcf_read.pyx":958
  *         info_integer_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -12248,29 +12536,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_malloc(stru
   __pyx_t_5numpy_int32_t __pyx_t_6;
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":990
+  /* "allel/opt/io_vcf_read.pyx":959
  * 
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='i4')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  *         self.memory[:] = self.fill
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 990, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 959, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 990, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 959, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 990, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 959, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 990, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 959, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 990, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 959, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_i4) < 0) __PYX_ERR(0, 990, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 990, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_i4) < 0) __PYX_ERR(0, 959, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 959, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -12281,7 +12569,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_malloc(stru
   __pyx_v_self->__pyx_base.values = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":991
+  /* "allel/opt/io_vcf_read.pyx":960
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='i4')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -12289,21 +12577,21 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_malloc(stru
  * 
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_int32_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 991, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 960, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":992
+  /* "allel/opt/io_vcf_read.pyx":961
  *         self.values = np.empty(self.chunk_length, dtype='i4')
  *         self.memory = self.values
  *         self.memory[:] = self.fill             # <<<<<<<<<<<<<<
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  */
-  __pyx_t_6 = __pyx_v_self->fill;
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 992, __pyx_L1_error)}
+  __pyx_t_6 = __Pyx_PyInt_As_npy_int32(__pyx_v_self->fill); if (unlikely((__pyx_t_6 == ((npy_int32)-1)) && PyErr_Occurred())) __PYX_ERR(0, 961, __pyx_L1_error)
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 961, __pyx_L1_error)}
   {
       __pyx_t_5numpy_int32_t __pyx_temp_scalar = __pyx_t_6;
       {
@@ -12319,7 +12607,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_malloc(stru
       }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":989
+  /* "allel/opt/io_vcf_read.pyx":958
  *         info_integer_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -12344,7 +12632,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_malloc(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":994
+/* "allel/opt/io_vcf_read.pyx":963
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -12366,14 +12654,14 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_mkchunk(str
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":995
+  /* "allel/opt/io_vcf_read.pyx":964
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')             # <<<<<<<<<<<<<<
  *         chunk[field] = self.values[:limit]
  *         self.malloc()
  */
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 995, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 964, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_self->key);
   __Pyx_GIVEREF(__pyx_v_self->key);
@@ -12381,39 +12669,39 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_mkchunk(str
   __Pyx_INCREF(__pyx_n_u_ascii);
   __Pyx_GIVEREF(__pyx_n_u_ascii);
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_n_u_ascii);
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 995, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 964, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 995, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 964, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_field = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":996
+  /* "allel/opt/io_vcf_read.pyx":965
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 996, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 965, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 996, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 965, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":997
+  /* "allel/opt/io_vcf_read.pyx":966
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 997, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 966, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":994
+  /* "allel/opt/io_vcf_read.pyx":963
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -12436,7 +12724,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_mkchunk(str
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1006
+/* "allel/opt/io_vcf_read.pyx":975
  *     cdef bytes key
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
@@ -12474,16 +12762,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_15InfoInt64Parser_1__cinit__(PyObj
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fill)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 1006, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 975, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 1006, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 975, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1006, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 975, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -12498,7 +12786,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_15InfoInt64Parser_1__cinit__(PyObj
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1006, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 975, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoInt64Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -12519,14 +12807,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt64Parser___cinit__(struct
   int __pyx_t_3;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1007
+  /* "allel/opt/io_vcf_read.pyx":976
  * 
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key             # <<<<<<<<<<<<<<
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  */
-  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1007, __pyx_L1_error)
+  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 976, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_key;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -12535,38 +12823,38 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt64Parser___cinit__(struct
   __pyx_v_self->key = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1008
+  /* "allel/opt/io_vcf_read.pyx":977
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key
  *         self.fill = fill             # <<<<<<<<<<<<<<
  *         self.chunk_length = chunk_length
  *         self.malloc()
  */
-  __pyx_t_2 = __Pyx_PyInt_As_npy_int64(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_int64)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1008, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_npy_int64(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_int64)-1)) && PyErr_Occurred())) __PYX_ERR(0, 977, __pyx_L1_error)
   __pyx_v_self->fill = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":1009
+  /* "allel/opt/io_vcf_read.pyx":978
  *         self.key = key
  *         self.fill = fill
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1009, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 978, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_3;
 
-  /* "allel/opt/io_vcf_read.pyx":1010
+  /* "allel/opt/io_vcf_read.pyx":979
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1010, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 979, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1006
+  /* "allel/opt/io_vcf_read.pyx":975
  *     cdef bytes key
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
@@ -12586,7 +12874,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_15InfoInt64Parser___cinit__(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1012
+/* "allel/opt/io_vcf_read.pyx":981
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -12600,7 +12888,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_parse(struc
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1013
+  /* "allel/opt/io_vcf_read.pyx":982
  * 
  *     cdef parse(self, ParserContext context):
  *         info_integer_parse(self.key, self.memory, context)             # <<<<<<<<<<<<<<
@@ -12609,11 +12897,11 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_parse(struc
  */
   __pyx_t_1 = __pyx_v_self->key;
   __Pyx_INCREF(__pyx_t_1);
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1013, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 982, __pyx_L1_error)}
   __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_integer_parse(((PyObject*)__pyx_t_1), __pyx_v_self->memory, __pyx_v_context);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1012
+  /* "allel/opt/io_vcf_read.pyx":981
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -12634,7 +12922,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_parse(struc
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1015
+/* "allel/opt/io_vcf_read.pyx":984
  *         info_integer_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -12653,29 +12941,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc(stru
   __pyx_t_5numpy_int64_t __pyx_t_6;
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1016
+  /* "allel/opt/io_vcf_read.pyx":985
  * 
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='i8')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  *         self.memory[:] = self.fill
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1016, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 985, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1016, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 985, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1016, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 985, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1016, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 985, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1016, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 985, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_i8) < 0) __PYX_ERR(0, 1016, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1016, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_i8) < 0) __PYX_ERR(0, 985, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 985, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -12686,7 +12974,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc(stru
   __pyx_v_self->__pyx_base.values = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1017
+  /* "allel/opt/io_vcf_read.pyx":986
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='i8')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -12694,13 +12982,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc(stru
  * 
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_int64_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1017, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 986, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":1018
+  /* "allel/opt/io_vcf_read.pyx":987
  *         self.values = np.empty(self.chunk_length, dtype='i8')
  *         self.memory = self.values
  *         self.memory[:] = self.fill             # <<<<<<<<<<<<<<
@@ -12708,7 +12996,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc(stru
  *     cdef mkchunk(self, chunk, limit=None):
  */
   __pyx_t_6 = __pyx_v_self->fill;
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1018, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 987, __pyx_L1_error)}
   {
       __pyx_t_5numpy_int64_t __pyx_temp_scalar = __pyx_t_6;
       {
@@ -12724,7 +13012,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc(stru
       }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1015
+  /* "allel/opt/io_vcf_read.pyx":984
  *         info_integer_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -12749,7 +13037,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1020
+/* "allel/opt/io_vcf_read.pyx":989
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -12771,14 +13059,14 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_mkchunk(str
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1021
+  /* "allel/opt/io_vcf_read.pyx":990
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')             # <<<<<<<<<<<<<<
  *         chunk[field] = self.values[:limit]
  *         self.malloc()
  */
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1021, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 990, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_self->key);
   __Pyx_GIVEREF(__pyx_v_self->key);
@@ -12786,39 +13074,39 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_mkchunk(str
   __Pyx_INCREF(__pyx_n_u_ascii);
   __Pyx_GIVEREF(__pyx_n_u_ascii);
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_n_u_ascii);
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1021, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 990, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1021, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 990, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_field = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1022
+  /* "allel/opt/io_vcf_read.pyx":991
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1022, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 991, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1022, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 991, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1023
+  /* "allel/opt/io_vcf_read.pyx":992
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1023, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoInt64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 992, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1020
+  /* "allel/opt/io_vcf_read.pyx":989
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -12841,9 +13129,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_mkchunk(str
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1031
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":996
+ * 
+ * # break out method as function for profiling
  * cdef inline void info_integer_parse(bytes key, int_t[:] memory, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         long value
@@ -12863,10 +13151,9 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   Py_ssize_t __pyx_t_9;
-  int __pyx_t_10;
   __Pyx_RefNannySetupContext("__pyx_fuse_2info_integer_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1039
+  /* "allel/opt/io_vcf_read.pyx":1004
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -12875,7 +13162,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1043
+  /* "allel/opt/io_vcf_read.pyx":1008
  *     # TODO code smells with float parse function
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -12900,7 +13187,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1044
+    /* "allel/opt/io_vcf_read.pyx":1009
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -12910,7 +13197,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_t_3 = __pyx_v_context->c;
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-    /* "allel/opt/io_vcf_read.pyx":1045
+    /* "allel/opt/io_vcf_read.pyx":1010
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -12919,7 +13206,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
     __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-    /* "allel/opt/io_vcf_read.pyx":1046
+    /* "allel/opt/io_vcf_read.pyx":1011
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -12929,19 +13216,19 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1051
+  /* "allel/opt/io_vcf_read.pyx":1016
  * 
  *     # debugging
  *     b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *     # debug(context.variant_index, 'temp', b, context.temp_size)
  * 
  */
-  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1051, __pyx_L1_error)
+  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1016, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_v_b = ((PyObject*)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1055
+  /* "allel/opt/io_vcf_read.pyx":1020
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -12951,29 +13238,29 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
   __pyx_t_1 = ((__pyx_v_context->temp_size == 0) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1056
+    /* "allel/opt/io_vcf_read.pyx":1021
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1056, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1021, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1056, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1021, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1057
+    /* "allel/opt/io_vcf_read.pyx":1022
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))             # <<<<<<<<<<<<<<
  *         ParserContext_next(context)
  *         return
  */
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1057, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1022, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1057, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1022, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_INCREF(__pyx_v_key);
     __Pyx_GIVEREF(__pyx_v_key);
@@ -12982,14 +13269,14 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1056
+    /* "allel/opt/io_vcf_read.pyx":1021
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1056, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1021, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -13003,14 +13290,14 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -13019,20 +13306,20 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -13040,7 +13327,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1058
+    /* "allel/opt/io_vcf_read.pyx":1023
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -13049,7 +13336,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-    /* "allel/opt/io_vcf_read.pyx":1059
+    /* "allel/opt/io_vcf_read.pyx":1024
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  *         return             # <<<<<<<<<<<<<<
@@ -13058,7 +13345,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
     goto __pyx_L0;
 
-    /* "allel/opt/io_vcf_read.pyx":1055
+    /* "allel/opt/io_vcf_read.pyx":1020
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -13067,7 +13354,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1062
+  /* "allel/opt/io_vcf_read.pyx":1027
  * 
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -13076,7 +13363,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1063
+  /* "allel/opt/io_vcf_read.pyx":1028
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0
  *     value = strtol(context.temp, &str_end, 10)             # <<<<<<<<<<<<<<
@@ -13085,7 +13372,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   __pyx_v_value = strtol(__pyx_v_context->temp, (&__pyx_v_str_end), 10);
 
-  /* "allel/opt/io_vcf_read.pyx":1068
+  /* "allel/opt/io_vcf_read.pyx":1033
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -13095,7 +13382,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
   __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1071
+    /* "allel/opt/io_vcf_read.pyx":1036
  * 
  *         # store value
  *         memory[context.chunk_variant_index] = value             # <<<<<<<<<<<<<<
@@ -13103,18 +13390,9 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  * 
  */
     __pyx_t_9 = __pyx_v_context->chunk_variant_index;
-    __pyx_t_10 = -1;
-    if (__pyx_t_9 < 0) {
-      __pyx_t_9 += __pyx_v_memory.shape[0];
-      if (unlikely(__pyx_t_9 < 0)) __pyx_t_10 = 0;
-    } else if (unlikely(__pyx_t_9 >= __pyx_v_memory.shape[0])) __pyx_t_10 = 0;
-    if (unlikely(__pyx_t_10 != -1)) {
-      __Pyx_RaiseBufferIndexError(__pyx_t_10);
-      __PYX_ERR(0, 1071, __pyx_L1_error)
-    }
     *((__pyx_t_5numpy_int32_t *) ( /* dim=0 */ (__pyx_v_memory.data + __pyx_t_9 * __pyx_v_memory.strides[0]) )) = __pyx_v_value;
 
-    /* "allel/opt/io_vcf_read.pyx":1068
+    /* "allel/opt/io_vcf_read.pyx":1033
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -13124,7 +13402,7 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     goto __pyx_L9;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1076
+  /* "allel/opt/io_vcf_read.pyx":1041
  *     else:
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
@@ -13132,36 +13410,36 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
  *                       (value, key, b, context.variant_index))
  */
   /*else*/ {
-    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1076, __pyx_L1_error)
+    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1041, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF_SET(__pyx_v_b, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1077
+    /* "allel/opt/io_vcf_read.pyx":1042
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as integer at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1077, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1042, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1077, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1042, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1078
+    /* "allel/opt/io_vcf_read.pyx":1043
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as integer at variant index %s' %
  *                       (value, key, b, context.variant_index))             # <<<<<<<<<<<<<<
  * 
  *     # reset temporary buffer here to indicate new field
  */
-    __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1078, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1043, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1078, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1043, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1078, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1043, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6);
@@ -13176,14 +13454,14 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_t_6 = 0;
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1077
+    /* "allel/opt/io_vcf_read.pyx":1042
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as integer at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1077, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1042, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -13197,14 +13475,14 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -13213,20 +13491,20 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -13236,18 +13514,18 @@ static CYTHON_INLINE void __pyx_fuse_2__pyx_f_5allel_3opt_11io_vcf_read_info_int
   }
   __pyx_L9:;
 
-  /* "allel/opt/io_vcf_read.pyx":1081
+  /* "allel/opt/io_vcf_read.pyx":1046
  * 
  *     # reset temporary buffer here to indicate new field
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
  * 
- *     # advance input stream
+ * 
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1031
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":996
+ * 
+ * # break out method as function for profiling
  * cdef inline void info_integer_parse(bytes key, int_t[:] memory, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         long value
@@ -13281,10 +13559,9 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   Py_ssize_t __pyx_t_9;
-  int __pyx_t_10;
   __Pyx_RefNannySetupContext("__pyx_fuse_3info_integer_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1039
+  /* "allel/opt/io_vcf_read.pyx":1004
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -13293,7 +13570,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1043
+  /* "allel/opt/io_vcf_read.pyx":1008
  *     # TODO code smells with float parse function
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -13318,7 +13595,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1044
+    /* "allel/opt/io_vcf_read.pyx":1009
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -13328,7 +13605,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_t_3 = __pyx_v_context->c;
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-    /* "allel/opt/io_vcf_read.pyx":1045
+    /* "allel/opt/io_vcf_read.pyx":1010
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -13337,7 +13614,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
     __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-    /* "allel/opt/io_vcf_read.pyx":1046
+    /* "allel/opt/io_vcf_read.pyx":1011
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -13347,19 +13624,19 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1051
+  /* "allel/opt/io_vcf_read.pyx":1016
  * 
  *     # debugging
  *     b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *     # debug(context.variant_index, 'temp', b, context.temp_size)
  * 
  */
-  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1051, __pyx_L1_error)
+  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1016, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_v_b = ((PyObject*)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1055
+  /* "allel/opt/io_vcf_read.pyx":1020
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -13369,29 +13646,29 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
   __pyx_t_1 = ((__pyx_v_context->temp_size == 0) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1056
+    /* "allel/opt/io_vcf_read.pyx":1021
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1056, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1021, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1056, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1021, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1057
+    /* "allel/opt/io_vcf_read.pyx":1022
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))             # <<<<<<<<<<<<<<
  *         ParserContext_next(context)
  *         return
  */
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1057, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1022, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1057, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1022, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_INCREF(__pyx_v_key);
     __Pyx_GIVEREF(__pyx_v_key);
@@ -13400,14 +13677,14 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1056
+    /* "allel/opt/io_vcf_read.pyx":1021
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1056, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1021, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -13421,14 +13698,14 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -13437,20 +13714,20 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1056, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1021, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -13458,7 +13735,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1058
+    /* "allel/opt/io_vcf_read.pyx":1023
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -13467,7 +13744,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-    /* "allel/opt/io_vcf_read.pyx":1059
+    /* "allel/opt/io_vcf_read.pyx":1024
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  *         return             # <<<<<<<<<<<<<<
@@ -13476,7 +13753,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
     goto __pyx_L0;
 
-    /* "allel/opt/io_vcf_read.pyx":1055
+    /* "allel/opt/io_vcf_read.pyx":1020
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -13485,7 +13762,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1062
+  /* "allel/opt/io_vcf_read.pyx":1027
  * 
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -13494,7 +13771,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1063
+  /* "allel/opt/io_vcf_read.pyx":1028
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0
  *     value = strtol(context.temp, &str_end, 10)             # <<<<<<<<<<<<<<
@@ -13503,7 +13780,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  */
   __pyx_v_value = strtol(__pyx_v_context->temp, (&__pyx_v_str_end), 10);
 
-  /* "allel/opt/io_vcf_read.pyx":1068
+  /* "allel/opt/io_vcf_read.pyx":1033
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -13513,7 +13790,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
   __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1071
+    /* "allel/opt/io_vcf_read.pyx":1036
  * 
  *         # store value
  *         memory[context.chunk_variant_index] = value             # <<<<<<<<<<<<<<
@@ -13521,18 +13798,9 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  * 
  */
     __pyx_t_9 = __pyx_v_context->chunk_variant_index;
-    __pyx_t_10 = -1;
-    if (__pyx_t_9 < 0) {
-      __pyx_t_9 += __pyx_v_memory.shape[0];
-      if (unlikely(__pyx_t_9 < 0)) __pyx_t_10 = 0;
-    } else if (unlikely(__pyx_t_9 >= __pyx_v_memory.shape[0])) __pyx_t_10 = 0;
-    if (unlikely(__pyx_t_10 != -1)) {
-      __Pyx_RaiseBufferIndexError(__pyx_t_10);
-      __PYX_ERR(0, 1071, __pyx_L1_error)
-    }
     *((__pyx_t_5numpy_int64_t *) ( /* dim=0 */ (__pyx_v_memory.data + __pyx_t_9 * __pyx_v_memory.strides[0]) )) = __pyx_v_value;
 
-    /* "allel/opt/io_vcf_read.pyx":1068
+    /* "allel/opt/io_vcf_read.pyx":1033
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -13542,7 +13810,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     goto __pyx_L9;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1076
+  /* "allel/opt/io_vcf_read.pyx":1041
  *     else:
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
@@ -13550,36 +13818,36 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
  *                       (value, key, b, context.variant_index))
  */
   /*else*/ {
-    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1076, __pyx_L1_error)
+    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1041, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF_SET(__pyx_v_b, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1077
+    /* "allel/opt/io_vcf_read.pyx":1042
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as integer at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1077, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1042, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1077, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1042, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1078
+    /* "allel/opt/io_vcf_read.pyx":1043
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as integer at variant index %s' %
  *                       (value, key, b, context.variant_index))             # <<<<<<<<<<<<<<
  * 
  *     # reset temporary buffer here to indicate new field
  */
-    __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1078, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyInt_From_long(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1043, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1078, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1043, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1078, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1043, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6);
@@ -13594,14 +13862,14 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
     __pyx_t_6 = 0;
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1077
+    /* "allel/opt/io_vcf_read.pyx":1042
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as integer at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1077, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1042, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -13615,14 +13883,14 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -13631,20 +13899,20 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1077, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1042, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -13654,18 +13922,18 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
   }
   __pyx_L9:;
 
-  /* "allel/opt/io_vcf_read.pyx":1081
+  /* "allel/opt/io_vcf_read.pyx":1046
  * 
  *     # reset temporary buffer here to indicate new field
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
  * 
- *     # advance input stream
+ * 
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1031
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":996
+ * 
+ * # break out method as function for profiling
  * cdef inline void info_integer_parse(bytes key, int_t[:] memory, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         long value
@@ -13685,7 +13953,7 @@ static CYTHON_INLINE void __pyx_fuse_3__pyx_f_5allel_3opt_11io_vcf_read_info_int
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1094
+/* "allel/opt/io_vcf_read.pyx":1055
  *     cdef bytes key
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
@@ -13723,16 +13991,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_1__cinit__(PyO
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fill)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 1094, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 1055, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 1094, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 1055, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1094, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1055, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -13747,7 +14015,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_1__cinit__(PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1094, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1055, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFloat32Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -13768,14 +14036,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat32Parser___cinit__(stru
   int __pyx_t_3;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1095
+  /* "allel/opt/io_vcf_read.pyx":1056
  * 
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key             # <<<<<<<<<<<<<<
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  */
-  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1095, __pyx_L1_error)
+  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1056, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_key;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -13784,38 +14052,38 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat32Parser___cinit__(stru
   __pyx_v_self->key = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1096
+  /* "allel/opt/io_vcf_read.pyx":1057
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key
  *         self.fill = fill             # <<<<<<<<<<<<<<
  *         self.chunk_length = chunk_length
  *         self.malloc()
  */
-  __pyx_t_2 = __pyx_PyFloat_AsFloat(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_float32)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1096, __pyx_L1_error)
+  __pyx_t_2 = __pyx_PyFloat_AsFloat(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_float32)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1057, __pyx_L1_error)
   __pyx_v_self->fill = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":1097
+  /* "allel/opt/io_vcf_read.pyx":1058
  *         self.key = key
  *         self.fill = fill
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1097, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1058, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_3;
 
-  /* "allel/opt/io_vcf_read.pyx":1098
+  /* "allel/opt/io_vcf_read.pyx":1059
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1098, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1059, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1094
+  /* "allel/opt/io_vcf_read.pyx":1055
  *     cdef bytes key
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
@@ -13835,7 +14103,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat32Parser___cinit__(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1100
+/* "allel/opt/io_vcf_read.pyx":1061
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -13849,7 +14117,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_parse(str
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1101
+  /* "allel/opt/io_vcf_read.pyx":1062
  * 
  *     cdef parse(self, ParserContext context):
  *         info_float_parse(self.key, self.memory, context)             # <<<<<<<<<<<<<<
@@ -13858,11 +14126,11 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_parse(str
  */
   __pyx_t_1 = __pyx_v_self->key;
   __Pyx_INCREF(__pyx_t_1);
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1101, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1062, __pyx_L1_error)}
   __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_float_parse(((PyObject*)__pyx_t_1), __pyx_v_self->memory, __pyx_v_context);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1100
+  /* "allel/opt/io_vcf_read.pyx":1061
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -13883,7 +14151,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_parse(str
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1103
+/* "allel/opt/io_vcf_read.pyx":1064
  *         info_float_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -13902,29 +14170,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc(st
   __pyx_t_5numpy_float32_t __pyx_t_6;
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1104
+  /* "allel/opt/io_vcf_read.pyx":1065
  * 
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='f4')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  *         self.memory[:] = self.fill
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1065, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1065, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1065, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1065, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1065, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_f4) < 0) __PYX_ERR(0, 1104, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1104, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_f4) < 0) __PYX_ERR(0, 1065, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1065, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -13935,7 +14203,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc(st
   __pyx_v_self->__pyx_base.values = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1105
+  /* "allel/opt/io_vcf_read.pyx":1066
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='f4')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -13943,13 +14211,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc(st
  * 
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_float32_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1105, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1066, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":1106
+  /* "allel/opt/io_vcf_read.pyx":1067
  *         self.values = np.empty(self.chunk_length, dtype='f4')
  *         self.memory = self.values
  *         self.memory[:] = self.fill             # <<<<<<<<<<<<<<
@@ -13957,7 +14225,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc(st
  *     cdef mkchunk(self, chunk, limit=None):
  */
   __pyx_t_6 = __pyx_v_self->fill;
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1106, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1067, __pyx_L1_error)}
   {
       __pyx_t_5numpy_float32_t __pyx_temp_scalar = __pyx_t_6;
       {
@@ -13973,7 +14241,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc(st
       }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1103
+  /* "allel/opt/io_vcf_read.pyx":1064
  *         info_float_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -13998,7 +14266,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc(st
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1108
+/* "allel/opt/io_vcf_read.pyx":1069
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -14020,14 +14288,14 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk(s
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1109
+  /* "allel/opt/io_vcf_read.pyx":1070
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')             # <<<<<<<<<<<<<<
  *         chunk[field] = self.values[:limit]
  *         self.malloc()
  */
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1109, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1070, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_self->key);
   __Pyx_GIVEREF(__pyx_v_self->key);
@@ -14035,39 +14303,39 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk(s
   __Pyx_INCREF(__pyx_n_u_ascii);
   __Pyx_GIVEREF(__pyx_n_u_ascii);
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_n_u_ascii);
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1109, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1070, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1109, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1070, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_field = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1110
+  /* "allel/opt/io_vcf_read.pyx":1071
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1110, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1071, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1110, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1071, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1111
+  /* "allel/opt/io_vcf_read.pyx":1072
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1111, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat32Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1072, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1108
+  /* "allel/opt/io_vcf_read.pyx":1069
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -14090,7 +14358,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk(s
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1120
+/* "allel/opt/io_vcf_read.pyx":1081
  *     cdef bytes key
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
@@ -14128,16 +14396,16 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_1__cinit__(PyO
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fill)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 1120, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 1081, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 1120, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 1081, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1120, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1081, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -14152,7 +14420,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_1__cinit__(PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1120, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1081, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFloat64Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -14173,14 +14441,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat64Parser___cinit__(stru
   int __pyx_t_3;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1121
+  /* "allel/opt/io_vcf_read.pyx":1082
  * 
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key             # <<<<<<<<<<<<<<
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  */
-  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1121, __pyx_L1_error)
+  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1082, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_key;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -14189,38 +14457,38 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat64Parser___cinit__(stru
   __pyx_v_self->key = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1122
+  /* "allel/opt/io_vcf_read.pyx":1083
  *     def __cinit__(self, key, fill, chunk_length):
  *         self.key = key
  *         self.fill = fill             # <<<<<<<<<<<<<<
  *         self.chunk_length = chunk_length
  *         self.malloc()
  */
-  __pyx_t_2 = __pyx_PyFloat_AsDouble(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_float64)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1122, __pyx_L1_error)
+  __pyx_t_2 = __pyx_PyFloat_AsDouble(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_float64)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1083, __pyx_L1_error)
   __pyx_v_self->fill = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":1123
+  /* "allel/opt/io_vcf_read.pyx":1084
  *         self.key = key
  *         self.fill = fill
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1123, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_3 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1084, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_3;
 
-  /* "allel/opt/io_vcf_read.pyx":1124
+  /* "allel/opt/io_vcf_read.pyx":1085
  *         self.fill = fill
  *         self.chunk_length = chunk_length
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1124, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1085, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1120
+  /* "allel/opt/io_vcf_read.pyx":1081
  *     cdef bytes key
  * 
  *     def __cinit__(self, key, fill, chunk_length):             # <<<<<<<<<<<<<<
@@ -14240,7 +14508,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_17InfoFloat64Parser___cinit__(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1126
+/* "allel/opt/io_vcf_read.pyx":1087
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -14254,7 +14522,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_parse(str
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1127
+  /* "allel/opt/io_vcf_read.pyx":1088
  * 
  *     cdef parse(self, ParserContext context):
  *         info_float_parse(self.key, self.memory, context)             # <<<<<<<<<<<<<<
@@ -14263,11 +14531,11 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_parse(str
  */
   __pyx_t_1 = __pyx_v_self->key;
   __Pyx_INCREF(__pyx_t_1);
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1127, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1088, __pyx_L1_error)}
   __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_float_parse(((PyObject*)__pyx_t_1), __pyx_v_self->memory, __pyx_v_context);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1126
+  /* "allel/opt/io_vcf_read.pyx":1087
  *         self.malloc()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -14288,7 +14556,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_parse(str
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1129
+/* "allel/opt/io_vcf_read.pyx":1090
  *         info_float_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -14307,29 +14575,29 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(st
   __pyx_t_5numpy_float64_t __pyx_t_6;
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1130
+  /* "allel/opt/io_vcf_read.pyx":1091
  * 
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='f8')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  *         self.memory[:] = self.fill
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1130, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1091, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1130, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1091, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1130, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1091, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1130, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1091, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1130, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1091, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_f8) < 0) __PYX_ERR(0, 1130, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1130, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_f8) < 0) __PYX_ERR(0, 1091, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1091, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -14340,7 +14608,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(st
   __pyx_v_self->__pyx_base.values = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1131
+  /* "allel/opt/io_vcf_read.pyx":1092
  *     cdef malloc(self):
  *         self.values = np.empty(self.chunk_length, dtype='f8')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -14348,13 +14616,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(st
  * 
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_float64_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1131, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1092, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":1132
+  /* "allel/opt/io_vcf_read.pyx":1093
  *         self.values = np.empty(self.chunk_length, dtype='f8')
  *         self.memory = self.values
  *         self.memory[:] = self.fill             # <<<<<<<<<<<<<<
@@ -14362,7 +14630,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(st
  *     cdef mkchunk(self, chunk, limit=None):
  */
   __pyx_t_6 = __pyx_v_self->fill;
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1132, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1093, __pyx_L1_error)}
   {
       __pyx_t_5numpy_float64_t __pyx_temp_scalar = __pyx_t_6;
       {
@@ -14378,7 +14646,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(st
       }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1129
+  /* "allel/opt/io_vcf_read.pyx":1090
  *         info_float_parse(self.key, self.memory, context)
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -14403,7 +14671,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc(st
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1134
+/* "allel/opt/io_vcf_read.pyx":1095
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -14425,14 +14693,14 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk(s
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1135
+  /* "allel/opt/io_vcf_read.pyx":1096
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')             # <<<<<<<<<<<<<<
  *         chunk[field] = self.values[:limit]
  *         self.malloc()
  */
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1135, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1096, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_self->key);
   __Pyx_GIVEREF(__pyx_v_self->key);
@@ -14440,39 +14708,39 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk(s
   __Pyx_INCREF(__pyx_n_u_ascii);
   __Pyx_GIVEREF(__pyx_n_u_ascii);
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_n_u_ascii);
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1135, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1096, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1135, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1096, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_field = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1136
+  /* "allel/opt/io_vcf_read.pyx":1097
  *     cdef mkchunk(self, chunk, limit=None):
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1136, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1097, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1136, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1097, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1137
+  /* "allel/opt/io_vcf_read.pyx":1098
  *         field = 'variants/' + str(self.key, 'ascii')
  *         chunk[field] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1137, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFloat64Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1098, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1134
+  /* "allel/opt/io_vcf_read.pyx":1095
  *         self.memory[:] = self.fill
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -14495,9 +14763,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk(s
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1145
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":1102
+ * 
+ * # break out method as function for profiling
  * cdef inline void info_float_parse(bytes key, float_t[:] memory, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         double value
@@ -14517,10 +14785,9 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   Py_ssize_t __pyx_t_9;
-  int __pyx_t_10;
   __Pyx_RefNannySetupContext("__pyx_fuse_0info_float_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1153
+  /* "allel/opt/io_vcf_read.pyx":1110
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -14529,7 +14796,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1155
+  /* "allel/opt/io_vcf_read.pyx":1112
  *     context.temp_size = 0
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -14554,7 +14821,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1156
+    /* "allel/opt/io_vcf_read.pyx":1113
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -14564,7 +14831,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_t_3 = __pyx_v_context->c;
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-    /* "allel/opt/io_vcf_read.pyx":1157
+    /* "allel/opt/io_vcf_read.pyx":1114
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -14573,7 +14840,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
     __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-    /* "allel/opt/io_vcf_read.pyx":1158
+    /* "allel/opt/io_vcf_read.pyx":1115
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -14583,19 +14850,19 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1163
+  /* "allel/opt/io_vcf_read.pyx":1120
  * 
  *     # debugging
  *     b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *     # debug(context.variant_index, 'temp', b, context.temp_size)
  * 
  */
-  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1163, __pyx_L1_error)
+  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_v_b = ((PyObject*)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1167
+  /* "allel/opt/io_vcf_read.pyx":1124
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -14605,29 +14872,29 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   __pyx_t_1 = ((__pyx_v_context->temp_size == 0) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1168
+    /* "allel/opt/io_vcf_read.pyx":1125
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1168, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1168, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1169
+    /* "allel/opt/io_vcf_read.pyx":1126
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))             # <<<<<<<<<<<<<<
  *         ParserContext_next(context)
  *         return
  */
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1169, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1169, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_INCREF(__pyx_v_key);
     __Pyx_GIVEREF(__pyx_v_key);
@@ -14636,14 +14903,14 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1168
+    /* "allel/opt/io_vcf_read.pyx":1125
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1168, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -14657,14 +14924,14 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -14673,20 +14940,20 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -14694,7 +14961,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1170
+    /* "allel/opt/io_vcf_read.pyx":1127
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -14703,7 +14970,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-    /* "allel/opt/io_vcf_read.pyx":1171
+    /* "allel/opt/io_vcf_read.pyx":1128
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  *         return             # <<<<<<<<<<<<<<
@@ -14712,7 +14979,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
     goto __pyx_L0;
 
-    /* "allel/opt/io_vcf_read.pyx":1167
+    /* "allel/opt/io_vcf_read.pyx":1124
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -14721,7 +14988,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1174
+  /* "allel/opt/io_vcf_read.pyx":1131
  * 
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -14730,7 +14997,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1175
+  /* "allel/opt/io_vcf_read.pyx":1132
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0
  *     value = strtod(context.temp, &str_end)             # <<<<<<<<<<<<<<
@@ -14739,7 +15006,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   __pyx_v_value = strtod(__pyx_v_context->temp, (&__pyx_v_str_end));
 
-  /* "allel/opt/io_vcf_read.pyx":1180
+  /* "allel/opt/io_vcf_read.pyx":1137
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -14749,7 +15016,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1183
+    /* "allel/opt/io_vcf_read.pyx":1140
  * 
  *         # store value
  *         memory[context.chunk_variant_index] = value             # <<<<<<<<<<<<<<
@@ -14757,18 +15024,9 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  * 
  */
     __pyx_t_9 = __pyx_v_context->chunk_variant_index;
-    __pyx_t_10 = -1;
-    if (__pyx_t_9 < 0) {
-      __pyx_t_9 += __pyx_v_memory.shape[0];
-      if (unlikely(__pyx_t_9 < 0)) __pyx_t_10 = 0;
-    } else if (unlikely(__pyx_t_9 >= __pyx_v_memory.shape[0])) __pyx_t_10 = 0;
-    if (unlikely(__pyx_t_10 != -1)) {
-      __Pyx_RaiseBufferIndexError(__pyx_t_10);
-      __PYX_ERR(0, 1183, __pyx_L1_error)
-    }
     *((__pyx_t_5numpy_float32_t *) ( /* dim=0 */ (__pyx_v_memory.data + __pyx_t_9 * __pyx_v_memory.strides[0]) )) = __pyx_v_value;
 
-    /* "allel/opt/io_vcf_read.pyx":1180
+    /* "allel/opt/io_vcf_read.pyx":1137
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -14778,7 +15036,7 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     goto __pyx_L9;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1188
+  /* "allel/opt/io_vcf_read.pyx":1145
  *     else:
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
@@ -14786,36 +15044,36 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  *                       (value, key, b, context.variant_index))
  */
   /*else*/ {
-    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1188, __pyx_L1_error)
+    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF_SET(__pyx_v_b, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1189
+    /* "allel/opt/io_vcf_read.pyx":1146
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as float at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1190
+    /* "allel/opt/io_vcf_read.pyx":1147
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as float at variant index %s' %
  *                       (value, key, b, context.variant_index))             # <<<<<<<<<<<<<<
  * 
  *     # reset temporary buffer here to indicate new field
  */
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1190, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1190, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1190, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6);
@@ -14830,14 +15088,14 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_t_6 = 0;
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1189
+    /* "allel/opt/io_vcf_read.pyx":1146
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as float at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value_2, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value_2, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -14851,14 +15109,14 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -14867,20 +15125,20 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -14890,18 +15148,18 @@ static CYTHON_INLINE void __pyx_fuse_0__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   }
   __pyx_L9:;
 
-  /* "allel/opt/io_vcf_read.pyx":1193
+  /* "allel/opt/io_vcf_read.pyx":1150
  * 
  *     # reset temporary buffer here to indicate new field
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
  * 
- *     # advance input stream
+ * 
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1145
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":1102
+ * 
+ * # break out method as function for profiling
  * cdef inline void info_float_parse(bytes key, float_t[:] memory, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         double value
@@ -14935,10 +15193,9 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   Py_ssize_t __pyx_t_9;
-  int __pyx_t_10;
   __Pyx_RefNannySetupContext("__pyx_fuse_1info_float_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1153
+  /* "allel/opt/io_vcf_read.pyx":1110
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -14947,7 +15204,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1155
+  /* "allel/opt/io_vcf_read.pyx":1112
  *     context.temp_size = 0
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -14972,7 +15229,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1156
+    /* "allel/opt/io_vcf_read.pyx":1113
  * 
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -14982,7 +15239,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_t_3 = __pyx_v_context->c;
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-    /* "allel/opt/io_vcf_read.pyx":1157
+    /* "allel/opt/io_vcf_read.pyx":1114
  *     while context.c != TAB and context.c != SEMICOLON and context.temp_size < context.temp_max_size:
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -14991,7 +15248,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
     __pyx_v_context->temp_size = (__pyx_v_context->temp_size + 1);
 
-    /* "allel/opt/io_vcf_read.pyx":1158
+    /* "allel/opt/io_vcf_read.pyx":1115
  *         context.temp[context.temp_size] = context.c
  *         context.temp_size += 1
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -15001,19 +15258,19 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1163
+  /* "allel/opt/io_vcf_read.pyx":1120
  * 
  *     # debugging
  *     b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *     # debug(context.variant_index, 'temp', b, context.temp_size)
  * 
  */
-  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1163, __pyx_L1_error)
+  __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1120, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_v_b = ((PyObject*)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1167
+  /* "allel/opt/io_vcf_read.pyx":1124
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -15023,29 +15280,29 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   __pyx_t_1 = ((__pyx_v_context->temp_size == 0) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1168
+    /* "allel/opt/io_vcf_read.pyx":1125
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1168, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1168, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1169
+    /* "allel/opt/io_vcf_read.pyx":1126
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))             # <<<<<<<<<<<<<<
  *         ParserContext_next(context)
  *         return
  */
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1169, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1169, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_INCREF(__pyx_v_key);
     __Pyx_GIVEREF(__pyx_v_key);
@@ -15054,14 +15311,14 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1168
+    /* "allel/opt/io_vcf_read.pyx":1125
  *     # fail fast
  *     if context.temp_size == 0:
  *         warnings.warn('no value for INFO key %r at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1168, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_no_value_for_INFO_key_r_at_varia, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -15075,14 +15332,14 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -15091,20 +15348,20 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1168, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1125, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -15112,7 +15369,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1170
+    /* "allel/opt/io_vcf_read.pyx":1127
  *         warnings.warn('no value for INFO key %r at variant index %s' %
  *                       (key, context.variant_index))
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -15121,7 +15378,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-    /* "allel/opt/io_vcf_read.pyx":1171
+    /* "allel/opt/io_vcf_read.pyx":1128
  *                       (key, context.variant_index))
  *         ParserContext_next(context)
  *         return             # <<<<<<<<<<<<<<
@@ -15130,7 +15387,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
     goto __pyx_L0;
 
-    /* "allel/opt/io_vcf_read.pyx":1167
+    /* "allel/opt/io_vcf_read.pyx":1124
  * 
  *     # fail fast
  *     if context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -15139,7 +15396,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1174
+  /* "allel/opt/io_vcf_read.pyx":1131
  * 
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -15148,7 +15405,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1175
+  /* "allel/opt/io_vcf_read.pyx":1132
  *     # parse string as integer
  *     context.temp[context.temp_size] = 0
  *     value = strtod(context.temp, &str_end)             # <<<<<<<<<<<<<<
@@ -15157,7 +15414,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  */
   __pyx_v_value = strtod(__pyx_v_context->temp, (&__pyx_v_str_end));
 
-  /* "allel/opt/io_vcf_read.pyx":1180
+  /* "allel/opt/io_vcf_read.pyx":1137
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -15167,7 +15424,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
   if (__pyx_t_1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1183
+    /* "allel/opt/io_vcf_read.pyx":1140
  * 
  *         # store value
  *         memory[context.chunk_variant_index] = value             # <<<<<<<<<<<<<<
@@ -15175,18 +15432,9 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  * 
  */
     __pyx_t_9 = __pyx_v_context->chunk_variant_index;
-    __pyx_t_10 = -1;
-    if (__pyx_t_9 < 0) {
-      __pyx_t_9 += __pyx_v_memory.shape[0];
-      if (unlikely(__pyx_t_9 < 0)) __pyx_t_10 = 0;
-    } else if (unlikely(__pyx_t_9 >= __pyx_v_memory.shape[0])) __pyx_t_10 = 0;
-    if (unlikely(__pyx_t_10 != -1)) {
-      __Pyx_RaiseBufferIndexError(__pyx_t_10);
-      __PYX_ERR(0, 1183, __pyx_L1_error)
-    }
     *((__pyx_t_5numpy_float64_t *) ( /* dim=0 */ (__pyx_v_memory.data + __pyx_t_9 * __pyx_v_memory.strides[0]) )) = __pyx_v_value;
 
-    /* "allel/opt/io_vcf_read.pyx":1180
+    /* "allel/opt/io_vcf_read.pyx":1137
  * 
  *     # check success
  *     if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -15196,7 +15444,7 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     goto __pyx_L9;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1188
+  /* "allel/opt/io_vcf_read.pyx":1145
  *     else:
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
@@ -15204,36 +15452,36 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
  *                       (value, key, b, context.variant_index))
  */
   /*else*/ {
-    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1188, __pyx_L1_error)
+    __pyx_t_4 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1145, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF_SET(__pyx_v_b, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1189
+    /* "allel/opt/io_vcf_read.pyx":1146
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as float at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warn); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1190
+    /* "allel/opt/io_vcf_read.pyx":1147
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as float at variant index %s' %
  *                       (value, key, b, context.variant_index))             # <<<<<<<<<<<<<<
  * 
  *     # reset temporary buffer here to indicate new field
  */
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1190, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1190, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1190, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6);
@@ -15248,14 +15496,14 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
     __pyx_t_6 = 0;
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1189
+    /* "allel/opt/io_vcf_read.pyx":1146
  * 
  *         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *         warnings.warn('error %s parsing INFO key %r value %r as float at variant index %s' %             # <<<<<<<<<<<<<<
  *                       (value, key, b, context.variant_index))
  * 
  */
-    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value_2, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __pyx_t_5 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_INFO_key_r_value_2, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -15269,14 +15517,14 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -15285,20 +15533,20 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1189, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1146, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -15308,18 +15556,18 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   }
   __pyx_L9:;
 
-  /* "allel/opt/io_vcf_read.pyx":1193
+  /* "allel/opt/io_vcf_read.pyx":1150
  * 
  *     # reset temporary buffer here to indicate new field
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
  * 
- *     # advance input stream
+ * 
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1145
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":1102
+ * 
+ * # break out method as function for profiling
  * cdef inline void info_float_parse(bytes key, float_t[:] memory, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         double value
@@ -15339,7 +15587,996 @@ static CYTHON_INLINE void __pyx_fuse_1__pyx_f_5allel_3opt_11io_vcf_read_info_flo
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1202
+/* "allel/opt/io_vcf_read.pyx":1158
+ *     cdef bytes key
+ * 
+ *     def __cinit__(self, key, chunk_length):             # <<<<<<<<<<<<<<
+ *         self.key = key
+ *         self.chunk_length = chunk_length
+ */
+
+/* Python wrapper */
+static int __pyx_pw_5allel_3opt_11io_vcf_read_14InfoFlagParser_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_5allel_3opt_11io_vcf_read_14InfoFlagParser_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_key = 0;
+  PyObject *__pyx_v_chunk_length = 0;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__cinit__ (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_key,&__pyx_n_s_chunk_length,0};
+    PyObject* values[2] = {0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_key)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        case  1:
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); __PYX_ERR(0, 1158, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1158, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+    }
+    __pyx_v_key = values[0];
+    __pyx_v_chunk_length = values[1];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1158, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFlagParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return -1;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_5allel_3opt_11io_vcf_read_14InfoFlagParser___cinit__(((struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *)__pyx_v_self), __pyx_v_key, __pyx_v_chunk_length);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_5allel_3opt_11io_vcf_read_14InfoFlagParser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_chunk_length) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  __Pyx_RefNannySetupContext("__cinit__", 0);
+
+  /* "allel/opt/io_vcf_read.pyx":1159
+ * 
+ *     def __cinit__(self, key, chunk_length):
+ *         self.key = key             # <<<<<<<<<<<<<<
+ *         self.chunk_length = chunk_length
+ *         self.malloc()
+ */
+  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1159, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_key;
+  __Pyx_INCREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->key);
+  __Pyx_DECREF(__pyx_v_self->key);
+  __pyx_v_self->key = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1160
+ *     def __cinit__(self, key, chunk_length):
+ *         self.key = key
+ *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
+ *         self.malloc()
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1160, __pyx_L1_error)
+  __pyx_v_self->__pyx_base.chunk_length = __pyx_t_2;
+
+  /* "allel/opt/io_vcf_read.pyx":1161
+ *         self.key = key
+ *         self.chunk_length = chunk_length
+ *         self.malloc()             # <<<<<<<<<<<<<<
+ * 
+ *     cdef parse(self, ParserContext context):
+ */
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFlagParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1161, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1158
+ *     cdef bytes key
+ * 
+ *     def __cinit__(self, key, chunk_length):             # <<<<<<<<<<<<<<
+ *         self.key = key
+ *         self.chunk_length = chunk_length
+ */
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFlagParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1163
+ *         self.malloc()
+ * 
+ *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
+ *         # ensure we hit the end of the field
+ *         while context.c != SEMICOLON and context.c != TAB and context.c != 0:
+ */
+
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  Py_ssize_t __pyx_t_3;
+  __Pyx_RefNannySetupContext("parse", 0);
+
+  /* "allel/opt/io_vcf_read.pyx":1165
+ *     cdef parse(self, ParserContext context):
+ *         # ensure we hit the end of the field
+ *         while context.c != SEMICOLON and context.c != TAB and context.c != 0:             # <<<<<<<<<<<<<<
+ *             ParserContext_next(context)
+ *         self.memory[context.chunk_variant_index] = 1
+ */
+  while (1) {
+    __pyx_t_2 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_SEMICOLON) != 0);
+    if (__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L5_bool_binop_done;
+    }
+    __pyx_t_2 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
+    if (__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L5_bool_binop_done;
+    }
+    __pyx_t_2 = ((__pyx_v_context->c != 0) != 0);
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_L5_bool_binop_done:;
+    if (!__pyx_t_1) break;
+
+    /* "allel/opt/io_vcf_read.pyx":1166
+ *         # ensure we hit the end of the field
+ *         while context.c != SEMICOLON and context.c != TAB and context.c != 0:
+ *             ParserContext_next(context)             # <<<<<<<<<<<<<<
+ *         self.memory[context.chunk_variant_index] = 1
+ * 
+ */
+    __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
+  }
+
+  /* "allel/opt/io_vcf_read.pyx":1167
+ *         while context.c != SEMICOLON and context.c != TAB and context.c != 0:
+ *             ParserContext_next(context)
+ *         self.memory[context.chunk_variant_index] = 1             # <<<<<<<<<<<<<<
+ * 
+ *     cdef malloc(self):
+ */
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1167, __pyx_L1_error)}
+  __pyx_t_3 = __pyx_v_context->chunk_variant_index;
+  *((__pyx_t_5numpy_uint8_t *) ( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_3 * __pyx_v_self->memory.strides[0]) )) = 1;
+
+  /* "allel/opt/io_vcf_read.pyx":1163
+ *         self.malloc()
+ * 
+ *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
+ *         # ensure we hit the end of the field
+ *         while context.c != SEMICOLON and context.c != TAB and context.c != 0:
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFlagParser.parse", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1169
+ *         self.memory[context.chunk_variant_index] = 1
+ * 
+ *     cdef malloc(self):             # <<<<<<<<<<<<<<
+ *         self.values = np.zeros(self.chunk_length, dtype='u1')
+ *         self.memory = self.values
+ */
+
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_malloc(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  __Pyx_memviewslice __pyx_t_5 = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __Pyx_RefNannySetupContext("malloc", 0);
+
+  /* "allel/opt/io_vcf_read.pyx":1170
+ * 
+ *     cdef malloc(self):
+ *         self.values = np.zeros(self.chunk_length, dtype='u1')             # <<<<<<<<<<<<<<
+ *         self.memory = self.values
+ * 
+ */
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
+  __pyx_t_1 = 0;
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_n_u_u1) < 0) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_GIVEREF(__pyx_t_4);
+  __Pyx_GOTREF(__pyx_v_self->__pyx_base.values);
+  __Pyx_DECREF(__pyx_v_self->__pyx_base.values);
+  __pyx_v_self->__pyx_base.values = __pyx_t_4;
+  __pyx_t_4 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1171
+ *     cdef malloc(self):
+ *         self.values = np.zeros(self.chunk_length, dtype='u1')
+ *         self.memory = self.values             # <<<<<<<<<<<<<<
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):
+ */
+  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_uint8_t(__pyx_v_self->__pyx_base.values);
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1171, __pyx_L1_error)
+  __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
+  __pyx_v_self->memory = __pyx_t_5;
+  __pyx_t_5.memview = NULL;
+  __pyx_t_5.data = NULL;
+
+  /* "allel/opt/io_vcf_read.pyx":1169
+ *         self.memory[context.chunk_variant_index] = 1
+ * 
+ *     cdef malloc(self):             # <<<<<<<<<<<<<<
+ *         self.values = np.zeros(self.chunk_length, dtype='u1')
+ *         self.memory = self.values
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFlagParser.malloc", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1173
+ *         self.memory = self.values
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit].view(bool)
+ */
+
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *__pyx_v_self, PyObject *__pyx_v_chunk, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk *__pyx_optional_args) {
+  PyObject *__pyx_v_limit = ((PyObject *)Py_None);
+  PyObject *__pyx_v_field = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  __Pyx_RefNannySetupContext("mkchunk", 0);
+  if (__pyx_optional_args) {
+    if (__pyx_optional_args->__pyx_n > 0) {
+      __pyx_v_limit = __pyx_optional_args->limit;
+    }
+  }
+
+  /* "allel/opt/io_vcf_read.pyx":1174
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):
+ *         field = 'variants/' + str(self.key, 'ascii')             # <<<<<<<<<<<<<<
+ *         chunk[field] = self.values[:limit].view(bool)
+ *         self.malloc()
+ */
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1174, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_v_self->key);
+  __Pyx_GIVEREF(__pyx_v_self->key);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self->key);
+  __Pyx_INCREF(__pyx_n_u_ascii);
+  __Pyx_GIVEREF(__pyx_n_u_ascii);
+  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_n_u_ascii);
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1174, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1174, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_field = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1175
+ *     cdef mkchunk(self, chunk, limit=None):
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit].view(bool)             # <<<<<<<<<<<<<<
+ *         self.malloc()
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1175, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_view); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1175, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (!__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject*)&PyBool_Type)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1175, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject*)&PyBool_Type)};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1175, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject*)&PyBool_Type)};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1175, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    {
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1175, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
+      __Pyx_INCREF(((PyObject*)&PyBool_Type));
+      __Pyx_GIVEREF(((PyObject*)&PyBool_Type));
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, ((PyObject*)&PyBool_Type));
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1175, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1175, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1176
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit].view(bool)
+ *         self.malloc()             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFlagParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1176, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1173
+ *         self.memory = self.values
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit].view(bool)
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoFlagParser.mkchunk", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_field);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1186
+ *     cdef np.uint8_t[:] memory
+ * 
+ *     def __cinit__(self, key, chunk_length, dtype):             # <<<<<<<<<<<<<<
+ *         self.key = key
+ *         self.chunk_length = chunk_length
+ */
+
+/* Python wrapper */
+static int __pyx_pw_5allel_3opt_11io_vcf_read_16InfoStringParser_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_5allel_3opt_11io_vcf_read_16InfoStringParser_1__cinit__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_key = 0;
+  PyObject *__pyx_v_chunk_length = 0;
+  PyObject *__pyx_v_dtype = 0;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__cinit__ (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_key,&__pyx_n_s_chunk_length,&__pyx_n_s_dtype,0};
+    PyObject* values[3] = {0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_key)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        case  1:
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chunk_length)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 1186, __pyx_L3_error)
+        }
+        case  2:
+        if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_dtype)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 1186, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1186, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+    }
+    __pyx_v_key = values[0];
+    __pyx_v_chunk_length = values[1];
+    __pyx_v_dtype = values[2];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1186, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoStringParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return -1;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_5allel_3opt_11io_vcf_read_16InfoStringParser___cinit__(((struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *)__pyx_v_self), __pyx_v_key, __pyx_v_chunk_length, __pyx_v_dtype);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_5allel_3opt_11io_vcf_read_16InfoStringParser___cinit__(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self, PyObject *__pyx_v_key, PyObject *__pyx_v_chunk_length, PyObject *__pyx_v_dtype) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  __Pyx_RefNannySetupContext("__cinit__", 0);
+
+  /* "allel/opt/io_vcf_read.pyx":1187
+ * 
+ *     def __cinit__(self, key, chunk_length, dtype):
+ *         self.key = key             # <<<<<<<<<<<<<<
+ *         self.chunk_length = chunk_length
+ *         self.dtype = check_string_dtype(dtype)
+ */
+  if (!(likely(PyBytes_CheckExact(__pyx_v_key))||((__pyx_v_key) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_key)->tp_name), 0))) __PYX_ERR(0, 1187, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_key;
+  __Pyx_INCREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->key);
+  __Pyx_DECREF(__pyx_v_self->key);
+  __pyx_v_self->key = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1188
+ *     def __cinit__(self, key, chunk_length, dtype):
+ *         self.key = key
+ *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
+ *         self.dtype = check_string_dtype(dtype)
+ *         self.itemsize = self.dtype.itemsize
+ */
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1188, __pyx_L1_error)
+  __pyx_v_self->__pyx_base.chunk_length = __pyx_t_2;
+
+  /* "allel/opt/io_vcf_read.pyx":1189
+ *         self.key = key
+ *         self.chunk_length = chunk_length
+ *         self.dtype = check_string_dtype(dtype)             # <<<<<<<<<<<<<<
+ *         self.itemsize = self.dtype.itemsize
+ *         self.malloc()
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_check_string_dtype); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1189, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (!__pyx_t_4) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1189, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_dtype};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1189, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_dtype};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1189, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    {
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1189, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_INCREF(__pyx_v_dtype);
+      __Pyx_GIVEREF(__pyx_v_dtype);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_dtype);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1189, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->dtype);
+  __Pyx_DECREF(__pyx_v_self->dtype);
+  __pyx_v_self->dtype = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1190
+ *         self.chunk_length = chunk_length
+ *         self.dtype = check_string_dtype(dtype)
+ *         self.itemsize = self.dtype.itemsize             # <<<<<<<<<<<<<<
+ *         self.malloc()
+ * 
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1190, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1190, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_self->itemsize = __pyx_t_2;
+
+  /* "allel/opt/io_vcf_read.pyx":1191
+ *         self.dtype = check_string_dtype(dtype)
+ *         self.itemsize = self.dtype.itemsize
+ *         self.malloc()             # <<<<<<<<<<<<<<
+ * 
+ *     cdef malloc(self):
+ */
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoStringParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1191, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1186
+ *     cdef np.uint8_t[:] memory
+ * 
+ *     def __cinit__(self, key, chunk_length, dtype):             # <<<<<<<<<<<<<<
+ *         self.key = key
+ *         self.chunk_length = chunk_length
+ */
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoStringParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1193
+ *         self.malloc()
+ * 
+ *     cdef malloc(self):             # <<<<<<<<<<<<<<
+ *         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
+ *         self.memory = self.values.view('u1')
+ */
+
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_malloc(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  __Pyx_memviewslice __pyx_t_5 = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __Pyx_RefNannySetupContext("malloc", 0);
+
+  /* "allel/opt/io_vcf_read.pyx":1194
+ * 
+ *     cdef malloc(self):
+ *         self.values = np.zeros(self.chunk_length, dtype=self.dtype)             # <<<<<<<<<<<<<<
+ *         self.memory = self.values.view('u1')
+ * 
+ */
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
+  __pyx_t_1 = 0;
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_v_self->dtype) < 0) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1194, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_GIVEREF(__pyx_t_4);
+  __Pyx_GOTREF(__pyx_v_self->__pyx_base.values);
+  __Pyx_DECREF(__pyx_v_self->__pyx_base.values);
+  __pyx_v_self->__pyx_base.values = __pyx_t_4;
+  __pyx_t_4 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1195
+ *     cdef malloc(self):
+ *         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
+ *         self.memory = self.values.view('u1')             # <<<<<<<<<<<<<<
+ * 
+ *     cdef parse(self, ParserContext context):
+ */
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->__pyx_base.values, __pyx_n_s_view); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1195, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__18, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1195, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn___pyx_t_5numpy_uint8_t(__pyx_t_1);
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 1195, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
+  __pyx_v_self->memory = __pyx_t_5;
+  __pyx_t_5.memview = NULL;
+  __pyx_t_5.data = NULL;
+
+  /* "allel/opt/io_vcf_read.pyx":1193
+ *         self.malloc()
+ * 
+ *     cdef malloc(self):             # <<<<<<<<<<<<<<
+ *         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
+ *         self.memory = self.values.view('u1')
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __PYX_XDEC_MEMVIEW(&__pyx_t_5, 1);
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoStringParser.malloc", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1197
+ *         self.memory = self.values.view('u1')
+ * 
+ *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             # index into memory view
+ */
+
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_parse(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *__pyx_v_context) {
+  int __pyx_v_memory_index;
+  int __pyx_v_chars_stored;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  char __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
+  __Pyx_RefNannySetupContext("parse", 0);
+
+  /* "allel/opt/io_vcf_read.pyx":1202
+ *             int memory_index
+ *             # number of characters read into current value
+ *             int chars_stored = 0             # <<<<<<<<<<<<<<
+ * 
+ *         # initialise memory index
+ */
+  __pyx_v_chars_stored = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1205
+ * 
+ *         # initialise memory index
+ *         memory_index = context.chunk_variant_index * self.itemsize             # <<<<<<<<<<<<<<
+ * 
+ *         # read characters until tab
+ */
+  __pyx_v_memory_index = (__pyx_v_context->chunk_variant_index * __pyx_v_self->itemsize);
+
+  /* "allel/opt/io_vcf_read.pyx":1208
+ * 
+ *         # read characters until tab
+ *         while context.c != TAB and context.c != SEMICOLON and context.c != 0:             # <<<<<<<<<<<<<<
+ *             if chars_stored < self.itemsize:
+ *                 # store value
+ */
+  while (1) {
+    __pyx_t_2 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
+    if (__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L5_bool_binop_done;
+    }
+    __pyx_t_2 = ((__pyx_v_context->c != __pyx_v_5allel_3opt_11io_vcf_read_SEMICOLON) != 0);
+    if (__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L5_bool_binop_done;
+    }
+    __pyx_t_2 = ((__pyx_v_context->c != 0) != 0);
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_L5_bool_binop_done:;
+    if (!__pyx_t_1) break;
+
+    /* "allel/opt/io_vcf_read.pyx":1209
+ *         # read characters until tab
+ *         while context.c != TAB and context.c != SEMICOLON and context.c != 0:
+ *             if chars_stored < self.itemsize:             # <<<<<<<<<<<<<<
+ *                 # store value
+ *                 self.memory[memory_index] = context.c
+ */
+    __pyx_t_1 = ((__pyx_v_chars_stored < __pyx_v_self->itemsize) != 0);
+    if (__pyx_t_1) {
+
+      /* "allel/opt/io_vcf_read.pyx":1211
+ *             if chars_stored < self.itemsize:
+ *                 # store value
+ *                 self.memory[memory_index] = context.c             # <<<<<<<<<<<<<<
+ *                 # advance memory index
+ *                 memory_index += 1
+ */
+      __pyx_t_3 = __pyx_v_context->c;
+      if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1211, __pyx_L1_error)}
+      __pyx_t_4 = __pyx_v_memory_index;
+      *((__pyx_t_5numpy_uint8_t *) ( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_4 * __pyx_v_self->memory.strides[0]) )) = __pyx_t_3;
+
+      /* "allel/opt/io_vcf_read.pyx":1213
+ *                 self.memory[memory_index] = context.c
+ *                 # advance memory index
+ *                 memory_index += 1             # <<<<<<<<<<<<<<
+ *                 # advance number of characters stored
+ *                 chars_stored += 1
+ */
+      __pyx_v_memory_index = (__pyx_v_memory_index + 1);
+
+      /* "allel/opt/io_vcf_read.pyx":1215
+ *                 memory_index += 1
+ *                 # advance number of characters stored
+ *                 chars_stored += 1             # <<<<<<<<<<<<<<
+ *             # advance input stream
+ *             ParserContext_next(context)
+ */
+      __pyx_v_chars_stored = (__pyx_v_chars_stored + 1);
+
+      /* "allel/opt/io_vcf_read.pyx":1209
+ *         # read characters until tab
+ *         while context.c != TAB and context.c != SEMICOLON and context.c != 0:
+ *             if chars_stored < self.itemsize:             # <<<<<<<<<<<<<<
+ *                 # store value
+ *                 self.memory[memory_index] = context.c
+ */
+    }
+
+    /* "allel/opt/io_vcf_read.pyx":1217
+ *                 chars_stored += 1
+ *             # advance input stream
+ *             ParserContext_next(context)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):
+ */
+    __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
+  }
+
+  /* "allel/opt/io_vcf_read.pyx":1197
+ *         self.memory = self.values.view('u1')
+ * 
+ *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
+ *         cdef:
+ *             # index into memory view
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoStringParser.parse", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1219
+ *             ParserContext_next(context)
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit]
+ */
+
+static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *__pyx_v_self, PyObject *__pyx_v_chunk, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk *__pyx_optional_args) {
+  PyObject *__pyx_v_limit = ((PyObject *)Py_None);
+  PyObject *__pyx_v_field = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  __Pyx_RefNannySetupContext("mkchunk", 0);
+  if (__pyx_optional_args) {
+    if (__pyx_optional_args->__pyx_n > 0) {
+      __pyx_v_limit = __pyx_optional_args->limit;
+    }
+  }
+
+  /* "allel/opt/io_vcf_read.pyx":1220
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):
+ *         field = 'variants/' + str(self.key, 'ascii')             # <<<<<<<<<<<<<<
+ *         chunk[field] = self.values[:limit]
+ *         self.malloc()
+ */
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1220, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_v_self->key);
+  __Pyx_GIVEREF(__pyx_v_self->key);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self->key);
+  __Pyx_INCREF(__pyx_n_u_ascii);
+  __Pyx_GIVEREF(__pyx_n_u_ascii);
+  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_n_u_ascii);
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&PyUnicode_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1220, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_kp_u_variants_2, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1220, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_field = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1221
+ *     cdef mkchunk(self, chunk, limit=None):
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit]             # <<<<<<<<<<<<<<
+ *         self.malloc()
+ * 
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1221, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_v_field, __pyx_t_1) < 0)) __PYX_ERR(0, 1221, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1222
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit]
+ *         self.malloc()             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoStringParser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1222, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "allel/opt/io_vcf_read.pyx":1219
+ *             ParserContext_next(context)
+ * 
+ *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
+ *         field = 'variants/' + str(self.key, 'ascii')
+ *         chunk[field] = self.values[:limit]
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("allel.opt.io_vcf_read.InfoStringParser.mkchunk", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_field);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "allel/opt/io_vcf_read.pyx":1227
  * cdef class FormatParser(Parser):
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -15374,7 +16611,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_12FormatParser___cinit__(CYTHON_UN
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1205
+/* "allel/opt/io_vcf_read.pyx":1230
  *         pass
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -15394,7 +16631,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_malloc(CYTHON_
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1208
+/* "allel/opt/io_vcf_read.pyx":1233
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -15407,7 +16644,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_parse(struct _
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1209
+  /* "allel/opt/io_vcf_read.pyx":1234
  * 
  *     cdef parse(self, ParserContext context):
  *         FormatParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -15416,7 +16653,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_parse(struct _
  */
   __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":1208
+  /* "allel/opt/io_vcf_read.pyx":1233
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -15431,9 +16668,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_parse(struct _
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1217
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":1238
+ * 
+ * # break out method as function for profiling
  * cdef inline void FormatParser_parse(FormatParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         char* format
@@ -15449,19 +16686,19 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
   char __pyx_t_4;
   __Pyx_RefNannySetupContext("FormatParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1221
+  /* "allel/opt/io_vcf_read.pyx":1242
  *         char* format
  *         bytes f
  *         list formats = []             # <<<<<<<<<<<<<<
  * 
  *     # debug('FormatParser_parse()')
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1221, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1242, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_formats = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1226
+  /* "allel/opt/io_vcf_read.pyx":1247
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -15470,7 +16707,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1228
+  /* "allel/opt/io_vcf_read.pyx":1249
  *     context.temp_size = 0
  * 
  *     while context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -15481,7 +16718,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
     __pyx_t_2 = ((__pyx_v_context->temp_size < __pyx_v_context->temp_max_size) != 0);
     if (!__pyx_t_2) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1231
+    /* "allel/opt/io_vcf_read.pyx":1252
  *         # debug(context.c)
  * 
  *         if context.c == TAB:             # <<<<<<<<<<<<<<
@@ -15491,7 +16728,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
     __pyx_t_2 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (__pyx_t_2) {
 
-      /* "allel/opt/io_vcf_read.pyx":1235
+      /* "allel/opt/io_vcf_read.pyx":1256
  * 
  *             # add last format
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -15501,28 +16738,28 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
       __pyx_t_2 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_2) {
 
-        /* "allel/opt/io_vcf_read.pyx":1237
+        /* "allel/opt/io_vcf_read.pyx":1258
  *             if context.temp_size > 0:
  *                 # debug('add last format')
  *                 f = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *                 formats.append(f)
  * 
  */
-        __pyx_t_1 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1237, __pyx_L1_error)
+        __pyx_t_1 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1258, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_XDECREF_SET(__pyx_v_f, ((PyObject*)__pyx_t_1));
         __pyx_t_1 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":1238
+        /* "allel/opt/io_vcf_read.pyx":1259
  *                 # debug('add last format')
  *                 f = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 formats.append(f)             # <<<<<<<<<<<<<<
  * 
  *             # set context
  */
-        __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_formats, __pyx_v_f); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(0, 1238, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_formats, __pyx_v_f); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(0, 1259, __pyx_L1_error)
 
-        /* "allel/opt/io_vcf_read.pyx":1235
+        /* "allel/opt/io_vcf_read.pyx":1256
  * 
  *             # add last format
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -15531,7 +16768,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
       }
 
-      /* "allel/opt/io_vcf_read.pyx":1241
+      /* "allel/opt/io_vcf_read.pyx":1262
  * 
  *             # set context
  *             context.formats = formats             # <<<<<<<<<<<<<<
@@ -15544,7 +16781,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
       __Pyx_DECREF(__pyx_v_context->formats);
       __pyx_v_context->formats = __pyx_v_formats;
 
-      /* "allel/opt/io_vcf_read.pyx":1244
+      /* "allel/opt/io_vcf_read.pyx":1265
  * 
  *             # we're done here
  *             break             # <<<<<<<<<<<<<<
@@ -15553,7 +16790,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
       goto __pyx_L4_break;
 
-      /* "allel/opt/io_vcf_read.pyx":1231
+      /* "allel/opt/io_vcf_read.pyx":1252
  *         # debug(context.c)
  * 
  *         if context.c == TAB:             # <<<<<<<<<<<<<<
@@ -15562,7 +16799,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1246
+    /* "allel/opt/io_vcf_read.pyx":1267
  *             break
  * 
  *         elif context.c == COLON:             # <<<<<<<<<<<<<<
@@ -15572,7 +16809,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
     __pyx_t_2 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_COLON) != 0);
     if (__pyx_t_2) {
 
-      /* "allel/opt/io_vcf_read.pyx":1250
+      /* "allel/opt/io_vcf_read.pyx":1271
  * 
  *             # add format
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -15582,28 +16819,28 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
       __pyx_t_2 = ((__pyx_v_context->temp_size > 0) != 0);
       if (__pyx_t_2) {
 
-        /* "allel/opt/io_vcf_read.pyx":1252
+        /* "allel/opt/io_vcf_read.pyx":1273
  *             if context.temp_size > 0:
  *                 # debug('add format')
  *                 f = PyBytes_FromStringAndSize(context.temp, context.temp_size)             # <<<<<<<<<<<<<<
  *                 formats.append(f)
  *                 context.temp_size = 0
  */
-        __pyx_t_1 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1252, __pyx_L1_error)
+        __pyx_t_1 = PyBytes_FromStringAndSize(__pyx_v_context->temp, __pyx_v_context->temp_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1273, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_XDECREF_SET(__pyx_v_f, ((PyObject*)__pyx_t_1));
         __pyx_t_1 = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":1253
+        /* "allel/opt/io_vcf_read.pyx":1274
  *                 # debug('add format')
  *                 f = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 formats.append(f)             # <<<<<<<<<<<<<<
  *                 context.temp_size = 0
  * 
  */
-        __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_formats, __pyx_v_f); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(0, 1253, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyList_Append(__pyx_v_formats, __pyx_v_f); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(0, 1274, __pyx_L1_error)
 
-        /* "allel/opt/io_vcf_read.pyx":1254
+        /* "allel/opt/io_vcf_read.pyx":1275
  *                 f = PyBytes_FromStringAndSize(context.temp, context.temp_size)
  *                 formats.append(f)
  *                 context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -15612,7 +16849,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
         __pyx_v_context->temp_size = 0;
 
-        /* "allel/opt/io_vcf_read.pyx":1250
+        /* "allel/opt/io_vcf_read.pyx":1271
  * 
  *             # add format
  *             if context.temp_size > 0:             # <<<<<<<<<<<<<<
@@ -15621,7 +16858,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
       }
 
-      /* "allel/opt/io_vcf_read.pyx":1246
+      /* "allel/opt/io_vcf_read.pyx":1267
  *             break
  * 
  *         elif context.c == COLON:             # <<<<<<<<<<<<<<
@@ -15631,7 +16868,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1259
+    /* "allel/opt/io_vcf_read.pyx":1280
  *             # debug('other')
  * 
  *             context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -15642,7 +16879,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
       __pyx_t_4 = __pyx_v_context->c;
       (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_4;
 
-      /* "allel/opt/io_vcf_read.pyx":1260
+      /* "allel/opt/io_vcf_read.pyx":1281
  * 
  *             context.temp[context.temp_size] = context.c
  *             context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -15653,7 +16890,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
     }
     __pyx_L5:;
 
-    /* "allel/opt/io_vcf_read.pyx":1263
+    /* "allel/opt/io_vcf_read.pyx":1284
  * 
  *         # advance to next character
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -15664,7 +16901,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
   }
   __pyx_L4_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":1266
+  /* "allel/opt/io_vcf_read.pyx":1287
  * 
  *     # advance to next field
  *     ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -15673,9 +16910,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
  */
   __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":1217
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":1238
+ * 
+ * # break out method as function for profiling
  * cdef inline void FormatParser_parse(FormatParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         char* format
@@ -15692,7 +16929,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_FormatParser_parse(C
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1276
+/* "allel/opt/io_vcf_read.pyx":1297
  *     cdef Parser skip_parser
  * 
  *     def __cinit__(self, chunk_length, formats, types, n_samples, ploidy):             # <<<<<<<<<<<<<<
@@ -15734,26 +16971,26 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_14CalldataParser_1__cinit__(PyObje
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_formats)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 1); __PYX_ERR(0, 1276, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 1); __PYX_ERR(0, 1297, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_types)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 2); __PYX_ERR(0, 1276, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 2); __PYX_ERR(0, 1297, __pyx_L3_error)
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_n_samples)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 3); __PYX_ERR(0, 1276, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 3); __PYX_ERR(0, 1297, __pyx_L3_error)
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ploidy)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 4); __PYX_ERR(0, 1276, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 4); __PYX_ERR(0, 1297, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1276, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1297, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -15772,7 +17009,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_14CalldataParser_1__cinit__(PyObje
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1276, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1297, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.CalldataParser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -15797,14 +17034,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
   PyObject *__pyx_t_6 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1277
+  /* "allel/opt/io_vcf_read.pyx":1298
  * 
  *     def __cinit__(self, chunk_length, formats, types, n_samples, ploidy):
  *         self.parsers = dict()             # <<<<<<<<<<<<<<
  *         for f in formats:
  *             # TODO handle types
  */
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1277, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1298, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __Pyx_GOTREF(__pyx_v_self->parsers);
@@ -15812,7 +17049,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
   __pyx_v_self->parsers = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1278
+  /* "allel/opt/io_vcf_read.pyx":1299
  *     def __cinit__(self, chunk_length, formats, types, n_samples, ploidy):
  *         self.parsers = dict()
  *         for f in formats:             # <<<<<<<<<<<<<<
@@ -15823,26 +17060,26 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
     __pyx_t_1 = __pyx_v_formats; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
     __pyx_t_3 = NULL;
   } else {
-    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_formats); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1278, __pyx_L1_error)
+    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_formats); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1299, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1278, __pyx_L1_error)
+    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1299, __pyx_L1_error)
   }
   for (;;) {
     if (likely(!__pyx_t_3)) {
       if (likely(PyList_CheckExact(__pyx_t_1))) {
         if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 1278, __pyx_L1_error)
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 1299, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1278, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1299, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       } else {
         if (__pyx_t_2 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 1278, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 1299, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1278, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1299, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       }
@@ -15852,7 +17089,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 1278, __pyx_L1_error)
+          else __PYX_ERR(0, 1299, __pyx_L1_error)
         }
         break;
       }
@@ -15861,64 +17098,64 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
     __Pyx_XDECREF_SET(__pyx_v_f, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1280
+    /* "allel/opt/io_vcf_read.pyx":1301
  *         for f in formats:
  *             # TODO handle types
  *             if f == b'GT':             # <<<<<<<<<<<<<<
  *                 self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,
  *                                                      n_samples=n_samples,
  */
-    __pyx_t_5 = (__Pyx_PyBytes_Equals(__pyx_v_f, __pyx_n_b_GT, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 1280, __pyx_L1_error)
+    __pyx_t_5 = (__Pyx_PyBytes_Equals(__pyx_v_f, __pyx_n_b_GT, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 1301, __pyx_L1_error)
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":1281
+      /* "allel/opt/io_vcf_read.pyx":1302
  *             # TODO handle types
  *             if f == b'GT':
  *                 self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                                      n_samples=n_samples,
  *                                                      ploidy=ploidy,
  */
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1281, __pyx_L1_error)
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1302, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 1281, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_chunk_length, __pyx_v_chunk_length) < 0) __PYX_ERR(0, 1302, __pyx_L1_error)
 
-      /* "allel/opt/io_vcf_read.pyx":1282
+      /* "allel/opt/io_vcf_read.pyx":1303
  *             if f == b'GT':
  *                 self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,
  *                                                      n_samples=n_samples,             # <<<<<<<<<<<<<<
  *                                                      ploidy=ploidy,
  *                                                      fill=-1)
  */
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_n_samples, __pyx_v_n_samples) < 0) __PYX_ERR(0, 1281, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_n_samples, __pyx_v_n_samples) < 0) __PYX_ERR(0, 1302, __pyx_L1_error)
 
-      /* "allel/opt/io_vcf_read.pyx":1283
+      /* "allel/opt/io_vcf_read.pyx":1304
  *                 self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,
  *                                                      n_samples=n_samples,
  *                                                      ploidy=ploidy,             # <<<<<<<<<<<<<<
  *                                                      fill=-1)
  *             # TODO initialise parsers for all fields
  */
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_ploidy, __pyx_v_ploidy) < 0) __PYX_ERR(0, 1281, __pyx_L1_error)
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 1281, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_ploidy, __pyx_v_ploidy) < 0) __PYX_ERR(0, 1302, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_fill, __pyx_int_neg_1) < 0) __PYX_ERR(0, 1302, __pyx_L1_error)
 
-      /* "allel/opt/io_vcf_read.pyx":1281
+      /* "allel/opt/io_vcf_read.pyx":1302
  *             # TODO handle types
  *             if f == b'GT':
  *                 self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,             # <<<<<<<<<<<<<<
  *                                                      n_samples=n_samples,
  *                                                      ploidy=ploidy,
  */
-      __pyx_t_6 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_GenotypeInt8Parser), __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1281, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_GenotypeInt8Parser), __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1302, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       if (unlikely(__pyx_v_self->parsers == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 1281, __pyx_L1_error)
+        __PYX_ERR(0, 1302, __pyx_L1_error)
       }
-      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_f, __pyx_t_6) < 0)) __PYX_ERR(0, 1281, __pyx_L1_error)
+      if (unlikely(PyDict_SetItem(__pyx_v_self->parsers, __pyx_v_f, __pyx_t_6) < 0)) __PYX_ERR(0, 1302, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":1280
+      /* "allel/opt/io_vcf_read.pyx":1301
  *         for f in formats:
  *             # TODO handle types
  *             if f == b'GT':             # <<<<<<<<<<<<<<
@@ -15927,7 +17164,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1278
+    /* "allel/opt/io_vcf_read.pyx":1299
  *     def __cinit__(self, chunk_length, formats, types, n_samples, ploidy):
  *         self.parsers = dict()
  *         for f in formats:             # <<<<<<<<<<<<<<
@@ -15937,14 +17174,14 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1286
+  /* "allel/opt/io_vcf_read.pyx":1307
  *                                                      fill=-1)
  *             # TODO initialise parsers for all fields
  *         self.skip_parser = SkipCalldataParser()             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipCalldataParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1286, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_5allel_3opt_11io_vcf_read_SkipCalldataParser), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1307, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __Pyx_GOTREF(__pyx_v_self->skip_parser);
@@ -15952,7 +17189,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
   __pyx_v_self->skip_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1276
+  /* "allel/opt/io_vcf_read.pyx":1297
  *     cdef Parser skip_parser
  * 
  *     def __cinit__(self, chunk_length, formats, types, n_samples, ploidy):             # <<<<<<<<<<<<<<
@@ -15975,7 +17212,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14CalldataParser___cinit__(struct 
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1288
+/* "allel/opt/io_vcf_read.pyx":1309
  *         self.skip_parser = SkipCalldataParser()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -15988,7 +17225,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_parse(struct
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1289
+  /* "allel/opt/io_vcf_read.pyx":1310
  * 
  *     cdef parse(self, ParserContext context):
  *         CalldataParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -15997,7 +17234,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_parse(struct
  */
   __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":1288
+  /* "allel/opt/io_vcf_read.pyx":1309
  *         self.skip_parser = SkipCalldataParser()
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -16012,7 +17249,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_parse(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1291
+/* "allel/opt/io_vcf_read.pyx":1312
  *         CalldataParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -16039,7 +17276,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk(stru
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1293
+  /* "allel/opt/io_vcf_read.pyx":1314
  *     cdef mkchunk(self, chunk, limit=None):
  *         cdef Parser parser
  *         for parser in self.parsers.values():             # <<<<<<<<<<<<<<
@@ -16049,9 +17286,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk(stru
   __pyx_t_2 = 0;
   if (unlikely(__pyx_v_self->parsers == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "values");
-    __PYX_ERR(0, 1293, __pyx_L1_error)
+    __PYX_ERR(0, 1314, __pyx_L1_error)
   }
-  __pyx_t_5 = __Pyx_dict_iterator(__pyx_v_self->parsers, 1, __pyx_n_s_values, (&__pyx_t_3), (&__pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1293, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_dict_iterator(__pyx_v_self->parsers, 1, __pyx_n_s_values, (&__pyx_t_3), (&__pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_1);
   __pyx_t_1 = __pyx_t_5;
@@ -16059,13 +17296,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk(stru
   while (1) {
     __pyx_t_6 = __Pyx_dict_iter_next(__pyx_t_1, __pyx_t_3, &__pyx_t_2, NULL, &__pyx_t_5, NULL, __pyx_t_4);
     if (unlikely(__pyx_t_6 == 0)) break;
-    if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 1293, __pyx_L1_error)
+    if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 1314, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 1293, __pyx_L1_error)
+    if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5allel_3opt_11io_vcf_read_Parser))))) __PYX_ERR(0, 1314, __pyx_L1_error)
     __Pyx_XDECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_5));
     __pyx_t_5 = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1294
+    /* "allel/opt/io_vcf_read.pyx":1315
  *         cdef Parser parser
  *         for parser in self.parsers.values():
  *             parser.mkchunk(chunk, limit=limit)             # <<<<<<<<<<<<<<
@@ -16074,13 +17311,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk(stru
  */
     __pyx_t_7.__pyx_n = 1;
     __pyx_t_7.limit = __pyx_v_limit;
-    __pyx_t_5 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->mkchunk(__pyx_v_parser, __pyx_v_chunk, &__pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1294, __pyx_L1_error)
+    __pyx_t_5 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->mkchunk(__pyx_v_parser, __pyx_v_chunk, &__pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1315, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1291
+  /* "allel/opt/io_vcf_read.pyx":1312
  *         CalldataParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -16103,9 +17340,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk(stru
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1302
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":1319
+ * 
+ * # break out method as function for profiling
  * cdef inline void CalldataParser_parse(CalldataParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         list parsers
@@ -16123,7 +17360,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
   int __pyx_t_6;
   __Pyx_RefNannySetupContext("CalldataParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1308
+  /* "allel/opt/io_vcf_read.pyx":1325
  * 
  *     # initialise context
  *     context.sample_index = 0             # <<<<<<<<<<<<<<
@@ -16132,7 +17369,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
   __pyx_v_context->sample_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1309
+  /* "allel/opt/io_vcf_read.pyx":1326
  *     # initialise context
  *     context.sample_index = 0
  *     context.format_index = 0             # <<<<<<<<<<<<<<
@@ -16141,7 +17378,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
   __pyx_v_context->format_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1312
+  /* "allel/opt/io_vcf_read.pyx":1329
  * 
  *     # initialise format parsers in correct order for this variant
  *     parsers = [self.parsers.get(f, self.skip_parser) for f in context.formats]             # <<<<<<<<<<<<<<
@@ -16150,30 +17387,30 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
   { /* enter inner scope */
     PyObject *__pyx_8genexpr1__pyx_v_f = NULL;
-    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1312, __pyx_L5_error)
+    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1329, __pyx_L5_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (unlikely(__pyx_v_context->formats == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-      __PYX_ERR(0, 1312, __pyx_L5_error)
+      __PYX_ERR(0, 1329, __pyx_L5_error)
     }
     __pyx_t_2 = __pyx_v_context->formats; __Pyx_INCREF(__pyx_t_2); __pyx_t_3 = 0;
     for (;;) {
       if (__pyx_t_3 >= PyList_GET_SIZE(__pyx_t_2)) break;
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-      __pyx_t_4 = PyList_GET_ITEM(__pyx_t_2, __pyx_t_3); __Pyx_INCREF(__pyx_t_4); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 1312, __pyx_L5_error)
+      __pyx_t_4 = PyList_GET_ITEM(__pyx_t_2, __pyx_t_3); __Pyx_INCREF(__pyx_t_4); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 1329, __pyx_L5_error)
       #else
-      __pyx_t_4 = PySequence_ITEM(__pyx_t_2, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1312, __pyx_L5_error)
+      __pyx_t_4 = PySequence_ITEM(__pyx_t_2, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1329, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_4);
       #endif
       __Pyx_XDECREF_SET(__pyx_8genexpr1__pyx_v_f, __pyx_t_4);
       __pyx_t_4 = 0;
       if (unlikely(__pyx_v_self->parsers == Py_None)) {
         PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "get");
-        __PYX_ERR(0, 1312, __pyx_L5_error)
+        __PYX_ERR(0, 1329, __pyx_L5_error)
       }
-      __pyx_t_4 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_8genexpr1__pyx_v_f, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1312, __pyx_L5_error)
+      __pyx_t_4 = __Pyx_PyDict_GetItemDefault(__pyx_v_self->parsers, __pyx_8genexpr1__pyx_v_f, ((PyObject *)__pyx_v_self->skip_parser)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1329, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_4))) __PYX_ERR(0, 1312, __pyx_L5_error)
+      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_4))) __PYX_ERR(0, 1329, __pyx_L5_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -16187,7 +17424,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
   __pyx_v_parsers = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1313
+  /* "allel/opt/io_vcf_read.pyx":1330
  *     # initialise format parsers in correct order for this variant
  *     parsers = [self.parsers.get(f, self.skip_parser) for f in context.formats]
  *     parser = <Parser> parsers[0]             # <<<<<<<<<<<<<<
@@ -16199,7 +17436,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
   __pyx_v_parser = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1315
+  /* "allel/opt/io_vcf_read.pyx":1332
  *     parser = <Parser> parsers[0]
  * 
  *     while True:             # <<<<<<<<<<<<<<
@@ -16208,7 +17445,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
   while (1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1317
+    /* "allel/opt/io_vcf_read.pyx":1334
  *     while True:
  * 
  *         if context.c == 0 or context.c == NEWLINE:             # <<<<<<<<<<<<<<
@@ -16226,7 +17463,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
     __pyx_L12_bool_binop_done:;
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":1318
+      /* "allel/opt/io_vcf_read.pyx":1335
  * 
  *         if context.c == 0 or context.c == NEWLINE:
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -16235,7 +17472,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":1319
+      /* "allel/opt/io_vcf_read.pyx":1336
  *         if context.c == 0 or context.c == NEWLINE:
  *             ParserContext_next(context)
  *             break             # <<<<<<<<<<<<<<
@@ -16244,7 +17481,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       goto __pyx_L10_break;
 
-      /* "allel/opt/io_vcf_read.pyx":1317
+      /* "allel/opt/io_vcf_read.pyx":1334
  *     while True:
  * 
  *         if context.c == 0 or context.c == NEWLINE:             # <<<<<<<<<<<<<<
@@ -16253,7 +17490,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1321
+    /* "allel/opt/io_vcf_read.pyx":1338
  *             break
  * 
  *         elif context.c == TAB:             # <<<<<<<<<<<<<<
@@ -16263,7 +17500,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
     __pyx_t_5 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_TAB) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":1323
+      /* "allel/opt/io_vcf_read.pyx":1340
  *         elif context.c == TAB:
  * 
  *             context.sample_index += 1             # <<<<<<<<<<<<<<
@@ -16272,7 +17509,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       __pyx_v_context->sample_index = (__pyx_v_context->sample_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":1324
+      /* "allel/opt/io_vcf_read.pyx":1341
  * 
  *             context.sample_index += 1
  *             context.format_index = 0             # <<<<<<<<<<<<<<
@@ -16281,7 +17518,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       __pyx_v_context->format_index = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":1325
+      /* "allel/opt/io_vcf_read.pyx":1342
  *             context.sample_index += 1
  *             context.format_index = 0
  *             parser = <Parser> parsers[0]             # <<<<<<<<<<<<<<
@@ -16293,7 +17530,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
       __Pyx_DECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1));
       __pyx_t_1 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":1326
+      /* "allel/opt/io_vcf_read.pyx":1343
  *             context.format_index = 0
  *             parser = <Parser> parsers[0]
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -16302,7 +17539,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":1321
+      /* "allel/opt/io_vcf_read.pyx":1338
  *             break
  * 
  *         elif context.c == TAB:             # <<<<<<<<<<<<<<
@@ -16312,7 +17549,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
       goto __pyx_L11;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1328
+    /* "allel/opt/io_vcf_read.pyx":1345
  *             ParserContext_next(context)
  * 
  *         elif context.c == COLON:             # <<<<<<<<<<<<<<
@@ -16322,7 +17559,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
     __pyx_t_5 = ((__pyx_v_context->c == __pyx_v_5allel_3opt_11io_vcf_read_COLON) != 0);
     if (__pyx_t_5) {
 
-      /* "allel/opt/io_vcf_read.pyx":1330
+      /* "allel/opt/io_vcf_read.pyx":1347
  *         elif context.c == COLON:
  * 
  *             context.format_index += 1             # <<<<<<<<<<<<<<
@@ -16331,7 +17568,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       __pyx_v_context->format_index = (__pyx_v_context->format_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":1331
+      /* "allel/opt/io_vcf_read.pyx":1348
  * 
  *             context.format_index += 1
  *             parser = <Parser> parsers[context.format_index]             # <<<<<<<<<<<<<<
@@ -16343,7 +17580,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
       __Pyx_DECREF_SET(__pyx_v_parser, ((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_t_1));
       __pyx_t_1 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":1332
+      /* "allel/opt/io_vcf_read.pyx":1349
  *             context.format_index += 1
  *             parser = <Parser> parsers[context.format_index]
  *             ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -16352,7 +17589,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  */
       __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
 
-      /* "allel/opt/io_vcf_read.pyx":1328
+      /* "allel/opt/io_vcf_read.pyx":1345
  *             ParserContext_next(context)
  * 
  *         elif context.c == COLON:             # <<<<<<<<<<<<<<
@@ -16362,7 +17599,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
       goto __pyx_L11;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1339
+    /* "allel/opt/io_vcf_read.pyx":1356
  *             #       context.formats[context.format_index],
  *             #       repr(parser))
  *             parser.parse(context)             # <<<<<<<<<<<<<<
@@ -16370,7 +17607,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
  * 
  */
     /*else*/ {
-      __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1339, __pyx_L1_error)
+      __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_parser->__pyx_vtab)->parse(__pyx_v_parser, __pyx_v_context); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1356, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     }
@@ -16378,9 +17615,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
   }
   __pyx_L10_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":1302
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":1319
+ * 
+ * # break out method as function for profiling
  * cdef inline void CalldataParser_parse(CalldataParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         list parsers
@@ -16399,7 +17636,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_CalldataParser_parse
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1349
+/* "allel/opt/io_vcf_read.pyx":1366
  *     cdef np.int8_t fill
  * 
  *     def __cinit__(self, chunk_length, n_samples, ploidy, fill):             # <<<<<<<<<<<<<<
@@ -16439,21 +17676,21 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_1__cinit__(Py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_n_samples)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, 1); __PYX_ERR(0, 1349, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, 1); __PYX_ERR(0, 1366, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ploidy)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, 2); __PYX_ERR(0, 1349, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, 2); __PYX_ERR(0, 1366, __pyx_L3_error)
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_fill)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, 3); __PYX_ERR(0, 1349, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, 3); __PYX_ERR(0, 1366, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1349, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 1366, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
       goto __pyx_L5_argtuple_error;
@@ -16470,7 +17707,7 @@ static int __pyx_pw_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_1__cinit__(Py
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1349, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 1366, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("allel.opt.io_vcf_read.GenotypeInt8Parser.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -16491,58 +17728,58 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser___cinit__(str
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1350
+  /* "allel/opt/io_vcf_read.pyx":1367
  * 
  *     def __cinit__(self, chunk_length, n_samples, ploidy, fill):
  *         self.chunk_length = chunk_length             # <<<<<<<<<<<<<<
  *         self.n_samples = n_samples
  *         self.ploidy = ploidy
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1350, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_chunk_length); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1367, __pyx_L1_error)
   __pyx_v_self->__pyx_base.chunk_length = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":1351
+  /* "allel/opt/io_vcf_read.pyx":1368
  *     def __cinit__(self, chunk_length, n_samples, ploidy, fill):
  *         self.chunk_length = chunk_length
  *         self.n_samples = n_samples             # <<<<<<<<<<<<<<
  *         self.ploidy = ploidy
  *         self.fill = fill
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_n_samples); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1351, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_n_samples); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1368, __pyx_L1_error)
   __pyx_v_self->n_samples = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":1352
+  /* "allel/opt/io_vcf_read.pyx":1369
  *         self.chunk_length = chunk_length
  *         self.n_samples = n_samples
  *         self.ploidy = ploidy             # <<<<<<<<<<<<<<
  *         self.fill = fill
  *         self.malloc()
  */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_ploidy); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1352, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_ploidy); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 1369, __pyx_L1_error)
   __pyx_v_self->ploidy = __pyx_t_1;
 
-  /* "allel/opt/io_vcf_read.pyx":1353
+  /* "allel/opt/io_vcf_read.pyx":1370
  *         self.n_samples = n_samples
  *         self.ploidy = ploidy
  *         self.fill = fill             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_2 = __Pyx_PyInt_As_npy_int8(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_int8)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1353, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_npy_int8(__pyx_v_fill); if (unlikely((__pyx_t_2 == ((npy_int8)-1)) && PyErr_Occurred())) __PYX_ERR(0, 1370, __pyx_L1_error)
   __pyx_v_self->fill = __pyx_t_2;
 
-  /* "allel/opt/io_vcf_read.pyx":1354
+  /* "allel/opt/io_vcf_read.pyx":1371
  *         self.ploidy = ploidy
  *         self.fill = fill
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  *     cdef malloc(self):
  */
-  __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1354, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1371, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1349
+  /* "allel/opt/io_vcf_read.pyx":1366
  *     cdef np.int8_t fill
  * 
  *     def __cinit__(self, chunk_length, n_samples, ploidy, fill):             # <<<<<<<<<<<<<<
@@ -16562,7 +17799,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser___cinit__(str
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1356
+/* "allel/opt/io_vcf_read.pyx":1373
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -16582,25 +17819,25 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
   __pyx_t_5numpy_int8_t __pyx_t_7;
   __Pyx_RefNannySetupContext("malloc", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1357
+  /* "allel/opt/io_vcf_read.pyx":1374
  * 
  *     cdef malloc(self):
  *         self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='i1')             # <<<<<<<<<<<<<<
  *         self.memory = self.values
  *         self.memory[:] = self.fill
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->__pyx_base.chunk_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_self->n_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_self->n_samples); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->ploidy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->ploidy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
@@ -16611,15 +17848,15 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
   __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_u_i1) < 0) __PYX_ERR(0, 1357, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1357, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_u_i1) < 0) __PYX_ERR(0, 1374, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 1374, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -16630,7 +17867,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
   __pyx_v_self->__pyx_base.values = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1358
+  /* "allel/opt/io_vcf_read.pyx":1375
  *     cdef malloc(self):
  *         self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='i1')
  *         self.memory = self.values             # <<<<<<<<<<<<<<
@@ -16638,13 +17875,13 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
  * 
  */
   __pyx_t_6 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_nn___pyx_t_5numpy_int8_t(__pyx_v_self->__pyx_base.values);
-  if (unlikely(!__pyx_t_6.memview)) __PYX_ERR(0, 1358, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6.memview)) __PYX_ERR(0, 1375, __pyx_L1_error)
   __PYX_XDEC_MEMVIEW(&__pyx_v_self->memory, 0);
   __pyx_v_self->memory = __pyx_t_6;
   __pyx_t_6.memview = NULL;
   __pyx_t_6.data = NULL;
 
-  /* "allel/opt/io_vcf_read.pyx":1359
+  /* "allel/opt/io_vcf_read.pyx":1376
  *         self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='i1')
  *         self.memory = self.values
  *         self.memory[:] = self.fill             # <<<<<<<<<<<<<<
@@ -16652,7 +17889,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
  *     cdef parse(self, ParserContext context):
  */
   __pyx_t_7 = __pyx_v_self->fill;
-  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1359, __pyx_L1_error)}
+  if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1376, __pyx_L1_error)}
   {
       __pyx_t_5numpy_int8_t __pyx_temp_scalar = __pyx_t_7;
       {
@@ -16684,7 +17921,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
       }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1356
+  /* "allel/opt/io_vcf_read.pyx":1373
  *         self.malloc()
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -16710,7 +17947,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_malloc(s
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1361
+/* "allel/opt/io_vcf_read.pyx":1378
  *         self.memory[:] = self.fill
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -16723,7 +17960,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_parse(st
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1362
+  /* "allel/opt/io_vcf_read.pyx":1379
  * 
  *     cdef parse(self, ParserContext context):
  *         GenotypeInt8Parser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -16732,7 +17969,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_parse(st
  */
   __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":1361
+  /* "allel/opt/io_vcf_read.pyx":1378
  *         self.memory[:] = self.fill
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -16747,7 +17984,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_parse(st
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1364
+/* "allel/opt/io_vcf_read.pyx":1381
  *         GenotypeInt8Parser_parse(self, context)
  * 
  *     cdef store(self, ParserContext context, int allele_index):             # <<<<<<<<<<<<<<
@@ -16760,7 +17997,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_store(st
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("store", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1365
+  /* "allel/opt/io_vcf_read.pyx":1382
  * 
  *     cdef store(self, ParserContext context, int allele_index):
  *         GenotypeInt8Parser_store(self, context, allele_index)             # <<<<<<<<<<<<<<
@@ -16769,7 +18006,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_store(st
  */
   __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_store(__pyx_v_self, __pyx_v_context, __pyx_v_allele_index);
 
-  /* "allel/opt/io_vcf_read.pyx":1364
+  /* "allel/opt/io_vcf_read.pyx":1381
  *         GenotypeInt8Parser_parse(self, context)
  * 
  *     cdef store(self, ParserContext context, int allele_index):             # <<<<<<<<<<<<<<
@@ -16784,7 +18021,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_store(st
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1367
+/* "allel/opt/io_vcf_read.pyx":1384
  *         GenotypeInt8Parser_store(self, context, allele_index)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -16804,30 +18041,30 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_mkchunk(
     }
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1368
+  /* "allel/opt/io_vcf_read.pyx":1385
  * 
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk['calldata/GT'] = self.values[:limit]             # <<<<<<<<<<<<<<
  *         self.malloc()
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1368, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_v_self->__pyx_base.values, 0, 0, NULL, &__pyx_v_limit, NULL, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1385, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_kp_u_calldata_GT, __pyx_t_1) < 0)) __PYX_ERR(0, 1368, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_chunk, __pyx_kp_u_calldata_GT, __pyx_t_1) < 0)) __PYX_ERR(0, 1385, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1369
+  /* "allel/opt/io_vcf_read.pyx":1386
  *     cdef mkchunk(self, chunk, limit=None):
  *         chunk['calldata/GT'] = self.values[:limit]
  *         self.malloc()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1369, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.malloc(((struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1386, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1367
+  /* "allel/opt/io_vcf_read.pyx":1384
  *         GenotypeInt8Parser_store(self, context, allele_index)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -16848,9 +18085,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_mkchunk(
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1376
- * @cython.initializedcheck(False)
- * @cython.nonecheck(False)
+/* "allel/opt/io_vcf_read.pyx":1389
+ * 
+ * 
  * cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         int allele_index = 0
@@ -16864,7 +18101,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
   char __pyx_t_3;
   __Pyx_RefNannySetupContext("GenotypeInt8Parser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1378
+  /* "allel/opt/io_vcf_read.pyx":1391
  * cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):
  *     cdef:
  *         int allele_index = 0             # <<<<<<<<<<<<<<
@@ -16873,7 +18110,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
   __pyx_v_allele_index = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1384
+  /* "allel/opt/io_vcf_read.pyx":1397
  * 
  *     # reset temporary buffer
  *     context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -16882,7 +18119,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
   __pyx_v_context->temp_size = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":1386
+  /* "allel/opt/io_vcf_read.pyx":1399
  *     context.temp_size = 0
  * 
  *     while context.temp_size < context.temp_max_size:             # <<<<<<<<<<<<<<
@@ -16893,7 +18130,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
     __pyx_t_1 = ((__pyx_v_context->temp_size < __pyx_v_context->temp_max_size) != 0);
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1388
+    /* "allel/opt/io_vcf_read.pyx":1401
  *     while context.temp_size < context.temp_max_size:
  * 
  *         if context.c == PERIOD:             # <<<<<<<<<<<<<<
@@ -16905,7 +18142,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1391
+    /* "allel/opt/io_vcf_read.pyx":1404
  *             pass
  * 
  *         elif context.c == SLASH or context.c == PIPE:             # <<<<<<<<<<<<<<
@@ -16923,7 +18160,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
     __pyx_L6_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":1393
+      /* "allel/opt/io_vcf_read.pyx":1406
  *         elif context.c == SLASH or context.c == PIPE:
  * 
  *             GenotypeInt8Parser_store(self, context, allele_index)             # <<<<<<<<<<<<<<
@@ -16932,7 +18169,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
       __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_store(__pyx_v_self, __pyx_v_context, __pyx_v_allele_index);
 
-      /* "allel/opt/io_vcf_read.pyx":1394
+      /* "allel/opt/io_vcf_read.pyx":1407
  * 
  *             GenotypeInt8Parser_store(self, context, allele_index)
  *             allele_index += 1             # <<<<<<<<<<<<<<
@@ -16941,7 +18178,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
       __pyx_v_allele_index = (__pyx_v_allele_index + 1);
 
-      /* "allel/opt/io_vcf_read.pyx":1391
+      /* "allel/opt/io_vcf_read.pyx":1404
  *             pass
  * 
  *         elif context.c == SLASH or context.c == PIPE:             # <<<<<<<<<<<<<<
@@ -16951,7 +18188,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
       goto __pyx_L5;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1396
+    /* "allel/opt/io_vcf_read.pyx":1409
  *             allele_index += 1
  * 
  *         elif context.c == COLON or context.c == TAB or context.c == NEWLINE:             # <<<<<<<<<<<<<<
@@ -16975,7 +18212,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
     __pyx_L8_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":1398
+      /* "allel/opt/io_vcf_read.pyx":1411
  *         elif context.c == COLON or context.c == TAB or context.c == NEWLINE:
  * 
  *             GenotypeInt8Parser_store(self, context, allele_index)             # <<<<<<<<<<<<<<
@@ -16984,7 +18221,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
       __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_store(__pyx_v_self, __pyx_v_context, __pyx_v_allele_index);
 
-      /* "allel/opt/io_vcf_read.pyx":1399
+      /* "allel/opt/io_vcf_read.pyx":1412
  * 
  *             GenotypeInt8Parser_store(self, context, allele_index)
  *             break             # <<<<<<<<<<<<<<
@@ -16993,7 +18230,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
       goto __pyx_L4_break;
 
-      /* "allel/opt/io_vcf_read.pyx":1396
+      /* "allel/opt/io_vcf_read.pyx":1409
  *             allele_index += 1
  * 
  *         elif context.c == COLON or context.c == TAB or context.c == NEWLINE:             # <<<<<<<<<<<<<<
@@ -17002,7 +18239,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1403
+    /* "allel/opt/io_vcf_read.pyx":1416
  *         else:
  * 
  *             context.temp[context.temp_size] = context.c             # <<<<<<<<<<<<<<
@@ -17013,7 +18250,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
       __pyx_t_3 = __pyx_v_context->c;
       (__pyx_v_context->temp[__pyx_v_context->temp_size]) = __pyx_t_3;
 
-      /* "allel/opt/io_vcf_read.pyx":1404
+      /* "allel/opt/io_vcf_read.pyx":1417
  * 
  *             context.temp[context.temp_size] = context.c
  *             context.temp_size += 1             # <<<<<<<<<<<<<<
@@ -17024,7 +18261,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
     }
     __pyx_L5:;
 
-    /* "allel/opt/io_vcf_read.pyx":1406
+    /* "allel/opt/io_vcf_read.pyx":1419
  *             context.temp_size += 1
  * 
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -17035,9 +18272,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
   }
   __pyx_L4_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":1376
- * @cython.initializedcheck(False)
- * @cython.nonecheck(False)
+  /* "allel/opt/io_vcf_read.pyx":1389
+ * 
+ * 
  * cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     cdef:
  *         int allele_index = 0
@@ -17047,9 +18284,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_p
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1416
- * @cython.initializedcheck(False)
- * @cython.nonecheck(False)
+/* "allel/opt/io_vcf_read.pyx":1425
+ * 
+ * 
  * cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext context,             # <<<<<<<<<<<<<<
  *                                           int allele_index):
  *     cdef:
@@ -17069,7 +18306,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("GenotypeInt8Parser_store", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1422
+  /* "allel/opt/io_vcf_read.pyx":1431
  *         char* str_end
  * 
  *     if allele_index >= self.ploidy:             # <<<<<<<<<<<<<<
@@ -17081,7 +18318,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
     goto __pyx_L3;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1426
+  /* "allel/opt/io_vcf_read.pyx":1435
  *         pass
  * 
  *     elif context.temp_size == 0:             # <<<<<<<<<<<<<<
@@ -17093,7 +18330,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
     goto __pyx_L3;
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1437
+  /* "allel/opt/io_vcf_read.pyx":1446
  * 
  *         # attempt to parse allele
  *         context.temp[context.temp_size] = 0             # <<<<<<<<<<<<<<
@@ -17103,7 +18340,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
   /*else*/ {
     (__pyx_v_context->temp[__pyx_v_context->temp_size]) = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1438
+    /* "allel/opt/io_vcf_read.pyx":1447
  *         # attempt to parse allele
  *         context.temp[context.temp_size] = 0
  *         allele = strtol(context.temp, &str_end, 10)             # <<<<<<<<<<<<<<
@@ -17112,7 +18349,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
  */
     __pyx_v_allele = strtol(__pyx_v_context->temp, (&__pyx_v_str_end), 10);
 
-    /* "allel/opt/io_vcf_read.pyx":1442
+    /* "allel/opt/io_vcf_read.pyx":1451
  * 
  *         # reset temporary buffer
  *         context.temp_size = 0             # <<<<<<<<<<<<<<
@@ -17121,7 +18358,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
  */
     __pyx_v_context->temp_size = 0;
 
-    /* "allel/opt/io_vcf_read.pyx":1445
+    /* "allel/opt/io_vcf_read.pyx":1454
  * 
  *         # store value
  *         if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -17131,19 +18368,20 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
     __pyx_t_1 = ((__pyx_v_str_end > __pyx_v_context->temp) != 0);
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":1446
+      /* "allel/opt/io_vcf_read.pyx":1455
  *         # store value
  *         if str_end > context.temp:
  *             self.memory[context.chunk_variant_index, context.sample_index, allele_index] = allele             # <<<<<<<<<<<<<<
  * 
  *         else:
  */
+      if (unlikely(!__pyx_v_self->memory.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 1455, __pyx_L1_error)}
       __pyx_t_2 = __pyx_v_context->chunk_variant_index;
       __pyx_t_3 = __pyx_v_context->sample_index;
       __pyx_t_4 = __pyx_v_allele_index;
       *((__pyx_t_5numpy_int8_t *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_self->memory.data + __pyx_t_2 * __pyx_v_self->memory.strides[0]) ) + __pyx_t_3 * __pyx_v_self->memory.strides[1]) ) + __pyx_t_4 * __pyx_v_self->memory.strides[2]) )) = __pyx_v_allele;
 
-      /* "allel/opt/io_vcf_read.pyx":1445
+      /* "allel/opt/io_vcf_read.pyx":1454
  * 
  *         # store value
  *         if str_end > context.temp:             # <<<<<<<<<<<<<<
@@ -17153,7 +18391,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
       goto __pyx_L4;
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1449
+    /* "allel/opt/io_vcf_read.pyx":1458
  * 
  *         else:
  *             raise RuntimeError('error %s parsing genotype at variant index %s, sample index '             # <<<<<<<<<<<<<<
@@ -17162,20 +18400,20 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
  */
     /*else*/ {
 
-      /* "allel/opt/io_vcf_read.pyx":1450
+      /* "allel/opt/io_vcf_read.pyx":1459
  *         else:
  *             raise RuntimeError('error %s parsing genotype at variant index %s, sample index '
  *                                '%s' % (allele, context.variant_index, context.sample_index))             # <<<<<<<<<<<<<<
  * 
  * 
  */
-      __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_allele); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1450, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_v_allele); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 1459, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1450, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_context->variant_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 1459, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_context->sample_index); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1450, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_context->sample_index); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1459, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1450, __pyx_L1_error)
+      __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1459, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_GIVEREF(__pyx_t_5);
       PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5);
@@ -17186,36 +18424,36 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
       __pyx_t_5 = 0;
       __pyx_t_6 = 0;
       __pyx_t_7 = 0;
-      __pyx_t_7 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_genotype_at_vari, __pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1450, __pyx_L1_error)
+      __pyx_t_7 = PyUnicode_Format(__pyx_kp_u_error_s_parsing_genotype_at_vari, __pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1459, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "allel/opt/io_vcf_read.pyx":1449
+      /* "allel/opt/io_vcf_read.pyx":1458
  * 
  *         else:
  *             raise RuntimeError('error %s parsing genotype at variant index %s, sample index '             # <<<<<<<<<<<<<<
  *                                '%s' % (allele, context.variant_index, context.sample_index))
  * 
  */
-      __pyx_t_8 = PyTuple_New(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1449, __pyx_L1_error)
+      __pyx_t_8 = PyTuple_New(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 1458, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_GIVEREF(__pyx_t_7);
       PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7);
       __pyx_t_7 = 0;
-      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_8, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1449, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_t_8, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1458, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_Raise(__pyx_t_7, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __PYX_ERR(0, 1449, __pyx_L1_error)
+      __PYX_ERR(0, 1458, __pyx_L1_error)
     }
     __pyx_L4:;
   }
   __pyx_L3:;
 
-  /* "allel/opt/io_vcf_read.pyx":1416
- * @cython.initializedcheck(False)
- * @cython.nonecheck(False)
+  /* "allel/opt/io_vcf_read.pyx":1425
+ * 
+ * 
  * cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext context,             # <<<<<<<<<<<<<<
  *                                           int allele_index):
  *     cdef:
@@ -17233,7 +18471,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_GenotypeInt8Parser_s
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1455
+/* "allel/opt/io_vcf_read.pyx":1464
  * cdef class SkipInfoParser(Parser):
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -17268,7 +18506,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_14SkipInfoParser___cinit__(CYTHON_
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1458
+/* "allel/opt/io_vcf_read.pyx":1467
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -17281,7 +18519,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14SkipInfoParser_parse(struct
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1460
+  /* "allel/opt/io_vcf_read.pyx":1469
  *     cdef parse(self, ParserContext context):
  *         # debug(context.variant_index, 'SkipInfoParser.parse', bytes([context.c]))
  *         SkipInfoParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -17290,7 +18528,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14SkipInfoParser_parse(struct
  */
   __pyx_f_5allel_3opt_11io_vcf_read_SkipInfoParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":1458
+  /* "allel/opt/io_vcf_read.pyx":1467
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -17305,9 +18543,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_14SkipInfoParser_parse(struct
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1468
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":1473
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipInfoParser_parse(SkipInfoParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     # debug(context.variant_index, 'SkipInfoParser_parse', bytes([context.c]))
  *     while context.c != SEMICOLON and context.c != TAB and context.c != 0:
@@ -17319,7 +18557,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipInfoParser_parse
   int __pyx_t_2;
   __Pyx_RefNannySetupContext("SkipInfoParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1470
+  /* "allel/opt/io_vcf_read.pyx":1475
  * cdef inline void SkipInfoParser_parse(SkipInfoParser self, ParserContext context):
  *     # debug(context.variant_index, 'SkipInfoParser_parse', bytes([context.c]))
  *     while context.c != SEMICOLON and context.c != TAB and context.c != 0:             # <<<<<<<<<<<<<<
@@ -17344,7 +18582,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipInfoParser_parse
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_1) break;
 
-    /* "allel/opt/io_vcf_read.pyx":1471
+    /* "allel/opt/io_vcf_read.pyx":1476
  *     # debug(context.variant_index, 'SkipInfoParser_parse', bytes([context.c]))
  *     while context.c != SEMICOLON and context.c != TAB and context.c != 0:
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -17354,9 +18592,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipInfoParser_parse
     __pyx_f_5allel_3opt_11io_vcf_read_ParserContext_next(__pyx_v_context);
   }
 
-  /* "allel/opt/io_vcf_read.pyx":1468
- * # @cython.boundscheck(False)
- * # @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":1473
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipInfoParser_parse(SkipInfoParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     # debug(context.variant_index, 'SkipInfoParser_parse', bytes([context.c]))
  *     while context.c != SEMICOLON and context.c != TAB and context.c != 0:
@@ -17366,7 +18604,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipInfoParser_parse
   __Pyx_RefNannyFinishContext();
 }
 
-/* "allel/opt/io_vcf_read.pyx":1476
+/* "allel/opt/io_vcf_read.pyx":1481
  * cdef class SkipCalldataParser(Parser):
  * 
  *     def __cinit__(self):             # <<<<<<<<<<<<<<
@@ -17401,7 +18639,7 @@ static int __pyx_pf_5allel_3opt_11io_vcf_read_18SkipCalldataParser___cinit__(CYT
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1479
+/* "allel/opt/io_vcf_read.pyx":1484
  *         pass
  * 
  *     cdef malloc(self):             # <<<<<<<<<<<<<<
@@ -17421,7 +18659,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_malloc(C
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1482
+/* "allel/opt/io_vcf_read.pyx":1487
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -17434,7 +18672,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_parse(st
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1483
+  /* "allel/opt/io_vcf_read.pyx":1488
  * 
  *     cdef parse(self, ParserContext context):
  *         SkipCalldataParser_parse(self, context)             # <<<<<<<<<<<<<<
@@ -17443,7 +18681,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_parse(st
  */
   __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_parse(__pyx_v_self, __pyx_v_context);
 
-  /* "allel/opt/io_vcf_read.pyx":1482
+  /* "allel/opt/io_vcf_read.pyx":1487
  *         pass
  * 
  *     cdef parse(self, ParserContext context):             # <<<<<<<<<<<<<<
@@ -17458,7 +18696,7 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_parse(st
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1485
+/* "allel/opt/io_vcf_read.pyx":1490
  *         SkipCalldataParser_parse(self, context)
  * 
  *     cdef mkchunk(self, chunk, limit=None):             # <<<<<<<<<<<<<<
@@ -17480,9 +18718,9 @@ static PyObject *__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_mkchunk(
   return __pyx_r;
 }
 
-/* "allel/opt/io_vcf_read.pyx":1494
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+/* "allel/opt/io_vcf_read.pyx":1495
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipCalldataParser_parse(SkipCalldataParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     # debug('SkipCalldataParser_parse')
  *     while True:
@@ -17494,7 +18732,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_p
   int __pyx_t_2;
   __Pyx_RefNannySetupContext("SkipCalldataParser_parse", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":1496
+  /* "allel/opt/io_vcf_read.pyx":1497
  * cdef inline void SkipCalldataParser_parse(SkipCalldataParser self, ParserContext context):
  *     # debug('SkipCalldataParser_parse')
  *     while True:             # <<<<<<<<<<<<<<
@@ -17503,7 +18741,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_p
  */
   while (1) {
 
-    /* "allel/opt/io_vcf_read.pyx":1498
+    /* "allel/opt/io_vcf_read.pyx":1499
  *     while True:
  * 
  *         if context.c == COLON or context.c == TAB or context.c == NEWLINE or context.c == 0:             # <<<<<<<<<<<<<<
@@ -17533,7 +18771,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_p
     __pyx_L6_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "allel/opt/io_vcf_read.pyx":1499
+      /* "allel/opt/io_vcf_read.pyx":1500
  * 
  *         if context.c == COLON or context.c == TAB or context.c == NEWLINE or context.c == 0:
  *             break             # <<<<<<<<<<<<<<
@@ -17542,7 +18780,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_p
  */
       goto __pyx_L4_break;
 
-      /* "allel/opt/io_vcf_read.pyx":1498
+      /* "allel/opt/io_vcf_read.pyx":1499
  *     while True:
  * 
  *         if context.c == COLON or context.c == TAB or context.c == NEWLINE or context.c == 0:             # <<<<<<<<<<<<<<
@@ -17551,7 +18789,7 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_p
  */
     }
 
-    /* "allel/opt/io_vcf_read.pyx":1501
+    /* "allel/opt/io_vcf_read.pyx":1502
  *             break
  * 
  *         ParserContext_next(context)             # <<<<<<<<<<<<<<
@@ -17560,9 +18798,9 @@ static CYTHON_INLINE void __pyx_f_5allel_3opt_11io_vcf_read_SkipCalldataParser_p
   }
   __pyx_L4_break:;
 
-  /* "allel/opt/io_vcf_read.pyx":1494
- * @cython.boundscheck(False)
- * @cython.wraparound(False)
+  /* "allel/opt/io_vcf_read.pyx":1495
+ * 
+ * # break out method as function for profiling
  * cdef inline void SkipCalldataParser_parse(SkipCalldataParser self, ParserContext context):             # <<<<<<<<<<<<<<
  *     # debug('SkipCalldataParser_parse')
  *     while True:
@@ -17741,7 +18979,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__18, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 218, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__19, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 218, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -17797,7 +19035,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  * 
  *             info.buf = PyArray_DATA(self)
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__19, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 222, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__20, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 222, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -18106,7 +19344,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  *                 if   t == NPY_BYTE:        f = "b"
  *                 elif t == NPY_UBYTE:       f = "B"
  */
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__20, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 259, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__21, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 259, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -18921,7 +20159,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  * 
  *         if ((child.byteorder == c'>' and little_endian) or
  */
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__21, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 799, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__22, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 799, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -18989,7 +20227,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  *             # One could encode it in the format string and have Cython
  *             # complain instead, BUT: < and > in format strings also imply
  */
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__22, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 803, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__23, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 803, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_Raise(__pyx_t_3, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -19098,7 +20336,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  * 
  *             # Until ticket #99 is fixed, use integers to avoid warnings
  */
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__23, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 823, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__24, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 823, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_Raise(__pyx_t_4, 0, 0, 0);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -19779,7 +21017,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
  * 
  * cdef inline int import_umath() except -1:
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__24, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 989, __pyx_L5_except_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__25, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 989, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -19910,7 +21148,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
  * 
  * cdef inline int import_ufunc() except -1:
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__25, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 995, __pyx_L5_except_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__26, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 995, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -20038,7 +21276,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
  */
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__26, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 1001, __pyx_L5_except_error)
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_builtin_ImportError, __pyx_tuple__27, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(1, 1001, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_Raise(__pyx_t_8, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -20271,7 +21509,7 @@ static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __
  * 
  *         if itemsize <= 0:
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__27, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 131, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__28, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 131, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -20303,7 +21541,7 @@ static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __
  * 
  *         if not isinstance(format, bytes):
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__28, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 134, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__29, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -20338,7 +21576,7 @@ static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __
  */
     __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_format, __pyx_n_s_encode); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 137, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__29, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 137, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__30, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 137, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF_SET(__pyx_v_format, __pyx_t_5);
@@ -20414,7 +21652,7 @@ static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __
  * 
  * 
  */
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_MemoryError, __pyx_tuple__30, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 146, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_MemoryError, __pyx_tuple__31, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 146, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_Raise(__pyx_t_5, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -20698,7 +21936,7 @@ static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __
  * 
  *             if self.dtype_is_object:
  */
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_MemoryError, __pyx_tuple__31, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 174, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_MemoryError, __pyx_tuple__32, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 174, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_Raise(__pyx_t_5, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -20936,7 +22174,7 @@ static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(stru
  *         info.buf = self.data
  *         info.len = self.len
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__32, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 190, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__33, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 190, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -23842,7 +25080,7 @@ static PyObject *__pyx_memoryview_convert_item_to_object(struct __pyx_memoryview
  * 
  */
         __Pyx_XDECREF(__pyx_r);
-        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_result, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 487, __pyx_L5_except_error)
+        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_result, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 487, __pyx_L5_except_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_r = __pyx_t_1;
         __pyx_t_1 = 0;
@@ -23902,7 +25140,7 @@ static PyObject *__pyx_memoryview_convert_item_to_object(struct __pyx_memoryview
  *         else:
  *             if len(self.view.format) == 1:
  */
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__33, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 484, __pyx_L5_except_error)
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__34, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 484, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_Raise(__pyx_t_6, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -24743,7 +25981,7 @@ static PyObject *__pyx_pf_15View_dot_MemoryView_10memoryview_7strides___get__(st
  * 
  *         return tuple([stride for stride in self.view.strides[:self.view.ndim]])
  */
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__34, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(2, 556, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__35, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(2, 556, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -24857,7 +26095,7 @@ static PyObject *__pyx_pf_15View_dot_MemoryView_10memoryview_10suboffsets___get_
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->view.ndim); if (unlikely(!__pyx_t_2)) __PYX_ERR(2, 563, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyNumber_Multiply(__pyx_tuple__35, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 563, __pyx_L1_error)
+    __pyx_t_3 = PyNumber_Multiply(__pyx_tuple__36, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 563, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_r = __pyx_t_3;
@@ -26161,9 +27399,9 @@ static PyObject *_unellipsify(PyObject *__pyx_v_index, int __pyx_v_ndim) {
         __Pyx_GOTREF(__pyx_t_7);
         { Py_ssize_t __pyx_temp;
           for (__pyx_temp=0; __pyx_temp < ((__pyx_v_ndim - __pyx_t_8) + 1); __pyx_temp++) {
-            __Pyx_INCREF(__pyx_slice__36);
-            __Pyx_GIVEREF(__pyx_slice__36);
-            PyList_SET_ITEM(__pyx_t_7, __pyx_temp, __pyx_slice__36);
+            __Pyx_INCREF(__pyx_slice__37);
+            __Pyx_GIVEREF(__pyx_slice__37);
+            PyList_SET_ITEM(__pyx_t_7, __pyx_temp, __pyx_slice__37);
           }
         }
         __pyx_t_9 = __Pyx_PyList_Extend(__pyx_v_result, __pyx_t_7); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(2, 668, __pyx_L1_error)
@@ -26196,7 +27434,7 @@ static PyObject *_unellipsify(PyObject *__pyx_v_index, int __pyx_v_ndim) {
  *         else:
  */
       /*else*/ {
-        __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_result, __pyx_slice__37); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(2, 671, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyList_Append(__pyx_v_result, __pyx_slice__38); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(2, 671, __pyx_L1_error)
       }
       __pyx_L7:;
 
@@ -26341,9 +27579,9 @@ static PyObject *_unellipsify(PyObject *__pyx_v_index, int __pyx_v_ndim) {
     __Pyx_GOTREF(__pyx_t_3);
     { Py_ssize_t __pyx_temp;
       for (__pyx_temp=0; __pyx_temp < __pyx_v_nslices; __pyx_temp++) {
-        __Pyx_INCREF(__pyx_slice__38);
-        __Pyx_GIVEREF(__pyx_slice__38);
-        PyList_SET_ITEM(__pyx_t_3, __pyx_temp, __pyx_slice__38);
+        __Pyx_INCREF(__pyx_slice__39);
+        __Pyx_GIVEREF(__pyx_slice__39);
+        PyList_SET_ITEM(__pyx_t_3, __pyx_temp, __pyx_slice__39);
       }
     }
     __pyx_t_9 = __Pyx_PyList_Extend(__pyx_v_result, __pyx_t_3); if (unlikely(__pyx_t_9 == -1)) __PYX_ERR(2, 682, __pyx_L1_error)
@@ -26467,7 +27705,7 @@ static PyObject *assert_direct_dimensions(Py_ssize_t *__pyx_v_suboffsets, int __
  * 
  * 
  */
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__39, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 689, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_ValueError, __pyx_tuple__40, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 689, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_Raise(__pyx_t_5, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -32977,6 +34215,7 @@ static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoInt32Parser(PyTypeOb
   p = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser *)o);
   p->__pyx_base.__pyx_vtab = (struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser*)__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt32Parser;
   p->key = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->fill = Py_None; Py_INCREF(Py_None);
   p->memory.data = NULL;
   p->memory.memview = NULL;
   if (unlikely(__pyx_pw_5allel_3opt_11io_vcf_read_15InfoInt32Parser_1__cinit__(o, a, k) < 0)) goto bad;
@@ -32995,9 +34234,30 @@ static void __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_InfoInt32Parser(PyObject 
   #endif
   PyObject_GC_UnTrack(o);
   Py_CLEAR(p->key);
+  Py_CLEAR(p->fill);
   __PYX_XDEC_MEMVIEW(&p->memory, 1);
   PyObject_GC_Track(o);
   __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_Parser(o);
+}
+
+static int __pyx_tp_traverse_5allel_3opt_11io_vcf_read_InfoInt32Parser(PyObject *o, visitproc v, void *a) {
+  int e;
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser *p = (struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser *)o;
+  e = __pyx_tp_traverse_5allel_3opt_11io_vcf_read_Parser(o, v, a); if (e) return e;
+  if (p->fill) {
+    e = (*v)(p->fill, a); if (e) return e;
+  }
+  return 0;
+}
+
+static int __pyx_tp_clear_5allel_3opt_11io_vcf_read_InfoInt32Parser(PyObject *o) {
+  PyObject* tmp;
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser *p = (struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoInt32Parser *)o;
+  __pyx_tp_clear_5allel_3opt_11io_vcf_read_Parser(o);
+  tmp = ((PyObject*)p->fill);
+  p->fill = Py_None; Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  return 0;
 }
 
 static PyMethodDef __pyx_methods_5allel_3opt_11io_vcf_read_InfoInt32Parser[] = {
@@ -33031,8 +34291,8 @@ static PyTypeObject __pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser = {
   0, /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
   0, /*tp_doc*/
-  __pyx_tp_traverse_5allel_3opt_11io_vcf_read_Parser, /*tp_traverse*/
-  __pyx_tp_clear_5allel_3opt_11io_vcf_read_Parser, /*tp_clear*/
+  __pyx_tp_traverse_5allel_3opt_11io_vcf_read_InfoInt32Parser, /*tp_traverse*/
+  __pyx_tp_clear_5allel_3opt_11io_vcf_read_InfoInt32Parser, /*tp_clear*/
   0, /*tp_richcompare*/
   0, /*tp_weaklistoffset*/
   0, /*tp_iter*/
@@ -33327,6 +34587,214 @@ static PyTypeObject __pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser = {
   0, /*tp_init*/
   0, /*tp_alloc*/
   __pyx_tp_new_5allel_3opt_11io_vcf_read_InfoFloat64Parser, /*tp_new*/
+  0, /*tp_free*/
+  0, /*tp_is_gc*/
+  0, /*tp_bases*/
+  0, /*tp_mro*/
+  0, /*tp_cache*/
+  0, /*tp_subclasses*/
+  0, /*tp_weaklist*/
+  0, /*tp_del*/
+  0, /*tp_version_tag*/
+  #if PY_VERSION_HEX >= 0x030400a1
+  0, /*tp_finalize*/
+  #endif
+};
+static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoFlagParser __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFlagParser;
+
+static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoFlagParser(PyTypeObject *t, PyObject *a, PyObject *k) {
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *p;
+  PyObject *o = __pyx_tp_new_5allel_3opt_11io_vcf_read_Parser(t, a, k);
+  if (unlikely(!o)) return 0;
+  p = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *)o);
+  p->__pyx_base.__pyx_vtab = (struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser*)__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFlagParser;
+  p->key = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->memory.data = NULL;
+  p->memory.memview = NULL;
+  if (unlikely(__pyx_pw_5allel_3opt_11io_vcf_read_14InfoFlagParser_1__cinit__(o, a, k) < 0)) goto bad;
+  return o;
+  bad:
+  Py_DECREF(o); o = 0;
+  return NULL;
+}
+
+static void __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_InfoFlagParser(PyObject *o) {
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *p = (struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser *)o;
+  #if PY_VERSION_HEX >= 0x030400a1
+  if (unlikely(Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
+    if (PyObject_CallFinalizerFromDealloc(o)) return;
+  }
+  #endif
+  PyObject_GC_UnTrack(o);
+  Py_CLEAR(p->key);
+  __PYX_XDEC_MEMVIEW(&p->memory, 1);
+  PyObject_GC_Track(o);
+  __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_Parser(o);
+}
+
+static PyMethodDef __pyx_methods_5allel_3opt_11io_vcf_read_InfoFlagParser[] = {
+  {0, 0, 0, 0}
+};
+
+static PyTypeObject __pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser = {
+  PyVarObject_HEAD_INIT(0, 0)
+  "allel.opt.io_vcf_read.InfoFlagParser", /*tp_name*/
+  sizeof(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoFlagParser), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_InfoFlagParser, /*tp_dealloc*/
+  0, /*tp_print*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*tp_compare*/
+  #endif
+  #if PY_MAJOR_VERSION >= 3
+  0, /*tp_as_async*/
+  #endif
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash*/
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+  0, /*tp_doc*/
+  __pyx_tp_traverse_5allel_3opt_11io_vcf_read_Parser, /*tp_traverse*/
+  __pyx_tp_clear_5allel_3opt_11io_vcf_read_Parser, /*tp_clear*/
+  0, /*tp_richcompare*/
+  0, /*tp_weaklistoffset*/
+  0, /*tp_iter*/
+  0, /*tp_iternext*/
+  __pyx_methods_5allel_3opt_11io_vcf_read_InfoFlagParser, /*tp_methods*/
+  0, /*tp_members*/
+  0, /*tp_getset*/
+  0, /*tp_base*/
+  0, /*tp_dict*/
+  0, /*tp_descr_get*/
+  0, /*tp_descr_set*/
+  0, /*tp_dictoffset*/
+  0, /*tp_init*/
+  0, /*tp_alloc*/
+  __pyx_tp_new_5allel_3opt_11io_vcf_read_InfoFlagParser, /*tp_new*/
+  0, /*tp_free*/
+  0, /*tp_is_gc*/
+  0, /*tp_bases*/
+  0, /*tp_mro*/
+  0, /*tp_cache*/
+  0, /*tp_subclasses*/
+  0, /*tp_weaklist*/
+  0, /*tp_del*/
+  0, /*tp_version_tag*/
+  #if PY_VERSION_HEX >= 0x030400a1
+  0, /*tp_finalize*/
+  #endif
+};
+static struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_InfoStringParser __pyx_vtable_5allel_3opt_11io_vcf_read_InfoStringParser;
+
+static PyObject *__pyx_tp_new_5allel_3opt_11io_vcf_read_InfoStringParser(PyTypeObject *t, PyObject *a, PyObject *k) {
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *p;
+  PyObject *o = __pyx_tp_new_5allel_3opt_11io_vcf_read_Parser(t, a, k);
+  if (unlikely(!o)) return 0;
+  p = ((struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *)o);
+  p->__pyx_base.__pyx_vtab = (struct __pyx_vtabstruct_5allel_3opt_11io_vcf_read_Parser*)__pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoStringParser;
+  p->key = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->dtype = Py_None; Py_INCREF(Py_None);
+  p->memory.data = NULL;
+  p->memory.memview = NULL;
+  if (unlikely(__pyx_pw_5allel_3opt_11io_vcf_read_16InfoStringParser_1__cinit__(o, a, k) < 0)) goto bad;
+  return o;
+  bad:
+  Py_DECREF(o); o = 0;
+  return NULL;
+}
+
+static void __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_InfoStringParser(PyObject *o) {
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *p = (struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *)o;
+  #if PY_VERSION_HEX >= 0x030400a1
+  if (unlikely(Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
+    if (PyObject_CallFinalizerFromDealloc(o)) return;
+  }
+  #endif
+  PyObject_GC_UnTrack(o);
+  Py_CLEAR(p->key);
+  Py_CLEAR(p->dtype);
+  __PYX_XDEC_MEMVIEW(&p->memory, 1);
+  PyObject_GC_Track(o);
+  __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_Parser(o);
+}
+
+static int __pyx_tp_traverse_5allel_3opt_11io_vcf_read_InfoStringParser(PyObject *o, visitproc v, void *a) {
+  int e;
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *p = (struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *)o;
+  e = __pyx_tp_traverse_5allel_3opt_11io_vcf_read_Parser(o, v, a); if (e) return e;
+  if (p->dtype) {
+    e = (*v)(p->dtype, a); if (e) return e;
+  }
+  return 0;
+}
+
+static int __pyx_tp_clear_5allel_3opt_11io_vcf_read_InfoStringParser(PyObject *o) {
+  PyObject* tmp;
+  struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *p = (struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser *)o;
+  __pyx_tp_clear_5allel_3opt_11io_vcf_read_Parser(o);
+  tmp = ((PyObject*)p->dtype);
+  p->dtype = Py_None; Py_INCREF(Py_None);
+  Py_XDECREF(tmp);
+  return 0;
+}
+
+static PyMethodDef __pyx_methods_5allel_3opt_11io_vcf_read_InfoStringParser[] = {
+  {0, 0, 0, 0}
+};
+
+static PyTypeObject __pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser = {
+  PyVarObject_HEAD_INIT(0, 0)
+  "allel.opt.io_vcf_read.InfoStringParser", /*tp_name*/
+  sizeof(struct __pyx_obj_5allel_3opt_11io_vcf_read_InfoStringParser), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  __pyx_tp_dealloc_5allel_3opt_11io_vcf_read_InfoStringParser, /*tp_dealloc*/
+  0, /*tp_print*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*tp_compare*/
+  #endif
+  #if PY_MAJOR_VERSION >= 3
+  0, /*tp_as_async*/
+  #endif
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash*/
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+  0, /*tp_doc*/
+  __pyx_tp_traverse_5allel_3opt_11io_vcf_read_InfoStringParser, /*tp_traverse*/
+  __pyx_tp_clear_5allel_3opt_11io_vcf_read_InfoStringParser, /*tp_clear*/
+  0, /*tp_richcompare*/
+  0, /*tp_weaklistoffset*/
+  0, /*tp_iter*/
+  0, /*tp_iternext*/
+  __pyx_methods_5allel_3opt_11io_vcf_read_InfoStringParser, /*tp_methods*/
+  0, /*tp_members*/
+  0, /*tp_getset*/
+  0, /*tp_base*/
+  0, /*tp_dict*/
+  0, /*tp_descr_get*/
+  0, /*tp_descr_set*/
+  0, /*tp_dictoffset*/
+  0, /*tp_init*/
+  0, /*tp_alloc*/
+  __pyx_tp_new_5allel_3opt_11io_vcf_read_InfoStringParser, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -34618,6 +36086,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_sys, __pyx_k_sys, sizeof(__pyx_k_sys), 0, 0, 1, 1},
   {&__pyx_n_s_temp_max_size, __pyx_k_temp_max_size, sizeof(__pyx_k_temp_max_size), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
+  {&__pyx_kp_u_type_s_not_supported_for_INFO_fi, __pyx_k_type_s_not_supported_for_INFO_fi, sizeof(__pyx_k_type_s_not_supported_for_INFO_fi), 0, 1, 0, 0},
   {&__pyx_n_s_types, __pyx_k_types, sizeof(__pyx_k_types), 0, 0, 1, 1},
   {&__pyx_n_u_u1, __pyx_k_u1, sizeof(__pyx_k_u1), 0, 1, 0, 1},
   {&__pyx_kp_s_unable_to_allocate_array_data, __pyx_k_unable_to_allocate_array_data, sizeof(__pyx_k_unable_to_allocate_array_data), 0, 0, 1, 0},
@@ -34643,10 +36112,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(0, 193, __pyx_L1_error)
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(0, 195, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 293, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(0, 408, __pyx_L1_error)
-  __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(0, 789, __pyx_L1_error)
+  __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(0, 761, __pyx_L1_error)
   __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(1, 231, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 989, __pyx_L1_error)
   __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(2, 146, __pyx_L1_error)
@@ -34663,83 +36132,83 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "allel/opt/io_vcf_read.pyx":148
+  /* "allel/opt/io_vcf_read.pyx":150
  *     filters = list()
  *     for field in list(fields):
  *         if field.startswith('variants/FILTER_'):             # <<<<<<<<<<<<<<
  *             filter = field[16:].encode('ascii')
  *             filters.append(filter)
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_u_variants_FILTER); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_u_variants_FILTER); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
 
-  /* "allel/opt/io_vcf_read.pyx":149
+  /* "allel/opt/io_vcf_read.pyx":151
  *     for field in list(fields):
  *         if field.startswith('variants/FILTER_'):
  *             filter = field[16:].encode('ascii')             # <<<<<<<<<<<<<<
  *             filters.append(filter)
  *             fields.remove(field)
  */
-  __pyx_slice__2 = PySlice_New(__pyx_int_16, Py_None, Py_None); if (unlikely(!__pyx_slice__2)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_slice__2 = PySlice_New(__pyx_int_16, Py_None, Py_None); if (unlikely(!__pyx_slice__2)) __PYX_ERR(0, 151, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_slice__2);
   __Pyx_GIVEREF(__pyx_slice__2);
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_n_u_ascii); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_n_u_ascii); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 151, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "allel/opt/io_vcf_read.pyx":162
+  /* "allel/opt/io_vcf_read.pyx":164
  *     # assume any variants fields left are INFO
  *     for field in list(fields):
  *         group, name = field.split('/')             # <<<<<<<<<<<<<<
  *         if group == 'variants':
  *             info = name.encode('ascii')
  */
-  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_u__4); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 162, __pyx_L1_error)
+  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_u__4); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 164, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
 
-  /* "allel/opt/io_vcf_read.pyx":164
+  /* "allel/opt/io_vcf_read.pyx":166
  *         group, name = field.split('/')
  *         if group == 'variants':
  *             info = name.encode('ascii')             # <<<<<<<<<<<<<<
  *             infos.append(info)
  *             fields.remove(field)
  */
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_n_u_ascii); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 164, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_n_u_ascii); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 166, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "allel/opt/io_vcf_read.pyx":176
+  /* "allel/opt/io_vcf_read.pyx":178
  *     formats = list()
  *     for field in list(fields):
  *         group, name = field.split('/')             # <<<<<<<<<<<<<<
  *         if group == 'calldata':
  *             format = name.encode('ascii')
  */
-  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_u__4); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_u__4); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 178, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
-  /* "allel/opt/io_vcf_read.pyx":178
+  /* "allel/opt/io_vcf_read.pyx":180
  *         group, name = field.split('/')
  *         if group == 'calldata':
  *             format = name.encode('ascii')             # <<<<<<<<<<<<<<
  *             formats.append(format)
  *             fields.remove(field)
  */
-  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_n_u_ascii); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_n_u_ascii); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 180, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "allel/opt/io_vcf_read.pyx":268
+  /* "allel/opt/io_vcf_read.pyx":270
  *         else:
  *             # shouldn't ever happen
  *             raise RuntimeError('unexpected parser state')             # <<<<<<<<<<<<<<
  * 
  *     # left-over chunk
  */
-  __pyx_tuple__9 = PyTuple_Pack(1, __pyx_kp_u_unexpected_parser_state); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 268, __pyx_L1_error)
+  __pyx_tuple__9 = PyTuple_Pack(1, __pyx_kp_u_unexpected_parser_state); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 270, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
 
@@ -34754,74 +36223,85 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
 
-  /* "allel/opt/io_vcf_read.pyx":653
+  /* "allel/opt/io_vcf_read.pyx":633
  *     cdef malloc(self):
  *         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype, order='C')
  *         self.memory = self.values.reshape(-1).view('u1')             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_int_neg_1); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 653, __pyx_L1_error)
+  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_int_neg_1); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__11);
   __Pyx_GIVEREF(__pyx_tuple__11);
-  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_n_u_u1); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 653, __pyx_L1_error)
+  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_n_u_u1); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 633, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__12);
   __Pyx_GIVEREF(__pyx_tuple__12);
 
-  /* "allel/opt/io_vcf_read.pyx":794
+  /* "allel/opt/io_vcf_read.pyx":766
  *     cdef malloc(self):
  *         self.values = np.zeros((self.chunk_length, len(self.filters) + 1), dtype=bool)
  *         self.memory = self.values.view('u1')             # <<<<<<<<<<<<<<
  * 
  *     cdef parse(self, ParserContext context):
  */
-  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_n_u_u1); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 794, __pyx_L1_error)
+  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_n_u_u1); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 766, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__13);
   __Pyx_GIVEREF(__pyx_tuple__13);
 
-  /* "allel/opt/io_vcf_read.pyx":885
+  /* "allel/opt/io_vcf_read.pyx":853
  *             # TODO other types
  *             t = types[key]
  *             if t == np.dtype('i4'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):
+ *             elif t == np.dtype('i8'):
  */
-  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_n_u_i4); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 885, __pyx_L1_error)
+  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_n_u_i4); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 853, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__14);
   __Pyx_GIVEREF(__pyx_tuple__14);
 
-  /* "allel/opt/io_vcf_read.pyx":887
+  /* "allel/opt/io_vcf_read.pyx":855
  *             if t == np.dtype('i4'):
  *                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
- *             if t == np.dtype('i8'):             # <<<<<<<<<<<<<<
+ *             elif t == np.dtype('i8'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):
  */
-  __pyx_tuple__15 = PyTuple_Pack(1, __pyx_n_u_i8); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 887, __pyx_L1_error)
+  __pyx_tuple__15 = PyTuple_Pack(1, __pyx_n_u_i8); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 855, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__15);
   __Pyx_GIVEREF(__pyx_tuple__15);
 
-  /* "allel/opt/io_vcf_read.pyx":889
- *             if t == np.dtype('i8'):
+  /* "allel/opt/io_vcf_read.pyx":857
+ *             elif t == np.dtype('i8'):
  *                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
  *             elif t == np.dtype('f4'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):
  */
-  __pyx_tuple__16 = PyTuple_Pack(1, __pyx_n_u_f4); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 889, __pyx_L1_error)
+  __pyx_tuple__16 = PyTuple_Pack(1, __pyx_n_u_f4); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 857, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__16);
   __Pyx_GIVEREF(__pyx_tuple__16);
 
-  /* "allel/opt/io_vcf_read.pyx":891
+  /* "allel/opt/io_vcf_read.pyx":859
  *             elif t == np.dtype('f4'):
  *                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
  *             elif t == np.dtype('f8'):             # <<<<<<<<<<<<<<
  *                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
- *             else:
+ *             elif t == np.dtype(bool):
  */
-  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_u_f8); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 891, __pyx_L1_error)
+  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_u_f8); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 859, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__17);
   __Pyx_GIVEREF(__pyx_tuple__17);
+
+  /* "allel/opt/io_vcf_read.pyx":1195
+ *     cdef malloc(self):
+ *         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
+ *         self.memory = self.values.view('u1')             # <<<<<<<<<<<<<<
+ * 
+ *     cdef parse(self, ParserContext context):
+ */
+  __pyx_tuple__18 = PyTuple_Pack(1, __pyx_n_u_u1); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(0, 1195, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__18);
+  __Pyx_GIVEREF(__pyx_tuple__18);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":218
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
@@ -34830,9 +36310,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  */
-  __pyx_tuple__18 = PyTuple_Pack(1, __pyx_kp_u_ndarray_is_not_C_contiguous); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(1, 218, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__18);
-  __Pyx_GIVEREF(__pyx_tuple__18);
+  __pyx_tuple__19 = PyTuple_Pack(1, __pyx_kp_u_ndarray_is_not_C_contiguous); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(1, 218, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__19);
+  __Pyx_GIVEREF(__pyx_tuple__19);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":222
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
@@ -34841,9 +36321,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *             info.buf = PyArray_DATA(self)
  */
-  __pyx_tuple__19 = PyTuple_Pack(1, __pyx_kp_u_ndarray_is_not_Fortran_contiguou); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(1, 222, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
+  __pyx_tuple__20 = PyTuple_Pack(1, __pyx_kp_u_ndarray_is_not_Fortran_contiguou); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(1, 222, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__20);
+  __Pyx_GIVEREF(__pyx_tuple__20);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":259
  *                 if ((descr.byteorder == c'>' and little_endian) or
@@ -34852,9 +36332,9 @@ static int __Pyx_InitCachedConstants(void) {
  *                 if   t == NPY_BYTE:        f = "b"
  *                 elif t == NPY_UBYTE:       f = "B"
  */
-  __pyx_tuple__20 = PyTuple_Pack(1, __pyx_kp_u_Non_native_byte_order_not_suppor); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(1, 259, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__20);
-  __Pyx_GIVEREF(__pyx_tuple__20);
+  __pyx_tuple__21 = PyTuple_Pack(1, __pyx_kp_u_Non_native_byte_order_not_suppor); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(1, 259, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__21);
+  __Pyx_GIVEREF(__pyx_tuple__21);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":799
  * 
@@ -34863,9 +36343,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *         if ((child.byteorder == c'>' and little_endian) or
  */
-  __pyx_tuple__21 = PyTuple_Pack(1, __pyx_kp_u_Format_string_allocated_too_shor); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(1, 799, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__21);
-  __Pyx_GIVEREF(__pyx_tuple__21);
+  __pyx_tuple__22 = PyTuple_Pack(1, __pyx_kp_u_Format_string_allocated_too_shor); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(1, 799, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__22);
+  __Pyx_GIVEREF(__pyx_tuple__22);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":803
  *         if ((child.byteorder == c'>' and little_endian) or
@@ -34874,9 +36354,9 @@ static int __Pyx_InitCachedConstants(void) {
  *             # One could encode it in the format string and have Cython
  *             # complain instead, BUT: < and > in format strings also imply
  */
-  __pyx_tuple__22 = PyTuple_Pack(1, __pyx_kp_u_Non_native_byte_order_not_suppor); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(1, 803, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__22);
-  __Pyx_GIVEREF(__pyx_tuple__22);
+  __pyx_tuple__23 = PyTuple_Pack(1, __pyx_kp_u_Non_native_byte_order_not_suppor); if (unlikely(!__pyx_tuple__23)) __PYX_ERR(1, 803, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__23);
+  __Pyx_GIVEREF(__pyx_tuple__23);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":823
  *             t = child.type_num
@@ -34885,9 +36365,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *             # Until ticket #99 is fixed, use integers to avoid warnings
  */
-  __pyx_tuple__23 = PyTuple_Pack(1, __pyx_kp_u_Format_string_allocated_too_shor_2); if (unlikely(!__pyx_tuple__23)) __PYX_ERR(1, 823, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__23);
-  __Pyx_GIVEREF(__pyx_tuple__23);
+  __pyx_tuple__24 = PyTuple_Pack(1, __pyx_kp_u_Format_string_allocated_too_shor_2); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(1, 823, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__24);
+  __Pyx_GIVEREF(__pyx_tuple__24);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":989
  *         _import_array()
@@ -34896,9 +36376,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * cdef inline int import_umath() except -1:
  */
-  __pyx_tuple__24 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(1, 989, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__24);
-  __Pyx_GIVEREF(__pyx_tuple__24);
+  __pyx_tuple__25 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_multiarray_failed_to); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(1, 989, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__25);
+  __Pyx_GIVEREF(__pyx_tuple__25);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":995
  *         _import_umath()
@@ -34907,18 +36387,18 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * cdef inline int import_ufunc() except -1:
  */
-  __pyx_tuple__25 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(1, 995, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__25);
-  __Pyx_GIVEREF(__pyx_tuple__25);
+  __pyx_tuple__26 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(1, 995, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__26);
+  __Pyx_GIVEREF(__pyx_tuple__26);
 
   /* "../../../../miniconda3/envs/biipy_20170126_py35/lib/python3.5/site-packages/Cython/Includes/numpy/__init__.pxd":1001
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
  */
-  __pyx_tuple__26 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(1, 1001, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__26);
-  __Pyx_GIVEREF(__pyx_tuple__26);
+  __pyx_tuple__27 = PyTuple_Pack(1, __pyx_kp_u_numpy_core_umath_failed_to_impor); if (unlikely(!__pyx_tuple__27)) __PYX_ERR(1, 1001, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__27);
+  __Pyx_GIVEREF(__pyx_tuple__27);
 
   /* "View.MemoryView":131
  * 
@@ -34927,9 +36407,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *         if itemsize <= 0:
  */
-  __pyx_tuple__27 = PyTuple_Pack(1, __pyx_kp_s_Empty_shape_tuple_for_cython_arr); if (unlikely(!__pyx_tuple__27)) __PYX_ERR(2, 131, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__27);
-  __Pyx_GIVEREF(__pyx_tuple__27);
+  __pyx_tuple__28 = PyTuple_Pack(1, __pyx_kp_s_Empty_shape_tuple_for_cython_arr); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(2, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__28);
+  __Pyx_GIVEREF(__pyx_tuple__28);
 
   /* "View.MemoryView":134
  * 
@@ -34938,9 +36418,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *         if not isinstance(format, bytes):
  */
-  __pyx_tuple__28 = PyTuple_Pack(1, __pyx_kp_s_itemsize_0_for_cython_array); if (unlikely(!__pyx_tuple__28)) __PYX_ERR(2, 134, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__28);
-  __Pyx_GIVEREF(__pyx_tuple__28);
+  __pyx_tuple__29 = PyTuple_Pack(1, __pyx_kp_s_itemsize_0_for_cython_array); if (unlikely(!__pyx_tuple__29)) __PYX_ERR(2, 134, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__29);
+  __Pyx_GIVEREF(__pyx_tuple__29);
 
   /* "View.MemoryView":137
  * 
@@ -34949,9 +36429,9 @@ static int __Pyx_InitCachedConstants(void) {
  *         self._format = format  # keep a reference to the byte string
  *         self.format = self._format
  */
-  __pyx_tuple__29 = PyTuple_Pack(1, __pyx_n_s_ASCII); if (unlikely(!__pyx_tuple__29)) __PYX_ERR(2, 137, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__29);
-  __Pyx_GIVEREF(__pyx_tuple__29);
+  __pyx_tuple__30 = PyTuple_Pack(1, __pyx_n_s_ASCII); if (unlikely(!__pyx_tuple__30)) __PYX_ERR(2, 137, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__30);
+  __Pyx_GIVEREF(__pyx_tuple__30);
 
   /* "View.MemoryView":146
  * 
@@ -34960,9 +36440,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * 
  */
-  __pyx_tuple__30 = PyTuple_Pack(1, __pyx_kp_s_unable_to_allocate_shape_and_str); if (unlikely(!__pyx_tuple__30)) __PYX_ERR(2, 146, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__30);
-  __Pyx_GIVEREF(__pyx_tuple__30);
+  __pyx_tuple__31 = PyTuple_Pack(1, __pyx_kp_s_unable_to_allocate_shape_and_str); if (unlikely(!__pyx_tuple__31)) __PYX_ERR(2, 146, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__31);
+  __Pyx_GIVEREF(__pyx_tuple__31);
 
   /* "View.MemoryView":174
  *             self.data = <char *>malloc(self.len)
@@ -34971,9 +36451,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *             if self.dtype_is_object:
  */
-  __pyx_tuple__31 = PyTuple_Pack(1, __pyx_kp_s_unable_to_allocate_array_data); if (unlikely(!__pyx_tuple__31)) __PYX_ERR(2, 174, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__31);
-  __Pyx_GIVEREF(__pyx_tuple__31);
+  __pyx_tuple__32 = PyTuple_Pack(1, __pyx_kp_s_unable_to_allocate_array_data); if (unlikely(!__pyx_tuple__32)) __PYX_ERR(2, 174, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__32);
+  __Pyx_GIVEREF(__pyx_tuple__32);
 
   /* "View.MemoryView":190
  *             bufmode = PyBUF_F_CONTIGUOUS | PyBUF_ANY_CONTIGUOUS
@@ -34982,9 +36462,9 @@ static int __Pyx_InitCachedConstants(void) {
  *         info.buf = self.data
  *         info.len = self.len
  */
-  __pyx_tuple__32 = PyTuple_Pack(1, __pyx_kp_s_Can_only_create_a_buffer_that_is); if (unlikely(!__pyx_tuple__32)) __PYX_ERR(2, 190, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__32);
-  __Pyx_GIVEREF(__pyx_tuple__32);
+  __pyx_tuple__33 = PyTuple_Pack(1, __pyx_kp_s_Can_only_create_a_buffer_that_is); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(2, 190, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__33);
+  __Pyx_GIVEREF(__pyx_tuple__33);
 
   /* "View.MemoryView":484
  *             result = struct.unpack(self.view.format, bytesitem)
@@ -34993,9 +36473,9 @@ static int __Pyx_InitCachedConstants(void) {
  *         else:
  *             if len(self.view.format) == 1:
  */
-  __pyx_tuple__33 = PyTuple_Pack(1, __pyx_kp_s_Unable_to_convert_item_to_object); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(2, 484, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__33);
-  __Pyx_GIVEREF(__pyx_tuple__33);
+  __pyx_tuple__34 = PyTuple_Pack(1, __pyx_kp_s_Unable_to_convert_item_to_object); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(2, 484, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__34);
+  __Pyx_GIVEREF(__pyx_tuple__34);
 
   /* "View.MemoryView":556
  *         if self.view.strides == NULL:
@@ -35004,9 +36484,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *         return tuple([stride for stride in self.view.strides[:self.view.ndim]])
  */
-  __pyx_tuple__34 = PyTuple_Pack(1, __pyx_kp_s_Buffer_view_does_not_expose_stri); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(2, 556, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__34);
-  __Pyx_GIVEREF(__pyx_tuple__34);
+  __pyx_tuple__35 = PyTuple_Pack(1, __pyx_kp_s_Buffer_view_does_not_expose_stri); if (unlikely(!__pyx_tuple__35)) __PYX_ERR(2, 556, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__35);
+  __Pyx_GIVEREF(__pyx_tuple__35);
 
   /* "View.MemoryView":563
  *     def suboffsets(self):
@@ -35015,12 +36495,12 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *         return tuple([suboffset for suboffset in self.view.suboffsets[:self.view.ndim]])
  */
-  __pyx_tuple__35 = PyTuple_New(1); if (unlikely(!__pyx_tuple__35)) __PYX_ERR(2, 563, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__35);
+  __pyx_tuple__36 = PyTuple_New(1); if (unlikely(!__pyx_tuple__36)) __PYX_ERR(2, 563, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__36);
   __Pyx_INCREF(__pyx_int_neg_1);
   __Pyx_GIVEREF(__pyx_int_neg_1);
-  PyTuple_SET_ITEM(__pyx_tuple__35, 0, __pyx_int_neg_1);
-  __Pyx_GIVEREF(__pyx_tuple__35);
+  PyTuple_SET_ITEM(__pyx_tuple__36, 0, __pyx_int_neg_1);
+  __Pyx_GIVEREF(__pyx_tuple__36);
 
   /* "View.MemoryView":668
  *         if item is Ellipsis:
@@ -35029,9 +36509,9 @@ static int __Pyx_InitCachedConstants(void) {
  *                 seen_ellipsis = True
  *             else:
  */
-  __pyx_slice__36 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__36)) __PYX_ERR(2, 668, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__36);
-  __Pyx_GIVEREF(__pyx_slice__36);
+  __pyx_slice__37 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__37)) __PYX_ERR(2, 668, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_slice__37);
+  __Pyx_GIVEREF(__pyx_slice__37);
 
   /* "View.MemoryView":671
  *                 seen_ellipsis = True
@@ -35040,9 +36520,9 @@ static int __Pyx_InitCachedConstants(void) {
  *             have_slices = True
  *         else:
  */
-  __pyx_slice__37 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__37)) __PYX_ERR(2, 671, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__37);
-  __Pyx_GIVEREF(__pyx_slice__37);
+  __pyx_slice__38 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__38)) __PYX_ERR(2, 671, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_slice__38);
+  __Pyx_GIVEREF(__pyx_slice__38);
 
   /* "View.MemoryView":682
  *     nslices = ndim - len(result)
@@ -35051,9 +36531,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *     return have_slices or nslices, tuple(result)
  */
-  __pyx_slice__38 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__38)) __PYX_ERR(2, 682, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__38);
-  __Pyx_GIVEREF(__pyx_slice__38);
+  __pyx_slice__39 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__39)) __PYX_ERR(2, 682, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_slice__39);
+  __Pyx_GIVEREF(__pyx_slice__39);
 
   /* "View.MemoryView":689
  *     for suboffset in suboffsets[:ndim]:
@@ -35062,33 +36542,33 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * 
  */
-  __pyx_tuple__39 = PyTuple_Pack(1, __pyx_kp_s_Indirect_dimensions_not_supporte); if (unlikely(!__pyx_tuple__39)) __PYX_ERR(2, 689, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__39);
-  __Pyx_GIVEREF(__pyx_tuple__39);
+  __pyx_tuple__40 = PyTuple_Pack(1, __pyx_kp_s_Indirect_dimensions_not_supporte); if (unlikely(!__pyx_tuple__40)) __PYX_ERR(2, 689, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__40);
+  __Pyx_GIVEREF(__pyx_tuple__40);
 
-  /* "allel/opt/io_vcf_read.pyx":67
+  /* "allel/opt/io_vcf_read.pyx":69
  * 
  * 
  * def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fields, types):             # <<<<<<<<<<<<<<
  *     cdef:
  *         ParserContext context
  */
-  __pyx_tuple__40 = PyTuple_Pack(33, __pyx_n_s_binary_file, __pyx_n_s_buffer_size, __pyx_n_s_chunk_length, __pyx_n_s_temp_max_size, __pyx_n_s_headers, __pyx_n_s_fields, __pyx_n_s_types, __pyx_n_s_context, __pyx_n_s_chrom_parser, __pyx_n_s_pos_parser, __pyx_n_s_id_parser, __pyx_n_s_ref_parser, __pyx_n_s_alt_parser, __pyx_n_s_qual_parser, __pyx_n_s_filter_parser, __pyx_n_s_info_parser, __pyx_n_s_format_parser, __pyx_n_s_calldata_parser, __pyx_n_s_chunks, __pyx_n_s_reader, __pyx_n_s_n_samples, __pyx_n_s_filters, __pyx_n_s_field, __pyx_n_s_filter, __pyx_n_s_infos, __pyx_n_s_info_types, __pyx_n_s_group, __pyx_n_s_name, __pyx_n_s_info, __pyx_n_s_formats, __pyx_n_s_format, __pyx_n_s_chunk, __pyx_n_s_limit); if (unlikely(!__pyx_tuple__40)) __PYX_ERR(0, 67, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__40);
-  __Pyx_GIVEREF(__pyx_tuple__40);
-  __pyx_codeobj__41 = (PyObject*)__Pyx_PyCode_New(7, 0, 33, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__40, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_iter_vcf, 67, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__41)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_tuple__41 = PyTuple_Pack(33, __pyx_n_s_binary_file, __pyx_n_s_buffer_size, __pyx_n_s_chunk_length, __pyx_n_s_temp_max_size, __pyx_n_s_headers, __pyx_n_s_fields, __pyx_n_s_types, __pyx_n_s_context, __pyx_n_s_chrom_parser, __pyx_n_s_pos_parser, __pyx_n_s_id_parser, __pyx_n_s_ref_parser, __pyx_n_s_alt_parser, __pyx_n_s_qual_parser, __pyx_n_s_filter_parser, __pyx_n_s_info_parser, __pyx_n_s_format_parser, __pyx_n_s_calldata_parser, __pyx_n_s_chunks, __pyx_n_s_reader, __pyx_n_s_n_samples, __pyx_n_s_filters, __pyx_n_s_field, __pyx_n_s_filter, __pyx_n_s_infos, __pyx_n_s_info_types, __pyx_n_s_group, __pyx_n_s_name, __pyx_n_s_info, __pyx_n_s_formats, __pyx_n_s_format, __pyx_n_s_chunk, __pyx_n_s_limit); if (unlikely(!__pyx_tuple__41)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__41);
+  __Pyx_GIVEREF(__pyx_tuple__41);
+  __pyx_codeobj__42 = (PyObject*)__Pyx_PyCode_New(7, 0, 33, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__41, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_iter_vcf, 69, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__42)) __PYX_ERR(0, 69, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":290
+  /* "allel/opt/io_vcf_read.pyx":292
  * 
  * 
  * def debug(*msg):             # <<<<<<<<<<<<<<
  *     print(*msg, file=sys.stderr)
  *     sys.stderr.flush()
  */
-  __pyx_tuple__42 = PyTuple_Pack(1, __pyx_n_s_msg); if (unlikely(!__pyx_tuple__42)) __PYX_ERR(0, 290, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__42);
-  __Pyx_GIVEREF(__pyx_tuple__42);
-  __pyx_codeobj__43 = (PyObject*)__Pyx_PyCode_New(0, 0, 1, 0, CO_VARARGS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__42, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_debug, 290, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__43)) __PYX_ERR(0, 290, __pyx_L1_error)
+  __pyx_tuple__43 = PyTuple_Pack(1, __pyx_n_s_msg); if (unlikely(!__pyx_tuple__43)) __PYX_ERR(0, 292, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__43);
+  __Pyx_GIVEREF(__pyx_tuple__43);
+  __pyx_codeobj__44 = (PyObject*)__Pyx_PyCode_New(0, 0, 1, 0, CO_VARARGS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__43, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_debug, 292, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__44)) __PYX_ERR(0, 292, __pyx_L1_error)
 
   /* "allel/opt/io_vcf_read.pyx":405
  * 
@@ -35097,10 +36577,10 @@ static int __Pyx_InitCachedConstants(void) {
  *     dtype = np.dtype(dtype)
  *     if dtype.kind != 'S':
  */
-  __pyx_tuple__44 = PyTuple_Pack(1, __pyx_n_s_dtype); if (unlikely(!__pyx_tuple__44)) __PYX_ERR(0, 405, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__44);
-  __Pyx_GIVEREF(__pyx_tuple__44);
-  __pyx_codeobj__45 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__44, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_check_string_dtype, 405, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__45)) __PYX_ERR(0, 405, __pyx_L1_error)
+  __pyx_tuple__45 = PyTuple_Pack(1, __pyx_n_s_dtype); if (unlikely(!__pyx_tuple__45)) __PYX_ERR(0, 405, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__45);
+  __Pyx_GIVEREF(__pyx_tuple__45);
+  __pyx_codeobj__46 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__45, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_aliman_src_github_cggh_sci, __pyx_n_s_check_string_dtype, 405, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__46)) __PYX_ERR(0, 405, __pyx_L1_error)
 
   /* "View.MemoryView":282
  *         return self.name
@@ -35109,9 +36589,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef strided = Enum("<strided and direct>") # default
  * cdef indirect = Enum("<strided and indirect>")
  */
-  __pyx_tuple__46 = PyTuple_Pack(1, __pyx_kp_s_strided_and_direct_or_indirect); if (unlikely(!__pyx_tuple__46)) __PYX_ERR(2, 282, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__46);
-  __Pyx_GIVEREF(__pyx_tuple__46);
+  __pyx_tuple__47 = PyTuple_Pack(1, __pyx_kp_s_strided_and_direct_or_indirect); if (unlikely(!__pyx_tuple__47)) __PYX_ERR(2, 282, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__47);
+  __Pyx_GIVEREF(__pyx_tuple__47);
 
   /* "View.MemoryView":283
  * 
@@ -35120,9 +36600,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef indirect = Enum("<strided and indirect>")
  * 
  */
-  __pyx_tuple__47 = PyTuple_Pack(1, __pyx_kp_s_strided_and_direct); if (unlikely(!__pyx_tuple__47)) __PYX_ERR(2, 283, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__47);
-  __Pyx_GIVEREF(__pyx_tuple__47);
+  __pyx_tuple__48 = PyTuple_Pack(1, __pyx_kp_s_strided_and_direct); if (unlikely(!__pyx_tuple__48)) __PYX_ERR(2, 283, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__48);
+  __Pyx_GIVEREF(__pyx_tuple__48);
 
   /* "View.MemoryView":284
  * cdef generic = Enum("<strided and direct or indirect>")
@@ -35131,9 +36611,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * 
  */
-  __pyx_tuple__48 = PyTuple_Pack(1, __pyx_kp_s_strided_and_indirect); if (unlikely(!__pyx_tuple__48)) __PYX_ERR(2, 284, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__48);
-  __Pyx_GIVEREF(__pyx_tuple__48);
+  __pyx_tuple__49 = PyTuple_Pack(1, __pyx_kp_s_strided_and_indirect); if (unlikely(!__pyx_tuple__49)) __PYX_ERR(2, 284, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__49);
+  __Pyx_GIVEREF(__pyx_tuple__49);
 
   /* "View.MemoryView":287
  * 
@@ -35142,9 +36622,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef indirect_contiguous = Enum("<contiguous and indirect>")
  * 
  */
-  __pyx_tuple__49 = PyTuple_Pack(1, __pyx_kp_s_contiguous_and_direct); if (unlikely(!__pyx_tuple__49)) __PYX_ERR(2, 287, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__49);
-  __Pyx_GIVEREF(__pyx_tuple__49);
+  __pyx_tuple__50 = PyTuple_Pack(1, __pyx_kp_s_contiguous_and_direct); if (unlikely(!__pyx_tuple__50)) __PYX_ERR(2, 287, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__50);
+  __Pyx_GIVEREF(__pyx_tuple__50);
 
   /* "View.MemoryView":288
  * 
@@ -35153,9 +36633,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * 
  */
-  __pyx_tuple__50 = PyTuple_Pack(1, __pyx_kp_s_contiguous_and_indirect); if (unlikely(!__pyx_tuple__50)) __PYX_ERR(2, 288, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__50);
-  __Pyx_GIVEREF(__pyx_tuple__50);
+  __pyx_tuple__51 = PyTuple_Pack(1, __pyx_kp_s_contiguous_and_indirect); if (unlikely(!__pyx_tuple__51)) __PYX_ERR(2, 288, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__51);
+  __Pyx_GIVEREF(__pyx_tuple__51);
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -35266,13 +36746,13 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   /*--- Variable export code ---*/
   /*--- Function export code ---*/
   /*--- Type init code ---*/
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_BufferedReader) < 0) __PYX_ERR(0, 295, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_BufferedReader) < 0) __PYX_ERR(0, 297, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_BufferedReader.tp_print = 0;
-  if (PyObject_SetAttrString(__pyx_m, "BufferedReader", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_BufferedReader) < 0) __PYX_ERR(0, 295, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "BufferedReader", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_BufferedReader) < 0) __PYX_ERR(0, 297, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_BufferedReader = &__pyx_type_5allel_3opt_11io_vcf_read_BufferedReader;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_ParserContext) < 0) __PYX_ERR(0, 349, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_ParserContext) < 0) __PYX_ERR(0, 351, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_ParserContext.tp_print = 0;
-  if (PyObject_SetAttrString(__pyx_m, "ParserContext", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_ParserContext) < 0) __PYX_ERR(0, 349, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "ParserContext", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_ParserContext) < 0) __PYX_ERR(0, 351, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_ParserContext = &__pyx_type_5allel_3opt_11io_vcf_read_ParserContext;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_Parser.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_6Parser_parse;
@@ -35300,10 +36780,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipChromParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipChromParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_15SkipChromParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser) < 0) __PYX_ERR(0, 475, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser) < 0) __PYX_ERR(0, 471, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipChromParser) < 0) __PYX_ERR(0, 475, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "SkipChromParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser) < 0) __PYX_ERR(0, 475, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipChromParser) < 0) __PYX_ERR(0, 471, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "SkipChromParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser) < 0) __PYX_ERR(0, 471, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_SkipChromParser = &__pyx_type_5allel_3opt_11io_vcf_read_SkipChromParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_PosInt32Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_PosInt32Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_PosInt32Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35311,10 +36791,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_PosInt32Parser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_PosInt32Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_14PosInt32Parser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser) < 0) __PYX_ERR(0, 508, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser) < 0) __PYX_ERR(0, 500, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_PosInt32Parser) < 0) __PYX_ERR(0, 508, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "PosInt32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser) < 0) __PYX_ERR(0, 508, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_PosInt32Parser) < 0) __PYX_ERR(0, 500, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "PosInt32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser) < 0) __PYX_ERR(0, 500, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_PosInt32Parser = &__pyx_type_5allel_3opt_11io_vcf_read_PosInt32Parser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipPosParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_SkipPosParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipPosParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35322,10 +36802,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipPosParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipPosParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_13SkipPosParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser) < 0) __PYX_ERR(0, 572, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser) < 0) __PYX_ERR(0, 560, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipPosParser) < 0) __PYX_ERR(0, 572, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "SkipPosParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser) < 0) __PYX_ERR(0, 572, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipPosParser) < 0) __PYX_ERR(0, 560, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "SkipPosParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser) < 0) __PYX_ERR(0, 560, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_SkipPosParser = &__pyx_type_5allel_3opt_11io_vcf_read_SkipPosParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_SkipParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35333,10 +36813,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_10SkipParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_SkipParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipParser) < 0) __PYX_ERR(0, 605, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipParser) < 0) __PYX_ERR(0, 589, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_SkipParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipParser) < 0) __PYX_ERR(0, 605, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "SkipParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipParser) < 0) __PYX_ERR(0, 605, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipParser) < 0) __PYX_ERR(0, 589, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "SkipParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipParser) < 0) __PYX_ERR(0, 589, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_SkipParser = &__pyx_type_5allel_3opt_11io_vcf_read_SkipParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_AltParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_AltParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_AltParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35344,10 +36824,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_AltParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_AltParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_9AltParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_AltParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_AltParser) < 0) __PYX_ERR(0, 636, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_AltParser) < 0) __PYX_ERR(0, 616, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_AltParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_AltParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_AltParser) < 0) __PYX_ERR(0, 636, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "AltParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_AltParser) < 0) __PYX_ERR(0, 636, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_AltParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_AltParser) < 0) __PYX_ERR(0, 616, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "AltParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_AltParser) < 0) __PYX_ERR(0, 616, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_AltParser = &__pyx_type_5allel_3opt_11io_vcf_read_AltParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_QualFloat32Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_QualFloat32Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_QualFloat32Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35355,10 +36835,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_QualFloat32Parser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_QualFloat32Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_17QualFloat32Parser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser) < 0) __PYX_ERR(0, 706, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser) < 0) __PYX_ERR(0, 682, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_QualFloat32Parser) < 0) __PYX_ERR(0, 706, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "QualFloat32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser) < 0) __PYX_ERR(0, 706, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_QualFloat32Parser) < 0) __PYX_ERR(0, 682, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "QualFloat32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser) < 0) __PYX_ERR(0, 682, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_QualFloat32Parser = &__pyx_type_5allel_3opt_11io_vcf_read_QualFloat32Parser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_FilterParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_FilterParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_FilterParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35367,20 +36847,20 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_FilterParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_mkchunk;
   __pyx_vtable_5allel_3opt_11io_vcf_read_FilterParser.store = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_FilterParser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_12FilterParser_store;
   __pyx_type_5allel_3opt_11io_vcf_read_FilterParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_FilterParser) < 0) __PYX_ERR(0, 780, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_FilterParser) < 0) __PYX_ERR(0, 752, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_FilterParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_FilterParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_FilterParser) < 0) __PYX_ERR(0, 780, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "FilterParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_FilterParser) < 0) __PYX_ERR(0, 780, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_FilterParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_FilterParser) < 0) __PYX_ERR(0, 752, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "FilterParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_FilterParser) < 0) __PYX_ERR(0, 752, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_FilterParser = &__pyx_type_5allel_3opt_11io_vcf_read_FilterParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoParser.__pyx_base.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_parse;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_10InfoParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_InfoParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoParser) < 0) __PYX_ERR(0, 872, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoParser) < 0) __PYX_ERR(0, 840, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_InfoParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoParser) < 0) __PYX_ERR(0, 872, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "InfoParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoParser) < 0) __PYX_ERR(0, 872, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoParser) < 0) __PYX_ERR(0, 840, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoParser) < 0) __PYX_ERR(0, 840, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_InfoParser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt32Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt32Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt32Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35388,10 +36868,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt32Parser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt32Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt32Parser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser) < 0) __PYX_ERR(0, 974, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser) < 0) __PYX_ERR(0, 943, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt32Parser) < 0) __PYX_ERR(0, 974, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "InfoInt32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser) < 0) __PYX_ERR(0, 974, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt32Parser) < 0) __PYX_ERR(0, 943, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoInt32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser) < 0) __PYX_ERR(0, 943, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt32Parser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoInt32Parser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt64Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt64Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt64Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35399,10 +36879,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt64Parser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoInt64Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_15InfoInt64Parser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser) < 0) __PYX_ERR(0, 1000, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser) < 0) __PYX_ERR(0, 969, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt64Parser) < 0) __PYX_ERR(0, 1000, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "InfoInt64Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser) < 0) __PYX_ERR(0, 1000, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoInt64Parser) < 0) __PYX_ERR(0, 969, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoInt64Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser) < 0) __PYX_ERR(0, 969, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_InfoInt64Parser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoInt64Parser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat32Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat32Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat32Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35410,10 +36890,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat32Parser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat32Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat32Parser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser) < 0) __PYX_ERR(0, 1088, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser) < 0) __PYX_ERR(0, 1049, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat32Parser) < 0) __PYX_ERR(0, 1088, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "InfoFloat32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser) < 0) __PYX_ERR(0, 1088, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat32Parser) < 0) __PYX_ERR(0, 1049, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoFloat32Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser) < 0) __PYX_ERR(0, 1049, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat32Parser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat32Parser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat64Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat64Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat64Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35421,30 +36901,52 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat64Parser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFloat64Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_17InfoFloat64Parser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser) < 0) __PYX_ERR(0, 1114, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser) < 0) __PYX_ERR(0, 1075, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat64Parser) < 0) __PYX_ERR(0, 1114, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "InfoFloat64Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser) < 0) __PYX_ERR(0, 1114, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFloat64Parser) < 0) __PYX_ERR(0, 1075, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoFloat64Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser) < 0) __PYX_ERR(0, 1075, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_InfoFloat64Parser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoFloat64Parser;
+  __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFlagParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoFlagParser;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFlagParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFlagParser.__pyx_base.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_parse;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFlagParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_malloc;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoFlagParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_14InfoFlagParser_mkchunk;
+  __pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser) < 0) __PYX_ERR(0, 1153, __pyx_L1_error)
+  __pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser.tp_print = 0;
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoFlagParser) < 0) __PYX_ERR(0, 1153, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoFlagParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser) < 0) __PYX_ERR(0, 1153, __pyx_L1_error)
+  __pyx_ptype_5allel_3opt_11io_vcf_read_InfoFlagParser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoFlagParser;
+  __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoStringParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_InfoStringParser;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoStringParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoStringParser.__pyx_base.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_parse;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoStringParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_malloc;
+  __pyx_vtable_5allel_3opt_11io_vcf_read_InfoStringParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_16InfoStringParser_mkchunk;
+  __pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser) < 0) __PYX_ERR(0, 1179, __pyx_L1_error)
+  __pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser.tp_print = 0;
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_InfoStringParser) < 0) __PYX_ERR(0, 1179, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "InfoStringParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser) < 0) __PYX_ERR(0, 1179, __pyx_L1_error)
+  __pyx_ptype_5allel_3opt_11io_vcf_read_InfoStringParser = &__pyx_type_5allel_3opt_11io_vcf_read_InfoStringParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_FormatParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_FormatParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_FormatParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_FormatParser.__pyx_base.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_parse;
   __pyx_vtable_5allel_3opt_11io_vcf_read_FormatParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_12FormatParser_malloc;
   __pyx_type_5allel_3opt_11io_vcf_read_FormatParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_FormatParser) < 0) __PYX_ERR(0, 1200, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_FormatParser) < 0) __PYX_ERR(0, 1225, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_FormatParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_FormatParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_FormatParser) < 0) __PYX_ERR(0, 1200, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "FormatParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_FormatParser) < 0) __PYX_ERR(0, 1200, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_FormatParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_FormatParser) < 0) __PYX_ERR(0, 1225, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "FormatParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_FormatParser) < 0) __PYX_ERR(0, 1225, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_FormatParser = &__pyx_type_5allel_3opt_11io_vcf_read_FormatParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_CalldataParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_CalldataParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_CalldataParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_CalldataParser.__pyx_base.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_parse;
   __pyx_vtable_5allel_3opt_11io_vcf_read_CalldataParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_14CalldataParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_CalldataParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser) < 0) __PYX_ERR(0, 1271, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser) < 0) __PYX_ERR(0, 1292, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_CalldataParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_CalldataParser) < 0) __PYX_ERR(0, 1271, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "CalldataParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser) < 0) __PYX_ERR(0, 1271, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_CalldataParser) < 0) __PYX_ERR(0, 1292, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "CalldataParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser) < 0) __PYX_ERR(0, 1292, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_CalldataParser = &__pyx_type_5allel_3opt_11io_vcf_read_CalldataParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_GenotypeInt8Parser = &__pyx_vtable_5allel_3opt_11io_vcf_read_GenotypeInt8Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35453,19 +36955,19 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_mkchunk;
   __pyx_vtable_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.store = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_GenotypeInt8Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *, int))__pyx_f_5allel_3opt_11io_vcf_read_18GenotypeInt8Parser_store;
   __pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser) < 0) __PYX_ERR(0, 1342, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser) < 0) __PYX_ERR(0, 1359, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_GenotypeInt8Parser) < 0) __PYX_ERR(0, 1342, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "GenotypeInt8Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser) < 0) __PYX_ERR(0, 1342, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_GenotypeInt8Parser) < 0) __PYX_ERR(0, 1359, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "GenotypeInt8Parser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser) < 0) __PYX_ERR(0, 1359, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_GenotypeInt8Parser = &__pyx_type_5allel_3opt_11io_vcf_read_GenotypeInt8Parser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipInfoParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_SkipInfoParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipInfoParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipInfoParser.__pyx_base.parse = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, struct __pyx_obj_5allel_3opt_11io_vcf_read_ParserContext *))__pyx_f_5allel_3opt_11io_vcf_read_14SkipInfoParser_parse;
   __pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser) < 0) __PYX_ERR(0, 1453, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser) < 0) __PYX_ERR(0, 1462, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipInfoParser) < 0) __PYX_ERR(0, 1453, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "SkipInfoParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser) < 0) __PYX_ERR(0, 1453, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipInfoParser) < 0) __PYX_ERR(0, 1462, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "SkipInfoParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser) < 0) __PYX_ERR(0, 1462, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_SkipInfoParser = &__pyx_type_5allel_3opt_11io_vcf_read_SkipInfoParser;
   __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipCalldataParser = &__pyx_vtable_5allel_3opt_11io_vcf_read_SkipCalldataParser;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipCalldataParser.__pyx_base = *__pyx_vtabptr_5allel_3opt_11io_vcf_read_Parser;
@@ -35473,10 +36975,10 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipCalldataParser.__pyx_base.malloc = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *))__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_malloc;
   __pyx_vtable_5allel_3opt_11io_vcf_read_SkipCalldataParser.__pyx_base.mkchunk = (PyObject *(*)(struct __pyx_obj_5allel_3opt_11io_vcf_read_Parser *, PyObject *, struct __pyx_opt_args_5allel_3opt_11io_vcf_read_6Parser_mkchunk *__pyx_optional_args))__pyx_f_5allel_3opt_11io_vcf_read_18SkipCalldataParser_mkchunk;
   __pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser.tp_base = __pyx_ptype_5allel_3opt_11io_vcf_read_Parser;
-  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser) < 0) __PYX_ERR(0, 1474, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser) < 0) __PYX_ERR(0, 1479, __pyx_L1_error)
   __pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipCalldataParser) < 0) __PYX_ERR(0, 1474, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "SkipCalldataParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser) < 0) __PYX_ERR(0, 1474, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser.tp_dict, __pyx_vtabptr_5allel_3opt_11io_vcf_read_SkipCalldataParser) < 0) __PYX_ERR(0, 1479, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "SkipCalldataParser", (PyObject *)&__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser) < 0) __PYX_ERR(0, 1479, __pyx_L1_error)
   __pyx_ptype_5allel_3opt_11io_vcf_read_SkipCalldataParser = &__pyx_type_5allel_3opt_11io_vcf_read_SkipCalldataParser;
   __pyx_vtabptr_array = &__pyx_vtable_array;
   __pyx_vtable_array.get_memview = (PyObject *(*)(struct __pyx_array_obj *))__pyx_array_get_memview;
@@ -35528,43 +37030,43 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "allel/opt/io_vcf_read.pyx":14
+  /* "allel/opt/io_vcf_read.pyx":16
  * 
  * 
  * import sys             # <<<<<<<<<<<<<<
  * import warnings
  * 
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_sys, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_sys, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sys, __pyx_t_1) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sys, __pyx_t_1) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":15
+  /* "allel/opt/io_vcf_read.pyx":17
  * 
  * import sys
  * import warnings             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_warnings, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_warnings, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_warnings, __pyx_t_1) < 0) __PYX_ERR(0, 15, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_warnings, __pyx_t_1) < 0) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":20
+  /* "allel/opt/io_vcf_read.pyx":22
  * from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
  * from libc.stdlib cimport strtol, strtof, strtod
  * import numpy as np             # <<<<<<<<<<<<<<
  * cimport numpy as np
  * import cython
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 20, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":47
+  /* "allel/opt/io_vcf_read.pyx":49
  * 
  * 
  * cdef char TAB = b'\t'             # <<<<<<<<<<<<<<
@@ -35573,7 +37075,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_TAB = '\t';
 
-  /* "allel/opt/io_vcf_read.pyx":48
+  /* "allel/opt/io_vcf_read.pyx":50
  * 
  * cdef char TAB = b'\t'
  * cdef char NEWLINE = b'\n'             # <<<<<<<<<<<<<<
@@ -35582,7 +37084,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_NEWLINE = '\n';
 
-  /* "allel/opt/io_vcf_read.pyx":49
+  /* "allel/opt/io_vcf_read.pyx":51
  * cdef char TAB = b'\t'
  * cdef char NEWLINE = b'\n'
  * cdef char HASH = b'#'             # <<<<<<<<<<<<<<
@@ -35591,7 +37093,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_HASH = '#';
 
-  /* "allel/opt/io_vcf_read.pyx":50
+  /* "allel/opt/io_vcf_read.pyx":52
  * cdef char NEWLINE = b'\n'
  * cdef char HASH = b'#'
  * cdef char COLON = b':'             # <<<<<<<<<<<<<<
@@ -35600,7 +37102,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_COLON = ':';
 
-  /* "allel/opt/io_vcf_read.pyx":51
+  /* "allel/opt/io_vcf_read.pyx":53
  * cdef char HASH = b'#'
  * cdef char COLON = b':'
  * cdef char SEMICOLON = b';'             # <<<<<<<<<<<<<<
@@ -35609,7 +37111,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_SEMICOLON = ';';
 
-  /* "allel/opt/io_vcf_read.pyx":52
+  /* "allel/opt/io_vcf_read.pyx":54
  * cdef char COLON = b':'
  * cdef char SEMICOLON = b';'
  * cdef char PERIOD = b'.'             # <<<<<<<<<<<<<<
@@ -35618,7 +37120,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_PERIOD = '.';
 
-  /* "allel/opt/io_vcf_read.pyx":53
+  /* "allel/opt/io_vcf_read.pyx":55
  * cdef char SEMICOLON = b';'
  * cdef char PERIOD = b'.'
  * cdef char COMMA = b','             # <<<<<<<<<<<<<<
@@ -35627,7 +37129,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_COMMA = ',';
 
-  /* "allel/opt/io_vcf_read.pyx":54
+  /* "allel/opt/io_vcf_read.pyx":56
  * cdef char PERIOD = b'.'
  * cdef char COMMA = b','
  * cdef char SLASH = b'/'             # <<<<<<<<<<<<<<
@@ -35636,7 +37138,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_SLASH = '/';
 
-  /* "allel/opt/io_vcf_read.pyx":55
+  /* "allel/opt/io_vcf_read.pyx":57
  * cdef char COMMA = b','
  * cdef char SLASH = b'/'
  * cdef char PIPE = b'|'             # <<<<<<<<<<<<<<
@@ -35645,7 +37147,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_PIPE = '|';
 
-  /* "allel/opt/io_vcf_read.pyx":56
+  /* "allel/opt/io_vcf_read.pyx":58
  * cdef char SLASH = b'/'
  * cdef char PIPE = b'|'
  * cdef char EQUALS = b'='             # <<<<<<<<<<<<<<
@@ -35654,82 +37156,82 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  */
   __pyx_v_5allel_3opt_11io_vcf_read_EQUALS = '=';
 
-  /* "allel/opt/io_vcf_read.pyx":59
+  /* "allel/opt/io_vcf_read.pyx":61
  * 
  * 
  * CHROM_FIELD = 'variants/CHROM'             # <<<<<<<<<<<<<<
  * POS_FIELD = 'variants/POS'
  * ID_FIELD = 'variants/ID'
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_CHROM_FIELD, __pyx_kp_u_variants_CHROM) < 0) __PYX_ERR(0, 59, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_CHROM_FIELD, __pyx_kp_u_variants_CHROM) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":60
+  /* "allel/opt/io_vcf_read.pyx":62
  * 
  * CHROM_FIELD = 'variants/CHROM'
  * POS_FIELD = 'variants/POS'             # <<<<<<<<<<<<<<
  * ID_FIELD = 'variants/ID'
  * REF_FIELD = 'variants/REF'
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_POS_FIELD, __pyx_kp_u_variants_POS) < 0) __PYX_ERR(0, 60, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_POS_FIELD, __pyx_kp_u_variants_POS) < 0) __PYX_ERR(0, 62, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":61
+  /* "allel/opt/io_vcf_read.pyx":63
  * CHROM_FIELD = 'variants/CHROM'
  * POS_FIELD = 'variants/POS'
  * ID_FIELD = 'variants/ID'             # <<<<<<<<<<<<<<
  * REF_FIELD = 'variants/REF'
  * ALT_FIELD = 'variants/ALT'
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ID_FIELD, __pyx_kp_u_variants_ID) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ID_FIELD, __pyx_kp_u_variants_ID) < 0) __PYX_ERR(0, 63, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":62
+  /* "allel/opt/io_vcf_read.pyx":64
  * POS_FIELD = 'variants/POS'
  * ID_FIELD = 'variants/ID'
  * REF_FIELD = 'variants/REF'             # <<<<<<<<<<<<<<
  * ALT_FIELD = 'variants/ALT'
  * QUAL_FIELD = 'variants/QUAL'
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_REF_FIELD, __pyx_kp_u_variants_REF) < 0) __PYX_ERR(0, 62, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_REF_FIELD, __pyx_kp_u_variants_REF) < 0) __PYX_ERR(0, 64, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":63
+  /* "allel/opt/io_vcf_read.pyx":65
  * ID_FIELD = 'variants/ID'
  * REF_FIELD = 'variants/REF'
  * ALT_FIELD = 'variants/ALT'             # <<<<<<<<<<<<<<
  * QUAL_FIELD = 'variants/QUAL'
  * 
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ALT_FIELD, __pyx_kp_u_variants_ALT) < 0) __PYX_ERR(0, 63, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ALT_FIELD, __pyx_kp_u_variants_ALT) < 0) __PYX_ERR(0, 65, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":64
+  /* "allel/opt/io_vcf_read.pyx":66
  * REF_FIELD = 'variants/REF'
  * ALT_FIELD = 'variants/ALT'
  * QUAL_FIELD = 'variants/QUAL'             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_QUAL_FIELD, __pyx_kp_u_variants_QUAL) < 0) __PYX_ERR(0, 64, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_QUAL_FIELD, __pyx_kp_u_variants_QUAL) < 0) __PYX_ERR(0, 66, __pyx_L1_error)
 
-  /* "allel/opt/io_vcf_read.pyx":67
+  /* "allel/opt/io_vcf_read.pyx":69
  * 
  * 
  * def iter_vcf(binary_file, buffer_size, chunk_length, temp_max_size, headers, fields, types):             # <<<<<<<<<<<<<<
  *     cdef:
  *         ParserContext context
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_11io_vcf_read_1iter_vcf, NULL, __pyx_n_s_allel_opt_io_vcf_read); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_11io_vcf_read_1iter_vcf, NULL, __pyx_n_s_allel_opt_io_vcf_read); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_iter_vcf, __pyx_t_1) < 0) __PYX_ERR(0, 67, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_iter_vcf, __pyx_t_1) < 0) __PYX_ERR(0, 69, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "allel/opt/io_vcf_read.pyx":290
+  /* "allel/opt/io_vcf_read.pyx":292
  * 
  * 
  * def debug(*msg):             # <<<<<<<<<<<<<<
  *     print(*msg, file=sys.stderr)
  *     sys.stderr.flush()
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_11io_vcf_read_3debug, NULL, __pyx_n_s_allel_opt_io_vcf_read); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 290, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5allel_3opt_11io_vcf_read_3debug, NULL, __pyx_n_s_allel_opt_io_vcf_read); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_debug, __pyx_t_1) < 0) __PYX_ERR(0, 290, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_debug, __pyx_t_1) < 0) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "allel/opt/io_vcf_read.pyx":405
@@ -35774,7 +37276,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  * cdef strided = Enum("<strided and direct>") # default
  * cdef indirect = Enum("<strided and indirect>")
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__46, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 282, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__47, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 282, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(generic);
   __Pyx_DECREF_SET(generic, __pyx_t_1);
@@ -35788,7 +37290,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  * cdef indirect = Enum("<strided and indirect>")
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__47, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 283, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__48, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 283, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(strided);
   __Pyx_DECREF_SET(strided, __pyx_t_1);
@@ -35802,7 +37304,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  * 
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__48, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 284, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__49, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 284, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(indirect);
   __Pyx_DECREF_SET(indirect, __pyx_t_1);
@@ -35816,7 +37318,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  * cdef indirect_contiguous = Enum("<contiguous and indirect>")
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__49, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 287, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__50, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 287, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(contiguous);
   __Pyx_DECREF_SET(contiguous, __pyx_t_1);
@@ -35830,7 +37332,7 @@ PyMODINIT_FUNC PyInit_io_vcf_read(void)
  * 
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__50, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 288, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__51, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 288, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(indirect_contiguous);
   __Pyx_DECREF_SET(indirect_contiguous, __pyx_t_1);
@@ -37858,12 +39360,6 @@ static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED
     }
 #endif
     return value;
-}
-
-/* BufferIndexError */
-          static void __Pyx_RaiseBufferIndexError(int axis) {
-  PyErr_Format(PyExc_IndexError,
-     "Out of bounds on buffer access (axis %d)", axis);
 }
 
 /* PyObjectCallMethod0 */

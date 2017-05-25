@@ -2,6 +2,8 @@
 # cython: profile=False
 # cython: linetrace=False
 # cython: binding=False
+# cython: boundscheck=False
+# cython: wraparound=False
 """
 # cython: profile=True
 # cython: linetrace=True
@@ -376,8 +378,6 @@ cdef class ParserContext(object):
         self.format_index = 0
 
 
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
 cdef inline void ParserContext_next(ParserContext self):
     cdef:
         BufferedReader reader
@@ -437,10 +437,6 @@ cdef class StringParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void StringParser_parse(StringParser self, ParserContext context):
     cdef:
         # index into memory view
@@ -489,10 +485,6 @@ cdef class SkipChromParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void SkipChromParser_parse(SkipChromParser self, ParserContext context):
 
     # TODO store chrom on context
@@ -527,10 +519,6 @@ cdef class PosInt32Parser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context):
     cdef:
         long value
@@ -586,10 +574,6 @@ cdef class SkipPosParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void SkipPosParser_parse(SkipPosParser self, ParserContext context):
 
     # TODO store pos on context
@@ -619,10 +603,6 @@ cdef class SkipParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void SkipParser_parse(SkipParser self, ParserContext context):
 
     # read characters until tab or newline
@@ -661,10 +641,6 @@ cdef class AltParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void AltParser_parse(AltParser self, ParserContext context):
     cdef:
         # index of alt values
@@ -729,10 +705,6 @@ cdef class QualFloat32Parser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void QualFloat32Parser_parse(QualFloat32Parser self, ParserContext context):
     cdef:
         float value
@@ -808,10 +780,6 @@ cdef class FilterParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void FilterParser_parse(FilterParser self, ParserContext context):
     cdef:
         int filter_index
@@ -884,14 +852,19 @@ cdef class InfoParser(Parser):
             t = types[key]
             if t == np.dtype('i4'):
                 self.parsers[key] = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length)
-            if t == np.dtype('i8'):
+            elif t == np.dtype('i8'):
                 self.parsers[key] = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length)
             elif t == np.dtype('f4'):
                 self.parsers[key] = InfoFloat32Parser(key, fill=np.nan, chunk_length=chunk_length)
             elif t == np.dtype('f8'):
                 self.parsers[key] = InfoFloat64Parser(key, fill=np.nan, chunk_length=chunk_length)
+            elif t == np.dtype(bool):
+                self.parsers[key] = InfoFlagParser(key, chunk_length=chunk_length)
+            elif t.kind == 'S':
+                self.parsers[key] = InfoStringParser(key, chunk_length=chunk_length, dtype=t)
             else:
-                pass  # TODO
+                warnings.warn('type %s not supported for INFO field %r, field will be skipped' %
+                              (t, key))
         self.skip_parser = SkipInfoParser()
 
     cdef parse(self, ParserContext context):
@@ -905,10 +878,6 @@ cdef class InfoParser(Parser):
 
 
 # break out method as function for profiling
-# @cython.nonecheck(False)
-# @cython.initializedcheck(False)
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 cdef inline void InfoParser_parse(InfoParser self, ParserContext context):
     cdef:
         bytes key
@@ -974,8 +943,8 @@ cdef inline void InfoParser_parse(InfoParser self, ParserContext context):
 cdef class InfoInt32Parser(Parser):
 
     cdef np.int32_t[:] memory
-    cdef np.int32_t fill
     cdef bytes key
+    cdef object fill
 
     def __cinit__(self, key, fill, chunk_length):
         self.key = key
@@ -1024,10 +993,6 @@ cdef class InfoInt64Parser(Parser):
 
 
 # break out method as function for profiling
-# @cython.nonecheck(False)
-# @cython.initializedcheck(False)
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 cdef inline void info_integer_parse(bytes key, int_t[:] memory, ParserContext context):
     cdef:
         long value
@@ -1079,10 +1044,6 @@ cdef inline void info_integer_parse(bytes key, int_t[:] memory, ParserContext co
 
     # reset temporary buffer here to indicate new field
     context.temp_size = 0
-
-    # advance input stream
-    # if context.c == SEMICOLON:
-    #     ParserContext_next(context)
 
 
 cdef class InfoFloat32Parser(Parser):
@@ -1138,10 +1099,6 @@ cdef class InfoFloat64Parser(Parser):
 
 
 # break out method as function for profiling
-# @cython.nonecheck(False)
-# @cython.initializedcheck(False)
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 cdef inline void info_float_parse(bytes key, float_t[:] memory, ParserContext context):
     cdef:
         double value
@@ -1192,9 +1149,77 @@ cdef inline void info_float_parse(bytes key, float_t[:] memory, ParserContext co
     # reset temporary buffer here to indicate new field
     context.temp_size = 0
 
-    # advance input stream
-    # if context.c == SEMICOLON:
-    #     ParserContext_next(context)
+
+cdef class InfoFlagParser(Parser):
+
+    cdef np.uint8_t[:] memory
+    cdef bytes key
+
+    def __cinit__(self, key, chunk_length):
+        self.key = key
+        self.chunk_length = chunk_length
+        self.malloc()
+
+    cdef parse(self, ParserContext context):
+        # ensure we hit the end of the field
+        while context.c != SEMICOLON and context.c != TAB and context.c != 0:
+            ParserContext_next(context)
+        self.memory[context.chunk_variant_index] = 1
+
+    cdef malloc(self):
+        self.values = np.zeros(self.chunk_length, dtype='u1')
+        self.memory = self.values
+
+    cdef mkchunk(self, chunk, limit=None):
+        field = 'variants/' + str(self.key, 'ascii')
+        chunk[field] = self.values[:limit].view(bool)
+        self.malloc()
+
+
+cdef class InfoStringParser(Parser):
+
+    cdef bytes key
+    cdef object dtype
+    cdef int itemsize
+    cdef np.uint8_t[:] memory
+
+    def __cinit__(self, key, chunk_length, dtype):
+        self.key = key
+        self.chunk_length = chunk_length
+        self.dtype = check_string_dtype(dtype)
+        self.itemsize = self.dtype.itemsize
+        self.malloc()
+
+    cdef malloc(self):
+        self.values = np.zeros(self.chunk_length, dtype=self.dtype)
+        self.memory = self.values.view('u1')
+
+    cdef parse(self, ParserContext context):
+        cdef:
+            # index into memory view
+            int memory_index
+            # number of characters read into current value
+            int chars_stored = 0
+
+        # initialise memory index
+        memory_index = context.chunk_variant_index * self.itemsize
+
+        # read characters until tab
+        while context.c != TAB and context.c != SEMICOLON and context.c != 0:
+            if chars_stored < self.itemsize:
+                # store value
+                self.memory[memory_index] = context.c
+                # advance memory index
+                memory_index += 1
+                # advance number of characters stored
+                chars_stored += 1
+            # advance input stream
+            ParserContext_next(context)
+
+    cdef mkchunk(self, chunk, limit=None):
+        field = 'variants/' + str(self.key, 'ascii')
+        chunk[field] = self.values[:limit]
+        self.malloc()
 
 
 cdef class FormatParser(Parser):
@@ -1210,10 +1235,6 @@ cdef class FormatParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void FormatParser_parse(FormatParser self, ParserContext context):
     cdef:
         char* format
@@ -1295,10 +1316,6 @@ cdef class CalldataParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void CalldataParser_parse(CalldataParser self, ParserContext context):
     cdef:
         list parsers
@@ -1369,10 +1386,6 @@ cdef class GenotypeInt8Parser(Parser):
         self.malloc()
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.initializedcheck(False)
-@cython.nonecheck(False)
 cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):
     cdef:
         int allele_index = 0
@@ -1409,10 +1422,6 @@ cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext
     #       self.values[context.chunk_variant_index, context.sample_index])
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.initializedcheck(False)
-@cython.nonecheck(False)
 cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext context,
                                           int allele_index):
     cdef:
@@ -1461,10 +1470,6 @@ cdef class SkipInfoParser(Parser):
 
 
 # break out method as function for profiling
-# @cython.nonecheck(False)
-# @cython.initializedcheck(False)
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 cdef inline void SkipInfoParser_parse(SkipInfoParser self, ParserContext context):
     # debug(context.variant_index, 'SkipInfoParser_parse', bytes([context.c]))
     while context.c != SEMICOLON and context.c != TAB and context.c != 0:
@@ -1487,10 +1492,6 @@ cdef class SkipCalldataParser(Parser):
 
 
 # break out method as function for profiling
-@cython.nonecheck(False)
-@cython.initializedcheck(False)
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef inline void SkipCalldataParser_parse(SkipCalldataParser self, ParserContext context):
     # debug('SkipCalldataParser_parse')
     while True:
