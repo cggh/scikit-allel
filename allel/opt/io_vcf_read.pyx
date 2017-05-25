@@ -734,7 +734,10 @@ cdef class AltParser(Parser):
         AltParser_parse(self, context)
 
     cdef mkchunk(self, chunk, limit=None):
-        chunk[ALT_FIELD] = self.values[:limit]
+        values = self.values[:limit]
+        if self.number == 1:
+            values = values.squeeze()
+        chunk[ALT_FIELD] = values
         self.malloc()
 
 

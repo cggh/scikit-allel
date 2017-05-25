@@ -15,26 +15,29 @@ TODO:
 ** DONE Float
 ** DONE Flag
 ** DONE String
+* DONE User-controlled dtypes
+* DONE User-controlled arities to ALT, INFO
 * DONE Parse INFO multiple values
+* DONE If number is 1 return 1D array for ALT, INFO, ...
+* Reduce duplicate code in INFO parsers (via squeeze?)
 * Parse other FORMAT fields
 ** Integer
 ** Float
 ** Flag
 ** String
 ** Multiple values
+* Option not to return samples
 * Read from region via tabix
 * Read from region via scanning
 * Progress logging in vcf_to_... functions
-* User-controlled dtypes
 * User-controlled fill values
-* User-controlled arities to ALT, INFO, calldata, ...
+* User-controlled numbers to calldata, ...
 * User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN
 * Unit tests
 * PY2 compatibility?
 * Report CHROM and POS in warnings
-* If arity is 1 return 1D array for ALT, INFO, ...
 * Store field descriptions as attributes in HDF5 and Zarr
 * User-provided ploidy
 
