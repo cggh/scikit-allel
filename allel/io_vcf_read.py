@@ -11,7 +11,17 @@ TODO:
 * DONE Return filters as separate arrays in read_vcf
 * DONE Store filters as separate arrays/datasets in vcf_to_... functions
 * Parse INFO fields
+** DONE Integer
+** DONE Float
+** Flag
+** String
+** Multiple values
 * Parse other FORMAT fields
+** Integer
+** Float
+** Flag
+** String
+** Multiple values
 * Read from region via tabix
 * Read from region via scanning
 * Progress logging in vcf_to_... functions
@@ -24,6 +34,8 @@ TODO:
 * Unit tests
 * PY2 compatibility?
 * Report CHROM and POS in warnings
+* If arity is 1 return 1D array for ALT, INFO, ...
+* Store field descriptions as attributes in HDF5 and Zarr
 
 """
 from __future__ import absolute_import, print_function, division
@@ -55,6 +67,7 @@ DEFAULT_TEMP_SIZE = 2**15
 
 def read_vcf(path,
              fields=None,
+             types=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              temp_max_size=DEFAULT_TEMP_SIZE):
@@ -65,6 +78,8 @@ def read_vcf(path,
     path : str
         TODO
     fields : sequence of str
+        TODO
+    types : dict
         TODO
     buffer_size : int
         TODO
@@ -81,8 +96,9 @@ def read_vcf(path,
     """
 
     # setup
-    headers, chunks = read_vcf_chunks(path=path, fields=fields, buffer_size=buffer_size,
-                                      chunk_length=chunk_length, temp_max_size=temp_max_size)
+    headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types,
+                                      buffer_size=buffer_size, chunk_length=chunk_length,
+                                      temp_max_size=temp_max_size)
 
     # read all chunks into a list
     chunks = list(chunks)
@@ -108,6 +124,7 @@ def vcf_to_npz(input_path, output_path,
                compressed=True,
                overwrite=False,
                fields=None,
+               types=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                temp_max_size=DEFAULT_TEMP_SIZE):
@@ -119,7 +136,7 @@ def vcf_to_npz(input_path, output_path,
         raise ValueError('file exists at path %r; use overwrite=True to replace' % output_path)
 
     # read all data into memory
-    data = read_vcf(path=input_path, fields=fields, buffer_size=buffer_size,
+    data = read_vcf(path=input_path, fields=fields, types=types, buffer_size=buffer_size,
                     chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     # setup save function
@@ -139,6 +156,7 @@ def vcf_to_hdf5(input_path, output_path,
                 shuffle=False,
                 overwrite=False,
                 fields=None,
+                types=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -160,7 +178,8 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        headers, chunks = read_vcf_chunks(input_path, fields=fields, buffer_size=buffer_size,
+        headers, chunks = read_vcf_chunks(input_path, fields=fields,
+                                          types=types, buffer_size=buffer_size,
                                           chunk_length=chunk_length, temp_max_size=temp_max_size)
         # TODO this won't be necessary when using generators
         chunks = iter(chunks)
@@ -251,6 +270,7 @@ def vcf_to_zarr(input_path, output_path,
                 order='C',
                 overwrite=False,
                 fields=None,
+                types=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -267,8 +287,9 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    headers, chunks = read_vcf_chunks(input_path, fields=fields, buffer_size=buffer_size,
-                                      chunk_length=chunk_length, temp_max_size=temp_max_size)
+    headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
+                                      buffer_size=buffer_size, chunk_length=chunk_length,
+                                      temp_max_size=temp_max_size)
     # TODO this won't be necessary when using generators
     chunks = iter(chunks)
 
@@ -317,6 +338,7 @@ def vcf_to_zarr(input_path, output_path,
 
 def read_vcf_chunks(path,
                     fields=None,
+                    types=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
                     chunk_length=DEFAULT_CHUNK_LENGTH,
                     temp_max_size=DEFAULT_TEMP_SIZE):
@@ -325,19 +347,19 @@ def read_vcf_chunks(path,
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
         with gzip.open(path, mode='rb') as binary_file:
-            return _read_vcf(binary_file, fields=fields, buffer_size=buffer_size,
+            return _read_vcf(binary_file, fields=fields, types=types, buffer_size=buffer_size,
                              chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     elif isinstance(path, str):
         # assume no compression
         with open(path, mode='rb', buffering=0) as binary_file:
-            return _read_vcf(binary_file, fields=fields, buffer_size=buffer_size,
+            return _read_vcf(binary_file, fields=fields, types=types, buffer_size=buffer_size,
                              chunk_length=chunk_length, temp_max_size=temp_max_size)
 
     else:
         # assume some other binary file-like object
         binary_file = path
-        return _read_vcf(binary_file, fields=fields, buffer_size=buffer_size,
+        return _read_vcf(binary_file, fields=fields, types=types, buffer_size=buffer_size,
                          chunk_length=chunk_length, temp_max_size=temp_max_size)
 
 
@@ -493,7 +515,98 @@ def normalize_fields(fields, headers):
     return normed_fields
 
 
-def _read_vcf(fileobj, fields, buffer_size, chunk_length, temp_max_size):
+default_integer_dtype = 'i4'
+default_float_dtype = 'f4'
+default_string_dtype = 'S12'
+
+
+def normalize_type(t):
+    if t == 'Integer':
+        return np.dtype(default_integer_dtype)
+    elif t == 'Float':
+        return np.dtype(default_float_dtype)
+    elif t == 'String':
+        return np.dtype(default_string_dtype)
+    elif t == 'Flag':
+        return np.dtype(bool)
+    else:
+        return np.dtype(t)
+
+
+default_types = {
+    'variants/CHROM': 'S12',
+    'variants/POS': 'i4',
+    'variants/ID': 'S12',
+    'variants/REF': 'S1',
+    'variants/ALT': 'S1',
+    'variants/QUAL': 'f4',
+    'variants/DP': 'i4',
+    'variants/AN': 'i4',
+    'variants/AC': 'i4',
+    'variants/AF': 'f4',
+    'variants/MQ': 'f4',
+    'calldata/GT': 'i1',
+    'calldata/DP': 'i2',
+    'calldata/AD': 'i2',
+    'calldata/MQ0': 'i2',
+    'calldata/MQ': 'f2',
+}
+
+
+def normalize_types(types, fields, headers):
+    """TODO"""
+
+    # normalize user-provided types
+    if types is None:
+        types = dict()
+    types = {normalize_field_prefix(f, headers): normalize_type(t)
+             for f, t in types.items()}
+
+    # setup output
+    normed_types = dict()
+
+    for f in fields:
+
+        group, name = f.split('/')
+
+        if f in types:
+            normed_types[f] = types[f]
+
+        elif f in default_types:
+            normed_types[f] = normalize_type(default_types[f])
+
+        elif group == 'variants':
+
+            if name.startswith('FILTER_'):
+                normed_types[f] = np.dtype(bool)
+
+            elif name in headers.infos:
+                normed_types[f] = normalize_type(headers.infos[name]['Type'])
+
+            else:
+                # fall back to string
+                normed_types[f] = normalize_type('String')
+                warnings.warn('could not determine type for field %r, falling back to %s' %
+                              (f, normed_types[f]))
+
+        elif group == 'calldata':
+
+            if name in headers.formats:
+                normed_types[f] = normalize_type(headers.formats[name]['Type'])
+
+            else:
+                # fall back to string
+                normed_types[f] = normalize_type('String')
+                warnings.warn('could not determine type for field %r, falling back to %s' %
+                              (f, normed_types[f]))
+
+        else:
+            raise RuntimeError('unpected field: %r' % f)
+
+    return normed_types
+
+
+def _read_vcf(fileobj, fields, types, buffer_size, chunk_length, temp_max_size):
 
     # read VCF headers
     headers = read_vcf_headers(fileobj)
@@ -510,9 +623,14 @@ def _read_vcf(fileobj, fields, buffer_size, chunk_length, temp_max_size):
     else:
         fields = normalize_fields(fields, headers)
 
+    # setup data types
+    types = normalize_types(types, fields, headers)
+    # debug('normalized types', types)
+
     # setup chunks iterator
     chunks = iter_vcf(fileobj, buffer_size=buffer_size, chunk_length=chunk_length,
-                      temp_max_size=temp_max_size, headers=headers, fields=fields)
+                      temp_max_size=temp_max_size, headers=headers, fields=fields,
+                      types=types)
 
     return headers, chunks
 
