@@ -970,17 +970,17 @@ cdef class InfoParser(Parser):
             if t == np.dtype(bool) or n == 0:
                 parser = InfoFlagParser(key, chunk_length=chunk_length)
             elif t == np.dtype('i4'):
-                parser = InfoInt32MultiParser(key, fill=-1, chunk_length=chunk_length,
+                parser = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length,
                                               number=n)
             elif t == np.dtype('i8'):
-                parser = InfoInt64MultiParser(key, fill=-1, chunk_length=chunk_length,
+                parser = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length,
                                               number=n)
             elif t == np.dtype('f4'):
-                parser = InfoFloat32MultiParser(key, fill=NAN,
+                parser = InfoFloat32Parser(key, fill=NAN,
                                                 chunk_length=chunk_length,
                                                 number=n)
             elif t == np.dtype('f8'):
-                parser = InfoFloat64MultiParser(key, fill=NAN,
+                parser = InfoFloat64Parser(key, fill=NAN,
                                                 chunk_length=chunk_length,
                                                 number=n)
             elif t == np.dtype(bool):
@@ -1070,7 +1070,7 @@ cdef inline void InfoParser_parse(InfoParser self, ParserContext context):
     ParserContext_next(context)
 
 
-cdef class InfoInt32MultiParser(Parser):
+cdef class InfoInt32Parser(Parser):
 
     cdef np.int32_t[:, :] memory
     cdef bytes key
@@ -1085,7 +1085,7 @@ cdef class InfoInt32MultiParser(Parser):
         self.malloc()
 
     cdef parse(self, ParserContext context):
-        info_integer_parse_multi(self.key, self.memory, self.number, context)
+        info_integer_parse(self.key, self.memory, self.number, context)
 
     cdef malloc(self):
         self.values = np.empty((self.chunk_length, self.number), dtype='i4')
@@ -1101,7 +1101,7 @@ cdef class InfoInt32MultiParser(Parser):
         self.malloc()
 
 
-cdef class InfoInt64MultiParser(Parser):
+cdef class InfoInt64Parser(Parser):
 
     cdef np.int64_t[:, :] memory
     cdef np.int64_t fill
@@ -1116,7 +1116,7 @@ cdef class InfoInt64MultiParser(Parser):
         self.malloc()
 
     cdef parse(self, ParserContext context):
-        info_integer_parse_multi(self.key, self.memory, self.number, context)
+        info_integer_parse(self.key, self.memory, self.number, context)
 
     cdef malloc(self):
         self.values = np.empty((self.chunk_length, self.number), dtype='i8')
@@ -1132,7 +1132,7 @@ cdef class InfoInt64MultiParser(Parser):
         self.malloc()
 
 
-cdef inline void info_integer_parse_multi(bytes key, int_t[:, :] memory, int number,
+cdef inline void info_integer_parse(bytes key, int_t[:, :] memory, int number,
                                           ParserContext context):
     cdef:
         int value_index = 0
@@ -1144,12 +1144,13 @@ cdef inline void info_integer_parse_multi(bytes key, int_t[:, :] memory, int num
 
         if context.c == COMMA:
 
-            info_integer_store_multi(key, memory, number, context, value_index)
+            info_integer_store(key, memory, number, context, value_index)
             temp_clear(context)
             value_index += 1
 
-        elif context.c == SEMICOLON or context.c == TAB or context.c == 0:
-            info_integer_store_multi(key, memory, number, context, value_index)
+        elif context.c == SEMICOLON or context.c == TAB or context.c == NEWLINE or \
+                context.c == 0:
+            info_integer_store(key, memory, number, context, value_index)
             break
 
         else:
@@ -1162,7 +1163,7 @@ cdef inline void info_integer_parse_multi(bytes key, int_t[:, :] memory, int num
     temp_clear(context)
 
 
-cdef inline void info_integer_store_multi(bytes key, int_t[:, :] memory, int number,
+cdef inline void info_integer_store(bytes key, int_t[:, :] memory, int number,
                                           ParserContext context, int value_index):
     cdef:
         long value
@@ -1179,7 +1180,7 @@ cdef inline void info_integer_store_multi(bytes key, int_t[:, :] memory, int num
     memory[context.chunk_variant_index, value_index] = value
 
 
-cdef class InfoFloat32MultiParser(Parser):
+cdef class InfoFloat32Parser(Parser):
 
     cdef np.float32_t[:, :] memory
     cdef np.float32_t fill
@@ -1194,7 +1195,7 @@ cdef class InfoFloat32MultiParser(Parser):
         self.malloc()
 
     cdef parse(self, ParserContext context):
-        info_float_parse_multi(self.key, self.memory, self.number, context)
+        info_float_parse(self.key, self.memory, self.number, context)
 
     cdef malloc(self):
         self.values = np.empty((self.chunk_length, self.number), dtype='f4')
@@ -1210,7 +1211,7 @@ cdef class InfoFloat32MultiParser(Parser):
         self.malloc()
 
 
-cdef class InfoFloat64MultiParser(Parser):
+cdef class InfoFloat64Parser(Parser):
 
     cdef np.float64_t[:, :] memory
     cdef np.float64_t fill
@@ -1225,7 +1226,7 @@ cdef class InfoFloat64MultiParser(Parser):
         self.malloc()
 
     cdef parse(self, ParserContext context):
-        info_float_parse_multi(self.key, self.memory, self.number, context)
+        info_float_parse(self.key, self.memory, self.number, context)
 
     cdef malloc(self):
         self.values = np.empty((self.chunk_length, self.number), dtype='f8')
@@ -1241,8 +1242,8 @@ cdef class InfoFloat64MultiParser(Parser):
         self.malloc()
 
 
-cdef inline void info_float_parse_multi(bytes key, float_t[:, :] memory, int number,
-                                        ParserContext context):
+cdef inline void info_float_parse(bytes key, float_t[:, :] memory, int number,
+                                  ParserContext context):
     cdef:
         int value_index = 0
 
@@ -1252,12 +1253,13 @@ cdef inline void info_float_parse_multi(bytes key, float_t[:, :] memory, int num
     while True:
 
         if context.c == COMMA:
-            info_float_store_multi(key, memory, number, context, value_index)
+            info_float_store(key, memory, number, context, value_index)
             temp_clear(context)
             value_index += 1
 
-        elif context.c == SEMICOLON or context.c == TAB or context.c == 0:
-            info_float_store_multi(key, memory, number, context, value_index)
+        elif context.c == SEMICOLON or context.c == TAB or context.c == NEWLINE or \
+                context.c == 0:
+            info_float_store(key, memory, number, context, value_index)
             break
 
         else:
@@ -1269,8 +1271,8 @@ cdef inline void info_float_parse_multi(bytes key, float_t[:, :] memory, int num
     temp_clear(context)
 
 
-cdef inline void info_float_store_multi(bytes key, float_t[:, :] memory, int number,
-                                        ParserContext context, int value_index):
+cdef inline void info_float_store(bytes key, float_t[:, :] memory, int number,
+                                  ParserContext context, int value_index):
     cdef:
         double value
 
@@ -1599,3 +1601,139 @@ cdef class SkipCalldataFieldParser(Parser):
 
     cdef mkchunk(self, chunk, limit=None):
         pass
+
+
+cdef inline void calldata_integer_parse(bytes key, int_t[:, :, :] memory, int number,
+                                        ParserContext context):
+    cdef:
+        int value_index = 0
+
+    # reset temporary buffer
+    temp_clear(context)
+
+    while True:
+
+        if context.c == COMMA:
+            calldata_integer_store(key, memory, number, context, value_index)
+            temp_clear(context)
+            value_index += 1
+
+        elif context.c == COLON or context.c == TAB or context.c == NEWLINE or \
+                context.c == 0:
+            calldata_integer_store(key, memory, number, context, value_index)
+            break
+
+        else:
+            temp_append(context)
+
+        ParserContext_next(context)
+
+    # reset temporary buffer here to indicate new field
+    temp_clear(context)
+
+
+cdef inline void calldata_integer_store(bytes key, int_t[:, :, :] memory, int number,
+                                        ParserContext context, int value_index):
+    cdef:
+        long value
+
+    if value_index >= number:
+        # more values than we have room for, ignore
+        return
+
+    # parse string as integer
+    # TODO configurable fill
+    value = temp_strtol(context, -1)
+
+    # store value
+    memory[context.chunk_variant_index, context.sample_index, value_index] = value
+
+
+cdef inline void calldata_float_parse(bytes key, float_t[:, :, :] memory, int number,
+                                      ParserContext context):
+    cdef:
+        int value_index = 0
+
+    # reset temporary buffer
+    temp_clear(context)
+
+    while True:
+
+        if context.c == COMMA:
+            calldata_float_store(key, memory, number, context, value_index)
+            temp_clear(context)
+            value_index += 1
+
+        elif context.c == COLON or context.c == TAB or context.c == NEWLINE or \
+                context.c == 0:
+            calldata_float_store(key, memory, number, context, value_index)
+            break
+
+        else:
+            temp_append(context)
+
+        ParserContext_next(context)
+
+    # reset temporary buffer here to indicate new field
+    temp_clear(context)
+
+
+cdef inline void calldata_float_store(bytes key, float_t[:, :, :] memory, int number,
+                                      ParserContext context, int value_index):
+    cdef:
+        double value
+
+    if value_index >= number:
+        # more values than we have room for, ignore
+        return
+
+    # parse string as float
+    # TODO configurable fill
+    value = temp_strtod(context, NAN)
+
+    # store value
+    memory[context.chunk_variant_index, context.sample_index, value_index] = value
+
+
+cdef class CalldataParserBase(Parser):
+
+    cdef bytes key
+    cdef int number
+    cdef int n_samples
+
+    cdef parse(self, ParserContext context):
+        pass
+
+    cdef malloc(self):
+        pass
+
+    cdef void mkchunk(self, chunk, limit=None):
+        field = 'calldata/' + str(self.key, 'ascii')
+        values = self.values[:limit]
+        if self.number == 1:
+            values = values.squeeze(axis=2)
+        chunk[field] = values
+        self.malloc()
+
+
+cdef class CalldataInt8Parser(CalldataParserBase):
+
+    cdef np.int8_t[:, :, :] memory
+    cdef np.int8_t fill
+
+    def __cinit__(self, key, fill, chunk_length, n_samples, number):
+        self.chunk_length = chunk_length
+        self.key = key
+        self.number = number
+        self.n_samples = n_samples
+        self.fill = fill
+        self.malloc()
+
+    cdef parse(self, ParserContext context):
+        calldata_integer_parse(self.key, self.memory, self.number, context)
+
+    cdef malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.number),
+                               dtype='i1')
+        self.memory = self.values
+        self.memory[:] = self.fill
