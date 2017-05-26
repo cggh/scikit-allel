@@ -986,7 +986,7 @@ cdef class InfoParser(Parser):
             elif t == np.dtype(bool):
                 parser = InfoFlagParser(key, chunk_length=chunk_length)
             elif t.kind == 'S':
-                parser = InfoStringMultiParser(key, chunk_length=chunk_length,
+                parser = InfoStringParser(key, chunk_length=chunk_length,
                                                dtype=t, number=n)
             else:
                 parser = self.skip_parser
@@ -1315,7 +1315,7 @@ cdef class InfoFlagParser(Parser):
         self.malloc()
 
 
-cdef class InfoStringMultiParser(Parser):
+cdef class InfoStringParser(Parser):
 
     cdef bytes key
     cdef object dtype
@@ -1493,7 +1493,9 @@ cdef class CalldataParser(Parser):
                                                n_samples=n_samples,
                                                number=n,
                                                fill=NAN)
-            # TODO string parser
+            elif t.kind == 'S':
+                parser = CalldataStringParser(key, dtype=t, chunk_length=chunk_length,
+                                              n_samples=n_samples, number=n)
             # TODO unsigned int parsers
             else:
                 parser = self.skip_parser
@@ -1674,9 +1676,6 @@ cdef inline void calldata_integer_parse(bytes key, int_t[:, :, :] memory, int nu
 
         ParserContext_next(context)
 
-    # reset temporary buffer here to indicate new field
-    temp_clear(context)
-
 
 cdef inline void calldata_integer_store(bytes key, int_t[:, :, :] memory, int number,
                                         ParserContext context, int value_index):
@@ -1719,9 +1718,6 @@ cdef inline void calldata_float_parse(bytes key, float_t[:, :, :] memory, int nu
             temp_append(context)
 
         ParserContext_next(context)
-
-    # reset temporary buffer here to indicate new field
-    temp_clear(context)
 
 
 cdef inline void calldata_float_store(bytes key, float_t[:, :, :] memory, int number,
@@ -1904,4 +1900,73 @@ cdef class CalldataFloat64Parser(CalldataParserBase):
         self.memory[:] = self.fill
 
 
-# TODO calldata string parser
+cdef class CalldataStringParser(Parser):
+
+    cdef bytes key
+    cdef object dtype
+    cdef int itemsize
+    cdef np.uint8_t[:] memory
+    cdef int number
+    cdef int n_samples
+
+    def __cinit__(self, key, chunk_length, dtype, number, n_samples):
+        self.key = key
+        self.chunk_length = chunk_length
+        self.dtype = check_string_dtype(dtype)
+        self.itemsize = self.dtype.itemsize
+        self.number = number
+        self.n_samples = n_samples
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.zeros((self.chunk_length, self.n_samples, self.number),
+                               dtype=self.dtype)
+        self.memory = self.values.reshape(-1).view('u1')
+
+    cdef void parse(self, ParserContext context):
+        cdef:
+            int value_index = 0
+            # index into memory view
+            int memory_offset, memory_index
+            # number of characters read into current value
+            int chars_stored = 0
+
+        # initialise memory index
+        memory_offset = ((context.chunk_variant_index *
+                         self.n_samples *
+                         self.number *
+                         self.itemsize) +
+                         (context.sample_index *
+                          self.number *
+                          self.itemsize))
+        memory_index = memory_offset
+
+        # read characters until tab
+        while True:
+            if context.c == TAB or context.c == COLON or context.c == NEWLINE or \
+                    context.c == 0:
+                break
+            elif context.c == COMMA:
+                # advance value index
+                value_index += 1
+                # set memory index to beginning of next item
+                memory_index = memory_offset + (value_index * self.itemsize)
+                # reset chars stored
+                chars_stored = 0
+            elif chars_stored < self.itemsize and value_index < self.number:
+                # store value
+                self.memory[memory_index] = context.c
+                # advance memory index
+                memory_index += 1
+                # advance number of characters stored
+                chars_stored += 1
+            # advance input stream
+            ParserContext_next(context)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        field = 'calldata/' + str(self.key, 'ascii')
+        values = self.values[:limit]
+        if self.number == 1:
+            values = values.squeeze(axis=2)
+        chunk[field] = values
+        self.malloc()

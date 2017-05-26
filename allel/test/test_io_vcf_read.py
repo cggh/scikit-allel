@@ -217,7 +217,8 @@ def test_read_vcf_fields_selected():
 
 def test_read_vcf_content():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='*', chunk_length=4, types={'ALT': 'S3'})
+    callset = read_vcf(fn, fields='*', chunk_length=4,
+                       types={'ALT': 'S3', 'calldata/DP': 'S3'})
 
     # fixed fields
     eq_(b'19', callset['variants/CHROM'][0])
@@ -244,6 +245,8 @@ def test_read_vcf_content():
     eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
     eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
     eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
+    print(callset['calldata/DP'])
+    eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
     # TODO special fields?
     # eq_(True, a[0]['NA00001']['is_called'])
     # eq_(True, a[0]['NA00001']['is_phased'])

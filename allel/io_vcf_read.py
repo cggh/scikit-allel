@@ -21,10 +21,10 @@ TODO:
 * DONE If number is 1 return 1D array for ALT, INFO, ...
 * DONE Reduce duplicate code in INFO parsers (via squeeze?)
 * DONE Check for less than temp chars parsed as int or float
-* Parse other FORMAT fields
+* DONE Parse other FORMAT fields
 ** DONE Integer
 ** DONE Float
-** String
+** DONE String
 * Generalise genotype parser integer type
 * User-provided ploidy
 * Option not to return samples
