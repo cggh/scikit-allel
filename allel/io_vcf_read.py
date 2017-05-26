@@ -22,15 +22,15 @@ TODO:
 * DONE Reduce duplicate code in INFO parsers (via squeeze?)
 * DONE Check for less than temp chars parsed as int or float
 * Parse other FORMAT fields
-** Integer
-** Float
+** DONE Integer
+** DONE Float
 ** String
-** Multiple values
+* Generalise genotype parser integer type
 * User-provided ploidy
 * Option not to return samples
 * Handle number = 0 in non-flag INFO field
 * User-controlled fill values
-* User-controlled numbers to ALT, INFO, calldata, ...
+* User-controlled numbers to ALT, INFO, calldata, ... (tests)
 * Read from region via tabix
 * Read from region via scanning
 * Progress logging in vcf_to_... functions
@@ -41,7 +41,7 @@ TODO:
 * PY2 compatibility?
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
-* Special fields: num_alleles, is_snp, svlen, genotype_ac, genotype?
+* Special fields: num_alleles, is_snp, svlen, genotype_ac, genotype, is_called, is_phased?
 
 """
 from __future__ import absolute_import, print_function, division

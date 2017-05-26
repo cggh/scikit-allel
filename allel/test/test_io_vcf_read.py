@@ -42,24 +42,30 @@ def test_read_vcf_chunks():
 
     # check chunk contents
     expected_fields = [
-        'calldata/GT',
-        'variants/AA',
-        'variants/AC',
-        'variants/AF',
-        'variants/ALT',
-        'variants/AN',
+        # fixed fields
         'variants/CHROM',
-        'variants/DB',
-        'variants/DP',
+        'variants/POS',
+        'variants/ID',
+        'variants/REF',
+        'variants/ALT',
+        'variants/QUAL',
         'variants/FILTER_PASS',
         'variants/FILTER_q10',
         'variants/FILTER_s50',
+        # INFO fields
+        'variants/AA',
+        'variants/AC',
+        'variants/AF',
+        'variants/AN',
+        'variants/DB',
+        'variants/DP',
         'variants/H2',
-        'variants/ID',
         'variants/NS',
-        'variants/POS',
-        'variants/QUAL',
-        'variants/REF'
+        # FORMAT fields
+        'calldata/GT',
+        'calldata/GQ',
+        'calldata/HQ',
+        'calldata/DP',
     ]
     for chunk in chunks:
         assert_list_equal(sorted(expected_fields), sorted(chunk.keys()))
@@ -91,7 +97,9 @@ def test_read_vcf_fields_all():
         'variants/NS',
         # FORMAT fields
         'calldata/GT',
-        # TODO other calldata
+        'calldata/GQ',
+        'calldata/HQ',
+        'calldata/DP',
     ]
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
@@ -181,7 +189,9 @@ def test_read_vcf_fields_all_calldata():
         # TODO no samples
         'samples',
         'calldata/GT',
-        # TODO other calldata
+        'calldata/GQ',
+        'calldata/HQ',
+        'calldata/DP',
     ]
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
@@ -200,7 +210,7 @@ def test_read_vcf_fields_selected():
         'variants/AF',
         # FORMAT fields
         'calldata/GT',
-        # TODO other calldata
+        'calldata/HQ',
     ]
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
@@ -229,7 +239,14 @@ def test_read_vcf_content():
     eq_(True, callset['variants/DB'][2])
     eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
 
-    # TODO test calldata content
+    # test calldata content
+    eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
+    eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
+    # TODO special fields?
+    # eq_(True, a[0]['NA00001']['is_called'])
+    # eq_(True, a[0]['NA00001']['is_phased'])
 
 
 # TODO test types

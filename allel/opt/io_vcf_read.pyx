@@ -524,13 +524,13 @@ cdef class Parser(object):
     cdef object values
     cdef int chunk_length
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         pass
 
 
@@ -556,14 +556,14 @@ cdef class StringParser(Parser):
         self.itemsize = self.dtype.itemsize
         self.malloc()
 
-    cdef malloc(self):
+    cdef void malloc(self):
         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
         self.memory = self.values.view('u1')
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         StringParser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         chunk[self.field] = self.values[:limit]
         self.malloc()
 
@@ -606,13 +606,13 @@ cdef class SkipChromParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         SkipChromParser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         pass
 
 
@@ -638,14 +638,14 @@ cdef class PosInt32Parser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef malloc(self):
-        self.values = np.zeros(self.chunk_length, dtype='i4')
+    cdef void malloc(self):
+        self.values = np.zeros(self.chunk_length, dtype='int32')
         self.memory = self.values
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         PosInt32Parser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         chunk[POS_FIELD] = self.values[:limit]
         self.malloc()
 
@@ -679,13 +679,13 @@ cdef class SkipPosParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         SkipPosParser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         pass
 
 
@@ -708,10 +708,10 @@ cdef class SkipFieldParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         # read characters until tab or newline
         while context.c != TAB and context.c != NEWLINE and context.c != 0:
             ParserContext_next(context)
@@ -719,7 +719,7 @@ cdef class SkipFieldParser(Parser):
         # advance input stream beyond tab or newline
         ParserContext_next(context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         pass
 
 
@@ -729,10 +729,10 @@ cdef class SkipAllCalldataParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         # read characters until newline
         while context.c != NEWLINE and context.c != 0:
             ParserContext_next(context)
@@ -740,7 +740,7 @@ cdef class SkipAllCalldataParser(Parser):
         # advance input stream beyond newline
         ParserContext_next(context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         pass
 
 
@@ -759,14 +759,14 @@ cdef class AltParser(Parser):
         self.number = number
         self.malloc()
 
-    cdef malloc(self):
+    cdef void malloc(self):
         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype, order='C')
         self.memory = self.values.reshape(-1).view('u1')
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         AltParser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=1)
@@ -824,16 +824,16 @@ cdef class QualFloat32Parser(Parser):
         self.fill = fill
         self.malloc()
 
-    cdef malloc(self):
+    cdef void malloc(self):
         # debug('QualFloat32Parser malloc()')
-        self.values = np.empty(self.chunk_length, dtype='f4')
+        self.values = np.empty(self.chunk_length, dtype='float32')
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         QualFloat32Parser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         chunk[QUAL_FIELD] = self.values[:limit]
         self.malloc()
 
@@ -873,17 +873,17 @@ cdef class FilterParser(Parser):
         self.filter_position = {f: i for i, f in enumerate(self.filters)}
         self.malloc()
 
-    cdef malloc(self):
+    cdef void malloc(self):
         self.values = np.zeros((self.chunk_length, len(self.filters) + 1), dtype=bool)
         self.memory = self.values.view('u1')
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         FilterParser_parse(self, context)
 
     cdef store(self, ParserContext context):
         FilterParser_store(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         for i, filter in enumerate(self.filters):
             field = 'variants/FILTER_' + str(filter, 'ascii')
             # TODO any need to make it a contiguous array?
@@ -969,17 +969,17 @@ cdef class InfoParser(Parser):
             # debug('setting up INFO parser', key, t, n)
             if t == np.dtype(bool) or n == 0:
                 parser = InfoFlagParser(key, chunk_length=chunk_length)
-            elif t == np.dtype('i4'):
+            elif t == np.dtype('int32'):
                 parser = InfoInt32Parser(key, fill=-1, chunk_length=chunk_length,
                                               number=n)
-            elif t == np.dtype('i8'):
+            elif t == np.dtype('int64'):
                 parser = InfoInt64Parser(key, fill=-1, chunk_length=chunk_length,
                                               number=n)
-            elif t == np.dtype('f4'):
+            elif t == np.dtype('float32'):
                 parser = InfoFloat32Parser(key, fill=NAN,
                                                 chunk_length=chunk_length,
                                                 number=n)
-            elif t == np.dtype('f8'):
+            elif t == np.dtype('float64'):
                 parser = InfoFloat64Parser(key, fill=NAN,
                                                 chunk_length=chunk_length,
                                                 number=n)
@@ -994,11 +994,11 @@ cdef class InfoParser(Parser):
                               (t, key))
             self.parsers[key] = parser
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         # debug(context.variant_index, 'InfoParser.parse')
         InfoParser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         cdef Parser parser
         for parser in self.parsers.values():
             parser.mkchunk(chunk, limit=limit)
@@ -1084,15 +1084,15 @@ cdef class InfoInt32Parser(Parser):
         self.number = number
         self.malloc()
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         info_integer_parse(self.key, self.memory, self.number, context)
 
-    cdef malloc(self):
-        self.values = np.empty((self.chunk_length, self.number), dtype='i4')
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.number), dtype='int32')
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         field = 'variants/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
@@ -1115,15 +1115,15 @@ cdef class InfoInt64Parser(Parser):
         self.number = number
         self.malloc()
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         info_integer_parse(self.key, self.memory, self.number, context)
 
-    cdef malloc(self):
-        self.values = np.empty((self.chunk_length, self.number), dtype='i8')
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.number), dtype='int64')
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         field = 'variants/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
@@ -1194,15 +1194,15 @@ cdef class InfoFloat32Parser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         info_float_parse(self.key, self.memory, self.number, context)
 
-    cdef malloc(self):
-        self.values = np.empty((self.chunk_length, self.number), dtype='f4')
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.number), dtype='float32')
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         field = 'variants/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
@@ -1225,15 +1225,15 @@ cdef class InfoFloat64Parser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         info_float_parse(self.key, self.memory, self.number, context)
 
-    cdef malloc(self):
-        self.values = np.empty((self.chunk_length, self.number), dtype='f8')
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.number), dtype='float64')
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         field = 'variants/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
@@ -1298,18 +1298,18 @@ cdef class InfoFlagParser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         self.memory[context.chunk_variant_index] = 1
         # ensure we advance the end of the field
         while context.c != SEMICOLON and context.c != TAB and context.c != NEWLINE and \
                 context.c != 0:
             ParserContext_next(context)
 
-    cdef malloc(self):
+    cdef void malloc(self):
         self.values = np.zeros(self.chunk_length, dtype='u1')
         self.memory = self.values
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         field = 'variants/' + str(self.key, 'ascii')
         chunk[field] = self.values[:limit].view(bool)
         self.malloc()
@@ -1331,11 +1331,11 @@ cdef class InfoStringMultiParser(Parser):
         self.number = number
         self.malloc()
 
-    cdef malloc(self):
+    cdef void malloc(self):
         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype)
         self.memory = self.values.reshape(-1).view('u1')
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         cdef:
             int value_index = 0
             # index into memory view
@@ -1368,7 +1368,7 @@ cdef class InfoStringMultiParser(Parser):
             # advance input stream
             ParserContext_next(context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         field = 'variants/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
@@ -1382,10 +1382,10 @@ cdef class FormatParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         FormatParser_parse(self, context)
 
 
@@ -1443,26 +1443,69 @@ cdef inline void FormatParser_parse(FormatParser self, ParserContext context):
 # noinspection PyShadowingBuiltins
 cdef class CalldataParser(Parser):
 
+    cdef tuple formats
     cdef dict parsers
     cdef Parser skip_parser
 
     def __cinit__(self, chunk_length, formats, types, numbers, n_samples, ploidy):
+        self.chunk_length = chunk_length
+        self.formats = tuple(formats)
         self.parsers = dict()
-        for f in formats:
+        self.skip_parser = SkipCalldataFieldParser()
+        for key in formats:
             # TODO handle numbers
             # TODO handle types
-            if f == b'GT':
-                self.parsers[f] = GenotypeInt8Parser(chunk_length=chunk_length,
-                                                     n_samples=n_samples,
-                                                     ploidy=ploidy,
-                                                     fill=-1)
-            # TODO initialise parsers for all fields
-        self.skip_parser = SkipCalldataFieldParser()
+            t = types[key]
+            n = numbers[key]
+            if key == b'GT':
+                # TODO other types?
+                parser = GenotypeInt8Parser(chunk_length=chunk_length,
+                                            n_samples=n_samples,
+                                            ploidy=ploidy,
+                                            fill=-1)
+            elif t == np.dtype('int8'):
+                parser = CalldataInt8Parser(key, chunk_length=chunk_length,
+                                            n_samples=n_samples,
+                                            number=n,
+                                            fill=-1)
+            elif t == np.dtype('int16'):
+                parser = CalldataInt16Parser(key, chunk_length=chunk_length,
+                                             n_samples=n_samples,
+                                             number=n,
+                                             fill=-1)
+            elif t == np.dtype('int32'):
+                parser = CalldataInt32Parser(key, chunk_length=chunk_length,
+                                             n_samples=n_samples,
+                                             number=n,
+                                             fill=-1)
+            elif t == np.dtype('int64'):
+                parser = CalldataInt64Parser(key, chunk_length=chunk_length,
+                                             n_samples=n_samples,
+                                             number=n,
+                                             fill=-1)
+            elif t == np.dtype('float32'):
+                parser = CalldataFloat32Parser(key, chunk_length=chunk_length,
+                                               n_samples=n_samples,
+                                               number=n,
+                                               fill=NAN)
+            elif t == np.dtype('float64'):
+                parser = CalldataFloat64Parser(key, chunk_length=chunk_length,
+                                               n_samples=n_samples,
+                                               number=n,
+                                               fill=NAN)
+            # TODO string parser
+            # TODO unsigned int parsers
+            else:
+                parser = self.skip_parser
+                warnings.warn('type %s not supported for FORMAT field %r, field will be '
+                              'skipped' % (t, key))
+            self.parsers[key] = parser
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         CalldataParser_parse(self, context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('CalldataParser.mkchunk')
         cdef Parser parser
         for parser in self.parsers.values():
             parser.mkchunk(chunk, limit=limit)
@@ -1520,22 +1563,24 @@ cdef class GenotypeInt8Parser(Parser):
         self.fill = fill
         self.malloc()
 
-    cdef malloc(self):
-        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='i1')
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='int8')
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         GenotypeInt8Parser_parse(self, context)
 
     cdef store(self, ParserContext context, int allele_index):
         GenotypeInt8Parser_store(self, context, allele_index)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt8Parser.mkchunk')
         chunk['calldata/GT'] = self.values[:limit]
         self.malloc()
 
 
+# TODO generalise type
 cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):
     cdef:
         int allele_index = 0
@@ -1560,6 +1605,7 @@ cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext
         ParserContext_next(context)
 
 
+# TODO generalise type
 cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext context,
                                           int allele_index):
     cdef:
@@ -1582,7 +1628,7 @@ cdef class SkipInfoFieldParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         while context.c != SEMICOLON and context.c != TAB and context.c != 0:
             ParserContext_next(context)
 
@@ -1592,14 +1638,14 @@ cdef class SkipCalldataFieldParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         while context.c != COLON and context.c != TAB and context.c != NEWLINE and context.c != 0:
             ParserContext_next(context)
 
-    cdef mkchunk(self, chunk, limit=None):
+    cdef void mkchunk(self, chunk, limit=None):
         pass
 
 
@@ -1701,13 +1747,14 @@ cdef class CalldataParserBase(Parser):
     cdef int number
     cdef int n_samples
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         pass
 
-    cdef malloc(self):
+    cdef void malloc(self):
         pass
 
     cdef void mkchunk(self, chunk, limit=None):
+        # debug('CalldataParserBase.mkchunk')
         field = 'calldata/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
@@ -1729,11 +1776,132 @@ cdef class CalldataInt8Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context):
         calldata_integer_parse(self.key, self.memory, self.number, context)
 
-    cdef malloc(self):
+    cdef void malloc(self):
         self.values = np.empty((self.chunk_length, self.n_samples, self.number),
-                               dtype='i1')
+                               dtype='int8')
         self.memory = self.values
         self.memory[:] = self.fill
+
+
+cdef class CalldataInt16Parser(CalldataParserBase):
+
+    cdef np.int16_t[:, :, :] memory
+    cdef np.int16_t fill
+
+    def __cinit__(self, key, fill, chunk_length, n_samples, number):
+        self.chunk_length = chunk_length
+        self.key = key
+        self.number = number
+        self.n_samples = n_samples
+        self.fill = fill
+        self.malloc()
+
+    cdef void parse(self, ParserContext context):
+        calldata_integer_parse(self.key, self.memory, self.number, context)
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.number),
+                               dtype='int16')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+
+cdef class CalldataInt32Parser(CalldataParserBase):
+
+    cdef np.int32_t[:, :, :] memory
+    cdef np.int32_t fill
+
+    def __cinit__(self, key, fill, chunk_length, n_samples, number):
+        self.chunk_length = chunk_length
+        self.key = key
+        self.number = number
+        self.n_samples = n_samples
+        self.fill = fill
+        self.malloc()
+
+    cdef void parse(self, ParserContext context):
+        calldata_integer_parse(self.key, self.memory, self.number, context)
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.number),
+                               dtype='int32')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+
+cdef class CalldataInt64Parser(CalldataParserBase):
+
+    cdef np.int64_t[:, :, :] memory
+    cdef np.int64_t fill
+
+    def __cinit__(self, key, fill, chunk_length, n_samples, number):
+        self.chunk_length = chunk_length
+        self.key = key
+        self.number = number
+        self.n_samples = n_samples
+        self.fill = fill
+        self.malloc()
+
+    cdef void parse(self, ParserContext context):
+        calldata_integer_parse(self.key, self.memory, self.number, context)
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.number),
+                               dtype='int64')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+
+# TODO unsigned int calldata parsers
+
+
+cdef class CalldataFloat32Parser(CalldataParserBase):
+
+    cdef np.float32_t[:, :, :] memory
+    cdef np.float32_t fill
+
+    def __cinit__(self, key, fill, chunk_length, n_samples, number):
+        self.chunk_length = chunk_length
+        self.key = key
+        self.number = number
+        self.n_samples = n_samples
+        self.fill = fill
+        self.malloc()
+
+    cdef void parse(self, ParserContext context):
+        calldata_float_parse(self.key, self.memory, self.number, context)
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.number),
+                               dtype='float32')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+
+cdef class CalldataFloat64Parser(CalldataParserBase):
+
+    cdef np.float64_t[:, :, :] memory
+    cdef np.float64_t fill
+
+    def __cinit__(self, key, fill, chunk_length, n_samples, number):
+        self.chunk_length = chunk_length
+        self.key = key
+        self.number = number
+        self.n_samples = n_samples
+        self.fill = fill
+        self.malloc()
+
+    cdef void parse(self, ParserContext context):
+        calldata_float_parse(self.key, self.memory, self.number, context)
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.number),
+                               dtype='float64')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+
+# TODO calldata string parser
