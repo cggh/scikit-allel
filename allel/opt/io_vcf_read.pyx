@@ -659,7 +659,7 @@ cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext context
     temp_clear(context)
 
     # read into temporary buffer until tab
-    while context.c != TAB and context.temp_size < context.temp_max_size:
+    while context.c != TAB:
         temp_append(context)
         ParserContext_next(context)
 
