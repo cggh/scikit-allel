@@ -42,6 +42,7 @@ TODO:
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
 * Special fields: num_alleles, is_snp, svlen, genotype_ac, genotype, is_called, is_phased?
+* Feature to rename fields, e.g., calldata/GT -> calldata/genotype
 
 """
 from __future__ import absolute_import, print_function, division

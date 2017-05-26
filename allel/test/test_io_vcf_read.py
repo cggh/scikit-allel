@@ -245,8 +245,10 @@ def test_read_vcf_content():
     eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
     eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
     eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
-    print(callset['calldata/DP'])
     eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
+
+    # TODO test GT as int16, int32, int64, S3
+    
     # TODO special fields?
     # eq_(True, a[0]['NA00001']['is_called'])
     # eq_(True, a[0]['NA00001']['is_phased'])

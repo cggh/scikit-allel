@@ -1457,12 +1457,26 @@ cdef class CalldataParser(Parser):
             # TODO handle types
             t = types[key]
             n = numbers[key]
-            if key == b'GT':
-                # TODO other types?
+            if key == b'GT' and t == np.dtype('int8'):
                 parser = GenotypeInt8Parser(chunk_length=chunk_length,
                                             n_samples=n_samples,
                                             ploidy=ploidy,
                                             fill=-1)
+            elif key == b'GT' and t == np.dtype('int16'):
+                parser = GenotypeInt16Parser(chunk_length=chunk_length,
+                                             n_samples=n_samples,
+                                             ploidy=ploidy,
+                                             fill=-1)
+            elif key == b'GT' and t == np.dtype('int32'):
+                parser = GenotypeInt32Parser(chunk_length=chunk_length,
+                                             n_samples=n_samples,
+                                             ploidy=ploidy,
+                                             fill=-1)
+            elif key == b'GT' and t == np.dtype('int64'):
+                parser = GenotypeInt64Parser(chunk_length=chunk_length,
+                                             n_samples=n_samples,
+                                             ploidy=ploidy,
+                                             fill=-1)
             elif t == np.dtype('int8'):
                 parser = CalldataInt8Parser(key, chunk_length=chunk_length,
                                             n_samples=n_samples,
@@ -1566,15 +1580,13 @@ cdef class GenotypeInt8Parser(Parser):
         self.malloc()
 
     cdef void malloc(self):
-        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy), dtype='int8')
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int8')
         self.memory = self.values
         self.memory[:] = self.fill
 
     cdef void parse(self, ParserContext context):
-        GenotypeInt8Parser_parse(self, context)
-
-    cdef store(self, ParserContext context, int allele_index):
-        GenotypeInt8Parser_store(self, context, allele_index)
+        genotype_parse(self.memory, context, self.ploidy)
 
     cdef void mkchunk(self, chunk, limit=None):
         # debug('GenotypeInt8Parser.mkchunk')
@@ -1582,8 +1594,96 @@ cdef class GenotypeInt8Parser(Parser):
         self.malloc()
 
 
-# TODO generalise type
-cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext context):
+cdef class GenotypeInt16Parser(Parser):
+
+    cdef int n_samples
+    cdef int ploidy
+    cdef np.int16_t[:, :, :] memory
+    cdef np.int16_t fill
+
+    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int16')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext context):
+        genotype_parse(self.memory, context, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt8Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef class GenotypeInt32Parser(Parser):
+
+    cdef int n_samples
+    cdef int ploidy
+    cdef np.int32_t[:, :, :] memory
+    cdef np.int32_t fill
+
+    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int32')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext context):
+        genotype_parse(self.memory, context, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt32Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef class GenotypeInt64Parser(Parser):
+
+    cdef int n_samples
+    cdef int ploidy
+    cdef np.int64_t[:, :, :] memory
+    cdef np.int64_t fill
+
+    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int64')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext context):
+        genotype_parse(self.memory, context, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt64Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef inline int genotype_parse(int_t[:, :, :] memory,
+                               ParserContext context,
+                               int ploidy) except -1:
     cdef:
         int allele_index = 0
 
@@ -1593,12 +1693,12 @@ cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext
     while True:
 
         if context.c == SLASH or context.c == PIPE:
-            GenotypeInt8Parser_store(self, context, allele_index)
+            genotype_store(memory, context, allele_index, ploidy)
             allele_index += 1
             temp_clear(context)
 
         elif context.c == COLON or context.c == TAB or context.c == NEWLINE:
-            GenotypeInt8Parser_store(self, context, allele_index)
+            genotype_store(memory, context, allele_index, ploidy)
             break
 
         else:
@@ -1606,23 +1706,26 @@ cdef inline void GenotypeInt8Parser_parse(GenotypeInt8Parser self, ParserContext
 
         ParserContext_next(context)
 
+    return 0
 
-# TODO generalise type
-cdef inline void GenotypeInt8Parser_store(GenotypeInt8Parser self, ParserContext context,
-                                          int allele_index):
+
+cdef inline int genotype_store(int_t[:, :, :] memory, ParserContext context,
+                               int allele_index, int ploidy) except -1:
     cdef:
         long allele
 
-    if allele_index >= self.ploidy:
+    if allele_index >= ploidy:
         # more alleles than we've made room for, ignore
-        return
+        return 0
 
     # attempt to parse allele
     # TODO configurable missing
     allele = temp_strtol(context, -1)
 
     # store value
-    self.memory[context.chunk_variant_index, context.sample_index, allele_index] = allele
+    memory[context.chunk_variant_index, context.sample_index, allele_index] = allele
+
+    return 0
 
 
 cdef class SkipInfoFieldParser(Parser):
