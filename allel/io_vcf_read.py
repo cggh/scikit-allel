@@ -19,7 +19,10 @@ TODO:
 * DONE User-controlled arities to ALT, INFO
 * DONE Parse INFO multiple values
 * DONE If number is 1 return 1D array for ALT, INFO, ...
-* Reduce duplicate code in INFO parsers (via squeeze?)
+* DONE Reduce duplicate code in INFO parsers (via squeeze?)
+* Check for less than temp chars parsed as int or float
+* User choose whether to return samples?
+* Handle number = 0 in non-flag field
 * Parse other FORMAT fields
 ** Integer
 ** Float
@@ -40,6 +43,7 @@ TODO:
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
 * User-provided ploidy
+* Special fields: num_alleles, is_snp, svlen, genotype_ac, genotype?
 
 """
 from __future__ import absolute_import, print_function, division
@@ -559,6 +563,8 @@ default_types = {
     'variants/AF': 'f4',
     'variants/MQ': 'f4',
     'calldata/GT': 'i1',
+    'calldata/GQ': 'i1',
+    'calldata/HQ': 'i1',
     'calldata/DP': 'i2',
     'calldata/AD': 'i2',
     'calldata/MQ0': 'i2',
@@ -632,6 +638,8 @@ default_numbers = {
     'variants/AF': 3,
     'variants/MQ': 1,
     'calldata/DP': 1,
+    'calldata/GQ': 1,
+    'calldata/HQ': 2,
     'calldata/AD': 4,
     'calldata/MQ0': 1,
     'calldata/MQ': 1,
@@ -722,6 +730,7 @@ def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length, temp_m
 
     else:
         fields = normalize_fields(fields, headers)
+    # debug('normalized fields', fields)
 
     # setup data types
     types = normalize_types(types, fields, headers)
@@ -729,6 +738,7 @@ def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length, temp_m
 
     # setup numbers (a.k.a., arity)
     numbers = normalize_numbers(numbers, fields, headers)
+    # debug('normalized numbers', numbers)
 
     # setup chunks iterator
     chunks = iter_vcf(fileobj, buffer_size=buffer_size, chunk_length=chunk_length,
