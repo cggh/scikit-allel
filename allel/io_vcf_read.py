@@ -20,21 +20,20 @@ TODO:
 * DONE Parse INFO multiple values
 * DONE If number is 1 return 1D array for ALT, INFO, ...
 * DONE Reduce duplicate code in INFO parsers (via squeeze?)
-* Check for less than temp chars parsed as int or float
-* User choose whether to return samples?
-* Handle number = 0 in non-flag field
+* DONE Check for less than temp chars parsed as int or float
 * Parse other FORMAT fields
 ** Integer
 ** Float
-** Flag
 ** String
 ** Multiple values
+* User-provided ploidy
 * Option not to return samples
+* Handle number = 0 in non-flag INFO field
+* User-controlled fill values
+* User-controlled numbers to ALT, INFO, calldata, ...
 * Read from region via tabix
 * Read from region via scanning
 * Progress logging in vcf_to_... functions
-* User-controlled fill values
-* User-controlled numbers to calldata, ...
 * User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN
@@ -42,7 +41,6 @@ TODO:
 * PY2 compatibility?
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
-* User-provided ploidy
 * Special fields: num_alleles, is_snp, svlen, genotype_ac, genotype?
 
 """
