@@ -31,6 +31,8 @@ cimport cython
 cdef double NAN = np.nan
 
 
+from cpython.ref cimport PyObject
+from cpython.list cimport PyList_GET_ITEM
 cdef extern from "Python.h":
     char* PyByteArray_AS_STRING(object string)
 
@@ -350,6 +352,7 @@ cdef class ParserContext:
         int sample_index
         list formats
         int format_index
+        list calldata_parsers
 
 
     def __cinit__(self,
@@ -526,7 +529,7 @@ cdef class Parser(object):
     cdef object values
     cdef int chunk_length
 
-    cdef void parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context) nogil:
         pass
 
     cdef void malloc(self):
@@ -562,7 +565,7 @@ cdef class StringParser(Parser):
         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
         self.memory = self.values.view('u1')
 
-    cdef void parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context) nogil:
         StringParser_parse(self, context)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -571,7 +574,7 @@ cdef class StringParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void StringParser_parse(StringParser self, ParserContext ctx):
+cdef inline void StringParser_parse(StringParser self, ParserContext ctx) nogil:
     cdef:
         # index into memory view
         int memory_index
@@ -611,7 +614,7 @@ cdef class SkipChromParser(Parser):
     cdef void malloc(self):
         pass
 
-    cdef void parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context) nogil:
         SkipChromParser_parse(self, context)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -619,7 +622,7 @@ cdef class SkipChromParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void SkipChromParser_parse(SkipChromParser self, ParserContext ctx):
+cdef inline void SkipChromParser_parse(SkipChromParser self, ParserContext ctx) nogil:
 
     # TODO store chrom on ctx
 
@@ -645,7 +648,7 @@ cdef class PosInt32Parser(Parser):
         self.memory = self.values
         self.memory[:] = -1
 
-    cdef void parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context) nogil:
         PosInt32Parser_parse(self, context)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -654,7 +657,7 @@ cdef class PosInt32Parser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext ctx):
+cdef inline void PosInt32Parser_parse(PosInt32Parser self, ParserContext ctx) nogil:
     cdef:
         long value
         int success
@@ -687,7 +690,7 @@ cdef class SkipPosParser(Parser):
     cdef void malloc(self):
         pass
 
-    cdef void parse(self, ParserContext context):
+    cdef void parse(self, ParserContext context) nogil:
         SkipPosParser_parse(self, context)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -695,7 +698,7 @@ cdef class SkipPosParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void SkipPosParser_parse(SkipPosParser self, ParserContext ctx):
+cdef inline void SkipPosParser_parse(SkipPosParser self, ParserContext ctx) nogil:
 
     # TODO store pos on ctx
 
@@ -716,7 +719,7 @@ cdef class SkipFieldParser(Parser):
     cdef void malloc(self):
         pass
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         # read characters until tab or newline
         while ctx.c != TAB and ctx.c != NEWLINE and ctx.c != 0:
             context_getc(ctx)
@@ -737,7 +740,7 @@ cdef class SkipAllCalldataParser(Parser):
     cdef void malloc(self):
         pass
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         # read characters until newline
         while ctx.c != NEWLINE and ctx.c != 0:
             context_getc(ctx)
@@ -768,7 +771,7 @@ cdef class AltParser(Parser):
         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype, order='C')
         self.memory = self.values.reshape(-1).view('u1')
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         AltParser_parse(self, ctx)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -780,7 +783,7 @@ cdef class AltParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void AltParser_parse(AltParser self, ParserContext ctx):
+cdef inline void AltParser_parse(AltParser self, ParserContext ctx) nogil:
     cdef:
         # index of alt values
         int alt_index = 0
@@ -835,7 +838,7 @@ cdef class QualFloat32Parser(Parser):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         QualFloat32Parser_parse(self, ctx)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -844,7 +847,7 @@ cdef class QualFloat32Parser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void QualFloat32Parser_parse(QualFloat32Parser self, ParserContext ctx):
+cdef inline void QualFloat32Parser_parse(QualFloat32Parser self, ParserContext ctx) nogil:
     cdef:
         int success
 
@@ -883,7 +886,7 @@ cdef class FilterParser(Parser):
         self.values = np.zeros((self.chunk_length, len(self.filters) + 1), dtype=bool)
         self.memory = self.values.view('u1')
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         FilterParser_parse(self, ctx)
 
     cdef store(self, ParserContext ctx):
@@ -898,7 +901,7 @@ cdef class FilterParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void FilterParser_parse(FilterParser self, ParserContext ctx):
+cdef inline void FilterParser_parse(FilterParser self, ParserContext ctx) nogil:
     cdef:
         int filter_index
 
@@ -935,20 +938,23 @@ cdef inline void FilterParser_parse(FilterParser self, ParserContext ctx):
     # debug(ctx.variant_index, 'FILTER', self.values[ctx.chunk_variant_index])
 
 
-cdef inline void FilterParser_store(FilterParser self, ParserContext ctx):
+cdef inline void FilterParser_store(FilterParser self, ParserContext ctx) nogil:
     cdef:
-        bytes f
         int filter_index
 
     if ctx.temp_size == 0:
         warn('empty FILTER', ctx)
         return
 
-    # read filter into byte string
-    f = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+    # TODO nogil version?
 
-    # find filter position
-    filter_index = self.filter_position.get(f, -1)
+    with gil:
+
+        # read filter into byte string
+        f = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+
+        # find filter position
+        filter_index = self.filter_position.get(f, -1)
 
     # store value
     if filter_index >= 0:
@@ -999,7 +1005,7 @@ cdef class InfoParser(Parser):
                               'skipped' % (t, key))
             self.parsers[key] = parser
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         # debug(ctx.variant_index, 'InfoParser.parse')
         InfoParser_parse(self, ctx)
 
@@ -1010,10 +1016,9 @@ cdef class InfoParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void InfoParser_parse(InfoParser self, ParserContext ctx):
-    cdef:
-        bytes key
-        Parser parser
+cdef inline void InfoParser_parse(InfoParser self, ParserContext ctx) nogil:
+    # cdef:
+    #     Parser parser
 
     # debug(ctx.variant_index, 'InfoParser_parse')
 
@@ -1027,48 +1032,51 @@ cdef inline void InfoParser_parse(InfoParser self, ParserContext ctx):
     # reset temporary buffer
     temp_clear(ctx)
 
-    while True:
+    with gil:
+        # TODO nogil version?
 
-        if ctx.c == TAB or ctx.c == NEWLINE or ctx.c == 0:
-            # debug(ctx.variant_index, 'end of INFO')
-            # handle flags
-            if ctx.temp_size > 0:
-                key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
-                parser = self.parsers.get(key, self.skip_parser)
-                parser.parse(ctx)
-            break
+        while True:
 
-        elif ctx.c == EQUALS:
-            # debug(ctx.variant_index, 'INFO =')
-            context_getc(ctx)
-            if ctx.temp_size > 0:
-                key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
-                # debug(ctx.variant_index, 'INFO parsing value for key', key)
-                parser = self.parsers.get(key, self.skip_parser)
-                parser.parse(ctx)
-                temp_clear(ctx)
+            if ctx.c == TAB or ctx.c == NEWLINE or ctx.c == 0:
+                # debug(ctx.variant_index, 'end of INFO')
+                # handle flags
+                if ctx.temp_size > 0:
+                    key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+                    parser = self.parsers.get(key, self.skip_parser)
+                    parser.parse(ctx)
+                break
+
+            elif ctx.c == EQUALS:
+                # debug(ctx.variant_index, 'INFO =')
+                context_getc(ctx)
+                if ctx.temp_size > 0:
+                    key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+                    # debug(ctx.variant_index, 'INFO parsing value for key', key)
+                    parser = self.parsers.get(key, self.skip_parser)
+                    parser.parse(ctx)
+                    temp_clear(ctx)
+                else:
+                    warn('error parsing INFO field, missing key', ctx)
+                    # advance to next sub-field
+                    while ctx.c != TAB and ctx.c != SEMICOLON and ctx.c != 0:
+                        context_getc(ctx)
+
+            elif ctx.c == SEMICOLON:
+                # debug(ctx.variant_index, 'end of INFO subfield')
+                # handle flags
+                if ctx.temp_size > 0:
+                    key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+                    (<Parser>self.parsers.get(key, self.skip_parser)).parse(ctx)
+                    # debug(ctx.variant_index, 'detected flag', key, parser)
+                    # parser.parse(ctx)
+                    temp_clear(ctx)
+                context_getc(ctx)
+
             else:
-                warn('error parsing INFO field, missing key', ctx)
-                # advance to next sub-field
-                while ctx.c != TAB and ctx.c != SEMICOLON and ctx.c != 0:
-                    context_getc(ctx)
 
-        elif ctx.c == SEMICOLON:
-            # debug(ctx.variant_index, 'end of INFO subfield')
-            # handle flags
-            if ctx.temp_size > 0:
-                key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
-                parser = self.parsers.get(key, self.skip_parser)
-                # debug(ctx.variant_index, 'detected flag', key, parser)
-                parser.parse(ctx)
-                temp_clear(ctx)
-            context_getc(ctx)
-
-        else:
-
-            # debug(ctx.variant_index, 'storing INFO key character', bytes([ctx.c]))
-            temp_append(ctx)
-            context_getc(ctx)
+                # debug(ctx.variant_index, 'storing INFO key character', bytes([ctx.c]))
+                temp_append(ctx)
+                context_getc(ctx)
 
     # advance to next field
     context_getc(ctx)
@@ -1088,7 +1096,7 @@ cdef class InfoInt32Parser(Parser):
         self.number = number
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         info_integer_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1119,7 +1127,7 @@ cdef class InfoInt64Parser(Parser):
         self.number = number
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         info_integer_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1137,7 +1145,7 @@ cdef class InfoInt64Parser(Parser):
 
 
 cdef inline void info_integer_parse(bytes key, integer[:, :] memory, int number,
-                                          ParserContext ctx):
+                                          ParserContext ctx) nogil:
     cdef:
         int value_index = 0
 
@@ -1168,7 +1176,7 @@ cdef inline void info_integer_parse(bytes key, integer[:, :] memory, int number,
 
 
 cdef inline void info_integer_store(bytes key, integer[:, :] memory, int number,
-                                    ParserContext ctx, int value_index):
+                                    ParserContext ctx, int value_index) nogil:
     cdef:
         int success
 
@@ -1198,7 +1206,7 @@ cdef class InfoFloat32Parser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         info_floating_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1229,7 +1237,7 @@ cdef class InfoFloat64Parser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         info_floating_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1247,7 +1255,7 @@ cdef class InfoFloat64Parser(Parser):
 
 
 cdef inline void info_floating_parse(bytes key, floating[:, :] memory, int number,
-                                  ParserContext ctx):
+                                  ParserContext ctx) nogil:
     cdef:
         int value_index = 0
 
@@ -1276,7 +1284,7 @@ cdef inline void info_floating_parse(bytes key, floating[:, :] memory, int numbe
 
 
 cdef inline void info_floating_store(bytes key, floating[:, :] memory, int number,
-                                  ParserContext ctx, int value_index):
+                                  ParserContext ctx, int value_index) nogil:
     cdef:
         int success
 
@@ -1302,7 +1310,7 @@ cdef class InfoFlagParser(Parser):
         self.chunk_length = chunk_length
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         self.memory[ctx.chunk_variant_index] = 1
         # ensure we advance the end of the field
         while ctx.c != SEMICOLON and ctx.c != TAB and ctx.c != NEWLINE and \
@@ -1339,7 +1347,7 @@ cdef class InfoStringParser(Parser):
         self.values = np.zeros((self.chunk_length, self.number), dtype=self.dtype)
         self.memory = self.values.reshape(-1).view('u1')
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         cdef:
             int value_index = 0
             # index into memory view
@@ -1389,55 +1397,54 @@ cdef class FormatParser(Parser):
     cdef void malloc(self):
         pass
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         FormatParser_parse(self, ctx)
 
 
 # break out method as function for profiling
-cdef inline void FormatParser_parse(FormatParser self, ParserContext ctx):
+cdef inline void FormatParser_parse(FormatParser self, ParserContext ctx) nogil:
     cdef:
         char* format
-        bytes f
-        list formats = []
 
     # debug('FormatParser_parse()')
 
     # reset temporary buffer
     temp_clear(ctx)
 
-    while True:
-        # debug(ctx.c)
+    with gil:
 
-        if ctx.c == TAB or ctx.c == NEWLINE:
+        ctx.formats = []
 
-            # add last format
-            if ctx.temp_size > 0:
-                # debug('add last format')
-                f = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
-                formats.append(f)
+        while True:
+            # debug(ctx.c)
 
-            # set ctx
-            ctx.formats = formats
+            if ctx.c == TAB or ctx.c == NEWLINE:
 
-            # we're done here
-            break
+                # add last format
+                if ctx.temp_size > 0:
+                    # debug('add last format')
+                    f = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+                    ctx.formats.append(f)
 
-        elif ctx.c == COLON:
+                # we're done here
+                break
 
-            # add format
-            if ctx.temp_size > 0:
-                # debug('add format')
-                f = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
-                formats.append(f)
-                temp_clear(ctx)
+            elif ctx.c == COLON:
 
-        else:
-            # debug('other')
+                # add format
+                if ctx.temp_size > 0:
+                    # debug('add format')
+                    f = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
+                    ctx.formats.append(f)
+                    temp_clear(ctx)
 
-            temp_append(ctx)
+            else:
+                # debug('other')
 
-        # advance to next character
-        context_getc(ctx)
+                temp_append(ctx)
+
+            # advance to next character
+            context_getc(ctx)
 
     # advance to next field
     context_getc(ctx)
@@ -1521,7 +1528,7 @@ cdef class CalldataParser(Parser):
                               'skipped' % (t, key))
             self.parsers[key] = parser
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         CalldataParser_parse(self, ctx)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -1532,41 +1539,44 @@ cdef class CalldataParser(Parser):
 
 
 # break out method as function for profiling
-cdef inline void CalldataParser_parse(CalldataParser self, ParserContext ctx):
-    cdef:
-        list parsers
-        Parser parser
+cdef inline void CalldataParser_parse(CalldataParser self, ParserContext ctx) nogil:
 
     # initialise ctx
     ctx.sample_index = 0
     ctx.format_index = 0
 
     # initialise format parsers in correct order for this variant
-    parsers = [self.parsers.get(f, self.skip_parser) for f in ctx.formats]
-    parser = <Parser> parsers[0]
+    with gil:
+        ctx.calldata_parsers = [self.parsers.get(f, self.skip_parser) for f in
+                                ctx.formats]
 
-    while True:
+    with nogil:
 
-        if ctx.c == 0 or ctx.c == NEWLINE:
-            context_getc(ctx)
-            break
+        while True:
 
-        elif ctx.c == TAB:
+            if ctx.c == 0 or ctx.c == NEWLINE:
+                context_getc(ctx)
+                break
 
-            ctx.sample_index += 1
-            ctx.format_index = 0
-            parser = <Parser> parsers[0]
-            context_getc(ctx)
+            elif ctx.c == TAB:
 
-        elif ctx.c == COLON:
+                ctx.sample_index += 1
+                ctx.format_index = 0
+                context_getc(ctx)
 
-            ctx.format_index += 1
-            parser = <Parser> parsers[ctx.format_index]
-            context_getc(ctx)
+            elif ctx.c == COLON:
 
-        else:
+                ctx.format_index += 1
+                context_getc(ctx)
 
-            parser.parse(ctx)
+            else:
+
+                # TODO check we haven't gone past last format parser
+                (<Parser>PyList_GET_ITEM(ctx.calldata_parsers,
+                                         ctx.format_index)).parse(ctx)
+                # parser = <Parser> parsers[ctx.format_index]
+                # parser = <Parser> PyList_GET_ITEM(parsers, ctx.format_index)
+                # parser.parse(ctx)
 
 
 cdef class GenotypeInt8Parser(Parser):
@@ -1589,7 +1599,7 @@ cdef class GenotypeInt8Parser(Parser):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         genotype_parse(self.memory, ctx, self.ploidy)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -1618,7 +1628,7 @@ cdef class GenotypeInt16Parser(Parser):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         genotype_parse(self.memory, ctx, self.ploidy)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -1647,7 +1657,7 @@ cdef class GenotypeInt32Parser(Parser):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         genotype_parse(self.memory, ctx, self.ploidy)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -1676,7 +1686,7 @@ cdef class GenotypeInt64Parser(Parser):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         genotype_parse(self.memory, ctx, self.ploidy)
 
     cdef void mkchunk(self, chunk, limit=None):
@@ -1687,7 +1697,7 @@ cdef class GenotypeInt64Parser(Parser):
 
 cdef inline int genotype_parse(integer[:, :, :] memory,
                                ParserContext ctx,
-                               int ploidy) except -1:
+                               int ploidy) nogil except -1:
     cdef:
         int allele_index = 0
 
@@ -1714,7 +1724,7 @@ cdef inline int genotype_parse(integer[:, :, :] memory,
 
 
 cdef inline int genotype_store(integer[:, :, :] memory, ParserContext ctx,
-                               int allele_index, int ploidy) except -1:
+                               int allele_index, int ploidy) nogil except -1:
     cdef:
         int success
 
@@ -1737,7 +1747,7 @@ cdef class SkipInfoFieldParser(Parser):
     def __cinit__(self):
         pass
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         while ctx.c != SEMICOLON and ctx.c != TAB and ctx.c != 0:
             context_getc(ctx)
 
@@ -1750,7 +1760,7 @@ cdef class SkipCalldataFieldParser(Parser):
     cdef void malloc(self):
         pass
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         while ctx.c != COLON and ctx.c != TAB and ctx.c != NEWLINE and ctx.c != 0:
             context_getc(ctx)
 
@@ -1759,7 +1769,7 @@ cdef class SkipCalldataFieldParser(Parser):
 
 
 cdef inline void calldata_integer_parse(bytes key, integer[:, :, :] memory, int number,
-                                        ParserContext ctx):
+                                        ParserContext ctx) nogil:
     cdef:
         int value_index = 0
 
@@ -1785,7 +1795,7 @@ cdef inline void calldata_integer_parse(bytes key, integer[:, :, :] memory, int 
 
 
 cdef inline void calldata_integer_store(bytes key, integer[:, :, :] memory, int number,
-                                        ParserContext ctx, int value_index):
+                                        ParserContext ctx, int value_index) nogil:
     cdef:
         int success
 
@@ -1828,7 +1838,7 @@ cdef inline void calldata_floating_parse(bytes key, floating[:, :, :] memory, in
 
 
 cdef inline void calldata_floating_store(bytes key, floating[:, :, :] memory, int number,
-                                      ParserContext ctx, int value_index):
+                                      ParserContext ctx, int value_index) nogil:
     cdef:
         int success
 
@@ -1850,7 +1860,7 @@ cdef class CalldataParserBase(Parser):
     cdef int number
     cdef int n_samples
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         pass
 
     cdef void malloc(self):
@@ -1879,7 +1889,7 @@ cdef class CalldataInt8Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         calldata_integer_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1902,7 +1912,7 @@ cdef class CalldataInt16Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         calldata_integer_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1925,7 +1935,7 @@ cdef class CalldataInt32Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         calldata_integer_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1948,7 +1958,7 @@ cdef class CalldataInt64Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         calldata_integer_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1974,7 +1984,7 @@ cdef class CalldataFloat32Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         calldata_floating_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -1997,7 +2007,7 @@ cdef class CalldataFloat64Parser(CalldataParserBase):
         self.fill = fill
         self.malloc()
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         calldata_floating_parse(self.key, self.memory, self.number, ctx)
 
     cdef void malloc(self):
@@ -2030,7 +2040,7 @@ cdef class CalldataStringParser(Parser):
                                dtype=self.dtype)
         self.memory = self.values.reshape(-1).view('u1')
 
-    cdef void parse(self, ParserContext ctx):
+    cdef void parse(self, ParserContext ctx) nogil:
         cdef:
             int value_index = 0
             # index into memory view
