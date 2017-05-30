@@ -1473,6 +1473,7 @@ cdef class CalldataParser(Parser):
         for key in formats:
             # TODO handle numbers
             # TODO handle types
+            # TODO build a list of parsers and an array for nogil processing later
             t = types[key]
             n = numbers[key]
             if key == b'GT' and t == np.dtype('int8'):
