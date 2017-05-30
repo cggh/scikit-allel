@@ -217,80 +217,86 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
         # shouldn't ever be any left over
         raise RuntimeError('unexpected fields left over: %r' % set(fields))
 
-    while True:
+    with nogil:
 
-        if ctx.c == 0:
-            break
+        while True:
 
-        elif ctx.state == ParserState.CHROM:
-            chrom_parser.parse(ctx)
-            ctx.state = ParserState.POS
+            if ctx.c == 0:
+                break
 
-        elif ctx.state == ParserState.POS:
-            pos_parser.parse(ctx)
-            ctx.state = ParserState.ID
+            elif ctx.state == ParserState.CHROM:
+                chrom_parser.parse(ctx)
+                ctx.state = ParserState.POS
 
-        elif ctx.state == ParserState.ID:
-            id_parser.parse(ctx)
-            ctx.state = ParserState.REF
+            elif ctx.state == ParserState.POS:
+                pos_parser.parse(ctx)
+                ctx.state = ParserState.ID
 
-        elif ctx.state == ParserState.REF:
-            ref_parser.parse(ctx)
-            ctx.state = ParserState.ALT
+            elif ctx.state == ParserState.ID:
+                id_parser.parse(ctx)
+                ctx.state = ParserState.REF
 
-        elif ctx.state == ParserState.ALT:
-            alt_parser.parse(ctx)
-            ctx.state = ParserState.QUAL
+            elif ctx.state == ParserState.REF:
+                ref_parser.parse(ctx)
+                ctx.state = ParserState.ALT
 
-        elif ctx.state == ParserState.QUAL:
-            qual_parser.parse(ctx)
-            ctx.state = ParserState.FILTER
+            elif ctx.state == ParserState.ALT:
+                alt_parser.parse(ctx)
+                ctx.state = ParserState.QUAL
 
-        elif ctx.state == ParserState.FILTER:
-            filter_parser.parse(ctx)
-            ctx.state = ParserState.INFO
+            elif ctx.state == ParserState.QUAL:
+                qual_parser.parse(ctx)
+                ctx.state = ParserState.FILTER
 
-        elif ctx.state == ParserState.INFO:
-            # debug(ctx.variant_index, 'parse INFO')
-            info_parser.parse(ctx)
-            ctx.state = ParserState.FORMAT
+            elif ctx.state == ParserState.FILTER:
+                filter_parser.parse(ctx)
+                ctx.state = ParserState.INFO
 
-        elif ctx.state == ParserState.FORMAT:
-            format_parser.parse(ctx)
-            ctx.state = ParserState.CALLDATA
+            elif ctx.state == ParserState.INFO:
+                # debug(ctx.variant_index, 'parse INFO')
+                info_parser.parse(ctx)
+                ctx.state = ParserState.FORMAT
 
-        elif ctx.state == ParserState.CALLDATA:
-            calldata_parser.parse(ctx)
-            ctx.state = ParserState.CHROM
+            elif ctx.state == ParserState.FORMAT:
+                format_parser.parse(ctx)
+                ctx.state = ParserState.CALLDATA
 
-            # setup next variant
-            # debug('setup next variant')
-            ctx.variant_index += 1
-            if ctx.chunk_variant_index < chunk_length - 1:
-                ctx.chunk_variant_index += 1
+            elif ctx.state == ParserState.CALLDATA:
+                calldata_parser.parse(ctx)
+                ctx.state = ParserState.CHROM
+
+                # setup next variant
+                # debug('setup next variant')
+                ctx.variant_index += 1
+                if ctx.chunk_variant_index < chunk_length - 1:
+                    ctx.chunk_variant_index += 1
+
+                else:
+
+                    with gil:
+
+                        # build chunk for output
+                        chunk = dict()
+                        chrom_parser.mkchunk(chunk)
+                        pos_parser.mkchunk(chunk)
+                        id_parser.mkchunk(chunk)
+                        ref_parser.mkchunk(chunk)
+                        alt_parser.mkchunk(chunk)
+                        qual_parser.mkchunk(chunk)
+                        filter_parser.mkchunk(chunk)
+                        info_parser.mkchunk(chunk)
+                        calldata_parser.mkchunk(chunk)
+                        # TODO yield
+                        chunks.append(chunk)
+
+                    # setup next chunk
+                    ctx.chunk_variant_index = 0
 
             else:
 
-                # build chunk for output
-                chunk = dict()
-                chrom_parser.mkchunk(chunk)
-                pos_parser.mkchunk(chunk)
-                id_parser.mkchunk(chunk)
-                ref_parser.mkchunk(chunk)
-                alt_parser.mkchunk(chunk)
-                qual_parser.mkchunk(chunk)
-                filter_parser.mkchunk(chunk)
-                info_parser.mkchunk(chunk)
-                calldata_parser.mkchunk(chunk)
-                # TODO yield
-                chunks.append(chunk)
-
-                # setup next chunk
-                ctx.chunk_variant_index = 0
-
-        else:
-            # shouldn't ever happen
-            raise RuntimeError('unexpected parser state')
+                with gil:
+                    # shouldn't ever happen
+                    raise RuntimeError('unexpected parser state')
 
     # left-over chunk
     limit = ctx.chunk_variant_index
@@ -351,6 +357,7 @@ cdef class ParserContext:
         int chunk_variant_index
         int sample_index
         list formats
+        int n_formats
         int format_index
         list calldata_parsers
 
@@ -1042,8 +1049,7 @@ cdef inline void InfoParser_parse(InfoParser self, ParserContext ctx) nogil:
                 # handle flags
                 if ctx.temp_size > 0:
                     key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
-                    parser = self.parsers.get(key, self.skip_parser)
-                    parser.parse(ctx)
+                    (<Parser>self.parsers.get(key, self.skip_parser)).parse(ctx)
                 break
 
             elif ctx.c == EQUALS:
@@ -1052,8 +1058,7 @@ cdef inline void InfoParser_parse(InfoParser self, ParserContext ctx) nogil:
                 if ctx.temp_size > 0:
                     key = PyBytes_FromStringAndSize(ctx.temp, ctx.temp_size)
                     # debug(ctx.variant_index, 'INFO parsing value for key', key)
-                    parser = self.parsers.get(key, self.skip_parser)
-                    parser.parse(ctx)
+                    (<Parser>self.parsers.get(key, self.skip_parser)).parse(ctx)
                     temp_clear(ctx)
                 else:
                     warn('error parsing INFO field, missing key', ctx)
@@ -1446,6 +1451,8 @@ cdef inline void FormatParser_parse(FormatParser self, ParserContext ctx) nogil:
             # advance to next character
             context_getc(ctx)
 
+        ctx.n_formats = len(ctx.formats)
+
     # advance to next field
     context_getc(ctx)
 
@@ -1469,22 +1476,22 @@ cdef class CalldataParser(Parser):
             t = types[key]
             n = numbers[key]
             if key == b'GT' and t == np.dtype('int8'):
-                parser = GenotypeInt8Parser(chunk_length=chunk_length,
+                parser = GenotypeInt8Parser(key, chunk_length=chunk_length,
                                             n_samples=n_samples,
                                             ploidy=ploidy,
                                             fill=-1)
             elif key == b'GT' and t == np.dtype('int16'):
-                parser = GenotypeInt16Parser(chunk_length=chunk_length,
+                parser = GenotypeInt16Parser(key, chunk_length=chunk_length,
                                              n_samples=n_samples,
                                              ploidy=ploidy,
                                              fill=-1)
             elif key == b'GT' and t == np.dtype('int32'):
-                parser = GenotypeInt32Parser(chunk_length=chunk_length,
+                parser = GenotypeInt32Parser(key, chunk_length=chunk_length,
                                              n_samples=n_samples,
                                              ploidy=ploidy,
                                              fill=-1)
             elif key == b'GT' and t == np.dtype('int64'):
-                parser = GenotypeInt64Parser(chunk_length=chunk_length,
+                parser = GenotypeInt64Parser(key, chunk_length=chunk_length,
                                              n_samples=n_samples,
                                              ploidy=ploidy,
                                              fill=-1)
@@ -1550,209 +1557,40 @@ cdef inline void CalldataParser_parse(CalldataParser self, ParserContext ctx) no
 
     # initialise format parsers in correct order for this variant
     with gil:
-        n_formats = len(ctx.formats)
-        parsers = malloc(n_formats, sizeof(PyObject*))
+        parsers = <PyObject **> malloc(ctx.n_formats * sizeof(PyObject*))
         for i, f in enumerate(ctx.formats):
-            parsers[i] = <PyObject*> self.parsers.get(f, self.skip_parser)
+            parser = <Parser> self.parsers.get(f, self.skip_parser)
+            parsers[i] = <PyObject*> (<Parser> parser)
         # ctx.calldata_parsers = [self.parsers.get(f, self.skip_parser) for f in
         #                         ctx.formats]
 
     try:
 
-        with nogil:
+        while True:
 
-            while True:
+            if ctx.c == 0 or ctx.c == NEWLINE:
+                context_getc(ctx)
+                break
 
-                if ctx.c == 0 or ctx.c == NEWLINE:
-                    context_getc(ctx)
-                    break
+            elif ctx.c == TAB:
 
-                elif ctx.c == TAB:
+                ctx.sample_index += 1
+                ctx.format_index = 0
+                context_getc(ctx)
 
-                    ctx.sample_index += 1
-                    ctx.format_index = 0
-                    context_getc(ctx)
+            elif ctx.c == COLON:
 
-                elif ctx.c == COLON:
+                ctx.format_index += 1
+                context_getc(ctx)
 
-                    ctx.format_index += 1
-                    context_getc(ctx)
+            else:
 
-                else:
-
-                    # TODO check we haven't gone past last format parser
+                # check we haven't gone past last format parser
+                if ctx.format_index < ctx.n_formats:
                     (<Parser>parsers[ctx.format_index]).parse(ctx)
-                    # (<Parser>PyList_GET_ITEM(ctx.calldata_parsers,
-                    #                          ctx.format_index)).parse(ctx)
-                    # parser = <Parser> parsers[ctx.format_index]
-                    # parser = <Parser> PyList_GET_ITEM(parsers, ctx.format_index)
-                    # parser.parse(ctx)
 
     finally:
         free(parsers)
-
-
-cdef class GenotypeInt8Parser(Parser):
-
-    cdef int n_samples
-    cdef int ploidy
-    cdef np.int8_t[:, :, :] memory
-    cdef np.int8_t fill
-
-    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
-        self.chunk_length = chunk_length
-        self.n_samples = n_samples
-        self.ploidy = ploidy
-        self.fill = fill
-        self.malloc()
-
-    cdef void malloc(self):
-        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
-                               dtype='int8')
-        self.memory = self.values
-        self.memory[:] = self.fill
-
-    cdef void parse(self, ParserContext ctx) nogil:
-        genotype_parse(self.memory, ctx, self.ploidy)
-
-    cdef void mkchunk(self, chunk, limit=None):
-        # debug('GenotypeInt8Parser.mkchunk')
-        chunk['calldata/GT'] = self.values[:limit]
-        self.malloc()
-
-
-cdef class GenotypeInt16Parser(Parser):
-
-    cdef int n_samples
-    cdef int ploidy
-    cdef np.int16_t[:, :, :] memory
-    cdef np.int16_t fill
-
-    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
-        self.chunk_length = chunk_length
-        self.n_samples = n_samples
-        self.ploidy = ploidy
-        self.fill = fill
-        self.malloc()
-
-    cdef void malloc(self):
-        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
-                               dtype='int16')
-        self.memory = self.values
-        self.memory[:] = self.fill
-
-    cdef void parse(self, ParserContext ctx) nogil:
-        genotype_parse(self.memory, ctx, self.ploidy)
-
-    cdef void mkchunk(self, chunk, limit=None):
-        # debug('GenotypeInt8Parser.mkchunk')
-        chunk['calldata/GT'] = self.values[:limit]
-        self.malloc()
-
-
-cdef class GenotypeInt32Parser(Parser):
-
-    cdef int n_samples
-    cdef int ploidy
-    cdef np.int32_t[:, :, :] memory
-    cdef np.int32_t fill
-
-    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
-        self.chunk_length = chunk_length
-        self.n_samples = n_samples
-        self.ploidy = ploidy
-        self.fill = fill
-        self.malloc()
-
-    cdef void malloc(self):
-        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
-                               dtype='int32')
-        self.memory = self.values
-        self.memory[:] = self.fill
-
-    cdef void parse(self, ParserContext ctx) nogil:
-        genotype_parse(self.memory, ctx, self.ploidy)
-
-    cdef void mkchunk(self, chunk, limit=None):
-        # debug('GenotypeInt32Parser.mkchunk')
-        chunk['calldata/GT'] = self.values[:limit]
-        self.malloc()
-
-
-cdef class GenotypeInt64Parser(Parser):
-
-    cdef int n_samples
-    cdef int ploidy
-    cdef np.int64_t[:, :, :] memory
-    cdef np.int64_t fill
-
-    def __cinit__(self, chunk_length, n_samples, ploidy, fill):
-        self.chunk_length = chunk_length
-        self.n_samples = n_samples
-        self.ploidy = ploidy
-        self.fill = fill
-        self.malloc()
-
-    cdef void malloc(self):
-        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
-                               dtype='int64')
-        self.memory = self.values
-        self.memory[:] = self.fill
-
-    cdef void parse(self, ParserContext ctx) nogil:
-        genotype_parse(self.memory, ctx, self.ploidy)
-
-    cdef void mkchunk(self, chunk, limit=None):
-        # debug('GenotypeInt64Parser.mkchunk')
-        chunk['calldata/GT'] = self.values[:limit]
-        self.malloc()
-
-
-cdef inline int genotype_parse(integer[:, :, :] memory,
-                               ParserContext ctx,
-                               int ploidy) nogil except -1:
-    cdef:
-        int allele_index = 0
-
-    # reset temporary buffer
-    temp_clear(ctx)
-
-    while True:
-
-        if ctx.c == SLASH or ctx.c == PIPE:
-            genotype_store(memory, ctx, allele_index, ploidy)
-            allele_index += 1
-            temp_clear(ctx)
-
-        elif ctx.c == COLON or ctx.c == TAB or ctx.c == NEWLINE:
-            genotype_store(memory, ctx, allele_index, ploidy)
-            break
-
-        else:
-            temp_append(ctx)
-
-        context_getc(ctx)
-
-    return 1
-
-
-cdef inline int genotype_store(integer[:, :, :] memory, ParserContext ctx,
-                               int allele_index, int ploidy) nogil except -1:
-    cdef:
-        int success
-
-    if allele_index >= ploidy:
-        # more alleles than we've made room for, ignore
-        return 0
-
-    # attempt to parse allele
-    success = temp_tolong(ctx)
-
-    # store value
-    if success:
-        memory[ctx.chunk_variant_index, ctx.sample_index, allele_index] = ctx.l
-
-    return 1
 
 
 cdef class SkipInfoFieldParser(Parser):
@@ -1825,7 +1663,7 @@ cdef inline void calldata_integer_store(bytes key, integer[:, :, :] memory, int 
 
 
 cdef inline void calldata_floating_parse(bytes key, floating[:, :, :] memory, int number,
-                                      ParserContext ctx):
+                                         ParserContext ctx) nogil:
     cdef:
         int value_index = 0
 
@@ -1851,7 +1689,7 @@ cdef inline void calldata_floating_parse(bytes key, floating[:, :, :] memory, in
 
 
 cdef inline void calldata_floating_store(bytes key, floating[:, :, :] memory, int number,
-                                      ParserContext ctx, int value_index) nogil:
+                                         ParserContext ctx, int value_index) nogil:
     cdef:
         int success
 
@@ -1887,6 +1725,170 @@ cdef class CalldataParserBase(Parser):
             values = values.squeeze(axis=2)
         chunk[field] = values
         self.malloc()
+
+
+cdef class GenotypeInt8Parser(CalldataParserBase):
+
+    cdef int ploidy
+    cdef np.int8_t[:, :, :] memory
+    cdef np.int8_t fill
+
+    def __cinit__(self, key, chunk_length, n_samples, ploidy, fill):
+        self.key = key
+        self.number = 1
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int8')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext ctx) nogil:
+        genotype_parse(self.memory, ctx, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt8Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef class GenotypeInt16Parser(CalldataParserBase):
+
+    cdef int ploidy
+    cdef np.int16_t[:, :, :] memory
+    cdef np.int16_t fill
+
+    def __cinit__(self, key, chunk_length, n_samples, ploidy, fill):
+        self.key = key
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int16')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext ctx) nogil:
+        genotype_parse(self.memory, ctx, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt8Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef class GenotypeInt32Parser(CalldataParserBase):
+
+    cdef int ploidy
+    cdef np.int32_t[:, :, :] memory
+    cdef np.int32_t fill
+
+    def __cinit__(self, key, chunk_length, n_samples, ploidy, fill):
+        self.key = key
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int32')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext ctx) nogil:
+        genotype_parse(self.memory, ctx, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt32Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef class GenotypeInt64Parser(CalldataParserBase):
+
+    cdef int ploidy
+    cdef np.int64_t[:, :, :] memory
+    cdef np.int64_t fill
+
+    def __cinit__(self, key, chunk_length, n_samples, ploidy, fill):
+        self.key = key
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+        self.fill = fill
+        self.malloc()
+
+    cdef void malloc(self):
+        self.values = np.empty((self.chunk_length, self.n_samples, self.ploidy),
+                               dtype='int64')
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef void parse(self, ParserContext ctx) nogil:
+        genotype_parse(self.memory, ctx, self.ploidy)
+
+    cdef void mkchunk(self, chunk, limit=None):
+        # debug('GenotypeInt64Parser.mkchunk')
+        chunk['calldata/GT'] = self.values[:limit]
+        self.malloc()
+
+
+cdef inline int genotype_parse(integer[:, :, :] memory,
+                               ParserContext ctx,
+                               int ploidy) nogil except -1:
+    cdef:
+        int allele_index = 0
+
+    # reset temporary buffer
+    temp_clear(ctx)
+
+    while True:
+
+        if ctx.c == SLASH or ctx.c == PIPE:
+            genotype_store(memory, ctx, allele_index, ploidy)
+            allele_index += 1
+            temp_clear(ctx)
+
+        elif ctx.c == COLON or ctx.c == TAB or ctx.c == NEWLINE:
+            genotype_store(memory, ctx, allele_index, ploidy)
+            break
+
+        else:
+            temp_append(ctx)
+
+        context_getc(ctx)
+
+    return 1
+
+
+cdef inline int genotype_store(integer[:, :, :] memory, ParserContext ctx,
+                               int allele_index, int ploidy) nogil except -1:
+    cdef:
+        int success
+
+    if allele_index >= ploidy:
+        # more alleles than we've made room for, ignore
+        return 0
+
+    # attempt to parse allele
+    success = temp_tolong(ctx)
+
+    # store value
+    if success:
+        memory[ctx.chunk_variant_index, ctx.sample_index, allele_index] = ctx.l
+
+    return 1
 
 
 cdef class CalldataInt8Parser(CalldataParserBase):
