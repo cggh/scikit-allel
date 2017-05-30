@@ -20,7 +20,7 @@ import warnings
 
 
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
-from libc.stdlib cimport strtol, strtof, strtod
+from libc.stdlib cimport strtol, strtof, strtod, malloc, free
 import numpy as np
 cimport numpy as np
 import cython
@@ -1540,6 +1540,9 @@ cdef class CalldataParser(Parser):
 
 # break out method as function for profiling
 cdef inline void CalldataParser_parse(CalldataParser self, ParserContext ctx) nogil:
+    cdef:
+        PyObject** parsers
+        int i
 
     # initialise ctx
     ctx.sample_index = 0
@@ -1547,36 +1550,46 @@ cdef inline void CalldataParser_parse(CalldataParser self, ParserContext ctx) no
 
     # initialise format parsers in correct order for this variant
     with gil:
-        ctx.calldata_parsers = [self.parsers.get(f, self.skip_parser) for f in
-                                ctx.formats]
+        n_formats = len(ctx.formats)
+        parsers = malloc(n_formats, sizeof(PyObject*))
+        for i, f in enumerate(ctx.formats):
+            parsers[i] = <PyObject*> self.parsers.get(f, self.skip_parser)
+        # ctx.calldata_parsers = [self.parsers.get(f, self.skip_parser) for f in
+        #                         ctx.formats]
 
-    with nogil:
+    try:
 
-        while True:
+        with nogil:
 
-            if ctx.c == 0 or ctx.c == NEWLINE:
-                context_getc(ctx)
-                break
+            while True:
 
-            elif ctx.c == TAB:
+                if ctx.c == 0 or ctx.c == NEWLINE:
+                    context_getc(ctx)
+                    break
 
-                ctx.sample_index += 1
-                ctx.format_index = 0
-                context_getc(ctx)
+                elif ctx.c == TAB:
 
-            elif ctx.c == COLON:
+                    ctx.sample_index += 1
+                    ctx.format_index = 0
+                    context_getc(ctx)
 
-                ctx.format_index += 1
-                context_getc(ctx)
+                elif ctx.c == COLON:
 
-            else:
+                    ctx.format_index += 1
+                    context_getc(ctx)
 
-                # TODO check we haven't gone past last format parser
-                (<Parser>PyList_GET_ITEM(ctx.calldata_parsers,
-                                         ctx.format_index)).parse(ctx)
-                # parser = <Parser> parsers[ctx.format_index]
-                # parser = <Parser> PyList_GET_ITEM(parsers, ctx.format_index)
-                # parser.parse(ctx)
+                else:
+
+                    # TODO check we haven't gone past last format parser
+                    (<Parser>parsers[ctx.format_index]).parse(ctx)
+                    # (<Parser>PyList_GET_ITEM(ctx.calldata_parsers,
+                    #                          ctx.format_index)).parse(ctx)
+                    # parser = <Parser> parsers[ctx.format_index]
+                    # parser = <Parser> PyList_GET_ITEM(parsers, ctx.format_index)
+                    # parser.parse(ctx)
+
+    finally:
+        free(parsers)
 
 
 cdef class GenotypeInt8Parser(Parser):
