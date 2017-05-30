@@ -25,7 +25,7 @@ TODO:
 ** DONE Integer
 ** DONE Float
 ** DONE String
-* Generalise genotype parser integer type
+* Generalise genotype parser integer type - needs tests
 * User-provided ploidy
 * Option not to return samples
 * Handle number = 0 in non-flag INFO field
@@ -41,8 +41,13 @@ TODO:
 * PY2 compatibility?
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
-* Special fields: num_alleles, is_snp, svlen, genotype_ac, genotype, is_called, is_phased?
-* Feature to rename fields, e.g., calldata/GT -> calldata/genotype
+* Special fields:
+** num_alleles
+** is_snp
+** svlen
+** genotype_ac
+** is_phased
+* Feature to rename fields, e.g., calldata/GT -> calldata/genotype?
 
 """
 from __future__ import absolute_import, print_function, division
@@ -69,7 +74,6 @@ def debug(*msg):
 DEFAULT_BUFFER_SIZE = 2**15
 DEFAULT_CHUNK_LENGTH = 2**15
 DEFAULT_CHUNK_WIDTH = 2**6
-DEFAULT_TEMP_SIZE = 2**15
 
 
 def read_vcf(path,
@@ -77,8 +81,7 @@ def read_vcf(path,
              types=None,
              numbers=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
-             chunk_length=DEFAULT_CHUNK_LENGTH,
-             temp_max_size=DEFAULT_TEMP_SIZE):
+             chunk_length=DEFAULT_CHUNK_LENGTH):
     """Read data from a VCF file into NumPy arrays.
 
     Parameters
@@ -89,11 +92,11 @@ def read_vcf(path,
         TODO
     types : dict
         TODO
+    numbers : dict
+        TODO
     buffer_size : int
         TODO
     chunk_length : int
-        TODO
-    temp_max_size : int
         TODO
 
     Returns
@@ -105,8 +108,7 @@ def read_vcf(path,
 
     # setup
     headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types, numbers=numbers,
-                                      buffer_size=buffer_size, chunk_length=chunk_length,
-                                      temp_max_size=temp_max_size)
+                                      buffer_size=buffer_size, chunk_length=chunk_length)
 
     # read all chunks into a list
     chunks = list(chunks)
@@ -135,8 +137,7 @@ def vcf_to_npz(input_path, output_path,
                types=None,
                numbers=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
-               chunk_length=DEFAULT_CHUNK_LENGTH,
-               temp_max_size=DEFAULT_TEMP_SIZE):
+               chunk_length=DEFAULT_CHUNK_LENGTH):
     """TODO"""
 
     # guard condition
@@ -146,8 +147,7 @@ def vcf_to_npz(input_path, output_path,
 
     # read all data into memory
     data = read_vcf(path=input_path, fields=fields, types=types, numbers=numbers,
-                    buffer_size=buffer_size, chunk_length=chunk_length,
-                    temp_max_size=temp_max_size)
+                    buffer_size=buffer_size, chunk_length=chunk_length)
 
     # setup save function
     if compressed:
@@ -170,8 +170,7 @@ def vcf_to_hdf5(input_path, output_path,
                 numbers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
-                chunk_width=DEFAULT_CHUNK_WIDTH,
-                temp_max_size=DEFAULT_TEMP_SIZE):
+                chunk_width=DEFAULT_CHUNK_WIDTH):
     """TODO"""
 
     import h5py
@@ -191,7 +190,7 @@ def vcf_to_hdf5(input_path, output_path,
         # setup chunk iterator
         headers, chunks = read_vcf_chunks(input_path, fields=fields,
                                           types=types, numbers=numbers, buffer_size=buffer_size,
-                                          chunk_length=chunk_length, temp_max_size=temp_max_size)
+                                          chunk_length=chunk_length)
         # TODO this won't be necessary when using generators
         chunks = iter(chunks)
 
@@ -285,8 +284,7 @@ def vcf_to_zarr(input_path, output_path,
                 numbers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
-                chunk_width=DEFAULT_CHUNK_WIDTH,
-                temp_max_size=DEFAULT_TEMP_SIZE):
+                chunk_width=DEFAULT_CHUNK_WIDTH):
     """TODO"""
 
     import zarr
@@ -299,9 +297,9 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types, numbers=numbers,
-                                      buffer_size=buffer_size, chunk_length=chunk_length,
-                                      temp_max_size=temp_max_size)
+    headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
+                                      numbers=numbers, buffer_size=buffer_size,
+                                      chunk_length=chunk_length)
     # TODO this won't be necessary when using generators
     chunks = iter(chunks)
 
@@ -332,8 +330,8 @@ def vcf_to_zarr(input_path, output_path,
         # create dataset
         shape = (0,) + data.shape[1:]
         root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
-                            compressor=compressor, overwrite=overwrite, fill_value=fill_value,
-                            order=order)
+                            compressor=compressor, overwrite=overwrite,
+                            fill_value=fill_value, order=order)
 
     # reconstitute chunks iterator
     chunks = itertools.chain([chunk], chunks)
@@ -353,30 +351,26 @@ def read_vcf_chunks(path,
                     types=None,
                     numbers=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
-                    chunk_length=DEFAULT_CHUNK_LENGTH,
-                    temp_max_size=DEFAULT_TEMP_SIZE):
+                    chunk_length=DEFAULT_CHUNK_LENGTH):
     """TODO"""
 
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
         with gzip.open(path, mode='rb') as binary_file:
             return _read_vcf(binary_file, fields=fields, types=types, numbers=numbers,
-                             buffer_size=buffer_size, chunk_length=chunk_length,
-                             temp_max_size=temp_max_size)
+                             buffer_size=buffer_size, chunk_length=chunk_length)
 
     elif isinstance(path, str):
         # assume no compression
         with open(path, mode='rb', buffering=0) as binary_file:
             return _read_vcf(binary_file, fields=fields, types=types, numbers=numbers,
-                             buffer_size=buffer_size, chunk_length=chunk_length,
-                             temp_max_size=temp_max_size)
+                             buffer_size=buffer_size, chunk_length=chunk_length)
 
     else:
         # assume some other binary file-like object
         binary_file = path
         return _read_vcf(binary_file, fields=fields, types=types, numbers=numbers,
-                         buffer_size=buffer_size, chunk_length=chunk_length,
-                         temp_max_size=temp_max_size)
+                         buffer_size=buffer_size, chunk_length=chunk_length)
 
 
 FIXED_VARIANTS_FIELDS = (
@@ -713,7 +707,7 @@ def normalize_numbers(numbers, fields, headers):
     return normed_numbers
 
 
-def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length, temp_max_size):
+def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length):
 
     # read VCF headers
     headers = read_vcf_headers(fileobj)
@@ -740,8 +734,9 @@ def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length, temp_m
     # debug('normalized numbers', numbers)
 
     # setup chunks iterator
-    chunks = iter_vcf(fileobj, buffer_size=buffer_size, chunk_length=chunk_length,
-                      temp_max_size=temp_max_size, headers=headers, fields=fields,
+    chunks = iter_vcf(input_file=fileobj, input_buffer_size=buffer_size,
+                      chunk_length=chunk_length,
+                      temp_buffer_size=2**12, headers=headers, fields=fields,
                       types=types, numbers=numbers)
 
     return headers, chunks
