@@ -1418,6 +1418,8 @@ cdef inline void FormatParser_parse(FormatParser self, ParserContext ctx) nogil:
 
     with gil:
 
+        # TODO nogil version
+
         ctx.formats = []
 
         while True:
