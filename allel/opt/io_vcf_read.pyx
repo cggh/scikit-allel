@@ -403,12 +403,20 @@ cdef class ParserContext:
         int sample_index
         int chunk_length
         int ploidy
+        # infos
+        int n_infos
+        tuple infos
+        char** info_ptrs
+        list info_parsers
+        PyObject** info_parser_ptrs
         # filters
         int n_filters
         tuple filters
         char** filter_ptrs
         # formats
         int n_formats
+        tuple formats
+        char** format_ptrs
         int variant_n_formats
         int format_index
         list calldata_parsers
@@ -439,8 +447,8 @@ cdef class ParserContext:
         self.temp_size = 0
 
         # initialize pointer arrays
-        self.calldata_parser_ptrs = <PyObject**> malloc(MAX_FORMATS * sizeof(PyObject*))
-        self.variant_calldata_parser_ptrs = <PyObject**> malloc(MAX_FORMATS * sizeof(PyObject*))
+        self.variant_calldata_parser_ptrs = <PyObject**> malloc(MAX_FORMATS *
+                                                                sizeof(PyObject*))
 
         # initialize state
         self.state = ParserState.CHROM
@@ -453,8 +461,20 @@ cdef class ParserContext:
         self.ploidy = ploidy
 
     def __dealloc__(self):
+
+        # infos
+        if self.info_ptrs is not NULL:
+            free(self.info_ptrs)
+        if self.info_parser_ptrs is not NULL:
+            free(self.info_parser_ptrs)
+
+        # filters
         if self.filter_ptrs is NULL:
             free(self.filter_ptrs)
+
+        # calldata
+        if self.format_ptrs is not NULL:
+            free(self.format_ptrs)
         if self.calldata_parser_ptrs is not NULL:
             free(self.calldata_parser_ptrs)
         if self.variant_calldata_parser_ptrs is not NULL:
@@ -1026,14 +1046,16 @@ cdef class FilterParser(Parser):
 
     def __init__(self, ParserContext context, filters):
         super(FilterParser, self).__init__(context)
-        context.filters = tuple(filters)
+
+        # setup filters
+        context.filters = tuple(sorted(filters))
         # debug(filters, context)
         context.n_filters = len(context.filters)
         if context.filter_ptrs is not NULL:
             free(context.filter_ptrs)
         context.filter_ptrs = <char**> malloc(context.n_filters * sizeof(char*))
         for i in range(context.n_filters):
-            context.filter_ptrs[i] = PyBytes_AS_STRING(<bytes>filters[i])
+            context.filter_ptrs[i] = <char*> context.filters[i]
 
     cdef int parse(self) nogil except -1:
         return filter_parse(self, self.context)
@@ -1123,7 +1145,7 @@ cdef inline int filter_parse(FilterParser self,
 cdef inline int filter_store(FilterParser self,
                              ParserContext context) nogil except -1:
     cdef:
-        int filter_index = -1
+        int filter_index
         int i
         char* f
 
@@ -1134,11 +1156,7 @@ cdef inline int filter_store(FilterParser self,
     temp_terminate(context)
 
     # search through filters to find index
-    for i in range(context.n_filters):
-        f = context.filter_ptrs[i]
-        if strcmp(context.temp, f) == 0:
-            filter_index = i
-            break
+    filter_index = search_sorted(context.temp, context.filter_ptrs, context.n_filters)
 
     # store value
     if filter_index >= 0:
@@ -1149,16 +1167,26 @@ cdef inline int filter_store(FilterParser self,
 
 cdef class InfoParser(Parser):
 
-    cdef tuple infos
-    cdef dict parsers
+    # cdef tuple infos
+    # cdef dict parsers
     cdef Parser skip_parser
 
     def __init__(self, ParserContext context, infos, types, numbers):
         super(InfoParser, self).__init__(context)
-        self.infos = tuple(infos)
-        self.parsers = dict()
+
+        # setup info keys
+        context.infos = tuple(sorted(infos))
+        context.n_infos = len(context.infos)
+        if context.info_ptrs is not NULL:
+            free(context.info_ptrs)
+        context.info_ptrs = <char**> malloc(context.n_infos * sizeof(char*))
+        for i in range(context.n_infos):
+            context.info_ptrs[i] = <char*> context.infos[i]
+
+        # setup parsers
+        context.info_parsers = list()
         self.skip_parser = SkipInfoFieldParser(context)
-        for key in self.infos:
+        for key in context.infos:
             t = types[key]
             n = numbers[key]
             if t == np.dtype(bool) or n == 0:
@@ -1179,18 +1207,26 @@ cdef class InfoParser(Parser):
                 parser = self.skip_parser
                 warnings.warn('type %s not supported for INFO field %r, field will be '
                               'skipped' % (t, key))
-            self.parsers[key] = parser
+            context.info_parsers.append(parser)
+
+        # store pointers to parsers
+        if context.info_parser_ptrs is not NULL:
+            free(context.info_parser_ptrs)
+        context.info_parser_ptrs = <PyObject**> malloc(context.n_infos *
+                                                       sizeof(PyObject*))
+        for i in range(context.n_infos):
+            context.info_parser_ptrs[i] = <PyObject*> context.info_parsers[i]
 
     cdef int parse(self) nogil except -1:
         return info_parse(self, self.context)
 
     def malloc(self):
-        for parser in self.parsers.values():
+        for parser in self.context.info_parsers:
             parser.malloc()
 
     def mkchunk(self, chunk, limit=None):
         cdef Parser parser
-        for parser in self.parsers.values():
+        for parser in self.context.info_parsers:
             parser.mkchunk(chunk, limit=limit)
 
 
@@ -1260,17 +1296,44 @@ cdef inline int info_parse(InfoParser self,
             context_getc(context)
 
 
+cdef inline int search_sorted(char* query, char** compare, int n_items) nogil:
+    cdef:
+        int i
+
+    # TODO smarter search
+
+    # simple scan for now
+    for i in range(n_items):
+        if strcmp(query, compare[i]) == 0:
+            return i
+
+    return -1
+
+
 cdef inline int info_store(InfoParser self,
                            ParserContext context) nogil except -1:
+    cdef:
+        int parser_index
+        PyObject* parser
 
     if context.temp_size > 0:
         # treat temp as key
 
-        with gil:
+        # terminate temp
+        temp_terminate(context)
 
-            key = PyBytes_FromStringAndSize(context.temp, context.temp_size)
-            temp_clear(context)
-            (<Parser>self.parsers.get(key, self.skip_parser)).parse()
+        # search for index of current INFO key
+        parser_index = search_sorted(context.temp, context.info_ptrs, context.n_infos)
+
+        # clear out temp for good measure
+        temp_clear(context)
+
+        if parser_index >= 0:
+            # obtain parser
+            parser = context.info_parser_ptrs[parser_index]
+            (<Parser> parser).parse()
+        else:
+            self.skip_parser.parse()
 
     # else:
     #
@@ -1630,8 +1693,7 @@ cdef inline int format_set(ParserContext context,
                            int format_index) nogil except -1:
     cdef:
         PyObject* parser = NULL
-        PyObject* matching_parser = NULL
-        int i
+        int parser_index
     # debug('format_set: enter', context)
 
     if format_index >= MAX_FORMATS:
@@ -1646,14 +1708,14 @@ cdef inline int format_set(ParserContext context,
         # terminate string
         temp_terminate(context)
 
-        for i in range(context.n_formats):
-            parser = context.calldata_parser_ptrs[i]
+        # find parser
+        parser_index = search_sorted(context.temp, context.format_ptrs, context.n_formats)
 
-            if strcmp(context.temp, (<Parser>parser).key) == 0:
-                matching_parser = parser
-                break
+        # set parser
+        if parser_index >= 0:
+            parser = context.calldata_parser_ptrs[parser_index]
 
-    context.variant_calldata_parser_ptrs[format_index] = matching_parser
+    context.variant_calldata_parser_ptrs[format_index] = parser
 
     temp_clear(context)
 
@@ -1668,11 +1730,20 @@ cdef class CalldataParser(Parser):
 
     def __init__(self, ParserContext context, formats, types, numbers):
         super(CalldataParser, self).__init__(context)
-        self.formats = tuple(formats)
         self.skip_parser = SkipCalldataFieldParser(context)
 
+        # setup formats
+        context.formats = tuple(sorted(formats))
+        context.n_formats = len(context.formats)
+        if context.format_ptrs is not NULL:
+            free(context.format_ptrs)
+        context.format_ptrs = <char**> malloc(context.n_formats * sizeof(char*))
+        for i in range(context.n_formats):
+            context.format_ptrs[i] = <char*> context.formats[i]
+
+        # setup parsers
         context.calldata_parsers = list()
-        for key in formats:
+        for key in context.formats:
             t = types[key]
             n = numbers[key]
             if key == b'GT' and t == np.dtype('int8'):
@@ -1703,9 +1774,12 @@ cdef class CalldataParser(Parser):
                 warnings.warn('type %s not supported for FORMAT field %r, field will be '
                               'skipped' % (t, key))
             context.calldata_parsers.append(parser)
-        context.n_formats = len(formats)
 
         # store pointers for nogil
+        if context.calldata_parser_ptrs is not NULL:
+            free(context.calldata_parser_ptrs)
+        context.calldata_parser_ptrs = <PyObject**> malloc(context.n_formats *
+                                                           sizeof(PyObject*))
         for i in range(context.n_formats):
             context.calldata_parser_ptrs[i] = <PyObject*> context.calldata_parsers[i]
 
