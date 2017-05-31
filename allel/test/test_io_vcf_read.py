@@ -8,7 +8,7 @@ from allel.io_vcf_read import read_vcf_chunks, read_vcf
 
 def test_read_vcf_chunks():
     fn = 'fixture/sample.vcf'
-    headers, chunks = read_vcf_chunks(fn, fields='*', chunk_length=4)
+    headers, chunks = read_vcf_chunks(fn, fields='*', chunk_length=4, buffer_size=100)
 
     # check headers
     assert_in('q10', headers.filters)
@@ -73,7 +73,7 @@ def test_read_vcf_chunks():
 
 def test_read_vcf_fields_all():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='*', chunk_length=4)
+    callset = read_vcf(fn, fields='*', chunk_length=4, buffer_size=100)
     expected_fields = [
         'samples',
         # fixed fields
@@ -106,7 +106,7 @@ def test_read_vcf_fields_all():
 
 def test_read_vcf_fields_default():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, chunk_length=4)
+    callset = read_vcf(fn, chunk_length=3, buffer_size=30)
     expected_fields = [
         'samples',
         'variants/CHROM',
@@ -123,7 +123,7 @@ def test_read_vcf_fields_default():
 
 def test_read_vcf_fields_all_variants():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='variants/*', chunk_length=4)
+    callset = read_vcf(fn, fields='variants/*', chunk_length=2, buffer_size=20)
     expected_fields = [
         # TODO no samples
         'samples',
@@ -152,7 +152,7 @@ def test_read_vcf_fields_all_variants():
 
 def test_read_vcf_fields_info():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='INFO', chunk_length=4)
+    callset = read_vcf(fn, fields='INFO', chunk_length=5, buffer_size=10)
     expected_fields = [
         # TODO no samples
         'samples',
@@ -171,7 +171,7 @@ def test_read_vcf_fields_info():
 
 def test_read_vcf_fields_filter():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='FILTER', chunk_length=4)
+    callset = read_vcf(fn, fields='FILTER', chunk_length=1, buffer_size=2)
     expected_fields = [
         # TODO no samples
         'samples',
@@ -184,7 +184,7 @@ def test_read_vcf_fields_filter():
 
 def test_read_vcf_fields_all_calldata():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='calldata/*', chunk_length=4)
+    callset = read_vcf(fn, fields='calldata/*', chunk_length=6, buffer_size=1000)
     expected_fields = [
         # TODO no samples
         'samples',
@@ -200,7 +200,7 @@ def test_read_vcf_fields_selected():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
                                    'calldata/HQ', 'FILTER_q10'],
-                       chunk_length=4)
+                       chunk_length=4, buffer_size=100)
     expected_fields = [
         'samples',
         'variants/CHROM',
@@ -217,7 +217,7 @@ def test_read_vcf_fields_selected():
 
 def test_read_vcf_content():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='*', chunk_length=4,
+    callset = read_vcf(fn, fields='*', chunk_length=4, buffer_size=10,
                        types={'ALT': 'S3', 'calldata/DP': 'S3'})
 
     # fixed fields

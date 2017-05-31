@@ -1,17 +1,17 @@
 # cython: language_level=3
+# cython: profile=False
+# cython: binding=False
+# cython: linetrace=False
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: initializedcheck=False
+# cython: nonecheck=False
+"""
 # cython: profile=True
 # cython: linetrace=True
 # cython: binding=True
 # distutils: define_macros=CYTHON_TRACE=1
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
-"""
-# cython: profile=False
-# cython: linetrace=False
-# cython: binding=False
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: initializedcheck=False
-# cython: nonecheck=False
 """
 
 
@@ -35,7 +35,6 @@ cdef double NAN = np.nan
 
 
 from cpython.ref cimport PyObject
-# from cpython.list cimport PyList_GET_ITEM
 cdef extern from "Python.h":
     char* PyByteArray_AS_STRING(object string)
 
@@ -97,7 +96,7 @@ cdef int debug(msg, ParserContext context) nogil except -1:
         msg += '; c: %s' % <bytes>context.c
         msg += '; n_formats: %s' % context.n_formats
         msg += '; variant_n_formats: %s' % context.variant_n_formats
-        msg += '; calldata_parserss: %s' % context.calldata_parsers
+        msg += '; calldata_parsers: %s' % context.calldata_parsers
         print(msg, file=sys.stderr)
         sys.stderr.flush()
 
@@ -230,7 +229,7 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
             fields.remove(field)
             format_types[key] = types[field]
             format_numbers[key] = numbers[field]
-    debug('iter_vcf format_keys: %s' % str(format_keys), context)
+    # debug('iter_vcf format_keys: %s' % str(format_keys), context)
     if format_keys:
         format_parser = FormatParser(context)
         calldata_parser = CalldataParser(context,
@@ -360,6 +359,9 @@ cdef enum ParserState:
     CALLDATA
 
 
+cdef int MAX_FORMATS = 100
+
+
 cdef class ParserContext:
     cdef:
         # input file and buffer
@@ -416,6 +418,10 @@ cdef class ParserContext:
         self.temp = PyByteArray_AS_STRING(self.temp_buffer)
         self.temp_size = 0
 
+        # initialize pointer arrays
+        self.calldata_parser_ptrs = <PyObject**> malloc(MAX_FORMATS * sizeof(PyObject*))
+        self.variant_calldata_parser_ptrs = <PyObject**> malloc(MAX_FORMATS * sizeof(PyObject*))
+
         # initialize state
         self.state = ParserState.CHROM
         self.n_samples = n_samples
@@ -423,8 +429,6 @@ cdef class ParserContext:
         self.chunk_variant_index = 0
         self.sample_index = 0
         self.format_index = 0
-        self.calldata_parser_ptrs = NULL
-        self.variant_calldata_parser_ptrs = NULL
         self.chunk_length = chunk_length
         self.ploidy = ploidy
 
@@ -588,19 +592,19 @@ cdef class Parser(object):
     cdef int itemsize
 
     def __init__(self, ParserContext context):
-        debug('Parser.__init__: enter', context)
+        # debug('Parser.__init__: enter', context)
         self.context = context
 
     cdef int parse(self) nogil except -1:
-        debug('Parser.parse: enter', self.context)
+        # debug('Parser.parse: enter', self.context)
         pass
 
     def malloc(self):
-        debug('Parser.malloc: enter', self.context)
+        # debug('Parser.malloc: enter', self.context)
         pass
 
     def mkchunk(self, chunk, limit=None):
-        debug('Parser.mkchunk: enter', self.context)
+        # debug('Parser.mkchunk: enter', self.context)
         pass
 
 
@@ -645,7 +649,7 @@ cdef inline int string_parse(np.uint8_t[:] memory,
         # number of characters read into current value
         int chars_stored = 0
 
-    debug('string_parse', context)
+    # debug('string_parse', context)
 
     # initialise memory index
     memory_index = context.chunk_variant_index * itemsize
@@ -709,7 +713,7 @@ cdef inline int pos_parse(integer[:] memory,
         long value
         int success
 
-    debug('pos_parse', context)
+    # debug('pos_parse', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -814,7 +818,7 @@ cdef inline int alt_parse(np.uint8_t[:] memory,
         # number of characters read into current value
         int chars_stored = 0
 
-    debug('alt_parse', context)
+    # debug('alt_parse', context)
 
     # initialise memory offset and index
     memory_offset = context.chunk_variant_index * itemsize * number
@@ -869,7 +873,7 @@ cdef inline int qual_parse(floating[:] memory,
     cdef:
         int success
 
-    debug('qual_parse', context)
+    # debug('qual_parse', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -924,7 +928,7 @@ cdef inline int filter_parse(FilterParser self,
     cdef:
         int filter_index
 
-    debug('filter_parse', context)
+    # debug('filter_parse', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -1036,7 +1040,7 @@ cdef class InfoParser(Parser):
 cdef inline int info_parse(InfoParser self,
                            ParserContext context) nogil except -1:
 
-    debug('info_parse', context)
+    # debug('info_parse', context)
 
     # check for explicit missing value
     if context.c == PERIOD:
@@ -1142,7 +1146,7 @@ cdef inline int info_integer_parse(integer[:, :] memory,
     cdef:
         int value_index = 0
 
-    debug('info_integer_parse', context)
+    # debug('info_integer_parse', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -1227,7 +1231,7 @@ cdef inline int info_floating_parse(floating[:, :] memory,
     cdef:
         int value_index = 0
 
-    debug('info_floating_parse', context)
+    # debug('info_floating_parse', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -1285,7 +1289,7 @@ cdef class InfoFlagParser(Parser):
         self.key = PyBytes_AS_STRING(key)
 
     cdef int parse(self) nogil except -1:
-        debug('InfoFlagParser.parse', self.context)
+        # debug('InfoFlagParser.parse', self.context)
         self.memory[self.context.chunk_variant_index] = 1
         # ensure we advance the end of the field
         while self.context.c != SEMICOLON and \
@@ -1324,7 +1328,7 @@ cdef class InfoStringParser(Parser):
             # number of characters read into current value
             int chars_stored = 0
 
-        debug('InfoStringParser.parse', self.context)
+        # debug('InfoStringParser.parse', self.context)
 
         # initialise memory index
         memory_offset = self.context.chunk_variant_index * self.itemsize * self.number
@@ -1380,16 +1384,16 @@ cdef inline int format_parse(FormatParser self,
         int format_index = 0
         int i
 
-    debug('format_parse: enter', context)
+    # debug('format_parse: enter', context)
 
     # reset temporary buffer
     temp_clear(context)
     context.variant_n_formats = 0
 
-    # reset parsers - NULL implies skip
-    for i in range(context.n_formats):
-        context.variant_calldata_parser_ptrs[i] = NULL
-
+    # # reset parsers - NULL implies skip
+    # for i in range(MAX_FORMATS):
+    #     context.variant_calldata_parser_ptrs[i] = NULL
+    #
     with gil:
 
         # TODO nogil version
@@ -1397,14 +1401,14 @@ cdef inline int format_parse(FormatParser self,
         while True:
 
             if context.c == TAB or context.c == NEWLINE:
-                debug('format_parse: field end, setting', context)
+                # debug('format_parse: field end, setting', context)
                 format_set(context, format_index)
                 format_index += 1
                 # we're done here
                 break
 
             elif context.c == COLON:
-                debug('format_parse: format end, setting', context)
+                # debug('format_parse: format end, setting', context)
                 format_set(context, format_index)
                 format_index += 1
 
@@ -1419,46 +1423,49 @@ cdef inline int format_parse(FormatParser self,
     # advance to next field
     context_getc(context)
 
-    debug('format_parse: leave', context)
+    # debug('format_parse: leave', context)
     return 1
 
 
 cdef inline int format_set(ParserContext context,
                            int format_index) except -1:  # TODO nogil
     cdef:
-        PyObject* parser
+        PyObject* parser = NULL
+        PyObject* matching_parser = NULL
         int i
-    debug('format_set: enter', context)
+    # debug('format_set: enter', context)
 
-    if context.temp_size > 0:
+    if format_index >= MAX_FORMATS:
+        warn('MAX_FORMATS exceeded', context)
+        return 0
+
+    if context.temp_size == 0:
+        warn('empty FORMAT', context)
+
+    else:
 
         # terminate string
         temp_terminate(context)
 
-        if format_index < context.n_formats:
-            debug('format_set: search for matching parser', context)
+        # debug('format_set: search for matching parser', context)
 
-            for i in range(context.n_formats):
-                parser = context.calldata_parser_ptrs[i]
-                debug('format_set: comparing parser with key %s' % (<Parser>parser).key,
-                      context)
+        for i in range(context.n_formats):
+            parser = context.calldata_parser_ptrs[i]
 
-                if strcmp(context.temp, (<Parser>parser).key) == 0:
-                    context.variant_calldata_parser_ptrs[format_index] = parser
-                    debug('format_set: parser match', context)
-                    break
+            # debug('format_set: comparing parser with key %s' % (<Parser>parser).key,
+            #       context)
+            if strcmp(context.temp, (<Parser>parser).key) == 0:
+                matching_parser = parser
+                # debug('format_set: parser match', context)
+                break
 
-                else:
-                    debug('format_set: parser no match', context)
+            else:
+                # debug('format_set: parser no match', context)
+                pass
 
-        else:
-            debug('format_set: more formats than parsers', context)
-        # TODO warn if no parser found?
+    context.variant_calldata_parser_ptrs[format_index] = matching_parser
 
-        temp_clear(context)
-
-    else:
-        warn('empty FORMAT', context)
+    temp_clear(context)
 
     return 1
 
@@ -1509,18 +1516,8 @@ cdef class CalldataParser(Parser):
         context.n_formats = len(formats)
 
         # store pointers for nogil
-        if context.calldata_parser_ptrs is not NULL:
-            free(context.calldata_parser_ptrs)
-        context.calldata_parser_ptrs = \
-            <PyObject**> malloc(context.n_formats * sizeof(PyObject*))
-        if context.variant_calldata_parser_ptrs is not NULL:
-            free(context.variant_calldata_parser_ptrs)
-        context.variant_calldata_parser_ptrs = \
-            <PyObject**> malloc(context.n_formats * sizeof(PyObject*))
         for i in range(context.n_formats):
             context.calldata_parser_ptrs[i] = <PyObject*> context.calldata_parsers[i]
-
-        #     self.parsers[key] = parser
 
     cdef int parse(self) nogil except -1:
         return calldata_parse(self, self.context)
@@ -1543,7 +1540,7 @@ cdef inline int calldata_parse(CalldataParser self,
         int i
         PyObject* parser
 
-    debug('calldata_parse: enter', context)
+    # debug('calldata_parse: enter', context)
 
     # initialise context
     context.sample_index = 0
@@ -1578,18 +1575,19 @@ cdef inline int calldata_parse(CalldataParser self,
 
         else:
 
-            debug('calldata_parse: find parser to delegate to', context)
+            # debug('calldata_parse: find parser to delegate to', context)
             # check we haven't gone past last format parser
-            if context.format_index < context.n_formats:
-                debug('calldata_parse: in range, find calldata parser', context)
+            if context.format_index < MAX_FORMATS:
+                # debug('calldata_parse: in range, find calldata parser', context)
+
                 parser = context.variant_calldata_parser_ptrs[context.format_index]
-                debug((<object>parser), context)
                 if parser is NULL:
-                    debug('calldata_parse: parser is NULL', context)
+                    # debug('calldata_parse: parser is NULL', context)
                     self.skip_parser.parse()
                 else:
-                    debug('calldata_parse: parser is not NULL, attempting to delegate',
-                          context)
+                    # debug((<object>parser), context)
+                    # debug('calldata_parse: parser is not NULL, attempting to delegate',
+                    #       context)
                     # jump through some hoops to avoid references (which need the GIL)
                     (<Parser>parser).parse()
             else:
@@ -1611,13 +1609,13 @@ cdef class SkipInfoFieldParser(Parser):
 cdef class SkipCalldataFieldParser(Parser):
 
     cdef int parse(self) nogil except -1:
-        debug('SkipCalldataFieldParser.parse: enter', self.context)
+        # debug('SkipCalldataFieldParser.parse: enter', self.context)
         while self.context.c != COLON and \
                 self.context.c != TAB and \
                 self.context.c != NEWLINE and \
                 self.context.c != 0:
             context_getc(self.context)
-        debug('SkipCalldataFieldParser.parse: leave', self.context)
+        # debug('SkipCalldataFieldParser.parse: leave', self.context)
         return 1
 
 
@@ -1627,7 +1625,7 @@ cdef inline int calldata_integer_parse(integer[:, :, :] memory,
     cdef:
         int value_index = 0
 
-    debug('calldata_integer_parse: enter', context)
+    # debug('calldata_integer_parse: enter', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -1679,7 +1677,7 @@ cdef inline int calldata_floating_parse(floating[:, :, :] memory,
     cdef:
         int value_index = 0
 
-    debug('calldata_floating_parse: enter', context)
+    # debug('calldata_floating_parse: enter', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -1728,7 +1726,7 @@ cdef inline int calldata_floating_store(floating[:, :, :] memory,
 cdef class GenotypeParserBase(Parser):
 
     def __init__(self, ParserContext context, bytes key, fill):
-        debug('GenotypeParserBase.__init__: enter', context)
+        # debug('GenotypeParserBase.__init__: enter', context)
         super(GenotypeParserBase, self).__init__(context)
         self.key = PyBytes_AS_STRING(key)
         self.fill = fill
@@ -1744,14 +1742,14 @@ cdef class GenotypeInt8Parser(GenotypeParserBase):
     # TODO cdef object dtype = 'int8' ... can factor out malloc?
 
     def malloc(self):
-        debug('GenotypeInt8Parser.malloc: enter', self.context)
+        # debug('GenotypeInt8Parser.malloc: enter', self.context)
         shape = (self.context.chunk_length, self.context.n_samples, self.context.ploidy)
         self.values = np.empty(shape, dtype='int8')
         self.memory = self.values
         self.memory[:] = self.fill
 
     cdef int parse(self) nogil except -1:
-        debug('GenotypeInt8Parser.parse: enter', self.context)
+        # debug('GenotypeInt8Parser.parse: enter', self.context)
         return genotype_parse(self.memory, self.context)
 
 
@@ -1802,7 +1800,7 @@ cdef inline int genotype_parse(integer[:, :, :] memory,
     cdef:
         int allele_index = 0
 
-    debug('genotype_parse: enter', context)
+    # debug('genotype_parse: enter', context)
 
     # reset temporary buffer
     temp_clear(context)
@@ -1832,7 +1830,7 @@ cdef inline int genotype_store(integer[:, :, :] memory,
     cdef:
         int success
 
-    debug('genotype_store: enter', context)
+    # debug('genotype_store: enter', context)
 
     if allele_index >= context.ploidy:
         # more alleles than we've made room for, ignore
@@ -1858,7 +1856,7 @@ cdef class CalldataParserBase(Parser):
         self.fill = fill
 
     def mkchunk(self, chunk, limit=None):
-        field = 'calldata/' + str(self.key, 'ascii')
+        field = 'calldata/' + str(<bytes>self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -1953,7 +1951,7 @@ cdef class CalldataFloat64Parser(CalldataParserBase):
         self.memory[:] = self.fill
 
 
-cdef class CalldataStringParser(CalldataParserBase):
+cdef class CalldataStringParser(Parser):
 
     cdef np.uint8_t[:] memory
 
@@ -1972,7 +1970,7 @@ cdef class CalldataStringParser(CalldataParserBase):
             # number of characters read into current value
             int chars_stored = 0
 
-        debug('CalldataStringParser.parse: enter', self.context)
+        # debug('CalldataStringParser.parse: enter', self.context)
 
         # initialise memory index
         memory_offset = ((self.context.chunk_variant_index *
