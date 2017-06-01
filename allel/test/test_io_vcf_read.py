@@ -265,40 +265,86 @@ def test_read_vcf_content():
     # eq_(True, a[0]['NA00001']['is_phased'])
 
 
-def test_vcf_truncation():
+def test_vcf_truncation_chrom():
 
-    input_data = b"""#CHROM\n2L\n"""
-    input_file = io.BytesIO(input_data)
-    callset = read_vcf(input_file, fields=['CHROM', 'POS', 'samples'])
+    input_data = b"""#CHROM\n2L\n2R\n"""
 
-    # check fields
-    expected_fields = ['variants/CHROM', 'variants/POS', 'samples']
-    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
 
-    # check data content
-    chrom = callset['variants/CHROM']
-    pos = callset['variants/POS']
-    eq_(1, len(chrom))
-    eq_(1, len(pos))
-    eq_(b'2L', chrom[0])
-    eq_(-1, pos[0])
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['CHROM', 'samples'])
 
-    # no final line terminator
-    input_data = b"""#CHROM\n2L"""
-    input_file = io.BytesIO(input_data)
-    callset = read_vcf(input_file, fields=['CHROM', 'POS', 'samples'])
+        # check fields
+        expected_fields = ['variants/CHROM', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
-    # check fields
-    expected_fields = ['variants/CHROM', 'variants/POS', 'samples']
-    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+        # check data content
+        eq_(0, len(callset['samples']))
+        chrom = callset['variants/CHROM']
+        eq_(2, len(chrom))
+        eq_(b'2L', chrom[0])
+        eq_(b'2R', chrom[1])
 
-    # check data content
-    chrom = callset['variants/CHROM']
-    pos = callset['variants/POS']
-    eq_(1, len(chrom))
-    eq_(1, len(pos))
-    eq_(b'2L', chrom[0])
-    eq_(-1, pos[0])
+
+def test_vcf_truncation_pos():
+
+    input_data = b"""#CHROM\tPOS\n2L\t12\n2R\t34\n"""
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['CHROM', 'POS', 'samples'])
+
+        # check fields
+        expected_fields = ['variants/CHROM', 'variants/POS', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(0, len(callset['samples']))
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        eq_(2, len(chrom))
+        eq_(2, len(pos))
+        eq_(b'2L', chrom[0])
+        eq_(b'2R', chrom[1])
+        eq_(12, pos[0])
+        eq_(34, pos[1])
+
+
+
+def test_vcf_truncation_id():
+
+    input_data = b"""#CHROM\tPOS\tID\n2L\t12\tfoo\n2R\t34\tbar\n"""
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['CHROM', 'POS', 'ID', 'samples'])
+
+        # check fields
+        expected_fields = ['variants/CHROM', 'variants/POS', 'variants/ID', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(0, len(callset['samples']))
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        id = callset['variants/ID']
+        eq_(2, len(chrom))
+        eq_(2, len(pos))
+        eq_(2, len(id))
+        eq_(b'2L', chrom[0])
+        eq_(b'2R', chrom[1])
+        eq_(12, pos[0])
+        eq_(34, pos[1])
+        eq_(b'foo', id[0])
+        eq_(b'bar', id[1])
+
+
+
 
 # TODO test types
 

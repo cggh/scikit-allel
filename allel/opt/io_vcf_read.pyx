@@ -135,10 +135,10 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
 
     # setup CHROM parser
     if CHROM_FIELD in fields:
-        chrom_parser = StringFieldParser(context, field=CHROM_FIELD, dtype=types[CHROM_FIELD])
+        chrom_parser = ChromParser(context, dtype=types[CHROM_FIELD], skip=False)
         fields.remove(CHROM_FIELD)
     else:
-        chrom_parser = SkipChromParser(context)
+        chrom_parser = ChromParser(context, dtype=None, skip=True)
     chrom_parser.malloc()
 
     # setup POS parser
@@ -256,18 +256,31 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
             # TODO sigint?
 
             if context.state == ParserState.EOF:
+
+                # left-over chunk
+                with gil:
+
+                    limit = context.chunk_variant_index + 1
+                    if limit > 0:
+                        chunk = dict()
+                        chrom_parser.mkchunk(chunk, limit=limit)
+                        pos_parser.mkchunk(chunk, limit=limit)
+                        id_parser.mkchunk(chunk, limit=limit)
+                        ref_parser.mkchunk(chunk, limit=limit)
+                        alt_parser.mkchunk(chunk, limit=limit)
+                        qual_parser.mkchunk(chunk, limit=limit)
+                        filter_parser.mkchunk(chunk, limit=limit)
+                        info_parser.mkchunk(chunk, limit=limit)
+                        calldata_parser.mkchunk(chunk, limit=limit)
+                        # TODO yield
+                        chunks.append(chunk)
+
                 break
 
             elif context.state == ParserState.EOL:
 
-                # setup next variant
-                context.variant_index += 1
-
                 # decide whether to start a new chunk
-                if context.chunk_variant_index < chunk_length - 1:
-                    context.chunk_variant_index += 1
-
-                else:
+                if context.chunk_variant_index == chunk_length - 1:
 
                     with gil:
 
@@ -286,7 +299,7 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
                         chunks.append(chunk)
 
                     # setup next chunk
-                    context.chunk_variant_index = 0
+                    context.chunk_variant_index = -1
 
                 # handle line terminators
                 if context.c == LF:
@@ -339,22 +352,6 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
                 with gil:
                     # shouldn't ever happen
                     raise RuntimeError('unexpected parser state: %s' % context.state)
-
-    # left-over chunk
-    limit = context.chunk_variant_index
-    if limit > 0:
-        chunk = dict()
-        chrom_parser.mkchunk(chunk, limit=limit)
-        pos_parser.mkchunk(chunk, limit=limit)
-        id_parser.mkchunk(chunk, limit=limit)
-        ref_parser.mkchunk(chunk, limit=limit)
-        alt_parser.mkchunk(chunk, limit=limit)
-        qual_parser.mkchunk(chunk, limit=limit)
-        filter_parser.mkchunk(chunk, limit=limit)
-        info_parser.mkchunk(chunk, limit=limit)
-        calldata_parser.mkchunk(chunk, limit=limit)
-        # TODO yield
-        chunks.append(chunk)
 
     # TODO yield
     return chunks
@@ -453,8 +450,8 @@ cdef class ParserContext:
         # initialize state
         self.state = ParserState.CHROM
         self.n_samples = n_samples
-        self.variant_index = 0
-        self.chunk_variant_index = 0
+        self.variant_index = -1
+        self.chunk_variant_index = -1
         self.sample_index = 0
         self.format_index = 0
         self.chunk_length = chunk_length
@@ -660,12 +657,88 @@ def check_string_dtype(dtype):
     return dtype
 
 
+cdef class ChromParser(Parser):
+
+    cdef np.uint8_t[:] memory
+    cdef bint skip
+
+    def __init__(self, ParserContext context, dtype, skip):
+        super(ChromParser, self).__init__(context)
+        if not skip:
+            self.dtype = check_string_dtype(dtype)
+            self.itemsize = self.dtype.itemsize
+        self.skip = skip
+
+    cdef int parse(self) nogil except -1:
+        return chrom_parse(self.memory, self.itemsize, self.context, self.skip)
+
+    def malloc(self):
+        if not self.skip:
+            self.values = np.zeros(self.context.chunk_length, dtype=self.dtype)
+            self.memory = self.values.view('u1')
+
+    def mkchunk(self, chunk, limit=None):
+        if not self.skip:
+            chunk[CHROM_FIELD] = self.values[:limit]
+            self.malloc()
+
+
+cdef inline int chrom_parse(np.uint8_t[:] memory,
+                            int itemsize,
+                            ParserContext context,
+                            bint skip) nogil except -1:
+    cdef:
+        # index into memory view
+        int memory_index
+        # number of characters read into current value
+        int chars_stored = 0
+
+    # TODO store CHROM on context
+
+    # check for EOF
+    if context.c != 0:
+        context.variant_index += 1
+        context.chunk_variant_index += 1
+
+    # initialise memory index
+    memory_index = context.chunk_variant_index * itemsize
+
+    while True:
+
+        if context.c == 0:
+            context.state = ParserState.EOF
+            return 0
+
+        elif context.c == LF or context.c == CR:
+            context.state = ParserState.EOL
+            return 0
+
+        elif context.c == TAB:
+            # advance input stream beyond tab
+            context_getc(context)
+            # advance to next field
+            context.state += 1
+            return 1
+
+        else:
+
+            if not skip and chars_stored < itemsize:
+                # store value
+                memory[memory_index] = context.c
+                # advance memory index
+                memory_index += 1
+                # advance number of characters stored
+                chars_stored += 1
+
+        # advance input stream
+        context_getc(context)
+
+
 cdef class StringFieldParser(Parser):
     """Generic string field parser, used for CHROM, ID, REF."""
 
     cdef np.uint8_t[:] memory
     cdef object field
-    cdef int next_state
 
     def __init__(self, ParserContext context, field, dtype):
         super(StringFieldParser, self).__init__(context)
@@ -728,34 +801,34 @@ cdef inline int string_field_parse(np.uint8_t[:] memory,
     return 1
 
 
-cdef class SkipChromParser(Parser):
-    """Skip the CHROM field."""
-
-    cdef int parse(self) nogil except -1:
-        return skip_chrom(self.context)
-
-
-cdef inline int skip_chrom(ParserContext context) nogil except -1:
-    # TODO store chrom on context
-
-    while True:
-
-        if context.c == 0:
-            context.state = ParserState.EOF
-            return 0
-
-        elif context.c == LF or context.c == CR:
-            context.state = ParserState.EOL
-            return 0
-
-        elif context.c == TAB:
-            # advance input stream beyond tab
-            context_getc(context)
-            context.state += 1
-            return 1
-
-        # advance input stream
-        context_getc(context)
+# cdef class SkipChromParser(Parser):
+#     """Skip the CHROM field."""
+#
+#     cdef int parse(self) nogil except -1:
+#         return skip_chrom(self.context)
+#
+#
+# cdef inline int skip_chrom(ParserContext context) nogil except -1:
+#     # TODO store chrom on context
+#
+#     while True:
+#
+#         if context.c == 0:
+#             context.state = ParserState.EOF
+#             return 0
+#
+#         elif context.c == LF or context.c == CR:
+#             context.state = ParserState.EOL
+#             return 0
+#
+#         elif context.c == TAB:
+#             # advance input stream beyond tab
+#             context_getc(context)
+#             context.state += 1
+#             return 1
+#
+#         # advance input stream
+#         context_getc(context)
 
 
 cdef class PosInt32Parser(Parser):
