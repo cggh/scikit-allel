@@ -283,6 +283,22 @@ def test_vcf_truncation():
     eq_(b'2L', chrom[0])
     eq_(-1, pos[0])
 
+    # no final line terminator
+    input_data = b"""#CHROM\n2L"""
+    input_file = io.BytesIO(input_data)
+    callset = read_vcf(input_file, fields=['CHROM', 'POS', 'samples'])
+
+    # check fields
+    expected_fields = ['variants/CHROM', 'variants/POS', 'samples']
+    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+    # check data content
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(1, len(chrom))
+    eq_(1, len(pos))
+    eq_(b'2L', chrom[0])
+    eq_(-1, pos[0])
 
 # TODO test types
 

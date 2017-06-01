@@ -27,7 +27,7 @@ TODO:
 ** DONE String
 * Generalise genotype parser integer type - needs tests
 * User-provided ploidy
-* Option not to return samples
+* DONE Option not to return samples
 * Handle number = 0 in non-flag INFO field
 * User-controlled fill values
 * User-controlled numbers to ALT, INFO, calldata, ... (tests)
