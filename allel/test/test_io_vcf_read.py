@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 import io
+import os
+import shutil
 
 
+import zarr
 import numpy as np
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import *
-from allel.io_vcf_read import read_vcf_chunks, read_vcf
+from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr
 
 
 def test_read_vcf_chunks():
@@ -557,6 +561,20 @@ def test_vcf_truncation_calldata():
         eq_(-1, a[2, 0])
         eq_(-1, a[2, 1])
 
+
+def test_vcf_to_zarr():
+    fn = 'fixture/sample.vcf'
+    callset = read_vcf(fn)
+    zarr_path = 'temp/sample.zarr'
+    if os.path.exists(zarr_path):
+        shutil.rmtree(zarr_path)
+    vcf_to_zarr(fn, zarr_path, chunk_length=2)
+    callset_zarr = zarr.open_group(zarr_path, mode='r')
+    for key in callset.keys():
+        if callset[key].dtype.kind == 'f':
+            assert_array_almost_equal(callset[key], callset_zarr[key][:])
+        else:
+            assert_array_equal(callset[key], callset_zarr[key][:])
 
 # TODO test types
 

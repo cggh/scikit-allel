@@ -59,12 +59,14 @@ import re
 from collections import namedtuple
 import warnings
 import io
+import multiprocessing
+from multiprocessing.pool import ThreadPool
 
 
 import numpy as np
 
 
-from allel.opt.io_vcf_read import iter_vcf
+from allel.opt.io_vcf_read import VCFChunkIterator
 
 
 def debug(*msg):
@@ -72,7 +74,7 @@ def debug(*msg):
     sys.stderr.flush()
 
 
-DEFAULT_BUFFER_SIZE = 2**15
+DEFAULT_BUFFER_SIZE = 2**14
 DEFAULT_CHUNK_LENGTH = 2**15
 DEFAULT_CHUNK_WIDTH = 2**6
 
@@ -222,8 +224,8 @@ def vcf_to_hdf5(input_path, output_path,
         headers, chunks = read_vcf_chunks(input_path, fields=fields,
                                           types=types, numbers=numbers, buffer_size=buffer_size,
                                           chunk_length=chunk_length)
-        # TODO this won't be necessary when using generators
-        chunks = iter(chunks)
+        # # TODO this won't be necessary when using generators
+        # chunks = iter(chunks)
 
         if add_samples:
             # store samples
@@ -305,6 +307,121 @@ def vcf_to_hdf5(input_path, output_path,
             offset = new_length
 
 
+# def vcf_to_zarr(input_path, output_path,
+#                 group='/',
+#                 compressor='default',
+#                 fill_value=0,
+#                 order='C',
+#                 overwrite=False,
+#                 fields=None,
+#                 types=None,
+#                 numbers=None,
+#                 buffer_size=DEFAULT_BUFFER_SIZE,
+#                 chunk_length=DEFAULT_CHUNK_LENGTH,
+#                 chunk_width=DEFAULT_CHUNK_WIDTH):
+#     """TODO"""
+#
+#     import zarr
+#
+#     # samples requested?
+#     add_samples, fields = _prep_fields_arg(fields)
+#
+#     # open root group
+#     root = zarr.open_group(output_path, mode='a', path=group)
+#
+#     # ensure sub-groups
+#     root.require_group('variants')
+#     root.require_group('calldata')
+#
+#     # setup chunk iterator
+#     headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
+#                                       numbers=numbers, buffer_size=buffer_size,
+#                                       chunk_length=chunk_length)
+#     # TODO this won't be necessary when using generators
+#     chunks = iter(chunks)
+#
+#     if add_samples:
+#         # store samples
+#         root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
+#                                    compressor=None, overwrite=overwrite)
+#
+#     # read first chunk
+#     chunk = next(chunks, None)
+#
+#     # handle no input
+#     if chunk is None:
+#         raise RuntimeError('input file has no data?')
+#
+#     # setup datasets
+#     keys = sorted(chunk.keys())
+#     for k in keys:
+#
+#         # obtain initial data
+#         data = chunk[k]
+#
+#         # determine chunk shape
+#         if data.ndim == 1:
+#             chunk_shape = (chunk_length,)
+#         else:
+#             chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
+#
+#         # create dataset
+#         shape = (0,) + data.shape[1:]
+#         root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
+#                             compressor=compressor, overwrite=overwrite,
+#                             fill_value=fill_value, order=order)
+#
+#     # reconstitute chunks iterator
+#     chunks = itertools.chain([chunk], chunks)
+#
+#     # load chunks
+#     for chunk_index, chunk in enumerate(chunks):
+#
+#         # load arrays
+#         for k in keys:
+#
+#             # append data
+#             root[k].append(chunk[k], axis=0)
+
+
+def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite,
+                         fill_value, order):
+
+    # handle no input
+    if chunk is None:
+        raise RuntimeError('input file has no data?')
+
+    # setup datasets
+    keys = sorted(chunk.keys())
+    for k in keys:
+
+        # obtain initial data
+        data = chunk[k]
+
+        # determine chunk shape
+        if data.ndim == 1:
+            chunk_shape = (chunk_length,)
+        else:
+            chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
+
+        # create dataset
+        shape = (0,) + data.shape[1:]
+        root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
+                            compressor=compressor, overwrite=overwrite,
+                            fill_value=fill_value, order=order)
+
+    return keys
+
+
+def _zarr_load_chunk(root, keys, chunk):
+
+    # load arrays
+    for k in keys:
+
+        # append data
+        root[k].append(chunk[k], axis=0)
+
+
 def vcf_to_zarr(input_path, output_path,
                 group='/',
                 compressor='default',
@@ -335,8 +452,8 @@ def vcf_to_zarr(input_path, output_path,
     headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
                                       numbers=numbers, buffer_size=buffer_size,
                                       chunk_length=chunk_length)
-    # TODO this won't be necessary when using generators
-    chunks = iter(chunks)
+    # # TODO this won't be necessary when using generators
+    # chunks = iter(chunks)
 
     if add_samples:
         # store samples
@@ -346,40 +463,36 @@ def vcf_to_zarr(input_path, output_path,
     # read first chunk
     chunk = next(chunks, None)
 
-    # handle no input
-    if chunk is None:
-        raise RuntimeError('input file has no data?')
-
     # setup datasets
-    keys = sorted(chunk.keys())
-    for k in keys:
+    keys = _zarr_setup_datasets(chunk, root=root,
+                                chunk_length=chunk_length,
+                                chunk_width=chunk_width,
+                                compressor=compressor,
+                                overwrite=overwrite,
+                                fill_value=fill_value,
+                                order=order)
 
-        # obtain initial data
-        data = chunk[k]
+    # setup thread pool
+    pool = ThreadPool(2)
 
-        # determine chunk shape
-        if data.ndim == 1:
-            chunk_shape = (chunk_length,)
-        else:
-            chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
+    while chunk is not None:
 
-        # create dataset
-        shape = (0,) + data.shape[1:]
-        root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
-                            compressor=compressor, overwrite=overwrite,
-                            fill_value=fill_value, order=order)
+        store_result = pool.apply_async(_zarr_load_chunk, kwds=dict(root=root,
+                                                                    keys=keys,
+                                                                    chunk=chunk))
+        chunk_result = pool.apply_async(next, args=(chunks, None))
 
-    # reconstitute chunks iterator
-    chunks = itertools.chain([chunk], chunks)
+        store_result.get()
+        chunk = chunk_result.get()
 
-    # load chunks
-    for chunk_index, chunk in enumerate(chunks):
+    pool.close()
+    pool.join()
+    pool.terminate()
 
-        # load arrays
-        for k in keys:
-
-            # append data
-            root[k].append(chunk[k], axis=0)
+    # # load chunks
+    # for chunk_index, chunk in enumerate(chunks):
+    #
+    #     _zarr_load_chunk(root, keys, chunk)
 
 
 def read_vcf_chunks(path,
@@ -392,16 +505,16 @@ def read_vcf_chunks(path,
 
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
-        with gzip.open(path, mode='rb') as buffered_reader:
-            # N.B., GZipFile supports peek
-            return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
-                             buffer_size=buffer_size, chunk_length=chunk_length)
+        # N.B., GZipFile supports peek
+        buffered_reader = gzip.open(path, mode='rb')
+        return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
+                         buffer_size=buffer_size, chunk_length=chunk_length)
 
     elif isinstance(path, str):
         # assume no compression
-        with open(path, mode='rb', buffering=buffer_size) as buffered_reader:
-            return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
-                             buffer_size=buffer_size, chunk_length=chunk_length)
+        buffered_reader = open(path, mode='rb', buffering=buffer_size)
+        return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
+                         buffer_size=buffer_size, chunk_length=chunk_length)
 
     else:
         # assume some other binary file-like object
@@ -749,6 +862,9 @@ def normalize_numbers(numbers, fields, headers):
     return normed_numbers
 
 
+TEMP_BUFFER_SIZE = 2**12
+
+
 def _read_vcf(buffered_reader, fields, types, numbers, buffer_size, chunk_length):
 
     # read VCF headers
@@ -776,10 +892,14 @@ def _read_vcf(buffered_reader, fields, types, numbers, buffer_size, chunk_length
     # debug('normalized numbers', numbers)
 
     # setup chunks iterator
-    chunks = iter_vcf(input_file=buffered_reader, input_buffer_size=buffer_size,
-                      chunk_length=chunk_length,
-                      temp_buffer_size=2**12, headers=headers, fields=fields,
-                      types=types, numbers=numbers)
+    chunks = VCFChunkIterator(input_file=buffered_reader,
+                              input_buffer_size=buffer_size,
+                              chunk_length=chunk_length,
+                              temp_buffer_size=TEMP_BUFFER_SIZE,
+                              headers=headers,
+                              fields=fields,
+                              types=types,
+                              numbers=numbers)
 
     return headers, chunks
 

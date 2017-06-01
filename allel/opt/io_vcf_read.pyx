@@ -1,4 +1,12 @@
 # cython: language_level=3
+# cython: profile=True
+# cython: linetrace=True
+# cython: binding=True
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: initializedcheck=False
+# cython: nonecheck=False
+"""
 # cython: profile=False
 # cython: binding=False
 # cython: linetrace=False
@@ -6,7 +14,7 @@
 # cython: wraparound=False
 # cython: initializedcheck=False
 # cython: nonecheck=False
-"""
+
 # cython: profile=True
 # cython: linetrace=True
 # cython: binding=True
@@ -76,20 +84,20 @@ ALT_FIELD = 'variants/ALT'
 QUAL_FIELD = 'variants/QUAL'
 
 
-cdef int warn(message, ParserContext context) nogil except -1:
-    with gil:
-        # TODO customize message based on state (CHROM, POS, etc.)
-        message += '; variant index: %s' % context.variant_index
-        b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
-        message += '; temporary buffer: %s' % b
-        warnings.warn(message)
+cdef int warn(message, ParserContext context) except -1:
+    # TODO customize message based on state (CHROM, POS, etc.)
+    message += '; variant index: %s' % context.variant_index
+    b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
+    message += '; temporary buffer: %s' % b
+    warnings.warn(message)
 
 
-cdef int debug(msg, ParserContext context) nogil except -1:
-    with gil:
-        msg = '[DEBUG] ' + str(msg) + '\n'
+cdef int debug(msg, ParserContext context=None) except -1:
+    msg = '[DEBUG] ' + str(msg) + '\n'
+    if context is not None:
         msg += 'state: %s' % context.state
         msg += '; variant_index: %s' % context.variant_index
+        msg += '; chunk_variant_index: %s' % context.chunk_variant_index
         msg += '; sample_index: %s' % context.sample_index
         msg += '; format_index: %s' % context.format_index
         b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
@@ -98,12 +106,12 @@ cdef int debug(msg, ParserContext context) nogil except -1:
         msg += '; n_formats: %s' % context.n_formats
         msg += '; variant_n_formats: %s' % context.variant_n_formats
         msg += '; calldata_parsers: %s' % context.calldata_parsers
-        print(msg, file=sys.stderr)
-        sys.stderr.flush()
+    print(msg, file=sys.stderr)
+    sys.stderr.flush()
 
 
-def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffer_size,
-             headers, fields, types, numbers, ploidy=2):
+cdef class VCFChunkIterator(object):
+
     cdef:
         ParserContext context
         Parser chrom_parser
@@ -117,191 +125,220 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
         Parser format_parser
         Parser calldata_parser
 
-    # setup output
-    # TODO yield chunks
-    chunks = []
+    def __init__(self,
+                 input_file,
+                 int input_buffer_size,
+                 int chunk_length,
+                 int temp_buffer_size,
+                 headers,
+                 fields,
+                 types,
+                 numbers,
+                 ploidy=2):
+        # debug('VCFChunkIterator.__init__: enter')
 
-    # setup context
-    n_samples = len(headers.samples)
-    context = ParserContext(input_file=input_file,
-                            input_buffer_size=input_buffer_size,
-                            temp_buffer_size=temp_buffer_size,
-                            n_samples=n_samples,
-                            chunk_length=chunk_length,
-                            ploidy=ploidy)
+        # setup context
+        n_samples = len(headers.samples)
+        context = ParserContext(input_file=input_file,
+                                input_buffer_size=input_buffer_size,
+                                temp_buffer_size=temp_buffer_size,
+                                n_samples=n_samples,
+                                chunk_length=chunk_length,
+                                ploidy=ploidy)
+        self.context = context
 
-    # copy so we don't modify someone else's data
-    fields = set(fields)
+        # copy so we don't modify someone else's data
+        fields = set(fields)
 
-    # setup CHROM parser
-    if CHROM_FIELD in fields:
-        chrom_parser = ChromParser(context, dtype=types[CHROM_FIELD], skip=False)
-        fields.remove(CHROM_FIELD)
-    else:
-        chrom_parser = ChromParser(context, dtype=None, skip=True)
-    chrom_parser.malloc()
+        # setup CHROM parser
+        if CHROM_FIELD in fields:
+            chrom_parser = ChromParser(context, dtype=types[CHROM_FIELD], skip=False)
+            fields.remove(CHROM_FIELD)
+        else:
+            chrom_parser = ChromParser(context, dtype=None, skip=True)
+        chrom_parser.malloc()
+        self.chrom_parser = chrom_parser
 
-    # setup POS parser
-    if POS_FIELD in fields:
-        # TODO user-provided type
-        pos_parser = PosInt32Parser(context)
-        fields.remove(POS_FIELD)
-    else:
-        pos_parser = SkipPosParser(context)
-    pos_parser.malloc()
+        # setup POS parser
+        if POS_FIELD in fields:
+            # TODO user-provided type
+            pos_parser = PosInt32Parser(context)
+            fields.remove(POS_FIELD)
+        else:
+            pos_parser = SkipPosParser(context)
+        pos_parser.malloc()
+        self.pos_parser = pos_parser
 
-    # setup ID parser
-    if ID_FIELD in fields:
-        id_parser = StringFieldParser(context, field=ID_FIELD, dtype=types[ID_FIELD])
-        fields.remove(ID_FIELD)
-    else:
-        id_parser = SkipFieldParser(context)
-    id_parser.malloc()
+        # setup ID parser
+        if ID_FIELD in fields:
+            id_parser = StringFieldParser(context, field=ID_FIELD, dtype=types[ID_FIELD])
+            fields.remove(ID_FIELD)
+        else:
+            id_parser = SkipFieldParser(context)
+        id_parser.malloc()
+        self.id_parser = id_parser
 
-    # setup REF parser
-    if REF_FIELD in fields:
-        ref_parser = StringFieldParser(context, field=REF_FIELD, dtype=types[REF_FIELD])
-        fields.remove(REF_FIELD)
-    else:
-        ref_parser = SkipFieldParser(context)
-    ref_parser.malloc()
+        # setup REF parser
+        if REF_FIELD in fields:
+            ref_parser = StringFieldParser(context, field=REF_FIELD, dtype=types[REF_FIELD])
+            fields.remove(REF_FIELD)
+        else:
+            ref_parser = SkipFieldParser(context)
+        ref_parser.malloc()
+        self.ref_parser = ref_parser
 
-    # setup ALT parser
-    if ALT_FIELD in fields:
-        t = types[ALT_FIELD]
-        n = numbers[ALT_FIELD]
-        alt_parser = AltParser(context, dtype=t, number=n)
-        fields.remove(ALT_FIELD)
-    else:
-        alt_parser = SkipFieldParser(context)
-    alt_parser.malloc()
+        # setup ALT parser
+        if ALT_FIELD in fields:
+            t = types[ALT_FIELD]
+            n = numbers[ALT_FIELD]
+            alt_parser = AltParser(context, dtype=t, number=n)
+            fields.remove(ALT_FIELD)
+        else:
+            alt_parser = SkipFieldParser(context)
+        alt_parser.malloc()
+        self.alt_parser = alt_parser
 
-    # setup QUAL parser
-    if QUAL_FIELD in fields:
-        # TODO user-provided type
-        qual_parser = QualFloat32Parser(context, fill=-1)
-        fields.remove(QUAL_FIELD)
-    else:
-        qual_parser = SkipFieldParser(context)
-    qual_parser.malloc()
+        # setup QUAL parser
+        if QUAL_FIELD in fields:
+            # TODO user-provided type
+            qual_parser = QualFloat32Parser(context, fill=-1)
+            fields.remove(QUAL_FIELD)
+        else:
+            qual_parser = SkipFieldParser(context)
+        qual_parser.malloc()
+        self.qual_parser = qual_parser
 
-    # setup FILTER parser
-    filter_keys = list()
-    for field in list(fields):
-        if field.startswith('variants/FILTER_'):
-            filter = field[16:].encode('ascii')
-            filter_keys.append(filter)
-            fields.remove(field)
-    # debug(filter_keys, context)
-    if filter_keys:
-        filter_parser = FilterParser(context, filters=filter_keys)
-    else:
-        filter_parser = SkipFieldParser(context)
-    filter_parser.malloc()
+        # setup FILTER parser
+        filter_keys = list()
+        for field in list(fields):
+            if field.startswith('variants/FILTER_'):
+                filter = field[16:].encode('ascii')
+                filter_keys.append(filter)
+                fields.remove(field)
+        # debug(filter_keys, context)
+        if filter_keys:
+            filter_parser = FilterParser(context, filters=filter_keys)
+        else:
+            filter_parser = SkipFieldParser(context)
+        filter_parser.malloc()
+        self.filter_parser = filter_parser
 
-    # setup INFO parsers
-    info_keys = list()
-    info_types = dict()
-    info_numbers = dict()
-    # assume any variants fields left are INFO
-    for field in list(fields):
-        group, name = field.split('/')
-        if group == 'variants':
-            key = name.encode('ascii')
-            info_keys.append(key)
-            fields.remove(field)
-            info_types[key] = types[field]
-            info_numbers[key] = numbers[field]
-    if info_keys:
-        info_parser = InfoParser(context, infos=info_keys, types=info_types,
-                                 numbers=info_numbers)
-    else:
-        info_parser = SkipFieldParser(context)
-    info_parser.malloc()
+        # setup INFO parser
+        info_keys = list()
+        info_types = dict()
+        info_numbers = dict()
+        # assume any variants fields left are INFO
+        for field in list(fields):
+            group, name = field.split('/')
+            if group == 'variants':
+                key = name.encode('ascii')
+                info_keys.append(key)
+                fields.remove(field)
+                info_types[key] = types[field]
+                info_numbers[key] = numbers[field]
+        if info_keys:
+            info_parser = InfoParser(context, infos=info_keys, types=info_types,
+                                     numbers=info_numbers)
+        else:
+            info_parser = SkipFieldParser(context)
+        info_parser.malloc()
+        self.info_parser = info_parser
 
-    # setup FORMAT and calldata parsers
-    format_keys = list()
-    format_types = dict()
-    format_numbers = dict()
-    for field in list(fields):
-        group, name = field.split('/')
-        if group == 'calldata':
-            key = name.encode('ascii')
-            format_keys.append(key)
-            fields.remove(field)
-            format_types[key] = types[field]
-            format_numbers[key] = numbers[field]
-    # debug('iter_vcf format_keys: %s' % str(format_keys), context)
-    if format_keys:
-        format_parser = FormatParser(context)
-        calldata_parser = CalldataParser(context,
-                                         formats=format_keys,
-                                         types=format_types,
-                                         numbers=format_numbers)
-    else:
-        format_parser = SkipFieldParser(context)
-        calldata_parser = SkipAllCalldataParser(context)
-    format_parser.malloc()
-    calldata_parser.malloc()
+        # setup FORMAT and calldata parsers
+        format_keys = list()
+        format_types = dict()
+        format_numbers = dict()
+        for field in list(fields):
+            group, name = field.split('/')
+            if group == 'calldata':
+                key = name.encode('ascii')
+                format_keys.append(key)
+                fields.remove(field)
+                format_types[key] = types[field]
+                format_numbers[key] = numbers[field]
+        # debug('iter_vcf format_keys: %s' % str(format_keys), context)
+        if format_keys:
+            format_parser = FormatParser(context)
+            calldata_parser = CalldataParser(context,
+                                             formats=format_keys,
+                                             types=format_types,
+                                             numbers=format_numbers)
+        else:
+            format_parser = SkipFieldParser(context)
+            calldata_parser = SkipAllCalldataParser(context)
+        format_parser.malloc()
+        calldata_parser.malloc()
+        self.format_parser = format_parser
+        self.calldata_parser = calldata_parser
 
-    if fields:
-        # shouldn't ever be any left over
-        raise RuntimeError('unexpected fields left over: %r' % set(fields))
+        if fields:
+            # shouldn't ever be any left over
+            raise RuntimeError('unexpected fields left over: %r' % set(fields))
 
-    # release GIL here for maximum parallelism
-    with nogil:
+        # debug('VCFChunkIterator.__init__: exit')
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        cdef ParserContext context = self.context
+
+        # debug('VCFChunkIterator.__next__: enter', context)
+
+        # with:
 
         while True:
 
-            # TODO sigint?
-
             if context.state == ParserState.EOF:
 
+                # debug('VCFChunkIterator.__next__: EOF', context)
+
                 # left-over chunk
-                with gil:
+                # with gil:
 
-                    limit = context.chunk_variant_index + 1
-                    if limit > 0:
-                        chunk = dict()
-                        chrom_parser.mkchunk(chunk, limit=limit)
-                        pos_parser.mkchunk(chunk, limit=limit)
-                        id_parser.mkchunk(chunk, limit=limit)
-                        ref_parser.mkchunk(chunk, limit=limit)
-                        alt_parser.mkchunk(chunk, limit=limit)
-                        qual_parser.mkchunk(chunk, limit=limit)
-                        filter_parser.mkchunk(chunk, limit=limit)
-                        info_parser.mkchunk(chunk, limit=limit)
-                        calldata_parser.mkchunk(chunk, limit=limit)
-                        # TODO yield
-                        chunks.append(chunk)
+                limit = context.chunk_variant_index + 1
+                if limit > 0:
+                    chunk = dict()
+                    self.chrom_parser.mkchunk(chunk, limit=limit)
+                    self.pos_parser.mkchunk(chunk, limit=limit)
+                    self.id_parser.mkchunk(chunk, limit=limit)
+                    self.ref_parser.mkchunk(chunk, limit=limit)
+                    self.alt_parser.mkchunk(chunk, limit=limit)
+                    self.qual_parser.mkchunk(chunk, limit=limit)
+                    self.filter_parser.mkchunk(chunk, limit=limit)
+                    self.info_parser.mkchunk(chunk, limit=limit)
+                    self.calldata_parser.mkchunk(chunk, limit=limit)
+                    self.context.chunk_variant_index = -1
+                    return chunk
 
-                break
+                else:
+                    raise StopIteration
 
             elif context.state == ParserState.EOL:
 
+                # debug('VCFChunkIterator.__next__: EOL', context)
+
                 # decide whether to start a new chunk
-                if context.chunk_variant_index == chunk_length - 1:
+                if context.chunk_variant_index == context.chunk_length - 1:
 
-                    with gil:
+                    # debug('VCFChunkIterator.__next__: returning chunk', context)
+                    # with gil:
 
-                        # build chunk for output
-                        chunk = dict()
-                        chrom_parser.mkchunk(chunk)
-                        pos_parser.mkchunk(chunk)
-                        id_parser.mkchunk(chunk)
-                        ref_parser.mkchunk(chunk)
-                        alt_parser.mkchunk(chunk)
-                        qual_parser.mkchunk(chunk)
-                        filter_parser.mkchunk(chunk)
-                        info_parser.mkchunk(chunk)
-                        calldata_parser.mkchunk(chunk)
-                        # TODO yield
-                        chunks.append(chunk)
-
-                    # setup next chunk
+                    # build chunk for output
+                    chunk = dict()
+                    self.chrom_parser.mkchunk(chunk)
+                    self.pos_parser.mkchunk(chunk)
+                    self.id_parser.mkchunk(chunk)
+                    self.ref_parser.mkchunk(chunk)
+                    self.alt_parser.mkchunk(chunk)
+                    self.qual_parser.mkchunk(chunk)
+                    self.filter_parser.mkchunk(chunk)
+                    self.info_parser.mkchunk(chunk)
+                    self.calldata_parser.mkchunk(chunk)
                     context.chunk_variant_index = -1
+                    return chunk
 
-                # handle line terminators
+                # debug('handle line terminators')
                 if context.c == LF:
                     context_getc(context)
                 elif context.c == CR:
@@ -310,51 +347,315 @@ def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffe
                         context_getc(context)
                 else:
 
-                    with gil:
-                        # shouldn't ever happen
-                        raise RuntimeError('unexpected EOL character')
+                    # with gil:
+                    # shouldn't ever happen
+                    raise RuntimeError('unexpected EOL character')
 
-                # advance state
+                # debug('advance state')
                 context.state = ParserState.CHROM
 
             elif context.state == ParserState.CHROM:
-                chrom_parser.parse()
+                # debug('VCFChunkIterator.__next__: CHROM', context)
+                self.chrom_parser.parse()
 
             elif context.state == ParserState.POS:
-                pos_parser.parse()
+                # debug('VCFChunkIterator.__next__: POS', context)
+                self.pos_parser.parse()
 
             elif context.state == ParserState.ID:
-                id_parser.parse()
+                # debug('VCFChunkIterator.__next__: ID', context)
+                self.id_parser.parse()
 
             elif context.state == ParserState.REF:
-                ref_parser.parse()
+                # debug('VCFChunkIterator.__next__: REF', context)
+                self.ref_parser.parse()
 
             elif context.state == ParserState.ALT:
-                alt_parser.parse()
+                # debug('VCFChunkIterator.__next__: ALT', context)
+                self.alt_parser.parse()
 
             elif context.state == ParserState.QUAL:
-                qual_parser.parse()
+                # debug('VCFChunkIterator.__next__: QUAL', context)
+                self.qual_parser.parse()
 
             elif context.state == ParserState.FILTER:
-                filter_parser.parse()
+                # debug('VCFChunkIterator.__next__: FILTER', context)
+                self.filter_parser.parse()
 
             elif context.state == ParserState.INFO:
-                info_parser.parse()
+                # debug('VCFChunkIterator.__next__: INFO', context)
+                self.info_parser.parse()
 
             elif context.state == ParserState.FORMAT:
-                format_parser.parse()
+                # debug('VCFChunkIterator.__next__: FORMAT', context)
+                self.format_parser.parse()
 
             elif context.state == ParserState.CALLDATA:
-                calldata_parser.parse()
+                # debug('VCFChunkIterator.__next__: CALLDATA', context)
+                self.calldata_parser.parse()
 
             else:
 
-                with gil:
-                    # shouldn't ever happen
-                    raise RuntimeError('unexpected parser state: %s' % context.state)
+                # with gil:
+                # shouldn't ever happen
+                raise RuntimeError('unexpected parser state: %s' % context.state)
 
-    # TODO yield
-    return chunks
+
+# def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffer_size,
+#              headers, fields, types, numbers, ploidy=2):
+#     cdef:
+#         ParserContext context
+#         Parser chrom_parser
+#         Parser pos_parser
+#         Parser id_parser
+#         Parser ref_parser
+#         Parser alt_parser
+#         Parser qual_parser
+#         Parser filter_parser
+#         Parser info_parser
+#         Parser format_parser
+#         Parser calldata_parser
+#
+#     # setup output
+#     # # TODO yield chunks
+#     # chunks = []
+#
+#     # setup context
+#     n_samples = len(headers.samples)
+#     context = ParserContext(input_file=input_file,
+#                             input_buffer_size=input_buffer_size,
+#                             temp_buffer_size=temp_buffer_size,
+#                             n_samples=n_samples,
+#                             chunk_length=chunk_length,
+#                             ploidy=ploidy)
+#
+#     # copy so we don't modify someone else's data
+#     fields = set(fields)
+#
+#     # setup CHROM parser
+#     if CHROM_FIELD in fields:
+#         chrom_parser = ChromParser(context, dtype=types[CHROM_FIELD], skip=False)
+#         fields.remove(CHROM_FIELD)
+#     else:
+#         chrom_parser = ChromParser(context, dtype=None, skip=True)
+#     chrom_parser.malloc()
+#
+#     # setup POS parser
+#     if POS_FIELD in fields:
+#         # TODO user-provided type
+#         pos_parser = PosInt32Parser(context)
+#         fields.remove(POS_FIELD)
+#     else:
+#         pos_parser = SkipPosParser(context)
+#     pos_parser.malloc()
+#
+#     # setup ID parser
+#     if ID_FIELD in fields:
+#         id_parser = StringFieldParser(context, field=ID_FIELD, dtype=types[ID_FIELD])
+#         fields.remove(ID_FIELD)
+#     else:
+#         id_parser = SkipFieldParser(context)
+#     id_parser.malloc()
+#
+#     # setup REF parser
+#     if REF_FIELD in fields:
+#         ref_parser = StringFieldParser(context, field=REF_FIELD, dtype=types[REF_FIELD])
+#         fields.remove(REF_FIELD)
+#     else:
+#         ref_parser = SkipFieldParser(context)
+#     ref_parser.malloc()
+#
+#     # setup ALT parser
+#     if ALT_FIELD in fields:
+#         t = types[ALT_FIELD]
+#         n = numbers[ALT_FIELD]
+#         alt_parser = AltParser(context, dtype=t, number=n)
+#         fields.remove(ALT_FIELD)
+#     else:
+#         alt_parser = SkipFieldParser(context)
+#     alt_parser.malloc()
+#
+#     # setup QUAL parser
+#     if QUAL_FIELD in fields:
+#         # TODO user-provided type
+#         qual_parser = QualFloat32Parser(context, fill=-1)
+#         fields.remove(QUAL_FIELD)
+#     else:
+#         qual_parser = SkipFieldParser(context)
+#     qual_parser.malloc()
+#
+#     # setup FILTER parser
+#     filter_keys = list()
+#     for field in list(fields):
+#         if field.startswith('variants/FILTER_'):
+#             filter = field[16:].encode('ascii')
+#             filter_keys.append(filter)
+#             fields.remove(field)
+#     # debug(filter_keys, context)
+#     if filter_keys:
+#         filter_parser = FilterParser(context, filters=filter_keys)
+#     else:
+#         filter_parser = SkipFieldParser(context)
+#     filter_parser.malloc()
+#
+#     # setup INFO parsers
+#     info_keys = list()
+#     info_types = dict()
+#     info_numbers = dict()
+#     # assume any variants fields left are INFO
+#     for field in list(fields):
+#         group, name = field.split('/')
+#         if group == 'variants':
+#             key = name.encode('ascii')
+#             info_keys.append(key)
+#             fields.remove(field)
+#             info_types[key] = types[field]
+#             info_numbers[key] = numbers[field]
+#     if info_keys:
+#         info_parser = InfoParser(context, infos=info_keys, types=info_types,
+#                                  numbers=info_numbers)
+#     else:
+#         info_parser = SkipFieldParser(context)
+#     info_parser.malloc()
+#
+#     # setup FORMAT and calldata parsers
+#     format_keys = list()
+#     format_types = dict()
+#     format_numbers = dict()
+#     for field in list(fields):
+#         group, name = field.split('/')
+#         if group == 'calldata':
+#             key = name.encode('ascii')
+#             format_keys.append(key)
+#             fields.remove(field)
+#             format_types[key] = types[field]
+#             format_numbers[key] = numbers[field]
+#     # debug('iter_vcf format_keys: %s' % str(format_keys), context)
+#     if format_keys:
+#         format_parser = FormatParser(context)
+#         calldata_parser = CalldataParser(context,
+#                                          formats=format_keys,
+#                                          types=format_types,
+#                                          numbers=format_numbers)
+#     else:
+#         format_parser = SkipFieldParser(context)
+#         calldata_parser = SkipAllCalldataParser(context)
+#     format_parser.malloc()
+#     calldata_parser.malloc()
+#
+#     if fields:
+#         # shouldn't ever be any left over
+#         raise RuntimeError('unexpected fields left over: %r' % set(fields))
+#
+#     # release GIL here for maximum parallelism
+#     # with:
+#
+#     while True:
+#
+#         # TODO sigint?
+#
+#         if context.state == ParserState.EOF:
+#
+#             # left-over chunk
+#             # with gil:
+#
+#             limit = context.chunk_variant_index + 1
+#             if limit > 0:
+#                 chunk = dict()
+#                 chrom_parser.mkchunk(chunk, limit=limit)
+#                 pos_parser.mkchunk(chunk, limit=limit)
+#                 id_parser.mkchunk(chunk, limit=limit)
+#                 ref_parser.mkchunk(chunk, limit=limit)
+#                 alt_parser.mkchunk(chunk, limit=limit)
+#                 qual_parser.mkchunk(chunk, limit=limit)
+#                 filter_parser.mkchunk(chunk, limit=limit)
+#                 info_parser.mkchunk(chunk, limit=limit)
+#                 calldata_parser.mkchunk(chunk, limit=limit)
+#                 # TODO yield
+#                 yield chunk
+#                 # chunks.append(chunk)
+#
+#             break
+#
+#         elif context.state == ParserState.EOL:
+#
+#             # decide whether to start a new chunk
+#             if context.chunk_variant_index == chunk_length - 1:
+#
+#                 # with gil:
+#
+#                 # build chunk for output
+#                 chunk = dict()
+#                 chrom_parser.mkchunk(chunk)
+#                 pos_parser.mkchunk(chunk)
+#                 id_parser.mkchunk(chunk)
+#                 ref_parser.mkchunk(chunk)
+#                 alt_parser.mkchunk(chunk)
+#                 qual_parser.mkchunk(chunk)
+#                 filter_parser.mkchunk(chunk)
+#                 info_parser.mkchunk(chunk)
+#                 calldata_parser.mkchunk(chunk)
+#                 # TODO yield
+#                 yield chunk
+#                 # chunks.append(chunk)
+#
+#                 # setup next chunk
+#                 context.chunk_variant_index = -1
+#
+#             # handle line terminators
+#             if context.c == LF:
+#                 context_getc(context)
+#             elif context.c == CR:
+#                 context_getc(context)
+#                 if context.c == LF:
+#                     context_getc(context)
+#             else:
+#
+#                 # with gil:
+#                 # shouldn't ever happen
+#                 raise RuntimeError('unexpected EOL character')
+#
+#             # advance state
+#             context.state = ParserState.CHROM
+#
+#         elif context.state == ParserState.CHROM:
+#             chrom_parser.parse()
+#
+#         elif context.state == ParserState.POS:
+#             pos_parser.parse()
+#
+#         elif context.state == ParserState.ID:
+#             id_parser.parse()
+#
+#         elif context.state == ParserState.REF:
+#             ref_parser.parse()
+#
+#         elif context.state == ParserState.ALT:
+#             alt_parser.parse()
+#
+#         elif context.state == ParserState.QUAL:
+#             qual_parser.parse()
+#
+#         elif context.state == ParserState.FILTER:
+#             filter_parser.parse()
+#
+#         elif context.state == ParserState.INFO:
+#             info_parser.parse()
+#
+#         elif context.state == ParserState.FORMAT:
+#             format_parser.parse()
+#
+#         elif context.state == ParserState.CALLDATA:
+#             calldata_parser.parse()
+#
+#         else:
+#
+#             # with gil:
+#             # shouldn't ever happen
+#             raise RuntimeError('unexpected parser state: %s' % context.state)
+#
+#     # TODO yield
+#     # return chunks
 
 
 cdef enum ParserState:
@@ -478,11 +779,10 @@ cdef class ParserContext:
             free(self.variant_calldata_parser_ptrs)
 
 
-cdef inline int context_fill_buffer(ParserContext context) nogil except -1:
+cdef inline int context_fill_buffer(ParserContext context) except -1:
     cdef:
         int l
-    with gil:
-        l = context.input_file.readinto(context.input_buffer)
+    l = context.input_file.readinto(context.input_buffer)
     if l > 0:
         context.input = context.input_start
         context.input_end = context.input + l
@@ -492,7 +792,7 @@ cdef inline int context_fill_buffer(ParserContext context) nogil except -1:
         return 0
 
 
-cdef inline int context_getc(ParserContext context) nogil except -1:
+cdef inline int context_getc(ParserContext context) except -1:
 
     if context.input is context.input_end:
         # end of input buffer
@@ -504,17 +804,17 @@ cdef inline int context_getc(ParserContext context) nogil except -1:
         return 0
 
     else:
-        # read next character from input buffer
+        # read next character from input buffer and advance buffer
         context.c = context.input[0]
         context.input += 1
         return 1
 
 
-cdef inline void temp_clear(ParserContext context) nogil:
+cdef inline void temp_clear(ParserContext context):
     context.temp_size = 0
 
 
-cdef inline int temp_append(ParserContext context) nogil except -1:
+cdef inline int temp_append(ParserContext context) except -1:
 
     # if context.temp_size >= context.temp_buffer_size:
     #
@@ -530,7 +830,7 @@ cdef inline int temp_append(ParserContext context) nogil except -1:
     return 1
 
 
-cdef inline int temp_terminate(ParserContext context) nogil except -1:
+cdef inline int temp_terminate(ParserContext context) except -1:
 
     # if context.temp_size >= context.temp_buffer_size:
     #
@@ -542,7 +842,7 @@ cdef inline int temp_terminate(ParserContext context) nogil except -1:
     return 1
 
 
-cdef inline int temp_tolong(ParserContext context) nogil except -1:
+cdef inline int temp_tolong(ParserContext context) except -1:
     cdef:
         char* str_end
         int parsed
@@ -582,7 +882,7 @@ cdef inline int temp_tolong(ParserContext context) nogil except -1:
             return 0
 
 
-cdef inline int temp_todouble(ParserContext context) nogil except -1:
+cdef inline int temp_todouble(ParserContext context) except -1:
     cdef:
         char* str_end
         int parsed
@@ -637,7 +937,7 @@ cdef class Parser(object):
         # debug('Parser.__init__: enter', context)
         self.context = context
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         # debug('Parser.parse: enter', self.context)
         pass
 
@@ -669,7 +969,7 @@ cdef class ChromParser(Parser):
             self.itemsize = self.dtype.itemsize
         self.skip = skip
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return chrom_parse(self.memory, self.itemsize, self.context, self.skip)
 
     def malloc(self):
@@ -686,7 +986,7 @@ cdef class ChromParser(Parser):
 cdef inline int chrom_parse(np.uint8_t[:] memory,
                             int itemsize,
                             ParserContext context,
-                            bint skip) nogil except -1:
+                            bint skip) except -1:
     cdef:
         # index into memory view
         int memory_index
@@ -746,7 +1046,7 @@ cdef class StringFieldParser(Parser):
         self.dtype = check_string_dtype(dtype)
         self.itemsize = self.dtype.itemsize
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return string_field_parse(self.memory, self.itemsize, self.context)
 
     def malloc(self):
@@ -760,7 +1060,7 @@ cdef class StringFieldParser(Parser):
 
 cdef inline int string_field_parse(np.uint8_t[:] memory,
                                    int itemsize,
-                                   ParserContext context) nogil except -1:
+                                   ParserContext context) except -1:
     cdef:
         # index into memory view
         int memory_index
@@ -804,11 +1104,11 @@ cdef inline int string_field_parse(np.uint8_t[:] memory,
 # cdef class SkipChromParser(Parser):
 #     """Skip the CHROM field."""
 #
-#     cdef int parse(self) nogil except -1:
+#     cdef int parse(self) except -1:
 #         return skip_chrom(self.context)
 #
 #
-# cdef inline int skip_chrom(ParserContext context) nogil except -1:
+# cdef inline int skip_chrom(ParserContext context) except -1:
 #     # TODO store chrom on context
 #
 #     while True:
@@ -836,7 +1136,7 @@ cdef class PosInt32Parser(Parser):
 
     cdef np.int32_t[:] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return pos_parse(self.memory, self.context)
 
     def malloc(self):
@@ -850,7 +1150,7 @@ cdef class PosInt32Parser(Parser):
 
 
 cdef inline int pos_parse(integer[:] memory,
-                          ParserContext context) nogil except -1:
+                          ParserContext context) except -1:
     cdef:
         long value
         int success
@@ -893,11 +1193,11 @@ cdef inline int pos_parse(integer[:] memory,
 cdef class SkipPosParser(Parser):
     """Skip the POS field."""
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return skip_pos(self.context)
 
 
-cdef inline int skip_pos(ParserContext context) nogil except -1:
+cdef inline int skip_pos(ParserContext context) except -1:
     # TODO put POS on context
 
     while True:
@@ -922,11 +1222,11 @@ cdef inline int skip_pos(ParserContext context) nogil except -1:
 cdef class SkipFieldParser(Parser):
     """Skip a field."""
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return skip_field(self.context)
 
 
-cdef inline int skip_field(ParserContext context) nogil except -1:
+cdef inline int skip_field(ParserContext context) except -1:
 
     while True:
 
@@ -950,11 +1250,11 @@ cdef inline int skip_field(ParserContext context) nogil except -1:
 cdef class SkipAllCalldataParser(Parser):
     """Skip a field."""
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return skip_all_calldata(self.context)
 
 
-cdef inline int skip_all_calldata(ParserContext context) nogil except -1:
+cdef inline int skip_all_calldata(ParserContext context) except -1:
 
     while True:
 
@@ -981,7 +1281,7 @@ cdef class AltParser(Parser):
         self.itemsize = self.dtype.itemsize
         self.number = number
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return alt_parse(self.memory, self.itemsize, self.number, self.context)
 
     def malloc(self):
@@ -1000,7 +1300,7 @@ cdef class AltParser(Parser):
 cdef inline int alt_parse(np.uint8_t[:] memory,
                           int itemsize,
                           int number,
-                          ParserContext context) nogil except -1:
+                          ParserContext context) except -1:
     cdef:
         # index of alt values
         int alt_index = 0
@@ -1058,7 +1358,7 @@ cdef class QualFloat32Parser(Parser):
         super(QualFloat32Parser, self).__init__(context)
         self.fill = fill
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return qual_parse(self.memory, self.context)
 
     def malloc(self):
@@ -1072,7 +1372,7 @@ cdef class QualFloat32Parser(Parser):
 
 
 cdef inline int qual_parse(floating[:] memory,
-                           ParserContext context) nogil except -1:
+                           ParserContext context) except -1:
     cdef:
         int success
 
@@ -1130,7 +1430,7 @@ cdef class FilterParser(Parser):
         for i in range(context.n_filters):
             context.filter_ptrs[i] = <char*> context.filters[i]
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return filter_parse(self, self.context)
 
     def malloc(self):
@@ -1147,7 +1447,7 @@ cdef class FilterParser(Parser):
 
 
 cdef inline int filter_parse(FilterParser self,
-                             ParserContext context) nogil except -1:
+                             ParserContext context) except -1:
     cdef:
         int filter_index
 
@@ -1216,7 +1516,7 @@ cdef inline int filter_parse(FilterParser self,
 
 
 cdef inline int filter_store(FilterParser self,
-                             ParserContext context) nogil except -1:
+                             ParserContext context) except -1:
     cdef:
         int filter_index
         int i
@@ -1290,7 +1590,7 @@ cdef class InfoParser(Parser):
         for i in range(context.n_infos):
             context.info_parser_ptrs[i] = <PyObject*> context.info_parsers[i]
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return info_parse(self, self.context)
 
     def malloc(self):
@@ -1304,7 +1604,7 @@ cdef class InfoParser(Parser):
 
 
 cdef inline int info_parse(InfoParser self,
-                           ParserContext context) nogil except -1:
+                           ParserContext context) except -1:
 
 
     # debug('info_parse', context)
@@ -1369,7 +1669,7 @@ cdef inline int info_parse(InfoParser self,
             context_getc(context)
 
 
-cdef inline int search_sorted(char* query, char** compare, int n_items) nogil:
+cdef inline int search_sorted(char* query, char** compare, int n_items):
     cdef:
         int i
 
@@ -1384,7 +1684,7 @@ cdef inline int search_sorted(char* query, char** compare, int n_items) nogil:
 
 
 cdef inline int info_store(InfoParser self,
-                           ParserContext context) nogil except -1:
+                           ParserContext context) except -1:
     cdef:
         int parser_index
         PyObject* parser
@@ -1443,7 +1743,7 @@ cdef class InfoInt32Parser(InfoParserBase):
 
     cdef np.int32_t[:, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return info_integer_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -1457,7 +1757,7 @@ cdef class InfoInt64Parser(InfoParserBase):
 
     cdef np.int64_t[:, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return info_integer_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -1469,7 +1769,7 @@ cdef class InfoInt64Parser(InfoParserBase):
 
 cdef inline int info_integer_parse(integer[:, :] memory,
                                    int number,
-                                   ParserContext context) nogil except -1:
+                                   ParserContext context) except -1:
     cdef:
         int value_index = 0
 
@@ -1507,7 +1807,7 @@ cdef inline int info_integer_parse(integer[:, :] memory,
 cdef inline int info_integer_store(integer[:, :] memory,
                                    int number,
                                    ParserContext context,
-                                   int value_index) nogil except -1:
+                                   int value_index) except -1:
     cdef:
         int success
 
@@ -1529,7 +1829,7 @@ cdef class InfoFloat32Parser(InfoParserBase):
 
     cdef np.float32_t[:, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return info_floating_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -1543,7 +1843,7 @@ cdef class InfoFloat64Parser(InfoParserBase):
 
     cdef np.float64_t[:, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return info_floating_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -1555,7 +1855,7 @@ cdef class InfoFloat64Parser(InfoParserBase):
 
 cdef inline int info_floating_parse(floating[:, :] memory,
                                     int number,
-                                    ParserContext context) nogil except -1:
+                                    ParserContext context) except -1:
     cdef:
         int value_index = 0
 
@@ -1593,7 +1893,7 @@ cdef inline int info_floating_parse(floating[:, :] memory,
 cdef inline int info_floating_store(floating[:, :] memory,
                                     int number,
                                     ParserContext context,
-                                    int value_index) nogil except -1:
+                                    int value_index) except -1:
     cdef:
         int success
 
@@ -1619,7 +1919,7 @@ cdef class InfoFlagParser(Parser):
         super(InfoFlagParser, self).__init__(context)
         self.key = PyBytes_AS_STRING(key)
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         # debug('InfoFlagParser.parse', self.context)
         self.memory[self.context.chunk_variant_index] = 1
         # ensure we advance the end of the field
@@ -1652,7 +1952,7 @@ cdef class InfoStringParser(Parser):
         self.itemsize = self.dtype.itemsize
         self.number = number
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         cdef:
             int value_index = 0
             # index into memory view
@@ -1712,13 +2012,13 @@ cdef class InfoStringParser(Parser):
 
 cdef class FormatParser(Parser):
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return format_parse(self, self.context)
 
 
 # break out method as function for profiling
 cdef inline int format_parse(FormatParser self,
-                             ParserContext context) nogil except -1:
+                             ParserContext context) except -1:
     cdef:
         int format_index = 0
         int i
@@ -1763,7 +2063,7 @@ cdef inline int format_parse(FormatParser self,
 
 
 cdef inline int format_set(ParserContext context,
-                           int format_index) nogil except -1:
+                           int format_index) except -1:
     cdef:
         PyObject* parser = NULL
         int parser_index
@@ -1848,7 +2148,7 @@ cdef class CalldataParser(Parser):
                               'skipped' % (t, key))
             context.calldata_parsers.append(parser)
 
-        # store pointers for nogil
+        # store pointers for
         if context.calldata_parser_ptrs is not NULL:
             free(context.calldata_parser_ptrs)
         context.calldata_parser_ptrs = <PyObject**> malloc(context.n_formats *
@@ -1856,7 +2156,7 @@ cdef class CalldataParser(Parser):
         for i in range(context.n_formats):
             context.calldata_parser_ptrs[i] = <PyObject*> context.calldata_parsers[i]
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_parse(self, self.context)
 
     def malloc(self):
@@ -1872,7 +2172,7 @@ cdef class CalldataParser(Parser):
 
 # break out method as function for profiling
 cdef inline int calldata_parse(CalldataParser self,
-                               ParserContext context) nogil except -1:
+                               ParserContext context) except -1:
     cdef:
         int i
         PyObject* parser
@@ -1886,23 +2186,29 @@ cdef inline int calldata_parse(CalldataParser self,
     while True:
 
         if context.c == 0:
+            # debug('calldata_parse: EOF', context)
             context.state = ParserState.EOF
             return 1
 
         elif context.c == LF or context.c == CR:
+            # debug('calldata_parse: EOL', context)
             context.state = ParserState.EOL
+            context.sample_index = 0
             return 1
 
         elif context.c == TAB:
+            # debug('calldata_parse: TAB', context)
             context.sample_index += 1
             context.format_index = 0
             context_getc(context)
 
         elif context.c == COLON:
+            # debug('calldata_parse: COLON', context)
             context.format_index += 1
             context_getc(context)
 
         elif context.format_index < MAX_FORMATS:
+            # debug('calldata_parse: parse', context)
 
             parser = context.variant_calldata_parser_ptrs[context.format_index]
             if parser is NULL:
@@ -1913,12 +2219,13 @@ cdef inline int calldata_parse(CalldataParser self,
                 (<Parser>parser).parse()
 
         else:
+            # debug('calldata_parse: exceeded MAX_FORMATS', context)
             self.skip_parser.parse()
 
 
 cdef class SkipInfoFieldParser(Parser):
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         while self.context.c != SEMICOLON and \
                 self.context.c != TAB and \
                 self.context.c != CR and \
@@ -1930,7 +2237,7 @@ cdef class SkipInfoFieldParser(Parser):
 
 cdef class SkipCalldataFieldParser(Parser):
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         while self.context.c != COLON and \
                 self.context.c != TAB and \
                 self.context.c != CR and \
@@ -1942,7 +2249,7 @@ cdef class SkipCalldataFieldParser(Parser):
 
 cdef inline int calldata_integer_parse(integer[:, :, :] memory,
                                        int number,
-                                       ParserContext context) nogil except -1:
+                                       ParserContext context) except -1:
     cdef:
         int value_index = 0
 
@@ -1954,6 +2261,7 @@ cdef inline int calldata_integer_parse(integer[:, :, :] memory,
     while True:
 
         if context.c == COMMA:
+            # debug('calldata_integer_parse: COMMA', context)
             calldata_integer_store(memory, number, context, value_index)
             temp_clear(context)
             value_index += 1
@@ -1963,39 +2271,48 @@ cdef inline int calldata_integer_parse(integer[:, :, :] memory,
                 context.c == LF or \
                 context.c == CR or \
                 context.c == 0:
+            # debug('calldata_integer_parse: DELIMITER', context)
             calldata_integer_store(memory, number, context, value_index)
-            return 1
+            break
 
         else:
+            # debug('calldata_integer_parse: temp_append', context)
             temp_append(context)
 
+        # debug('calldata_integer_parse: getc', context)
         context_getc(context)
+
+    # debug('calldata_integer_parse: exit', context)
+    return 1
 
 
 cdef inline int calldata_integer_store(integer[:, :, :] memory,
                                        int number,
                                        ParserContext context,
-                                       int value_index) nogil except -1:
+                                       int value_index) except -1:
     cdef:
         int success
+
+    # debug('calldata_integer_store: enter', context)
 
     if value_index >= number:
         # more values than we have room for, ignore
         return 1
 
-    # parse string as integer
+    # debug('parse string as integer', context)
     success = temp_tolong(context)
 
     # store value
     if success:
         memory[context.chunk_variant_index, context.sample_index, value_index] = context.l
 
+    # debug('calldata_integer_store: exit', context)
     return 1
 
 
 cdef inline int calldata_floating_parse(floating[:, :, :] memory,
                                         int number,
-                                        ParserContext context) nogil except -1:
+                                        ParserContext context) except -1:
     cdef:
         int value_index = 0
 
@@ -2028,7 +2345,7 @@ cdef inline int calldata_floating_parse(floating[:, :, :] memory,
 cdef inline int calldata_floating_store(floating[:, :, :] memory,
                                         int number,
                                         ParserContext context,
-                                        int value_index) nogil except -1:
+                                        int value_index) except -1:
     cdef:
         int success
 
@@ -2071,7 +2388,7 @@ cdef class GenotypeInt8Parser(GenotypeParserBase):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         # debug('GenotypeInt8Parser.parse: enter', self.context)
         return genotype_parse(self.memory, self.context)
 
@@ -2086,7 +2403,7 @@ cdef class GenotypeInt16Parser(GenotypeParserBase):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return genotype_parse(self.memory, self.context)
 
 
@@ -2100,7 +2417,7 @@ cdef class GenotypeInt32Parser(GenotypeParserBase):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return genotype_parse(self.memory, self.context)
 
 
@@ -2114,12 +2431,12 @@ cdef class GenotypeInt64Parser(GenotypeParserBase):
         self.memory = self.values
         self.memory[:] = self.fill
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return genotype_parse(self.memory, self.context)
 
 
 cdef inline int genotype_parse(integer[:, :, :] memory,
-                               ParserContext context) nogil except -1:
+                               ParserContext context) except -1:
     cdef:
         int allele_index = 0
 
@@ -2151,7 +2468,7 @@ cdef inline int genotype_parse(integer[:, :, :] memory,
 
 cdef inline int genotype_store(integer[:, :, :] memory,
                                ParserContext context,
-                               int allele_index) nogil except -1:
+                               int allele_index) except -1:
     cdef:
         int success
 
@@ -2193,7 +2510,7 @@ cdef class CalldataInt8Parser(CalldataParserBase):
 
     cdef np.int8_t[:, :, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_integer_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -2207,7 +2524,7 @@ cdef class CalldataInt16Parser(CalldataParserBase):
 
     cdef np.int16_t[:, :, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_integer_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -2221,7 +2538,7 @@ cdef class CalldataInt32Parser(CalldataParserBase):
 
     cdef np.int32_t[:, :, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_integer_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -2235,7 +2552,7 @@ cdef class CalldataInt64Parser(CalldataParserBase):
 
     cdef np.int64_t[:, :, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_integer_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -2252,7 +2569,7 @@ cdef class CalldataFloat32Parser(CalldataParserBase):
 
     cdef np.float32_t[:, :, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_floating_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -2266,7 +2583,7 @@ cdef class CalldataFloat64Parser(CalldataParserBase):
 
     cdef np.float64_t[:, :, :] memory
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         return calldata_floating_parse(self.memory, self.number, self.context)
 
     def malloc(self):
@@ -2287,7 +2604,7 @@ cdef class CalldataStringParser(Parser):
         self.itemsize = self.dtype.itemsize
         self.number = number
 
-    cdef int parse(self) nogil except -1:
+    cdef int parse(self) except -1:
         cdef:
             int value_index = 0
             # index into memory view
