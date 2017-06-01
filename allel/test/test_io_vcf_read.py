@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, division
 import io
 
 
+import numpy as np
 from nose.tools import *
 from allel.io_vcf_read import read_vcf_chunks, read_vcf
 
@@ -228,46 +229,60 @@ def test_read_vcf_fields_selected():
 
 def test_read_vcf_content():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='*', chunk_length=4, buffer_size=10,
-                       types={'ALT': 'S3', 'calldata/DP': 'S3'})
+    data = open(fn, mode='rb').read(-1)
 
-    # fixed fields
-    eq_(b'19', callset['variants/CHROM'][0])
-    eq_(111, callset['variants/POS'][0])
-    eq_(b'rs6054257', callset['variants/ID'][2])
-    eq_(b'A', callset['variants/REF'][0])
-    eq_(b'ATG', callset['variants/ALT'][8, 1])
-    eq_(10.0, callset['variants/QUAL'][1])
-    eq_(True, callset['variants/FILTER_PASS'][2])
-    eq_(False, callset['variants/FILTER_PASS'][3])
-    eq_(True, callset['variants/FILTER_q10'][3])
-    # TODO special fields
-    # eq_(2, callset['variants/num_alleles'][0])
-    # eq_(False, callset['variants/is_snp'][5])
+    inputs = (fn,
+              io.BytesIO(data),
+              io.BytesIO(data.replace(b'\n', b'\r')),
+              io.BytesIO(data.replace(b'\n', b'\r\n')))
 
-    # INFO fields
-    eq_(3, callset['variants/NS'][2])
-    eq_(.5, callset['variants/AF'][2, 0])
-    eq_(True, callset['variants/DB'][2])
-    eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
+    print(data.replace(b'\n', b'\r\n'))
 
-    # test calldata content
-    eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
-    eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
-    eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
-    eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
-    eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
+    for i, input in enumerate(inputs):
+        print(i)
 
-    # TODO test GT as int16, int32, int64, S3
+        callset = read_vcf(input, fields='*', chunk_length=4, buffer_size=10,
+                           types={'ALT': 'S3', 'calldata/DP': 'S3'})
 
-    # TODO special fields?
-    # eq_(True, a[0]['NA00001']['is_called'])
-    # eq_(True, a[0]['NA00001']['is_phased'])
+        # fixed fields
+        eq_(b'19', callset['variants/CHROM'][0])
+        eq_(111, callset['variants/POS'][0])
+        eq_(b'rs6054257', callset['variants/ID'][2])
+        eq_(b'A', callset['variants/REF'][0])
+        eq_(b'ATG', callset['variants/ALT'][8, 1])
+        eq_(10.0, callset['variants/QUAL'][1])
+        eq_(True, callset['variants/FILTER_PASS'][2])
+        eq_(False, callset['variants/FILTER_PASS'][3])
+        eq_(True, callset['variants/FILTER_q10'][3])
+        # TODO special fields
+        # eq_(2, callset['variants/num_alleles'][0])
+        # eq_(False, callset['variants/is_snp'][5])
+
+        # INFO fields
+        eq_(3, callset['variants/NS'][2])
+        eq_(.5, callset['variants/AF'][2, 0])
+        eq_(True, callset['variants/DB'][2])
+        eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
+
+        # test calldata content
+        eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
+        eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
+        eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
+        eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
+        eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
+
+        # TODO test GT as int16, int32, int64, S3
+
+        # TODO special fields?
+        # eq_(True, a[0]['NA00001']['is_called'])
+        # eq_(True, a[0]['NA00001']['is_phased'])
 
 
 def test_vcf_truncation_chrom():
 
-    input_data = b"""#CHROM\n2L\n2R\n"""
+    input_data = (b"#CHROM\n"
+                  b"2L\n"
+                  b"2R\n")
 
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
@@ -281,69 +296,266 @@ def test_vcf_truncation_chrom():
 
         # check data content
         eq_(0, len(callset['samples']))
-        chrom = callset['variants/CHROM']
-        eq_(2, len(chrom))
-        eq_(b'2L', chrom[0])
-        eq_(b'2R', chrom[1])
+        a = callset['variants/CHROM']
+        eq_(2, len(a))
+        eq_(b'2L', a[0])
+        eq_(b'2R', a[1])
 
 
 def test_vcf_truncation_pos():
 
-    input_data = b"""#CHROM\tPOS\n2L\t12\n2R\t34\n"""
+    input_data = (b"#CHROM\tPOS\n"
+                  b"2L\t12\n"
+                  b"2R\t34\n")
 
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
 
         input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['CHROM', 'POS', 'samples'])
+        callset = read_vcf(input_file, fields=['POS', 'samples'])
 
         # check fields
-        expected_fields = ['variants/CHROM', 'variants/POS', 'samples']
+        expected_fields = ['variants/POS', 'samples']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
         eq_(0, len(callset['samples']))
-        chrom = callset['variants/CHROM']
-        pos = callset['variants/POS']
-        eq_(2, len(chrom))
-        eq_(2, len(pos))
-        eq_(b'2L', chrom[0])
-        eq_(b'2R', chrom[1])
-        eq_(12, pos[0])
-        eq_(34, pos[1])
-
+        a = callset['variants/POS']
+        eq_(2, len(a))
+        eq_(12, a[0])
+        eq_(34, a[1])
 
 
 def test_vcf_truncation_id():
 
-    input_data = b"""#CHROM\tPOS\tID\n2L\t12\tfoo\n2R\t34\tbar\n"""
+    input_data = (b"#CHROM\tPOS\tID\n"
+                  b"2L\t12\tfoo\n"
+                  b"2R\t34\tbar\n")
 
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
 
         input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['CHROM', 'POS', 'ID', 'samples'])
+        callset = read_vcf(input_file, fields=['ID', 'samples'])
 
         # check fields
-        expected_fields = ['variants/CHROM', 'variants/POS', 'variants/ID', 'samples']
+        expected_fields = ['variants/ID', 'samples']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
         eq_(0, len(callset['samples']))
-        chrom = callset['variants/CHROM']
-        pos = callset['variants/POS']
-        id = callset['variants/ID']
-        eq_(2, len(chrom))
-        eq_(2, len(pos))
-        eq_(2, len(id))
-        eq_(b'2L', chrom[0])
-        eq_(b'2R', chrom[1])
-        eq_(12, pos[0])
-        eq_(34, pos[1])
-        eq_(b'foo', id[0])
-        eq_(b'bar', id[1])
+        a = callset['variants/ID']
+        eq_(2, len(a))
+        eq_(b'foo', a[0])
+        eq_(b'bar', a[1])
 
 
+def test_vcf_truncation_ref():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\n"
+                  b"2L\t12\tfoo\tA\n"
+                  b"2R\t34\tbar\tC\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['REF', 'samples'])
+
+        # check fields
+        expected_fields = ['variants/REF', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(0, len(callset['samples']))
+        a = callset['variants/REF']
+        eq_(2, len(a))
+        eq_(b'A', a[0])
+        eq_(b'C', a[1])
+
+
+def test_vcf_truncation_alt():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\n"
+                  b"2L\t12\tfoo\tA\tC\n"
+                  b"2R\t34\tbar\tC\tG\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['ALT', 'samples'], numbers=dict(ALT=1))
+
+        # check fields
+        expected_fields = ['variants/ALT', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(0, len(callset['samples']))
+        a = callset['variants/ALT']
+        eq_(2, len(a))
+        eq_(b'C', a[0])
+        eq_(b'G', a[1])
+
+
+def test_vcf_truncation_qual():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\n"
+                  b"2L\t12\tfoo\tA\tC\t1.2\n"
+                  b"2R\t34\tbar\tC\tG\t3.4\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['QUAL', 'samples'])
+
+        # check fields
+        expected_fields = ['variants/QUAL', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(0, len(callset['samples']))
+        a = callset['variants/QUAL']
+        eq_(2, len(a))
+        assert_almost_equal(1.2, a[0], places=6)
+        assert_almost_equal(3.4, a[1], places=6)
+
+
+def test_vcf_truncation_filter():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\n"
+                  b"2L\t12\tfoo\tA\tC\t1.2\t.\n"
+                  b"2R\t34\tbar\tC\tG\t3.4\tPASS\n"
+                  b"2R\t56\tbaz\tG\tT\t56.77\tq10,s50\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file, fields=['FILTER_PASS', 'FILTER_q10', 'FILTER_s50'])
+
+        # check fields
+        expected_fields = ['variants/FILTER_PASS', 'variants/FILTER_q10',
+                           'variants/FILTER_s50']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        a = callset['variants/FILTER_PASS']
+        eq_(3, len(a))
+        assert_list_equal([False, True, False], a.tolist())
+        a = callset['variants/FILTER_q10']
+        eq_(3, len(a))
+        assert_list_equal([False, False, True], a.tolist())
+        a = callset['variants/FILTER_s50']
+        eq_(3, len(a))
+        assert_list_equal([False, False, True], a.tolist())
+
+
+def test_vcf_truncation_info():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                  b"2L\t12\tfoo\tA\tC\t1.2\t.\tfoo=42;bar=1.2\n"
+                  b"2R\t34\tbar\tC\tG\t3.4\tPASS\t.\n"
+                  b"2R\t56\tbaz\tG\tT\t56.77\tq10,s50\t\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file,
+                           fields=['foo', 'bar'],
+                           types=dict(foo='Integer', bar='Float'))
+
+        # check fields
+        expected_fields = ['variants/foo', 'variants/bar']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        a = callset['variants/foo']
+        eq_(3, len(a))
+        eq_(42, a[0])
+        eq_(-1, a[1])
+        eq_(-1, a[2])
+        a = callset['variants/bar']
+        eq_(3, len(a))
+        assert_almost_equal(1.2, a[0], places=6)
+        assert np.isnan(a[1])
+        assert np.isnan(a[2])
+
+
+def test_vcf_truncation_format():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+                  b"2L\t12\tfoo\tA\tC\t1.2\t.\tfoo=42;bar=1.2\tGT:GQ\n"
+                  b"2R\t34\tbar\tC\tG\t3.4\tPASS\t.\t.\n"
+                  b"2R\t56\tbaz\tG\tT\t56.77\tq10,s50\t\t\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file,
+                           fields=['foo', 'bar', 'samples'],
+                           types=dict(foo='Integer', bar='Float'))
+
+        # check fields
+        expected_fields = ['variants/foo', 'variants/bar', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(0, len(callset['samples']))
+        a = callset['variants/foo']
+        eq_(3, len(a))
+        eq_(42, a[0])
+        eq_(-1, a[1])
+        eq_(-1, a[2])
+        a = callset['variants/bar']
+        eq_(3, len(a))
+        assert_almost_equal(1.2, a[0], places=6)
+        assert np.isnan(a[1])
+        assert np.isnan(a[2])
+
+
+def test_vcf_truncation_calldata():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\n"
+                  b"2L\t12\tfoo\tA\tC\t1.2\t.\tfoo=42;bar=1.2\tGT:GQ\t0/1:12\t1/2:34\n"
+                  b"2R\t34\tbar\tC\tG\t3.4\tPASS\t.\tGT\t./.\n"
+                  b"2R\t56\tbaz\tG\tT\t56.77\tq10,s50\t\n")
+
+    # with and without final line terminator
+    for data in (input_data, input_data[:-1]):
+
+        input_file = io.BytesIO(data)
+        callset = read_vcf(input_file,
+                           fields=['calldata/GT', 'calldata/GQ', 'samples'],
+                           types={'calldata/GT': 'i1', 'calldata/GQ': 'i2'})
+
+        # check fields
+        expected_fields = ['calldata/GT', 'calldata/GQ', 'samples']
+        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+        # check data content
+        eq_(2, len(callset['samples']))
+        assert_list_equal([b'S2', b'S1'], callset['samples'].tolist())
+        a = callset['calldata/GT']
+        eq_((3, 2, 2), a.shape)
+        eq_((0, 1), tuple(a[0, 0]))
+        eq_((1, 2), tuple(a[0, 1]))
+        eq_((-1, -1), tuple(a[1, 0]))
+        eq_((-1, -1), tuple(a[1, 1]))
+        eq_((-1, -1), tuple(a[2, 0]))
+        eq_((-1, -1), tuple(a[2, 1]))
+
+        a = callset['calldata/GQ']
+        eq_((3, 2), a.shape)
+        eq_(12, a[0, 0])
+        eq_(34, a[0, 1])
+        eq_(-1, a[1, 0])
+        eq_(-1, a[1, 1])
+        eq_(-1, a[2, 0])
+        eq_(-1, a[2, 1])
 
 
 # TODO test types

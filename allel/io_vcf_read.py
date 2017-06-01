@@ -58,6 +58,7 @@ import os
 import re
 from collections import namedtuple
 import warnings
+import io
 
 
 import numpy as np
@@ -391,20 +392,25 @@ def read_vcf_chunks(path,
 
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
-        with gzip.open(path, mode='rb') as binary_file:
-            return _read_vcf(binary_file, fields=fields, types=types, numbers=numbers,
+        with gzip.open(path, mode='rb') as buffered_reader:
+            # N.B., GZipFile supports peek
+            return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
                              buffer_size=buffer_size, chunk_length=chunk_length)
 
     elif isinstance(path, str):
         # assume no compression
-        with open(path, mode='rb', buffering=0) as binary_file:
-            return _read_vcf(binary_file, fields=fields, types=types, numbers=numbers,
+        with open(path, mode='rb', buffering=buffer_size) as buffered_reader:
+            return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
                              buffer_size=buffer_size, chunk_length=chunk_length)
 
     else:
         # assume some other binary file-like object
-        binary_file = path
-        return _read_vcf(binary_file, fields=fields, types=types, numbers=numbers,
+        if not hasattr(path, 'peek'):
+            # need a buffered reader to support peek
+            buffered_reader = io.BufferedReader(path, buffer_size=buffer_size)
+        else:
+            buffered_reader = path
+        return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
                          buffer_size=buffer_size, chunk_length=chunk_length)
 
 
@@ -666,6 +672,7 @@ default_numbers = {
     'variants/AF': 3,
     'variants/MQ': 1,
     'calldata/DP': 1,
+    'calldata/GT': 1,
     'calldata/GQ': 1,
     'calldata/HQ': 2,
     'calldata/AD': 4,
@@ -742,10 +749,10 @@ def normalize_numbers(numbers, fields, headers):
     return normed_numbers
 
 
-def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length):
+def _read_vcf(buffered_reader, fields, types, numbers, buffer_size, chunk_length):
 
     # read VCF headers
-    headers = read_vcf_headers(fileobj)
+    headers = read_vcf_headers(buffered_reader)
 
     # setup fields to read
     if fields is None:
@@ -769,7 +776,7 @@ def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length):
     # debug('normalized numbers', numbers)
 
     # setup chunks iterator
-    chunks = iter_vcf(input_file=fileobj, input_buffer_size=buffer_size,
+    chunks = iter_vcf(input_file=buffered_reader, input_buffer_size=buffer_size,
                       chunk_length=chunk_length,
                       temp_buffer_size=2**12, headers=headers, fields=fields,
                       types=types, numbers=numbers)
@@ -777,16 +784,21 @@ def _read_vcf(fileobj, fields, types, numbers, buffer_size, chunk_length):
     return headers, chunks
 
 
-def _binary_readline(binary_file):
-    # N.B., cannot do this with standard library text I/O because we don't want to advance the
-    # underlying stream beyond exactly the number of bytes read for the header
+def _binary_readline(buffered_reader):
+    # N.B., cannot do this with standard library text I/O because we don't want to advance
+    # the binary stream beyond exactly the number of bytes read for the header
     line = []
-    c = binary_file.read(1)
-    while c and c != b'\n':
+    c = buffered_reader.read(1)
+    while c and c != b'\n' and c != b'\r':
         line.append(c)
-        c = binary_file.read(1)
+        c = buffered_reader.read(1)
     line = b''.join(line)
     line = str(line, 'ascii')
+    # cope with windows line terminators
+    if c == b'\r':
+        peek = buffered_reader.peek(1)
+        if peek[0] == ord(b'\n'):
+            buffered_reader.read(1)
     return line
 
 
@@ -802,7 +814,7 @@ re_format_header = \
 VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
 
 
-def read_vcf_headers(binary_file):
+def read_vcf_headers(buffered_reader):
 
     # setup
     headers = []
@@ -812,10 +824,9 @@ def read_vcf_headers(binary_file):
     formats = dict()
 
     # read first header line
-    header = _binary_readline(binary_file)
+    header = _binary_readline(buffered_reader)
 
     while header and header[0] == '#':
-        # debug('found header', header)
 
         headers.append(header)
 
@@ -866,7 +877,7 @@ def read_vcf_headers(binary_file):
             break
 
         # read next header line
-        header = _binary_readline(binary_file)
+        header = _binary_readline(buffered_reader)
 
     # check if we saw the mandatory header line or not
     if samples is None:
