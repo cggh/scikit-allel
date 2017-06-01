@@ -76,6 +76,28 @@ DEFAULT_CHUNK_LENGTH = 2**15
 DEFAULT_CHUNK_WIDTH = 2**6
 
 
+def _prep_fields_arg(fields):
+
+    add_samples = False
+
+    if fields is None:
+        # add samples by default
+        return True, None
+
+    if isinstance(fields, str):
+        fields = [fields]
+    else:
+        fields = list(fields)
+
+    if 'samples' in fields:
+        fields.remove('samples')
+        add_samples = True
+    elif '*' in fields:
+        add_samples = True
+
+    return add_samples, fields
+
+
 def read_vcf(path,
              fields=None,
              types=None,
@@ -106,6 +128,9 @@ def read_vcf(path,
 
     """
 
+    # samples requested?
+    add_samples, fields = _prep_fields_arg(fields)
+
     # setup
     headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types, numbers=numbers,
                                       buffer_size=buffer_size, chunk_length=chunk_length)
@@ -115,8 +140,10 @@ def read_vcf(path,
 
     # setup output
     output = dict()
-    # use binary string type for cross-platform compatibility
-    output['samples'] = np.array(headers.samples).astype('S')
+
+    if add_samples:
+        # use binary string type for cross-platform compatibility
+        output['samples'] = np.array(headers.samples).astype('S')
 
     if chunks:
 
@@ -175,6 +202,9 @@ def vcf_to_hdf5(input_path, output_path,
 
     import h5py
 
+    # samples requested?
+    add_samples, fields = _prep_fields_arg(fields)
+
     with h5py.File(output_path, mode='a') as h5f:
 
         # setup offset for loading
@@ -194,16 +224,17 @@ def vcf_to_hdf5(input_path, output_path,
         # TODO this won't be necessary when using generators
         chunks = iter(chunks)
 
-        # store samples
-        name = 'samples'
-        if name in root[group]:
-            if overwrite:
-                del root[group][name]
-            else:
-                # TODO right exception class?
-                raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
-        root[group].create_dataset(name, data=np.array(headers.samples).astype('S'),
-                                   chunks=None)
+        if add_samples:
+            # store samples
+            name = 'samples'
+            if name in root[group]:
+                if overwrite:
+                    del root[group][name]
+                else:
+                    # TODO right exception class?
+                    raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
+            root[group].create_dataset(name, data=np.array(headers.samples).astype('S'),
+                                       chunks=None)
 
         # read first chunk
         chunk = next(chunks, None)
@@ -289,6 +320,9 @@ def vcf_to_zarr(input_path, output_path,
 
     import zarr
 
+    # samples requested?
+    add_samples, fields = _prep_fields_arg(fields)
+
     # open root group
     root = zarr.open_group(output_path, mode='a', path=group)
 
@@ -303,9 +337,10 @@ def vcf_to_zarr(input_path, output_path,
     # TODO this won't be necessary when using generators
     chunks = iter(chunks)
 
-    # store samples
-    root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
-                               compressor=None, overwrite=overwrite)
+    if add_samples:
+        # store samples
+        root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
+                                   compressor=None, overwrite=overwrite)
 
     # read first chunk
     chunk = next(chunks, None)

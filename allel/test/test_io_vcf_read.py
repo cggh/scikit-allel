@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+import io
 
 
 from nose.tools import *
@@ -125,8 +126,6 @@ def test_read_vcf_fields_all_variants():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='variants/*', chunk_length=2, buffer_size=20)
     expected_fields = [
-        # TODO no samples
-        'samples',
         # fixed fields
         'variants/CHROM',
         'variants/POS',
@@ -154,8 +153,6 @@ def test_read_vcf_fields_info():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='INFO', chunk_length=5, buffer_size=10)
     expected_fields = [
-        # TODO no samples
-        'samples',
         # INFO fields
         'variants/AA',
         'variants/AC',
@@ -173,8 +170,6 @@ def test_read_vcf_fields_filter():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='FILTER', chunk_length=1, buffer_size=2)
     expected_fields = [
-        # TODO no samples
-        'samples',
         'variants/FILTER_PASS',
         'variants/FILTER_q10',
         'variants/FILTER_s50',
@@ -186,8 +181,6 @@ def test_read_vcf_fields_all_calldata():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='calldata/*', chunk_length=6, buffer_size=1000)
     expected_fields = [
-        # TODO no samples
-        'samples',
         'calldata/GT',
         'calldata/GQ',
         'calldata/HQ',
@@ -198,8 +191,26 @@ def test_read_vcf_fields_all_calldata():
 
 def test_read_vcf_fields_selected():
     fn = 'fixture/sample.vcf'
+
+    # without samples
     callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
                                    'calldata/HQ', 'FILTER_q10'],
+                       chunk_length=4, buffer_size=100)
+    expected_fields = [
+        'variants/CHROM',
+        'variants/POS',
+        'variants/FILTER_q10',
+        'variants/AC',
+        'variants/AF',
+        # FORMAT fields
+        'calldata/GT',
+        'calldata/HQ',
+    ]
+    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+    # with samples
+    callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
+                                   'calldata/HQ', 'FILTER_q10', 'samples'],
                        chunk_length=4, buffer_size=100)
     expected_fields = [
         'samples',
@@ -252,6 +263,25 @@ def test_read_vcf_content():
     # TODO special fields?
     # eq_(True, a[0]['NA00001']['is_called'])
     # eq_(True, a[0]['NA00001']['is_phased'])
+
+
+def test_vcf_truncation():
+
+    input_data = b"""#CHROM\n2L\n"""
+    input_file = io.BytesIO(input_data)
+    callset = read_vcf(input_file, fields=['CHROM', 'POS', 'samples'])
+
+    # check fields
+    expected_fields = ['variants/CHROM', 'variants/POS', 'samples']
+    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+    # check data content
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(1, len(chrom))
+    eq_(1, len(pos))
+    eq_(b'2L', chrom[0])
+    eq_(-1, pos[0])
 
 
 # TODO test types
