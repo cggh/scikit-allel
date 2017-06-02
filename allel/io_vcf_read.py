@@ -25,9 +25,10 @@ TODO:
 ** DONE Integer
 ** DONE Float
 ** DONE String
+* DONE Option not to return samples
+* Profile heavy INFO, binary search?
 * Generalise genotype parser integer type - needs tests
 * User-provided ploidy
-* DONE Option not to return samples
 * Handle number = 0 in non-flag INFO field
 * User-controlled fill values
 * User-controlled numbers to ALT, INFO, calldata, ... (tests)
@@ -37,10 +38,11 @@ TODO:
 * User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN
-* Unit tests
 * PY2 compatibility?
+* More formats than declared in FORMAT field. Less formats.
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
+* Docstrings
 * Special fields:
 ** num_alleles
 ** is_snp
@@ -59,9 +61,6 @@ import re
 from collections import namedtuple
 import warnings
 import io
-from multiprocessing.pool import ThreadPool
-import time
-from contextlib import contextmanager
 
 
 import numpy as np
