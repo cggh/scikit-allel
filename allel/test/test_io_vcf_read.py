@@ -3,13 +3,17 @@ from __future__ import absolute_import, print_function, division
 import io
 import os
 import shutil
+import itertools
+import gzip
 
 
 import zarr
+import h5py
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import *
-from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr
+from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
+    vcf_to_npz
 
 
 def test_read_vcf_chunks():
@@ -236,16 +240,29 @@ def test_read_vcf_content():
     data = open(fn, mode='rb').read(-1)
 
     inputs = (fn,
-              io.BytesIO(data),
-              io.BytesIO(data.replace(b'\n', b'\r')),
-              io.BytesIO(data.replace(b'\n', b'\r\n')))
+              fn + '.gz',
+              lambda: open(fn, mode='rb'),
+              lambda: gzip.open(fn + '.gz', mode='rb'),
+              lambda: io.BytesIO(data),
+              lambda: io.BytesIO(data.replace(b'\n', b'\r')),
+              lambda: io.BytesIO(data.replace(b'\n', b'\r\n')))
 
-    print(data.replace(b'\n', b'\r\n'))
+    chunk_lengths = 1, 2, 3, 4, 5, 6, 8, 10, 12, 20, 1000
 
-    for i, input in enumerate(inputs):
-        print(i)
+    buffer_sizes = 2, 10, 20, 30, 50, 100, 1000, 10000, 100000
 
-        callset = read_vcf(input, fields='*', chunk_length=4, buffer_size=10,
+    for input, chunk_length, buffer_size in itertools.product(inputs,
+                                                              chunk_lengths,
+                                                              buffer_sizes):
+        if isinstance(input, str):
+            input_file = input
+        else:
+            input_file = input()
+
+        callset = read_vcf(input_file,
+                           fields='*',
+                           chunk_length=chunk_length,
+                           buffer_size=buffer_size,
                            types={'ALT': 'S3', 'calldata/DP': 'S3'})
 
         # fixed fields
@@ -562,20 +579,49 @@ def test_vcf_truncation_calldata():
         eq_(-1, a[2, 1])
 
 
+def test_vcf_to_npz():
+    fn = 'fixture/sample.vcf'
+    expect = read_vcf(fn)
+    npz_fn = 'temp/sample.npz'
+    if os.path.exists(npz_fn):
+        os.remove(npz_fn)
+    vcf_to_npz(fn, npz_fn, chunk_length=2)
+    actual = np.load(npz_fn)
+    for key in expect.keys():
+        if expect[key].dtype.kind == 'f':
+            assert_array_almost_equal(expect[key], actual[key])
+        else:
+            assert_array_equal(expect[key], actual[key])
+
+
 def test_vcf_to_zarr():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn)
+    expect = read_vcf(fn)
     zarr_path = 'temp/sample.zarr'
-    for use_threads in False, True:
-        if os.path.exists(zarr_path):
-            shutil.rmtree(zarr_path)
-        vcf_to_zarr(fn, zarr_path, chunk_length=2, use_threads=use_threads)
-        callset_zarr = zarr.open_group(zarr_path, mode='r')
-        for key in callset.keys():
-            if callset[key].dtype.kind == 'f':
-                assert_array_almost_equal(callset[key], callset_zarr[key][:])
+    if os.path.exists(zarr_path):
+        shutil.rmtree(zarr_path)
+    vcf_to_zarr(fn, zarr_path, chunk_length=2)
+    actual = zarr.open_group(zarr_path, mode='r')
+    for key in expect.keys():
+        if expect[key].dtype.kind == 'f':
+            assert_array_almost_equal(expect[key], actual[key][:])
+        else:
+            assert_array_equal(expect[key], actual[key][:])
+
+
+def test_vcf_to_hdf5():
+    fn = 'fixture/sample.vcf'
+    expect = read_vcf(fn)
+    h5_fn = 'temp/sample.h5'
+    if os.path.exists(h5_fn):
+        os.remove(h5_fn)
+    vcf_to_hdf5(fn, h5_fn, chunk_length=2)
+    with h5py.File(h5_fn, mode='r') as actual:
+        for key in expect.keys():
+            if expect[key].dtype.kind == 'f':
+                assert_array_almost_equal(expect[key], actual[key][:])
             else:
-                assert_array_equal(callset[key], callset_zarr[key][:])
+                assert_array_equal(expect[key], actual[key][:])
 
 
 # TODO test types
