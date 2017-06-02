@@ -23,7 +23,7 @@ import warnings
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
 # noinspection PyUnresolvedReferences
 from libc.stdlib cimport strtol, strtof, strtod, malloc, free
-from libc.string cimport strcmp
+from libc.string cimport strcmp, memcpy
 import numpy as np
 cimport numpy as np
 # noinspection PyUnresolvedReferences
@@ -2390,3 +2390,153 @@ cdef class CalldataStringParser(Parser):
             values = values.squeeze(axis=2)
         chunk[field] = values
         self.malloc()
+
+
+##########################################################################################
+
+#
+# cdef class BufferedReader(object):
+#
+#     cdef:
+#         object fileobj
+#         int buffer_size
+#         bytearray buffer
+#         char* stream
+#         char* stream_start
+#         char* stream_end
+#         char c
+#
+#     def __init__(self, fileobj, buffer_size=2**14):
+#         self.fileobj = fileobj
+#         self.buffer = bytearray(buffer_size)
+#         self.stream_start = PyByteArray_AS_STRING(self.buffer)
+#         self.stream = self.stream_start
+#         self.fill_buffer()
+#         self.getc()
+#
+#     cdef void fill_buffer(self) nogil:
+#         cdef int l
+#         with gil:
+#             l = self.fileobj.readinto(self.buffer)
+#         if l > 0:
+#             self.stream = self.stream_start
+#             self.stream_end = self.stream + l
+#         else:
+#             self.stream = NULL
+#
+#     cdef void getc(self) nogil:
+#         if self.stream is self.stream_end:
+#             # end of stream buffer
+#             self.fill_buffer()
+#         if self.stream is NULL:
+#             # end of file
+#             self.c = 0
+#         else:
+#             # read next character from stream stream
+#             self.c = self.stream[0]
+#             self.stream += 1
+#
+#
+# cdef class AsyncBlockParser(object):
+#
+#     cdef:
+#         BufferedReader reader
+#         object pool
+#         int block_length
+#         int block_variant_index
+#         int chunk_variant_index
+#         char* buffer
+#         int buffer_size
+#         int buffer_index
+#         object async_result
+#         int n_lines
+#
+#     def __cinit__(self, reader, pool, block_length, chunk_variant_index, buffer_size):
+#         self.reader = reader
+#         self.pool = pool
+#         self.block_length = block_length
+#         self.block_variant_index = 0
+#         self.chunk_variant_index = chunk_variant_index
+#         self.buffer_size = buffer_size
+#         self.buffer = <char*> malloc(self.buffer_size * sizeof(char*))
+#         self.buffer_index = 0
+#         self.async_result = None
+#         self.n_lines = 0
+#
+#     def __dealloc__(self):
+#         if self.buffer is not NULL:
+#             free(self.buffer)
+#
+#     cdef void reset(self, chunk_variant_index):
+#         self.buffer_index = 0
+#         self.block_variant_index = 0
+#         self.chunk_variant_index = chunk_variant_index
+#         self.n_lines = 0
+#
+#     cdef void grow_buffer(self) nogil:
+#         cdef:
+#             char* new_buffer
+#             cdef int new_buffer_size
+#
+#         # allocated new buffer
+#         new_buffer_size = self.buffer_size * 2
+#         new_buffer = <char*> malloc(new_buffer_size * sizeof(char*))
+#
+#         # copy contents of old buffer to new buffer
+#         memcpy(new_buffer, self.buffer, self.buffer_size)
+#
+#         # free old buffer
+#         free(self.buffer)
+#         self.buffer = new_buffer
+#         self.buffer_size = new_buffer_size
+#
+#     cdef void append_buffer(self) nogil:
+#         if self.buffer_index == self.buffer_size:
+#             self.grow_buffer()
+#         self.buffer[self.buffer_index] = self.reader.c
+#         self.buffer_index += 1
+#
+#     def wait_completed(self):
+#         if self.async_result is not None:
+#             self.async_result.get()
+#         # otherwise return immediately
+#
+#     def parse(self):
+#
+#         # TODO synchronous part - read lines into buffer
+#         self.sync_read()
+#
+#         # TODO async part - parse lines and store data
+#         self.async_parse()
+#
+#     def sync_read(self):
+#
+#         # TODO universal newlines
+#
+#         with nogil:
+#
+#             while True:
+#
+#                 if self.reader.c == LF:
+#                     self.append_buffer()
+#                     self.n_lines += 1
+#                     if self.n_lines == self.block_length:
+#                         # advance beyond end of line for next block
+#                         self.reader.getc()
+#                         break
+#
+#                 elif self.reader.c == 0:
+#                     self.append_buffer()
+#                     self.n_lines += 1
+#                     break
+#
+#                 self.reader.getc()
+#
+#     def async_parse(self):
+#         self.async_result = self.pool.apply_async(block_parse, args=(self,))
+#
+#
+# def block_parse(AsyncBlockParser self):
+#     # TODO
+#     pass
+#
