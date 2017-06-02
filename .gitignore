@@ -62,5 +62,5 @@ example.*
 *.h5
 *.zarr
 *.npz
-fixture/prof*
+profdata/*
 

@@ -43,6 +43,7 @@ TODO:
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
 * Docstrings
+* Test vcf_to_... if no samples, in general calldata fields but no samples
 * Special fields:
 ** num_alleles
 ** is_snp
@@ -144,7 +145,7 @@ def read_vcf(path,
     # setup output
     output = dict()
 
-    if add_samples:
+    if add_samples and headers.samples:
         # use binary string type for cross-platform compatibility
         output['samples'] = np.array(headers.samples).astype('S')
 
@@ -288,7 +289,7 @@ def vcf_to_hdf5(input_path, output_path,
                                           types=types, numbers=numbers, buffer_size=buffer_size,
                                           chunk_length=chunk_length)
 
-        if add_samples:
+        if add_samples and headers.samples:
             # store samples
             name = 'samples'
             if name in root[group]:
@@ -337,6 +338,8 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
             chunk_shape = (chunk_length,)
         else:
             chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
+
+        # debug(k, data.ndim, data.shape, chunk_shape)
 
         # create dataset
         shape = (0,) + data.shape[1:]
@@ -387,7 +390,7 @@ def vcf_to_zarr(input_path, output_path,
                                       numbers=numbers, buffer_size=buffer_size,
                                       chunk_length=chunk_length)
 
-    if add_samples:
+    if add_samples and headers.samples:
         # store samples
         root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
                                    compressor=None, overwrite=overwrite)
@@ -555,8 +558,10 @@ def add_all_filter_fields(fields, headers):
 
 
 def add_all_calldata_fields(fields, headers):
-    for f in headers.formats:
-        fields.add('calldata/' + f)
+    # only add calldata fields if there are samples
+    if headers.samples:
+        for f in headers.formats:
+            fields.add('calldata/' + f)
 
 
 def normalize_fields(fields, headers):
@@ -595,7 +600,11 @@ def normalize_fields(fields, headers):
             # normalize field specification
             f = normalize_field_prefix(f, headers)
             check_field(f, headers)
-            normed_fields.add(f)
+            if f.startswith('calldata/') and not headers.samples:
+                # only add calldata fields if there are samples
+                pass
+            else:
+                normed_fields.add(f)
 
     return normed_fields
 
@@ -798,7 +807,8 @@ def _read_vcf(buffered_reader, fields, types, numbers, buffer_size, chunk_length
         fields = set()
         add_all_fixed_variants_fields(fields)
         fields.add('variants/FILTER_PASS')
-        fields.add('calldata/GT')
+        if headers.samples and 'GT' in headers.formats:
+            fields.add('calldata/GT')
 
     else:
         fields = normalize_fields(fields, headers)
