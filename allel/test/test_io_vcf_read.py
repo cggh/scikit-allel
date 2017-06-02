@@ -566,15 +566,17 @@ def test_vcf_to_zarr():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn)
     zarr_path = 'temp/sample.zarr'
-    if os.path.exists(zarr_path):
-        shutil.rmtree(zarr_path)
-    vcf_to_zarr(fn, zarr_path, chunk_length=2)
-    callset_zarr = zarr.open_group(zarr_path, mode='r')
-    for key in callset.keys():
-        if callset[key].dtype.kind == 'f':
-            assert_array_almost_equal(callset[key], callset_zarr[key][:])
-        else:
-            assert_array_equal(callset[key], callset_zarr[key][:])
+    for use_threads in False, True:
+        if os.path.exists(zarr_path):
+            shutil.rmtree(zarr_path)
+        vcf_to_zarr(fn, zarr_path, chunk_length=2, use_threads=use_threads)
+        callset_zarr = zarr.open_group(zarr_path, mode='r')
+        for key in callset.keys():
+            if callset[key].dtype.kind == 'f':
+                assert_array_almost_equal(callset[key], callset_zarr[key][:])
+            else:
+                assert_array_equal(callset[key], callset_zarr[key][:])
+
 
 # TODO test types
 

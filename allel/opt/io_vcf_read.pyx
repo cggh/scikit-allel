@@ -77,7 +77,7 @@ ALT_FIELD = 'variants/ALT'
 QUAL_FIELD = 'variants/QUAL'
 
 
-cdef int warn(message, ParserContext context) nogil except -1:
+cdef int warn(message, ParserContext context) nogil:
     with gil:
         # TODO customize message based on state (CHROM, POS, etc.)
         message += '; variant index: %s' % context.variant_index
@@ -283,8 +283,6 @@ cpdef next_chunk(VCFChunkIterator self, ParserContext context):
 
     # debug('VCFChunkIterator.__next__: enter', context)
 
-    # with:
-
     with nogil:
 
         while True:
@@ -309,8 +307,6 @@ cpdef next_chunk(VCFChunkIterator self, ParserContext context):
                     if context.c == LF:
                         context_getc(context)
                 else:
-
-                    # with gil:
                     # shouldn't ever happen
                     warn('unexpected EOL character', context)
                     break
@@ -359,17 +355,16 @@ cpdef next_chunk(VCFChunkIterator self, ParserContext context):
                 self.calldata_parser.parse()
 
             else:
-
                 # shouldn't ever happen
                 warn('unexpected parser state', context)
                 break
 
     chunk_length = context.chunk_variant_index + 1
     if chunk_length > 0:
-        if chunk_length == context.chunk_length:
-            limit = None
-        else:
+        if chunk_length < context.chunk_length:
             limit = chunk_length
+        else:
+            limit = None
         chunk = dict()
         self.chrom_parser.mkchunk(chunk, limit=limit)
         self.pos_parser.mkchunk(chunk, limit=limit)
@@ -385,264 +380,6 @@ cpdef next_chunk(VCFChunkIterator self, ParserContext context):
 
     else:
         raise StopIteration
-
-
-
-# def iter_vcf(input_file, int input_buffer_size, int chunk_length, int temp_buffer_size,
-#              headers, fields, types, numbers, ploidy=2):
-#     cdef:
-#         ParserContext context
-#         Parser chrom_parser
-#         Parser pos_parser
-#         Parser id_parser
-#         Parser ref_parser
-#         Parser alt_parser
-#         Parser qual_parser
-#         Parser filter_parser
-#         Parser info_parser
-#         Parser format_parser
-#         Parser calldata_parser
-#
-#     # setup output
-#     # # TODO yield chunks
-#     # chunks = []
-#
-#     # setup context
-#     n_samples = len(headers.samples)
-#     context = ParserContext(input_file=input_file,
-#                             input_buffer_size=input_buffer_size,
-#                             temp_buffer_size=temp_buffer_size,
-#                             n_samples=n_samples,
-#                             chunk_length=chunk_length,
-#                             ploidy=ploidy)
-#
-#     # copy so we don't modify someone else's data
-#     fields = set(fields)
-#
-#     # setup CHROM parser
-#     if CHROM_FIELD in fields:
-#         chrom_parser = ChromParser(context, dtype=types[CHROM_FIELD], skip=False)
-#         fields.remove(CHROM_FIELD)
-#     else:
-#         chrom_parser = ChromParser(context, dtype=None, skip=True)
-#     chrom_parser.malloc()
-#
-#     # setup POS parser
-#     if POS_FIELD in fields:
-#         # TODO user-provided type
-#         pos_parser = PosInt32Parser(context)
-#         fields.remove(POS_FIELD)
-#     else:
-#         pos_parser = SkipPosParser(context)
-#     pos_parser.malloc()
-#
-#     # setup ID parser
-#     if ID_FIELD in fields:
-#         id_parser = StringFieldParser(context, field=ID_FIELD, dtype=types[ID_FIELD])
-#         fields.remove(ID_FIELD)
-#     else:
-#         id_parser = SkipFieldParser(context)
-#     id_parser.malloc()
-#
-#     # setup REF parser
-#     if REF_FIELD in fields:
-#         ref_parser = StringFieldParser(context, field=REF_FIELD, dtype=types[REF_FIELD])
-#         fields.remove(REF_FIELD)
-#     else:
-#         ref_parser = SkipFieldParser(context)
-#     ref_parser.malloc()
-#
-#     # setup ALT parser
-#     if ALT_FIELD in fields:
-#         t = types[ALT_FIELD]
-#         n = numbers[ALT_FIELD]
-#         alt_parser = AltParser(context, dtype=t, number=n)
-#         fields.remove(ALT_FIELD)
-#     else:
-#         alt_parser = SkipFieldParser(context)
-#     alt_parser.malloc()
-#
-#     # setup QUAL parser
-#     if QUAL_FIELD in fields:
-#         # TODO user-provided type
-#         qual_parser = QualFloat32Parser(context, fill=-1)
-#         fields.remove(QUAL_FIELD)
-#     else:
-#         qual_parser = SkipFieldParser(context)
-#     qual_parser.malloc()
-#
-#     # setup FILTER parser
-#     filter_keys = list()
-#     for field in list(fields):
-#         if field.startswith('variants/FILTER_'):
-#             filter = field[16:].encode('ascii')
-#             filter_keys.append(filter)
-#             fields.remove(field)
-#     # debug(filter_keys, context)
-#     if filter_keys:
-#         filter_parser = FilterParser(context, filters=filter_keys)
-#     else:
-#         filter_parser = SkipFieldParser(context)
-#     filter_parser.malloc()
-#
-#     # setup INFO parsers
-#     info_keys = list()
-#     info_types = dict()
-#     info_numbers = dict()
-#     # assume any variants fields left are INFO
-#     for field in list(fields):
-#         group, name = field.split('/')
-#         if group == 'variants':
-#             key = name.encode('ascii')
-#             info_keys.append(key)
-#             fields.remove(field)
-#             info_types[key] = types[field]
-#             info_numbers[key] = numbers[field]
-#     if info_keys:
-#         info_parser = InfoParser(context, infos=info_keys, types=info_types,
-#                                  numbers=info_numbers)
-#     else:
-#         info_parser = SkipFieldParser(context)
-#     info_parser.malloc()
-#
-#     # setup FORMAT and calldata parsers
-#     format_keys = list()
-#     format_types = dict()
-#     format_numbers = dict()
-#     for field in list(fields):
-#         group, name = field.split('/')
-#         if group == 'calldata':
-#             key = name.encode('ascii')
-#             format_keys.append(key)
-#             fields.remove(field)
-#             format_types[key] = types[field]
-#             format_numbers[key] = numbers[field]
-#     # debug('iter_vcf format_keys: %s' % str(format_keys), context)
-#     if format_keys:
-#         format_parser = FormatParser(context)
-#         calldata_parser = CalldataParser(context,
-#                                          formats=format_keys,
-#                                          types=format_types,
-#                                          numbers=format_numbers)
-#     else:
-#         format_parser = SkipFieldParser(context)
-#         calldata_parser = SkipAllCalldataParser(context)
-#     format_parser.malloc()
-#     calldata_parser.malloc()
-#
-#     if fields:
-#         # shouldn't ever be any left over
-#         raise RuntimeError('unexpected fields left over: %r' % set(fields))
-#
-#     # release GIL here for maximum parallelism
-#     # with:
-#
-#     while True:
-#
-#         # TODO sigint?
-#
-#         if context.state == ParserState.EOF:
-#
-#             # left-over chunk
-#             # with gil:
-#
-#             limit = context.chunk_variant_index + 1
-#             if limit > 0:
-#                 chunk = dict()
-#                 chrom_parser.mkchunk(chunk, limit=limit)
-#                 pos_parser.mkchunk(chunk, limit=limit)
-#                 id_parser.mkchunk(chunk, limit=limit)
-#                 ref_parser.mkchunk(chunk, limit=limit)
-#                 alt_parser.mkchunk(chunk, limit=limit)
-#                 qual_parser.mkchunk(chunk, limit=limit)
-#                 filter_parser.mkchunk(chunk, limit=limit)
-#                 info_parser.mkchunk(chunk, limit=limit)
-#                 calldata_parser.mkchunk(chunk, limit=limit)
-#                 # TODO yield
-#                 yield chunk
-#                 # chunks.append(chunk)
-#
-#             break
-#
-#         elif context.state == ParserState.EOL:
-#
-#             # decide whether to start a new chunk
-#             if context.chunk_variant_index == chunk_length - 1:
-#
-#                 # with gil:
-#
-#                 # build chunk for output
-#                 chunk = dict()
-#                 chrom_parser.mkchunk(chunk)
-#                 pos_parser.mkchunk(chunk)
-#                 id_parser.mkchunk(chunk)
-#                 ref_parser.mkchunk(chunk)
-#                 alt_parser.mkchunk(chunk)
-#                 qual_parser.mkchunk(chunk)
-#                 filter_parser.mkchunk(chunk)
-#                 info_parser.mkchunk(chunk)
-#                 calldata_parser.mkchunk(chunk)
-#                 # TODO yield
-#                 yield chunk
-#                 # chunks.append(chunk)
-#
-#                 # setup next chunk
-#                 context.chunk_variant_index = -1
-#
-#             # handle line terminators
-#             if context.c == LF:
-#                 context_getc(context)
-#             elif context.c == CR:
-#                 context_getc(context)
-#                 if context.c == LF:
-#                     context_getc(context)
-#             else:
-#
-#                 # with gil:
-#                 # shouldn't ever happen
-#                 raise RuntimeError('unexpected EOL character')
-#
-#             # advance state
-#             context.state = ParserState.CHROM
-#
-#         elif context.state == ParserState.CHROM:
-#             chrom_parser.parse()
-#
-#         elif context.state == ParserState.POS:
-#             pos_parser.parse()
-#
-#         elif context.state == ParserState.ID:
-#             id_parser.parse()
-#
-#         elif context.state == ParserState.REF:
-#             ref_parser.parse()
-#
-#         elif context.state == ParserState.ALT:
-#             alt_parser.parse()
-#
-#         elif context.state == ParserState.QUAL:
-#             qual_parser.parse()
-#
-#         elif context.state == ParserState.FILTER:
-#             filter_parser.parse()
-#
-#         elif context.state == ParserState.INFO:
-#             info_parser.parse()
-#
-#         elif context.state == ParserState.FORMAT:
-#             format_parser.parse()
-#
-#         elif context.state == ParserState.CALLDATA:
-#             calldata_parser.parse()
-#
-#         else:
-#
-#             # with gil:
-#             # shouldn't ever happen
-#             raise RuntimeError('unexpected parser state: %s' % context.state)
-#
-#     # TODO yield
-#     # return chunks
 
 
 cdef enum ParserState:
@@ -766,7 +503,7 @@ cdef class ParserContext:
             free(self.variant_calldata_parser_ptrs)
 
 
-cdef inline int context_fill_buffer(ParserContext context) nogil except -1:
+cdef inline int context_fill_buffer(ParserContext context) nogil:
     cdef:
         int l
     with gil:
@@ -780,7 +517,7 @@ cdef inline int context_fill_buffer(ParserContext context) nogil except -1:
         return 0
 
 
-cdef inline int context_getc(ParserContext context) nogil except -1:
+cdef inline int context_getc(ParserContext context) nogil:
 
     if context.input is context.input_end:
         # end of input buffer
@@ -802,7 +539,7 @@ cdef inline void temp_clear(ParserContext context) nogil:
     context.temp_size = 0
 
 
-cdef inline int temp_append(ParserContext context) nogil except -1:
+cdef inline int temp_append(ParserContext context) nogil:
 
     # if context.temp_size >= context.temp_buffer_size:
     #
@@ -818,7 +555,7 @@ cdef inline int temp_append(ParserContext context) nogil except -1:
     return 1
 
 
-cdef inline int temp_terminate(ParserContext context) nogil except -1:
+cdef inline int temp_terminate(ParserContext context) nogil:
 
     # if context.temp_size >= context.temp_buffer_size:
     #
@@ -830,7 +567,7 @@ cdef inline int temp_terminate(ParserContext context) nogil except -1:
     return 1
 
 
-cdef inline int temp_tolong(ParserContext context) nogil except -1:
+cdef inline int temp_tolong(ParserContext context) nogil:
     cdef:
         char* str_end
         int parsed
@@ -870,7 +607,7 @@ cdef inline int temp_tolong(ParserContext context) nogil except -1:
             return 0
 
 
-cdef inline int temp_todouble(ParserContext context) nogil except -1:
+cdef inline int temp_todouble(ParserContext context) nogil:
     cdef:
         char* str_end
         int parsed
