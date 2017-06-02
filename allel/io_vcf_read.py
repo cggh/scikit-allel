@@ -59,8 +59,9 @@ import re
 from collections import namedtuple
 import warnings
 import io
-import multiprocessing
 from multiprocessing.pool import ThreadPool
+import time
+from contextlib import contextmanager
 
 
 import numpy as np
@@ -413,13 +414,32 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
     return keys
 
 
-def _zarr_load_chunk(root, keys, chunk):
+@contextmanager
+def timer(message):
+    before = time.time()
+    try:
+        yield
+    finally:
+        after = time.time()
+        debug('%s done in %.3fs' % (message, (after - before)))
 
-    # load arrays
-    for k in keys:
 
-        # append data
-        root[k].append(chunk[k], axis=0)
+def _zarr_store_chunk(root, keys, chunk):
+
+    with timer('_zarr_store_chunk'):
+
+        # load arrays
+        for k in keys:
+
+            # append data
+            root[k].append(chunk[k], axis=0)
+
+
+def _zarr_next_chunk(chunks, default):
+
+    with timer('_zarr_next_chunk'):
+
+        return next(chunks, default)
 
 
 def vcf_to_zarr(input_path, output_path,
@@ -433,7 +453,8 @@ def vcf_to_zarr(input_path, output_path,
                 numbers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
-                chunk_width=DEFAULT_CHUNK_WIDTH):
+                chunk_width=DEFAULT_CHUNK_WIDTH,
+                use_threads=False):
     """TODO"""
 
     import zarr
@@ -461,7 +482,7 @@ def vcf_to_zarr(input_path, output_path,
                                    compressor=None, overwrite=overwrite)
 
     # read first chunk
-    chunk = next(chunks, None)
+    chunk = _zarr_next_chunk(chunks, None)
 
     # setup datasets
     keys = _zarr_setup_datasets(chunk, root=root,
@@ -472,27 +493,32 @@ def vcf_to_zarr(input_path, output_path,
                                 fill_value=fill_value,
                                 order=order)
 
-    # setup thread pool
-    pool = ThreadPool(2)
+    if use_threads:
+        # because parsing is so much slower than storing, this doesn't look like it
+        # gives any speed-up at all, however leave it in for now
 
-    while chunk is not None:
+        # setup thread pool
+        pool = ThreadPool(2)
 
-        store_result = pool.apply_async(_zarr_load_chunk, kwds=dict(root=root,
-                                                                    keys=keys,
-                                                                    chunk=chunk))
-        chunk_result = pool.apply_async(next, args=(chunks, None))
+        while chunk is not None:
 
-        store_result.get()
-        chunk = chunk_result.get()
+            store_result = pool.apply_async(_zarr_store_chunk, kwds=dict(root=root,
+                                                                         keys=keys,
+                                                                         chunk=chunk))
+            chunk_result = pool.apply_async(_zarr_next_chunk, args=(chunks, None))
 
-    pool.close()
-    pool.join()
-    pool.terminate()
+            store_result.get()
+            chunk = chunk_result.get()
 
-    # # load chunks
-    # for chunk_index, chunk in enumerate(chunks):
-    #
-    #     _zarr_load_chunk(root, keys, chunk)
+        pool.close()
+        pool.join()
+        pool.terminate()
+
+    else:
+
+        while chunk is not None:
+            _zarr_store_chunk(root, keys, chunk)
+            chunk = _zarr_next_chunk(chunks, None)
 
 
 def read_vcf_chunks(path,
