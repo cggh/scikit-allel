@@ -18,11 +18,9 @@
 
 import sys
 import warnings
-
-
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
 # noinspection PyUnresolvedReferences
-from libc.stdlib cimport strtol, strtof, strtod, malloc, free
+from libc.stdlib cimport strtol, strtof, strtod, malloc, free, realloc
 from libc.string cimport strcmp, memcpy
 import numpy as np
 cimport numpy as np
@@ -30,14 +28,42 @@ cimport numpy as np
 import cython
 # noinspection PyUnresolvedReferences
 cimport cython
-
-
-cdef double NAN = np.nan
-
-
 from cpython.ref cimport PyObject
 cdef extern from "Python.h":
     char* PyByteArray_AS_STRING(object string)
+
+
+#########################################################################################
+# CONSTANTS
+
+
+# for Windows compatibility
+cdef double NAN = np.nan
+
+# pre-define these characters for convenience and speed
+cdef char TAB = b'\t'
+cdef char LF = b'\n'
+cdef char CR = b'\r'
+cdef char HASH = b'#'
+cdef char COLON = b':'
+cdef char SEMICOLON = b';'
+cdef char PERIOD = b'.'
+cdef char COMMA = b','
+cdef char SLASH = b'/'
+cdef char PIPE = b'|'
+cdef char EQUALS = b'='
+
+# user field specifications for fixed fields
+CHROM_FIELD = 'variants/CHROM'
+POS_FIELD = 'variants/POS'
+ID_FIELD = 'variants/ID'
+REF_FIELD = 'variants/REF'
+ALT_FIELD = 'variants/ALT'
+QUAL_FIELD = 'variants/QUAL'
+
+
+##########################################################################################
+# FUSED TYPES
 
 
 ctypedef fused integer:
@@ -52,29 +78,256 @@ ctypedef fused integer:
 
 
 ctypedef fused floating:
+    # TODO float16?
     np.float32_t
     np.float64_t
 
 
-cdef char TAB = b'\t'
-cdef char LF = b'\n'
-cdef char CR = b'\r'
-cdef char HASH = b'#'
-cdef char COLON = b':'
-cdef char SEMICOLON = b';'
-cdef char PERIOD = b'.'
-cdef char COMMA = b','
-cdef char SLASH = b'/'
-cdef char PIPE = b'|'
-cdef char EQUALS = b'='
+##########################################################################################
+# GENERAL I/O
 
 
-CHROM_FIELD = 'variants/CHROM'
-POS_FIELD = 'variants/POS'
-ID_FIELD = 'variants/ID'
-REF_FIELD = 'variants/REF'
-ALT_FIELD = 'variants/ALT'
-QUAL_FIELD = 'variants/QUAL'
+cdef class CharBuffer(object):
+    """Dynamically-sized array of C chars."""
+
+    cdef:
+        int size
+        int capacity
+        char* data
+
+    def __cinit__(self, capacity=16):
+        self.size = 0
+        self.capacity = capacity
+        self.data = <char*> malloc(sizeof(char) * capacity)
+
+    cdef void grow_if_full(self) nogil:
+        """Double the capacity if the buffer is full."""
+        if self.size >= self.capacity:
+            self.capacity *= 2
+            self.data = <char*> realloc(self.data, sizeof(char) * self.capacity)
+
+    cdef void append(self, char c) nogil:
+        """Append a single char to the buffer."""
+        self.grow_if_full()
+        self.data[self.size] = c
+        self.size += 1
+
+    cdef void terminate(self) nogil:
+        """Terminate the buffer by appending a null byte."""
+        self.append(0)
+
+    cdef void clear(self) nogil:
+        """Cheaply clear the buffer by setting the size to 0."""
+        self.size = 0
+
+    cdef bytes to_pybytes(self):
+        return PyBytes_FromStringAndSize(self.data, self.size)
+
+
+cdef class InputStream(object):
+    """Abstract base class defining an input stream over C chars."""
+
+    cdef:
+        # character at the current position in the stream
+        char c
+
+    cdef int getc(self) nogil except -1:
+        """Read the next character from the stream and store it in the `c` attribute."""
+        pass
+
+
+cdef class FileInputStream(InputStream):
+
+    cdef:
+        # Python file-like object
+        object fileobj
+        int buffer_size
+        bytearray buffer
+        char* buffer_start
+        char* buffer_end
+        char* stream
+
+    def __cinit__(self, fileobj, buffer_size=2**14):
+        self.fileobj = fileobj
+        self.buffer_size = buffer_size
+        # initialise input buffer
+        self.buffer = bytearray(buffer_size)
+        self.buffer_start = PyByteArray_AS_STRING(self.buffer)
+        self.stream = self.buffer_start
+        self._bufferup()
+        self.getc()
+
+    # CYTHON API: PRIVATE
+
+    cdef int _bufferup(self) nogil except -1:
+        """Read as many bytes as possible from the underlying file object into the
+        buffer."""
+        cdef int l
+        with gil:
+            self.fileobj.readinto(self.buffer)
+        if l > 0:
+            self.stream = self.buffer_start
+            self.buffer_end = self.buffer_start + l
+        else:
+            self.stream = NULL
+
+    # CYTHON API: PUBLIC
+
+    cdef int getc(self) nogil except -1:
+        """Read the next character from the stream and store it in the `c` attribute."""
+        if self.stream is self.buffer_end:
+            self._bufferup()
+        if self.stream is NULL:
+            # end of file
+            self.c = 0
+        else:
+            self.c = self.stream[0]
+            self.stream += 1
+
+    cdef int read_line_into(self, CharBuffer dest) nogil except -1:
+        """Read up to end of line or end of file (whichever comes first) and append
+        chars to the `dest` buffer."""
+
+        while True:
+
+            if self.c == 0:
+                break
+
+            elif self.c == LF:
+                dest.append(LF)
+                # advance input stream beyond EOL
+                self.getc()
+                break
+
+            elif self.c == CR:
+                # translate newdests
+                dest.append(LF)
+                # advance input stream beyond EOL
+                self.getc()
+                if self.c == LF:
+                    # handle Windows CRLF
+                    self.getc()
+                break
+
+            else:
+                dest.append(self.c)
+                self.getc()
+
+    cdef int read_lines_into(self, CharBuffer dest, int n) nogil except -1:
+        """Read up to `n` lines into the `dest` buffer."""
+        cdef int n_lines_read = 0
+
+        while n_lines_read < n and self.c != 0:
+            self.read_line_into(dest)
+            n_lines_read += 1
+
+        return n_lines_read
+
+    # PYTHON API
+
+    def readline(self):
+        """Read characters up to end of line or end of file and return as Python bytes
+        object."""
+        cdef CharBuffer line = CharBuffer()
+        self.read_line_into(line)
+        return line.to_pybytes()
+
+
+cdef class CharBufferInputStream(InputStream):
+
+    cdef:
+        CharBuffer buffer
+        int stream_index
+        int buffer_size
+
+    def __cinit__(self, CharBuffer buffer):
+        self.buffer = buffer
+        self.stream_index = 0
+        self.getc()
+
+    cdef int getc(self) nogil except -1:
+        if self.stream_index < self.buffer.size:
+            self.c = self.buffer.data[self.stream_index]
+            self.stream_index += 1
+        else:
+            self.c = 0
+
+
+##########################################################################################
+# VCF PARSING UTILITIES
+
+
+cdef class VCFContext(object):
+
+    cdef:
+
+        # temporary buffer
+        CharBuffer temp
+        # buffers used for INFO parsing
+        CharBuffer info_key
+        CharBuffer info_val
+        # overall parser state
+        int state
+        # static attributes - should not change during parsing
+        int chunk_length
+        int n_samples
+        int ploidy
+        # dynamic attributes - reflect current position during parsing
+        int variant_index  # index of current variant
+        int chunk_variant_index  # index of current variant within chunk
+        int sample_index  # index of current sample within calldata
+        int sample_field_index  # index of field within calldata for current sample
+        int** variant_format_indices  # indices of formats for the current variant
+
+    def __cinit__(self, int n_samples, int chunk_length, int ploidy):
+        # TODO
+        pass
+
+    def __dealloc__(self):
+        # TODO
+        pass
+
+
+cdef class VCFChunkBuilder(object):
+
+    def __init__(self, *args, **kwargs):
+        # TODO
+        pass
+
+    def parse(self, InputStream stream, VCFContext context, int n_lines=None):
+        """Parse up to `n_lines` or end of current chunk, whichever comes sooner."""
+        # TODO
+        pass
+
+    def get_chunk(self):
+        # TODO make chunk
+        pass
+
+
+# TODO ABC for Parsers
+
+
+cdef long vcf_buffer_tolong(CharBuffer buffer, long default, VCFContext context) nogil:
+    # TODO
+    pass
+
+    # cdef bytes to_pybytes(self):
+    #     """Convert the buffer to a Python bytes object."""
+    #     return PyBytes_FromStringAndSize(self.data, self.size)
+    #
+    # cdef long to_long(self, long default):
+    #     """Parse the buffer as a long value."""
+    #     cdef:
+    #         char* str_end
+    #         int chars_parsed
+
+
+
+
+
+
+##########################################################################################
+# LOGGING
 
 
 cdef int warn(message, ParserContext context) nogil:
@@ -103,6 +356,10 @@ cdef int debug(msg, ParserContext context=None) nogil except -1:
             msg += '; calldata_parsers: %s' % context.calldata_parsers
         print(msg, file=sys.stderr)
         sys.stderr.flush()
+
+
+##########################################################################################
+# LEGACY
 
 
 cdef class VCFChunkIterator(object):
