@@ -63,7 +63,7 @@ QUAL_FIELD = 'variants/QUAL'
 
 
 ##########################################################################################
-# FUSED TYPES
+# Fused Types
 
 
 ctypedef fused integer:
@@ -84,10 +84,10 @@ ctypedef fused floating:
 
 
 ##########################################################################################
-# GENERAL I/O
+# Vectors
 
 
-cdef class CharBuffer(object):
+cdef class CharVector(object):
     """Dynamically-sized array of C chars."""
 
     cdef:
@@ -101,27 +101,61 @@ cdef class CharBuffer(object):
         self.data = <char*> malloc(sizeof(char) * capacity)
 
     cdef void grow_if_full(self) nogil:
-        """Double the capacity if the buffer is full."""
+        """Double the capacity if the vector is full."""
         if self.size >= self.capacity:
             self.capacity *= 2
             self.data = <char*> realloc(self.data, sizeof(char) * self.capacity)
 
     cdef void append(self, char c) nogil:
-        """Append a single char to the buffer."""
+        """Append a single char to the vector."""
         self.grow_if_full()
         self.data[self.size] = c
         self.size += 1
 
-    cdef void terminate(self) nogil:
-        """Terminate the buffer by appending a null byte."""
-        self.append(0)
-
     cdef void clear(self) nogil:
-        """Cheaply clear the buffer by setting the size to 0."""
+        """Cheaply clear the vector by setting the size to 0."""
         self.size = 0
+
+    cdef void terminate(self) nogil:
+        """Terminate the vector by appending a null byte."""
+        self.append(0)
 
     cdef bytes to_pybytes(self):
         return PyBytes_FromStringAndSize(self.data, self.size)
+
+
+cdef class IntVector(object):
+    """Dynamically-sized array of C ints."""
+
+    cdef:
+        int size
+        int capacity
+        int* data
+
+    def __cinit__(self, capacity=16):
+        self.size = 0
+        self.capacity = capacity
+        self.data = <int*> malloc(sizeof(int) * capacity)
+
+    cdef void grow_if_full(self) nogil:
+        """Double the capacity if the vector is full."""
+        if self.size >= self.capacity:
+            self.capacity *= 2
+            self.data = <int*> realloc(self.data, sizeof(int) * self.capacity)
+
+    cdef void append(self, int i) nogil:
+        """Append a single value to the vector."""
+        self.grow_if_full()
+        self.data[self.size] = i
+        self.size += 1
+
+    cdef void clear(self) nogil:
+        """Cheaply clear the vector by setting the size to 0."""
+        self.size = 0
+
+
+##########################################################################################
+# General I/O
 
 
 cdef class InputStream(object):
@@ -184,7 +218,7 @@ cdef class FileInputStream(InputStream):
             self.c = self.stream[0]
             self.stream += 1
 
-    cdef int read_line_into(self, CharBuffer dest) nogil except -1:
+    cdef int read_line_into(self, CharVector dest) nogil except -1:
         """Read up to end of line or end of file (whichever comes first) and append
         chars to the `dest` buffer."""
 
@@ -213,7 +247,7 @@ cdef class FileInputStream(InputStream):
                 dest.append(self.c)
                 self.getc()
 
-    cdef int read_lines_into(self, CharBuffer dest, int n) nogil except -1:
+    cdef int read_lines_into(self, CharVector dest, int n) nogil except -1:
         """Read up to `n` lines into the `dest` buffer."""
         cdef int n_lines_read = 0
 
@@ -228,67 +262,94 @@ cdef class FileInputStream(InputStream):
     def readline(self):
         """Read characters up to end of line or end of file and return as Python bytes
         object."""
-        cdef CharBuffer line = CharBuffer()
+        cdef CharVector line = CharVector()
         self.read_line_into(line)
         return line.to_pybytes()
 
 
-cdef class CharBufferInputStream(InputStream):
+cdef class CharVectorInputStream(InputStream):
 
     cdef:
-        CharBuffer buffer
+        CharVector vector
         int stream_index
-        int buffer_size
+        int vector_size
 
-    def __cinit__(self, CharBuffer buffer):
-        self.buffer = buffer
+    def __cinit__(self, CharVector vector):
+        self.vector = vector
         self.stream_index = 0
         self.getc()
 
     cdef int getc(self) nogil except -1:
-        if self.stream_index < self.buffer.size:
-            self.c = self.buffer.data[self.stream_index]
+        if self.stream_index < self.vector.size:
+            self.c = self.vector.data[self.stream_index]
             self.stream_index += 1
         else:
             self.c = 0
 
 
 ##########################################################################################
-# VCF PARSING UTILITIES
+# VCF Parsing
+
+
+cdef enum VCFState:
+    CHROM,
+    POS,
+    ID,
+    REF,
+    ALT,
+    QUAL,
+    FILTER,
+    INFO,
+    FORMAT,
+    CALLDATA,
+    EOL,
+    EOF
 
 
 cdef class VCFContext(object):
 
     cdef:
 
-        # temporary buffer
-        CharBuffer temp
-        # buffers used for INFO parsing
-        CharBuffer info_key
-        CharBuffer info_val
-        # overall parser state
-        int state
         # static attributes - should not change during parsing
         int chunk_length
         int n_samples
         int ploidy
-        # dynamic attributes - reflect current position during parsing
+
+        # dynamic attributes - reflect current state during parsing
+        int state  # overall parser state
         int variant_index  # index of current variant
-        int chunk_variant_index  # index of current variant within chunk
-        int sample_index  # index of current sample within calldata
-        int sample_field_index  # index of field within calldata for current sample
-        int** variant_format_indices  # indices of formats for the current variant
+        int chunk_variant_index  # index of current variant within current chunk
+        int sample_index  # index of current sample within call data
+        int sample_field_index  # index of field within call data for current sample
+        IntVector variant_format_indices  # indices of formats for the current variant
 
-    def __cinit__(self, int n_samples, int chunk_length, int ploidy):
-        # TODO
-        pass
+        # buffers
+        CharVector temp  # used for numeric values
+        CharVector info_key  # used for info key
+        CharVector info_val  # used for info value
 
-    def __dealloc__(self):
-        # TODO
-        pass
+    def __cinit__(self, int chunk_length, int n_samples, int ploidy):
+
+        # initialise static attributes
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
+        self.ploidy = ploidy
+
+        # initialise dynamic state
+        self.state = VCFState.CHROM
+        self.variant_index = -1
+        self.chunk_variant_index = -1
+        self.sample_index = 0
+        self.sample_field_index = 0
+        self.variant_format_indices = IntVector()
+
+        # initialise temporary buffers
+        self.temp = CharVector()
+        self.info_key = CharVector()
+        self.info_val = CharVector()
 
 
-cdef class VCFChunkBuilder(object):
+cdef class VCFParser(object):
 
     def __init__(self, *args, **kwargs):
         # TODO
@@ -304,22 +365,119 @@ cdef class VCFChunkBuilder(object):
         pass
 
 
-# TODO ABC for Parsers
-
-
-cdef long vcf_buffer_tolong(CharBuffer buffer, long default, VCFContext context) nogil:
+cdef long vcf_strtol(CharVector value, long default, VCFContext context) nogil:
     # TODO
     pass
 
-    # cdef bytes to_pybytes(self):
-    #     """Convert the buffer to a Python bytes object."""
-    #     return PyBytes_FromStringAndSize(self.data, self.size)
-    #
-    # cdef long to_long(self, long default):
-    #     """Parse the buffer as a long value."""
-    #     cdef:
-    #         char* str_end
-    #         int chars_parsed
+
+cdef double vcf_strtod(CharVector value, double default, VCFContext context) nogil:
+    # TODO
+    pass
+
+
+cdef class VCFSkipFieldParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFChromParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFPosParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFStringFieldParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFAltParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFSkipFieldParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFQualParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFFilterParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFInfoParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFInfoDatumParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFInfoInt32Parser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFInfoInt64Parser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFInfoFloat32Parser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFInfoFloat64Parser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFInfoFlagParser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFInfoStringParser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFInfoSkipParser(VCFInfoDatumParser):
+    # TODO
+    pass
+
+
+cdef class VCFFormatParser(object):
+    # TODO
+    pass
+
+
+cdef class VCFCallParser(object):
+    # TODO
+    pass
+
+
+
+
+
+
+
+
+
+
 
 
 
