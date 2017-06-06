@@ -763,7 +763,53 @@ cdef class VCFChromParser(VCFFieldParserBase):
         self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_chrom_parse(stream, context, self.memory, self.itemsize, self.store)
+        cdef:
+            # index into memory view
+            int memory_index = context.chunk_variant_index * self.itemsize
+            # number of characters read into current value
+            int chars_stored = 0
+
+        # setup to store CHROM on context
+        context.chrom.clear()
+
+        # check for EOF - important to handle file with no final line terminator
+        if stream.c != 0:
+            context.variant_index += 1
+            context.chunk_variant_index += 1
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                # advance input stream beyond tab
+                stream.getc()
+                # advance to next field
+                context.state += 1
+                break
+
+            else:
+
+                # store on context
+                context.chrom.append(stream.c)
+
+                # store in chunk
+                if self.store and chars_stored < self.itemsize:
+                    # store value
+                    self.memory[memory_index] = stream.c
+                    # advance memory index
+                    memory_index += 1
+                    # advance number of characters stored
+                    chars_stored += 1
+
+            # advance input stream
+            stream.getc()
 
     def malloc_chunk(self, VCFContext context):
         if self.store:
@@ -773,60 +819,6 @@ cdef class VCFChromParser(VCFFieldParserBase):
     def make_chunk(self, chunk, limit=None):
         if self.store:
             chunk[CHROM_FIELD] = self.values[:limit]
-
-
-cdef int vcf_chrom_parse(InputStreamBase stream,
-                         VCFContext context,
-                         np.uint8_t[:] memory,
-                         int itemsize,
-                         bint store) nogil except -1:
-    cdef:
-        # index into memory view
-        int memory_index = context.chunk_variant_index * itemsize
-        # number of characters read into current value
-        int chars_stored = 0
-
-    # setup to store CHROM on context
-    context.chrom.clear()
-
-    # check for EOF - important to handle file with no final line terminator
-    if stream.c != 0:
-        context.variant_index += 1
-        context.chunk_variant_index += 1
-
-    while True:
-
-        if stream.c == 0:
-            context.state = VCFState.EOF
-            return 0
-
-        elif stream.c == LF or stream.c == CR:
-            context.state = VCFState.EOL
-            return 0
-
-        elif stream.c == TAB:
-            # advance input stream beyond tab
-            stream.getc()
-            # advance to next field
-            context.state += 1
-            return 1
-
-        else:
-
-            # store on context
-            context.chrom.append(stream.c)
-
-            # store in chunk
-            if store and chars_stored < itemsize:
-                # store value
-                memory[memory_index] = stream.c
-                # advance memory index
-                memory_index += 1
-                # advance number of characters stored
-                chars_stored += 1
-
-        # advance input stream
-        stream.getc()
 
 
 cdef class VCFPosParser(VCFFieldParserBase):
@@ -840,7 +832,43 @@ cdef class VCFPosParser(VCFFieldParserBase):
         self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_pos_parse(stream, context, self.memory, self.store)
+        cdef:
+            long value
+            int parsed
+
+        # setup temp vector to store value
+        context.temp.clear()
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                stream.getc()
+                context.state += 1
+                break
+
+            else:
+                context.temp.append(stream.c)
+
+            # advance input stream
+            stream.getc()
+
+        # parse string as integer
+        parsed = vcf_strtol(context.temp, context, &value)
+
+        # store value on context, whatever happens
+        context.pos = value
+
+        if parsed > 0 and self.store:
+            # store value in chunk
+            self.memory[context.chunk_variant_index] = value
 
     def malloc_chunk(self, VCFContext context):
         if self.store:
@@ -851,48 +879,6 @@ cdef class VCFPosParser(VCFFieldParserBase):
     def make_chunk(self, chunk, limit=None):
         if self.store:
             chunk[POS_FIELD] = self.values[:limit]
-
-
-cdef int vcf_pos_parse(InputStreamBase stream,
-                       VCFContext context,
-                       integer[:] memory,
-                       bint store) nogil except -1:
-    cdef:
-        long value
-
-    # setup temp vector to store value
-    context.temp.clear()
-
-    while True:
-
-        if stream.c == 0:
-            context.state = VCFState.EOF
-            break
-
-        elif stream.c == LF or stream.c == CR:
-            context.state = VCFState.EOL
-            break
-
-        elif stream.c == TAB:
-            stream.getc()
-            context.state += 1
-            break
-
-        else:
-            context.temp.append(stream.c)
-
-        # advance input stream
-        stream.getc()
-
-    # parse string as integer
-    value = vcf_strtol(context.temp, -1, context)
-
-    # store value on context
-    context.pos = value
-
-    # store value in chunk
-    if store:
-        memory[context.chunk_variant_index] = value
 
 
 cdef class VCFStringFieldParser(VCFFieldParserBase):
@@ -908,7 +894,41 @@ cdef class VCFStringFieldParser(VCFFieldParserBase):
         self.itemsize = self.dtype.itemsize
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_string_field_parse(stream, context, self.memory, self.itemsize)
+        cdef:
+            # index into memory view
+            int memory_index = context.chunk_variant_index * self.itemsize
+            # number of characters read into current value
+            int chars_stored = 0
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                # advance input stream beyond tab
+                stream.getc()
+                # advance to next field
+                context.state += 1
+                break
+
+            elif chars_stored < self.itemsize:
+                # store value
+                self.memory[memory_index] = stream.c
+                # advance memory index
+                memory_index += 1
+                # advance number of characters stored
+                chars_stored += 1
+
+            # advance input stream
+            stream.getc()
+
+        return 1
 
     def malloc_chunk(self, VCFContext context):
         self.values = np.zeros(context.chunk_length, dtype=self.dtype)
@@ -916,47 +936,6 @@ cdef class VCFStringFieldParser(VCFFieldParserBase):
 
     def make_chunk(self, chunk, limit=None):
         chunk[self.field] = self.values[:limit]
-
-
-cdef int vcf_string_field_parse(InputStreamBase stream,
-                                VCFContext context,
-                                np.uint8_t[:] memory,
-                                int itemsize) nogil except -1:
-    cdef:
-        # index into memory view
-        int memory_index = context.chunk_variant_index * itemsize
-        # number of characters read into current value
-        int chars_stored = 0
-
-    while True:
-
-        if stream.c == 0:
-            context.state = VCFState.EOF
-            break
-
-        elif stream.c == LF or stream.c == CR:
-            context.state = VCFState.EOL
-            break
-
-        elif stream.c == TAB:
-            # advance input stream beyond tab
-            stream.getc()
-            # advance to next field
-            context.state += 1
-            break
-
-        elif chars_stored < itemsize:
-            # store value
-            memory[memory_index] = stream.c
-            # advance memory index
-            memory_index += 1
-            # advance number of characters stored
-            chars_stored += 1
-
-        # advance input stream
-        stream.getc()
-
-    return 1
 
 
 cdef class VCFAltParser(VCFFieldParserBase):
@@ -970,7 +949,51 @@ cdef class VCFAltParser(VCFFieldParserBase):
         self.number = number
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_alt_parse(stream, context, self.memory, self.itemsize, self.number)
+        cdef:
+            # index of alt values
+            int alt_index = 0
+            # index into memory view
+            int memory_offset, memory_index
+            # number of characters read into current value
+            int chars_stored = 0
+
+        # initialise memory offset and index
+        memory_offset = context.chunk_variant_index * self.itemsize * self.number
+        memory_index = memory_offset
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            if stream.c == TAB:
+                stream.getc()
+                context.state += 1
+                break
+
+            elif stream.c == COMMA:
+                # advance value index
+                alt_index += 1
+                # set memory index to beginning of next item
+                memory_index = memory_offset + (alt_index * self.itemsize)
+                # reset chars stored
+                chars_stored = 0
+
+            elif chars_stored < self.itemsize and alt_index < self.number:
+                # store value
+                self.memory[memory_index] = stream.c
+                # advance memory index
+                memory_index += 1
+                # advance number of characters stored
+                chars_stored += 1
+
+            # advance input stream
+            stream.getc()
 
     def malloc_chunk(self, VCFContext context):
         shape = (context.chunk_length, self.number)
@@ -984,65 +1007,47 @@ cdef class VCFAltParser(VCFFieldParserBase):
         chunk[ALT_FIELD] = values
 
 
-cdef int vcf_alt_parse(InputStreamBase stream,
-                       VCFContext context,
-                       np.uint8_t[:] memory,
-                       int itemsize,
-                       int number) nogil except -1:
-    cdef:
-        # index of alt values
-        int alt_index = 0
-        # index into memory view
-        int memory_offset, memory_index
-        # number of characters read into current value
-        int chars_stored = 0
-
-    # initialise memory offset and index
-    memory_offset = context.chunk_variant_index * itemsize * number
-    memory_index = memory_offset
-
-    while True:
-
-        if stream.c == 0:
-            context.state = VCFState.EOF
-            break
-
-        elif stream.c == LF or stream.c == CR:
-            context.state = VCFState.EOL
-            break
-
-        if stream.c == TAB:
-            stream.getc()
-            context.state += 1
-            break
-
-        elif stream.c == COMMA:
-            # advance value index
-            alt_index += 1
-            # set memory index to beginning of next item
-            memory_index = memory_offset + (alt_index * itemsize)
-            # reset chars stored
-            chars_stored = 0
-
-        elif chars_stored < itemsize and alt_index < number:
-            # store value
-            memory[memory_index] = stream.c
-            # advance memory index
-            memory_index += 1
-            # advance number of characters stored
-            chars_stored += 1
-
-        # advance input stream
-        stream.getc()
-
-
 cdef class VCFQualParser(VCFFieldParserBase):
     """TODO"""
 
     cdef np.float32_t[:] memory
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_qual_parse(stream, context, self.memory)
+        cdef:
+            double value
+            int parsed
+
+        # reset temporary buffer
+        context.temp.clear()
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                # advance input stream beyond tab
+                stream.getc()
+                context.state += 1
+                break
+
+            else:
+                context.temp.append(stream.c)
+
+            # advance input stream
+            stream.getc()
+
+        # parse string as floating
+        parsed = vcf_strtol(context.temp, context, &value)
+
+        if parsed > 0:
+            # store value
+            self.memory[context.chunk_variant_index] = value
 
     def malloc_chunk(self, VCFContext context):
         self.values = np.empty(context.chunk_length, dtype='float32')
@@ -1051,44 +1056,6 @@ cdef class VCFQualParser(VCFFieldParserBase):
 
     def make_chunk(self, chunk, limit=None):
         chunk[QUAL_FIELD] = self.values[:limit]
-
-
-cdef int vcf_qual_parse(InputStreamBase stream,
-                        VCFContext context,
-                        floating[:] memory) nogil except -1:
-    cdef:
-        double value
-
-    # reset temporary buffer
-    context.temp.clear()
-
-    while True:
-
-        if stream.c == 0:
-            context.state = VCFState.EOF
-            break
-
-        elif stream.c == LF or stream.c == CR:
-            context.state = VCFState.EOL
-            break
-
-        elif stream.c == TAB:
-            # advance input stream beyond tab
-            stream.getc()
-            context.state += 1
-            break
-
-        else:
-            context.temp.append(stream.c)
-
-        # advance input stream
-        stream.getc()
-
-    # parse string as floating
-    value = vcf_strtol(context.temp, NAN, context)
-
-    # store value
-    memory[context.chunk_variant_index] = value
 
 
 cdef class VCFFilterParser(VCFFieldParserBase):
@@ -1112,35 +1079,52 @@ cdef class VCFFilterParser(VCFFieldParserBase):
             free(self.filter_ptrs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_filter_parse(stream, context, self.filter_ptrs, self.n_filters,
-                                self.memory)
+        cdef:
+            int filter_index
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.n_filters)
-        self.values = np.zeros(shape, dtype=bool)
-        self.memory = self.values.view('u1')
+        # check for explicit missing value
+        if stream.c == PERIOD:
+            # treat leading period as missing, regardless of what comes next
+            return self.parse_missing(stream, context)
 
-    def make_chunk(self, chunk, limit=None):
-        for i, filter in enumerate(self.filters):
-            field = 'variants/FILTER_' + str(filter, 'ascii')
-            # TODO any need to make it a contiguous array?
-            chunk[field] = self.values[:limit, i]
+        # reset temporary buffer
+        context.temp.clear()
 
+        while True:
 
-cdef int vcf_filter_parse(InputStreamBase stream,
-                          VCFContext context,
-                          char** filter_ptrs,
-                          int n_filters,
-                          np.uint8_t[:, :] memory) nogil except -1:
-    cdef:
-        int filter_index
+            if stream.c == 0:
+                self.parse_filter(context)
+                context.state = VCFState.EOF
+                break
 
-    # reset temporary buffer
-    context.temp.clear()
+            elif stream.c == LF or stream.c == CR:
+                self.parse_filter(context)
+                context.state = VCFState.EOL
+                break
 
-    # check for explicit missing value
-    if stream.c == PERIOD:
-        # treat leading period as missing, regardless of what comes next
+            elif stream.c == TAB:
+                self.parse_filter(context)
+                # advance input stream beyond tab
+                stream.getc()
+                context.state += 1
+                break
+
+            elif stream.c == COMMA or stream.c == COLON or stream.c == SEMICOLON:
+                # some of these delimiters are not strictly kosher, but have seen them
+                self.parse_filter(context)
+                context.temp.clear()
+
+            else:
+                context.temp.append(stream.c)
+
+            # advance input stream
+            stream.getc()
+
+        return 1
+
+    cdef int parse_missing(self,
+                           InputStreamBase stream,
+                           VCFContext context) nogil except -1:
 
         while True:
 
@@ -1161,63 +1145,36 @@ cdef int vcf_filter_parse(InputStreamBase stream,
             # advance input stream
             stream.getc()
 
-        # bail out early
-        return 0
+    cdef int parse_filter(self, VCFContext context) nogil except -1:
+        cdef:
+            int filter_index
+            int i
+            char* f
 
-    while True:
+        if context.temp.size == 0:
+            warn('empty FILTER', context)
+            return 0
 
-        if stream.c == 0:
-            vcf_filter_store(context, filter_ptrs, n_filters, memory)
-            context.state = VCFState.EOF
-            break
+        context.temp.terminate()
 
-        elif stream.c == LF or stream.c == CR:
-            vcf_filter_store(context, filter_ptrs, n_filters, memory)
-            context.state = VCFState.EOL
-            break
+        # search through filters to find index
+        filter_index = cstr_search_sorted(context.temp.data, self.filter_ptrs,
+                                          self.n_filters)
 
-        elif stream.c == TAB:
-            vcf_filter_store(context, filter_ptrs, n_filters, memory)
-            # advance input stream beyond tab
-            stream.getc()
-            context.state += 1
-            break
+        # store value
+        if filter_index >= 0:
+            self.memory[context.chunk_variant_index, filter_index] = 1
 
-        elif stream.c == COMMA or stream.c == COLON or stream.c == SEMICOLON:
-            # some of these delimiters are not strictly kosher, but have seen them
-            vcf_filter_store(context, filter_ptrs, n_filters, memory)
-            context.temp.clear()
+    def malloc_chunk(self, VCFContext context):
+        shape = (context.chunk_length, self.n_filters)
+        self.values = np.zeros(shape, dtype=bool)
+        self.memory = self.values.view('u1')
 
-        else:
-            context.temp.append(stream.c)
-
-        # advance input stream
-        stream.getc()
-
-    return 1
-
-
-cdef int vcf_filter_store(VCFContext context,
-                          char** filter_ptrs,
-                          int n_filters,
-                          np.uint8_t[:, :] memory) nogil except -1:
-    cdef:
-        int filter_index
-        int i
-        char* f
-
-    if context.temp.size == 0:
-        warn('empty FILTER', context)
-        return 0
-
-    context.temp.terminate()
-
-    # search through filters to find index
-    filter_index = cstr_search_sorted(context.temp, filter_ptrs, n_filters)
-
-    # store value
-    if filter_index >= 0:
-        memory[context.chunk_variant_index, filter_index] = 1
+    def make_chunk(self, chunk, limit=None):
+        for i, filter in enumerate(self.filters):
+            field = 'variants/FILTER_' + str(filter, 'ascii')
+            # TODO any need to make it a contiguous array?
+            chunk[field] = self.values[:limit, i]
 
 
 cdef class VCFInfoParser(VCFFieldParserBase):
@@ -1230,7 +1187,6 @@ cdef class VCFInfoParser(VCFFieldParserBase):
         tuple info_parsers
         PyObject** info_parser_ptrs
         VCFInfoParserBase skip_parser
-
 
     def __cinit__(self, infos, types, numbers):
 
@@ -1282,7 +1238,112 @@ cdef class VCFInfoParser(VCFFieldParserBase):
             free(self.info_parser_ptrs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_info_parse(stream, context)
+
+        # check for explicit missing value
+        if stream.c == PERIOD:
+            # treat leading period as missing, regardless of what comes next
+            return self.parse_missing(stream, context)
+
+        # reset buffers
+        context.info_key.clear()
+        context.info_val.clear()
+
+        while True:
+
+            if stream.c == 0:
+                if context.info_key.size > 0:
+                    # handle flag
+                    self.parse_info(stream, context)
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                if context.info_key.size > 0:
+                    # handle flag
+                    self.parse_info(stream, context)
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                if context.info_key.size > 0:
+                    # handle flag
+                    self.parse_info(stream, context)
+                # advance input stream beyond tab
+                stream.getc()
+                context.state += 1
+                break
+
+            elif stream.c == SEMICOLON:
+                if context.info_key.size > 0:
+                    # handle flag
+                    self.parse_info(stream, context)
+                else:
+                    warn('missing INFO key', context)
+                stream.getc()
+
+            elif stream.c == EQUALS:
+                # advance input stream beyond '='
+                stream.getc()
+                if context.info_key.size > 0:
+                    self.parse_info(stream, context)
+                else:
+                    warn('missing INFO key', context)
+                    self.skip_parser.parse(stream, context)
+
+            else:
+
+                context.info_key.append(stream.c)
+                stream.getc()
+
+    cdef int parse_missing(self,
+                           InputStreamBase stream,
+                           VCFContext context) nogil except -1:
+
+        # TODO refactor with filter
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                # advance input stream beyond tab
+                stream.getc()
+                context.state += 1
+                break
+
+            # advance input stream
+            stream.getc()
+
+    cdef int parse_info(self,
+                        InputStreamBase stream,
+                        VCFContext context) nogil except -1:
+
+        cdef:
+            int parser_index
+            PyObject* parser
+
+        # terminate key
+        context.info_key.terminate()
+
+        # search for index of current INFO key
+        parser_index = cstr_search_sorted(context.info_key.data, self.info_ptrs,
+                                          self.n_infos)
+
+        # clear out key for good measure
+        context.info_key.clear()
+
+        if parser_index >= 0:
+            # obtain parser, use trickery for nogil
+            parser = self.info_parser_ptrs[parser_index]
+            (<VCFInfoParserBase> parser).parse(stream, context)
+        else:
+            self.skip_parser.parse(stream, context)
 
     def malloc_chunk(self, VCFContext context):
         for parser in self.info_parsers:
@@ -1293,83 +1354,201 @@ cdef class VCFInfoParser(VCFFieldParserBase):
             parser.make_chunk(chunk, limit=limit)
 
 
-
-
 cdef class VCFInfoParserBase(object):
     """TODO"""
+
+    cdef:
+        bytes key
+        int number
+        object values
+        object fill
+        object dtype
+        int itemsize
+
+    def __init__(self, key, dtype, number=1, fill=0):
+        self.key = key
+        self.dtype = np.dtype(dtype)
+        self.itemsize = self.dtype.itemsize
+        self.number = number
+        self.fill = fill
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         pass
 
-    def malloc_chunk(self, VCFContext context)::
-        pass
-
     def make_chunk(self, chunk, limit=None):
-        pass
+        field = 'variants/' + str(self.key, 'ascii')
+        values = self.values[:limit]
+        if self.number == 1:
+            values = values.squeeze(axis=1)
+        chunk[field] = values
+
+    def malloc_chunk(self, VCFContext context):
+        shape = (context.chunk_length, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = self.fill
+
+    cdef int parse_integer(self,
+                           InputStreamBase stream,
+                           VCFContext context,
+                           integer[:, :] memory) nogil except -1:
+        cdef:
+            int value_index = 0
+
+        # reset temporary buffer
+        context.info_val.clear()
+
+        while True:
+
+            if stream.c == 0 or \
+                    stream.c == LF or \
+                    stream.c == CR or \
+                    stream.c == TAB or \
+                    stream.c == SEMICOLON:
+                self.store_integer(self, context, value_index, memory)
+                break
+
+            elif stream.c == COMMA:
+                self.store_integer(self, context, value_index, memory)
+                context.info_val.clear()
+                value_index += 1
+
+            else:
+                context.info_val.append(stream.c)
+
+            stream.getc()
+
+    cdef int store_integer(self,
+                           VCFContext context,
+                           int value_index,
+                           integer[:, :] memory) nogil except -1:
+        cdef:
+            int parsed
+            long value
+
+        if value_index >= self.number:
+            # more values than we have room for, ignore
+            return 0
+
+        # parse string as integer
+        parsed = vcf_strtol(context.info_val, context, &value)
+
+        if parsed > 0:
+            # store value
+            memory[context.chunk_variant_index, value_index] = value
+
+    cdef int parse_floating(self,
+                            InputStreamBase stream,
+                            VCFContext context,
+                            floating[:, :] memory) nogil except -1:
+        cdef:
+            int value_index = 0
+
+        # reset temporary buffer
+        context.info_val.clear()
+
+        while True:
+
+            if stream.c == 0 or \
+                    stream.c == LF or \
+                    stream.c == CR or \
+                    stream.c == TAB or \
+                    stream.c == SEMICOLON:
+                self.store_floating(self, context, value_index, memory)
+                break
+
+            elif stream.c == COMMA:
+                self.store_floating(self, context, value_index, memory)
+                context.info_val.clear()
+                value_index += 1
+
+            else:
+                context.info_val.append(stream.c)
+
+            stream.getc()
+
+    cdef int store_floating(self,
+                           VCFContext context,
+                           int value_index,
+                           floating[:, :] memory) nogil except -1:
+        cdef:
+            int parsed
+            double value
+
+        if value_index >= self.number:
+            # more values than we have room for, ignore
+            return 0
+
+        # parse string as floating
+        parsed = vcf_strtod(context.info_val, context, &value)
+
+        if parsed > 0:
+            # store value
+            memory[context.chunk_variant_index, value_index] = value
 
 
 cdef class VCFInfoInt32Parser(VCFInfoParserBase):
     """TODO"""
 
+    cdef np.int32_t[:, :] memory
+
+    def __init__(self, key, number=1, fill=-1):
+        super(VCFInfoInt32Parser, self).__init__(key, dtype='int32', number=number,
+                                                 fill=fill)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
-
-    def malloc_chunk(self, VCFContext context)::
-        pass
-
-    def make_chunk(self, chunk, limit=None):
-        pass
+        return self.parse_integer(stream, context, self.memory)
 
 
 cdef class VCFInfoInt64Parser(VCFInfoParserBase):
     """TODO"""
 
+    cdef np.int64_t[:, :] memory
+
+    def __init__(self, key, number=1, fill=-1):
+        super(VCFInfoInt64Parser, self).__init__(key, dtype='int64', number=number,
+                                                 fill=fill)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
-
-    def malloc_chunk(self, VCFContext context)::
-        pass
-
-    def make_chunk(self, chunk, limit=None):
-        pass
+        return self.parse_integer(stream, context, self.memory)
 
 
 cdef class VCFInfoFloat32Parser(VCFInfoParserBase):
     """TODO"""
 
+    cdef np.float32_t[:, :] memory
+
+    def __init__(self, key, number=1, fill=NAN):
+        super(VCFInfoFloat32Parser, self).__init__(key, dtype='float32', number=number,
+                                                   fill=fill)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
-
-    def malloc_chunk(self, VCFContext context)::
-        pass
-
-    def make_chunk(self, chunk, limit=None):
-        pass
+        return self.parse_floating(stream, context, self.memory)
 
 
 cdef class VCFInfoFloat64Parser(VCFInfoParserBase):
     """TODO"""
 
+    cdef np.float64_t[:, :] memory
+
+    def __init__(self, key, number=1, fill=NAN):
+        super(VCFInfoFloat64Parser, self).__init__(key, dtype='float64', number=number,
+                                                   fill=fill)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
-
-    def malloc_chunk(self, VCFContext context)::
-        pass
-
-    def make_chunk(self, chunk, limit=None):
-        pass
+        return self.parse_floating(stream, context, self.memory)
 
 
 cdef class VCFInfoFlagParser(VCFInfoParserBase):
     """TODO"""
 
+    def __init__(self, key):
+        super(VCFInfoFlagParser, self).__init__(key, dtype='bool')
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         pass
 
     def malloc_chunk(self, VCFContext context)::
-        pass
-
-    def make_chunk(self, chunk, limit=None):
         pass
 
 
@@ -1382,9 +1561,6 @@ cdef class VCFInfoStringParser(VCFInfoParserBase):
     def malloc_chunk(self, VCFContext context)::
         pass
 
-    def make_chunk(self, chunk, limit=None):
-        pass
-
 
 cdef class VCFInfoSkipParser(VCFInfoParserBase):
     """TODO"""
@@ -1393,9 +1569,6 @@ cdef class VCFInfoSkipParser(VCFInfoParserBase):
         pass
 
     def malloc_chunk(self, VCFContext context)::
-        pass
-
-    def make_chunk(self, chunk, limit=None):
         pass
 
 
@@ -1429,76 +1602,74 @@ cdef class VCFCallsParser(object):
 # Low-level VCF value parsing functions
 
 
-cdef long vcf_strtol(CharVector value, long default, VCFContext context) nogil:
+cdef int vcf_strtol(CharVector value, VCFContext context, long* l) nogil:
     cdef:
         char* str_end
         int parsed
-        long l
 
     if value.size == 0:
         warn('expected integer, found empty value', context)
-        return default
+        return 0
 
     if value.size == 1 and value.data[0] == PERIOD:
         # explicit missing value
-        return default
+        return 0
 
     # terminate string
     value.terminate()
 
     # do parsing
-    l = strtol(value.data, &str_end, 10)
+    l[0] = strtol(value.data, &str_end, 10)
 
     # check success
     parsed = str_end - value.data
 
     # check success
     if value.size - 1 == parsed:  # account for terminating null byte
-        return l
+        return parsed
 
     elif parsed > 0:
         warn('not all characters parsed for integer value', context)
-        return l
+        return parsed
 
     else:
         warn('error parsing integer value', context)
-        return default
+        return 0
 
 
-cdef double vcf_strtod(CharVector value, double default, VCFContext context) nogil:
+cdef int vcf_strtod(CharVector value, VCFContext context, double* d) nogil:
     cdef:
         char* str_end
         int parsed
-        double d
 
     if value.size == 0:
         warn('expected floating point number, found empty value', context)
-        return default
+        return 0
 
     if value.size == 1 and value.data[0] == PERIOD:
         # explicit missing value
-        return default
+        return 0
 
     # terminate string
     value.terminate()
 
     # do parsing
-    l = strtod(value.data, &str_end)
+    d[0] = strtod(value.data, &str_end)
 
     # check success
     parsed = str_end - value.data
 
     # check success
     if value.size - 1 == parsed:  # account for terminating null byte
-        return l
+        return parsed
 
     elif parsed > 0:
         warn('not all characters parsed for floating point value', context)
-        return l
+        return parsed
 
     else:
         warn('error parsing floating point value', context)
-        return default
+        return 0
 
 
 
@@ -1670,215 +1841,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #
 #         # advance input stream
 #         stream.getc()
-#
-#
-# cdef inline int info_parse(InfoParser self,
-#                            ParserContext context) nogil except -1:
-#
-#
-#     # debug('info_parse', context)
-#
-#     # check for explicit missing value
-#     if stream.c == PERIOD:
-#
-#         while True:
-#
-#             if stream.c == 0:
-#                 context.state = VCFState.EOF
-#                 return 0
-#
-#             elif stream.c == LF or stream.c == CR:
-#                 context.state = VCFState.EOL
-#                 return 0
-#
-#             elif stream.c == TAB:
-#                 # advance input stream beyond tab
-#                 stream.getc()
-#                 context.state += 1
-#                 return 1
-#
-#             # advance input stream
-#             stream.getc()
-#
-#     # reset temporary buffer
-#     context.temp.clear()
-#
-#     while True:
-#
-#         if stream.c == 0:
-#             info_store(self, context)
-#             context.state = VCFState.EOF
-#             return 0
-#
-#         elif stream.c == LF or stream.c == CR:
-#             info_store(self, context)
-#             context.state = VCFState.EOL
-#             return 0
-#
-#         elif stream.c == TAB:
-#             info_store(self, context)
-#             # advance input stream beyond tab
-#             stream.getc()
-#             context.state += 1
-#             return 1
-#
-#         elif stream.c == SEMICOLON:
-#             info_store(self, context)
-#             stream.getc()
-#
-#         elif stream.c == EQUALS:
-#             # advance input stream beyond '='
-#             # TODO warn if empty key?
-#             stream.getc()
-#             info_store(self, context)
-#
-#         else:
-#
-#             temp_append(context)
-#             stream.getc()
-#
-#
-# cdef inline int info_store(InfoParser self,
-#                            ParserContext context) nogil except -1:
-#     cdef:
-#         int parser_index
-#         PyObject* parser
-#
-#     if context.temp_size > 0:
-#         # treat temp as key
-#
-#         # terminate temp
-#         context.temp.terminate()
-#
-#         # search for index of current INFO key
-#         parser_index = search_sorted(context.temp, context.info_ptrs, context.n_infos)
-#
-#         # clear out temp for good measure
-#         context.temp.clear()
-#
-#         if parser_index >= 0:
-#             # obtain parser
-#             parser = context.info_parser_ptrs[parser_index]
-#             (<Parser> parser).parse()
-#         else:
-#             self.skip_parser.parse()
-#
-#     # else:
-#     #
-#     #     warn('error parsing INFO field, missing key', context)
-#     #     # advance to next delimiter
-#     #     while stream.c != SEMICOLON and \
-#     #             stream.c != TAB and \
-#     #             stream.c != LF and \
-#     #             stream.c != CR and \
-#     #             stream.c != 0:
-#     #         stream.getc()
-#     #
-#     return 1
-#
-#
-# cdef class InfoParserBase(Parser):
-#
-#     def __init__(self, ParserContext context, key, fill, number):
-#         super(InfoParserBase, self).__init__(context)
-#         self.key = PyBytes_AS_STRING(key)
-#         self.fill = fill
-#         self.number = number
-#
-#     def mkchunk(self, chunk, limit=None):
-#         field = 'variants/' + str(<bytes>self.key, 'ascii')
-#         values = self.values[:limit]
-#         if self.number == 1:
-#             values = values.squeeze(axis=1)
-#         chunk[field] = values
-#         self.malloc()
-#
-#
-# cdef class InfoInt32Parser(InfoParserBase):
-#
-#     cdef np.int32_t[:, :] memory
-#
-#     cdef int parse(self) nogil except -1:
-#         return info_integer_parse(self.memory, self.number, self.context)
-#
-#     def malloc(self):
-#         shape = (self.context.chunk_length, self.number)
-#         self.values = np.empty(shape, dtype='int32')
-#         self.memory = self.values
-#         self.memory[:] = self.fill
-#
-#
-# cdef class InfoInt64Parser(InfoParserBase):
-#
-#     cdef np.int64_t[:, :] memory
-#
-#     cdef int parse(self) nogil except -1:
-#         return info_integer_parse(self.memory, self.number, self.context)
-#
-#     def malloc(self):
-#         shape = (self.context.chunk_length, self.number)
-#         self.values = np.empty(shape, dtype='int64')
-#         self.memory = self.values
-#         self.memory[:] = self.fill
-#
-#
-# cdef inline int info_integer_parse(integer[:, :] memory,
-#                                    int number,
-#                                    ParserContext context) nogil except -1:
-#     cdef:
-#         int value_index = 0
-#
-#     # debug('info_integer_parse', context)
-#
-#     # reset temporary buffer
-#     context.temp.clear()
-#
-#     while True:
-#
-#         if stream.c == 0 or \
-#                 stream.c == LF or \
-#                 stream.c == CR or \
-#                 stream.c == TAB or \
-#                 stream.c == SEMICOLON:
-#             info_integer_store(memory, number, context, value_index)
-#             break
-#
-#         elif stream.c == COMMA:
-#             info_integer_store(memory, number, context, value_index)
-#             context.temp.clear()
-#             value_index += 1
-#
-#         else:
-#             temp_append(context)
-#
-#         stream.getc()
-#
-#     # reset temporary buffer here to indicate new field
-#     context.temp.clear()
-#
-#     return 1
-#
-#
-# cdef inline int info_integer_store(integer[:, :] memory,
-#                                    int number,
-#                                    ParserContext context,
-#                                    int value_index) nogil except -1:
-#     cdef:
-#         int success
-#
-#     if value_index >= number:
-#         # more values than we have room for, ignore
-#         return 1
-#
-#     # parse string as integer
-#     success = temp_tolong(context)
-#
-#     # store value
-#     if success:
-#         memory[context.chunk_variant_index, value_index] = context.l
-#
-#     return 1
-#
+##
 #
 # cdef class InfoFloat32Parser(InfoParserBase):
 #
@@ -1935,7 +1898,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #             value_index += 1
 #
 #         else:
-#             temp_append(context)
+#             context.temp.append(stream.c)
 #
 #         stream.getc()
 #
@@ -2111,7 +2074,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #             format_index += 1
 #
 #         else:
-#             temp_append(context)
+#             context.temp.append(stream.c)
 #
 #         # advance to next character
 #         stream.getc()
@@ -2332,7 +2295,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #
 #         else:
 #             # debug('calldata_integer_parse: temp_append', context)
-#             temp_append(context)
+#             context.temp.append(stream.c)
 #
 #         # debug('calldata_integer_parse: getc', context)
 #         stream.getc()
@@ -2392,7 +2355,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #             return 1
 #
 #         else:
-#             temp_append(context)
+#             context.temp.append(stream.c)
 #
 #         stream.getc()
 #
@@ -2516,7 +2479,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #             return 1
 #
 #         else:
-#             temp_append(context)
+#             context.temp.append(stream.c)
 #
 #         stream.getc()
 #
