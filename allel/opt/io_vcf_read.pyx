@@ -328,6 +328,10 @@ cdef class VCFContext(object):
         CharVector info_key  # used for info key
         CharVector info_val  # used for info value
 
+        # keep track of current chrom and pos, even if fields are skipped
+        CharVector chrom
+        long pos
+
     def __cinit__(self, int chunk_length, int n_samples, int ploidy):
 
         # initialise static attributes
@@ -347,6 +351,10 @@ cdef class VCFContext(object):
         self.temp = CharVector()
         self.info_key = CharVector()
         self.info_val = CharVector()
+
+        # initialise chrom and pos
+        self.chrom = CharVector()
+        self.pos = -1
 
 
 cdef class VCFChunkIterator(object):
@@ -728,24 +736,24 @@ cdef class VCFChromParser(VCFFieldParserBase):
 
     cdef:
         np.uint8_t[:] memory
-        bint skip
+        bint store
 
-    def __init__(self, dtype, skip):
-        if not skip:
+    def __init__(self, dtype, bint store):
+        if store:
             self.dtype = check_string_dtype(dtype)
             self.itemsize = self.dtype.itemsize
-        self.skip = skip
+        self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_chrom_parse(stream, context, self.memory, self.itemsize, self.skip)
+        return vcf_chrom_parse(stream, context, self.memory, self.itemsize, self.store)
 
     def malloc_chunk(self, VCFContext context):
-        if not self.skip:
+        if self.store:
             self.values = np.zeros(context.chunk_length, dtype=self.dtype)
             self.memory = self.values.view('u1')
 
     def make_chunk(self, chunk, limit=None):
-        if not self.skip:
+        if self.store:
             chunk[CHROM_FIELD] = self.values[:limit]
 
 
@@ -753,22 +761,20 @@ cdef int vcf_chrom_parse(InputStreamBase stream,
                          VCFContext context,
                          np.uint8_t[:] memory,
                          int itemsize,
-                         bint skip) nogil except -1:
+                         bint store) nogil except -1:
     cdef:
         # index into memory view
-        int memory_index
+        int memory_index = context.chunk_variant_index * itemsize
         # number of characters read into current value
         int chars_stored = 0
 
-    # TODO store CHROM on context
+    # setup to store CHROM on context
+    context.chrom.clear()
 
     # check for EOF - important to handle file with no final line terminator
     if stream.c != 0:
         context.variant_index += 1
         context.chunk_variant_index += 1
-
-    # initialise memory index
-    memory_index = context.chunk_variant_index * itemsize
 
     while True:
 
@@ -789,7 +795,11 @@ cdef int vcf_chrom_parse(InputStreamBase stream,
 
         else:
 
-            if not skip and chars_stored < itemsize:
+            # store on context
+            context.chrom.append(stream.c)
+
+            # store in chunk
+            if store and chars_stored < itemsize:
                 # store value
                 memory[memory_index] = stream.c
                 # advance memory index
@@ -804,26 +814,35 @@ cdef int vcf_chrom_parse(InputStreamBase stream,
 cdef class VCFPosParser(VCFFieldParserBase):
     """TODO"""
 
-    cdef np.int32_t[:] memory
+    cdef:
+        np.int32_t[:] memory
+        bint store
+
+    def __init__(self, bint store):
+        self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_pos_parse(stream, context, self.memory)
+        return vcf_pos_parse(stream, context, self.memory, self.store)
 
     def malloc_chunk(self, VCFContext context):
-        self.values = np.zeros(context.chunk_length, dtype='int32')
-        self.memory = self.values
-        self.memory[:] = -1
+        if self.store:
+            self.values = np.zeros(context.chunk_length, dtype='int32')
+            self.memory = self.values
+            self.memory[:] = -1
 
     def make_chunk(self, chunk, limit=None):
-        chunk[POS_FIELD] = self.values[:limit]
+        if self.store:
+            chunk[POS_FIELD] = self.values[:limit]
 
 
-cdef int vcf_pos_parse(InputStreamBase stream,
-                       VCFContext context,
-                       integer[:] memory) nogil except -1:
+cdef int vcf_pos_parse_store(InputStreamBase stream,
+                             VCFContext context,
+                             integer[:] memory,
+                             bint store) nogil except -1:
     cdef:
         long value
 
+    # setup temp vector to store value
     context.temp.clear()
 
     while True:
@@ -850,21 +869,76 @@ cdef int vcf_pos_parse(InputStreamBase stream,
     # parse string as integer
     value = vcf_strtol(context.temp, -1, context)
 
-    # store value
-    memory[context.chunk_variant_index] = value
+    # store value on context
+    context.pos = value
+
+    # store value in chunk
+    if store:
+        memory[context.chunk_variant_index] = value
 
 
 cdef class VCFStringFieldParser(VCFFieldParserBase):
     """TODO"""
 
-    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
+    cdef:
+        np.uint8_t[:] memory
+        object field
 
-    def malloc_chunk(self, VCFContext context)::
-        pass
+    def __init__(self, field, dtype):
+        self.field = field
+        self.dtype = check_string_dtype(dtype)
+        self.itemsize = self.dtype.itemsize
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return string_field_parse(stream, context, self.memory, self.itemsize)
+
+    def malloc_chunk(self, VCFContext context):
+        self.values = np.zeros(context.chunk_length, dtype=self.dtype)
+        self.memory = self.values.view('u1')
 
     def make_chunk(self, chunk, limit=None):
-        pass
+        chunk[self.field] = self.values[:limit]
+
+
+cdef int string_field_parse(InputStreamBase stream,
+                            VCFContext context,
+                            np.uint8_t[:] memory,
+                            int itemsize) nogil except -1:
+    cdef:
+        # index into memory view
+        int memory_index = context.chunk_variant_index * itemsize
+        # number of characters read into current value
+        int chars_stored = 0
+
+    while True:
+
+        if stream.c == 0:
+            context.state = VCFState.EOF
+            break
+
+        elif stream.c == LF or stream.c == CR:
+            context.state = VCFState.EOL
+            break
+
+        elif stream.c == TAB:
+            # advance input stream beyond tab
+            stream.getc()
+            # advance to next field
+            context.state += 1
+            break
+
+        elif chars_stored < itemsize:
+            # store value
+            memory[memory_index] = stream.c
+            # advance memory index
+            memory_index += 1
+            # advance number of characters stored
+            chars_stored += 1
+
+        # advance input stream
+        stream.getc()
+
+    return 1
 
 
 cdef class VCFAltParser(VCFFieldParserBase):
@@ -1293,102 +1367,6 @@ cdef int debug(msg, ParserContext context=None) nogil except -1:
 #             free(self.calldata_parser_ptrs)
 #         if self.variant_calldata_parser_ptrs is not NULL:
 #             free(self.variant_calldata_parser_ptrs)
-#
-#
-# cdef class StringFieldParser(Parser):
-#     """Generic string field parser, used for CHROM, ID, REF."""
-#
-#     cdef np.uint8_t[:] memory
-#     cdef object field
-#
-#     def __init__(self, ParserContext context, field, dtype):
-#         super(StringFieldParser, self).__init__(context)
-#         self.field = field
-#         self.dtype = check_string_dtype(dtype)
-#         self.itemsize = self.dtype.itemsize
-#
-#     cdef int parse(self) nogil except -1:
-#         return string_field_parse(self.memory, self.itemsize, self.context)
-#
-#     def malloc(self):
-#         self.values = np.zeros(self.context.chunk_length, dtype=self.dtype)
-#         self.memory = self.values.view('u1')
-#
-#     def mkchunk(self, chunk, limit=None):
-#         chunk[self.field] = self.values[:limit]
-#         self.malloc()
-#
-#
-# cdef inline int string_field_parse(np.uint8_t[:] memory,
-#                                    int itemsize,
-#                                    ParserContext context) nogil except -1:
-#     cdef:
-#         # index into memory view
-#         int memory_index
-#         # number of characters read into current value
-#         int chars_stored = 0
-#
-#     # initialise memory index
-#     memory_index = context.chunk_variant_index * itemsize
-#
-#     while True:
-#
-#         if stream.c == 0:
-#             context.state = VCFState.EOF
-#             break
-#
-#         elif stream.c == LF or stream.c == CR:
-#             context.state = VCFState.EOL
-#             break
-#
-#         elif stream.c == TAB:
-#             # advance input stream beyond tab
-#             stream.getc()
-#             # advance to next field
-#             context.state += 1
-#             break
-#
-#         elif chars_stored < itemsize:
-#             # store value
-#             memory[memory_index] = stream.c
-#             # advance memory index
-#             memory_index += 1
-#             # advance number of characters stored
-#             chars_stored += 1
-#
-#         # advance input stream
-#         stream.getc()
-#
-#     return 1
-#
-#
-# cdef class SkipPosParser(Parser):
-#     """Skip the POS field."""
-#
-#     cdef int parse(self) nogil except -1:
-#         return skip_pos(self.context)
-#
-#
-# cdef inline int skip_pos(ParserContext context) nogil except -1:
-#     # TODO put POS on context
-#
-#     while True:
-#
-#         if stream.c == 0:
-#             context.state = VCFState.EOF
-#             return 0
-#
-#         elif stream.c == LF or stream.c == CR:
-#             context.state = VCFState.EOL
-#             return 0
-#
-#         elif stream.c == TAB:
-#             stream.getc()
-#             context.state += 1
-#             return 1
-#
-#         # advance input stream
-#         stream.getc()
 #
 #
 # cdef class SkipAllCalldataParser(Parser):
