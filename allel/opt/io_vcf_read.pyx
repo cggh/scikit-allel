@@ -1076,14 +1076,108 @@ cdef int vcf_qual_parse(InputStreamBase stream,
 cdef class VCFFilterParser(VCFFieldParserBase):
     """TODO"""
 
-    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
+    cdef:
+        np.uint8_t[:, :] memory
+        tuple filters
+        int n_filters
+        char** filter_ptrs
 
-    def malloc_chunk(self, VCFContext context)::
-        pass
+    def __cinit__(self, filters):
+        self.filters = tuple(sorted(filters))
+        self.n_filters = len(self.filters)
+        self.filter_ptrs = <char**> malloc(sizeof(char*) * self.n_filters)
+        for i in range(self.n_filters):
+            self.filter_ptrs[i] = <char*> self.filters[i]
+
+    def __dealloc__(self):
+        if self.filter_ptrs is not NULL:
+            free(self.filter_ptrs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_filter_parse(stream, context, self.filter_ptrs, self.n_filters,
+                                self.memory)
+
+    def malloc_chunk(self, VCFContext context):
+        shape = (context.chunk_length, self.n_filters)
+        self.values = np.zeros(shape, dtype=bool)
+        self.memory = self.values.view('u1')
 
     def make_chunk(self, chunk, limit=None):
-        pass
+        for i, filter in enumerate(self.filters):
+            field = 'variants/FILTER_' + str(filter, 'ascii')
+            # TODO any need to make it a contiguous array?
+            chunk[field] = self.values[:limit, i]
+
+
+cdef int vcf_filter_parse(InputStreamBase stream,
+                          VCFContext context,
+                          ) nogil except -1:
+    cdef:
+        int filter_index
+
+    # debug('filter_parse: enter', context)
+
+    # reset temporary buffer
+    temp_clear(context)
+
+    # check for explicit missing value
+    if stream.c == PERIOD:
+        # debug('filter_parse: found missing value', context)
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                # advance input stream beyond tab
+                stream.getc()
+                context.state += 1
+                break
+
+            # advance input stream
+            stream.getc()
+
+        return 1
+
+    while True:
+        # debug('filter_parse: parsing filters', context)
+
+        if stream.c == 0:
+            filter_store(self, context)
+            context.state = VCFState.EOF
+            break
+
+        elif stream.c == LF or stream.c == CR:
+            filter_store(self, context)
+            context.state = VCFState.EOL
+            break
+
+        elif stream.c == TAB:
+            filter_store(self, context)
+            # advance input stream beyond tab
+            stream.getc()
+            context.state += 1
+            break
+
+        elif stream.c == COMMA or stream.c == COLON or stream.c == SEMICOLON:
+            # some of these delimiters are not strictly kosher, but have seen them
+            filter_store(self, context)
+            temp_clear(context)
+
+        else:
+            temp_append(context)
+
+        # advance input stream
+        stream.getc()
+
+    return 1
+
 
 
 cdef class VCFInfoParser(VCFFieldParserBase):
@@ -1327,16 +1421,14 @@ cdef double vcf_strtod(CharVector value, double default, VCFContext context) nog
 # LOGGING
 
 
-cdef int warn(message, ParserContext context) nogil:
+cdef int warn(message, VCFContext context) nogil:
     with gil:
         # TODO customize message based on state (CHROM, POS, etc.)
         message += '; variant index: %s' % context.variant_index
-        b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
-        message += '; temporary buffer: %s' % b
         warnings.warn(message)
 
 
-cdef int debug(msg, ParserContext context=None) nogil except -1:
+cdef int debug(msg, VCFContext context=None) nogil except -1:
     with gil:
         msg = '[DEBUG] ' + str(msg) + '\n'
         if context is not None:
@@ -1344,13 +1436,6 @@ cdef int debug(msg, ParserContext context=None) nogil except -1:
             msg += '; variant_index: %s' % context.variant_index
             msg += '; chunk_variant_index: %s' % context.chunk_variant_index
             msg += '; sample_index: %s' % context.sample_index
-            msg += '; format_index: %s' % context.format_index
-            b = PyBytes_FromStringAndSize(context.temp, context.temp_size)
-            msg += '; temp: %s' % b
-            msg += '; c: %s' % <bytes>stream.c
-            msg += '; n_formats: %s' % context.n_formats
-            msg += '; variant_n_formats: %s' % context.variant_n_formats
-            msg += '; calldata_parsers: %s' % context.calldata_parsers
         print(msg, file=sys.stderr)
         sys.stderr.flush()
 
@@ -1483,108 +1568,6 @@ cdef int debug(msg, ParserContext context=None) nogil except -1:
 #
 #         # advance input stream
 #         stream.getc()
-#
-#
-# cdef class FilterParser(Parser):
-#
-#     cdef np.uint8_t[:, :] memory
-#
-#     def __init__(self, ParserContext context, filters):
-#         super(FilterParser, self).__init__(context)
-#
-#         # setup filters
-#         context.filters = tuple(sorted(filters))
-#         # debug(filters, context)
-#         context.n_filters = len(context.filters)
-#         if context.filter_ptrs is not NULL:
-#             free(context.filter_ptrs)
-#         context.filter_ptrs = <char**> malloc(context.n_filters * sizeof(char*))
-#         for i in range(context.n_filters):
-#             context.filter_ptrs[i] = <char*> context.filters[i]
-#
-#     cdef int parse(self) nogil except -1:
-#         return filter_parse(self, self.context)
-#
-#     def malloc(self):
-#         shape = (self.context.chunk_length, self.context.n_filters)
-#         self.values = np.zeros(shape, dtype=bool)
-#         self.memory = self.values.view('u1')
-#
-#     def mkchunk(self, chunk, limit=None):
-#         for i, filter in enumerate(self.context.filters):
-#             field = 'variants/FILTER_' + str(filter, 'ascii')
-#             # TODO any need to make it a contiguous array?
-#             chunk[field] = self.values[:limit, i]
-#         self.malloc()
-#
-#
-# cdef inline int filter_parse(FilterParser self,
-#                              ParserContext context) nogil except -1:
-#     cdef:
-#         int filter_index
-#
-#     # debug('filter_parse: enter', context)
-#
-#     # reset temporary buffer
-#     temp_clear(context)
-#
-#     # check for explicit missing value
-#     if stream.c == PERIOD:
-#         # debug('filter_parse: found missing value', context)
-#
-#         while True:
-#
-#             if stream.c == 0:
-#                 context.state = VCFState.EOF
-#                 break
-#
-#             elif stream.c == LF or stream.c == CR:
-#                 context.state = VCFState.EOL
-#                 break
-#
-#             elif stream.c == TAB:
-#                 # advance input stream beyond tab
-#                 stream.getc()
-#                 context.state += 1
-#                 break
-#
-#             # advance input stream
-#             stream.getc()
-#
-#         return 1
-#
-#     while True:
-#         # debug('filter_parse: parsing filters', context)
-#
-#         if stream.c == 0:
-#             filter_store(self, context)
-#             context.state = VCFState.EOF
-#             break
-#
-#         elif stream.c == LF or stream.c == CR:
-#             filter_store(self, context)
-#             context.state = VCFState.EOL
-#             break
-#
-#         elif stream.c == TAB:
-#             filter_store(self, context)
-#             # advance input stream beyond tab
-#             stream.getc()
-#             context.state += 1
-#             break
-#
-#         elif stream.c == COMMA or stream.c == COLON or stream.c == SEMICOLON:
-#             # some of these delimiters are not strictly kosher, but have seen them
-#             filter_store(self, context)
-#             temp_clear(context)
-#
-#         else:
-#             temp_append(context)
-#
-#         # advance input stream
-#         stream.getc()
-#
-#     return 1
 #
 #
 # cdef inline int filter_store(FilterParser self,
