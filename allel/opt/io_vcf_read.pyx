@@ -1223,14 +1223,76 @@ cdef int vcf_filter_store(VCFContext context,
 cdef class VCFInfoParser(VCFFieldParserBase):
     """TODO"""
 
-    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
+    cdef:
+        tuple infos
+        int n_infos
+        char** info_ptrs
+        tuple info_parsers
+        PyObject** info_parser_ptrs
+        VCFInfoParserBase skip_parser
 
-    def malloc_chunk(self, VCFContext context)::
-        pass
+
+    def __cinit__(self, infos, types, numbers):
+
+        # setup INFO keys
+        self.infos = tuple(sorted(infos))
+        self.n_infos = len(self.infos)
+
+        # setup INFO keys as C strings for nogil searching
+        self.info_ptrs = <char**> malloc(sizeof(char*) * self.n_infos)
+        for i in range(self.n_infos):
+            self.info_ptrs[i] = <char*> self.infos[i]
+
+        # setup INFO parsers
+        info_parsers = list()
+        self.skip_parser = VCFInfoSkipParser()
+        for key in self.infos:
+            t = types[key]
+            n = numbers[key]
+            if t == np.dtype(bool) or n == 0:
+                parser = VCFInfoFlagParser(key)
+            elif t == np.dtype('int32'):
+                parser = VCFInfoInt32Parser(key, fill=-1, number=n)
+            elif t == np.dtype('int64'):
+                parser = VCFInfoInt64Parser(key, fill=-1, number=n)
+            elif t == np.dtype('float32'):
+                parser = VCFInfoFloat32Parser(key, fill=NAN, number=n)
+            elif t == np.dtype('float64'):
+                parser = VCFInfoFloat64Parser(key, fill=NAN, number=n)
+            elif t == np.dtype(bool):
+                parser = VCFInfoFlagParser(key)
+            elif t.kind == 'S':
+                parser = VCFInfoStringParser(key, dtype=t, number=n)
+            else:
+                parser = self.skip_parser
+                warnings.warn('type %s not supported for INFO field %r, field will be '
+                              'skipped' % (t, key))
+            info_parsers.append(parser)
+        self.info_parsers = tuple(info_parsers)
+
+        # store pointers to parsers for nogil trickery
+        self.info_parser_ptrs = <PyObject**> malloc(sizeof(PyObject*) * self.n_infos)
+        for i in range(self.n_infos):
+            self.info_parser_ptrs[i] = <PyObject*> self.info_parsers[i]
+
+    def __dealloc__(self):
+        if self.info_ptrs is not NULL:
+            free(self.info_ptrs)
+        if self.info_parser_ptrs is not NULL:
+            free(self.info_parser_ptrs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_info_parse(stream, context)
+
+    def malloc_chunk(self, VCFContext context):
+        for parser in self.info_parsers:
+            parser.malloc_chunk()
 
     def make_chunk(self, chunk, limit=None):
-        pass
+        for parser in self.info_parsers:
+            parser.make_chunk(chunk, limit=limit)
+
+
 
 
 cdef class VCFInfoParserBase(object):
@@ -1608,71 +1670,6 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #
 #         # advance input stream
 #         stream.getc()
-#
-#
-# cdef class InfoParser(Parser):
-#
-#     # cdef tuple infos
-#     # cdef dict parsers
-#     cdef Parser skip_parser
-#
-#     def __init__(self, ParserContext context, infos, types, numbers):
-#         super(InfoParser, self).__init__(context)
-#
-#         # setup info keys
-#         context.infos = tuple(sorted(infos))
-#         context.n_infos = len(context.infos)
-#         if context.info_ptrs is not NULL:
-#             free(context.info_ptrs)
-#         context.info_ptrs = <char**> malloc(context.n_infos * sizeof(char*))
-#         for i in range(context.n_infos):
-#             context.info_ptrs[i] = <char*> context.infos[i]
-#
-#         # setup parsers
-#         context.info_parsers = list()
-#         self.skip_parser = SkipInfoFieldParser(context)
-#         for key in context.infos:
-#             t = types[key]
-#             n = numbers[key]
-#             if t == np.dtype(bool) or n == 0:
-#                 parser = InfoFlagParser(context, key)
-#             elif t == np.dtype('int32'):
-#                 parser = InfoInt32Parser(context, key, fill=-1, number=n)
-#             elif t == np.dtype('int64'):
-#                 parser = InfoInt64Parser(context, key, fill=-1, number=n)
-#             elif t == np.dtype('float32'):
-#                 parser = InfoFloat32Parser(context, key, fill=NAN, number=n)
-#             elif t == np.dtype('float64'):
-#                 parser = InfoFloat64Parser(context, key, fill=NAN, number=n)
-#             elif t == np.dtype(bool):
-#                 parser = InfoFlagParser(context, key)
-#             elif t.kind == 'S':
-#                 parser = InfoStringParser(context, key, dtype=t, number=n)
-#             else:
-#                 parser = self.skip_parser
-#                 warnings.warn('type %s not supported for INFO field %r, field will be '
-#                               'skipped' % (t, key))
-#             context.info_parsers.append(parser)
-#
-#         # store pointers to parsers
-#         if context.info_parser_ptrs is not NULL:
-#             free(context.info_parser_ptrs)
-#         context.info_parser_ptrs = <PyObject**> malloc(context.n_infos *
-#                                                        sizeof(PyObject*))
-#         for i in range(context.n_infos):
-#             context.info_parser_ptrs[i] = <PyObject*> context.info_parsers[i]
-#
-#     cdef int parse(self) nogil except -1:
-#         return info_parse(self, self.context)
-#
-#     def malloc(self):
-#         for parser in self.context.info_parsers:
-#             parser.malloc()
-#
-#     def mkchunk(self, chunk, limit=None):
-#         cdef Parser parser
-#         for parser in self.context.info_parsers:
-#             parser.mkchunk(chunk, limit=limit)
 #
 #
 # cdef inline int info_parse(InfoParser self,
