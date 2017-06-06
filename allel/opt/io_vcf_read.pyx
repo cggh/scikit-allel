@@ -363,6 +363,7 @@ cdef class VCFContext(object):
         self.chunk_variant_index = -1
         self.sample_index = 0
         self.sample_field_index = 0
+        self.variant_n_formats = 0
         self.variant_format_indices = IntVector()
 
         # initialise temporary buffers
@@ -1644,17 +1645,102 @@ cdef class VCFInfoSkipParser(VCFInfoDataParserBase):
         pass
 
 
-cdef class VCFFormatParser(object):
+cdef class VCFFormatParser(VCFFieldParserBase):
     """TODO"""
 
+    cdef:
+        tuple formats
+        int n_formats
+        char** format_ptrs
+
+    def __cinit__(self, formats):
+
+        # setup FORMAT keys
+        self.formats = tuple(sorted(formats))
+        self.n_formats = len(self.formats)
+
+        # setup FORMAT keys as C strings for nogil searching
+        self.format_ptrs = <char**> malloc(sizeof(char*) * self.n_formats)
+        for i in range(self.n_formats):
+            self.format_ptrs[i] = <char*> self.formats[i]
+
+    def __dealloc__(self):
+        if self.format_ptrs is not NULL:
+            free(self.format_ptrs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        pass
+        cdef:
+            int i
 
-    def malloc_chunk(self, VCFContext context):
-        pass
+        # reset temporary buffer
+        context.temp.clear()
+        context.variant_format_indices.clear()
 
-    def make_chunk(self, chunk, limit=None):
-        pass
+        while True:
+
+            if stream.c == 0:
+                # no point setting format, there will be no calldata
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                # no point setting format, there will be no calldata
+                context.state = VCFState.EOL
+                break
+
+            elif stream.c == TAB:
+                self.store_format(context)
+                # we're done here, advance to next field
+                context.state += 1
+                stream.getc()
+                break
+
+            elif stream.c == COLON:
+                self.store_format(context)
+
+            else:
+                context.temp.append(stream.c)
+
+            # advance to next character
+            stream.getc()
+
+    cdef int store_format(self, VCFContext context) nogil except -1:
+        cdef int format_index
+
+        # deal with empty or missing data
+        if context.temp.size == 0:
+            warn('empty FORMAT', context)
+            return 0
+
+        if context.temp.size == 1 and context.temp[0] == PERIOD:
+            return 0
+
+        context.temp.terminate()
+
+        # find format index within those declared in header
+        format_index = cstr_search_sorted()
+
+        # TODO
+        
+
+
+cdef class VCFSkipAllCallDataParser(VCFFieldParserBase):
+    """Skip a field."""
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+
+        while True:
+
+            if stream.c == 0:
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                context.state = VCFState.EOL
+                break
+
+            # advance input stream
+            stream.getc()
 
 
 cdef class VCFCallDataParser(object):
@@ -1924,52 +2010,6 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #         return format_parse(self, self.context)
 #
 #
-# # break out method as function for profiling
-# cdef inline int format_parse(FormatParser self,
-#                              ParserContext context) nogil except -1:
-#     cdef:
-#         int format_index = 0
-#         int i
-#
-#     # debug('format_parse: enter', context)
-#
-#     # reset temporary buffer
-#     context.temp.clear()
-#     context.variant_n_formats = 0
-#
-#     while True:
-#
-#         if stream.c == 0:
-#             # no point setting format
-#             context.state = VCFState.EOF
-#             return 0
-#
-#         elif stream.c == LF or stream.c == CR:
-#             # no point setting format
-#             context.state = VCFState.EOL
-#             return 0
-#
-#         elif stream.c == TAB:
-#             # debug('format_parse: field end, setting', context)
-#             format_set(context, format_index)
-#             context.variant_n_formats = format_index + 1
-#             # we're done here, advance to next field
-#             context.state += 1
-#             stream.getc()
-#             return 1
-#
-#         elif stream.c == COLON:
-#             # debug('format_parse: format end, setting', context)
-#             format_set(context, format_index)
-#             format_index += 1
-#
-#         else:
-#             context.temp.append(stream.c)
-#
-#         # advance to next character
-#         stream.getc()
-#
-#
 # cdef inline int format_set(ParserContext context,
 #                            int format_index) nogil except -1:
 #     cdef:
@@ -2129,18 +2169,6 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #         else:
 #             # debug('calldata_parse: exceeded MAX_FORMATS', context)
 #             self.skip_parser.parse()
-#
-#
-# cdef class SkipInfoFieldParser(Parser):
-#
-#     cdef int parse(self) nogil except -1:
-#         while self.stream.c != SEMICOLON and \
-#                 self.stream.c != TAB and \
-#                 self.stream.c != CR and \
-#                 self.stream.c != LF and \
-#                 self.stream.c != 0:
-#             stream.getc()
-#         return 1
 #
 #
 # cdef class SkipCalldataFieldParser(Parser):
