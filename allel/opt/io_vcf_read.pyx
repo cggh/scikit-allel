@@ -155,6 +155,24 @@ cdef class IntVector(object):
 
 
 ##########################################################################################
+# C string utilities
+
+
+cdef inline int cstr_search_sorted(char* query, char** compare, int n_items) nogil:
+    cdef:
+        int i
+
+    # TODO binary search
+
+    # simple scan for now
+    for i in range(n_items):
+        if strcmp(query, compare[i]) == 0:
+            return i
+
+    return -1
+
+
+##########################################################################################
 # General I/O
 
 
@@ -1111,18 +1129,18 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 
 cdef int vcf_filter_parse(InputStreamBase stream,
                           VCFContext context,
-                          ) nogil except -1:
+                          char** filter_ptrs,
+                          int n_filters,
+                          np.uint8_t[:, :] memory) nogil except -1:
     cdef:
         int filter_index
 
-    # debug('filter_parse: enter', context)
-
     # reset temporary buffer
-    temp_clear(context)
+    context.temp.clear()
 
     # check for explicit missing value
     if stream.c == PERIOD:
-        # debug('filter_parse: found missing value', context)
+        # treat leading period as missing, regardless of what comes next
 
         while True:
 
@@ -1143,23 +1161,23 @@ cdef int vcf_filter_parse(InputStreamBase stream,
             # advance input stream
             stream.getc()
 
-        return 1
+        # bail out early
+        return 0
 
     while True:
-        # debug('filter_parse: parsing filters', context)
 
         if stream.c == 0:
-            filter_store(self, context)
+            vcf_filter_store(context, filter_ptrs, n_filters, memory)
             context.state = VCFState.EOF
             break
 
         elif stream.c == LF or stream.c == CR:
-            filter_store(self, context)
+            vcf_filter_store(context, filter_ptrs, n_filters, memory)
             context.state = VCFState.EOL
             break
 
         elif stream.c == TAB:
-            filter_store(self, context)
+            vcf_filter_store(context, filter_ptrs, n_filters, memory)
             # advance input stream beyond tab
             stream.getc()
             context.state += 1
@@ -1167,17 +1185,39 @@ cdef int vcf_filter_parse(InputStreamBase stream,
 
         elif stream.c == COMMA or stream.c == COLON or stream.c == SEMICOLON:
             # some of these delimiters are not strictly kosher, but have seen them
-            filter_store(self, context)
-            temp_clear(context)
+            vcf_filter_store(context, filter_ptrs, n_filters, memory)
+            context.temp.clear()
 
         else:
-            temp_append(context)
+            context.temp.append(stream.c)
 
         # advance input stream
         stream.getc()
 
     return 1
 
+
+cdef int vcf_filter_store(VCFContext context,
+                          char** filter_ptrs,
+                          int n_filters,
+                          np.uint8_t[:, :] memory) nogil except -1:
+    cdef:
+        int filter_index
+        int i
+        char* f
+
+    if context.temp.size == 0:
+        warn('empty FILTER', context)
+        return 0
+
+    context.temp.terminate()
+
+    # search through filters to find index
+    filter_index = cstr_search_sorted(context.temp, filter_ptrs, n_filters)
+
+    # store value
+    if filter_index >= 0:
+        memory[context.chunk_variant_index, filter_index] = 1
 
 
 cdef class VCFInfoParser(VCFFieldParserBase):
@@ -1570,29 +1610,6 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #         stream.getc()
 #
 #
-# cdef inline int filter_store(FilterParser self,
-#                              ParserContext context) nogil except -1:
-#     cdef:
-#         int filter_index
-#         int i
-#         char* f
-#
-#     if context.temp_size == 0:
-#         warn('empty FILTER', context)
-#         return 0
-#
-#     temp_terminate(context)
-#
-#     # search through filters to find index
-#     filter_index = search_sorted(context.temp, context.filter_ptrs, context.n_filters)
-#
-#     # store value
-#     if filter_index >= 0:
-#         self.memory[context.chunk_variant_index, filter_index] = 1
-#
-#     return 1
-#
-#
 # cdef class InfoParser(Parser):
 #
 #     # cdef tuple infos
@@ -1687,7 +1704,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #             stream.getc()
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     while True:
 #
@@ -1724,20 +1741,6 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #             stream.getc()
 #
 #
-# cdef inline int search_sorted(char* query, char** compare, int n_items) nogil:
-#     cdef:
-#         int i
-#
-#     # TODO smarter search
-#
-#     # simple scan for now
-#     for i in range(n_items):
-#         if strcmp(query, compare[i]) == 0:
-#             return i
-#
-#     return -1
-#
-#
 # cdef inline int info_store(InfoParser self,
 #                            ParserContext context) nogil except -1:
 #     cdef:
@@ -1748,13 +1751,13 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #         # treat temp as key
 #
 #         # terminate temp
-#         temp_terminate(context)
+#         context.temp.terminate()
 #
 #         # search for index of current INFO key
 #         parser_index = search_sorted(context.temp, context.info_ptrs, context.n_infos)
 #
 #         # clear out temp for good measure
-#         temp_clear(context)
+#         context.temp.clear()
 #
 #         if parser_index >= 0:
 #             # obtain parser
@@ -1831,7 +1834,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     # debug('info_integer_parse', context)
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     while True:
 #
@@ -1845,7 +1848,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #
 #         elif stream.c == COMMA:
 #             info_integer_store(memory, number, context, value_index)
-#             temp_clear(context)
+#             context.temp.clear()
 #             value_index += 1
 #
 #         else:
@@ -1854,7 +1857,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #         stream.getc()
 #
 #     # reset temporary buffer here to indicate new field
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     return 1
 #
@@ -1917,7 +1920,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     # debug('info_floating_parse', context)
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     while True:
 #
@@ -1931,7 +1934,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #
 #         elif stream.c == COMMA:
 #             info_floating_store(memory, number, context, value_index)
-#             temp_clear(context)
+#             context.temp.clear()
 #             value_index += 1
 #
 #         else:
@@ -1940,7 +1943,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #         stream.getc()
 #
 #     # reset temporary buffer here to indicate new field
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     return 1
 #
@@ -2081,7 +2084,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     # debug('format_parse: enter', context)
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #     context.variant_n_formats = 0
 #
 #     while True:
@@ -2134,7 +2137,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     else:
 #
 #         # terminate string
-#         temp_terminate(context)
+#         context.temp.terminate()
 #
 #         # find parser
 #         parser_index = search_sorted(context.temp, context.format_ptrs, context.n_formats)
@@ -2145,7 +2148,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #
 #     context.variant_calldata_parser_ptrs[format_index] = parser
 #
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     return 1
 #
@@ -2311,14 +2314,14 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     # debug('calldata_integer_parse: enter', context)
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     while True:
 #
 #         if stream.c == COMMA:
 #             # debug('calldata_integer_parse: COMMA', context)
 #             calldata_integer_store(memory, number, context, value_index)
-#             temp_clear(context)
+#             context.temp.clear()
 #             value_index += 1
 #
 #         elif stream.c == COLON or \
@@ -2374,13 +2377,13 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     # debug('calldata_floating_parse: enter', context)
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     while True:
 #
 #         if stream.c == COMMA:
 #             calldata_floating_store(memory, number, context, value_index)
-#             temp_clear(context)
+#             context.temp.clear()
 #             value_index += 1
 #
 #         elif stream.c == COLON or \
@@ -2498,14 +2501,14 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #     # debug('genotype_parse: enter', context)
 #
 #     # reset temporary buffer
-#     temp_clear(context)
+#     context.temp.clear()
 #
 #     while True:
 #
 #         if stream.c == SLASH or stream.c == PIPE:
 #             genotype_store(memory, context, allele_index)
 #             allele_index += 1
-#             temp_clear(context)
+#             context.temp.clear()
 #
 #         elif stream.c == COLON or \
 #                 stream.c == TAB or \
