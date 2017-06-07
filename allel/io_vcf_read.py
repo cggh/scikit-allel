@@ -67,7 +67,7 @@ import io
 import numpy as np
 
 
-from allel.opt.io_vcf_read import VCFChunkIterator
+from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 
 
 def debug(*msg):
@@ -136,8 +136,9 @@ def read_vcf(path,
     add_samples, fields = _prep_fields_arg(fields)
 
     # setup
-    headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types, numbers=numbers,
-                                      buffer_size=buffer_size, chunk_length=chunk_length)
+    headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types,
+                                      numbers=numbers,buffer_size=buffer_size,
+                                      chunk_length=chunk_length)
 
     # read all chunks into a list
     chunks = list(chunks)
@@ -285,8 +286,8 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        headers, chunks = read_vcf_chunks(input_path, fields=fields,
-                                          types=types, numbers=numbers, buffer_size=buffer_size,
+        headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
+                                          numbers=numbers, buffer_size=buffer_size,
                                           chunk_length=chunk_length)
 
         if add_samples and headers.samples:
@@ -423,32 +424,33 @@ def read_vcf_chunks(path,
                     fields=None,
                     types=None,
                     numbers=None,
-                    buffer_size=DEFAULT_BUFFER_SIZE,
-                    chunk_length=DEFAULT_CHUNK_LENGTH):
+                    chunk_length=DEFAULT_CHUNK_LENGTH,
+                    buffer_size=DEFAULT_BUFFER_SIZE):
     """TODO"""
 
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
         # N.B., GZipFile supports peek
-        buffered_reader = gzip.open(path, mode='rb')
-        return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
-                         buffer_size=buffer_size, chunk_length=chunk_length)
+        fileobj = gzip.open(path, mode='rb')
+        stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
+        return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
+                         chunk_length=chunk_length)
 
     elif isinstance(path, str):
         # assume no compression
-        buffered_reader = open(path, mode='rb', buffering=buffer_size)
-        return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
-                         buffer_size=buffer_size, chunk_length=chunk_length)
+        fileobj = open(path, mode='rb', buffering=buffer_size)
+        stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
+        return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
+                         chunk_length=chunk_length)
+
+    elif hasattr(path, 'readinto'):
+        fileobj = path
+        stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
+        return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
+                         chunk_length=chunk_length)
 
     else:
-        # assume some other binary file-like object
-        if not hasattr(path, 'peek'):
-            # need a buffered reader to support peek
-            buffered_reader = io.BufferedReader(path, buffer_size=buffer_size)
-        else:
-            buffered_reader = path
-        return _read_vcf(buffered_reader, fields=fields, types=types, numbers=numbers,
-                         buffer_size=buffer_size, chunk_length=chunk_length)
+        raise ValueError('path must be string or file-like, found %r' % path)
 
 
 FIXED_VARIANTS_FIELDS = (
@@ -797,10 +799,10 @@ def normalize_numbers(numbers, fields, headers):
 TEMP_BUFFER_SIZE = 2**12
 
 
-def _read_vcf(buffered_reader, fields, types, numbers, buffer_size, chunk_length):
+def _read_vcf(stream, fields, types, numbers, chunk_length):
 
     # read VCF headers
-    headers = read_vcf_headers(buffered_reader)
+    headers = read_vcf_headers(stream)
 
     # setup fields to read
     if fields is None:
@@ -825,34 +827,14 @@ def _read_vcf(buffered_reader, fields, types, numbers, buffer_size, chunk_length
     # debug('normalized numbers', numbers)
 
     # setup chunks iterator
-    chunks = VCFChunkIterator(input_file=buffered_reader,
-                              input_buffer_size=buffer_size,
+    chunks = VCFChunkIterator(stream,
                               chunk_length=chunk_length,
-                              temp_buffer_size=TEMP_BUFFER_SIZE,
                               headers=headers,
                               fields=fields,
                               types=types,
                               numbers=numbers)
 
     return headers, chunks
-
-
-def _binary_readline(buffered_reader):
-    # N.B., cannot do this with standard library text I/O because we don't want to advance
-    # the binary stream beyond exactly the number of bytes read for the header
-    line = []
-    c = buffered_reader.read(1)
-    while c and c != b'\n' and c != b'\r':
-        line.append(c)
-        c = buffered_reader.read(1)
-    line = b''.join(line)
-    line = str(line, 'ascii')
-    # cope with windows line terminators
-    if c == b'\r':
-        peek = buffered_reader.peek(1)
-        if peek[0] == ord(b'\n'):
-            buffered_reader.read(1)
-    return line
 
 
 # pre-compile some regular expressions
@@ -867,7 +849,8 @@ re_format_header = \
 VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
 
 
-def read_vcf_headers(buffered_reader):
+def read_vcf_headers(stream):
+    debug('read_vcf_headers: enter')
 
     # setup
     headers = []
@@ -877,7 +860,8 @@ def read_vcf_headers(buffered_reader):
     formats = dict()
 
     # read first header line
-    header = _binary_readline(buffered_reader)
+    header = str(stream.readline(), 'ascii')
+    debug('read_vcf_headers: first header: %r' % header)
 
     while header and header[0] == '#':
 
@@ -926,11 +910,12 @@ def read_vcf_headers(buffered_reader):
         elif header.startswith('#CHROM'):
 
             # parse out samples
-            samples = header.split('\t')[9:]
+            samples = header.strip().split('\t')[9:]
             break
 
         # read next header line
-        header = _binary_readline(buffered_reader)
+        header = str(stream.readline(), 'ascii')
+        debug('read_vcf_headers: next header: %r' % header)
 
     # check if we saw the mandatory header line or not
     if samples is None:

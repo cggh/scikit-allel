@@ -1,13 +1,12 @@
 # cython: language_level=3
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: initializedcheck=False
-# cython: nonecheck=False
 # cython: profile=False
 # cython: binding=False
 # cython: linetrace=False
-
+# cython: boundscheck=False
+# cython: wraparound=False
 """
+# cython: initializedcheck=False
+# cython: nonecheck=False
 # cython: profile=True
 # cython: linetrace=True
 # cython: binding=True
@@ -85,7 +84,7 @@ ctypedef fused floating:
 # Vectors
 
 
-cdef class CharVector(object):
+cdef class CharVector:
     """Dynamically-sized array of C chars."""
 
     cdef:
@@ -122,7 +121,7 @@ cdef class CharVector(object):
         return PyBytes_FromStringAndSize(self.data, self.size)
 
 
-cdef class IntVector(object):
+cdef class IntVector:
     """Dynamically-sized array of C ints."""
 
     cdef:
@@ -174,14 +173,14 @@ cdef inline int cstr_search_sorted(char* query, char** compare, int n_items) nog
 # General I/O
 
 
-cdef class InputStreamBase(object):
+cdef class InputStreamBase:
     """Abstract base class defining an input stream over C chars."""
 
     cdef:
         # character at the current position in the stream
         char c
 
-    cdef int getc(self) nogil except -1:
+    cdef int advance(self) nogil except -1:
         """Read the next character from the stream and store it in the `c` attribute."""
         pass
 
@@ -197,7 +196,7 @@ cdef class FileInputStream(InputStreamBase):
         char* buffer_end
         char* stream
 
-    def __cinit__(self, fileobj, buffer_size=2**14):
+    def __init__(self, fileobj, buffer_size=2**14):
         self.fileobj = fileobj
         self.buffer_size = buffer_size
         # initialise input buffer
@@ -205,9 +204,7 @@ cdef class FileInputStream(InputStreamBase):
         self.buffer_start = PyByteArray_AS_STRING(self.buffer)
         self.stream = self.buffer_start
         self._bufferup()
-        self.getc()
-
-    # CYTHON API: PRIVATE
+        self.advance()
 
     cdef int _bufferup(self) nogil except -1:
         """Read as many bytes as possible from the underlying file object into the
@@ -221,9 +218,7 @@ cdef class FileInputStream(InputStreamBase):
         else:
             self.stream = NULL
 
-    # CYTHON API: PUBLIC
-
-    cdef int getc(self) nogil except -1:
+    cdef int advance(self) nogil except -1:
         """Read the next character from the stream and store it in the `c` attribute."""
         if self.stream is self.buffer_end:
             self._bufferup()
@@ -246,22 +241,22 @@ cdef class FileInputStream(InputStreamBase):
             elif self.c == LF:
                 dest.append(LF)
                 # advance input stream beyond EOL
-                self.getc()
+                self.advance()
                 break
 
             elif self.c == CR:
                 # translate newdests
                 dest.append(LF)
                 # advance input stream beyond EOL
-                self.getc()
+                self.advance()
                 if self.c == LF:
                     # handle Windows CRLF
-                    self.getc()
+                    self.advance()
                 break
 
             else:
                 dest.append(self.c)
-                self.getc()
+                self.advance()
 
     cdef int read_lines_into(self, CharVector dest, int n) nogil except -1:
         """Read up to `n` lines into the `dest` buffer."""
@@ -290,12 +285,12 @@ cdef class CharVectorInputStream(InputStreamBase):
         int stream_index
         int vector_size
 
-    def __cinit__(self, CharVector vector):
+    def __init__(self, CharVector vector):
         self.vector = vector
         self.stream_index = 0
-        self.getc()
+        self.advance()
 
-    cdef int getc(self) nogil except -1:
+    cdef int advance(self) nogil except -1:
         if self.stream_index < self.vector.size:
             self.c = self.vector.data[self.stream_index]
             self.stream_index += 1
@@ -322,14 +317,13 @@ cdef enum VCFState:
     EOF
 
 
-cdef class VCFContext(object):
+cdef class VCFContext:
 
     cdef:
 
         # static attributes - should not change during parsing
         int chunk_length
         int n_samples
-        int ploidy
 
         # dynamic attributes - reflect current state during parsing
         int state  # overall parser state
@@ -348,12 +342,11 @@ cdef class VCFContext(object):
         CharVector chrom
         long pos
 
-    def __cinit__(self, int chunk_length, int n_samples, int ploidy):
+    def __cinit__(self, int chunk_length, int n_samples):
 
         # initialise static attributes
         self.chunk_length = chunk_length
         self.n_samples = n_samples
-        self.ploidy = ploidy
 
         # initialise dynamic state
         self.state = VCFState.CHROM
@@ -361,7 +354,6 @@ cdef class VCFContext(object):
         self.chunk_variant_index = -1
         self.sample_index = 0
         self.sample_field_index = 0
-        self.variant_n_formats = 0
         self.variant_format_indices = IntVector()
 
         # initialise temporary buffers
@@ -374,7 +366,7 @@ cdef class VCFContext(object):
         self.pos = -1
 
 
-cdef class VCFChunkIterator(object):
+cdef class VCFChunkIterator:
     """TODO"""
 
     cdef:
@@ -388,19 +380,18 @@ cdef class VCFChunkIterator(object):
                  headers,
                  fields,
                  types,
-                 numbers,
-                 ploidy=2):
+                 numbers):
 
         # store reference to input stream
         self.stream = stream
 
         # setup context
         n_samples = len(headers.samples)
-        self.context = VCFContext(chunk_length=chunk_length, n_samples=n_samples,
-                                  ploidy=ploidy)
+        self.context = VCFContext(chunk_length=chunk_length, n_samples=n_samples)
 
         # setup parser
-        self.parser = VCFChunkParser(fields=fields, types=types, numbers=numbers)
+        self.parser = VCFChunkParser(fields=fields, types=types, numbers=numbers,
+                                     chunk_length=chunk_length, n_samples=n_samples)
 
     def __iter__(self):
         return self
@@ -408,20 +399,22 @@ cdef class VCFChunkIterator(object):
     def __next__(self):
 
         # allocate arrays for next chunk
-        self.parser.malloc_chunk(self.context)
+        self.parser.malloc_chunk()
 
         # parse next chunk
         self.parser.parse(self.stream, self.context)
 
         # get the chunk
-        chunk = self.parser.make_chunk()
+        chunk = self.parser.make_chunk(self.context)
 
         return chunk
 
 
-cdef class VCFChunkParser(object):
+cdef class VCFChunkParser:
 
     cdef:
+        int chunk_length
+        int n_samples
         VCFFieldParserBase chrom_parser
         VCFFieldParserBase pos_parser
         VCFFieldParserBase id_parser
@@ -433,7 +426,9 @@ cdef class VCFChunkParser(object):
         VCFFieldParserBase format_parser
         VCFFieldParserBase calldata_parser
 
-    def __init__(self, fields, types, numbers):
+    def __init__(self, fields, types, numbers, chunk_length, n_samples):
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
 
         # copy so we don't modify someone else's data
         fields = set(fields)
@@ -446,20 +441,22 @@ cdef class VCFChunkParser(object):
         self._init_alt(fields, types, numbers)
         self._init_qual(fields, types)
         self._init_filter(fields)
-        self._init_info(self, fields, types, numbers)
-        self._init_format_calldata(self, fields, types, numbers)
+        self._init_info(fields, types, numbers)
+        self._init_format_calldata(fields, types, numbers)
 
         if fields:
             # shouldn't ever be any left over
             raise RuntimeError('unexpected fields left over: %r' % set(fields))
 
-    def _init_chrom(self, fields, types, numbers):
+    def _init_chrom(self, fields, types):
         """Setup CHROM parser."""
         if CHROM_FIELD in fields:
-            chrom_parser = VCFChromParser(dtype=types[CHROM_FIELD], store=True)
+            chrom_parser = VCFChromParser(dtype=types[CHROM_FIELD], store=True,
+                                          chunk_length=self.chunk_length)
             fields.remove(CHROM_FIELD)
         else:
-            chrom_parser = VCFChromParser(dtype=types[CHROM_FIELD], store=False)
+            chrom_parser = VCFChromParser(dtype=types[CHROM_FIELD], store=False,
+                                          chunk_length=self.chunk_length)
         chrom_parser.malloc_chunk()
         self.chrom_parser = chrom_parser
 
@@ -467,20 +464,23 @@ cdef class VCFChunkParser(object):
         """Setup POS parser."""
         if POS_FIELD in fields:
             if POS_FIELD in types:
+                t = types[POS_FIELD]
                 # TODO support user-provided type?
-                warn('Only int32 supported for POS field, ignoring requested type: %r'
-                     % types[POS_FIELD])
-            pos_parser = VCFPosParser(store=True)
+                if t != np.dtype('int32'):
+                    warn('only int32 supported for POS field, ignoring requested type: %r'
+                         % types[POS_FIELD])
+            pos_parser = VCFPosParser(store=True, chunk_length=self.chunk_length)
             fields.remove(POS_FIELD)
         else:
-            pos_parser = VCFPosParser(store=False)
+            pos_parser = VCFPosParser(store=False, chunk_length=self.chunk_length)
         pos_parser.malloc_chunk()
         self.pos_parser = pos_parser
 
     def _init_id(self, fields, types):
         """Setup ID parser."""
         if ID_FIELD in fields:
-            id_parser = VCFStringFieldParser(field=ID_FIELD, dtype=types[ID_FIELD])
+            id_parser = VCFStringFieldParser(key=b'ID', dtype=types[ID_FIELD],
+                                             chunk_length=self.chunk_length)
             fields.remove(ID_FIELD)
         else:
             id_parser = VCFSkipFieldParser()
@@ -490,7 +490,8 @@ cdef class VCFChunkParser(object):
     def _init_ref(self, fields, types):
         # setup REF parser
         if REF_FIELD in fields:
-            ref_parser = VCFStringFieldParser(field=REF_FIELD, dtype=types[REF_FIELD])
+            ref_parser = VCFStringFieldParser(key=b'REF', dtype=types[REF_FIELD],
+                                              chunk_length=self.chunk_length)
             fields.remove(REF_FIELD)
         else:
             ref_parser = VCFSkipFieldParser()
@@ -502,7 +503,7 @@ cdef class VCFChunkParser(object):
         if ALT_FIELD in fields:
             t = types[ALT_FIELD]
             n = numbers[ALT_FIELD]
-            alt_parser = VCFAltParser(dtype=t, number=n)
+            alt_parser = VCFAltParser(dtype=t, number=n, chunk_length=self.chunk_length)
             fields.remove(ALT_FIELD)
         else:
             alt_parser = VCFSkipFieldParser()
@@ -513,10 +514,12 @@ cdef class VCFChunkParser(object):
         """Setup QUAL parser."""
         if QUAL_FIELD in fields:
             if QUAL_FIELD in types:
+                t = types[QUAL_FIELD]
                 # TODO support user-provided type?
-                warn('Only float32 supported for QUAL field, ignoring requested type: %r'
-                     % types[QUAL_FIELD])
-            qual_parser = VCFQualParser()
+                if t != np.dtype('float32'):
+                    warn('only float32 supported for QUAL field, ignoring requested '
+                         'type: %r' % types[QUAL_FIELD])
+            qual_parser = VCFQualParser(chunk_length=self.chunk_length)
             fields.remove(QUAL_FIELD)
         else:
             qual_parser = VCFSkipFieldParser()
@@ -533,7 +536,8 @@ cdef class VCFChunkParser(object):
                 fields.remove(field)
         # debug(filter_keys, context)
         if filter_keys:
-            filter_parser = VCFFilterParser(filters=filter_keys)
+            filter_parser = VCFFilterParser(filters=filter_keys,
+                                            chunk_length=self.chunk_length)
         else:
             filter_parser = VCFSkipFieldParser()
         filter_parser.malloc_chunk()
@@ -555,7 +559,8 @@ cdef class VCFChunkParser(object):
                 info_numbers[key] = numbers[field]
         if info_keys:
             info_parser = VCFInfoParser(infos=info_keys, types=info_types,
-                                        numbers=info_numbers)
+                                        numbers=info_numbers,
+                                        chunk_length=self.chunk_length)
         else:
             info_parser = VCFSkipFieldParser()
         info_parser.malloc_chunk()
@@ -575,12 +580,14 @@ cdef class VCFChunkParser(object):
                 format_types[key] = types[field]
                 format_numbers[key] = numbers[field]
         if format_keys:
-            format_parser = VCFFormatParser()
+            format_parser = VCFFormatParser(formats=format_keys)
             calldata_parser = VCFCallDataParser(formats=format_keys,
                                                 types=format_types,
-                                                numbers=format_numbers)
+                                                numbers=format_numbers,
+                                                chunk_length=self.chunk_length,
+                                                n_samples=self.n_samples)
         else:
-            format_parser = VCFSkipFieldParser()
+            format_parser = VCFSkipFieldParser(key=b'FORMAT')
             calldata_parser = VCFSkipAllCallDataParser()
         format_parser.malloc_chunk()
         calldata_parser.malloc_chunk()
@@ -601,11 +608,11 @@ cdef class VCFChunkParser(object):
 
                     # handle line terminators
                     if stream.c == LF:
-                        stream.getc()
+                        stream.advance()
                     elif stream.c == CR:
-                        stream.getc()
+                        stream.advance()
                         if stream.c == LF:
-                            stream.getc()
+                            stream.advance()
                     else:
                         # shouldn't ever happen
                         warn('unexpected EOL character', context)
@@ -654,16 +661,16 @@ cdef class VCFChunkParser(object):
                     warn('unexpected parser state', context)
                     break
 
-    def malloc_chunk(self, VCFContext context):
-        self.chrom_parser.malloc_chunk(context)
-        self.pos_parser.malloc_chunk(context)
-        self.id_parser.malloc_chunk(context)
-        self.ref_parser.malloc_chunk(context)
-        self.alt_parser.malloc_chunk(context)
-        self.qual_parser.malloc_chunk(context)
-        self.filter_parser.malloc_chunk(context)
-        self.format_parser.malloc_chunk(context)
-        self.calldata_parser.malloc_chunk(context)
+    def malloc_chunk(self):
+        self.chrom_parser.malloc_chunk()
+        self.pos_parser.malloc_chunk()
+        self.id_parser.malloc_chunk()
+        self.ref_parser.malloc_chunk()
+        self.alt_parser.malloc_chunk()
+        self.qual_parser.malloc_chunk()
+        self.filter_parser.malloc_chunk()
+        self.format_parser.malloc_chunk()
+        self.calldata_parser.malloc_chunk()
 
     def make_chunk(self, VCFContext context):
         chunk_length = context.chunk_variant_index + 1
@@ -690,29 +697,49 @@ cdef class VCFChunkParser(object):
             return None
 
 
-cdef class VCFFieldParserBase(object):
+cdef class VCFFieldParserBase:
     """Abstract base class for top-level field parsers."""
 
     cdef:
-        char* key
-        int number
-        object values
-        object fill
-        object dtype
+        bytes key
+        np.dtype dtype
         int itemsize
+        int number
+        object fill
+        int chunk_length
+        np.ndarray values
+
+    def __init__(self, key=None, dtype=None, number=1, fill=None, chunk_length=0):
+        self.key = key
+        if dtype is not None:
+            dtype = np.dtype(dtype)
+            self.itemsize = dtype.itemsize
+        else:
+            self.itemsize = 0
+        self.dtype = dtype
+        self.number = number
+        self.fill = fill
+        self.chunk_length = chunk_length
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         pass
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         pass
 
     def make_chunk(self, chunk, limit=None):
-        pass
+        field = 'variants/' + str(self.key, 'ascii')
+        values = self.values
+        if self.values.ndim > 1 and self.number == 1:
+            values = values.squeeze(axis=1)
+        chunk[field] = values[:limit]
 
 
 cdef class VCFSkipFieldParser(VCFFieldParserBase):
     """Parser to skip a tab-delimited field."""
+
+    def __init__(self, key):
+        super(VCFSkipFieldParser, self).__init__(key=key)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
 
@@ -727,14 +754,14 @@ cdef class VCFSkipFieldParser(VCFFieldParserBase):
                 break
 
             elif stream.c == TAB:
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         pass
 
     def make_chunk(self, chunk, limit=None):
@@ -755,10 +782,10 @@ cdef class VCFChromParser(VCFFieldParserBase):
         np.uint8_t[:] memory
         bint store
 
-    def __init__(self, dtype, bint store):
-        if store:
-            self.dtype = check_string_dtype(dtype)
-            self.itemsize = self.dtype.itemsize
+    def __init__(self, dtype, store, chunk_length):
+        dtype = check_string_dtype(dtype)
+        super(VCFChromParser, self).__init__(key=b'CHROM', dtype=dtype, number=1,
+                                             chunk_length=chunk_length)
         self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -790,7 +817,7 @@ cdef class VCFChromParser(VCFFieldParserBase):
 
             elif stream.c == TAB:
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 # advance to next field
                 context.state += 1
                 break
@@ -810,11 +837,11 @@ cdef class VCFChromParser(VCFFieldParserBase):
                     chars_stored += 1
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         if self.store:
-            self.values = np.zeros(context.chunk_length, dtype=self.dtype)
+            self.values = np.zeros(self.chunk_length, dtype=self.dtype)
             self.memory = self.values.view('u1')
 
     def make_chunk(self, chunk, limit=None):
@@ -829,7 +856,9 @@ cdef class VCFPosParser(VCFFieldParserBase):
         np.int32_t[:] memory
         bint store
 
-    def __init__(self, bint store):
+    def __init__(self, store, chunk_length):
+        super(VCFPosParser, self).__init__(key=b'POS', dtype='int32', number=1,
+                                           fill=-1, chunk_length=chunk_length)
         self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -851,7 +880,7 @@ cdef class VCFPosParser(VCFFieldParserBase):
                 break
 
             elif stream.c == TAB:
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
@@ -859,7 +888,7 @@ cdef class VCFPosParser(VCFFieldParserBase):
                 context.temp.append(stream.c)
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
         # parse string as integer
         parsed = vcf_strtol(context.temp, context, &value)
@@ -871,9 +900,9 @@ cdef class VCFPosParser(VCFFieldParserBase):
             # store value in chunk
             self.memory[context.chunk_variant_index] = value
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         if self.store:
-            self.values = np.zeros(context.chunk_length, dtype='int32')
+            self.values = np.zeros(self.chunk_length, dtype='int32')
             self.memory = self.values
             self.memory[:] = -1
 
@@ -885,14 +914,12 @@ cdef class VCFPosParser(VCFFieldParserBase):
 cdef class VCFStringFieldParser(VCFFieldParserBase):
     """TODO"""
 
-    cdef:
-        np.uint8_t[:] memory
-        object field
+    cdef np.uint8_t[:] memory
 
-    def __init__(self, field, dtype):
-        self.field = field
-        self.dtype = check_string_dtype(dtype)
-        self.itemsize = self.dtype.itemsize
+    def __init__(self, key, dtype, chunk_length):
+        dtype = check_string_dtype(dtype)
+        super(VCFStringFieldParser, self).__init__(key=key, dtype=dtype, number=1,
+                                                   chunk_length=chunk_length)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -913,7 +940,7 @@ cdef class VCFStringFieldParser(VCFFieldParserBase):
 
             elif stream.c == TAB:
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 # advance to next field
                 context.state += 1
                 break
@@ -927,16 +954,13 @@ cdef class VCFStringFieldParser(VCFFieldParserBase):
                 chars_stored += 1
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
         return 1
 
-    def malloc_chunk(self, VCFContext context):
-        self.values = np.zeros(context.chunk_length, dtype=self.dtype)
+    def malloc_chunk(self):
+        self.values = np.zeros(self.chunk_length, dtype=self.dtype)
         self.memory = self.values.view('u1')
-
-    def make_chunk(self, chunk, limit=None):
-        chunk[self.field] = self.values[:limit]
 
 
 cdef class VCFAltParser(VCFFieldParserBase):
@@ -944,10 +968,10 @@ cdef class VCFAltParser(VCFFieldParserBase):
 
     cdef np.uint8_t[:] memory
 
-    def __init__(self, dtype, number):
-        self.dtype = check_string_dtype(dtype)
-        self.itemsize = self.dtype.itemsize
-        self.number = number
+    def __init__(self, dtype, number, chunk_length):
+        dtype = check_string_dtype(dtype)
+        super(VCFAltParser, self).__init__(key=b'ALT', dtype=dtype, number=number,
+                                           chunk_length=chunk_length)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -973,7 +997,7 @@ cdef class VCFAltParser(VCFFieldParserBase):
                 break
 
             if stream.c == TAB:
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
@@ -994,24 +1018,22 @@ cdef class VCFAltParser(VCFFieldParserBase):
                 chars_stored += 1
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.number)
         self.values = np.zeros(shape, dtype=self.dtype, order='C')
         self.memory = self.values.reshape(-1).view('u1')
-
-    def make_chunk(self, chunk, limit=None):
-        values = self.values[:limit]
-        if self.number == 1:
-            values = values.squeeze(axis=1)
-        chunk[ALT_FIELD] = values
 
 
 cdef class VCFQualParser(VCFFieldParserBase):
     """TODO"""
 
     cdef np.float32_t[:] memory
+
+    def __init__(self, chunk_length):
+        super(VCFQualParser, self).__init__(key=b'QUAL', dtype='float32', number=1,
+                                            fill=NAN, chunk_length=chunk_length)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1033,7 +1055,7 @@ cdef class VCFQualParser(VCFFieldParserBase):
 
             elif stream.c == TAB:
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
@@ -1041,7 +1063,7 @@ cdef class VCFQualParser(VCFFieldParserBase):
                 context.temp.append(stream.c)
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
         # parse string as floating
         parsed = vcf_strtod(context.temp, context, &value)
@@ -1050,13 +1072,10 @@ cdef class VCFQualParser(VCFFieldParserBase):
             # store value
             self.memory[context.chunk_variant_index] = value
 
-    def malloc_chunk(self, VCFContext context):
-        self.values = np.empty(context.chunk_length, dtype='float32')
+    def malloc_chunk(self):
+        self.values = np.empty(self.chunk_length, dtype='float32')
         self.memory = self.values
         self.memory[:] = NAN
-
-    def make_chunk(self, chunk, limit=None):
-        chunk[QUAL_FIELD] = self.values[:limit]
 
 
 cdef class VCFFilterParser(VCFFieldParserBase):
@@ -1066,18 +1085,23 @@ cdef class VCFFilterParser(VCFFieldParserBase):
         np.uint8_t[:, :] memory
         tuple filters
         int n_filters
-        char** filter_ptrs
+        char** filters_c
 
-    def __cinit__(self, filters):
+    def __cinit__(self, filters, chunk_length):
         self.filters = tuple(sorted(filters))
         self.n_filters = len(self.filters)
-        self.filter_ptrs = <char**> malloc(sizeof(char*) * self.n_filters)
+        self.filters_c = <char**> malloc(sizeof(char*) * self.n_filters)
         for i in range(self.n_filters):
-            self.filter_ptrs[i] = <char*> self.filters[i]
+            self.filters_c[i] = <char*> self.filters[i]
+
+    def __init__(self, filters, chunk_length):
+        super(VCFFilterParser, self).__init__(key=b'FILTER', dtype='bool',
+                                              number=len(filters), fill=0,
+                                              chunk_length=chunk_length)
 
     def __dealloc__(self):
-        if self.filter_ptrs is not NULL:
-            free(self.filter_ptrs)
+        if self.filters_c is not NULL:
+            free(self.filters_c)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1106,7 +1130,7 @@ cdef class VCFFilterParser(VCFFieldParserBase):
             elif stream.c == TAB:
                 self.parse_filter(context)
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
@@ -1119,7 +1143,7 @@ cdef class VCFFilterParser(VCFFieldParserBase):
                 context.temp.append(stream.c)
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
         return 1
 
@@ -1139,12 +1163,12 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 
             elif stream.c == TAB:
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
     cdef int parse_filter(self, VCFContext context) nogil except -1:
         cdef:
@@ -1159,15 +1183,15 @@ cdef class VCFFilterParser(VCFFieldParserBase):
         context.temp.terminate()
 
         # search through filters to find index
-        filter_index = cstr_search_sorted(context.temp.data, self.filter_ptrs,
+        filter_index = cstr_search_sorted(context.temp.data, self.filters_c,
                                           self.n_filters)
 
         # store value
         if filter_index >= 0:
             self.memory[context.chunk_variant_index, filter_index] = 1
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.n_filters)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_filters)
         self.values = np.zeros(shape, dtype=bool)
         self.memory = self.values.view('u1')
 
@@ -1188,59 +1212,62 @@ cdef class VCFInfoParser(VCFFieldParserBase):
     cdef:
         tuple infos
         int n_infos
-        char** info_ptrs
+        char** infos_c
         tuple info_parsers
-        PyObject** info_parser_ptrs
+        PyObject** info_parsers_c
         VCFInfoParserBase skip_parser
 
-    def __cinit__(self, infos, types, numbers):
+    def __cinit__(self, infos, types, numbers, chunk_length):
 
         # setup INFO keys
         self.infos = tuple(sorted(infos))
         self.n_infos = len(self.infos)
 
         # setup INFO keys as C strings for nogil searching
-        self.info_ptrs = <char**> malloc(sizeof(char*) * self.n_infos)
+        self.infos_c = <char**> malloc(sizeof(char*) * self.n_infos)
         for i in range(self.n_infos):
-            self.info_ptrs[i] = <char*> self.infos[i]
+            self.infos_c[i] = <char*> self.infos[i]
 
         # setup INFO parsers
         info_parsers = list()
-        self.skip_parser = VCFInfoSkipParser()
+        self.skip_parser = VCFInfoSkipParser(key=None)
         for key in self.infos:
             t = types[key]
             n = numbers[key]
             if t == np.dtype(bool) or n == 0:
-                parser = VCFInfoFlagParser(key)
+                parser = VCFInfoFlagParser(key, chunk_length=chunk_length)
             elif t == np.dtype('int32'):
-                parser = VCFInfoInt32Parser(key, fill=-1, number=n)
+                parser = VCFInfoInt32Parser(key, fill=-1, number=n, chunk_length=chunk_length)
             elif t == np.dtype('int64'):
-                parser = VCFInfoInt64Parser(key, fill=-1, number=n)
+                parser = VCFInfoInt64Parser(key, fill=-1, number=n, chunk_length=chunk_length)
             elif t == np.dtype('float32'):
-                parser = VCFInfoFloat32Parser(key, fill=NAN, number=n)
+                parser = VCFInfoFloat32Parser(key, fill=NAN, number=n, chunk_length=chunk_length)
             elif t == np.dtype('float64'):
-                parser = VCFInfoFloat64Parser(key, fill=NAN, number=n)
+                parser = VCFInfoFloat64Parser(key, fill=NAN, number=n, chunk_length=chunk_length)
             elif t == np.dtype(bool):
-                parser = VCFInfoFlagParser(key)
+                parser = VCFInfoFlagParser(key, chunk_length=chunk_length)
             elif t.kind == 'S':
-                parser = VCFInfoStringParser(key, dtype=t, number=n)
+                parser = VCFInfoStringParser(key, dtype=t, number=n, chunk_length=chunk_length)
             else:
-                parser = self.skip_parser
+                parser = VCFInfoSkipParser(key)
                 warnings.warn('type %s not supported for INFO field %r, field will be '
                               'skipped' % (t, key))
             info_parsers.append(parser)
         self.info_parsers = tuple(info_parsers)
 
         # store pointers to parsers for nogil trickery
-        self.info_parser_ptrs = <PyObject**> malloc(sizeof(PyObject*) * self.n_infos)
+        self.info_parsers_c = <PyObject**> malloc(sizeof(PyObject*) * self.n_infos)
         for i in range(self.n_infos):
-            self.info_parser_ptrs[i] = <PyObject*> self.info_parsers[i]
+            self.info_parsers_c[i] = <PyObject*> self.info_parsers[i]
+
+    def __init__(self, infos, types, numbers, chunk_length):
+        super(VCFInfoParser, self).__init__(key=b'INFO', chunk_length=chunk_length)
 
     def __dealloc__(self):
-        if self.info_ptrs is not NULL:
-            free(self.info_ptrs)
-        if self.info_parser_ptrs is not NULL:
-            free(self.info_parser_ptrs)
+        if self.infos_c is not NULL:
+            free(self.infos_c)
+        if self.info_parsers_c is not NULL:
+            free(self.info_parsers_c)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
 
@@ -1274,7 +1301,7 @@ cdef class VCFInfoParser(VCFFieldParserBase):
                     # handle flag
                     self.parse_info(stream, context)
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
@@ -1284,11 +1311,11 @@ cdef class VCFInfoParser(VCFFieldParserBase):
                     self.parse_info(stream, context)
                 else:
                     warn('missing INFO key', context)
-                stream.getc()
+                stream.advance()
 
             elif stream.c == EQUALS:
                 # advance input stream beyond '='
-                stream.getc()
+                stream.advance()
                 if context.info_key.size > 0:
                     self.parse_info(stream, context)
                 else:
@@ -1298,7 +1325,7 @@ cdef class VCFInfoParser(VCFFieldParserBase):
             else:
 
                 context.info_key.append(stream.c)
-                stream.getc()
+                stream.advance()
 
     cdef int parse_missing(self,
                            InputStreamBase stream,
@@ -1318,12 +1345,12 @@ cdef class VCFInfoParser(VCFFieldParserBase):
 
             elif stream.c == TAB:
                 # advance input stream beyond tab
-                stream.getc()
+                stream.advance()
                 context.state += 1
                 break
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
     cdef int parse_info(self,
                         InputStreamBase stream,
@@ -1337,7 +1364,7 @@ cdef class VCFInfoParser(VCFFieldParserBase):
         context.info_key.terminate()
 
         # search for index of current INFO key
-        parser_index = cstr_search_sorted(context.info_key.data, self.info_ptrs,
+        parser_index = cstr_search_sorted(context.info_key.data, self.infos_c,
                                           self.n_infos)
 
         # clear out key for good measure
@@ -1345,12 +1372,12 @@ cdef class VCFInfoParser(VCFFieldParserBase):
 
         if parser_index >= 0:
             # obtain parser, use trickery for nogil
-            parser = self.info_parser_ptrs[parser_index]
+            parser = self.info_parsers_c[parser_index]
             (<VCFInfoParserBase> parser).parse(stream, context)
         else:
             self.skip_parser.parse(stream, context)
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         for parser in self.info_parsers:
             parser.malloc_chunk()
 
@@ -1359,27 +1386,30 @@ cdef class VCFInfoParser(VCFFieldParserBase):
             parser.make_chunk(chunk, limit=limit)
 
 
-cdef class VCFInfoParserBase(object):
+cdef class VCFInfoParserBase:
     """TODO"""
 
     cdef:
         bytes key
-        object dtype
+        np.dtype dtype
         int itemsize
         int number
         object fill
-        object values
+        np.ndarray values
+        int chunk_length
 
-    def __init__(self, key=None, dtype=None, number=1, fill=0):
+    def __init__(self, key=None, dtype=None, number=1, fill=0, chunk_length=0):
         self.key = key
         if dtype is not None:
             dtype = np.dtype(dtype)
+            self.dtype = dtype
             self.itemsize = dtype.itemsize
         else:
             self.dtype = dtype
             self.itemsize = 0
         self.number = number
         self.fill = fill
+        self.chunk_length = chunk_length
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         pass
@@ -1397,15 +1427,15 @@ cdef class VCFInfoInt32Parser(VCFInfoParserBase):
 
     cdef np.int32_t[:, :] memory
 
-    def __init__(self, key, number=1, fill=-1):
-        super(VCFInfoInt32Parser, self).__init__(key, dtype='int32', number=number,
-                                                 fill=fill)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int32'
+        super(VCFInfoInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_info_parse_integer(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -1416,15 +1446,15 @@ cdef class VCFInfoInt64Parser(VCFInfoParserBase):
 
     cdef np.int64_t[:, :] memory
 
-    def __init__(self, key, number=1, fill=-1):
-        super(VCFInfoInt64Parser, self).__init__(key, dtype='int64', number=number,
-                                                 fill=fill)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int64'
+        super(VCFInfoInt64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_info_parse_integer(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -1435,15 +1465,15 @@ cdef class VCFInfoFloat32Parser(VCFInfoParserBase):
 
     cdef np.float32_t[:, :] memory
 
-    def __init__(self, key, number=1, fill=NAN):
-        super(VCFInfoFloat32Parser, self).__init__(key, dtype='float32', number=number,
-                                                   fill=fill)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'float32'
+        super(VCFInfoFloat32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_info_parse_floating(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -1454,15 +1484,15 @@ cdef class VCFInfoFloat64Parser(VCFInfoParserBase):
 
     cdef np.float64_t[:, :] memory
 
-    def __init__(self, key, number=1, fill=NAN):
-        super(VCFInfoFloat64Parser, self).__init__(key, dtype='float64', number=number,
-                                                   fill=fill)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'float64'
+        super(VCFInfoFloat64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_info_parse_floating(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -1473,8 +1503,9 @@ cdef class VCFInfoFlagParser(VCFInfoParserBase):
 
     cdef np.uint8_t[:] memory
 
-    def __init__(self, key):
-        super(VCFInfoFlagParser, self).__init__(key, dtype='uint8')
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'uint8'
+        super(VCFInfoFlagParser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         # nothing to parse
@@ -1485,15 +1516,15 @@ cdef class VCFInfoFlagParser(VCFInfoParserBase):
                 stream.c != LF and \
                 stream.c != CR and \
                 stream.c != 0:
-            stream.getc()
+            stream.advance()
 
     def make_chunk(self, chunk, limit=None):
         # override to view as bool array
         field = 'variants/' + str(self.key, 'ascii')
         chunk[field] = self.values[:limit].view(bool)
 
-    def malloc_chunk(self, VCFContext context):
-        self.values = np.empty(context.chunk_length, dtype=self.dtype)
+    def malloc_chunk(self):
+        self.values = np.empty(self.chunk_length, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -1503,9 +1534,9 @@ cdef class VCFInfoStringParser(VCFInfoParserBase):
 
     cdef np.uint8_t[:] memory
 
-    def __init__(self, key, dtype, number=1):
-        dtype = check_string_dtype(dtype)
-        super(VCFInfoStringParser, self).__init__(key, dtype=dtype, number=number)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = check_string_dtype(kwargs.get('dtype'))
+        super(VCFInfoStringParser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1547,16 +1578,19 @@ cdef class VCFInfoStringParser(VCFInfoParserBase):
                 chars_stored += 1
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.number)
         self.values = np.zeros(shape, dtype=self.dtype)
         self.memory = self.values.reshape(-1).view('u1')
 
 
 cdef class VCFInfoSkipParser(VCFInfoParserBase):
     """TODO"""
+
+    def __init__(self, *args, **kwargs):
+        super(VCFInfoSkipParser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         # ensure we advance the end of the field
@@ -1565,9 +1599,9 @@ cdef class VCFInfoSkipParser(VCFInfoParserBase):
                 stream.c != LF and \
                 stream.c != CR and \
                 stream.c != 0:
-            stream.getc()
+            stream.advance()
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         pass
 
     def make_chunk(self, chunk, limit=None):
@@ -1601,7 +1635,7 @@ cdef int vcf_info_parse_integer(InputStreamBase stream,
         else:
             context.info_val.append(stream.c)
 
-        stream.getc()
+        stream.advance()
 
 
 cdef int vcf_info_store_integer(VCFContext context,
@@ -1650,7 +1684,7 @@ cdef int vcf_info_parse_floating(InputStreamBase stream,
         else:
             context.info_val.append(stream.c)
 
-        stream.getc()
+        stream.advance()
 
 
 cdef int vcf_info_store_floating(VCFContext context,
@@ -1682,7 +1716,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
     cdef:
         tuple formats
         int n_formats
-        char** format_ptrs
+        char** formats_c
 
     def __cinit__(self, formats):
 
@@ -1691,13 +1725,16 @@ cdef class VCFFormatParser(VCFFieldParserBase):
         self.n_formats = len(self.formats)
 
         # setup FORMAT keys as C strings for nogil searching
-        self.format_ptrs = <char**> malloc(sizeof(char*) * self.n_formats)
+        self.formats_c = <char**> malloc(sizeof(char*) * self.n_formats)
         for i in range(self.n_formats):
-            self.format_ptrs[i] = <char*> self.formats[i]
+            self.formats_c[i] = <char*> self.formats[i]
+
+    def __init__(self, formats):
+        super(VCFFormatParser, self).__init__(key=b'FORMAT')
 
     def __dealloc__(self):
-        if self.format_ptrs is not NULL:
-            free(self.format_ptrs)
+        if self.formats_c is not NULL:
+            free(self.formats_c)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1723,7 +1760,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
                 self.store_format(context)
                 # we're done here, advance to next field
                 context.state += 1
-                stream.getc()
+                stream.advance()
                 break
 
             elif stream.c == COLON:
@@ -1733,7 +1770,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
                 context.temp.append(stream.c)
 
             # advance to next character
-            stream.getc()
+            stream.advance()
 
     cdef int store_format(self, VCFContext context) nogil except -1:
         cdef int format_index
@@ -1750,7 +1787,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
         context.temp.terminate()
 
         # find format index
-        format_index = cstr_search_sorted(context.temp.data, self.format_ptrs,
+        format_index = cstr_search_sorted(context.temp.data, self.formats_c,
                                           self.n_formats)
 
         # add to vector of indices for the current variant
@@ -1774,28 +1811,32 @@ cdef class VCFSkipAllCallDataParser(VCFFieldParserBase):
                 break
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
 
-cdef class VCFCallDataParser(object):
+cdef class VCFCallDataParser(VCFFieldParserBase):
     """TODO"""
 
     cdef:
         tuple formats
         int n_formats
         tuple parsers
-        PyObject** parser_ptrs
+        PyObject** parsers_c
         VCFCallDataParserBase skip_parser
+        int n_samples
 
-    def __cinit__(self, formats, types, numbers):
+    def __cinit__(self, formats, types, numbers, chunk_length, n_samples):
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
 
         # setup formats
         self.formats = tuple(sorted(formats))
         self.n_formats = len(self.formats)
 
         # setup parsers
-        self.skip_parser = VCFCallDataSkipParser()
+        self.skip_parser = VCFCallDataSkipParser(key=None)
         parsers = list()
+        kwds = dict(chunk_length=chunk_length, n_samples=n_samples)
         for key in self.formats:
             t = types[key]
             n = numbers[key]
@@ -1804,13 +1845,13 @@ cdef class VCFCallDataParser(object):
             if isinstance(t, str) and t.startswith('genotype/'):
                 t = np.dtype(t.split('/')[1])
                 if t == np.dtype('int8'):
-                    parser = VCFGenotypeInt8Parser(key, fill=-1)
+                    parser = VCFGenotypeInt8Parser(key, number=n, fill=-1, **kwds)
                 elif t == np.dtype('int16'):
-                    parser = VCFGenotypeInt16Parser(key, fill=-1)
+                    parser = VCFGenotypeInt16Parser(key, number=n, fill=-1, **kwds)
                 elif t == np.dtype('int32'):
-                    parser = VCFGenotypeInt32Parser(key, fill=-1)
+                    parser = VCFGenotypeInt32Parser(key, number=n, fill=-1, **kwds)
                 elif t == np.dtype('int64'):
-                    parser = VCFGenotypeInt64Parser(key, fill=-1)
+                    parser = VCFGenotypeInt64Parser(key, number=n, fill=-1, **kwds)
                 else:
                     warnings.warn('type %r not supported for genotype field %r, '
                                   'field will be skipped' % (t, key))
@@ -1818,34 +1859,34 @@ cdef class VCFCallDataParser(object):
 
             # special handling of GT field
             elif key == b'GT' and t == np.dtype('int8'):
-                parser = VCFGenotypeInt8Parser(key, fill=-1)
+                parser = VCFGenotypeInt8Parser(key, number=n, fill=-1, **kwds)
             elif key == b'GT' and t == np.dtype('int16'):
-                parser = VCFGenotypeInt16Parser(key, fill=-1)
+                parser = VCFGenotypeInt16Parser(key, number=n, fill=-1, **kwds)
             elif key == b'GT' and t == np.dtype('int32'):
-                parser = VCFGenotypeInt32Parser(key, fill=-1)
+                parser = VCFGenotypeInt32Parser(key, number=n, fill=-1, **kwds)
             elif key == b'GT' and t == np.dtype('int64'):
-                parser = VCFGenotypeInt64Parser(key, fill=-1)
+                parser = VCFGenotypeInt64Parser(key, number=n, fill=-1, **kwds)
 
             # all other calldata
             elif t == np.dtype('int8'):
-                parser = VCFCallDataInt8Parser(key, number=n, fill=-1)
+                parser = VCFCallDataInt8Parser(key, number=n, fill=-1, **kwds)
             elif t == np.dtype('int16'):
-                parser = VCFCallDataInt16Parser(key, number=n, fill=-1)
+                parser = VCFCallDataInt16Parser(key, number=n, fill=-1, **kwds)
             elif t == np.dtype('int32'):
-                parser = VCFCallDataInt32Parser(key, number=n, fill=-1)
+                parser = VCFCallDataInt32Parser(key, number=n, fill=-1, **kwds)
             elif t == np.dtype('int64'):
-                parser = VCFCallDataInt64Parser(key, number=n, fill=-1)
+                parser = VCFCallDataInt64Parser(key, number=n, fill=-1, **kwds)
             elif t == np.dtype('float32'):
-                parser = VCFCallDataFloat32Parser(key, number=n, fill=NAN)
+                parser = VCFCallDataFloat32Parser(key, number=n, fill=NAN, **kwds)
             elif t == np.dtype('float64'):
-                parser = VCFCallDataFloat64Parser(key, number=n, fill=NAN)
+                parser = VCFCallDataFloat64Parser(key, number=n, fill=NAN, **kwds)
             elif t.kind == 'S':
-                parser = VCFCallDataStringParser(key, dtype=t, number=n)
+                parser = VCFCallDataStringParser(key, dtype=t, number=n, **kwds)
 
             # TODO unsigned int parsers
 
             else:
-                parser = self.skip_parser
+                parser = VCFCallDataSkipParser(key)
                 warnings.warn('type %r not supported for FORMAT field %r, field will be '
                               'skipped' % (t, key))
 
@@ -1853,13 +1894,16 @@ cdef class VCFCallDataParser(object):
         self.parsers = tuple(parsers)
 
         # store pointers to parsers
-        self.parser_ptrs = <PyObject**> malloc(sizeof(PyObject*) * self.n_formats)
+        self.parsers_c = <PyObject**> malloc(sizeof(PyObject*) * self.n_formats)
         for i in range(self.n_formats):
-            self.parser_ptrs[i] = <PyObject*> self.parsers[i]
+            self.parsers_c[i] = <PyObject*> self.parsers[i]
+
+    def __init__(self, formats, types, numbers, chunk_length, n_samples):
+        super(VCFCallDataParser, self).__init__(chunk_length=chunk_length)
 
     def __dealloc__(self):
-        if self.parser_ptrs is not NULL:
-            free(self.parser_ptrs)
+        if self.parsers_c is not NULL:
+            free(self.parsers_c)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1883,16 +1927,16 @@ cdef class VCFCallDataParser(object):
             elif stream.c == TAB:
                 context.sample_index += 1
                 context.sample_field_index = 0
-                stream.getc()
+                stream.advance()
 
             elif stream.c == COLON:
                 context.sample_field_index += 1
-                stream.getc()
+                stream.advance()
 
             elif context.sample_index >= context.n_samples:
                 # more samples than we expected, skip to EOL
                 while stream.c != 0 and stream.c != LF and stream.c != CR:
-                    stream.getc()
+                    stream.advance()
 
             elif context.sample_field_index >= context.variant_format_indices.size:
                 # more sample fields than formats declared for this variant
@@ -1905,42 +1949,47 @@ cdef class VCFCallDataParser(object):
 
                 # find parser
                 if format_index >= 0:
-                    parser = self.parser_ptrs[format_index]
+                    parser = self.parsers_c[format_index]
                     # jump through some hoops to avoid references (which need the GIL)
                     (<VCFCallDataParserBase>parser).parse(stream, context)
 
                 else:
                     self.skip_parser.parse(stream, context)
 
-    def malloc_chunk(self, VCFContext context):
+    def malloc_chunk(self):
         for parser in self.parsers:
-            parser.malloc_chunk(context)
+            parser.malloc_chunk()
 
     def make_chunk(self, chunk, limit=None):
         for parser in self.parsers:
             parser.make_chunk(chunk, limit=limit)
 
 
-cdef class VCFCallDataParserBase(object):
+cdef class VCFCallDataParserBase:
 
     cdef:
         bytes key
-        object dtype
+        np.dtype dtype
         int itemsize
         int number
         object fill
-        object values
+        np.ndarray values
+        int chunk_length
+        int n_samples
 
-    def __init__(self, key=None, dtype=None, number=1, fill=0):
+    def __init__(self, key=None, dtype=None, number=1, fill=0, chunk_length=0,
+                 n_samples=0):
         self.key = key
         if dtype is not None:
-            dtype = np.dtype(dtype)
-            self.itemsize = dtype.itemsize
+            self.dtype = np.dtype(dtype)
+            self.itemsize = self.dtype.itemsize
         else:
             self.dtype = dtype
             self.itemsize = 0
         self.number = number
         self.fill = fill
+        self.chunk_length = chunk_length
+        self.n_samples = n_samples
 
     def make_chunk(self, chunk, limit=None):
         field = 'calldata/' + str(self.key, 'ascii')
@@ -1955,13 +2004,16 @@ cdef class VCFCallDataParserBase(object):
 
 cdef class VCFCallDataSkipParser(VCFCallDataParserBase):
 
+    def __init__(self, key, *args, **kwargs):
+        super(VCFCallDataSkipParser, self).__init__(key=key)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         while stream.c != COLON and \
                 stream.c != TAB and \
                 stream.c != CR and \
                 stream.c != LF and \
                 stream.c != 0:
-            stream.getc()
+            stream.advance()
 
 
 cdef class VCFGenotypeInt8Parser(VCFCallDataParserBase):
@@ -1969,15 +2021,15 @@ cdef class VCFGenotypeInt8Parser(VCFCallDataParserBase):
     cdef:
         np.int8_t[:, :, :] memory
 
-    def __init__(self, key, dtype, ploidy=2):
-        super(VCFGenotypeInt8Parser, self).__init__(key, dtype='int8', number=ploidy,
-                                                    fill=-1)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int8'
+        super(VCFGenotypeInt8Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_genotype_parse(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -1988,15 +2040,15 @@ cdef class VCFGenotypeInt16Parser(VCFCallDataParserBase):
     cdef:
         np.int16_t[:, :, :] memory
 
-    def __init__(self, key, dtype, ploidy=2):
-        super(VCFGenotypeInt16Parser, self).__init__(key, dtype='int16', number=ploidy,
-                                                     fill=-1)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int16'
+        super(VCFGenotypeInt16Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_genotype_parse(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -2007,15 +2059,15 @@ cdef class VCFGenotypeInt32Parser(VCFCallDataParserBase):
     cdef:
         np.int32_t[:, :, :] memory
 
-    def __init__(self, key, dtype, ploidy=2):
-        super(VCFGenotypeInt32Parser, self).__init__(key, dtype='int32', number=ploidy,
-                                                     fill=-1)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int32'
+        super(VCFGenotypeInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_genotype_parse(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -2026,15 +2078,15 @@ cdef class VCFGenotypeInt64Parser(VCFCallDataParserBase):
     cdef:
         np.int64_t[:, :, :] memory
 
-    def __init__(self, key, dtype, ploidy=2):
-        super(VCFGenotypeInt64Parser, self).__init__(key, dtype='int64', number=ploidy,
-                                                     fill=-1)
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int64'
+        super(VCFGenotypeInt64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_genotype_parse(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
@@ -2067,7 +2119,7 @@ cdef int vcf_genotype_parse(InputStreamBase stream,
         else:
             context.temp.append(stream.c)
 
-        stream.getc()
+        stream.advance()
 
 
 cdef int vcf_genotype_store(VCFContext context,
@@ -2093,12 +2145,16 @@ cdef class VCFCallDataInt8Parser(VCFCallDataParserBase):
 
     cdef np.int8_t[:, :, :] memory
 
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int8'
+        super(VCFCallDataInt8Parser, self).__init__(*args, **kwargs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_integer(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
-        self.values = np.empty(shape, dtype='int8')
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -2107,12 +2163,16 @@ cdef class VCFCallDataInt16Parser(VCFCallDataParserBase):
 
     cdef np.int16_t[:, :, :] memory
 
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int16'
+        super(VCFCallDataInt16Parser, self).__init__(*args, **kwargs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_integer(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
-        self.values = np.empty(shape, dtype='int16')
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -2121,12 +2181,16 @@ cdef class VCFCallDataInt32Parser(VCFCallDataParserBase):
 
     cdef np.int32_t[:, :, :] memory
 
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'in32'
+        super(VCFCallDataInt32Parser, self).__init__(*args, **kwargs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_integer(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
-        self.values = np.empty(shape, dtype='int32')
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -2135,12 +2199,16 @@ cdef class VCFCallDataInt64Parser(VCFCallDataParserBase):
 
     cdef np.int64_t[:, :, :] memory
 
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int64'
+        super(VCFCallDataInt64Parser, self).__init__(*args, **kwargs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_integer(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
-        self.values = np.empty(shape, dtype='int64')
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -2152,12 +2220,16 @@ cdef class VCFCallDataFloat32Parser(VCFCallDataParserBase):
 
     cdef np.float32_t[:, :, :] memory
 
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'float32'
+        super(VCFCallDataFloat32Parser, self).__init__(*args, **kwargs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_floating(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
-        self.values = np.empty(shape, dtype='float32')
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -2166,12 +2238,16 @@ cdef class VCFCallDataFloat64Parser(VCFCallDataParserBase):
 
     cdef np.float64_t[:, :, :] memory
 
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'float64'
+        super(VCFCallDataFloat64Parser, self).__init__(*args, **kwargs)
+
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_floating(stream, context, self.memory)
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
-        self.values = np.empty(shape, dtype='float64')
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
         self.memory = self.values
         self.memory[:] = self.fill
 
@@ -2204,7 +2280,7 @@ cdef int vcf_calldata_parse_integer(InputStreamBase stream,
         else:
             context.temp.append(stream.c)
 
-        stream.getc()
+        stream.advance()
 
 
 cdef int vcf_calldata_store_integer(VCFContext context,
@@ -2253,7 +2329,7 @@ cdef int vcf_calldata_parse_floating(InputStreamBase stream,
         else:
             context.temp.append(stream.c)
 
-        stream.getc()
+        stream.advance()
 
 
 cdef int vcf_calldata_store_floating(VCFContext context,
@@ -2331,10 +2407,10 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
                 chars_stored += 1
 
             # advance input stream
-            stream.getc()
+            stream.advance()
 
-    def malloc_chunk(self, VCFContext context):
-        shape = (context.chunk_length, context.n_samples, self.number)
+    def malloc_chunk(self):
+        shape = (self.chunk_length, self.n_samples, self.number)
         self.values = np.zeros(shape, dtype=self.dtype)
         self.memory = self.values.reshape(-1).view('u1')
 
@@ -2431,6 +2507,7 @@ cdef int warn(message, VCFContext context=None) nogil:
         else:
             # TODO customize message based on state (CHROM, POS, etc.)
             message += '; variant index: %s' % context.variant_index
+            message += '; state: %s' % context.state
             warnings.warn(message)
 
 
@@ -2450,7 +2527,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 ##########################################################################################
 
 
-# cdef class AsyncBlockParser(object):
+# cdef class AsyncBlockParser:
 #
 #     cdef:
 #         BufferedReader reader
@@ -2535,7 +2612,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #                     self.n_lines += 1
 #                     if self.n_lines == self.block_length:
 #                         # advance beyond end of line for next block
-#                         self.reader.getc()
+#                         self.reader.advance()
 #                         break
 #
 #                 elif self.reader.c == 0:
@@ -2543,7 +2620,7 @@ cdef int debug(msg, VCFContext context=None) nogil except -1:
 #                     self.n_lines += 1
 #                     break
 #
-#                 self.reader.getc()
+#                 self.reader.advance()
 #
 #     def async_parse(self):
 #         self.async_result = self.pool.apply_async(block_parse, args=(self,))
