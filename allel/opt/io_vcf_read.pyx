@@ -18,16 +18,14 @@
 
 import sys
 import warnings
+# noinspection PyUnresolvedReferences
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
 # noinspection PyUnresolvedReferences
 from libc.stdlib cimport strtol, strtof, strtod, malloc, free, realloc
+# noinspection PyUnresolvedReferences
 from libc.string cimport strcmp, memcpy
 import numpy as np
 cimport numpy as np
-# noinspection PyUnresolvedReferences
-import cython
-# noinspection PyUnresolvedReferences
-cimport cython
 from cpython.ref cimport PyObject
 cdef extern from "Python.h":
     char* PyByteArray_AS_STRING(object string)
@@ -216,7 +214,7 @@ cdef class FileInputStream(InputStreamBase):
         buffer."""
         cdef int l
         with gil:
-            self.fileobj.readinto(self.buffer)
+            l = self.fileobj.readinto(self.buffer)
         if l > 0:
             self.stream = self.buffer_start
             self.buffer_end = self.buffer_start + l
@@ -431,6 +429,7 @@ cdef class VCFChunkParser(object):
         VCFFieldParserBase alt_parser
         VCFFieldParserBase qual_parser
         VCFFieldParserBase filter_parser
+        VCFFieldParserBase info_parser
         VCFFieldParserBase format_parser
         VCFFieldParserBase calldata_parser
 
@@ -587,7 +586,6 @@ cdef class VCFChunkParser(object):
         calldata_parser.malloc_chunk()
         self.format_parser = format_parser
         self.calldata_parser = calldata_parser
-
 
     def parse(self, InputStreamBase stream, VCFContext context):
         """Parse to end of current chunk or EOF."""
@@ -1046,7 +1044,7 @@ cdef class VCFQualParser(VCFFieldParserBase):
             stream.getc()
 
         # parse string as floating
-        parsed = vcf_strtol(context.temp, context, &value)
+        parsed = vcf_strtod(context.temp, context, &value)
 
         if parsed > 0:
             # store value
@@ -1745,7 +1743,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
             warn('empty FORMAT', context)
             return 0
 
-        if context.temp.size == 1 and context.temp[0] == PERIOD:
+        if context.temp.size == 1 and context.temp.data[0] == PERIOD:
             return 0
 
         # terminate the string
@@ -1896,7 +1894,7 @@ cdef class VCFCallDataParser(object):
                 while stream.c != 0 and stream.c != LF and stream.c != CR:
                     stream.getc()
 
-            elif context.sample_field_index >= context.variant_format_indices:
+            elif context.sample_field_index >= context.variant_format_indices.size:
                 # more sample fields than formats declared for this variant
                 self.skip_parser.parse(stream, context)
 
@@ -1976,7 +1974,7 @@ cdef class VCFGenotypeInt8Parser(VCFCallDataParserBase):
                                                     fill=-1)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_genotype_parse(stream, context, self.memory, self.number)
+        return vcf_genotype_parse(stream, context, self.memory)
 
     def malloc_chunk(self, VCFContext context):
         shape = (context.chunk_length, context.n_samples, self.number)
@@ -1995,7 +1993,7 @@ cdef class VCFGenotypeInt16Parser(VCFCallDataParserBase):
                                                      fill=-1)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_genotype_parse(stream, context, self.memory, self.number)
+        return vcf_genotype_parse(stream, context, self.memory)
 
     def malloc_chunk(self, VCFContext context):
         shape = (context.chunk_length, context.n_samples, self.number)
@@ -2014,7 +2012,7 @@ cdef class VCFGenotypeInt32Parser(VCFCallDataParserBase):
                                                      fill=-1)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_genotype_parse(stream, context, self.memory, self.number)
+        return vcf_genotype_parse(stream, context, self.memory)
 
     def malloc_chunk(self, VCFContext context):
         shape = (context.chunk_length, context.n_samples, self.number)
@@ -2033,7 +2031,7 @@ cdef class VCFGenotypeInt64Parser(VCFCallDataParserBase):
                                                      fill=-1)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-        return vcf_genotype_parse(stream, context, self.memory, self.number)
+        return vcf_genotype_parse(stream, context, self.memory)
 
     def malloc_chunk(self, VCFContext context):
         shape = (context.chunk_length, context.n_samples, self.number)
@@ -2154,7 +2152,7 @@ cdef class VCFCallDataFloat32Parser(VCFCallDataParserBase):
 
     cdef np.float32_t[:, :, :] memory
 
-    cdef float parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_floating(stream, context, self.memory)
 
     def malloc_chunk(self, VCFContext context):
@@ -2168,7 +2166,7 @@ cdef class VCFCallDataFloat64Parser(VCFCallDataParserBase):
 
     cdef np.float64_t[:, :, :] memory
 
-    cdef float parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_calldata_parse_floating(stream, context, self.memory)
 
     def malloc_chunk(self, VCFContext context):
@@ -2426,11 +2424,14 @@ cdef int vcf_strtod(CharVector value, VCFContext context, double* d) nogil:
 # LOGGING
 
 
-cdef int warn(message, VCFContext context) nogil:
+cdef int warn(message, VCFContext context=None) nogil:
     with gil:
-        # TODO customize message based on state (CHROM, POS, etc.)
-        message += '; variant index: %s' % context.variant_index
-        warnings.warn(message)
+        if context is None:
+            warnings.warn(message)
+        else:
+            # TODO customize message based on state (CHROM, POS, etc.)
+            message += '; variant index: %s' % context.variant_index
+            warnings.warn(message)
 
 
 cdef int debug(msg, VCFContext context=None) nogil except -1:
