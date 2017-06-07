@@ -623,6 +623,8 @@ def normalize_type(t):
         return np.dtype(default_string_dtype)
     elif t == 'Flag':
         return np.dtype(bool)
+    elif isinstance(t, str) and t.startswith('genotype/'):
+        return t
     else:
         return np.dtype(t)
 
