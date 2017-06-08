@@ -254,6 +254,8 @@ def test_read_vcf_content():
     for input, chunk_length, buffer_size in itertools.product(inputs,
                                                               chunk_lengths,
                                                               buffer_sizes):
+        print(repr(input), chunk_length, buffer_size)
+
         if isinstance(input, str):
             input_file = input
         else:
@@ -266,14 +268,24 @@ def test_read_vcf_content():
                            types={'ALT': 'S3', 'calldata/DP': 'S3'})
 
         # fixed fields
+        print(callset['variants/CHROM'])
+        print(callset['variants/POS'])
+        eq_((9,), callset['variants/CHROM'].shape)
         eq_(b'19', callset['variants/CHROM'][0])
+        eq_((9,), callset['variants/POS'].shape)
         eq_(111, callset['variants/POS'][0])
+        eq_((9,), callset['variants/ID'].shape)
         eq_(b'rs6054257', callset['variants/ID'][2])
+        eq_((9,), callset['variants/REF'].shape)
         eq_(b'A', callset['variants/REF'][0])
+        eq_((9, 3), callset['variants/ALT'].shape)
         eq_(b'ATG', callset['variants/ALT'][8, 1])
+        eq_((9,), callset['variants/QUAL'].shape)
         eq_(10.0, callset['variants/QUAL'][1])
+        eq_((9,), callset['variants/FILTER_PASS'].shape)
         eq_(True, callset['variants/FILTER_PASS'][2])
         eq_(False, callset['variants/FILTER_PASS'][3])
+        eq_((9,), callset['variants/FILTER_q10'].shape)
         eq_(True, callset['variants/FILTER_q10'][3])
         # TODO special fields
         # eq_(2, callset['variants/num_alleles'][0])
@@ -286,10 +298,13 @@ def test_read_vcf_content():
         eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
 
         # test calldata content
+        eq_((9, 3, 2), callset['calldata/GT'].shape)
         eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
         eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
         eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
+        eq_((9, 3, 2), callset['calldata/HQ'].shape)
         eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
+        eq_((9, 3), callset['calldata/DP'].shape)
         eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
 
         # TODO test GT as int16, int32, int64, S3

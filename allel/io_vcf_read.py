@@ -146,7 +146,7 @@ def read_vcf(path,
     # setup output
     output = dict()
 
-    if add_samples and headers.samples:
+    if add_samples:
         # use binary string type for cross-platform compatibility
         output['samples'] = np.array(headers.samples).astype('S')
 
@@ -290,7 +290,7 @@ def vcf_to_hdf5(input_path, output_path,
                                           numbers=numbers, buffer_size=buffer_size,
                                           chunk_length=chunk_length)
 
-        if add_samples and headers.samples:
+        if add_samples:
             # store samples
             name = 'samples'
             if name in root[group]:
@@ -391,7 +391,7 @@ def vcf_to_zarr(input_path, output_path,
                                       numbers=numbers, buffer_size=buffer_size,
                                       chunk_length=chunk_length)
 
-    if add_samples and headers.samples:
+    if add_samples:
         # store samples
         root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
                                    compressor=None, overwrite=overwrite)
@@ -719,7 +719,7 @@ default_numbers = {
     'variants/AF': 3,
     'variants/MQ': 1,
     'calldata/DP': 1,
-    'calldata/GT': 1,
+    'calldata/GT': 2,
     'calldata/GQ': 1,
     'calldata/HQ': 2,
     'calldata/AD': 4,
@@ -850,7 +850,6 @@ VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats',
 
 
 def read_vcf_headers(stream):
-    debug('read_vcf_headers: enter')
 
     # setup
     headers = []
@@ -861,7 +860,6 @@ def read_vcf_headers(stream):
 
     # read first header line
     header = str(stream.readline(), 'ascii')
-    debug('read_vcf_headers: first header: %r' % header)
 
     while header and header[0] == '#':
 
@@ -915,7 +913,6 @@ def read_vcf_headers(stream):
 
         # read next header line
         header = str(stream.readline(), 'ascii')
-        debug('read_vcf_headers: next header: %r' % header)
 
     # check if we saw the mandatory header line or not
     if samples is None:
