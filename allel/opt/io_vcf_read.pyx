@@ -481,6 +481,9 @@ cdef class VCFChunkIterator:
         if self.context.state == VCFState.EOF:
             raise StopIteration
 
+        # reset indices
+        self.context.chunk_variant_index = -1
+
         # allocate arrays for next chunk
         self.parser.malloc_chunk()
 
@@ -488,7 +491,7 @@ cdef class VCFChunkIterator:
         self.parser.parse(self.stream, &self.context)
 
         # get the chunk
-        chunk = self.parser.make_chunk(&self.context)
+        chunk = self.parser.make_chunk(self.context.chunk_variant_index + 1)
 
         if chunk is None:
             raise StopIteration
@@ -763,10 +766,11 @@ cdef class VCFParser:
         self.format_parser.malloc_chunk()
         self.calldata_parser.malloc_chunk()
 
-    cdef object make_chunk(self, VCFContext* context):
-        chunk_length = context.chunk_variant_index + 1
+    # cdef object make_chunk(self, VCFContext* context):
+    #     chunk_length = context.chunk_variant_index + 1
+    cdef object make_chunk(self, chunk_length):
         if chunk_length > 0:
-            if chunk_length < context.chunk_length:
+            if chunk_length < self.chunk_length:
                 limit = chunk_length
             else:
                 limit = None
@@ -780,11 +784,9 @@ cdef class VCFParser:
             self.filter_parser.make_chunk(chunk, limit=limit)
             self.info_parser.make_chunk(chunk, limit=limit)
             self.calldata_parser.make_chunk(chunk, limit=limit)
-            context.chunk_variant_index = -1
             return chunk
 
         else:
-            # TODO is this reachable?
             return None
 
 
@@ -2489,8 +2491,6 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
             # number of characters read into current value
             int chars_stored = 0
 
-        # debug('CallDataStringParser.parse: enter', self.context)
-
         # initialise memory index
         memory_offset = ((context.chunk_variant_index *
                          context.n_samples *
@@ -2649,119 +2649,140 @@ cdef int debug(message, VCFContext* context) nogil except -1:
         sys.stderr.flush()
 
 
-
 ##########################################################################################
+# EXPERIMENTAL support for multi-threaded parsing
 
 
 import itertools
-from threading import Lock
 
 
-cdef class VCFChunkIteratorParallel:
+cdef class VCFParallelWorker:
+
+    cdef:
+        CharVectorInputStream buffer
+        VCFContext context
+        VCFParser parser
+        int chunk_length
+        int block_length
+        int n_samples
+
+    def __cinit__(self, parser, chunk_length, block_length, n_samples):
+        self.buffer = CharVectorInputStream(2**14)
+        VCFContext_init(&self.context, chunk_length, n_samples)
+        self.parser = parser
+        self.chunk_length = chunk_length
+        self.block_length = block_length
+        self.n_samples = n_samples
+
+    def __dealloc__(self):
+        VCFContext_free(&self.context)
+
+    def work(self, block_index, chunk_index):
+        # set initial state
+        self.context.state = VCFState.CHROM
+        self.context.chunk_variant_index = block_index * self.block_length - 1
+        self.context.variant_index = (chunk_index * self.chunk_length +
+                                      self.context.chunk_variant_index)
+        # parse the block of data stored in the buffer
+        self.parser.parse(self.buffer, &self.context)
+
+
+cdef class VCFParallelChunkIterator:
 
     cdef:
         FileInputStream stream
-        VCFContext* contexts
         VCFParser parser
         object pool
         int chunk_length
         int block_length
         int n_samples
         int n_threads
-        list buffers
         int chunk_index
-        object mutex
+        list workers
 
     def __cinit__(self,
                   FileInputStream stream,
                   int chunk_length, int block_length, int n_threads,
                   headers, fields, types, numbers):
-        cdef int i
         self.stream = stream
         self.chunk_length = chunk_length
-        self.block_length = block_length
+        # cannot have block length larger than chunk length
+        self.block_length = min(block_length, chunk_length)
         self.n_threads = n_threads
         self.pool = ThreadPool(n_threads)
-        self.mutex = Lock()
-        self.contexts = <VCFContext*> malloc(sizeof(VCFContext) * n_threads)
         self.n_samples = len(headers.samples)
-        for i in range(n_threads):
-            VCFContext_init(self.contexts + i, self.chunk_length, self.n_samples)
-        self.buffers = [CharVectorInputStream(2**15) for _ in range(n_threads)]
         self.parser = VCFParser(fields=fields, types=types, numbers=numbers,
                                 chunk_length=chunk_length, n_samples=self.n_samples)
         self.chunk_index = -1
-
-    def __dealloc__(self):
-        cdef int i
-        if self.contexts is not NULL:
-            for i in range(self.n_threads):
-                VCFContext_free(self.contexts + i)
-            free(self.contexts)
+        self.workers = [VCFParallelWorker(self.parser, self.chunk_length,
+                                          self.block_length, self.n_samples)
+                        for _ in range(self.n_threads)]
 
     def __iter__(self):
         return self
 
     def __next__(self):
         cdef:
-            CharVectorInputStream buffer
-            VCFContext* context = self.contexts
             int block_index = 0
             int i = 0
+            int n_lines
+            int n_lines_read = 0
+            VCFParallelWorker worker
+
+        # increment the current chunk index
         self.chunk_index += 1
 
         # allocate arrays for next chunk
         self.parser.malloc_chunk()
 
+        # setup list to hold async results
         results = [None] * self.n_threads
 
+        # cycle around the number of threads
         for i in itertools.cycle(list(range(self.n_threads))):
-            context = self.contexts + i
+            worker = self.workers[i]
 
+            # wait for the result to finish - this ensures we don't overwrite a
+            # worker's buffer while it's still parsing
             if results[i] is not None:
                 results[i].get()
 
-            result = self.pool.apply_async(self.parse, args=(i, block_index,
-                                                             self.chunk_index))
+            # read lines into the worker's buffer - this part has to be synchronous
+            worker.buffer.clear()
+            n_lines = min(self.block_length, self.chunk_length - n_lines_read)
+            n_lines_read += self.stream.read_lines_into(&(worker.buffer.vector), n_lines)
+            worker.buffer.advance()
+
+            # launch parsing of the block in parallel
+            result = self.pool.apply_async(worker.work, args=(block_index,
+                                                              self.chunk_index))
             results[i] = result
 
+            # increment the current block index
             block_index += 1
 
-            # chunk done?
-            if block_index * self.block_length >= self.chunk_length:
+            # is the chunk done?
+            if n_lines_read >= self.chunk_length:
                 break
 
-            # all done?
+            # is the input stream exhausted?
             if self.stream.c == 0:
                 break
 
+        # wait for all parallel tasks to complete
         for result in results:
             if result is not None:
                 result.get()
 
-        chunk = self.parser.make_chunk(context)
+        # obtain the chunk
+        chunk = self.parser.make_chunk(worker.context.chunk_variant_index + 1)
 
         if chunk is None:
+            # clean up thread pool
             self.pool.close()
             self.pool.join()
             self.pool.terminate()
             raise StopIteration
+
         else:
             return chunk
-
-    def parse(self, int i, block_index, chunk_index):
-        cdef:
-            VCFContext* context = self.contexts + i
-            CharVectorInputStream buffer = self.buffers[i]
-
-        with self.mutex:
-            buffer.clear()
-            self.stream.read_lines_into(&buffer.vector, self.block_length)
-            # tee up first character
-            buffer.advance()
-
-        context.state = VCFState.CHROM
-        context.chunk_variant_index = block_index * self.block_length - 1
-        context.variant_index = chunk_index * self.chunk_length + context.chunk_variant_index
-
-        self.parser.parse(buffer, context)

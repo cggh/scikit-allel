@@ -67,7 +67,7 @@ import numpy as np
 
 
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
-    VCFChunkIteratorParallel
+    VCFParallelChunkIterator
 
 
 def debug(*msg):
@@ -103,6 +103,23 @@ def _prep_fields_arg(fields):
     return add_samples, fields
 
 
+import time
+
+
+def progress(chunks, log, prefix='[scikit-allel]'):
+    before_all = time.time()
+    before_chunk = before_all
+    for chunk in chunks:
+        after_chunk = time.time()
+        elapsed = after_chunk - before_chunk
+        print('%s chunk in %.2fs' % (prefix, elapsed), file=log)
+        yield chunk
+        before_chunk = after_chunk
+    after_all = time.time()
+    elapsed = after_all - before_all
+    print('%s all done in %.2fs' % (prefix, elapsed), file=log)
+
+
 def read_vcf(path,
              fields=None,
              types=None,
@@ -110,7 +127,8 @@ def read_vcf(path,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              block_length=DEFAULT_BLOCK_LENGTH,
-             n_threads=None):
+             n_threads=None,
+             log=None):
     """Read data from a VCF file into NumPy arrays.
 
     Parameters
@@ -131,6 +149,8 @@ def read_vcf(path,
         TODO
     n_threads : int
         TODO
+    log : file-like
+        TODO
 
     Returns
     -------
@@ -147,6 +167,8 @@ def read_vcf(path,
                                       numbers=numbers,buffer_size=buffer_size,
                                       chunk_length=chunk_length,
                                       block_length=block_length, n_threads=n_threads)
+    if log is not None:
+        chunks = progress(chunks, log)
 
     # read all chunks into a list
     chunks = list(chunks)
@@ -179,7 +201,8 @@ def vcf_to_npz(input_path, output_path,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                block_length=DEFAULT_BLOCK_LENGTH,
-               n_threads=None):
+               n_threads=None,
+               log=None):
     """TODO"""
 
     # guard condition
@@ -190,7 +213,7 @@ def vcf_to_npz(input_path, output_path,
     # read all data into memory
     data = read_vcf(path=input_path, fields=fields, types=types, numbers=numbers,
                     buffer_size=buffer_size, chunk_length=chunk_length,
-                    block_length=block_length, n_threads=n_threads)
+                    block_length=block_length, n_threads=n_threads, log=log)
 
     # setup save function
     if compressed:
@@ -281,7 +304,8 @@ def vcf_to_hdf5(input_path, output_path,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
                 block_length=DEFAULT_BLOCK_LENGTH,
-                n_threads=None):
+                n_threads=None,
+                log=None):
     """TODO"""
 
     import h5py
@@ -303,6 +327,8 @@ def vcf_to_hdf5(input_path, output_path,
                                           numbers=numbers, buffer_size=buffer_size,
                                           chunk_length=chunk_length,
                                           block_length=block_length, n_threads=n_threads)
+        if log is not None:
+            chunks = progress(chunks, log)
 
         if add_samples:
             # store samples
@@ -387,7 +413,8 @@ def vcf_to_zarr(input_path, output_path,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
                 block_length=DEFAULT_BLOCK_LENGTH,
-                n_threads=None):
+                n_threads=None,
+                log=None):
     """TODO"""
 
     import zarr
@@ -407,6 +434,8 @@ def vcf_to_zarr(input_path, output_path,
                                       numbers=numbers, buffer_size=buffer_size,
                                       chunk_length=chunk_length,
                                       block_length=block_length, n_threads=n_threads)
+    if log is not None:
+        chunks = progress(chunks, log)
 
     if add_samples:
         # store samples
@@ -857,7 +886,7 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
                                   types=types,
                                   numbers=numbers)
     else:
-        chunks = VCFChunkIteratorParallel(stream,
+        chunks = VCFParallelChunkIterator(stream,
                                           chunk_length=chunk_length,
                                           block_length=block_length,
                                           n_threads=n_threads,

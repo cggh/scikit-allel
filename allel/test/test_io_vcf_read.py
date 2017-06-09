@@ -13,13 +13,13 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import *
 from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
-    vcf_to_npz
+    vcf_to_npz, debug
 
 
 def test_read_vcf_chunks():
     fn = 'fixture/sample.vcf'
 
-    for n_threads in None, 1, 2:
+    for n_threads in 1, 2:
         headers, chunks = read_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
                                           buffer_size=100, n_threads=n_threads)
 
@@ -238,8 +238,71 @@ def test_read_vcf_fields_selected():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_content():
+def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length):
+
+    if isinstance(input, str):
+        input_file = input
+    else:
+        input_file = input()
+
+    callset = read_vcf(input_file,
+                       fields='*',
+                       chunk_length=chunk_length,
+                       buffer_size=buffer_size,
+                       types={'ALT': 'S3', 'calldata/DP': 'S3'},
+                       block_length=block_length,
+                       n_threads=n_threads)
+
+    # fixed fields
+    print(callset['variants/CHROM'])
+    print(callset['variants/POS'])
+    eq_((9,), callset['variants/CHROM'].shape)
+    eq_(b'19', callset['variants/CHROM'][0])
+    eq_((9,), callset['variants/POS'].shape)
+    eq_(111, callset['variants/POS'][0])
+    eq_((9,), callset['variants/ID'].shape)
+    eq_(b'rs6054257', callset['variants/ID'][2])
+    eq_((9,), callset['variants/REF'].shape)
+    eq_(b'A', callset['variants/REF'][0])
+    eq_((9, 3), callset['variants/ALT'].shape)
+    eq_(b'ATG', callset['variants/ALT'][8, 1])
+    eq_((9,), callset['variants/QUAL'].shape)
+    eq_(10.0, callset['variants/QUAL'][1])
+    eq_((9,), callset['variants/FILTER_PASS'].shape)
+    eq_(True, callset['variants/FILTER_PASS'][2])
+    eq_(False, callset['variants/FILTER_PASS'][3])
+    eq_((9,), callset['variants/FILTER_q10'].shape)
+    eq_(True, callset['variants/FILTER_q10'][3])
+    # TODO special fields
+    # eq_(2, callset['variants/num_alleles'][0])
+    # eq_(False, callset['variants/is_snp'][5])
+
+    # INFO fields
+    eq_(3, callset['variants/NS'][2])
+    eq_(.5, callset['variants/AF'][2, 0])
+    eq_(True, callset['variants/DB'][2])
+    eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
+
+    # test calldata content
+    eq_((9, 3, 2), callset['calldata/GT'].shape)
+    eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
+    eq_((9, 3, 2), callset['calldata/HQ'].shape)
+    eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
+    eq_((9, 3), callset['calldata/DP'].shape)
+    eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
+
+    # TODO test GT as int16, int32, int64, S3
+
+    # TODO special fields?
+    # eq_(True, a[0]['NA00001']['is_called'])
+    # eq_(True, a[0]['NA00001']['is_phased'])
+
+
+def test_read_vcf_content_inputs():
     fn = 'fixture/sample.vcf'
+
     data = open(fn, mode='rb').read(-1)
 
     inputs = (fn,
@@ -250,71 +313,39 @@ def test_read_vcf_content():
               lambda: io.BytesIO(data.replace(b'\n', b'\r')),
               lambda: io.BytesIO(data.replace(b'\n', b'\r\n')))
 
-    chunk_lengths = 1, 2, 3, 4, 5, 6, 8, 10, 12, 20, 1000
+    chunk_length = 3
+    block_length = 2
+    buffer_size = 10
+    n_threads = 1
 
-    buffer_sizes = 2, 10, 20, 30, 50, 100, 1000, 10000, 100000
+    for input in inputs:
+        _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
-    for input, chunk_length, buffer_size in itertools.product(inputs,
-                                                              chunk_lengths,
-                                                              buffer_sizes):
-        print(repr(input), chunk_length, buffer_size)
 
-        if isinstance(input, str):
-            input_file = input
-        else:
-            input_file = input()
+def test_read_vcf_content_chunk_block_lengths():
+    fn = 'fixture/sample.vcf'
+    input = fn
+    chunk_lengths = 1, 2, 3, 5, 10, 20
+    block_lengths = 1, 2, 3, 5, 10, 20
+    buffer_size = 10
+    n_threadses = 1, 2
 
-        callset = read_vcf(input_file,
-                           fields='*',
-                           chunk_length=chunk_length,
-                           buffer_size=buffer_size,
-                           types={'ALT': 'S3', 'calldata/DP': 'S3'})
+    for chunk_length, n_threads, block_length in itertools.product(
+            chunk_lengths, n_threadses, block_lengths):
+        _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
-        # fixed fields
-        print(callset['variants/CHROM'])
-        print(callset['variants/POS'])
-        eq_((9,), callset['variants/CHROM'].shape)
-        eq_(b'19', callset['variants/CHROM'][0])
-        eq_((9,), callset['variants/POS'].shape)
-        eq_(111, callset['variants/POS'][0])
-        eq_((9,), callset['variants/ID'].shape)
-        eq_(b'rs6054257', callset['variants/ID'][2])
-        eq_((9,), callset['variants/REF'].shape)
-        eq_(b'A', callset['variants/REF'][0])
-        eq_((9, 3), callset['variants/ALT'].shape)
-        eq_(b'ATG', callset['variants/ALT'][8, 1])
-        eq_((9,), callset['variants/QUAL'].shape)
-        eq_(10.0, callset['variants/QUAL'][1])
-        eq_((9,), callset['variants/FILTER_PASS'].shape)
-        eq_(True, callset['variants/FILTER_PASS'][2])
-        eq_(False, callset['variants/FILTER_PASS'][3])
-        eq_((9,), callset['variants/FILTER_q10'].shape)
-        eq_(True, callset['variants/FILTER_q10'][3])
-        # TODO special fields
-        # eq_(2, callset['variants/num_alleles'][0])
-        # eq_(False, callset['variants/is_snp'][5])
 
-        # INFO fields
-        eq_(3, callset['variants/NS'][2])
-        eq_(.5, callset['variants/AF'][2, 0])
-        eq_(True, callset['variants/DB'][2])
-        eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
+def test_read_vcf_content_buffer_size():
+    fn = 'fixture/sample.vcf'
+    input = fn
+    chunk_length = 3
+    block_length = 2
+    buffer_sizes = 1, 2, 4, 8, 16, 32, 64, 128, 256, 512
+    n_threadses = 1, 2
 
-        # test calldata content
-        eq_((9, 3, 2), callset['calldata/GT'].shape)
-        eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
-        eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
-        eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
-        eq_((9, 3, 2), callset['calldata/HQ'].shape)
-        eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
-        eq_((9, 3), callset['calldata/DP'].shape)
-        eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
-
-        # TODO test GT as int16, int32, int64, S3
-
-        # TODO special fields?
-        # eq_(True, a[0]['NA00001']['is_called'])
-        # eq_(True, a[0]['NA00001']['is_phased'])
+    for n_threads, buffer_size in itertools.product(
+            n_threadses, buffer_sizes):
+        _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
 
 def test_vcf_truncation_chrom():
@@ -599,47 +630,50 @@ def test_vcf_truncation_calldata():
 
 def test_vcf_to_npz():
     fn = 'fixture/sample.vcf'
-    expect = read_vcf(fn)
-    npz_fn = 'temp/sample.npz'
-    if os.path.exists(npz_fn):
-        os.remove(npz_fn)
-    vcf_to_npz(fn, npz_fn, chunk_length=2)
-    actual = np.load(npz_fn)
-    for key in expect.keys():
-        if expect[key].dtype.kind == 'f':
-            assert_array_almost_equal(expect[key], actual[key])
-        else:
-            assert_array_equal(expect[key], actual[key])
+    for n_threads in 1, 2:
+        expect = read_vcf(fn)
+        npz_fn = 'temp/sample.npz'
+        if os.path.exists(npz_fn):
+            os.remove(npz_fn)
+        vcf_to_npz(fn, npz_fn, chunk_length=2, n_threads=n_threads)
+        actual = np.load(npz_fn)
+        for key in expect.keys():
+            if expect[key].dtype.kind == 'f':
+                assert_array_almost_equal(expect[key], actual[key])
+            else:
+                assert_array_equal(expect[key], actual[key])
 
 
 def test_vcf_to_zarr():
     fn = 'fixture/sample.vcf'
     expect = read_vcf(fn)
     zarr_path = 'temp/sample.zarr'
-    if os.path.exists(zarr_path):
-        shutil.rmtree(zarr_path)
-    vcf_to_zarr(fn, zarr_path, chunk_length=2)
-    actual = zarr.open_group(zarr_path, mode='r')
-    for key in expect.keys():
-        if expect[key].dtype.kind == 'f':
-            assert_array_almost_equal(expect[key], actual[key][:])
-        else:
-            assert_array_equal(expect[key], actual[key][:])
+    for n_threads in 1, 2:
+        if os.path.exists(zarr_path):
+            shutil.rmtree(zarr_path)
+        vcf_to_zarr(fn, zarr_path, chunk_length=2, n_threads=n_threads)
+        actual = zarr.open_group(zarr_path, mode='r')
+        for key in expect.keys():
+            if expect[key].dtype.kind == 'f':
+                assert_array_almost_equal(expect[key], actual[key][:])
+            else:
+                assert_array_equal(expect[key], actual[key][:])
 
 
 def test_vcf_to_hdf5():
     fn = 'fixture/sample.vcf'
     expect = read_vcf(fn)
     h5_fn = 'temp/sample.h5'
-    if os.path.exists(h5_fn):
-        os.remove(h5_fn)
-    vcf_to_hdf5(fn, h5_fn, chunk_length=2)
-    with h5py.File(h5_fn, mode='r') as actual:
-        for key in expect.keys():
-            if expect[key].dtype.kind == 'f':
-                assert_array_almost_equal(expect[key], actual[key][:])
-            else:
-                assert_array_equal(expect[key], actual[key][:])
+    for n_threads in 1, 2:
+        if os.path.exists(h5_fn):
+            os.remove(h5_fn)
+        vcf_to_hdf5(fn, h5_fn, chunk_length=2, n_threads=n_threads)
+        with h5py.File(h5_fn, mode='r') as actual:
+            for key in expect.keys():
+                if expect[key].dtype.kind == 'f':
+                    assert_array_almost_equal(expect[key], actual[key][:])
+                else:
+                    assert_array_equal(expect[key], actual[key][:])
 
 
 # TODO test types
