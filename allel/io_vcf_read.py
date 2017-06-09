@@ -61,13 +61,13 @@ import os
 import re
 from collections import namedtuple
 import warnings
-import io
 
 
 import numpy as np
 
 
-from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
+from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
+    VCFChunkIteratorParallel
 
 
 def debug(*msg):
@@ -77,6 +77,7 @@ def debug(*msg):
 
 DEFAULT_BUFFER_SIZE = 2**14
 DEFAULT_CHUNK_LENGTH = 2**15
+DEFAULT_BLOCK_LENGTH = 100
 DEFAULT_CHUNK_WIDTH = 2**6
 
 
@@ -107,7 +108,9 @@ def read_vcf(path,
              types=None,
              numbers=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
-             chunk_length=DEFAULT_CHUNK_LENGTH):
+             chunk_length=DEFAULT_CHUNK_LENGTH,
+             block_length=DEFAULT_BLOCK_LENGTH,
+             n_threads=None):
     """Read data from a VCF file into NumPy arrays.
 
     Parameters
@@ -124,6 +127,10 @@ def read_vcf(path,
         TODO
     chunk_length : int
         TODO
+    block_length : int
+        TODO
+    n_threads : int
+        TODO
 
     Returns
     -------
@@ -138,7 +145,8 @@ def read_vcf(path,
     # setup
     headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types,
                                       numbers=numbers,buffer_size=buffer_size,
-                                      chunk_length=chunk_length)
+                                      chunk_length=chunk_length,
+                                      block_length=block_length, n_threads=n_threads)
 
     # read all chunks into a list
     chunks = list(chunks)
@@ -169,7 +177,9 @@ def vcf_to_npz(input_path, output_path,
                types=None,
                numbers=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
-               chunk_length=DEFAULT_CHUNK_LENGTH):
+               chunk_length=DEFAULT_CHUNK_LENGTH,
+               block_length=DEFAULT_BLOCK_LENGTH,
+               n_threads=None):
     """TODO"""
 
     # guard condition
@@ -179,7 +189,8 @@ def vcf_to_npz(input_path, output_path,
 
     # read all data into memory
     data = read_vcf(path=input_path, fields=fields, types=types, numbers=numbers,
-                    buffer_size=buffer_size, chunk_length=chunk_length)
+                    buffer_size=buffer_size, chunk_length=chunk_length,
+                    block_length=block_length, n_threads=n_threads)
 
     # setup save function
     if compressed:
@@ -268,7 +279,9 @@ def vcf_to_hdf5(input_path, output_path,
                 numbers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
-                chunk_width=DEFAULT_CHUNK_WIDTH):
+                chunk_width=DEFAULT_CHUNK_WIDTH,
+                block_length=DEFAULT_BLOCK_LENGTH,
+                n_threads=None):
     """TODO"""
 
     import h5py
@@ -288,7 +301,8 @@ def vcf_to_hdf5(input_path, output_path,
         # setup chunk iterator
         headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
                                           numbers=numbers, buffer_size=buffer_size,
-                                          chunk_length=chunk_length)
+                                          chunk_length=chunk_length,
+                                          block_length=block_length, n_threads=n_threads)
 
         if add_samples:
             # store samples
@@ -371,7 +385,9 @@ def vcf_to_zarr(input_path, output_path,
                 numbers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
-                chunk_width=DEFAULT_CHUNK_WIDTH):
+                chunk_width=DEFAULT_CHUNK_WIDTH,
+                block_length=DEFAULT_BLOCK_LENGTH,
+                n_threads=None):
     """TODO"""
 
     import zarr
@@ -389,7 +405,8 @@ def vcf_to_zarr(input_path, output_path,
     # setup chunk iterator
     headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
                                       numbers=numbers, buffer_size=buffer_size,
-                                      chunk_length=chunk_length)
+                                      chunk_length=chunk_length,
+                                      block_length=block_length, n_threads=n_threads)
 
     if add_samples:
         # store samples
@@ -425,7 +442,9 @@ def read_vcf_chunks(path,
                     types=None,
                     numbers=None,
                     chunk_length=DEFAULT_CHUNK_LENGTH,
-                    buffer_size=DEFAULT_BUFFER_SIZE):
+                    block_length=DEFAULT_BLOCK_LENGTH,
+                    buffer_size=DEFAULT_BUFFER_SIZE,
+                    n_threads=None):
     """TODO"""
 
     if isinstance(path, str) and path.endswith('gz'):
@@ -434,20 +453,23 @@ def read_vcf_chunks(path,
         fileobj = gzip.open(path, mode='rb')
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
         return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
-                         chunk_length=chunk_length)
+                         chunk_length=chunk_length, block_length=block_length,
+                         n_threads=n_threads)
 
     elif isinstance(path, str):
         # assume no compression
         fileobj = open(path, mode='rb', buffering=buffer_size)
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
         return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
-                         chunk_length=chunk_length)
+                         chunk_length=chunk_length, block_length=block_length,
+                         n_threads=n_threads)
 
     elif hasattr(path, 'readinto'):
         fileobj = path
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
         return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
-                         chunk_length=chunk_length)
+                         chunk_length=chunk_length, block_length=block_length,
+                         n_threads=n_threads)
 
     else:
         raise ValueError('path must be string or file-like, found %r' % path)
@@ -799,7 +821,7 @@ def normalize_numbers(numbers, fields, headers):
 TEMP_BUFFER_SIZE = 2**12
 
 
-def _read_vcf(stream, fields, types, numbers, chunk_length):
+def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads):
 
     # read VCF headers
     headers = read_vcf_headers(stream)
@@ -827,12 +849,22 @@ def _read_vcf(stream, fields, types, numbers, chunk_length):
     # debug('normalized numbers', numbers)
 
     # setup chunks iterator
-    chunks = VCFChunkIterator(stream,
-                              chunk_length=chunk_length,
-                              headers=headers,
-                              fields=fields,
-                              types=types,
-                              numbers=numbers)
+    if n_threads is None or n_threads == 1:
+        chunks = VCFChunkIterator(stream,
+                                  chunk_length=chunk_length,
+                                  headers=headers,
+                                  fields=fields,
+                                  types=types,
+                                  numbers=numbers)
+    else:
+        chunks = VCFChunkIteratorParallel(stream,
+                                          chunk_length=chunk_length,
+                                          block_length=block_length,
+                                          n_threads=n_threads,
+                                          headers=headers,
+                                          fields=fields,
+                                          types=types,
+                                          numbers=numbers)
 
     return headers, chunks
 
