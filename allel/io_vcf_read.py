@@ -26,6 +26,7 @@ TODO:
 ** DONE Float
 ** DONE String
 * DONE Option not to return samples
+* DONE Progress logging in vcf_to_... functions
 * Profile heavy INFO, binary search?
 * Generalise genotype parser integer type - needs tests
 * User-provided ploidy
@@ -34,7 +35,6 @@ TODO:
 * User-controlled numbers to ALT, INFO, calldata, ... (tests)
 * Read from region via tabix
 * Read from region via scanning
-* Progress logging in vcf_to_... functions
 * User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN
@@ -50,13 +50,13 @@ TODO:
 ** svlen
 ** genotype_ac
 ** is_phased
-* Feature to rename fields, e.g., calldata/GT -> calldata/genotype?
+
+* [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype?
 
 """
 from __future__ import absolute_import, print_function, division
 import gzip
 import sys
-import itertools
 import os
 import re
 from collections import namedtuple
@@ -106,7 +106,8 @@ def _prep_fields_arg(fields):
 import time
 
 
-def progress(it, log, prefix='[scikit-allel]'):
+def chunk_iter_progress(it, log, prefix):
+    """Wrap a chunk iterator for progress logging."""
     n_variants = 0
     before_all = time.time()
     before_chunk = before_all
@@ -177,7 +178,7 @@ def read_vcf(path,
                                   chunk_length=chunk_length,
                                   block_length=block_length, n_threads=n_threads)
     if log is not None:
-        it = progress(it, log, prefix='[read_vcf]')
+        it = chunk_iter_progress(it, log, prefix='[read_vcf]')
 
     # read all chunks into a list
     chunks = [chunk for chunk, _, _, _ in it]
@@ -337,7 +338,7 @@ def vcf_to_hdf5(input_path, output_path,
                                       chunk_length=chunk_length,
                                       block_length=block_length, n_threads=n_threads)
         if log is not None:
-            it = progress(it, log, prefix='[vcf_to_hdf5]')
+            it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
         if add_samples:
             # store samples
@@ -444,7 +445,7 @@ def vcf_to_zarr(input_path, output_path,
                                   chunk_length=chunk_length,
                                   block_length=block_length, n_threads=n_threads)
     if log is not None:
-        it = progress(it, log, prefix='[vcf_to_zarr]')
+        it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
     if add_samples:
         # store samples
@@ -851,9 +852,6 @@ def normalize_numbers(numbers, fields, headers):
             raise RuntimeError('unpected field: %r' % f)
 
     return normed_numbers
-
-
-TEMP_BUFFER_SIZE = 2**12
 
 
 def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads):
