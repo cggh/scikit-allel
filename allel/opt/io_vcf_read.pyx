@@ -491,12 +491,15 @@ cdef class VCFChunkIterator:
         self.parser.parse(self.stream, &self.context)
 
         # get the chunk
-        chunk = self.parser.make_chunk(self.context.chunk_variant_index + 1)
+        chunk_length = self.context.chunk_variant_index + 1
+        chunk = self.parser.make_chunk(chunk_length)
 
         if chunk is None:
             raise StopIteration
 
-        return chunk
+        chrom = CharVector_to_pybytes(&self.context.chrom)
+        pos = self.context.pos
+        return chunk, chunk_length, chrom, pos
 
 
 cdef class VCFParser:
@@ -889,15 +892,18 @@ cdef class VCFChromParser(VCFFieldParserBase):
             # number of characters read into current value
             int chars_stored = 0
 
+        # check for EOF - important to handle file with no final line terminator
+        if stream.c == 0:
+            context.state = VCFState.EOF
+            return 0
+
         # setup context
         CharVector_clear(&context.chrom)
         context.pos = -1
         context.sample_index = 0
         context.sample_field_index = 0
-        # check for EOF - important to handle file with no final line terminator
-        if stream.c != 0:
-            context.variant_index += 1
-            context.chunk_variant_index += 1
+        context.variant_index += 1
+        context.chunk_variant_index += 1
 
         # now initialise memory index
         memory_index = context.chunk_variant_index * self.itemsize
@@ -2775,7 +2781,8 @@ cdef class VCFParallelChunkIterator:
                 result.get()
 
         # obtain the chunk
-        chunk = self.parser.make_chunk(worker.context.chunk_variant_index + 1)
+        chunk_length = worker.context.chunk_variant_index + 1
+        chunk = self.parser.make_chunk(chunk_length)
 
         if chunk is None:
             # clean up thread pool
@@ -2785,4 +2792,6 @@ cdef class VCFParallelChunkIterator:
             raise StopIteration
 
         else:
-            return chunk
+            chrom = CharVector_to_pybytes(&worker.context.chrom)
+            pos = worker.context.pos
+            return chunk, chunk_length, chrom, pos

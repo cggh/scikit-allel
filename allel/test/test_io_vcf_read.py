@@ -20,8 +20,8 @@ def test_read_vcf_chunks():
     fn = 'fixture/sample.vcf'
 
     for n_threads in 1, 2:
-        headers, chunks = read_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
-                                          buffer_size=100, n_threads=n_threads)
+        headers, it = read_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
+                                      buffer_size=100, n_threads=n_threads)
 
         # check headers
         assert_in('q10', headers.filters)
@@ -47,7 +47,7 @@ def test_read_vcf_chunks():
         eq_('Haplotype Quality', headers.formats['HQ']['Description'])
 
         # check chunk lengths
-        chunks = list(chunks)
+        chunks = [chunk for chunk, _, _, _ in it]
         eq_(3, len(chunks))
         eq_(4, chunks[0]['variants/POS'].shape[0])
         eq_(4, chunks[1]['variants/POS'].shape[0])

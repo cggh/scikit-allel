@@ -77,7 +77,7 @@ def debug(*msg):
 
 DEFAULT_BUFFER_SIZE = 2**14
 DEFAULT_CHUNK_LENGTH = 2**15
-DEFAULT_BLOCK_LENGTH = 100
+DEFAULT_BLOCK_LENGTH = 2**11
 DEFAULT_CHUNK_WIDTH = 2**6
 
 
@@ -106,18 +106,27 @@ def _prep_fields_arg(fields):
 import time
 
 
-def progress(chunks, log, prefix='[scikit-allel]'):
+def progress(it, log, prefix='[scikit-allel]'):
+    n_variants = 0
     before_all = time.time()
     before_chunk = before_all
-    for chunk in chunks:
+    for chunk, chunk_length, chrom, pos in it:
         after_chunk = time.time()
-        elapsed = after_chunk - before_chunk
-        print('%s chunk in %.2fs' % (prefix, elapsed), file=log)
-        yield chunk
+        elapsed_chunk = after_chunk - before_chunk
+        elapsed = after_chunk - before_all
+        n_variants += chunk_length
+        print('%s %s rows in %.2fs; chunk in %.2fs (%s rows/s); %s:%s' %
+              (prefix, n_variants, elapsed, elapsed_chunk,
+               int(chunk_length//elapsed_chunk), str(chrom, 'ascii'), pos),
+              file=log)
+        log.flush()
+        yield chunk, chunk_length, chrom, pos
         before_chunk = after_chunk
     after_all = time.time()
     elapsed = after_all - before_all
-    print('%s all done in %.2fs' % (prefix, elapsed), file=log)
+    print('%s all done (%s rows/s)' %
+          (prefix, int(n_variants//elapsed)), file=log)
+    log.flush()
 
 
 def read_vcf(path,
@@ -163,15 +172,15 @@ def read_vcf(path,
     add_samples, fields = _prep_fields_arg(fields)
 
     # setup
-    headers, chunks = read_vcf_chunks(path=path, fields=fields, types=types,
-                                      numbers=numbers,buffer_size=buffer_size,
-                                      chunk_length=chunk_length,
-                                      block_length=block_length, n_threads=n_threads)
+    headers, it = read_vcf_chunks(path=path, fields=fields, types=types,
+                                  numbers=numbers,buffer_size=buffer_size,
+                                  chunk_length=chunk_length,
+                                  block_length=block_length, n_threads=n_threads)
     if log is not None:
-        chunks = progress(chunks, log)
+        it = progress(it, log, prefix='[read_vcf]')
 
     # read all chunks into a list
-    chunks = list(chunks)
+    chunks = [chunk for chunk, _, _, _ in it]
 
     # setup output
     output = dict()
@@ -323,12 +332,12 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
-                                          numbers=numbers, buffer_size=buffer_size,
-                                          chunk_length=chunk_length,
-                                          block_length=block_length, n_threads=n_threads)
+        headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
+                                      numbers=numbers, buffer_size=buffer_size,
+                                      chunk_length=chunk_length,
+                                      block_length=block_length, n_threads=n_threads)
         if log is not None:
-            chunks = progress(chunks, log)
+            it = progress(it, log, prefix='[vcf_to_hdf5]')
 
         if add_samples:
             # store samples
@@ -343,7 +352,7 @@ def vcf_to_hdf5(input_path, output_path,
                                        chunks=None)
 
         # read first chunk
-        chunk = next(chunks, None)
+        chunk, _, _, _ = next(it)
 
         # setup datasets
         keys = _hdf5_setup_datasets(chunk=chunk, root=root, chunk_length=chunk_length,
@@ -351,11 +360,11 @@ def vcf_to_hdf5(input_path, output_path,
                                     compression_opts=compression_opts, shuffle=shuffle,
                                     overwrite=overwrite)
 
-        # reconstitute chunks iterator
-        chunks = itertools.chain([chunk], chunks)
+        # store first chunk
+        _hdf5_store_chunk(root, keys, chunk)
 
-        # store chunks
-        for chunk in chunks:
+        # store remaining chunks
+        for chunk, _, _, _ in it:
 
             _hdf5_store_chunk(root, keys, chunk)
 
@@ -430,12 +439,12 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    headers, chunks = read_vcf_chunks(input_path, fields=fields, types=types,
-                                      numbers=numbers, buffer_size=buffer_size,
-                                      chunk_length=chunk_length,
-                                      block_length=block_length, n_threads=n_threads)
+    headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
+                                  numbers=numbers, buffer_size=buffer_size,
+                                  chunk_length=chunk_length,
+                                  block_length=block_length, n_threads=n_threads)
     if log is not None:
-        chunks = progress(chunks, log)
+        it = progress(it, log, prefix='[vcf_to_zarr]')
 
     if add_samples:
         # store samples
@@ -443,11 +452,7 @@ def vcf_to_zarr(input_path, output_path,
                                    compressor=None, overwrite=overwrite)
 
     # read first chunk
-    chunk = next(chunks, None)
-
-    # handle no input
-    if chunk is None:
-        raise RuntimeError('input file has no data?')
+    chunk, _, _, _ = next(it)
 
     # setup datasets
     keys = _zarr_setup_datasets(chunk, root=root,
@@ -458,10 +463,11 @@ def vcf_to_zarr(input_path, output_path,
                                 fill_value=fill_value,
                                 order=order)
 
-    # reconstitute chunks iterator
-    chunks = itertools.chain([chunk], chunks)
+    # store first chunk
+    _zarr_store_chunk(root, keys, chunk)
 
-    for chunk in chunks:
+    # store remaining chunks
+    for chunk, _, _, _ in it:
 
         _zarr_store_chunk(root, keys, chunk)
 
