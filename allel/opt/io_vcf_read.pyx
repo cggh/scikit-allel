@@ -2654,6 +2654,7 @@ cdef int debug(message, VCFContext* context) nogil except -1:
 
 
 import itertools
+from threading import Lock
 
 
 cdef class VCFChunkIteratorParallel:
@@ -2669,6 +2670,7 @@ cdef class VCFChunkIteratorParallel:
         int n_threads
         list buffers
         int chunk_index
+        object mutex
 
     def __cinit__(self,
                   FileInputStream stream,
@@ -2680,6 +2682,7 @@ cdef class VCFChunkIteratorParallel:
         self.block_length = block_length
         self.n_threads = n_threads
         self.pool = ThreadPool(n_threads)
+        self.mutex = Lock()
         self.contexts = <VCFContext*> malloc(sizeof(VCFContext) * n_threads)
         self.n_samples = len(headers.samples)
         for i in range(n_threads):
@@ -2706,7 +2709,6 @@ cdef class VCFChunkIteratorParallel:
             int block_index = 0
             int i = 0
         self.chunk_index += 1
-        # debug('__next__: enter %s' % self.chunk_index, context)
 
         # allocate arrays for next chunk
         self.parser.malloc_chunk()
@@ -2715,48 +2717,28 @@ cdef class VCFChunkIteratorParallel:
 
         for i in itertools.cycle(list(range(self.n_threads))):
             context = self.contexts + i
-            # debug('__next__: cycle %s, %s, %s' % (i, block_index, self.chunk_index),
-            #       context)
 
             if results[i] is not None:
-                # debug('wait for result', context)
                 results[i].get()
 
-            # debug('read into buffer - synchronous', context)
-            buffer = self.buffers[i]
-            buffer.clear()
-            self.stream.read_lines_into(&buffer.vector, self.block_length)
-            # tee up first character
-            buffer.advance()
-            # debug(CharVector_to_pybytes(&buffer.vector), context)
-
-            # debug('do parsing - asynchronous', context)
             result = self.pool.apply_async(self.parse, args=(i, block_index,
                                                              self.chunk_index))
             results[i] = result
 
-            # debug('increment block', context)
             block_index += 1
 
             # chunk done?
             if block_index * self.block_length >= self.chunk_length:
-                # debug('chunk done', context)
                 break
 
             # all done?
             if self.stream.c == 0:
-                # debug('all done, EOF', context)
-                # # TODO last chunk?
-                # raise StopIteration
                 break
 
-        # debug('wait til all finished', context)
         for result in results:
             if result is not None:
                 result.get()
 
-        # debug('make chunk; %s; chunk_variant_index: %s' %
-        #       (i, context.chunk_variant_index), context)
         chunk = self.parser.make_chunk(context)
 
         if chunk is None:
@@ -2765,28 +2747,21 @@ cdef class VCFChunkIteratorParallel:
             self.pool.terminate()
             raise StopIteration
         else:
-            # debug(chunk['variants/POS'], context)
             return chunk
 
     def parse(self, int i, block_index, chunk_index):
         cdef:
             VCFContext* context = self.contexts + i
             CharVectorInputStream buffer = self.buffers[i]
-        # debug('async parse begin: %s, %s, %s' % (i, block_index, chunk_index), context)
-        # debug('async parse: buffers: %s' % repr(self.buffers), context)
+
+        with self.mutex:
+            buffer.clear()
+            self.stream.read_lines_into(&buffer.vector, self.block_length)
+            # tee up first character
+            buffer.advance()
+
         context.state = VCFState.CHROM
         context.chunk_variant_index = block_index * self.block_length - 1
         context.variant_index = chunk_index * self.chunk_length + context.chunk_variant_index
-        # debug('async parse: indices before: %s, %s' % (context.chunk_variant_index,
-        #                                                context.variant_index),
-        #       context)
-        # debug('async parse: buffer: %r, %r, %r, %r' % (buffer,
-        #                                                buffer.stream_index,
-        #                                                <bytes>buffer.c,
-        #                                                CharVector_to_pybytes(&buffer.vector)),
-        #       context)
+
         self.parser.parse(buffer, context)
-        # debug('async parse: indices after: %s, %s' % (context.chunk_variant_index,
-        #                                               context.variant_index),
-        #       context)
-        # debug('async parse end: %s, %s, %s' % (i, block_index, chunk_index), context)
