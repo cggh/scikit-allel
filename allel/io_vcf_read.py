@@ -492,29 +492,27 @@ def read_vcf_chunks(path,
                     n_threads=None):
     """TODO"""
 
+    kwds = dict(fields=fields, types=types, numbers=numbers,
+                chunk_length=chunk_length, block_length=block_length,
+                n_threads=n_threads, fills=fills)
+
     if isinstance(path, str) and path.endswith('gz'):
         # assume gzip-compatible compression
         # N.B., GZipFile supports peek
         fileobj = gzip.open(path, mode='rb')
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
-        return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
-                         chunk_length=chunk_length, block_length=block_length,
-                         n_threads=n_threads, fills=fills)
+        return _read_vcf(stream, **kwds)
 
     elif isinstance(path, str):
         # assume no compression
         fileobj = open(path, mode='rb', buffering=buffer_size)
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
-        return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
-                         chunk_length=chunk_length, block_length=block_length,
-                         n_threads=n_threads, fills=fills)
+        return _read_vcf(stream, **kwds)
 
     elif hasattr(path, 'readinto'):
         fileobj = path
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
-        return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
-                         chunk_length=chunk_length, block_length=block_length,
-                         n_threads=n_threads, fills=fills)
+        return _read_vcf(stream, **kwds)
 
     else:
         raise ValueError('path must be string or file-like, found %r' % path)

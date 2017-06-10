@@ -2984,16 +2984,9 @@ cdef int warn(message, VCFContext* context) nogil except -1:
         warnings.warn(message)
 
 
-cdef int debug(message, VCFContext* context) nogil except -1:
+cdef int debug(message) nogil except -1:
     with gil:
-        message = '[DEBUG] ' + str(message) + '\n'
-        # message += 'state: %s' % context.state
-        # message += '; variant_index: %s' % context.variant_index
-        # message += '; chunk_variant_index: %s' % context.chunk_variant_index
-        # message += '; sample_index: %s' % context.sample_index
-        # message += '; sample_field_index: %s' % context.sample_field_index
-        # message += '; chrom: %s' % CharVector_to_pybytes(&context.chrom)
-        # message += '; pos: %s' % context.pos
+        message = '[DEBUG] ' + str(message)
         print(message, file=sys.stderr)
         sys.stderr.flush()
 
@@ -3003,6 +2996,7 @@ cdef int debug(message, VCFContext* context) nogil except -1:
 
 
 import itertools
+import time
 
 
 cdef class VCFParallelWorker:
@@ -3027,6 +3021,9 @@ cdef class VCFParallelWorker:
         VCFContext_free(&self.context)
 
     def work(self, block_index, chunk_index):
+        # For some reason, calling time.time() stabilises multi-threaded performance. I
+        # will by you a beer if you can tell me why.
+        before = time.time()
         # set initial state
         self.context.state = VCFState.CHROM
         self.context.chunk_variant_index = block_index * self.block_length - 1
@@ -3034,6 +3031,7 @@ cdef class VCFParallelWorker:
                                       self.context.chunk_variant_index)
         # parse the block of data stored in the buffer
         self.parser.parse(self.buffer, &self.context)
+        after = time.time()
 
 
 cdef class VCFParallelChunkIterator:
@@ -3046,6 +3044,7 @@ cdef class VCFParallelChunkIterator:
         int block_length
         int n_samples
         int n_threads
+        int n_workers
         int chunk_index
         list workers
 
@@ -3058,6 +3057,9 @@ cdef class VCFParallelChunkIterator:
         # cannot have block length larger than chunk length
         self.block_length = min(block_length, chunk_length)
         self.n_threads = n_threads
+        # see slightly better parallelism if allow one more worker than number of
+        # threads
+        self.n_workers = n_threads + 1
         self.pool = ThreadPool(n_threads)
         self.n_samples = len(headers.samples)
         self.parser = VCFParser(fields=fields, types=types, numbers=numbers,
@@ -3066,7 +3068,7 @@ cdef class VCFParallelChunkIterator:
         self.chunk_index = -1
         self.workers = [VCFParallelWorker(self.parser, self.chunk_length,
                                           self.block_length, self.n_samples)
-                        for _ in range(self.n_threads)]
+                        for _ in range(self.n_workers)]
 
     def __iter__(self):
         return self
@@ -3086,10 +3088,10 @@ cdef class VCFParallelChunkIterator:
         self.parser.malloc_chunk()
 
         # setup list to hold async results
-        results = [None] * self.n_threads
+        results = [None] * self.n_workers
 
         # cycle around the number of threads
-        for i in itertools.cycle(list(range(self.n_threads))):
+        for i in itertools.cycle(list(range(self.n_workers))):
             worker = self.workers[i]
 
             # wait for the result to finish - this ensures we don't overwrite a
