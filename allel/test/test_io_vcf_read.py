@@ -676,6 +676,33 @@ def test_vcf_to_hdf5():
                     assert_array_equal(expect[key], actual[key][:])
 
 
+def test_read_vcf_info_types():
+    fn = 'fixture/sample.vcf'
+
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8':
+        callset = read_vcf(fn, fields=['variants/DP'], types={'variants/DP': dtype})
+        eq_(np.dtype(dtype), callset['variants/DP'].dtype)
+        eq_((9,), callset['variants/DP'].shape)
+
+
+def test_read_vcf_genotype_types():
+    fn = 'fixture/sample.vcf'
+
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8':
+        callset = read_vcf(fn, fields=['GT'], types={'GT': dtype})
+        eq_(np.dtype(dtype), callset['calldata/GT'].dtype)
+        eq_((9, 3, 2), callset['calldata/GT'].shape)
+
+
+def test_read_vcf_calldata_types():
+    fn = 'fixture/sample.vcf'
+
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8':
+        callset = read_vcf(fn, fields=['HQ'], types={'HQ': dtype})
+        eq_(np.dtype(dtype), callset['calldata/HQ'].dtype)
+        eq_((9, 3, 2), callset['calldata/HQ'].shape)
+
+
 # TODO test types
 
 # TODO test numbers

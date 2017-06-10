@@ -27,8 +27,8 @@ TODO:
 ** DONE String
 * DONE Option not to return samples
 * DONE Progress logging in vcf_to_... functions
+* DONE Generalise genotype parser integer type - needs tests
 * Profile heavy INFO, binary search?
-* Generalise genotype parser integer type - needs tests
 * User-provided ploidy
 * Handle number = 0 in non-flag INFO field
 * User-controlled fill values
