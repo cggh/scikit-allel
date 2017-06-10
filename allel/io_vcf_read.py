@@ -28,10 +28,12 @@ TODO:
 * DONE Option not to return samples
 * DONE Progress logging in vcf_to_... functions
 * DONE Generalise genotype parser integer type - needs tests
-* Profile heavy INFO, binary search?
-* User-provided ploidy
-* Handle number = 0 in non-flag INFO field
+* DONE Profile heavy INFO, binary search
+* DONE User-provided ploidy
+* Test numbers
 * User-controlled fill values
+* Test fills
+* Handle number = 0 in non-flag INFO field
 * User-controlled numbers to ALT, INFO, calldata, ... (tests)
 * Read from region via tabix
 * Read from region via scanning

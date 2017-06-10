@@ -1,7 +1,7 @@
 # cython: language_level=3
-# cython: profile=True
-# cython: binding=True
 # cython: linetrace=False
+# cython: profile=False
+# cython: binding=False
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: initializedcheck=False
@@ -10,8 +10,8 @@
 # cython: linetrace=True
 # distutils: define_macros=CYTHON_TRACE=1
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
-# cython: profile=False
-# cython: binding=False
+# cython: profile=True
+# cython: binding=True
 """
 
 
@@ -39,6 +39,19 @@ from multiprocessing.pool import ThreadPool
 cdef double NAN = np.nan
 
 # pre-define these characters for convenience and speed
+# cdef enum:
+#     TAB = b'\t'
+#     LF = b'\n'
+#     CR = b'\r'
+#     HASH = b'#'
+#     COLON = b':'
+#     SEMICOLON = b';'
+#     PERIOD = b'.'
+#     COMMA = b','
+#     SLASH = b'/'
+#     PIPE = b'|'
+#     EQUALS = b'='
+
 cdef char TAB = b'\t'
 cdef char LF = b'\n'
 cdef char CR = b'\r'
@@ -85,7 +98,6 @@ ctypedef fused integer:
 
 
 ctypedef fused floating:
-    # TODO float16?
     np.float32_t
     np.float64_t
 
@@ -172,9 +184,9 @@ cdef inline int cstr_search_sorted(char* query, char** compare, int n_items) nog
     cdef:
         int i
 
-    # TODO binary search
+    # N.B., we could do a binary search here, but in fact this is not the performance
+    # bottleneck, so stick with a simple scan for now
 
-    # simple scan for now
     for i in range(n_items):
         if strcmp(query, compare[i]) == 0:
             return i
@@ -338,61 +350,6 @@ cdef enum VCFState:
     CALLDATA,
     EOL,
     EOF
-
-
-# cdef class VCFContext:
-#
-#     cdef:
-#
-#         # static attributes - should not change during parsing
-#         int chunk_length
-#         int n_samples
-#
-#         # dynamic attributes - reflect current state during parsing
-#         int state  # overall parser state
-#         int variant_index  # index of current variant
-#         int chunk_variant_index  # index of current variant within current chunk
-#         int sample_index  # index of current sample within call data
-#         int sample_field_index  # index of field within call data for current sample
-#         IntVector variant_format_indices  # indices of formats for the current variant
-#
-#         # buffers
-#         CharVector temp  # used for numeric values
-#         CharVector info_key  # used for info key
-#         CharVector info_val  # used for info value
-#
-#         # keep track of current chrom and pos, even if fields are skipped
-#         CharVector chrom
-#         long pos
-#
-#     def __cinit__(self, int chunk_length, int n_samples):
-#
-#         # initialise static attributes
-#         self.chunk_length = chunk_length
-#         self.n_samples = n_samples
-#
-#         # initialise dynamic state
-#         self.state = VCFState.CHROM
-#         self.variant_index = -1
-#         self.chunk_variant_index = -1
-#         self.sample_index = 0
-#         self.sample_field_index = 0
-#         IntVector_init(&self.variant_format_indices, 2**6)
-#
-#         # initialise temporary buffers
-#         CharVector_init(&self.temp, 2**6)
-#         CharVector_init(&self.info_key, 2**6)
-#         CharVector_init(&self.info_val, 2**6)
-#
-#         # initialise chrom and pos
-#         CharVector_init(&self.chrom, 2**6)
-#         self.pos = -1
-#
-#     def __dealloc__(self):
-#         CharVector_free(&self.temp)
-#         CharVector_free(&self.info_key)
-#         CharVector_free(&self.info_val)
-#         CharVector_free(&self.chrom)
 
 
 cdef struct VCFContext:
@@ -696,14 +653,10 @@ cdef class VCFParser:
 
     cdef int parse(self, InputStreamBase stream, VCFContext* context) except -1:
         """Parse to end of current chunk or EOF."""
-        # debug('VCFParser.parse: enter', context)
 
         with nogil:
 
             while True:
-                # debug('VCFParser.parse: loop; state %s; chunk_variant_index %s' % (
-                #     context.state, context.chunk_variant_index,
-                # ), context)
 
                 if context.state == VCFState.EOF:
                     break
@@ -1708,6 +1661,7 @@ cdef class VCFInfoFloat32Parser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'float32'
+        kwargs.setdefault('fill', NAN)
         super(VCFInfoFloat32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext* context) nogil except -1:
@@ -1726,6 +1680,7 @@ cdef class VCFInfoFloat64Parser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'float64'
+        kwargs.setdefault('fill', NAN)
         super(VCFInfoFloat64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext* context) nogil except -1:
@@ -1845,7 +1800,7 @@ cdef class VCFInfoSkipParser(VCFInfoParserBase):
 
 cdef int vcf_info_parse_integer(InputStreamBase stream,
                                 VCFContext* context,
-                                integer[:, :] memory) nogil except-1:
+                                integer[:, :] memory) nogil except -1:
     cdef:
         int value_index = 0
 
@@ -1875,7 +1830,7 @@ cdef int vcf_info_parse_integer(InputStreamBase stream,
 
 cdef int vcf_info_store_integer(VCFContext* context,
                                 int value_index,
-                                integer[:, :] memory) nogil except-1:
+                                integer[:, :] memory) nogil except -1:
     cdef:
         int parsed
         long value
@@ -1894,7 +1849,7 @@ cdef int vcf_info_store_integer(VCFContext* context,
 
 cdef int vcf_info_parse_floating(InputStreamBase stream,
                                  VCFContext* context,
-                                 floating[:, :] memory) nogil except-1:
+                                 floating[:, :] memory) nogil except -1:
     cdef:
         int value_index = 0
 
@@ -1924,7 +1879,7 @@ cdef int vcf_info_parse_floating(InputStreamBase stream,
 
 cdef int vcf_info_store_floating(VCFContext* context,
                                  int value_index,
-                                 floating[:, :] memory) nogil except-1:
+                                 floating[:, :] memory) nogil except -1:
     cdef:
         int parsed
         double value
@@ -2452,7 +2407,7 @@ cdef class VCFGenotypeUInt64Parser(VCFCallDataParserBase):
 
 cdef int vcf_genotype_parse(InputStreamBase stream,
                             VCFContext* context,
-                            integer[:, :, :] memory) nogil except-1:
+                            integer[:, :, :] memory) nogil except -1:
     cdef:
         int value_index = 0
     # debug('vcf_genotype_parse: enter', context)
@@ -2692,7 +2647,7 @@ cdef class VCFCallDataFloat64Parser(VCFCallDataParserBase):
 
 cdef int vcf_calldata_parse_integer(InputStreamBase stream,
                                     VCFContext* context,
-                                    integer[:, :, :] memory) nogil except-1:
+                                    integer[:, :, :] memory) nogil except -1:
 
     cdef:
         int value_index = 0
@@ -2725,7 +2680,7 @@ cdef int vcf_calldata_parse_integer(InputStreamBase stream,
 
 cdef int vcf_calldata_store_integer(VCFContext* context,
                                     int value_index,
-                                    integer[:, :, :] memory) nogil except-1:
+                                    integer[:, :, :] memory) nogil except -1:
     cdef:
         int parsed
         long value
@@ -2743,7 +2698,7 @@ cdef int vcf_calldata_store_integer(VCFContext* context,
 
 cdef int vcf_calldata_parse_floating(InputStreamBase stream,
                                      VCFContext* context,
-                                     floating[:, :, :] memory) nogil except-1:
+                                     floating[:, :, :] memory) nogil except -1:
 
     cdef:
         int value_index = 0
@@ -2775,7 +2730,7 @@ cdef int vcf_calldata_parse_floating(InputStreamBase stream,
 
 cdef int vcf_calldata_store_floating(VCFContext* context,
                                      int value_index,
-                                     floating[:, :, :] memory) nogil except-1:
+                                     floating[:, :, :] memory) nogil except -1:
     cdef:
         int parsed
         double value
@@ -2939,7 +2894,7 @@ cdef int vcf_strtod(CharVector* value, VCFContext* context, double* d) nogil:
 # LOGGING
 
 
-cdef int warn(message, VCFContext* context) nogil:
+cdef int warn(message, VCFContext* context) nogil except -1:
     with gil:
         # TODO customize message based on state (CHROM, POS, etc.)
         message += '; variant index: %s' % context.variant_index

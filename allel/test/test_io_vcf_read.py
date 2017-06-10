@@ -703,7 +703,28 @@ def test_read_vcf_calldata_types():
         eq_((9, 3, 2), callset['calldata/HQ'].shape)
 
 
-# TODO test types
+def test_genotype_ploidy():
+    fn = 'fixture/sample.vcf'
+
+    callset = read_vcf(fn, fields='GT', numbers=dict(GT=1))
+    gt = callset['calldata/GT']
+    eq_((9, 3), gt.shape)
+    eq_((0, 0, 0), tuple(gt[8, :]))
+
+    callset = read_vcf(fn, fields='GT', numbers=dict(GT=2))
+    gt = callset['calldata/GT']
+    eq_((9, 3, 2), gt.shape)
+    eq_((0, -1), tuple(gt[8, 0]))
+    eq_((0, 1), tuple(gt[8, 1]))
+    eq_((0, 2), tuple(gt[8, 2]))
+
+    callset = read_vcf(fn, fields='GT', numbers=dict(GT=3))
+    gt = callset['calldata/GT']
+    eq_((9, 3, 3), gt.shape)
+    eq_((0, -1, -1), tuple(gt[8, 0]))
+    eq_((0, 1, -1), tuple(gt[8, 1]))
+    eq_((0, 2, -1), tuple(gt[8, 2]))
+
 
 # TODO test numbers
 
