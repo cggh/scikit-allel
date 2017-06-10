@@ -158,12 +158,18 @@ def read_vcf(path,
         TODO
     chunk_length : int
         TODO
-    block_length : int
-        TODO
     n_threads : int
-        TODO
+        Experimental: number of additional threads to launch to parse in parallel.
+        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
+        program thread. If you are feeling adventurous and/or impatient, try a value of 1
+        or 2. May increase or decrease speed of parsing relative to single-threaded
+        behaviour, depending on the data, your computer, the weather, and how the stars
+        are aligned. A value of None (default) means single-threaded  parsing.
+    block_length : int
+        Only applies if n_threads is not None (multi-threaded parsing). Size of block
+        (number of rows) that will be handed off to be parsed in parallel.
     log : file-like
-        TODO
+        A file-like object (e.g., sys.stderr) to print progress information.
 
     Returns
     -------

@@ -3038,6 +3038,7 @@ cdef class VCFParallelParser:
             self.result.get()
 
     def parse(self, block_index, chunk_index):
+        before = time.time()
         # set initial state
         self.context.state = VCFState.CHROM
         self.context.chunk_variant_index = block_index * self.block_length - 1
@@ -3045,6 +3046,7 @@ cdef class VCFParallelParser:
                                       self.context.chunk_variant_index)
         # parse the block of data stored in the buffer
         self.parser.parse(self.buffer, &self.context)
+        after = time.time()
 
 
 cdef class VCFParallelChunkIterator:
@@ -3133,9 +3135,11 @@ cdef class VCFParallelChunkIterator:
         for worker in self.workers:
             worker.join()
 
-        # obtain the chunk from the last worker
+        # obtain the final chunk length via the last worker
         worker = self.workers[i]
         chunk_length = worker.context.chunk_variant_index + 1
+
+        # obtain the chunk
         chunk = self.parser.make_chunk(chunk_length)
 
         if chunk is None:
