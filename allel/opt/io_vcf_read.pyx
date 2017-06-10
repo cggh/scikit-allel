@@ -1954,8 +1954,6 @@ cdef class VCFFormatParser(VCFFieldParserBase):
         for i in range(self.n_formats):
             self.formats_c[i] = <char*> self.formats[i]
 
-        # debug('FORMATS: %s' % repr(self.formats))
-
     def __init__(self, formats):
         super(VCFFormatParser, self).__init__(key=b'FORMAT')
 
@@ -2999,31 +2997,47 @@ import itertools
 import time
 
 
-cdef class VCFParallelWorker:
+cdef class VCFParallelParser:
 
     cdef:
+        FileInputStream stream
         CharVectorInputStream buffer
         VCFContext context
         VCFParser parser
         int chunk_length
         int block_length
         int n_samples
+        object pool
+        object result
 
-    def __cinit__(self, parser, chunk_length, block_length, n_samples):
+    def __cinit__(self, stream, parser, chunk_length, block_length, n_samples, pool):
         self.buffer = CharVectorInputStream(2**14)
         VCFContext_init(&self.context, chunk_length, n_samples)
+        self.stream = stream
         self.parser = parser
         self.chunk_length = chunk_length
         self.block_length = block_length
         self.n_samples = n_samples
+        self.pool = pool
+        self.result = None
 
     def __dealloc__(self):
         VCFContext_free(&self.context)
 
-    def work(self, block_index, chunk_index):
-        # For some reason, calling time.time() stabilises multi-threaded performance. I
-        # will by you a beer if you can tell me why.
-        before = time.time()
+    def read(self, n_lines):
+        self.buffer.clear()
+        n_lines_read = self.stream.read_lines_into(&(self.buffer.vector), n_lines)
+        self.buffer.advance()
+        return n_lines_read
+
+    def parse_async(self, block_index, chunk_index):
+        self.result = self.pool.apply_async(self.parse, args=(block_index, chunk_index))
+
+    def join(self):
+        if self.result is not None:
+            self.result.get()
+
+    def parse(self, block_index, chunk_index):
         # set initial state
         self.context.state = VCFState.CHROM
         self.context.chunk_variant_index = block_index * self.block_length - 1
@@ -3031,7 +3045,6 @@ cdef class VCFParallelWorker:
                                       self.context.chunk_variant_index)
         # parse the block of data stored in the buffer
         self.parser.parse(self.buffer, &self.context)
-        after = time.time()
 
 
 cdef class VCFParallelChunkIterator:
@@ -3054,11 +3067,14 @@ cdef class VCFParallelChunkIterator:
                   headers, fields, types, numbers, fills):
         self.stream = stream
         self.chunk_length = chunk_length
-        # cannot have block length larger than chunk length
-        self.block_length = min(block_length, chunk_length)
+        # only makes sense to have block length at most half chunk length if we want
+        # some parallelism
+        self.block_length = min(block_length, chunk_length//2)
+        if self.block_length < 1:
+            self.block_length = 1
         self.n_threads = n_threads
-        # see slightly better parallelism if allow one more worker than number of
-        # threads
+        # allow one more worker than number of threads in pool to allow for sync
+        # reading of data in the main thread
         self.n_workers = n_threads + 1
         self.pool = ThreadPool(n_threads)
         self.n_samples = len(headers.samples)
@@ -3066,8 +3082,8 @@ cdef class VCFParallelChunkIterator:
                                 chunk_length=chunk_length, n_samples=self.n_samples,
                                 fills=fills)
         self.chunk_index = -1
-        self.workers = [VCFParallelWorker(self.parser, self.chunk_length,
-                                          self.block_length, self.n_samples)
+        self.workers = [VCFParallelParser(stream, self.parser, self.chunk_length,
+                                          self.block_length, self.n_samples, self.pool)
                         for _ in range(self.n_workers)]
 
     def __iter__(self):
@@ -3079,7 +3095,7 @@ cdef class VCFParallelChunkIterator:
             int i = 0
             int n_lines
             int n_lines_read = 0
-            VCFParallelWorker worker
+            VCFParallelParser worker
 
         # increment the current chunk index
         self.chunk_index += 1
@@ -3087,28 +3103,20 @@ cdef class VCFParallelChunkIterator:
         # allocate arrays for next chunk
         self.parser.malloc_chunk()
 
-        # setup list to hold async results
-        results = [None] * self.n_workers
-
-        # cycle around the number of threads
+        # cycle around the workers
         for i in itertools.cycle(list(range(self.n_workers))):
             worker = self.workers[i]
 
             # wait for the result to finish - this ensures we don't overwrite a
             # worker's buffer while it's still parsing
-            if results[i] is not None:
-                results[i].get()
+            worker.join()
 
             # read lines into the worker's buffer - this part has to be synchronous
-            worker.buffer.clear()
             n_lines = min(self.block_length, self.chunk_length - n_lines_read)
-            n_lines_read += self.stream.read_lines_into(&(worker.buffer.vector), n_lines)
-            worker.buffer.advance()
+            n_lines_read += worker.read(n_lines)
 
             # launch parsing of the block in parallel
-            result = self.pool.apply_async(worker.work, args=(block_index,
-                                                              self.chunk_index))
-            results[i] = result
+            worker.parse_async(block_index, self.chunk_index)
 
             # increment the current block index
             block_index += 1
@@ -3122,11 +3130,11 @@ cdef class VCFParallelChunkIterator:
                 break
 
         # wait for all parallel tasks to complete
-        for result in results:
-            if result is not None:
-                result.get()
+        for worker in self.workers:
+            worker.join()
 
-        # obtain the chunk
+        # obtain the chunk from the last worker
+        worker = self.workers[i]
         chunk_length = worker.context.chunk_variant_index + 1
         chunk = self.parser.make_chunk(chunk_length)
 

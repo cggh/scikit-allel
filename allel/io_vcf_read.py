@@ -78,7 +78,7 @@ def debug(*msg):
 
 
 DEFAULT_BUFFER_SIZE = 2**14
-DEFAULT_CHUNK_LENGTH = 2**15
+DEFAULT_CHUNK_LENGTH = 2**16
 DEFAULT_BLOCK_LENGTH = 2**11
 DEFAULT_CHUNK_WIDTH = 2**6
 
@@ -908,7 +908,7 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
     fills = normalize_fills(fills, fields, headers)
 
     # setup chunks iterator
-    if n_threads is None or n_threads == 1:
+    if n_threads is None:
         chunks = VCFChunkIterator(stream,
                                   chunk_length=chunk_length,
                                   headers=headers,
