@@ -33,8 +33,8 @@ TODO:
 * DONE Test numbers
 * DONE User-controlled fill values
 * DONE Test fills
-* Handle number = 0 in non-flag INFO field
-* User-controlled numbers to ALT, INFO, calldata, ... (tests)
+* DONE Handle number = 0 in non-flag INFO field
+* DONE User-controlled numbers to ALT, INFO, calldata, ... (tests)
 * Read from region via tabix
 * Read from region via scanning
 * User-specified samples to parse
@@ -139,8 +139,8 @@ def read_vcf(path,
              fills=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
-             block_length=DEFAULT_BLOCK_LENGTH,
              n_threads=None,
+             block_length=DEFAULT_BLOCK_LENGTH,
              log=None):
     """Read data from a VCF file into NumPy arrays.
 
@@ -153,6 +153,8 @@ def read_vcf(path,
     types : dict
         TODO
     numbers : dict
+        TODO
+    fills : dict
         TODO
     buffer_size : int
         TODO
@@ -221,10 +223,47 @@ def vcf_to_npz(input_path, output_path,
                fills=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
-               block_length=DEFAULT_BLOCK_LENGTH,
                n_threads=None,
+               block_length=DEFAULT_BLOCK_LENGTH,
                log=None):
-    """TODO"""
+    """Read data from a VCF file into NumPy arrays and save as a .npz file.
+
+    Parameters
+    ----------
+    input_path : str
+        TODO
+    output_path : str
+        TODO
+    compressed : bool
+        If True (default), save with compression.
+    overwrite : bool
+        If False (default), do not overwrite an existing file.
+    fields : sequence of str
+        TODO
+    types : dict
+        TODO
+    numbers : dict
+        TODO
+    fills : dict
+        TODO
+    buffer_size : int
+        TODO
+    chunk_length : int
+        TODO
+    n_threads : int
+        Experimental: number of additional threads to launch to parse in parallel.
+        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
+        program thread. If you are feeling adventurous and/or impatient, try a value of 1
+        or 2. May increase or decrease speed of parsing relative to single-threaded
+        behaviour, depending on the data, your computer, the weather, and how the stars
+        are aligned. A value of None (default) means single-threaded  parsing.
+    block_length : int
+        Only applies if n_threads is not None (multi-threaded parsing). Size of block
+        (number of rows) that will be handed off to be parsed in parallel.
+    log : file-like
+        A file-like object (e.g., sys.stderr) to print progress information.
+
+    """
 
     # guard condition
     if not overwrite and os.path.exists(output_path):
@@ -325,10 +364,55 @@ def vcf_to_hdf5(input_path, output_path,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
-                block_length=DEFAULT_BLOCK_LENGTH,
                 n_threads=None,
+                block_length=DEFAULT_BLOCK_LENGTH,
                 log=None):
-    """TODO"""
+    """Read data from a VCF file and load into an HDF5 file.
+
+    Parameters
+    ----------
+    input_path : str
+        TODO
+    output_path : str
+        TODO
+    group : str
+        TODO
+    compression : str
+        Compression algorithm, e.g., 'gzip' (default).
+    compression_opts : int
+        Compression level, e.g., 1 (default).
+    shuffle : bool
+        Use byte shuffling to improve compression (default is False).
+    overwrite : bool
+        If False (default), do not overwrite an existing file.
+    fields : sequence of str
+        TODO
+    types : dict
+        TODO
+    numbers : dict
+        TODO
+    fills : dict
+        TODO
+    buffer_size : int
+        TODO
+    chunk_length : int
+        TODO
+    chunk_width : int
+        TODO
+    n_threads : int
+        Experimental: number of additional threads to launch to parse in parallel.
+        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
+        program thread. If you are feeling adventurous and/or impatient, try a value of 1
+        or 2. May increase or decrease speed of parsing relative to single-threaded
+        behaviour, depending on the data, your computer, the weather, and how the stars
+        are aligned. A value of None (default) means single-threaded  parsing.
+    block_length : int
+        Only applies if n_threads is not None (multi-threaded parsing). Size of block
+        (number of rows) that will be handed off to be parsed in parallel.
+    log : file-like
+        A file-like object (e.g., sys.stderr) to print progress information.
+
+    """
 
     import h5py
 
@@ -383,8 +467,7 @@ def vcf_to_hdf5(input_path, output_path,
             _hdf5_store_chunk(root, keys, chunk)
 
 
-def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite,
-                         fill_value, order):
+def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite):
 
     # handle no input
     if chunk is None:
@@ -408,8 +491,7 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
         # create dataset
         shape = (0,) + data.shape[1:]
         root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
-                            compressor=compressor, overwrite=overwrite,
-                            fill_value=fill_value, order=order)
+                            compressor=compressor, overwrite=overwrite)
 
     return keys
 
@@ -426,8 +508,6 @@ def _zarr_store_chunk(root, keys, chunk):
 def vcf_to_zarr(input_path, output_path,
                 group='/',
                 compressor='default',
-                fill_value=0,
-                order='C',
                 overwrite=False,
                 fields=None,
                 types=None,
@@ -436,10 +516,51 @@ def vcf_to_zarr(input_path, output_path,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
-                block_length=DEFAULT_BLOCK_LENGTH,
                 n_threads=None,
+                block_length=DEFAULT_BLOCK_LENGTH,
                 log=None):
-    """TODO"""
+    """Read data from a VCF file and load into a Zarr on-disk store.
+
+    Parameters
+    ----------
+    input_path : str
+        TODO
+    output_path : str
+        TODO
+    group : str
+        TODO
+    compressor : compressor
+        Compression algorithm, e.g., zarr.Blosc(cname='zstd', clevel=1, shuffle=1).
+    overwrite : bool
+        If False (default), do not overwrite an existing file.
+    fields : sequence of str
+        TODO
+    types : dict
+        TODO
+    numbers : dict
+        TODO
+    fills : dict
+        TODO
+    buffer_size : int
+        TODO
+    chunk_length : int
+        TODO
+    chunk_width : int
+        TODO
+    n_threads : int
+        Experimental: number of additional threads to launch to parse in parallel.
+        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
+        program thread. If you are feeling adventurous and/or impatient, try a value of 1
+        or 2. May increase or decrease speed of parsing relative to single-threaded
+        behaviour, depending on the data, your computer, the weather, and how the stars
+        are aligned. A value of None (default) means single-threaded  parsing.
+    block_length : int
+        Only applies if n_threads is not None (multi-threaded parsing). Size of block
+        (number of rows) that will be handed off to be parsed in parallel.
+    log : file-like
+        A file-like object (e.g., sys.stderr) to print progress information.
+
+    """
 
     import zarr
 
@@ -456,7 +577,7 @@ def vcf_to_zarr(input_path, output_path,
     # setup chunk iterator
     headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
                                   numbers=numbers, buffer_size=buffer_size,
-                                  chunk_length=chunk_length,
+                                  chunk_length=chunk_length, fills=fills,
                                   block_length=block_length, n_threads=n_threads)
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
@@ -474,9 +595,7 @@ def vcf_to_zarr(input_path, output_path,
                                 chunk_length=chunk_length,
                                 chunk_width=chunk_width,
                                 compressor=compressor,
-                                overwrite=overwrite,
-                                fill_value=fill_value,
-                                order=order)
+                                overwrite=overwrite)
 
     # store first chunk
     _zarr_store_chunk(root, keys, chunk)
@@ -496,7 +615,7 @@ def read_vcf_chunks(path,
                     block_length=DEFAULT_BLOCK_LENGTH,
                     buffer_size=DEFAULT_BUFFER_SIZE,
                     n_threads=None):
-    """TODO"""
+    """Returns an iterator over chunks of data from a VCF file as NumPy arrays."""
 
     kwds = dict(fields=fields, types=types, numbers=numbers,
                 chunk_length=chunk_length, block_length=block_length,
@@ -534,8 +653,7 @@ FIXED_VARIANTS_FIELDS = (
 )
 
 
-def normalize_field_prefix(field, headers):
-    """TODO"""
+def _normalize_field_prefix(field, headers):
 
     # already contains prefix?
     if field.startswith('variants/') or field.startswith('calldata/'):
@@ -566,8 +684,7 @@ def normalize_field_prefix(field, headers):
         return 'variants/' + field
 
 
-def check_field(field, headers):
-    """TODO"""
+def _check_field(field, headers):
 
     # assume field is already normalized for prefix
     group, name = field.split('/')
@@ -603,41 +720,41 @@ def check_field(field, headers):
         raise ValueError('invalid field specification: %r' % field)
 
 
-def add_all_fields(fields, headers):
-    add_all_variants_fields(fields, headers)
-    add_all_calldata_fields(fields, headers)
+def _add_all_fields(fields, headers):
+    _add_all_variants_fields(fields, headers)
+    _add_all_calldata_fields(fields, headers)
 
 
-def add_all_variants_fields(fields, headers):
-    add_all_fixed_variants_fields(fields)
-    add_all_info_fields(fields, headers)
-    add_all_filter_fields(fields, headers)
+def _add_all_variants_fields(fields, headers):
+    _add_all_fixed_variants_fields(fields)
+    _add_all_info_fields(fields, headers)
+    _add_all_filter_fields(fields, headers)
 
 
-def add_all_fixed_variants_fields(fields):
+def _add_all_fixed_variants_fields(fields):
     for f in FIXED_VARIANTS_FIELDS:
         fields.add('variants/' + f)
 
 
-def add_all_info_fields(fields, headers):
+def _add_all_info_fields(fields, headers):
     for f in headers.infos:
         fields.add('variants/' + f)
 
 
-def add_all_filter_fields(fields, headers):
+def _add_all_filter_fields(fields, headers):
     fields.add('variants/FILTER_PASS')
     for f in headers.filters:
         fields.add('variants/FILTER_' + f)
 
 
-def add_all_calldata_fields(fields, headers):
+def _add_all_calldata_fields(fields, headers):
     # only add calldata fields if there are samples
     if headers.samples:
         for f in headers.formats:
             fields.add('calldata/' + f)
 
 
-def normalize_fields(fields, headers):
+def _normalize_fields(fields, headers):
 
     # setup normalized fields
     normed_fields = set()
@@ -651,28 +768,28 @@ def normalize_fields(fields, headers):
         # special cases: be lenient about how to specify
 
         if f == '*':
-            add_all_fields(normed_fields, headers)
+            _add_all_fields(normed_fields, headers)
 
         elif f in ['variants', 'variants*', 'variants/*']:
-            add_all_variants_fields(normed_fields, headers)
+            _add_all_variants_fields(normed_fields, headers)
 
         elif f in ['calldata', 'calldata*', 'calldata/*']:
-            add_all_calldata_fields(normed_fields, headers)
+            _add_all_calldata_fields(normed_fields, headers)
 
         elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*', 'variants/INFO/*']:
-            add_all_info_fields(normed_fields, headers)
+            _add_all_info_fields(normed_fields, headers)
 
         elif f in ['FILTER', 'FILTER*', 'FILTER_*', 'variants/FILTER', 'variants/FILTER*',
                    'variants/FILTER/*']:
-            add_all_filter_fields(normed_fields, headers)
+            _add_all_filter_fields(normed_fields, headers)
 
         # exact field specification
 
         else:
 
             # normalize field specification
-            f = normalize_field_prefix(f, headers)
-            check_field(f, headers)
+            f = _normalize_field_prefix(f, headers)
+            _check_field(f, headers)
             if f.startswith('calldata/') and not headers.samples:
                 # only add calldata fields if there are samples
                 pass
@@ -687,7 +804,7 @@ default_float_dtype = 'f4'
 default_string_dtype = 'S12'
 
 
-def normalize_type(t):
+def _normalize_type(t):
     if t == 'Integer':
         return np.dtype(default_integer_dtype)
     elif t == 'Float':
@@ -724,13 +841,13 @@ default_types = {
 }
 
 
-def normalize_types(types, fields, headers):
+def _normalize_types(types, fields, headers):
     """TODO"""
 
     # normalize user-provided types
     if types is None:
         types = dict()
-    types = {normalize_field_prefix(f, headers): normalize_type(t)
+    types = {_normalize_field_prefix(f, headers): _normalize_type(t)
              for f, t in types.items()}
 
     # setup output
@@ -744,7 +861,7 @@ def normalize_types(types, fields, headers):
             normed_types[f] = types[f]
 
         elif f in default_types:
-            normed_types[f] = normalize_type(default_types[f])
+            normed_types[f] = _normalize_type(default_types[f])
 
         elif group == 'variants':
 
@@ -752,22 +869,22 @@ def normalize_types(types, fields, headers):
                 normed_types[f] = np.dtype(bool)
 
             elif name in headers.infos:
-                normed_types[f] = normalize_type(headers.infos[name]['Type'])
+                normed_types[f] = _normalize_type(headers.infos[name]['Type'])
 
             else:
                 # fall back to string
-                normed_types[f] = normalize_type('String')
+                normed_types[f] = _normalize_type('String')
                 warnings.warn('could not determine type for field %r, falling back to %s' %
                               (f, normed_types[f]))
 
         elif group == 'calldata':
 
             if name in headers.formats:
-                normed_types[f] = normalize_type(headers.formats[name]['Type'])
+                normed_types[f] = _normalize_type(headers.formats[name]['Type'])
 
             else:
                 # fall back to string
-                normed_types[f] = normalize_type('String')
+                normed_types[f] = _normalize_type('String')
                 warnings.warn('could not determine type for field %r, falling back to %s' %
                               (f, normed_types[f]))
 
@@ -799,7 +916,7 @@ default_numbers = {
 }
 
 
-def normalize_number(field, n):
+def _normalize_number(field, n):
     if n == '.':
         return 1
     elif n == 'A':
@@ -816,13 +933,13 @@ def normalize_number(field, n):
         return 1
 
 
-def normalize_numbers(numbers, fields, headers):
+def _normalize_numbers(numbers, fields, headers):
     """TODO"""
 
     # normalize user-provided numbers
     if numbers is None:
         numbers = dict()
-    numbers = {normalize_field_prefix(f, headers): normalize_number(f, n)
+    numbers = {_normalize_field_prefix(f, headers): _normalize_number(f, n)
                for f, n in numbers.items()}
 
     # setup output
@@ -844,7 +961,7 @@ def normalize_numbers(numbers, fields, headers):
                 normed_numbers[f] = 0
 
             elif name in headers.infos:
-                normed_numbers[f] = normalize_number(f, headers.infos[name]['Number'])
+                normed_numbers[f] = _normalize_number(f, headers.infos[name]['Number'])
 
             else:
                 # fall back to 1
@@ -854,7 +971,7 @@ def normalize_numbers(numbers, fields, headers):
         elif group == 'calldata':
 
             if name in headers.formats:
-                normed_numbers[f] = normalize_number(f, headers.formats[name]['Number'])
+                normed_numbers[f] = _normalize_number(f, headers.formats[name]['Number'])
 
             else:
                 # fall back to 1
@@ -867,11 +984,11 @@ def normalize_numbers(numbers, fields, headers):
     return normed_numbers
 
 
-def normalize_fills(fills, fields, headers):
+def _normalize_fills(fills, fields, headers):
 
     if fills is None:
         fills = dict()
-    fills = {normalize_field_prefix(f, headers): v
+    fills = {_normalize_field_prefix(f, headers): v
              for f, v in fills.items()}
 
     # setup output
@@ -889,29 +1006,29 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
               fills):
 
     # read VCF headers
-    headers = read_vcf_headers(stream)
+    headers = _read_vcf_headers(stream)
 
     # setup fields to read
     if fields is None:
 
         # choose default fields
         fields = set()
-        add_all_fixed_variants_fields(fields)
+        _add_all_fixed_variants_fields(fields)
         fields.add('variants/FILTER_PASS')
         if headers.samples and 'GT' in headers.formats:
             fields.add('calldata/GT')
 
     else:
-        fields = normalize_fields(fields, headers)
+        fields = _normalize_fields(fields, headers)
 
     # setup data types
-    types = normalize_types(types, fields, headers)
+    types = _normalize_types(types, fields, headers)
 
     # setup numbers (a.k.a., arity)
-    numbers = normalize_numbers(numbers, fields, headers)
+    numbers = _normalize_numbers(numbers, fields, headers)
 
     # setup fills
-    fills = normalize_fills(fills, fields, headers)
+    fills = _normalize_fills(fills, fields, headers)
 
     # setup chunks iterator
     if n_threads is None:
@@ -938,18 +1055,22 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
 
 
 # pre-compile some regular expressions
-re_filter_header = \
+_re_filter_header = \
     re.compile('##FILTER=<ID=([^,]+),Description="([^"]+)">')
-re_info_header = \
+_re_info_header = \
     re.compile('##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
-re_format_header = \
+_re_format_header = \
     re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
 
 
-VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
+_VCFHeaders = namedtuple('VCFHeaders', ['headers',
+                                        'filters',
+                                        'infos',
+                                        'formats',
+                                        'samples'])
 
 
-def read_vcf_headers(stream):
+def _read_vcf_headers(stream):
 
     # setup
     headers = []
@@ -967,7 +1088,7 @@ def read_vcf_headers(stream):
 
         if header.startswith('##FILTER'):
 
-            match = re_filter_header.match(header)
+            match = _re_filter_header.match(header)
             if match is None:
                 warnings.warn('invalid FILTER header: %r' % header)
             else:
@@ -979,7 +1100,7 @@ def read_vcf_headers(stream):
 
         elif header.startswith('##INFO'):
 
-            match = re_info_header.match(header)
+            match = _re_info_header.match(header)
             if match is None:
                 warnings.warn('invalid INFO header: %r' % header)
             else:
@@ -993,7 +1114,7 @@ def read_vcf_headers(stream):
 
         elif header.startswith('##FORMAT'):
 
-            match = re_format_header.match(header)
+            match = _re_format_header.match(header)
             if match is None:
                 warnings.warn('invalid FORMAT header: %r' % header)
             else:
@@ -1019,4 +1140,4 @@ def read_vcf_headers(stream):
         # can't warn about this, it's fatal
         raise RuntimeError('VCF file is missing mandatory header line ("#CHROM...")')
 
-    return VCFHeaders(headers, filters, infos, formats, samples)
+    return _VCFHeaders(headers, filters, infos, formats, samples)

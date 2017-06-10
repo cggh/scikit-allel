@@ -289,7 +289,7 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
     eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
     eq_((9, 3, 2), callset['calldata/HQ'].shape)
-    eq_((10, 10), tuple(callset['calldata/HQ'][0, 0]))
+    eq_((10, 15), tuple(callset['calldata/HQ'][0, 0]))
     eq_((9, 3), callset['calldata/DP'].shape)
     eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
 
@@ -726,40 +726,6 @@ def test_genotype_ploidy():
     eq_((0, 2, -1), tuple(gt[8, 2]))
 
 
-def test_numbers_info():
-    fn = 'fixture/sample.vcf'
-
-    callset = read_vcf(fn, fields='AF', numbers=dict(AF=1))
-    a = callset['variants/AF']
-    eq_((9,), a.shape)
-    eq_(0.5, a[2])
-    assert_almost_equal(0.333, a[4])
-
-    callset = read_vcf(fn, fields='AF', numbers=dict(AF=2))
-    a = callset['variants/AF']
-    eq_((9, 2), a.shape)
-    eq_(0.5, a[2, 0])
-    assert np.isnan(a[2, 1])
-    assert_almost_equal(0.333, a[4, 0])
-    assert_almost_equal(0.667, a[4, 1])
-
-
-def test_numbers_calldata():
-    fn = 'fixture/sample.vcf'
-
-    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=1))
-    a = callset['calldata/HQ']
-    eq_((9, 3), a.shape)
-    eq_(10, a[0, 0])
-    eq_(51, a[2, 0])
-
-    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2))
-    a = callset['calldata/HQ']
-    eq_((9, 3, 2), a.shape)
-    eq_((10, 10), tuple(a[0, 0]))
-    eq_((51, 51), tuple(a[2, 0]))
-
-
 def test_fills_info():
     fn = 'fixture/sample.vcf'
 
@@ -816,23 +782,90 @@ def test_fills_calldata():
     callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2))
     a = callset['calldata/HQ']
     eq_((9, 3, 2), a.shape)
-    eq_((10, 10), tuple(a[0, 0]))
+    eq_((10, 15), tuple(a[0, 0]))
     eq_((-1, -1), tuple(a[7, 0]))
     eq_((-1, -1), tuple(a[8, 0]))
 
     callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2), fills=dict(HQ=-2))
     a = callset['calldata/HQ']
     eq_((9, 3, 2), a.shape)
-    eq_((10, 10), tuple(a[0, 0]))
+    eq_((10, 15), tuple(a[0, 0]))
     eq_((-2, -2), tuple(a[7, 0]))
     eq_((-2, -2), tuple(a[8, 0]))
 
     callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2), fills=dict(HQ=-1))
     a = callset['calldata/HQ']
     eq_((9, 3, 2), a.shape)
-    eq_((10, 10), tuple(a[0, 0]))
+    eq_((10, 15), tuple(a[0, 0]))
     eq_((-1, -1), tuple(a[7, 0]))
     eq_((-1, -1), tuple(a[8, 0]))
 
 
+def test_numbers():
+    fn = 'fixture/sample.vcf'
 
+    callset = read_vcf(fn, fields=['ALT'], numbers=dict(ALT=1))
+    a = callset['variants/ALT']
+    eq_((9,), a.shape)
+    eq_(b'A', a[8])
+
+    callset = read_vcf(fn, fields=['ALT'], numbers=dict(ALT=2), types=dict(ALT='S4'))
+    a = callset['variants/ALT']
+    eq_((9, 2), a.shape)
+    eq_(b'A', a[8, 0])
+    eq_(b'ATG', a[8, 1])
+
+    callset = read_vcf(fn, fields=['ALT'], numbers=dict(ALT=3), types=dict(ALT='S4'))
+    a = callset['variants/ALT']
+    eq_((9, 3), a.shape)
+    eq_(b'A', a[8, 0])
+    eq_(b'ATG', a[8, 1])
+    eq_(b'C', a[8, 2])
+
+    callset = read_vcf(fn, fields=['AC'], numbers=dict(AC=0))
+    a = callset['variants/AC']
+    eq_((9,), a.shape)
+    eq_(False, a[0])
+    eq_(True, a[6])
+
+    callset = read_vcf(fn, fields=['AC'], numbers=dict(AC=1))
+    a = callset['variants/AC']
+    eq_((9,), a.shape)
+    eq_(-1, a[0])
+    eq_(3, a[6])
+
+    callset = read_vcf(fn, fields=['AC'], numbers=dict(AC=2))
+    a = callset['variants/AC']
+    eq_((9, 2), a.shape)
+    eq_(-1, a[0, 0])
+    eq_(-1, a[0, 1])
+    eq_(3, a[6, 0])
+    eq_(1, a[6, 1])
+
+    callset = read_vcf(fn, fields='AF', numbers=dict(AF=1))
+    a = callset['variants/AF']
+    eq_((9,), a.shape)
+    eq_(0.5, a[2])
+    assert_almost_equal(0.333, a[4])
+
+    callset = read_vcf(fn, fields='AF', numbers=dict(AF=2))
+    a = callset['variants/AF']
+    eq_((9, 2), a.shape)
+    eq_(0.5, a[2, 0])
+    assert np.isnan(a[2, 1])
+    assert_almost_equal(0.333, a[4, 0])
+    assert_almost_equal(0.667, a[4, 1])
+
+    callset = read_vcf(fn, fields=['HQ'], numbers=dict(HQ=1))
+    a = callset['calldata/HQ']
+    eq_((9, 3), a.shape)
+    eq_(10, a[0, 0])
+    eq_(51, a[2, 0])
+    eq_(-1, a[6, 0])
+
+    callset = read_vcf(fn, fields=['HQ'], numbers=dict(HQ=2))
+    a = callset['calldata/HQ']
+    eq_((9, 3, 2), a.shape)
+    eq_((10, 15), tuple(a[0, 0]))
+    eq_((51, 51), tuple(a[2, 0]))
+    eq_((-1, -1), tuple(a[6, 0]))

@@ -1311,10 +1311,12 @@ cdef class VCFInfoParser(VCFFieldParserBase):
         info_parsers = list()
         self.skip_parser = VCFInfoSkipParser(key=None)
         for key in self.infos:
-            # TODO what about field? e.g., variants/AN?
             t = types[key]
             n = numbers[key]
             if t == np.dtype(bool) or n == 0:
+                if t != np.dtype(bool):
+                    warnings.warn('cannot have non-bool dtype for field with number 0, '
+                                  'ignoring type %r' % t)
                 parser = VCFInfoFlagParser(key, chunk_length=chunk_length)
             elif t == np.dtype('int8'):
                 fill = fills.get(key, -1)
