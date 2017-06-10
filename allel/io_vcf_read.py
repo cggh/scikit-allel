@@ -30,9 +30,9 @@ TODO:
 * DONE Generalise genotype parser integer type - needs tests
 * DONE Profile heavy INFO, binary search
 * DONE User-provided ploidy
-* Test numbers
-* User-controlled fill values
-* Test fills
+* DONE Test numbers
+* DONE User-controlled fill values
+* DONE Test fills
 * Handle number = 0 in non-flag INFO field
 * User-controlled numbers to ALT, INFO, calldata, ... (tests)
 * Read from region via tabix
@@ -136,6 +136,7 @@ def read_vcf(path,
              fields=None,
              types=None,
              numbers=None,
+             fills=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              block_length=DEFAULT_BLOCK_LENGTH,
@@ -178,7 +179,8 @@ def read_vcf(path,
     headers, it = read_vcf_chunks(path=path, fields=fields, types=types,
                                   numbers=numbers,buffer_size=buffer_size,
                                   chunk_length=chunk_length,
-                                  block_length=block_length, n_threads=n_threads)
+                                  block_length=block_length, n_threads=n_threads,
+                                  fills=fills)
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[read_vcf]')
 
@@ -189,7 +191,7 @@ def read_vcf(path,
     output = dict()
 
     if add_samples:
-        # use binary string type for cross-platform compatibility
+        # use binary string type
         output['samples'] = np.array(headers.samples).astype('S')
 
     if chunks:
@@ -210,6 +212,7 @@ def vcf_to_npz(input_path, output_path,
                fields=None,
                types=None,
                numbers=None,
+               fills=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                block_length=DEFAULT_BLOCK_LENGTH,
@@ -225,7 +228,7 @@ def vcf_to_npz(input_path, output_path,
     # read all data into memory
     data = read_vcf(path=input_path, fields=fields, types=types, numbers=numbers,
                     buffer_size=buffer_size, chunk_length=chunk_length,
-                    block_length=block_length, n_threads=n_threads, log=log)
+                    block_length=block_length, n_threads=n_threads, log=log, fills=fills)
 
     # setup save function
     if compressed:
@@ -312,6 +315,7 @@ def vcf_to_hdf5(input_path, output_path,
                 fields=None,
                 types=None,
                 numbers=None,
+                fills=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -338,7 +342,8 @@ def vcf_to_hdf5(input_path, output_path,
         headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
                                       numbers=numbers, buffer_size=buffer_size,
                                       chunk_length=chunk_length,
-                                      block_length=block_length, n_threads=n_threads)
+                                      block_length=block_length, n_threads=n_threads,
+                                      fills=fills)
         if log is not None:
             it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
@@ -421,6 +426,7 @@ def vcf_to_zarr(input_path, output_path,
                 fields=None,
                 types=None,
                 numbers=None,
+                fills=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -479,6 +485,7 @@ def read_vcf_chunks(path,
                     fields=None,
                     types=None,
                     numbers=None,
+                    fills=None,
                     chunk_length=DEFAULT_CHUNK_LENGTH,
                     block_length=DEFAULT_BLOCK_LENGTH,
                     buffer_size=DEFAULT_BUFFER_SIZE,
@@ -492,7 +499,7 @@ def read_vcf_chunks(path,
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
         return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
                          chunk_length=chunk_length, block_length=block_length,
-                         n_threads=n_threads)
+                         n_threads=n_threads, fills=fills)
 
     elif isinstance(path, str):
         # assume no compression
@@ -500,14 +507,14 @@ def read_vcf_chunks(path,
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
         return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
                          chunk_length=chunk_length, block_length=block_length,
-                         n_threads=n_threads)
+                         n_threads=n_threads, fills=fills)
 
     elif hasattr(path, 'readinto'):
         fileobj = path
         stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
         return _read_vcf(stream, fields=fields, types=types, numbers=numbers,
                          chunk_length=chunk_length, block_length=block_length,
-                         n_threads=n_threads)
+                         n_threads=n_threads, fills=fills)
 
     else:
         raise ValueError('path must be string or file-like, found %r' % path)
@@ -856,7 +863,26 @@ def normalize_numbers(numbers, fields, headers):
     return normed_numbers
 
 
-def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads):
+def normalize_fills(fills, fields, headers):
+
+    if fills is None:
+        fills = dict()
+    fills = {normalize_field_prefix(f, headers): v
+             for f, v in fills.items()}
+
+    # setup output
+    normed_fills = dict()
+
+    for f in fields:
+
+        if f in fills:
+            normed_fills[f] = fills[f]
+
+    return normed_fills
+
+
+def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads,
+              fills):
 
     # read VCF headers
     headers = read_vcf_headers(stream)
@@ -873,15 +899,15 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
 
     else:
         fields = normalize_fields(fields, headers)
-    # debug('normalized fields', fields)
 
     # setup data types
     types = normalize_types(types, fields, headers)
-    # debug('normalized types', types)
 
     # setup numbers (a.k.a., arity)
     numbers = normalize_numbers(numbers, fields, headers)
-    # debug('normalized numbers', numbers)
+
+    # setup fills
+    fills = normalize_fills(fills, fields, headers)
 
     # setup chunks iterator
     if n_threads is None or n_threads == 1:
@@ -890,8 +916,10 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
                                   headers=headers,
                                   fields=fields,
                                   types=types,
-                                  numbers=numbers)
+                                  numbers=numbers,
+                                  fills=fills)
     else:
+        # noinspection PyArgumentList
         chunks = VCFParallelChunkIterator(stream,
                                           chunk_length=chunk_length,
                                           block_length=block_length,
@@ -899,7 +927,8 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
                                           headers=headers,
                                           fields=fields,
                                           types=types,
-                                          numbers=numbers)
+                                          numbers=numbers,
+                                          fills=fills)
 
     return headers, chunks
 

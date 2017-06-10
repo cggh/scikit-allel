@@ -11,7 +11,7 @@ import zarr
 import h5py
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import *
+from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal
 from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
     vcf_to_npz, debug
 
@@ -726,6 +726,113 @@ def test_genotype_ploidy():
     eq_((0, 2, -1), tuple(gt[8, 2]))
 
 
-# TODO test numbers
+def test_numbers_info():
+    fn = 'fixture/sample.vcf'
 
-# TODO test fills
+    callset = read_vcf(fn, fields='AF', numbers=dict(AF=1))
+    a = callset['variants/AF']
+    eq_((9,), a.shape)
+    eq_(0.5, a[2])
+    assert_almost_equal(0.333, a[4])
+
+    callset = read_vcf(fn, fields='AF', numbers=dict(AF=2))
+    a = callset['variants/AF']
+    eq_((9, 2), a.shape)
+    eq_(0.5, a[2, 0])
+    assert np.isnan(a[2, 1])
+    assert_almost_equal(0.333, a[4, 0])
+    assert_almost_equal(0.667, a[4, 1])
+
+
+def test_numbers_calldata():
+    fn = 'fixture/sample.vcf'
+
+    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=1))
+    a = callset['calldata/HQ']
+    eq_((9, 3), a.shape)
+    eq_(10, a[0, 0])
+    eq_(51, a[2, 0])
+
+    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2))
+    a = callset['calldata/HQ']
+    eq_((9, 3, 2), a.shape)
+    eq_((10, 10), tuple(a[0, 0]))
+    eq_((51, 51), tuple(a[2, 0]))
+
+
+def test_fills_info():
+    fn = 'fixture/sample.vcf'
+
+    callset = read_vcf(fn, fields='AN', numbers=dict(AN=1))
+    a = callset['variants/AN']
+    eq_((9,), a.shape)
+    eq_(-1, a[0])
+    eq_(-1, a[1])
+    eq_(-1, a[2])
+
+    callset = read_vcf(fn, fields='AN', numbers=dict(AN=1), fills=dict(AN=-2))
+    a = callset['variants/AN']
+    eq_((9,), a.shape)
+    eq_(-2, a[0])
+    eq_(-2, a[1])
+    eq_(-2, a[2])
+
+    callset = read_vcf(fn, fields='AN', numbers=dict(AN=1), fills=dict(AN=-1))
+    a = callset['variants/AN']
+    eq_((9,), a.shape)
+    eq_(-1, a[0])
+    eq_(-1, a[1])
+    eq_(-1, a[2])
+
+
+def test_fills_genotype():
+    fn = 'fixture/sample.vcf'
+
+    callset = read_vcf(fn, fields='GT', numbers=dict(GT=2))
+    gt = callset['calldata/GT']
+    eq_((9, 3, 2), gt.shape)
+    eq_((0, -1), tuple(gt[8, 0]))
+    eq_((0, 1), tuple(gt[8, 1]))
+    eq_((0, 2), tuple(gt[8, 2]))
+
+    callset = read_vcf(fn, fields='GT', numbers=dict(GT=2), fills=dict(GT=-2))
+    gt = callset['calldata/GT']
+    eq_((9, 3, 2), gt.shape)
+    eq_((0, -2), tuple(gt[8, 0]))
+    eq_((0, 1), tuple(gt[8, 1]))
+    eq_((0, 2), tuple(gt[8, 2]))
+
+    callset = read_vcf(fn, fields='GT', numbers=dict(GT=3), fills=dict(GT=-1))
+    gt = callset['calldata/GT']
+    eq_((9, 3, 3), gt.shape)
+    eq_((0, -1, -1), tuple(gt[8, 0]))
+    eq_((0, 1, -1), tuple(gt[8, 1]))
+    eq_((0, 2, -1), tuple(gt[8, 2]))
+
+
+def test_fills_calldata():
+    fn = 'fixture/sample.vcf'
+
+    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2))
+    a = callset['calldata/HQ']
+    eq_((9, 3, 2), a.shape)
+    eq_((10, 10), tuple(a[0, 0]))
+    eq_((-1, -1), tuple(a[7, 0]))
+    eq_((-1, -1), tuple(a[8, 0]))
+
+    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2), fills=dict(HQ=-2))
+    a = callset['calldata/HQ']
+    eq_((9, 3, 2), a.shape)
+    eq_((10, 10), tuple(a[0, 0]))
+    eq_((-2, -2), tuple(a[7, 0]))
+    eq_((-2, -2), tuple(a[8, 0]))
+
+    callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2), fills=dict(HQ=-1))
+    a = callset['calldata/HQ']
+    eq_((9, 3, 2), a.shape)
+    eq_((10, 10), tuple(a[0, 0]))
+    eq_((-1, -1), tuple(a[7, 0]))
+    eq_((-1, -1), tuple(a[8, 0]))
+
+
+
