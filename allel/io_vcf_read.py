@@ -2,8 +2,8 @@
 """
 TODO:
 
-* Specialised parser for EFF
 * Specialised parser for ANN
+* Specialised parser for EFF
 * PY2 compatibility?
 * More formats than declared in FORMAT field. Less formats.
 * Report CHROM and POS in warnings
@@ -33,7 +33,7 @@ import numpy as np
 
 
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
-    VCFParallelChunkIterator
+    VCFParallelChunkIterator, ANNTransformer
 
 
 def debug(*msg):
@@ -96,6 +96,13 @@ def chunk_iter_progress(it, log, prefix):
     log.flush()
 
 
+def chunk_iter_transform(it, transformers):
+    for chunk, chunk_length, chrom, pos in it:
+        for transformer in transformers:
+            transformer.transform(chunk)
+        yield chunk, chunk_length, chrom, pos
+
+
 def read_vcf(path,
              fields=None,
              types=None,
@@ -104,6 +111,7 @@ def read_vcf(path,
              region=None,
              tabix='tabix',
              samples=None,
+             transformers=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              n_threads=None,
@@ -162,6 +170,10 @@ def read_vcf(path,
         block_length=block_length, n_threads=n_threads, fills=fills, region=region, tabix=tabix, samples=samples
     )
 
+    # setup transformers
+    if transformers is not None:
+        it = chunk_iter_transform(it, transformers)
+
     # setup progress logging
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[read_vcf]')
@@ -198,6 +210,7 @@ def vcf_to_npz(input_path, output_path,
                region=None,
                tabix=True,
                samples=None,
+               transformers=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                n_threads=None,
@@ -257,7 +270,7 @@ def vcf_to_npz(input_path, output_path,
     data = read_vcf(
         path=input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
         chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, log=log, fills=fills,
-        region=region, tabix=tabix, samples=samples
+        region=region, tabix=tabix, samples=samples, transformers=transformers
     )
 
     # setup save function
@@ -348,6 +361,7 @@ def vcf_to_hdf5(input_path, output_path,
                 region=None,
                 tabix='tabix',
                 samples=None,
+                transformers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -427,6 +441,10 @@ def vcf_to_hdf5(input_path, output_path,
             chunk_length=chunk_length, block_length=block_length, n_threads=n_threads,
             fills=fills, region=region, tabix=tabix, samples=samples
         )
+
+        # setup transformers
+        if transformers is not None:
+            it = chunk_iter_transform(it, transformers)
 
         # setup progress logging
         if log is not None:
@@ -511,6 +529,7 @@ def vcf_to_zarr(input_path, output_path,
                 region=None,
                 tabix='tabix',
                 samples=None,
+                transformers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -583,6 +602,10 @@ def vcf_to_zarr(input_path, output_path,
         input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
         fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples
     )
+
+    # setup transformers
+    if transformers is not None:
+        it = chunk_iter_transform(it, transformers)
 
     # setup progress logging
     if log is not None:
@@ -873,6 +896,7 @@ default_types = {
     'variants/AC': 'i4',
     'variants/AF': 'f4',
     'variants/MQ': 'f4',
+    'variants/ANN': 'S400',
     'calldata/GT': 'i1',
     'calldata/GQ': 'i1',
     'calldata/HQ': 'i1',

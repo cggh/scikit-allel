@@ -13,7 +13,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal
 from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
-    vcf_to_npz, debug
+    vcf_to_npz, debug, ANNTransformer
 
 
 def test_read_vcf_chunks():
@@ -975,3 +975,88 @@ def test_read_samples():
             eq_((9, 1, 2), gt.shape)
             eq_((1, 0), tuple(gt[2, 0]))
             eq_((2, 1), tuple(gt[4, 0]))
+
+
+def test_ann():
+    fn = 'fixture/ann.vcf'
+
+    # all ANN fields
+    callset = read_vcf(fn, fields=['ANN'], types={'ANN': 'S200'}, transformers=[ANNTransformer()])
+    assert_list_equal(sorted(['variants/ANN_Allele',
+                              'variants/ANN_Annotation',
+                              'variants/ANN_Annotation_Impact',
+                              'variants/ANN_Gene_Name',
+                              'variants/ANN_Gene_ID',
+                              'variants/ANN_Feature_Type',
+                              'variants/ANN_Feature_ID',
+                              'variants/ANN_Transcript_BioType',
+                              'variants/ANN_Rank',
+                              'variants/ANN_HGVS_c',
+                              'variants/ANN_HGVS_p',
+                              'variants/ANN_cDNA_pos',
+                              'variants/ANN_cDNA_length',
+                              'variants/ANN_CDS_pos',
+                              'variants/ANN_CDS_length',
+                              'variants/ANN_AA_pos',
+                              'variants/ANN_AA_length',
+                              'variants/ANN_Distance'
+                              ]),
+                      sorted(callset.keys()))
+    a = callset['variants/ANN_Allele']
+    eq_((3,), a.shape)
+    assert_array_equal([b'T', b'', b'T'], a)
+    a = callset['variants/ANN_Annotation']
+    eq_((3,), a.shape)
+    assert_array_equal([b'intergenic_region', b'', b'missense_variant'], a)
+    a = callset['variants/ANN_Annotation_Impact']
+    eq_((3,), a.shape)
+    assert_array_equal([b'MODIFIER', b'', b'MODERATE'], a)
+    a = callset['variants/ANN_Gene_Name']
+    eq_((3,), a.shape)
+    assert_array_equal([b'AGAP004677', b'', b'AGAP005273'], a)
+    a = callset['variants/ANN_Gene_ID']
+    eq_((3,), a.shape)
+    assert_array_equal([b'AGAP004677', b'', b'AGAP005273'], a)
+    a = callset['variants/ANN_Feature_Type']
+    eq_((3,), a.shape)
+    assert_array_equal([b'intergenic_region', b'', b'transcript'], a)
+    a = callset['variants/ANN_Feature_ID']
+    eq_((3,), a.shape)
+    assert_array_equal([b'AGAP004677', b'', b'AGAP005273-RA'], a)
+    a = callset['variants/ANN_Transcript_BioType']
+    eq_((3,), a.shape)
+    assert_array_equal([b'', b'', b'VectorBase'], a)
+    a = callset['variants/ANN_Rank']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, 1], a)
+    a = callset['variants/ANN_HGVS_c']
+    eq_((3,), a.shape)
+    assert_array_equal([b'', b'', b'17A>T'], a)
+    a = callset['variants/ANN_HGVS_p']
+    eq_((3,), a.shape)
+    assert_array_equal([b'', b'', b'Asp6Val'], a)
+    a = callset['variants/ANN_cDNA_pos']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, 17], a)
+    a = callset['variants/ANN_cDNA_length']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, 4788], a)
+    a = callset['variants/ANN_CDS_pos']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, 17], a)
+    a = callset['variants/ANN_CDS_length']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, -1], a)
+    a = callset['variants/ANN_AA_pos']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, 6], a)
+    a = callset['variants/ANN_AA_length']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, -1], a)
+    a = callset['variants/ANN_Distance']
+    eq_((3,), a.shape)
+    assert_array_equal([-1, -1, -1], a)
+
+    # TODO numbers=2
+    # TODO choose fields
+    # TODO change dtype

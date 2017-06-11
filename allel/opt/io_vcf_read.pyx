@@ -3179,3 +3179,179 @@ cdef class VCFParallelChunkIterator:
             chrom = CharVector_to_pybytes(&worker.context.chrom)
             pos = worker.context.pos
             return chunk, chunk_length, chrom, pos
+
+
+###################################################################
+# ANN transformer
+
+
+cdef enum ANNFields:
+    ALLELE
+    ANNOTATION
+    ANNOTATION_IMPACT
+    GENE_NAME
+    GENE_ID
+    FEATURE_TYPE
+    FEATURE_ID
+    TRANSCRIPT_BIOTYPE
+    RANK
+    HGVS_C
+    HGVS_P
+    CDNA
+    CDS
+    AA
+    DISTANCE
+
+
+cdef class ANNTransformer:
+
+    cdef:
+        object fields
+        object types
+        bint keep_original
+
+    def __init__(self, fields=None, types=None, keep_original=False):
+        self.fields = fields
+        self.types = types
+        self.keep_original = keep_original
+        # TODO check fields and types
+
+    def transform(self, chunk):
+        cdef:
+            int i, j, k, chunk_length, number, itemsize, field
+            bytes raw
+            list vals
+            bytes v
+            list vv
+
+        # obtain array to be transformed
+        ann = chunk['variants/ANN']
+        if not self.keep_original:
+            del chunk['variants/ANN']
+
+        # determine chunk length and number of items
+        chunk_length = ann.shape[0]
+        if ann.ndim == 1:
+            ann = ann[:, np.newaxis]
+        number = ann.shape[1]
+        shape = chunk_length, number
+
+        # allocate output arrays
+        # TODO user types
+        # TODO only allocate arrays if requested by user
+        allele = np.zeros(shape, dtype='S1')
+        annotation = np.zeros(shape, dtype='S34')
+        annotation_impact = np.zeros(shape, dtype='S8')
+        gene_name = np.zeros(shape, dtype='S14')
+        gene_id = np.zeros(shape, dtype='S14')
+        feature_type = np.zeros(shape, dtype='S20')
+        feature_id = np.zeros(shape, dtype='S14')
+        transcript_biotype = np.zeros(shape, dtype='S20')
+        rank = np.empty(shape, dtype='int8')
+        rank.fill(-1)
+        hgvs_c = np.zeros(shape, dtype='S16')
+        hgvs_p = np.zeros(shape, dtype='S16')
+        cdna_pos = np.empty(shape, dtype='int32')
+        cdna_pos.fill(-1)
+        cdna_length = np.empty(shape, dtype='int32')
+        cdna_length.fill(-1)
+        cds_pos = np.empty(shape, dtype='int32')
+        cds_pos.fill(-1)
+        cds_length = np.empty(shape, dtype='int32')
+        cds_length.fill(-1)
+        aa_pos = np.empty(shape, dtype='int32')
+        aa_pos.fill(-1)
+        aa_length = np.empty(shape, dtype='int32')
+        aa_length.fill(-1)
+        distance = np.empty(shape, dtype='int32')
+        distance.fill(-1)
+
+        # start working
+        for i in range(chunk_length):
+            for j in range(number):
+
+                # obtain raw value
+                raw = <bytes>ann[i, j]
+
+                # bail early if no content
+                if raw == b'' or raw == b'.':
+                    continue
+
+                # split fields
+                vals = raw.split(b'|')
+
+                # convert and store values
+                try:
+                    v = vals[ANNFields.ALLELE]
+                    if v:
+                        allele[i, j] = v
+                    v = vals[ANNFields.ANNOTATION]
+                    if v:
+                        annotation[i, j] = v
+                    v = vals[ANNFields.ANNOTATION_IMPACT]
+                    if v:
+                        annotation_impact[i, j] = v
+                    v = vals[ANNFields.GENE_NAME]
+                    if v:
+                        gene_name[i, j] = v
+                    v = vals[ANNFields.GENE_ID]
+                    if v:
+                        gene_id[i, j] = v
+                    v = vals[ANNFields.FEATURE_TYPE]
+                    if v:
+                        feature_type[i, j] = v
+                    v = vals[ANNFields.FEATURE_ID]
+                    if v:
+                        feature_id[i, j] = v
+                    v = vals[ANNFields.TRANSCRIPT_BIOTYPE]
+                    if v:
+                        transcript_biotype[i, j] = v
+                    v = vals[ANNFields.RANK]
+                    if v:
+                        rank[i, j] = int(v.partition(b'/')[0])
+                    v = vals[ANNFields.HGVS_C]
+                    if v:
+                        hgvs_c[i, j] = v[2:]
+                    v = vals[ANNFields.HGVS_P]
+                    if v:
+                        hgvs_p[i, j] = v[2:]
+                    v = vals[ANNFields.CDNA]
+                    if v:
+                        vv = v.split(b'/')
+                        cdna_pos[i, j] = int(vv[0])
+                        cdna_length[i, j] = int(vv[1])
+                    v = vals[ANNFields.CDS]
+                    if v:
+                        vv = v.split(b'/')
+                        cds_pos[i, j] = int(vv[0])
+                        cds_length[i, j] = int(vv[1])
+                    v = vals[ANNFields.AA]
+                    if v:
+                        vv = v.split(b'/')
+                        aa_pos[i, j] = int(vv[0])
+                        aa_length[i, j] = int(vv[1])
+                    v = vals[ANNFields.DISTANCE]
+                    if v:
+                        distance[i, j] = v
+
+                except IndexError:
+                    warnings.warn('missing fields in ANN value')
+
+        chunk['variants/ANN_Allele'] = allele.squeeze(axis=1)
+        chunk['variants/ANN_Annotation'] = annotation.squeeze(axis=1)
+        chunk['variants/ANN_Annotation_Impact'] = annotation_impact.squeeze(axis=1)
+        chunk['variants/ANN_Gene_Name'] = gene_name.squeeze(axis=1)
+        chunk['variants/ANN_Gene_ID'] = gene_id.squeeze(axis=1)
+        chunk['variants/ANN_Feature_Type'] = feature_type.squeeze(axis=1)
+        chunk['variants/ANN_Feature_ID'] = feature_id.squeeze(axis=1)
+        chunk['variants/ANN_Transcript_BioType'] = transcript_biotype.squeeze(axis=1)
+        chunk['variants/ANN_Rank'] = rank.squeeze(axis=1)
+        chunk['variants/ANN_HGVS_c'] = hgvs_c.squeeze(axis=1)
+        chunk['variants/ANN_HGVS_p'] = hgvs_p.squeeze(axis=1)
+        chunk['variants/ANN_cDNA_pos'] = cdna_pos.squeeze(axis=1)
+        chunk['variants/ANN_cDNA_length'] = cdna_length.squeeze(axis=1)
+        chunk['variants/ANN_CDS_pos'] = cds_pos.squeeze(axis=1)
+        chunk['variants/ANN_CDS_length'] = cds_length.squeeze(axis=1)
+        chunk['variants/ANN_AA_pos'] = aa_pos.squeeze(axis=1)
+        chunk['variants/ANN_AA_length'] = aa_length.squeeze(axis=1)
+        chunk['variants/ANN_Distance'] = distance.squeeze(axis=1)
