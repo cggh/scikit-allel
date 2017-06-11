@@ -2,42 +2,6 @@
 """
 TODO:
 
-* DONE Fix missing value in trailing item
-* DONE Inintial implementation of vcf_to_npz
-* DONE Initial implementation of vcf_to_hdf5
-* DONE Add samples to output of read_vcf and store in vcf_to_... functions
-* DONE Initial implementation of vcf_to_zarr
-* DONE Parse FILTERS from header
-* DONE Return filters as separate arrays in read_vcf
-* DONE Store filters as separate arrays/datasets in vcf_to_... functions
-* DONE Parse INFO fields single values
-** DONE Integer
-** DONE Float
-** DONE Flag
-** DONE String
-* DONE User-controlled dtypes
-* DONE User-controlled arities to ALT, INFO
-* DONE Parse INFO multiple values
-* DONE If number is 1 return 1D array for ALT, INFO, ...
-* DONE Reduce duplicate code in INFO parsers (via squeeze?)
-* DONE Check for less than temp chars parsed as int or float
-* DONE Parse other FORMAT fields
-** DONE Integer
-** DONE Float
-** DONE String
-* DONE Option not to return samples
-* DONE Progress logging in vcf_to_... functions
-* DONE Generalise genotype parser integer type - needs tests
-* DONE Profile heavy INFO, binary search
-* DONE User-provided ploidy
-* DONE Test numbers
-* DONE User-controlled fill values
-* DONE Test fills
-* DONE Handle number = 0 in non-flag INFO field
-* DONE User-controlled numbers to ALT, INFO, calldata, ... (tests)
-* DONE Read from region via tabix
-* DONE Read from region via scanning
-* User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN
 * PY2 compatibility?
@@ -139,6 +103,7 @@ def read_vcf(path,
              fills=None,
              region=None,
              tabix='tabix',
+             samples=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              n_threads=None,
@@ -161,6 +126,8 @@ def read_vcf(path,
     region : string
         TODO
     tabix : string
+        TODO
+    samples : sequence of strings
         TODO
     buffer_size : int
         TODO
@@ -190,11 +157,12 @@ def read_vcf(path,
     add_samples, fields = _prep_fields_arg(fields)
 
     # setup
-    headers, it = read_vcf_chunks(path=path, fields=fields, types=types,
-                                  numbers=numbers,buffer_size=buffer_size,
-                                  chunk_length=chunk_length,
-                                  block_length=block_length, n_threads=n_threads,
-                                  fills=fills, region=region, tabix=tabix)
+    samples, _, it = read_vcf_chunks(
+        path=path, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size, chunk_length=chunk_length,
+        block_length=block_length, n_threads=n_threads, fills=fills, region=region, tabix=tabix, samples=samples
+    )
+
+    # setup progress logging
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[read_vcf]')
 
@@ -206,7 +174,7 @@ def read_vcf(path,
 
     if add_samples:
         # use binary string type
-        output['samples'] = np.array(headers.samples).astype('S')
+        output['samples'] = np.array(samples).astype('S')
 
     if chunks:
 
@@ -229,6 +197,7 @@ def vcf_to_npz(input_path, output_path,
                fills=None,
                region=None,
                tabix=True,
+               samples=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                n_threads=None,
@@ -258,6 +227,8 @@ def vcf_to_npz(input_path, output_path,
         TODO
     tabix : string
         TODO
+    samples : sequence of strings
+        TODO
     buffer_size : int
         TODO
     chunk_length : int
@@ -283,10 +254,11 @@ def vcf_to_npz(input_path, output_path,
         raise ValueError('file exists at path %r; use overwrite=True to replace' % output_path)
 
     # read all data into memory
-    data = read_vcf(path=input_path, fields=fields, types=types, numbers=numbers,
-                    buffer_size=buffer_size, chunk_length=chunk_length,
-                    block_length=block_length, n_threads=n_threads, log=log,
-                    fills=fills, region=region, tabix=tabix)
+    data = read_vcf(
+        path=input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, log=log, fills=fills,
+        region=region, tabix=tabix, samples=samples
+    )
 
     # setup save function
     if compressed:
@@ -298,8 +270,7 @@ def vcf_to_npz(input_path, output_path,
     savez(output_path, **data)
 
 
-def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
-                         compression_opts, shuffle, overwrite):
+def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts, shuffle, overwrite):
 
     # handle no input
     if chunk is None:
@@ -329,10 +300,10 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
 
         shape = (0,) + data.shape[1:]
         maxshape = (None,) + data.shape[1:]
-        root[group].create_dataset(name, shape=shape, maxshape=maxshape,
-                                   chunks=chunk_shape, dtype=data.dtype,
-                                   compression=compression,
-                                   compression_opts=compression_opts, shuffle=shuffle)
+        root[group].create_dataset(
+            name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=data.dtype, compression=compression,
+            compression_opts=compression_opts, shuffle=shuffle
+        )
 
     return keys
 
@@ -376,6 +347,7 @@ def vcf_to_hdf5(input_path, output_path,
                 fills=None,
                 region=None,
                 tabix='tabix',
+                samples=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -411,6 +383,8 @@ def vcf_to_hdf5(input_path, output_path,
     region : string
         TODO
     tabix : string
+        TODO
+    samples : sequence of strings
         TODO
     buffer_size : int
         TODO
@@ -448,11 +422,13 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
-                                      numbers=numbers, buffer_size=buffer_size,
-                                      chunk_length=chunk_length,
-                                      block_length=block_length, n_threads=n_threads,
-                                      fills=fills, region=region, tabix=tabix)
+        samples, _, it = read_vcf_chunks(
+            input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+            chunk_length=chunk_length, block_length=block_length, n_threads=n_threads,
+            fills=fills, region=region, tabix=tabix, samples=samples
+        )
+
+        # setup progress logging
         if log is not None:
             it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
@@ -465,17 +441,17 @@ def vcf_to_hdf5(input_path, output_path,
                 else:
                     # TODO right exception class?
                     raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
-            root[group].create_dataset(name, data=np.array(headers.samples).astype('S'),
+            root[group].create_dataset(name, data=np.array(samples).astype('S'),
                                        chunks=None)
 
         # read first chunk
         chunk, _, _, _ = next(it)
 
         # setup datasets
-        keys = _hdf5_setup_datasets(chunk=chunk, root=root, chunk_length=chunk_length,
-                                    chunk_width=chunk_width, compression=compression,
-                                    compression_opts=compression_opts, shuffle=shuffle,
-                                    overwrite=overwrite)
+        keys = _hdf5_setup_datasets(
+            chunk=chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compression=compression,
+            compression_opts=compression_opts, shuffle=shuffle, overwrite=overwrite
+        )
 
         # store first chunk
         _hdf5_store_chunk(root, keys, chunk)
@@ -509,8 +485,8 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
 
         # create dataset
         shape = (0,) + data.shape[1:]
-        root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
-                            compressor=compressor, overwrite=overwrite)
+        root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype, compressor=compressor,
+                            overwrite=overwrite)
 
     return keys
 
@@ -534,6 +510,7 @@ def vcf_to_zarr(input_path, output_path,
                 fills=None,
                 region=None,
                 tabix='tabix',
+                samples=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -565,6 +542,8 @@ def vcf_to_zarr(input_path, output_path,
     region : string
         TODO
     tabix : string
+        TODO
+    samples : sequence of strings
         TODO
     buffer_size : int
         TODO
@@ -600,28 +579,27 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
-                                  numbers=numbers, buffer_size=buffer_size,
-                                  chunk_length=chunk_length, fills=fills,
-                                  block_length=block_length, n_threads=n_threads,
-                                  region=region, tabix=tabix)
+    samples, _, it = read_vcf_chunks(
+        input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
+        fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples
+    )
+
+    # setup progress logging
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
     if add_samples:
         # store samples
-        root[group].create_dataset('samples', data=np.array(headers.samples).astype('S'),
-                                   compressor=None, overwrite=overwrite)
+        root[group].create_dataset('samples', data=np.array(samples).astype('S'), compressor=None, overwrite=overwrite)
 
     # read first chunk
     chunk, _, _, _ = next(it)
 
     # setup datasets
-    keys = _zarr_setup_datasets(chunk, root=root,
-                                chunk_length=chunk_length,
-                                chunk_width=chunk_width,
-                                compressor=compressor,
-                                overwrite=overwrite)
+    keys = _zarr_setup_datasets(
+        chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compressor=compressor,
+        overwrite=overwrite
+    )
 
     # store first chunk
     _zarr_store_chunk(root, keys, chunk)
@@ -642,6 +620,7 @@ def read_vcf_chunks(path,
                     fills=None,
                     region=None,
                     tabix='tabix',
+                    samples=None,
                     chunk_length=DEFAULT_CHUNK_LENGTH,
                     block_length=DEFAULT_BLOCK_LENGTH,
                     buffer_size=DEFAULT_BUFFER_SIZE,
@@ -656,17 +635,19 @@ def read_vcf_chunks(path,
 
     kwds = dict(fields=fields, types=types, numbers=numbers,
                 chunk_length=chunk_length, block_length=block_length,
-                n_threads=n_threads, fills=fills)
+                n_threads=n_threads, fills=fills, samples=samples)
 
     if isinstance(path, str) and path.endswith('gz'):
 
         if region and tabix and os.name != 'nt':
+
             try:
                 # try tabix
                 p = subprocess.Popen([tabix, '-h', path, region],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
                                      bufsize=buffer_size)
+
                 # check if tabix exited early, look for tabix error
                 time.sleep(.5)
                 poll = p.poll()
@@ -675,14 +656,17 @@ def read_vcf_chunks(path,
                     raise Exception(str(err, 'ascii').strip())
                 fileobj = p.stdout
                 region = None
+
             except FileNotFoundError:
                 # no tabix, fall back to scanning
                 warnings.warn('tabix not found, falling back to scanning to region')
                 fileobj = gzip.open(path, mode='rb')
+
             except Exception as e:
                 warnings.warn('error occurred attempting tabix (%s); falling back to '
                               'scanning to region' % e)
                 fileobj = gzip.open(path, mode='rb')
+
         else:
             fileobj = gzip.open(path, mode='rb')
 
@@ -837,8 +821,8 @@ def _normalize_fields(fields, headers):
         elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*', 'variants/INFO/*']:
             _add_all_info_fields(normed_fields, headers)
 
-        elif f in ['FILTER', 'FILTER*', 'FILTER_*', 'variants/FILTER', 'variants/FILTER*',
-                   'variants/FILTER/*']:
+        elif f in ['FILTER', 'FILTER*', 'FILTER/*', 'FILTER_*', 'variants/FILTER',
+                   'variants/FILTER*', 'variants/FILTER/*', 'variants/FILTER_*']:
             _add_all_filter_fields(normed_fields, headers)
 
         # exact field specification
@@ -1060,8 +1044,33 @@ def _normalize_fills(fills, fields, headers):
     return normed_fills
 
 
+def _normalize_samples(samples, headers):
+    loc_samples = np.zeros(len(headers.samples), dtype='u1')
+
+    if samples is None:
+        normed_samples = headers.samples
+        loc_samples.fill(1)
+
+    else:
+        samples = set(samples)
+        normed_samples = []
+        for i, s in enumerate(headers.samples):
+            if i in samples:
+                normed_samples.append(s)
+                samples.remove(i)
+                loc_samples[i] = 1
+            elif s in samples:
+                normed_samples.append(s)
+                samples.remove(s)
+                loc_samples[i] = 1
+        if samples:
+            warnings.warn('samples not found, will be ignored: ' + ', '.join(map(repr, sorted(samples))))
+
+    return normed_samples, loc_samples
+
+
 def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads,
-              fills, region):
+              fills, region, samples):
 
     # read VCF headers
     headers = _read_vcf_headers(stream)
@@ -1088,30 +1097,23 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
     # setup fills
     fills = _normalize_fills(fills, fields, headers)
 
+    # setup samples
+    samples, loc_samples = _normalize_samples(samples, headers)
+
     # setup chunks iterator
     if n_threads is None:
-        chunks = VCFChunkIterator(stream,
-                                  chunk_length=chunk_length,
-                                  headers=headers,
-                                  fields=fields,
-                                  types=types,
-                                  numbers=numbers,
-                                  fills=fills,
-                                  region=region)
+        chunks = VCFChunkIterator(
+            stream, chunk_length=chunk_length, headers=headers, fields=fields, types=types, numbers=numbers,
+            fills=fills, region=region, samples=loc_samples
+        )
     else:
         # noinspection PyArgumentList
-        chunks = VCFParallelChunkIterator(stream,
-                                          chunk_length=chunk_length,
-                                          block_length=block_length,
-                                          n_threads=n_threads,
-                                          headers=headers,
-                                          fields=fields,
-                                          types=types,
-                                          numbers=numbers,
-                                          fills=fills,
-                                          region=region)
+        chunks = VCFParallelChunkIterator(
+            stream, chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, headers=headers,
+            fields=fields, types=types, numbers=numbers, fills=fills, region=region, samples=loc_samples
+        )
 
-    return headers, chunks
+    return samples, headers, chunks
 
 
 # pre-compile some regular expressions
@@ -1123,11 +1125,7 @@ _re_format_header = \
     re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
 
 
-_VCFHeaders = namedtuple('VCFHeaders', ['headers',
-                                        'filters',
-                                        'infos',
-                                        'formats',
-                                        'samples'])
+_VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
 
 
 def _read_vcf_headers(stream):
@@ -1153,10 +1151,7 @@ def _read_vcf_headers(stream):
                 warnings.warn('invalid FILTER header: %r' % header)
             else:
                 k, d = match.groups()
-                filters[k] = {
-                    'ID': k,
-                    'Description': d
-                }
+                filters[k] = {'ID': k, 'Description': d}
 
         elif header.startswith('##INFO'):
 
@@ -1165,12 +1160,7 @@ def _read_vcf_headers(stream):
                 warnings.warn('invalid INFO header: %r' % header)
             else:
                 k, n, t, d = match.groups()
-                infos[k] = {
-                    'ID': k,
-                    'Number': n,
-                    'Type': t,
-                    'Description': d
-                }
+                infos[k] = {'ID': k, 'Number': n, 'Type': t, 'Description': d}
 
         elif header.startswith('##FORMAT'):
 
@@ -1179,12 +1169,7 @@ def _read_vcf_headers(stream):
                 warnings.warn('invalid FORMAT header: %r' % header)
             else:
                 k, n, t, d = match.groups()
-                formats[k] = {
-                    'ID': k,
-                    'Number': n,
-                    'Type': t,
-                    'Description': d
-                }
+                formats[k] = {'ID': k, 'Number': n, 'Type': t, 'Description': d}
 
         elif header.startswith('#CHROM'):
 

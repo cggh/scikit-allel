@@ -20,8 +20,8 @@ def test_read_vcf_chunks():
     fn = 'fixture/sample.vcf'
 
     for n_threads in 1, 2:
-        headers, it = read_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
-                                      buffer_size=100, n_threads=n_threads)
+        samples, headers, it = read_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
+                                               buffer_size=100, n_threads=n_threads)
 
         # check headers
         assert_in('q10', headers.filters)
@@ -39,6 +39,7 @@ def test_read_vcf_chunks():
         assert_in('GT', headers.formats)
         assert_in('HQ', headers.formats)
         eq_(['NA00001', 'NA00002', 'NA00003'], headers.samples)
+        eq_(['NA00001', 'NA00002', 'NA00003'], samples)
         eq_('1', headers.infos['AA']['Number'])
         eq_('String', headers.infos['AA']['Type'])
         eq_('Ancestral Allele', headers.infos['AA']['Description'])
@@ -634,17 +635,18 @@ def test_vcf_to_npz():
     for n_threads in None, 2:
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
-                expect = read_vcf(fn, region=region, tabix=tabix)
-                if os.path.exists(npz_fn):
-                    os.remove(npz_fn)
-                vcf_to_npz(fn, npz_fn, chunk_length=2, n_threads=n_threads,
-                           region=region, tabix=tabix)
-                actual = np.load(npz_fn)
-                for key in expect.keys():
-                    if expect[key].dtype.kind == 'f':
-                        assert_array_almost_equal(expect[key], actual[key])
-                    else:
-                        assert_array_equal(expect[key], actual[key])
+                for samples in None, ['NA00001', 'NA00003']:
+                    expect = read_vcf(fn, region=region, tabix=tabix, samples=samples)
+                    if os.path.exists(npz_fn):
+                        os.remove(npz_fn)
+                    vcf_to_npz(fn, npz_fn, chunk_length=2, n_threads=n_threads,
+                               region=region, tabix=tabix, samples=samples)
+                    actual = np.load(npz_fn)
+                    for key in expect.keys():
+                        if expect[key].dtype.kind == 'f':
+                            assert_array_almost_equal(expect[key], actual[key])
+                        else:
+                            assert_array_equal(expect[key], actual[key])
 
 
 def test_vcf_to_zarr():
@@ -653,17 +655,18 @@ def test_vcf_to_zarr():
     for n_threads in None, 2:
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
-                expect = read_vcf(fn, region=region, tabix=tabix)
-                if os.path.exists(zarr_path):
-                    shutil.rmtree(zarr_path)
-                vcf_to_zarr(fn, zarr_path, chunk_length=2, n_threads=n_threads,
-                            region=region, tabix=tabix)
-                actual = zarr.open_group(zarr_path, mode='r')
-                for key in expect.keys():
-                    if expect[key].dtype.kind == 'f':
-                        assert_array_almost_equal(expect[key], actual[key][:])
-                    else:
-                        assert_array_equal(expect[key], actual[key][:])
+                for samples in None, ['NA00001', 'NA00003']:
+                    expect = read_vcf(fn, region=region, tabix=tabix, samples=samples)
+                    if os.path.exists(zarr_path):
+                        shutil.rmtree(zarr_path)
+                    vcf_to_zarr(fn, zarr_path, chunk_length=2, n_threads=n_threads,
+                                region=region, tabix=tabix, samples=samples)
+                    actual = zarr.open_group(zarr_path, mode='r')
+                    for key in expect.keys():
+                        if expect[key].dtype.kind == 'f':
+                            assert_array_almost_equal(expect[key], actual[key][:])
+                        else:
+                            assert_array_equal(expect[key], actual[key][:])
 
 
 def test_vcf_to_hdf5():
@@ -672,17 +675,18 @@ def test_vcf_to_hdf5():
     for n_threads in None, 2:
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
-                expect = read_vcf(fn, region=region, tabix=tabix)
-                if os.path.exists(h5_fn):
-                    os.remove(h5_fn)
-                vcf_to_hdf5(fn, h5_fn, chunk_length=2, n_threads=n_threads,
-                            region=region, tabix=tabix)
-                with h5py.File(h5_fn, mode='r') as actual:
-                    for key in expect.keys():
-                        if expect[key].dtype.kind == 'f':
-                            assert_array_almost_equal(expect[key], actual[key][:])
-                        else:
-                            assert_array_equal(expect[key], actual[key][:])
+                for samples in None, ['NA00001', 'NA00003']:
+                    expect = read_vcf(fn, region=region, tabix=tabix, samples=samples)
+                    if os.path.exists(h5_fn):
+                        os.remove(h5_fn)
+                    vcf_to_hdf5(fn, h5_fn, chunk_length=2, n_threads=n_threads,
+                                region=region, tabix=tabix, samples=samples)
+                    with h5py.File(h5_fn, mode='r') as actual:
+                        for key in expect.keys():
+                            if expect[key].dtype.kind == 'f':
+                                assert_array_almost_equal(expect[key], actual[key][:])
+                            else:
+                                assert_array_equal(expect[key], actual[key][:])
 
 
 def test_read_vcf_info_types():
@@ -945,3 +949,29 @@ def test_read_region():
         assert np.all(chrom == b'20')
         eq_(2, len(pos))
         assert_array_equal([1234567, 1235237], pos)
+
+
+def test_read_samples():
+    fn = 'fixture/sample.vcf'
+
+    for n_threads in None, 2:
+
+        for samples in ['NA00001', 'NA00003'], [0, 2], ['NA00003', 'NA00001'], [2, 'NA00001']:
+            callset = read_vcf(fn, fields=['samples', 'GT'], samples=samples,
+                               n_threads=n_threads)
+            assert_list_equal(['NA00001', 'NA00003'], callset['samples'].astype('U').tolist())
+            gt = callset['calldata/GT']
+            eq_((9, 2, 2), gt.shape)
+            eq_((0, 0), tuple(gt[2, 0]))
+            eq_((1, 1), tuple(gt[2, 1]))
+            eq_((1, 2), tuple(gt[4, 0]))
+            eq_((2, 2), tuple(gt[4, 1]))
+
+        for samples in ['NA00002'], [1]:
+            callset = read_vcf(fn, fields=['samples', 'GT'], samples=samples,
+                               n_threads=n_threads)
+            assert_list_equal(['NA00002'], callset['samples'].astype('U').tolist())
+            gt = callset['calldata/GT']
+            eq_((9, 1, 2), gt.shape)
+            eq_((1, 0), tuple(gt[2, 0]))
+            eq_((2, 1), tuple(gt[4, 0]))
