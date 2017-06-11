@@ -3185,7 +3185,7 @@ cdef class VCFParallelChunkIterator:
 # ANN transformer
 
 
-cdef enum ANNFields:
+cdef enum ANNFidx:
     ALLELE
     ANNOTATION
     ANNOTATION_IMPACT
@@ -3203,31 +3203,132 @@ cdef enum ANNFields:
     DISTANCE
 
 
+ANN_FIELD = 'variants/ANN'
+ANN_ALLELE_FIELD = 'variants/ANN_Allele'
+ANN_ANNOTATION_FIELD = 'variants/ANN_Annotation'
+ANN_ANNOTATION_IMPACT_FIELD = 'variants/ANN_Annotation_Impact'
+ANN_GENE_NAME_FIELD = 'variants/ANN_Gene_Name'
+ANN_GENE_ID_FIELD = 'variants/ANN_Gene_ID'
+ANN_FEATURE_TYPE_FIELD = 'variants/ANN_Feature_Type'
+ANN_FEATURE_ID_FIELD = 'variants/ANN_Feature_ID'
+ANN_TRANSCRIPT_BIOTYPE_FIELD = 'variants/ANN_Transcript_BioType'
+ANN_RANK_FIELD = 'variants/ANN_Rank'
+ANN_HGVS_C_FIELD = 'variants/ANN_HGVS_c'
+ANN_HGVS_P_FIELD = 'variants/ANN_HGVS_p'
+ANN_CDNA_FIELD = 'variants/ANN_cDNA'
+ANN_CDS_FIELD = 'variants/ANN_CDS'
+ANN_AA_FIELD = 'variants/ANN_AA'
+ANN_DISTANCE_FIELD = 'variants/ANN_Distance'
+
+
+ANN_FIELDS = (
+    ANN_ALLELE_FIELD,
+    ANN_ANNOTATION_FIELD,
+    ANN_ANNOTATION_IMPACT_FIELD,
+    ANN_GENE_NAME_FIELD,
+    ANN_GENE_ID_FIELD,
+    ANN_FEATURE_TYPE_FIELD,
+    ANN_FEATURE_ID_FIELD,
+    ANN_TRANSCRIPT_BIOTYPE_FIELD,
+    ANN_RANK_FIELD,
+    ANN_HGVS_C_FIELD,
+    ANN_HGVS_P_FIELD,
+    ANN_CDNA_FIELD,
+    ANN_CDS_FIELD,
+    ANN_AA_FIELD,
+    ANN_DISTANCE_FIELD
+)
+
+
+def _normalize_ann_field_prefix(f):
+    # normalize prefix
+    if f.startswith('variants/ANN_'):
+        pass
+    elif f.startswith('ANN_'):
+        f = 'variants/' + f
+    else:
+        f = 'variants/ANN_' + f
+    if f not in ANN_FIELDS:
+        warnings.warn('invalid ANN field %r, will be ignored' % f)
+        f = None
+    return f
+
+
+def _normalize_ann_fields(fields):
+    normed_fields = set()
+
+    if fields is None:
+        return set(ANN_FIELDS)
+
+    else:
+        for f in fields:
+            f = _normalize_ann_field_prefix(f)
+            if f:
+                normed_fields.add(f)
+
+    return normed_fields
+
+
+default_ann_types = dict()
+default_ann_types[ANN_ALLELE_FIELD] = np.dtype('S1')
+default_ann_types[ANN_ANNOTATION_FIELD] = np.dtype('S34')
+default_ann_types[ANN_ANNOTATION_IMPACT_FIELD] = np.dtype('S8')
+default_ann_types[ANN_GENE_NAME_FIELD] = np.dtype('S14')
+default_ann_types[ANN_GENE_ID_FIELD] = np.dtype('S14')
+default_ann_types[ANN_FEATURE_TYPE_FIELD] = np.dtype('S20')
+default_ann_types[ANN_FEATURE_ID_FIELD] = np.dtype('S14')
+default_ann_types[ANN_TRANSCRIPT_BIOTYPE_FIELD] = np.dtype('S20')
+default_ann_types[ANN_RANK_FIELD] = np.dtype('int8')
+default_ann_types[ANN_HGVS_C_FIELD] = np.dtype('S16')
+default_ann_types[ANN_HGVS_P_FIELD] = np.dtype('S16')
+default_ann_types[ANN_CDNA_FIELD] = np.dtype('int32')
+default_ann_types[ANN_CDS_FIELD] = np.dtype('int32')
+default_ann_types[ANN_AA_FIELD] = np.dtype('int32')
+default_ann_types[ANN_DISTANCE_FIELD] = np.dtype('int32')
+
+
+def _normalize_ann_types(fields, types):
+
+    if types is None:
+        types = dict()
+    types = {_normalize_ann_field_prefix(f): np.dtype(t)
+             for f, t in types.items()}
+
+    normed_types = dict()
+    for f in fields:
+        if f in types:
+            normed_types[f] = types[f]
+        else:
+            normed_types[f] = default_ann_types[f]
+
+    return normed_types
+
+
 cdef class ANNTransformer:
 
     cdef:
-        object fields
+        set fields
         object types
         bint keep_original
+        np.uint8_t[:] emit
 
     def __init__(self, fields=None, types=None, keep_original=False):
-        self.fields = fields
-        self.types = types
+        self.fields = _normalize_ann_fields(fields)
+        self.types = _normalize_ann_types(self.fields, types)
         self.keep_original = keep_original
-        # TODO check fields and types
 
     def transform(self, chunk):
         cdef:
-            int i, j, k, chunk_length, number, itemsize, field
+            int i, j, chunk_length, number
             bytes raw
             list vals
             bytes v
             list vv
 
         # obtain array to be transformed
-        ann = chunk['variants/ANN']
+        ann = chunk[ANN_FIELD]
         if not self.keep_original:
-            del chunk['variants/ANN']
+            del chunk[ANN_FIELD]
 
         # determine chunk length and number of items
         chunk_length = ann.shape[0]
@@ -3238,33 +3339,71 @@ cdef class ANNTransformer:
 
         # allocate output arrays
         # TODO user types
-        # TODO only allocate arrays if requested by user
-        allele = np.zeros(shape, dtype='S1')
-        annotation = np.zeros(shape, dtype='S34')
-        annotation_impact = np.zeros(shape, dtype='S8')
-        gene_name = np.zeros(shape, dtype='S14')
-        gene_id = np.zeros(shape, dtype='S14')
-        feature_type = np.zeros(shape, dtype='S20')
-        feature_id = np.zeros(shape, dtype='S14')
-        transcript_biotype = np.zeros(shape, dtype='S20')
-        rank = np.empty(shape, dtype='int8')
-        rank.fill(-1)
-        hgvs_c = np.zeros(shape, dtype='S16')
-        hgvs_p = np.zeros(shape, dtype='S16')
-        cdna_pos = np.empty(shape, dtype='int32')
-        cdna_pos.fill(-1)
-        cdna_length = np.empty(shape, dtype='int32')
-        cdna_length.fill(-1)
-        cds_pos = np.empty(shape, dtype='int32')
-        cds_pos.fill(-1)
-        cds_length = np.empty(shape, dtype='int32')
-        cds_length.fill(-1)
-        aa_pos = np.empty(shape, dtype='int32')
-        aa_pos.fill(-1)
-        aa_length = np.empty(shape, dtype='int32')
-        aa_length.fill(-1)
-        distance = np.empty(shape, dtype='int32')
-        distance.fill(-1)
+        if ANN_ALLELE_FIELD in self.fields:
+            allele = np.zeros(shape, dtype=self.types[ANN_ALLELE_FIELD])
+        else:
+            allele = None
+        if ANN_ANNOTATION_FIELD in self.fields:
+            annotation = np.zeros(shape, dtype=self.types[ANN_ANNOTATION_FIELD])
+        else:
+            annotation = None
+        if ANN_ANNOTATION_IMPACT_FIELD in self.fields:
+            annotation_impact = np.zeros(shape, dtype=self.types[ANN_ANNOTATION_IMPACT_FIELD])
+        else:
+            annotation_impact = None
+        if ANN_GENE_NAME_FIELD in self.fields:
+            gene_name = np.zeros(shape, dtype=self.types[ANN_GENE_NAME_FIELD])
+        else:
+            gene_name = None
+        if ANN_GENE_ID_FIELD in self.fields:
+            gene_id = np.zeros(shape, dtype=self.types[ANN_GENE_ID_FIELD])
+        else:
+            gene_id = None
+        if ANN_FEATURE_TYPE_FIELD in self.fields:
+            feature_type = np.zeros(shape, dtype=self.types[ANN_FEATURE_TYPE_FIELD])
+        else:
+            feature_type = None
+        if ANN_FEATURE_ID_FIELD in self.fields:
+            feature_id = np.zeros(shape, dtype=self.types[ANN_FEATURE_ID_FIELD])
+        else:
+            feature_id = None
+        if ANN_TRANSCRIPT_BIOTYPE_FIELD in self.fields:
+            transcript_biotype = np.zeros(shape, dtype=self.types[ANN_TRANSCRIPT_BIOTYPE_FIELD])
+        else:
+            transcript_biotype = None
+        if ANN_RANK_FIELD in self.fields:
+            rank = np.empty(shape + (2,), dtype=self.types[ANN_RANK_FIELD])
+            rank.fill(-1)
+        else:
+            rank = None
+        if ANN_HGVS_C_FIELD in self.fields:
+            hgvs_c = np.zeros(shape, dtype=self.types[ANN_HGVS_C_FIELD])
+        else:
+            hgvs_c = None
+        if ANN_HGVS_P_FIELD in self.fields:
+            hgvs_p = np.zeros(shape, dtype=self.types[ANN_HGVS_P_FIELD])
+        else:
+            hgvs_p = None
+        if ANN_CDNA_FIELD in self.fields:
+            cdna = np.empty(shape + (2,), dtype=self.types[ANN_CDNA_FIELD])
+            cdna.fill(-1)
+        else:
+            cdna = None
+        if ANN_CDS_FIELD in self.fields:
+            cds = np.empty(shape + (2,), dtype=self.types[ANN_CDS_FIELD])
+            cds.fill(-1)
+        else:
+            cds = None
+        if ANN_AA_FIELD in self.fields:
+            aa = np.empty(shape + (2,), dtype=self.types[ANN_AA_FIELD])
+            aa.fill(-1)
+        else:
+            aa = None
+        if ANN_DISTANCE_FIELD in self.fields:
+            distance = np.empty(shape, dtype=self.types[ANN_DISTANCE_FIELD])
+            distance.fill(-1)
+        else:
+            distance = None
 
         # start working
         for i in range(chunk_length):
@@ -3282,76 +3421,112 @@ cdef class ANNTransformer:
 
                 # convert and store values
                 try:
-                    v = vals[ANNFields.ALLELE]
-                    if v:
-                        allele[i, j] = v
-                    v = vals[ANNFields.ANNOTATION]
-                    if v:
-                        annotation[i, j] = v
-                    v = vals[ANNFields.ANNOTATION_IMPACT]
-                    if v:
-                        annotation_impact[i, j] = v
-                    v = vals[ANNFields.GENE_NAME]
-                    if v:
-                        gene_name[i, j] = v
-                    v = vals[ANNFields.GENE_ID]
-                    if v:
-                        gene_id[i, j] = v
-                    v = vals[ANNFields.FEATURE_TYPE]
-                    if v:
-                        feature_type[i, j] = v
-                    v = vals[ANNFields.FEATURE_ID]
-                    if v:
-                        feature_id[i, j] = v
-                    v = vals[ANNFields.TRANSCRIPT_BIOTYPE]
-                    if v:
-                        transcript_biotype[i, j] = v
-                    v = vals[ANNFields.RANK]
-                    if v:
-                        rank[i, j] = int(v.partition(b'/')[0])
-                    v = vals[ANNFields.HGVS_C]
-                    if v:
-                        hgvs_c[i, j] = v[2:]
-                    v = vals[ANNFields.HGVS_P]
-                    if v:
-                        hgvs_p[i, j] = v[2:]
-                    v = vals[ANNFields.CDNA]
-                    if v:
-                        vv = v.split(b'/')
-                        cdna_pos[i, j] = int(vv[0])
-                        cdna_length[i, j] = int(vv[1])
-                    v = vals[ANNFields.CDS]
-                    if v:
-                        vv = v.split(b'/')
-                        cds_pos[i, j] = int(vv[0])
-                        cds_length[i, j] = int(vv[1])
-                    v = vals[ANNFields.AA]
-                    if v:
-                        vv = v.split(b'/')
-                        aa_pos[i, j] = int(vv[0])
-                        aa_length[i, j] = int(vv[1])
-                    v = vals[ANNFields.DISTANCE]
-                    if v:
-                        distance[i, j] = v
+                    if allele is not None:
+                        v = vals[ANNFidx.ALLELE]
+                        if v:
+                            allele[i, j] = v
+                    if annotation is not None:
+                        v = vals[ANNFidx.ANNOTATION]
+                        if v:
+                            annotation[i, j] = v
+                    if annotation_impact is not None:
+                        v = vals[ANNFidx.ANNOTATION_IMPACT]
+                        if v:
+                            annotation_impact[i, j] = v
+                    if gene_name is not None:
+                        v = vals[ANNFidx.GENE_NAME]
+                        if v:
+                            gene_name[i, j] = v
+                    if gene_id is not None:
+                        v = vals[ANNFidx.GENE_ID]
+                        if v:
+                            gene_id[i, j] = v
+                    if feature_type is not None:
+                        v = vals[ANNFidx.FEATURE_TYPE]
+                        if v:
+                            feature_type[i, j] = v
+                    if feature_id is not None:
+                        v = vals[ANNFidx.FEATURE_ID]
+                        if v:
+                            feature_id[i, j] = v
+                    if transcript_biotype is not None:
+                        v = vals[ANNFidx.TRANSCRIPT_BIOTYPE]
+                        if v:
+                            transcript_biotype[i, j] = v
+                    if rank is not None:
+                        v = vals[ANNFidx.RANK]
+                        if v:
+                            vv = v.split(b'/')
+                            rank[i, j, 0] = int(vv[0])
+                            rank[i, j, 1] = int(vv[1])
+                    if hgvs_c is not None:
+                        v = vals[ANNFidx.HGVS_C]
+                        if v:
+                            hgvs_c[i, j] = v[2:]
+                    if hgvs_p is not None:
+                        v = vals[ANNFidx.HGVS_P]
+                        if v:
+                            hgvs_p[i, j] = v[2:]
+                    if cdna is not None:
+                        v = vals[ANNFidx.CDNA]
+                        if v:
+                            vv = v.split(b'/')
+                            cdna[i, j, 0] = int(vv[0])
+                            cdna[i, j, 1] = int(vv[1])
+                    if cds is not None:
+                        v = vals[ANNFidx.CDS]
+                        if v:
+                            vv = v.split(b'/')
+                            cds[i, j, 0] = int(vv[0])
+                            cds[i, j, 1] = int(vv[1])
+                    if aa is not None:
+                        v = vals[ANNFidx.AA]
+                        if v:
+                            vv = v.split(b'/')
+                            aa[i, j, 0] = int(vv[0])
+                            aa[i, j, 1] = int(vv[1])
+                    if distance is not None:
+                        v = vals[ANNFidx.DISTANCE]
+                        if v:
+                            distance[i, j] = v
 
                 except IndexError:
                     warnings.warn('missing fields in ANN value')
 
-        chunk['variants/ANN_Allele'] = allele.squeeze(axis=1)
-        chunk['variants/ANN_Annotation'] = annotation.squeeze(axis=1)
-        chunk['variants/ANN_Annotation_Impact'] = annotation_impact.squeeze(axis=1)
-        chunk['variants/ANN_Gene_Name'] = gene_name.squeeze(axis=1)
-        chunk['variants/ANN_Gene_ID'] = gene_id.squeeze(axis=1)
-        chunk['variants/ANN_Feature_Type'] = feature_type.squeeze(axis=1)
-        chunk['variants/ANN_Feature_ID'] = feature_id.squeeze(axis=1)
-        chunk['variants/ANN_Transcript_BioType'] = transcript_biotype.squeeze(axis=1)
-        chunk['variants/ANN_Rank'] = rank.squeeze(axis=1)
-        chunk['variants/ANN_HGVS_c'] = hgvs_c.squeeze(axis=1)
-        chunk['variants/ANN_HGVS_p'] = hgvs_p.squeeze(axis=1)
-        chunk['variants/ANN_cDNA_pos'] = cdna_pos.squeeze(axis=1)
-        chunk['variants/ANN_cDNA_length'] = cdna_length.squeeze(axis=1)
-        chunk['variants/ANN_CDS_pos'] = cds_pos.squeeze(axis=1)
-        chunk['variants/ANN_CDS_length'] = cds_length.squeeze(axis=1)
-        chunk['variants/ANN_AA_pos'] = aa_pos.squeeze(axis=1)
-        chunk['variants/ANN_AA_length'] = aa_length.squeeze(axis=1)
-        chunk['variants/ANN_Distance'] = distance.squeeze(axis=1)
+        ann_chunk = dict()
+        if allele is not None:
+            ann_chunk[ANN_ALLELE_FIELD] = allele
+        if annotation is not None:
+            ann_chunk[ANN_ANNOTATION_FIELD] = annotation
+        if annotation_impact is not None:
+            ann_chunk[ANN_ANNOTATION_IMPACT_FIELD] = annotation_impact
+        if gene_name is not None:
+            ann_chunk[ANN_GENE_NAME_FIELD] = gene_name
+        if gene_id is not None:
+            ann_chunk[ANN_GENE_ID_FIELD] = gene_id
+        if feature_type is not None:
+            ann_chunk[ANN_FEATURE_TYPE_FIELD] = feature_type
+        if feature_id is not None:
+            ann_chunk[ANN_FEATURE_ID_FIELD] = feature_id
+        if transcript_biotype is not None:
+            ann_chunk[ANN_TRANSCRIPT_BIOTYPE_FIELD] = transcript_biotype
+        if rank is not None:
+            ann_chunk[ANN_RANK_FIELD] = rank
+        if hgvs_c is not None:
+            ann_chunk[ANN_HGVS_C_FIELD] = hgvs_c
+        if hgvs_p is not None:
+            ann_chunk[ANN_HGVS_P_FIELD] = hgvs_p
+        if cdna is not None:
+            ann_chunk[ANN_CDNA_FIELD] = cdna
+        if cds is not None:
+            ann_chunk[ANN_CDS_FIELD] = cds
+        if aa is not None:
+            ann_chunk[ANN_AA_FIELD] = aa
+        if distance is not None:
+            ann_chunk[ANN_DISTANCE_FIELD] = distance
+
+        if number == 1:
+            for k in list(ann_chunk.keys()):
+                ann_chunk[k] = ann_chunk[k].squeeze(axis=1)
+
+        chunk.update(ann_chunk)

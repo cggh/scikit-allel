@@ -2,8 +2,6 @@
 """
 TODO:
 
-* Specialised parser for ANN
-* Specialised parser for EFF
 * PY2 compatibility?
 * More formats than declared in FORMAT field. Less formats.
 * Report CHROM and POS in warnings
@@ -16,8 +14,10 @@ TODO:
 ** svlen
 ** genotype_ac
 ** is_phased
+* Port tests from vcfnp
 
 * [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype?
+* [WONTFIX] Specialised parser for EFF
 
 """
 from __future__ import absolute_import, print_function, division

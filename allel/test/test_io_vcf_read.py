@@ -981,7 +981,7 @@ def test_ann():
     fn = 'fixture/ann.vcf'
 
     # all ANN fields
-    callset = read_vcf(fn, fields=['ANN'], types={'ANN': 'S200'}, transformers=[ANNTransformer()])
+    callset = read_vcf(fn, fields=['ANN'], transformers=[ANNTransformer()])
     assert_list_equal(sorted(['variants/ANN_Allele',
                               'variants/ANN_Annotation',
                               'variants/ANN_Annotation_Impact',
@@ -993,12 +993,9 @@ def test_ann():
                               'variants/ANN_Rank',
                               'variants/ANN_HGVS_c',
                               'variants/ANN_HGVS_p',
-                              'variants/ANN_cDNA_pos',
-                              'variants/ANN_cDNA_length',
-                              'variants/ANN_CDS_pos',
-                              'variants/ANN_CDS_length',
-                              'variants/ANN_AA_pos',
-                              'variants/ANN_AA_length',
+                              'variants/ANN_cDNA',
+                              'variants/ANN_CDS',
+                              'variants/ANN_AA',
                               'variants/ANN_Distance'
                               ]),
                       sorted(callset.keys()))
@@ -1027,36 +1024,62 @@ def test_ann():
     eq_((3,), a.shape)
     assert_array_equal([b'', b'', b'VectorBase'], a)
     a = callset['variants/ANN_Rank']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, 1], a)
+    eq_((3, 2), a.shape)
+    assert_array_equal([-1, -1, 1], a[:, 0])
+    assert_array_equal([-1, -1, 4], a[:, 1])
     a = callset['variants/ANN_HGVS_c']
     eq_((3,), a.shape)
     assert_array_equal([b'', b'', b'17A>T'], a)
     a = callset['variants/ANN_HGVS_p']
     eq_((3,), a.shape)
     assert_array_equal([b'', b'', b'Asp6Val'], a)
-    a = callset['variants/ANN_cDNA_pos']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, 17], a)
-    a = callset['variants/ANN_cDNA_length']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, 4788], a)
-    a = callset['variants/ANN_CDS_pos']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, 17], a)
-    a = callset['variants/ANN_CDS_length']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, -1], a)
-    a = callset['variants/ANN_AA_pos']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, 6], a)
-    a = callset['variants/ANN_AA_length']
-    eq_((3,), a.shape)
-    assert_array_equal([-1, -1, -1], a)
+    a = callset['variants/ANN_cDNA']
+    eq_((3, 2), a.shape)
+    assert_array_equal([-1, -1, 17], a[:, 0])
+    assert_array_equal([-1, -1, 4788], a[:, 1])
+    a = callset['variants/ANN_CDS']
+    eq_((3, 2), a.shape)
+    assert_array_equal([-1, -1, 17], a[:, 0])
+    assert_array_equal([-1, -1, -1], a[:, 1])
+    a = callset['variants/ANN_AA']
+    eq_((3, 2), a.shape)
+    assert_array_equal([-1, -1, 6], a[:, 0])
+    assert_array_equal([-1, -1, -1], a[:, 1])
     a = callset['variants/ANN_Distance']
     eq_((3,), a.shape)
     assert_array_equal([-1, -1, -1], a)
 
-    # TODO numbers=2
-    # TODO choose fields
-    # TODO change dtype
+    # numbers=2
+    callset = read_vcf(fn, fields=['ANN'], numbers={'ANN': 2}, transformers=[ANNTransformer()])
+    a = callset['variants/ANN_Allele']
+    eq_((3, 2), a.shape)
+    assert_array_equal([b'T', b''], a[0])
+    assert_array_equal([b'', b''], a[1])
+    assert_array_equal([b'T', b'G'], a[2])
+    a = callset['variants/ANN_cDNA']
+    eq_((3, 2, 2), a.shape)
+    assert_array_equal([-1, -1, 17], a[:, 0, 0])
+    assert_array_equal([-1, -1, 4788], a[:, 0, 1])
+
+    # choose fields and types
+    callset = read_vcf(fn, fields=['ANN'],
+                       transformers=[ANNTransformer(fields=['Allele', 'ANN_HGVS_c', 'variants/ANN_cDNA'],
+                                                    types={'Allele': 'S12', 'ANN_HGVS_c': 'S20',
+                                                           'variants/ANN_cDNA': 'i8'})])
+    assert_list_equal(sorted(['variants/ANN_Allele',
+                              'variants/ANN_HGVS_c',
+                              'variants/ANN_cDNA']),
+                      sorted(callset.keys()))
+    a = callset['variants/ANN_Allele']
+    eq_((3,), a.shape)
+    eq_(np.dtype('S12'), a.dtype)
+    assert_array_equal([b'T', b'', b'T'], a)
+    a = callset['variants/ANN_HGVS_c']
+    eq_((3,), a.shape)
+    eq_(np.dtype('S20'), a.dtype)
+    assert_array_equal([b'', b'', b'17A>T'], a)
+    a = callset['variants/ANN_cDNA']
+    eq_((3, 2), a.shape)
+    eq_(np.dtype('i8'), a.dtype)
+    assert_array_equal([-1, -1, 17], a[:, 0])
+    assert_array_equal([-1, -1, 4788], a[:, 1])
