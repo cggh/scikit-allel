@@ -630,50 +630,59 @@ def test_vcf_truncation_calldata():
 
 def test_vcf_to_npz():
     fn = 'fixture/sample.vcf'
-    for n_threads in 1, 2:
-        expect = read_vcf(fn)
-        npz_fn = 'temp/sample.npz'
-        if os.path.exists(npz_fn):
-            os.remove(npz_fn)
-        vcf_to_npz(fn, npz_fn, chunk_length=2, n_threads=n_threads)
-        actual = np.load(npz_fn)
-        for key in expect.keys():
-            if expect[key].dtype.kind == 'f':
-                assert_array_almost_equal(expect[key], actual[key])
-            else:
-                assert_array_equal(expect[key], actual[key])
+    npz_fn = 'temp/sample.npz'
+    for n_threads in None, 2:
+        for region in None, '20', '20:10000-20000':
+            for tabix in 'tabix', None:
+                expect = read_vcf(fn, region=region, tabix=tabix)
+                if os.path.exists(npz_fn):
+                    os.remove(npz_fn)
+                vcf_to_npz(fn, npz_fn, chunk_length=2, n_threads=n_threads,
+                           region=region, tabix=tabix)
+                actual = np.load(npz_fn)
+                for key in expect.keys():
+                    if expect[key].dtype.kind == 'f':
+                        assert_array_almost_equal(expect[key], actual[key])
+                    else:
+                        assert_array_equal(expect[key], actual[key])
 
 
 def test_vcf_to_zarr():
     fn = 'fixture/sample.vcf'
-    expect = read_vcf(fn)
     zarr_path = 'temp/sample.zarr'
-    for n_threads in 1, 2:
-        if os.path.exists(zarr_path):
-            shutil.rmtree(zarr_path)
-        vcf_to_zarr(fn, zarr_path, chunk_length=2, n_threads=n_threads)
-        actual = zarr.open_group(zarr_path, mode='r')
-        for key in expect.keys():
-            if expect[key].dtype.kind == 'f':
-                assert_array_almost_equal(expect[key], actual[key][:])
-            else:
-                assert_array_equal(expect[key], actual[key][:])
+    for n_threads in None, 2:
+        for region in None, '20', '20:10000-20000':
+            for tabix in 'tabix', None:
+                expect = read_vcf(fn, region=region, tabix=tabix)
+                if os.path.exists(zarr_path):
+                    shutil.rmtree(zarr_path)
+                vcf_to_zarr(fn, zarr_path, chunk_length=2, n_threads=n_threads,
+                            region=region, tabix=tabix)
+                actual = zarr.open_group(zarr_path, mode='r')
+                for key in expect.keys():
+                    if expect[key].dtype.kind == 'f':
+                        assert_array_almost_equal(expect[key], actual[key][:])
+                    else:
+                        assert_array_equal(expect[key], actual[key][:])
 
 
 def test_vcf_to_hdf5():
     fn = 'fixture/sample.vcf'
-    expect = read_vcf(fn)
     h5_fn = 'temp/sample.h5'
-    for n_threads in 1, 2:
-        if os.path.exists(h5_fn):
-            os.remove(h5_fn)
-        vcf_to_hdf5(fn, h5_fn, chunk_length=2, n_threads=n_threads)
-        with h5py.File(h5_fn, mode='r') as actual:
-            for key in expect.keys():
-                if expect[key].dtype.kind == 'f':
-                    assert_array_almost_equal(expect[key], actual[key][:])
-                else:
-                    assert_array_equal(expect[key], actual[key][:])
+    for n_threads in None, 2:
+        for region in None, '20', '20:10000-20000':
+            for tabix in 'tabix', None:
+                expect = read_vcf(fn, region=region, tabix=tabix)
+                if os.path.exists(h5_fn):
+                    os.remove(h5_fn)
+                vcf_to_hdf5(fn, h5_fn, chunk_length=2, n_threads=n_threads,
+                            region=region, tabix=tabix)
+                with h5py.File(h5_fn, mode='r') as actual:
+                    for key in expect.keys():
+                        if expect[key].dtype.kind == 'f':
+                            assert_array_almost_equal(expect[key], actual[key][:])
+                        else:
+                            assert_array_equal(expect[key], actual[key][:])
 
 
 def test_read_vcf_info_types():
@@ -879,27 +888,29 @@ def test_read_region():
         region = '19'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        # debug(chrom)
+        # debug(pos)
         eq_(2, len(chrom))
         assert np.all(chrom == b'19')
-        pos = callset['variants/POS']
         eq_(2, len(pos))
         assert_array_equal([111, 112], pos)
 
         region = '20'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
         eq_(6, len(chrom))
         assert np.all(chrom == b'20')
-        pos = callset['variants/POS']
         eq_(6, len(pos))
         assert_array_equal([14370, 17330, 1110696, 1230237, 1234567, 1235237], pos)
 
         region = 'X'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
         eq_(1, len(chrom))
         assert np.all(chrom == b'X')
-        pos = callset['variants/POS']
         eq_(1, len(pos))
         assert_array_equal([10], pos)
 
@@ -911,26 +922,26 @@ def test_read_region():
         region = '20:1-100000'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
         eq_(2, len(chrom))
         assert np.all(chrom == b'20')
-        pos = callset['variants/POS']
         eq_(2, len(pos))
         assert_array_equal([14370, 17330], pos)
 
         region = '20:1000000-1233000'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
         eq_(2, len(chrom))
         assert np.all(chrom == b'20')
-        pos = callset['variants/POS']
         eq_(2, len(pos))
         assert_array_equal([1110696, 1230237], pos)
 
         region = '20:1233000-2000000'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
         eq_(2, len(chrom))
         assert np.all(chrom == b'20')
-        pos = callset['variants/POS']
         eq_(2, len(pos))
         assert_array_equal([1234567, 1235237], pos)

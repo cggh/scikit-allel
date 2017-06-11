@@ -35,8 +35,8 @@ TODO:
 * DONE Test fills
 * DONE Handle number = 0 in non-flag INFO field
 * DONE User-controlled numbers to ALT, INFO, calldata, ... (tests)
-* Read from region via tabix
-* Read from region via scanning
+* DONE Read from region via tabix
+* DONE Read from region via scanning
 * User-specified samples to parse
 * Specialised parser for EFF
 * Specialised parser for ANN
@@ -648,22 +648,30 @@ def read_vcf_chunks(path,
                     n_threads=None):
     """Returns an iterator over chunks of data from a VCF file as NumPy arrays."""
 
+    # guard condition
+    if n_threads is not None and region:
+        warnings.warn('cannot use multiple threads if region is given, falling back to '
+                      'single-threaded implementation')
+        n_threads = None
+
     kwds = dict(fields=fields, types=types, numbers=numbers,
                 chunk_length=chunk_length, block_length=block_length,
                 n_threads=n_threads, fills=fills)
 
     if isinstance(path, str) and path.endswith('gz'):
 
-        if region and tabix:
+        if region and tabix and os.name != 'nt':
             try:
                 # try tabix
                 p = subprocess.Popen([tabix, '-h', path, region],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
-                                     bufsize=0)
-                # check stderr
-                err = p.stderr.read(-1)
-                if err:
+                                     bufsize=buffer_size)
+                # check if tabix exited early, look for tabix error
+                time.sleep(.5)
+                poll = p.poll()
+                if poll is not None and poll > 0:
+                    err = p.stderr.read(-1)
                     raise Exception(str(err, 'ascii').strip())
                 fileobj = p.stdout
                 region = None
@@ -672,7 +680,7 @@ def read_vcf_chunks(path,
                 warnings.warn('tabix not found, falling back to scanning to region')
                 fileobj = gzip.open(path, mode='rb')
             except Exception as e:
-                warnings.warn('exception occurred attempting tabix (%s); falling back to '
+                warnings.warn('error occurred attempting tabix (%s); falling back to '
                               'scanning to region' % e)
                 fileobj = gzip.open(path, mode='rb')
         else:

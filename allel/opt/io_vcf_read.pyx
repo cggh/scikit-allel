@@ -438,7 +438,7 @@ cdef class VCFChunkIterator:
         # setup parser
         self.parser = VCFParser(fields=fields, types=types, numbers=numbers,
                                 chunk_length=chunk_length, n_samples=n_samples,
-                                fills=fills)
+                                fills=fills, region=region)
 
     def __dealloc__(self):
         VCFContext_free(&self.context)
@@ -487,17 +487,23 @@ cdef class VCFParser:
         VCFFieldParserBase info_parser
         VCFFieldParserBase format_parser
         VCFFieldParserBase calldata_parser
+        bytes region_chrom
+        int region_begin
+        int region_end
 
-    def __init__(self, fields, types, numbers, chunk_length, n_samples, fills):
+    def __init__(self, fields, types, numbers, chunk_length, n_samples, fills, region):
         self.chunk_length = chunk_length
         self.n_samples = n_samples
 
         # copy so we don't modify someone else's data
         fields = set(fields)
 
+        # handle region
+        self._init_region(region)
+
         # setup parsers
         self._init_chrom(fields, types)
-        self._init_pos(fields, types, fills)
+        # self._init_pos(fields, types, fills)
         self._init_id(fields, types)
         self._init_ref(fields, types)
         self._init_alt(fields, types, numbers)
@@ -510,35 +516,66 @@ cdef class VCFParser:
             # shouldn't ever be any left over
             raise RuntimeError('unexpected fields left over: %r' % set(fields))
 
-    def _init_chrom(self, fields, types):
-        """Setup CHROM parser."""
-        if CHROM_FIELD in fields:
-            chrom_parser = VCFChromParser(dtype=types[CHROM_FIELD], store=True,
-                                          chunk_length=self.chunk_length)
-            fields.remove(CHROM_FIELD)
-        else:
-            chrom_parser = VCFChromParser(dtype=None, store=False,
-                                          chunk_length=self.chunk_length)
-        chrom_parser.malloc_chunk()
-        self.chrom_parser = chrom_parser
+    def _init_region(self, region):
+        self.region_chrom = b''
+        self.region_begin = 0
+        self.region_end = 0
+        if region is not None:
+            tokens = region.split(':')
+            if len(tokens) == 0:
+                raise ValueError('bad region string: %r' % region)
+            self.region_chrom = tokens[0].encode('ascii')
+            if len(tokens) > 1:
+                range_tokens = tokens[1].split('-')
+                if len(range_tokens) != 2:
+                    raise ValueError('bad region string: %r' % region)
+                self.region_begin = int(range_tokens[0])
+                self.region_end = int(range_tokens[1])
 
-    def _init_pos(self, fields, types, fills):
-        """Setup POS parser."""
+    def _init_chrom(self, fields, types):
+        """Setup CHROM and POS parser."""
+        kwds = dict(dtype=None, chunk_length=self.chunk_length,
+                    region_chrom=self.region_chrom, region_begin=self.region_begin,
+                    region_end=self.region_end, store_chrom=False, store_pos=False)
+
+        if CHROM_FIELD in fields:
+            kwds['dtype'] = types[CHROM_FIELD]
+            kwds['store_chrom'] = True
+            fields.remove(CHROM_FIELD)
+
         if POS_FIELD in fields:
             if POS_FIELD in types:
                 t = types[POS_FIELD]
-                # TODO support user-provided type?
                 if t != np.dtype('int32'):
                     warnings.warn('only int32 supported for POS field, ignoring '
                                   'requested type: %r' % types[POS_FIELD])
-            fill = fills.get(POS_FIELD, -1)
-            pos_parser = VCFPosParser(store=True, chunk_length=self.chunk_length,
-                                      fill=fill)
+            kwds['store_pos'] = True
             fields.remove(POS_FIELD)
-        else:
-            pos_parser = VCFPosParser(store=False, chunk_length=self.chunk_length)
-        pos_parser.malloc_chunk()
-        self.pos_parser = pos_parser
+
+        chrom_parser = VCFChromPosParser(**kwds)
+        chrom_parser.malloc_chunk()
+        self.chrom_parser = chrom_parser
+
+    # def _init_pos(self, fields, types, fills):
+    #     """Setup POS parser."""
+    #     if POS_FIELD in fields:
+    #         if POS_FIELD in types:
+    #             t = types[POS_FIELD]
+    #             # TODO support user-provided type?
+    #             if t != np.dtype('int32'):
+    #                 warnings.warn('only int32 supported for POS field, ignoring '
+    #                               'requested type: %r' % types[POS_FIELD])
+    #         fill = fills.get(POS_FIELD, -1)
+    #         pos_parser = VCFPosParser(store=True, chunk_length=self.chunk_length,
+    #                                   fill=fill, region_begin=self.region_begin,
+    #                                   region_end=self.region_end)
+    #         fields.remove(POS_FIELD)
+    #     else:
+    #         pos_parser = VCFPosParser(store=False, chunk_length=self.chunk_length,
+    #                                   region_begin=self.region_begin,
+    #                                   region_end=self.region_end)
+    #     pos_parser.malloc_chunk()
+    #     self.pos_parser = pos_parser
 
     def _init_id(self, fields, types):
         """Setup ID parser."""
@@ -703,8 +740,8 @@ cdef class VCFParser:
                 elif context.state == VCFState.CHROM:
                     self.chrom_parser.parse(stream, context)
 
-                elif context.state == VCFState.POS:
-                    self.pos_parser.parse(stream, context)
+                # elif context.state == VCFState.POS:
+                #     self.pos_parser.parse(stream, context)
 
                 elif context.state == VCFState.ID:
                     self.id_parser.parse(stream, context)
@@ -737,7 +774,7 @@ cdef class VCFParser:
 
     cdef int malloc_chunk(self) except -1:
         self.chrom_parser.malloc_chunk()
-        self.pos_parser.malloc_chunk()
+        # self.pos_parser.malloc_chunk()
         self.id_parser.malloc_chunk()
         self.ref_parser.malloc_chunk()
         self.alt_parser.malloc_chunk()
@@ -757,7 +794,7 @@ cdef class VCFParser:
                 limit = None
             chunk = dict()
             self.chrom_parser.make_chunk(chunk, limit=limit)
-            self.pos_parser.make_chunk(chunk, limit=limit)
+            # self.pos_parser.make_chunk(chunk, limit=limit)
             self.id_parser.make_chunk(chunk, limit=limit)
             self.ref_parser.make_chunk(chunk, limit=limit)
             self.alt_parser.make_chunk(chunk, limit=limit)
@@ -849,147 +886,217 @@ def check_string_dtype(dtype):
     return dtype
 
 
-cdef class VCFChromParser(VCFFieldParserBase):
+cdef int vcf_read_field(InputStreamBase stream,
+                        VCFContext* context,
+                        CharVector* dest) nogil except -1:
+
+    # setup temp vector to store value
+    CharVector_clear(dest)
+
+    while True:
+
+        if stream.c == 0:
+            context.state = VCFState.EOF
+            break
+
+        elif stream.c == LF or stream.c == CR:
+            context.state = VCFState.EOL
+            break
+
+        elif stream.c == TAB:
+            stream.advance()
+            context.state += 1
+            break
+
+        else:
+            CharVector_append(dest, stream.c)
+
+        # advance input stream
+        stream.advance()
+
+
+cdef int vcf_skip_variant(InputStreamBase stream, VCFContext* context) nogil except -1:
+    # skip to EOL or EOF
+    while True:
+        if stream.c == 0:
+            context.state = VCFState.EOF
+            break
+        elif stream.c == LF or stream.c == CR:
+            context.state = VCFState.EOL
+            break
+        # advance input stream
+        stream.advance()
+
+
+cdef class VCFChromPosParser(VCFFieldParserBase):
     """TODO"""
 
     cdef:
-        np.uint8_t[:] memory
-        bint store
+        np.uint8_t[:] chrom_memory
+        np.int32_t[:] pos_memory
+        bint store_chrom
+        bint store_pos
+        char* region_chrom
+        int region_begin
+        int region_end
+        np.ndarray chrom_values
+        np.ndarray pos_values
 
-    def __init__(self, dtype, store, chunk_length):
-        if store:
+    def __init__(self, dtype, store_chrom, store_pos, chunk_length, region_chrom,
+                 region_begin, region_end):
+        if store_chrom:
             dtype = check_string_dtype(dtype)
-        super(VCFChromParser, self).__init__(key=b'CHROM', dtype=dtype, number=1,
-                                             chunk_length=chunk_length)
-        self.store = store
+        super(VCFChromPosParser, self).__init__(key=b'CHROM', dtype=dtype, number=1,
+                                                chunk_length=chunk_length)
+        self.store_chrom = store_chrom
+        self.store_pos = store_pos
+        if region_chrom:
+            self.region_chrom = PyBytes_AS_STRING(region_chrom)
+            self.region_begin = region_begin
+            self.region_end = region_end
+        else:
+            self.region_chrom = NULL
+            self.region_begin = 0
+            self.region_end = 0
 
     cdef int parse(self, InputStreamBase stream, VCFContext* context) nogil except -1:
         cdef:
+            int i, n, cmp
             # index into memory view
-            int memory_index
-            # number of characters read into current value
-            int chars_stored = 0
+            int memory_offset
 
-        # check for EOF - important to handle file with no final line terminator
+        # reset context
+        CharVector_clear(&context.chrom)
+        context.pos = 0
+
+        # check for EOF early - important to handle file with no final line terminator
         if stream.c == 0:
             context.state = VCFState.EOF
             return 0
 
+        # read chrom
+        vcf_read_field(stream, context, &context.chrom)
+        CharVector_terminate(&context.chrom)
+
+        # read pos
+        if context.state == VCFState.POS:
+            # read pos into temp
+            vcf_read_field(stream, context, &context.temp)
+            # parse pos as integer
+            vcf_strtol(&context.temp, context, &context.pos)
+
+        # handle region
+        if self.region_chrom is not NULL:
+
+            # compare with region chrom
+            cmp = strcmp(context.chrom.data, self.region_chrom)
+
+            if cmp < 0:
+                return vcf_skip_variant(stream, context)
+
+            if cmp > 0:
+                # we're done
+                context.state = EOF
+                return 0
+
+            if self.region_begin > 0 and context.pos < self.region_begin:
+                return vcf_skip_variant(stream, context)
+
+            if self.region_end > 0 and context.pos > self.region_end:
+                # we're done
+                context.state = EOF
+                return 0
+
         # setup context
-        CharVector_clear(&context.chrom)
-        context.pos = -1
         context.sample_index = 0
         context.sample_field_index = 0
         context.variant_index += 1
         context.chunk_variant_index += 1
 
-        # now initialise memory index
-        memory_index = context.chunk_variant_index * self.itemsize
+        # store in chunk
+        if self.store_chrom:
 
-        while True:
+            # initialise memory index
+            memory_offset = context.chunk_variant_index * self.itemsize
 
-            if stream.c == 0:
-                context.state = VCFState.EOF
-                break
+            # figure out how many characters to store
+            n = min(context.chrom.size - 1, self.itemsize)
 
-            elif stream.c == LF or stream.c == CR:
-                context.state = VCFState.EOL
-                break
+            # store characters
+            for i in range(n):
+                self.chrom_memory[memory_offset + i] = context.chrom.data[i]
 
-            elif stream.c == TAB:
-                # advance input stream beyond tab
-                stream.advance()
-                # advance to next field
-                context.state += 1
-                break
-
-            else:
-
-                # store on context
-                CharVector_append(&context.chrom, stream.c)
-
-                # store in chunk
-                if self.store and chars_stored < self.itemsize:
-                    # store value
-                    self.memory[memory_index] = stream.c
-                    # advance memory index
-                    memory_index += 1
-                    # advance number of characters stored
-                    chars_stored += 1
-
-            # advance input stream
-            stream.advance()
+        if self.store_pos:
+            self.pos_memory[context.chunk_variant_index] = context.pos
 
     cdef int malloc_chunk(self) except -1:
-        if self.store:
-            self.values = np.zeros(self.chunk_length, dtype=self.dtype)
-            self.memory = self.values.view('u1')
+        if self.store_chrom:
+            self.chrom_values = np.zeros(self.chunk_length, dtype=self.dtype)
+            self.chrom_memory = self.chrom_values.view('u1')
+        if self.store_pos:
+            self.pos_values = np.zeros(self.chunk_length, dtype='int32')
+            self.pos_memory = self.pos_values
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        if self.store:
-            chunk[CHROM_FIELD] = self.values[:limit]
+        if self.store_chrom:
+            chunk[CHROM_FIELD] = self.chrom_values[:limit]
+        if self.store_pos:
+            chunk[POS_FIELD] = self.pos_values[:limit]
 
 
-cdef class VCFPosParser(VCFFieldParserBase):
-    """TODO"""
-
-    cdef:
-        np.int32_t[:] memory
-        bint store
-
-    def __init__(self, store, chunk_length, fill=-1):
-        super(VCFPosParser, self).__init__(key=b'POS', dtype='int32', number=1,
-                                           fill=fill, chunk_length=chunk_length)
-        self.store = store
-
-    cdef int parse(self, InputStreamBase stream, VCFContext* context) nogil except -1:
-        cdef:
-            long value
-            int parsed
-
-        # setup temp vector to store value
-        CharVector_clear(&context.temp)
-
-        while True:
-
-            if stream.c == 0:
-                context.state = VCFState.EOF
-                break
-
-            elif stream.c == LF or stream.c == CR:
-                context.state = VCFState.EOL
-                break
-
-            elif stream.c == TAB:
-                stream.advance()
-                context.state += 1
-                break
-
-            else:
-                CharVector_append(&context.temp, stream.c)
-
-            # advance input stream
-            stream.advance()
-
-        # parse string as integer
-        parsed = vcf_strtol(&context.temp, context, &value)
-
-        # store value on context, whatever happens
-        context.pos = value
-
-        if parsed > 0 and self.store:
-            # store value in chunk
-            self.memory[context.chunk_variant_index] = value
-
-    cdef int malloc_chunk(self) except -1:
-        if self.store:
-            self.values = np.zeros(self.chunk_length, dtype='int32')
-            self.memory = self.values
-            self.memory[:] = -1
-
-    cdef int make_chunk(self, chunk, limit=None) except -1:
-        if self.store:
-            chunk[POS_FIELD] = self.values[:limit]
+# cdef class VCFPosParser(VCFFieldParserBase):
+#     """TODO"""
+#
+#     cdef:
+#         np.int32_t[:] memory
+#         bint store
+#         int region_begin
+#         int region_end
+#
+#     def __init__(self, store, chunk_length, fill, region_begin, region_end):
+#         super(VCFPosParser, self).__init__(key=b'POS', dtype='int32', number=1,
+#                                            fill=fill, chunk_length=chunk_length)
+#         self.store = store
+#         self.region_begin = region_begin
+#         self.region_end = region_end
+#
+#     cdef int parse(self, InputStreamBase stream, VCFContext* context) nogil except -1:
+#         cdef:
+#             long value
+#             int parsed
+#
+#         # read field into temp
+#         vcf_read_field(stream, context, &context.temp)
+#
+#         # parse string as integer
+#         parsed = vcf_strtol(&context.temp, context, &value)
+#
+#         # store value on context, whatever happens
+#         context.pos = value
+#
+#         if parsed > 0:
+#
+#             if self.region_begin > 0 and value < self.region_begin:
+#                 return vcf_skip_variant(stream, context)
+#
+#             elif self.region_end > 0 and value > self.region_end:
+#                 # we're done
+#                 context.state = EOF
+#                 return 0
+#
+#             elif self.store:
+#                 # store value in chunk
+#                 self.memory[context.chunk_variant_index] = value
+#
+#     cdef int malloc_chunk(self) except -1:
+#         if self.store:
+#             self.values = np.zeros(self.chunk_length, dtype='int32')
+#             self.memory = self.values
+#             self.memory[:] = -1
+#
+#     cdef int make_chunk(self, chunk, limit=None) except -1:
+#         if self.store:
+#             chunk[POS_FIELD] = self.values[:limit]
 
 
 cdef class VCFStringFieldParser(VCFFieldParserBase):
@@ -1121,30 +1228,8 @@ cdef class VCFQualParser(VCFFieldParserBase):
             double value
             int parsed
 
-        # reset temporary buffer
-        CharVector_clear(&context.temp)
-
-        while True:
-
-            if stream.c == 0:
-                context.state = VCFState.EOF
-                break
-
-            elif stream.c == LF or stream.c == CR:
-                context.state = VCFState.EOL
-                break
-
-            elif stream.c == TAB:
-                # advance input stream beyond tab
-                stream.advance()
-                context.state += 1
-                break
-
-            else:
-                CharVector_append(&context.temp, stream.c)
-
-            # advance input stream
-            stream.advance()
+        # read into temp
+        vcf_read_field(stream, context, &context.temp)
 
         # parse string as floating
         parsed = vcf_strtod(&context.temp, context, &value)
@@ -2033,19 +2118,7 @@ cdef class VCFSkipAllCallDataParser(VCFFieldParserBase):
     """Skip a field."""
 
     cdef int parse(self, InputStreamBase stream, VCFContext* context) nogil except -1:
-
-        while True:
-
-            if stream.c == 0:
-                context.state = VCFState.EOF
-                break
-
-            elif stream.c == LF or stream.c == CR:
-                context.state = VCFState.EOL
-                break
-
-            # advance input stream
-            stream.advance()
+        return vcf_skip_variant(stream, context)
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         pass
@@ -3071,7 +3144,7 @@ cdef class VCFParallelChunkIterator:
     def __cinit__(self,
                   FileInputStream stream,
                   int chunk_length, int block_length, int n_threads,
-                  headers, fields, types, numbers, fills, region=None):
+                  headers, fields, types, numbers, fills, region):
         # TODO handle region
 
         self.stream = stream
@@ -3089,7 +3162,7 @@ cdef class VCFParallelChunkIterator:
         self.n_samples = len(headers.samples)
         self.parser = VCFParser(fields=fields, types=types, numbers=numbers,
                                 chunk_length=chunk_length, n_samples=self.n_samples,
-                                fills=fills)
+                                fills=fills, region=region)
         self.chunk_index = -1
         self.workers = [VCFParallelParser(stream, self.parser, self.chunk_length,
                                           self.block_length, self.n_samples, self.pool)
