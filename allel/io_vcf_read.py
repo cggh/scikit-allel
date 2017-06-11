@@ -137,6 +137,8 @@ def read_vcf(path,
              types=None,
              numbers=None,
              fills=None,
+             region=None,
+             tabix='tabix',
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
              n_threads=None,
@@ -146,15 +148,19 @@ def read_vcf(path,
 
     Parameters
     ----------
-    path : str
+    path : string
         TODO
-    fields : sequence of str
+    fields : sequence of strings
         TODO
     types : dict
         TODO
     numbers : dict
         TODO
     fills : dict
+        TODO
+    region : string
+        TODO
+    tabix : string
         TODO
     buffer_size : int
         TODO
@@ -188,7 +194,7 @@ def read_vcf(path,
                                   numbers=numbers,buffer_size=buffer_size,
                                   chunk_length=chunk_length,
                                   block_length=block_length, n_threads=n_threads,
-                                  fills=fills)
+                                  fills=fills, region=region, tabix=tabix)
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[read_vcf]')
 
@@ -221,6 +227,8 @@ def vcf_to_npz(input_path, output_path,
                types=None,
                numbers=None,
                fills=None,
+               region=None,
+               tabix=True,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                n_threads=None,
@@ -230,9 +238,9 @@ def vcf_to_npz(input_path, output_path,
 
     Parameters
     ----------
-    input_path : str
+    input_path : string
         TODO
-    output_path : str
+    output_path : string
         TODO
     compressed : bool
         If True (default), save with compression.
@@ -245,6 +253,10 @@ def vcf_to_npz(input_path, output_path,
     numbers : dict
         TODO
     fills : dict
+        TODO
+    region : string
+        TODO
+    tabix : string
         TODO
     buffer_size : int
         TODO
@@ -273,7 +285,8 @@ def vcf_to_npz(input_path, output_path,
     # read all data into memory
     data = read_vcf(path=input_path, fields=fields, types=types, numbers=numbers,
                     buffer_size=buffer_size, chunk_length=chunk_length,
-                    block_length=block_length, n_threads=n_threads, log=log, fills=fills)
+                    block_length=block_length, n_threads=n_threads, log=log,
+                    fills=fills, region=region, tabix=tabix)
 
     # setup save function
     if compressed:
@@ -361,6 +374,8 @@ def vcf_to_hdf5(input_path, output_path,
                 types=None,
                 numbers=None,
                 fills=None,
+                region=None,
+                tabix='tabix',
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -371,13 +386,13 @@ def vcf_to_hdf5(input_path, output_path,
 
     Parameters
     ----------
-    input_path : str
+    input_path : string
         TODO
-    output_path : str
+    output_path : string
         TODO
-    group : str
+    group : string
         TODO
-    compression : str
+    compression : string
         Compression algorithm, e.g., 'gzip' (default).
     compression_opts : int
         Compression level, e.g., 1 (default).
@@ -385,13 +400,17 @@ def vcf_to_hdf5(input_path, output_path,
         Use byte shuffling to improve compression (default is False).
     overwrite : bool
         If False (default), do not overwrite an existing file.
-    fields : sequence of str
+    fields : sequence of strings
         TODO
     types : dict
         TODO
     numbers : dict
         TODO
     fills : dict
+        TODO
+    region : string
+        TODO
+    tabix : string
         TODO
     buffer_size : int
         TODO
@@ -433,7 +452,7 @@ def vcf_to_hdf5(input_path, output_path,
                                       numbers=numbers, buffer_size=buffer_size,
                                       chunk_length=chunk_length,
                                       block_length=block_length, n_threads=n_threads,
-                                      fills=fills)
+                                      fills=fills, region=region, tabix=tabix)
         if log is not None:
             it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
@@ -513,6 +532,8 @@ def vcf_to_zarr(input_path, output_path,
                 types=None,
                 numbers=None,
                 fills=None,
+                region=None,
+                tabix='tabix',
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
@@ -523,23 +544,27 @@ def vcf_to_zarr(input_path, output_path,
 
     Parameters
     ----------
-    input_path : str
+    input_path : string
         TODO
-    output_path : str
+    output_path : string
         TODO
-    group : str
+    group : string
         TODO
     compressor : compressor
         Compression algorithm, e.g., zarr.Blosc(cname='zstd', clevel=1, shuffle=1).
     overwrite : bool
         If False (default), do not overwrite an existing file.
-    fields : sequence of str
+    fields : sequence of strings
         TODO
     types : dict
         TODO
     numbers : dict
         TODO
     fills : dict
+        TODO
+    region : string
+        TODO
+    tabix : string
         TODO
     buffer_size : int
         TODO
@@ -578,7 +603,8 @@ def vcf_to_zarr(input_path, output_path,
     headers, it = read_vcf_chunks(input_path, fields=fields, types=types,
                                   numbers=numbers, buffer_size=buffer_size,
                                   chunk_length=chunk_length, fills=fills,
-                                  block_length=block_length, n_threads=n_threads)
+                                  block_length=block_length, n_threads=n_threads,
+                                  region=region, tabix=tabix)
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
@@ -606,11 +632,16 @@ def vcf_to_zarr(input_path, output_path,
         _zarr_store_chunk(root, keys, chunk)
 
 
+import subprocess
+
+
 def read_vcf_chunks(path,
                     fields=None,
                     types=None,
                     numbers=None,
                     fills=None,
+                    region=None,
+                    tabix='tabix',
                     chunk_length=DEFAULT_CHUNK_LENGTH,
                     block_length=DEFAULT_BLOCK_LENGTH,
                     buffer_size=DEFAULT_BUFFER_SIZE,
@@ -622,25 +653,44 @@ def read_vcf_chunks(path,
                 n_threads=n_threads, fills=fills)
 
     if isinstance(path, str) and path.endswith('gz'):
-        # assume gzip-compatible compression
-        # N.B., GZipFile supports peek
-        fileobj = gzip.open(path, mode='rb')
-        stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
-        return _read_vcf(stream, **kwds)
+
+        if region and tabix:
+            try:
+                # try tabix
+                p = subprocess.Popen([tabix, '-h', path, region],
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     bufsize=0)
+                # check stderr
+                err = p.stderr.read(-1)
+                if err:
+                    raise Exception(str(err, 'ascii').strip())
+                fileobj = p.stdout
+                region = None
+            except FileNotFoundError:
+                # no tabix, fall back to scanning
+                warnings.warn('tabix not found, falling back to scanning to region')
+                fileobj = gzip.open(path, mode='rb')
+            except Exception as e:
+                warnings.warn('exception occurred attempting tabix (%s); falling back to '
+                              'scanning to region' % e)
+                fileobj = gzip.open(path, mode='rb')
+        else:
+            fileobj = gzip.open(path, mode='rb')
 
     elif isinstance(path, str):
         # assume no compression
         fileobj = open(path, mode='rb', buffering=buffer_size)
-        stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
-        return _read_vcf(stream, **kwds)
 
     elif hasattr(path, 'readinto'):
         fileobj = path
-        stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
-        return _read_vcf(stream, **kwds)
 
     else:
         raise ValueError('path must be string or file-like, found %r' % path)
+
+    stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
+    kwds['region'] = region
+    return _read_vcf(stream, **kwds)
 
 
 FIXED_VARIANTS_FIELDS = (
@@ -1003,7 +1053,7 @@ def _normalize_fills(fills, fields, headers):
 
 
 def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads,
-              fills):
+              fills, region):
 
     # read VCF headers
     headers = _read_vcf_headers(stream)
@@ -1038,7 +1088,8 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
                                   fields=fields,
                                   types=types,
                                   numbers=numbers,
-                                  fills=fills)
+                                  fills=fills,
+                                  region=region)
     else:
         # noinspection PyArgumentList
         chunks = VCFParallelChunkIterator(stream,
@@ -1049,7 +1100,8 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
                                           fields=fields,
                                           types=types,
                                           numbers=numbers,
-                                          fills=fills)
+                                          fills=fills,
+                                          region=region)
 
     return headers, chunks
 

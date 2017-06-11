@@ -869,3 +869,68 @@ def test_numbers():
     eq_((10, 15), tuple(a[0, 0]))
     eq_((51, 51), tuple(a[2, 0]))
     eq_((-1, -1), tuple(a[6, 0]))
+
+
+def test_read_region():
+    fn = 'fixture/sample.vcf.gz'
+
+    for tabix in 'tabix',:# None:
+
+        region = '19'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        chrom = callset['variants/CHROM']
+        eq_(2, len(chrom))
+        assert np.all(chrom == b'19')
+        pos = callset['variants/POS']
+        eq_(2, len(pos))
+        assert_array_equal([111, 112], pos)
+
+        region = '20'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        chrom = callset['variants/CHROM']
+        eq_(6, len(chrom))
+        assert np.all(chrom == b'20')
+        pos = callset['variants/POS']
+        eq_(6, len(pos))
+        assert_array_equal([14370, 17330, 1110696, 1230237, 1234567, 1235237], pos)
+
+        region = 'X'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        chrom = callset['variants/CHROM']
+        eq_(1, len(chrom))
+        assert np.all(chrom == b'X')
+        pos = callset['variants/POS']
+        eq_(1, len(pos))
+        assert_array_equal([10], pos)
+
+        region = 'Y'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        assert 'variants/POS' not in callset
+        assert 'variants/CHROM' not in callset
+
+        region = '20:1-100000'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        chrom = callset['variants/CHROM']
+        eq_(2, len(chrom))
+        assert np.all(chrom == b'20')
+        pos = callset['variants/POS']
+        eq_(2, len(pos))
+        assert_array_equal([14370, 17330], pos)
+
+        region = '20:1000000-1233000'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        chrom = callset['variants/CHROM']
+        eq_(2, len(chrom))
+        assert np.all(chrom == b'20')
+        pos = callset['variants/POS']
+        eq_(2, len(pos))
+        assert_array_equal([1110696, 1230237], pos)
+
+        region = '20:1233000-2000000'
+        callset = read_vcf(fn, region=region, tabix=tabix)
+        chrom = callset['variants/CHROM']
+        eq_(2, len(chrom))
+        assert np.all(chrom == b'20')
+        pos = callset['variants/POS']
+        eq_(2, len(pos))
+        assert_array_equal([1234567, 1235237], pos)

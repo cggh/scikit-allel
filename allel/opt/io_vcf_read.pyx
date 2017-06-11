@@ -333,54 +333,6 @@ cdef class CharVectorInputStream(InputStreamBase):
         self.stream_index = 0
 
 
-cdef class TabixInputStream(InputStreamBase):
-
-    cdef:
-        bytes buffer
-        char* buffer_start
-        char* buffer_end
-        char* stream
-        object it
-
-    def __init__(self, fn, region):
-        # noinspection PyUnresolvedReferences
-        import pysam
-        tabix_file = pysam.TabixFile(fn)
-        self.it = tabix_file.fetch(region=region, parser=None)
-        self._bufferup()
-        self.advance()
-
-    cdef int _bufferup(self) except -1:
-        try:
-            line = next(self.it)
-        except StopIteration:
-            self.stream = NULL
-        else:
-            self.buffer = line.encode('ascii')
-            self.buffer_start = PyBytes_AS_STRING(self.buffer)
-            self.stream = self.buffer_start
-            self.buffer_end = self.buffer_start + len(self.buffer)
-
-    cdef int advance(self) nogil except -1:
-        """Read the next character from the stream and store it in the `c` attribute."""
-
-        # handle virtual EOL
-        if self.c == LF:
-            self._bufferup()
-
-        elif self.stream is self.buffer_end:
-            # set a virtual EOL
-            self.c = LF
-            return 0
-
-        if self.stream is NULL:
-            # end of file
-            self.c = 0
-        else:
-            self.c = self.stream[0]
-            self.stream += 1
-
-
 ##########################################################################################
 # VCF Parsing
 
@@ -470,7 +422,10 @@ cdef class VCFChunkIterator:
                  fields,
                  types,
                  numbers,
-                 fills):
+                 fills,
+                 region=None):
+
+        # TODO handle region
 
         # store reference to input stream
         self.stream = stream
@@ -3116,7 +3071,9 @@ cdef class VCFParallelChunkIterator:
     def __cinit__(self,
                   FileInputStream stream,
                   int chunk_length, int block_length, int n_threads,
-                  headers, fields, types, numbers, fills):
+                  headers, fields, types, numbers, fills, region=None):
+        # TODO handle region
+
         self.stream = stream
         self.chunk_length = chunk_length
         # only makes sense to have block length at most half chunk length if we want
