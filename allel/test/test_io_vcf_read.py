@@ -874,7 +874,7 @@ def test_numbers():
 def test_read_region():
     fn = 'fixture/sample.vcf.gz'
 
-    for tabix in 'tabix',:# None:
+    for tabix in 'tabix', None:
 
         region = '19'
         callset = read_vcf(fn, region=region, tabix=tabix)
