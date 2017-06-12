@@ -2924,7 +2924,7 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
 # Low-level VCF value parsing functions
 
 
-cdef int vcf_strtol(CharVector* value, VCFContext context, long* l) nogil:
+cdef int vcf_strtol(CharVector* value, VCFContext context, long* l) nogil except -1:
     cdef:
         char* str_end
         int parsed
@@ -2959,7 +2959,7 @@ cdef int vcf_strtol(CharVector* value, VCFContext context, long* l) nogil:
         return 0
 
 
-cdef int vcf_strtod(CharVector* value, VCFContext context, double* d) nogil:
+cdef int vcf_strtod(CharVector* value, VCFContext context, double* d) nogil except -1:
     cdef:
         char* str_end
         int parsed
@@ -2998,17 +2998,30 @@ cdef int vcf_strtod(CharVector* value, VCFContext context, double* d) nogil:
 # LOGGING
 
 
+vcf_state_labels = [
+    'CHROM',
+    'POS',
+    'ID',
+    'REF',
+    'ALT',
+    'QUAL',
+    'FILTER',
+    'INFO',
+    'FORMAT',
+    'CALLDATA',
+    'EOL',
+    'EOF'
+]
+
+
 cdef int warn(message, VCFContext context) nogil except -1:
     with gil:
-        # TODO customize message based on state (CHROM, POS, etc.)
+        message += '; field: %s' % vcf_state_labels[context.state]
         message += '; variant index: %s' % context.variant_index
-        message += '; state: %s' % context.state
-        message += '; temp: %s' % CharVector_to_pybytes(&context.temp)
-        message += '; chunk_variant_index: %s' % context.chunk_variant_index
-        message += '; sample_index: %s' % context.sample_index
-        message += '; sample_field_index: %s' % context.sample_field_index
-        message += '; chrom: %s' % CharVector_to_pybytes(&context.chrom)
-        message += '; pos: %s' % context.pos
+        if context.state > VCFState.POS:
+            message += '; %s:%s' % (str(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
+        if context.state == VCFState.CALLDATA:
+            message += '; sample index: %s' % context.sample_index
         warnings.warn(message)
 
 

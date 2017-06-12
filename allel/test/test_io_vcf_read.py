@@ -11,7 +11,7 @@ import zarr
 import h5py
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal
+from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
 from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
     vcf_to_npz, debug, ANNTransformer
 
@@ -1101,3 +1101,33 @@ def test_format_inconsistencies():
     eq_((2, 4), gq.shape)
     assert_array_equal([12, -1, 34, -1], gq[0])
     assert_array_equal([-1, -1, -1, -1], gq[1])
+
+
+def test_warnings():
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='error')
+
+        # empty POS
+        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                      b"2L\t\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t\n")
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
+
+        # dodgy POS
+        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                      b"2L\taaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t\n")
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
+
+        # empty QUAL
+        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                      b"2L\t12\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\t\n")
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
+
+        # dodgy QUAL
+        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                      b"2L\t12\t.\t.\t.\taaa\t.\t.\t.\t.\t.\t.\t\n")
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
