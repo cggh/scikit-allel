@@ -2,7 +2,6 @@
 """
 TODO:
 
-* Store field descriptions as attributes in HDF5 and Zarr
 * Docstrings
 * Test vcf_to_... if no samples, in general calldata fields but no samples
 * Special fields:
@@ -281,7 +280,8 @@ def vcf_to_npz(input_path, output_path,
     savez(output_path, **data)
 
 
-def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts, shuffle, overwrite):
+def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts, shuffle, overwrite,
+                         headers):
 
     # handle no input
     if chunk is None:
@@ -311,10 +311,22 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
 
         shape = (0,) + data.shape[1:]
         maxshape = (None,) + data.shape[1:]
-        root[group].create_dataset(
+        ds = root[group].create_dataset(
             name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=data.dtype, compression=compression,
             compression_opts=compression_opts, shuffle=shuffle
         )
+
+        # copy metadata from VCF headers
+        meta = None
+        if group == 'variants' and name in headers.infos:
+            meta = headers.infos[name]
+        elif group == 'calldata' and name in headers.formats:
+            meta = headers.formats[name]
+        if meta is not None:
+            ds.attrs['ID'] = meta['ID']
+            ds.attrs['Number'] = meta['Number']
+            ds.attrs['Type'] = meta['Type']
+            ds.attrs['Description'] = meta['Description']
 
     return keys
 
@@ -434,7 +446,7 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        samples, _, it = read_vcf_chunks(
+        samples, headers, it = read_vcf_chunks(
             input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
             chunk_length=chunk_length, block_length=block_length, n_threads=n_threads,
             fills=fills, region=region, tabix=tabix, samples=samples
@@ -466,7 +478,7 @@ def vcf_to_hdf5(input_path, output_path,
         # setup datasets
         keys = _hdf5_setup_datasets(
             chunk=chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compression=compression,
-            compression_opts=compression_opts, shuffle=shuffle, overwrite=overwrite
+            compression_opts=compression_opts, shuffle=shuffle, overwrite=overwrite, headers=headers
         )
 
         # store first chunk
@@ -478,7 +490,7 @@ def vcf_to_hdf5(input_path, output_path,
             _hdf5_store_chunk(root, keys, chunk)
 
 
-def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite):
+def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers):
 
     # handle no input
     if chunk is None:
@@ -501,8 +513,21 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
 
         # create dataset
         shape = (0,) + data.shape[1:]
-        root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype, compressor=compressor,
+        ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype, compressor=compressor,
                             overwrite=overwrite)
+
+        # copy metadata from VCF headers
+        group, name = k.split('/')
+        meta = None
+        if group == 'variants' and name in headers.infos:
+            meta = headers.infos[name]
+        elif group == 'calldata' and name in headers.formats:
+            meta = headers.formats[name]
+        if meta is not None:
+            ds.attrs['ID'] = meta['ID']
+            ds.attrs['Number'] = meta['Number']
+            ds.attrs['Type'] = meta['Type']
+            ds.attrs['Description'] = meta['Description']
 
     return keys
 
@@ -596,7 +621,7 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    samples, _, it = read_vcf_chunks(
+    samples, headers, it = read_vcf_chunks(
         input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
         fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples
     )
@@ -619,7 +644,7 @@ def vcf_to_zarr(input_path, output_path,
     # setup datasets
     keys = _zarr_setup_datasets(
         chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compressor=compressor,
-        overwrite=overwrite
+        overwrite=overwrite, headers=headers
     )
 
     # store first chunk
