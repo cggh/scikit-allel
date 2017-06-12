@@ -2,7 +2,6 @@
 """
 TODO:
 
-* Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
 * Docstrings
 * Test vcf_to_... if no samples, in general calldata fields but no samples
@@ -12,11 +11,11 @@ TODO:
 ** svlen
 ** genotype_ac
 ** is_phased
-* Port tests from vcfnp
+* Port any relevant tests from vcfnp
 * PY2 compatibility?
 
-* [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype?
-* [WONTFIX] Specialised parser for EFF
+* [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via transformer.
+* [WONTFIX] Specialised parser for EFF - obsolete.
 
 """
 from __future__ import absolute_import, print_function, division

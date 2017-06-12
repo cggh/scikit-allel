@@ -338,23 +338,25 @@ cdef class CharVectorInputStream(InputStreamBase):
 
 
 cdef enum VCFState:
-    CHROM,
-    POS,
-    ID,
-    REF,
-    ALT,
-    QUAL,
-    FILTER,
-    INFO,
-    FORMAT,
-    CALLDATA,
-    EOL,
-    EOF
+    CHROM = 0,
+    POS = 1,
+    ID = 2,
+    REF = 3,
+    ALT = 4,
+    QUAL = 5,
+    FILTER = 6,
+    INFO = 7,
+    FORMAT = 8,
+    CALLDATA = 9,
+    EOL = 10,
+    EOF = 11
 
 
 cdef class VCFContext:
 
     cdef:
+        # useful stuff
+        object headers
 
         # dynamic attributes - reflect current state during parsing
         int state  # overall parser state
@@ -374,7 +376,8 @@ cdef class VCFContext:
         CharVector chrom
         long pos
 
-    def __cinit__(self):
+    def __cinit__(self, headers):
+        self.headers = headers
 
         # initialise dynamic state
         self.state = VCFState.CHROM
@@ -436,7 +439,7 @@ cdef class VCFChunkIterator:
         self.stream = stream
 
         # setup context
-        self.context = VCFContext()
+        self.context = VCFContext(headers)
 
         # setup parser
         samples = check_samples(samples, headers)
@@ -546,8 +549,7 @@ cdef class VCFParser:
             if POS_FIELD in types:
                 t = types[POS_FIELD]
                 if t != np.dtype('int32'):
-                    warnings.warn('only int32 supported for POS field, ignoring '
-                                  'requested type: %r' % types[POS_FIELD])
+                    warnings.warn('only int32 supported for POS field, ignoring requested type: %r' % t)
             kwds['store_pos'] = True
             fields.remove(POS_FIELD)
 
@@ -596,8 +598,7 @@ cdef class VCFParser:
                 t = types[QUAL_FIELD]
                 # TODO support user-provided type?
                 if t != np.dtype('float32'):
-                    warnings.warn('only float32 supported for QUAL field, ignoring '
-                                  'requested type: %r' % types[QUAL_FIELD])
+                    warnings.warn('only float32 supported for QUAL field, ignoring requested type: %r' % t)
             fill = fills.get(QUAL_FIELD, -1)
             qual_parser = VCFQualParser(chunk_length=self.chunk_length, fill=fill)
             fields.remove(QUAL_FIELD)
@@ -717,9 +718,6 @@ cdef class VCFParser:
 
                 elif context.state == VCFState.CHROM:
                     self.chrom_pos_parser.parse(stream, context)
-
-                # elif context.state == VCFState.POS:
-                #     self.pos_parser.parse(stream, context)
 
                 elif context.state == VCFState.ID:
                     self.id_parser.parse(stream, context)
@@ -881,7 +879,7 @@ cdef int vcf_read_field(InputStreamBase stream,
 
         elif stream.c == TAB:
             stream.advance()
-            context.state += 1
+            # leave it to caller to advance state
             break
 
         else:
@@ -952,14 +950,22 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
 
         # read chrom
         vcf_read_field(stream, context, &context.chrom)
+        if context.chrom.size == 0:
+            warn('empty CHROM', context)
         CharVector_terminate(&context.chrom)
 
         # read pos
-        if context.state == VCFState.POS:
-            # read pos into temp
+        if context.state == VCFState.CHROM:
+            context.state += 1
+            # read pos
             vcf_read_field(stream, context, &context.temp)
-            # parse pos as integer
-            vcf_strtol(&context.temp, context, &context.pos)
+            if context.temp.size == 0:
+                warn('empty POS', context)
+            else:
+                vcf_strtol(&context.temp, context, &context.pos)
+
+        if context.state == VCFState.POS:
+            context.state += 1
 
         # handle region
         if self.region_chrom is not NULL:
@@ -1019,61 +1025,6 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
             chunk[CHROM_FIELD] = self.chrom_values[:limit]
         if self.store_pos:
             chunk[POS_FIELD] = self.pos_values[:limit]
-
-
-# cdef class VCFPosParser(VCFFieldParserBase):
-#     """TODO"""
-#
-#     cdef:
-#         np.int32_t[:] memory
-#         bint store
-#         int region_begin
-#         int region_end
-#
-#     def __init__(self, store, chunk_length, fill, region_begin, region_end):
-#         super(VCFPosParser, self).__init__(key=b'POS', dtype='int32', number=1,
-#                                            fill=fill, chunk_length=chunk_length)
-#         self.store = store
-#         self.region_begin = region_begin
-#         self.region_end = region_end
-#
-#     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
-#         cdef:
-#             long value
-#             int parsed
-#
-#         # read field into temp
-#         vcf_read_field(stream, context, &context.temp)
-#
-#         # parse string as integer
-#         parsed = vcf_strtol(&context.temp, context, &value)
-#
-#         # store value on context, whatever happens
-#         context.pos = value
-#
-#         if parsed > 0:
-#
-#             if self.region_begin > 0 and value < self.region_begin:
-#                 return vcf_skip_variant(stream, context)
-#
-#             elif self.region_end > 0 and value > self.region_end:
-#                 # we're done
-#                 context.state = EOF
-#                 return 0
-#
-#             elif self.store:
-#                 # store value in chunk
-#                 self.memory[context.chunk_variant_index] = value
-#
-#     cdef int malloc_chunk(self) except -1:
-#         if self.store:
-#             self.values = np.zeros(self.chunk_length, dtype='int32')
-#             self.memory = self.values
-#             self.memory[:] = -1
-#
-#     cdef int make_chunk(self, chunk, limit=None) except -1:
-#         if self.store:
-#             chunk[POS_FIELD] = self.values[:limit]
 
 
 cdef class VCFStringFieldParser(VCFFieldParserBase):
@@ -1215,6 +1166,9 @@ cdef class VCFQualParser(VCFFieldParserBase):
             # store value
             self.memory[context.chunk_variant_index] = value
 
+        if context.state == VCFState.QUAL:
+            context.state += 1
+
     cdef int malloc_chunk(self) except -1:
         self.values = np.empty(self.chunk_length, dtype='float32')
         self.memory = self.values
@@ -1320,7 +1274,7 @@ cdef class VCFFilterParser(VCFFieldParserBase):
             char* f
 
         if context.temp.size == 0:
-            warn('empty FILTER', context)
+            # not strictly kosher, treat as missing/empty
             return 0
 
         CharVector_terminate(&context.temp)
@@ -1380,8 +1334,7 @@ cdef class VCFInfoParser(VCFFieldParserBase):
             n = numbers[key]
             if t == np.dtype(bool) or n == 0:
                 if t != np.dtype(bool):
-                    warnings.warn('cannot have non-bool dtype for field with number 0, '
-                                  'ignoring type %r' % t)
+                    warnings.warn('cannot have non-bool dtype for field with number 0, ignoring type %r' % t)
                 parser = VCFInfoFlagParser(key, chunk_length=chunk_length)
             elif t == np.dtype('int8'):
                 fill = fills.get(key, -1)
@@ -1429,8 +1382,7 @@ cdef class VCFInfoParser(VCFFieldParserBase):
                 parser = VCFInfoStringParser(key, dtype=t, number=n, chunk_length=chunk_length)
             else:
                 parser = VCFInfoSkipParser(key)
-                warnings.warn('type %s not supported for INFO field %r, field will be '
-                              'skipped' % (t, key))
+                warnings.warn('type %s not supported for INFO field %r, field will be skipped' % (t, key))
             info_parsers.append(parser)
         self.info_parsers = tuple(info_parsers)
 
@@ -1451,14 +1403,21 @@ cdef class VCFInfoParser(VCFFieldParserBase):
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
 
-        # check for explicit missing value
+        # reset buffers
+        CharVector_clear(&context.info_key)
+        CharVector_clear(&context.info_val)
+
+        # check for missing value
         if stream.c == PERIOD:
             # treat leading period as missing, regardless of what comes next
             return self.parse_missing(stream, context)
 
-        # reset buffers
-        CharVector_clear(&context.info_key)
-        CharVector_clear(&context.info_val)
+        # check for empty value
+        if stream.c == TAB:
+            # not strictly kosher, treat as missing/empty
+            stream.advance()
+            context.state += 1
+            return 0
 
         while True:
 
@@ -2070,7 +2029,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
 
         # deal with empty or missing data
         if context.temp.size == 0:
-            warn('empty FORMAT', context)
+            # not strictly kosher, handle as missing/empty
             return 0
 
         if context.temp.size == 1 and context.temp.data[0] == PERIOD:
@@ -2930,7 +2889,7 @@ cdef int vcf_strtol(CharVector* value, VCFContext context, long* l) nogil except
         int parsed
 
     if value.size == 0:
-        warn('expected integer, found empty value', context)
+        # not strictly kosher, treat as missing value
         return 0
 
     if value.size == 1 and value.data[0] == PERIOD:
@@ -2965,7 +2924,7 @@ cdef int vcf_strtod(CharVector* value, VCFContext context, double* d) nogil exce
         int parsed
 
     if value.size == 0:
-        warn('expected floating point number, found empty value', context)
+        # not strictly kosher, treat as missing value
         return 0
 
     if value.size == 1 and value.data[0] == PERIOD:
@@ -3017,11 +2976,12 @@ vcf_state_labels = [
 cdef int warn(message, VCFContext context) nogil except -1:
     with gil:
         message += '; field: %s' % vcf_state_labels[context.state]
-        message += '; variant index: %s' % context.variant_index
+        message += '; variant: %s' % context.variant_index
         if context.state > VCFState.POS:
-            message += '; %s:%s' % (str(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
+            message += ' (%s:%s)' % (str(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
         if context.state == VCFState.CALLDATA:
-            message += '; sample index: %s' % context.sample_index
+            message += '; sample: %s:%s (%s)' % (context.sample_index, context.sample_field_index,
+                                                 context.headers.samples[context.sample_index])
         warnings.warn(message)
 
 
@@ -3052,9 +3012,9 @@ cdef class VCFParallelParser:
         object pool
         object result
 
-    def __cinit__(self, stream, parser, chunk_length, block_length, pool):
+    def __cinit__(self, stream, parser, chunk_length, block_length, pool, headers):
         self.buffer = CharVectorInputStream(2**14)
-        self.context = VCFContext()
+        self.context = VCFContext(headers)
         self.stream = stream
         self.parser = parser
         self.chunk_length = chunk_length
@@ -3118,13 +3078,13 @@ cdef class VCFParallelChunkIterator:
         if self.block_length < 1:
             self.block_length = 1
         samples = check_samples(samples, headers)
-        self.parser = VCFParser(fields=fields, types=types, numbers=numbers,
-                                chunk_length=chunk_length, samples=samples,
-                                fills=fills, region=region)
+        self.parser = VCFParser(
+            fields=fields, types=types, numbers=numbers, chunk_length=chunk_length, samples=samples, fills=fills,
+            region=region
+        )
         self.chunk_index = -1
-        self.workers = [VCFParallelParser(stream=stream, parser=self.parser,
-                                          chunk_length=self.chunk_length,
-                                          block_length=self.block_length, pool=self.pool)
+        self.workers = [VCFParallelParser(stream=stream, parser=self.parser, chunk_length=self.chunk_length,
+                                          block_length=self.block_length, pool=self.pool, headers=headers)
                         for _ in range(self.n_workers)]
 
     def __iter__(self):
