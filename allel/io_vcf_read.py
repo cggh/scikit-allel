@@ -2,8 +2,6 @@
 """
 TODO:
 
-* PY2 compatibility?
-* More formats than declared in FORMAT field. Less formats.
 * Report CHROM and POS in warnings
 * Store field descriptions as attributes in HDF5 and Zarr
 * Docstrings
@@ -15,6 +13,7 @@ TODO:
 ** genotype_ac
 ** is_phased
 * Port tests from vcfnp
+* PY2 compatibility?
 
 * [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype?
 * [WONTFIX] Specialised parser for EFF

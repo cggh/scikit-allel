@@ -349,7 +349,7 @@ def test_read_vcf_content_buffer_size():
         _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
 
-def test_vcf_truncation_chrom():
+def test_truncation_chrom():
 
     input_data = (b"#CHROM\n"
                   b"2L\n"
@@ -373,7 +373,7 @@ def test_vcf_truncation_chrom():
         eq_(b'2R', a[1])
 
 
-def test_vcf_truncation_pos():
+def test_truncation_pos():
 
     input_data = (b"#CHROM\tPOS\n"
                   b"2L\t12\n"
@@ -397,7 +397,7 @@ def test_vcf_truncation_pos():
         eq_(34, a[1])
 
 
-def test_vcf_truncation_id():
+def test_truncation_id():
 
     input_data = (b"#CHROM\tPOS\tID\n"
                   b"2L\t12\tfoo\n"
@@ -421,7 +421,7 @@ def test_vcf_truncation_id():
         eq_(b'bar', a[1])
 
 
-def test_vcf_truncation_ref():
+def test_truncation_ref():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\n"
                   b"2L\t12\tfoo\tA\n"
@@ -445,7 +445,7 @@ def test_vcf_truncation_ref():
         eq_(b'C', a[1])
 
 
-def test_vcf_truncation_alt():
+def test_truncation_alt():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\n"
                   b"2L\t12\tfoo\tA\tC\n"
@@ -469,7 +469,7 @@ def test_vcf_truncation_alt():
         eq_(b'G', a[1])
 
 
-def test_vcf_truncation_qual():
+def test_truncation_qual():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\n"
                   b"2L\t12\tfoo\tA\tC\t1.2\n"
@@ -493,7 +493,7 @@ def test_vcf_truncation_qual():
         assert_almost_equal(3.4, a[1], places=6)
 
 
-def test_vcf_truncation_filter():
+def test_truncation_filter():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\n"
                   b"2L\t12\tfoo\tA\tC\t1.2\t.\n"
@@ -523,7 +523,7 @@ def test_vcf_truncation_filter():
         assert_list_equal([False, False, True], a.tolist())
 
 
-def test_vcf_truncation_info():
+def test_truncation_info():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
                   b"2L\t12\tfoo\tA\tC\t1.2\t.\tfoo=42;bar=1.2\n"
@@ -555,7 +555,7 @@ def test_vcf_truncation_info():
         assert np.isnan(a[2])
 
 
-def test_vcf_truncation_format():
+def test_truncation_format():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
                   b"2L\t12\tfoo\tA\tC\t1.2\t.\tfoo=42;bar=1.2\tGT:GQ\n"
@@ -588,7 +588,7 @@ def test_vcf_truncation_format():
         assert np.isnan(a[2])
 
 
-def test_vcf_truncation_calldata():
+def test_truncation_calldata():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\n"
                   b"2L\t12\tfoo\tA\tC\t1.2\t.\tfoo=42;bar=1.2\tGT:GQ\t0/1:12\t1/2:34\n"
@@ -1083,3 +1083,21 @@ def test_ann():
     eq_(np.dtype('i8'), a.dtype)
     assert_array_equal([-1, -1, 17], a[:, 0])
     assert_array_equal([-1, -1, 4788], a[:, 1])
+
+
+def test_format_inconsistencies():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\tfoo\tA\tC\t1.2\t.\t.\tGT:GQ\t0/1:12\t1/2\t2/3:34:67,89\t\n"
+                  b"2R\t34\tbar\tC\tG\t3.4\t.\t.\tGT\t./.\t\t3/3:45\t1/2:11:55,67\n")
+
+    input_file = io.BytesIO(input_data)
+    callset = read_vcf(input_file, fields=['calldata/GT', 'calldata/GQ'])
+    gt = callset['calldata/GT']
+    eq_((2, 4, 2), gt.shape)
+    assert_array_equal([[0, 1], [1, 2], [2, 3], [-1, -1]], gt[0])
+    assert_array_equal([[-1, -1], [-1, -1], [3, 3], [1, 2]], gt[1])
+    gq = callset['calldata/GQ']
+    eq_((2, 4), gq.shape)
+    assert_array_equal([12, -1, 34, -1], gq[0])
+    assert_array_equal([-1, -1, -1, -1], gq[1])
