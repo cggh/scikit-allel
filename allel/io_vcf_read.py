@@ -100,7 +100,51 @@ def chunk_iter_transform(it, transformers):
         yield chunk, chunk_length, chrom, pos
 
 
-def read_vcf(path,
+_doc_param_input_path = \
+    """Path to VCF file on the local file system. May be uncompressed or gzip-compatible
+        compressed file. May also be a file-like object (e.g., `io.BytesIO`)."""
+
+_doc_param_fields = \
+    """Fields to extract data for. Should be a sequence of strings, e.g., `['variants/CHROM',
+        'variants/POS', 'variants/DP', 'calldata/GT']`. If you are feeling lazy, you can drop
+        the 'variants/' and 'calldata/' prefixes, in which case the fields will be matched against
+        fields declared in the VCF header, with variants taking priority over calldata if a field
+        with the same ID exists both in INFO and FORMAT headers. I.e., `['CHROM', 'POS', 'DP', 'GT']`
+        will also work as well, although watch out for fields like 'DP' which can be both INFO and
+        FORMAT. For convenience, some special string values are also recognized. To extract all fields,
+        provide just the string '*'. To extract all variants fields (including all INFO fields) provide
+        'variants/*'. To extract all calldata fields (i.e., defined in FORMAT headers) provide 'calldata/*'."""
+
+_doc_param_types = \
+    """Overide data types. Should be a dictionary mapping field names to NumPy data types.
+        E.g., providing the dictionary `{'variants/DP': 'i8', 'calldata/GQ': 'i2'}` will mean
+        the 'variants/DP' field is stored in a 64-bit integer array, and the `calldata/GQ` field
+        is stored in a 16-bit integer array."""
+
+_doc_param_numbers = \
+    """Override the expected number of values. Should be a dictionary mapping field names to
+        integers. E.g., providing the dictionary `{'variants/ALT': 3, 'variants/AC': 3,
+        'calldata/HQ': 2}` will mean that, for each variant, 3 values are stored for the
+        'variants/ALT' field, 3 values are stored for the 'variants/AC' field, and for each
+        sample, 2 values are stored for the 'calldata/HQ' field."""
+
+_doc_param_fills = \
+    """Override the fill value used for empty values. Should be a dictionary mapping field names
+        to fill values."""
+
+_doc_param_region = \
+    """Genomic region to extract variants for. If provided, should be a tabix-style region string,
+        which can be either just a chromosome name (e.g., '2L'), or a chromosome name followed by
+        1-based beginning and end coordinates (e.g., '2L:100000-200000')."""
+
+_doc_param_tabix = \
+    """Name or path to tabix executable. Only required if `region` is given. Setting `tabix` to
+        `None` will cause a fall-back to scanning through the VCF file from the beginning, which
+        may be much slower than tabix but the only option if tabix is not available on your system
+        and/or the VCF file has not been tabix-indexed."""
+
+
+def read_vcf(input_path,
              fields=None,
              types=None,
              numbers=None,
@@ -118,37 +162,39 @@ def read_vcf(path,
 
     Parameters
     ----------
-    path : string
-        TODO
-    fields : sequence of strings
-        TODO
-    types : dict
-        TODO
-    numbers : dict
-        TODO
-    fills : dict
-        TODO
-    region : string
-        TODO
-    tabix : string
-        TODO
+    input_path : string
+        {input_path}
+    fields : sequence of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
     samples : sequence of strings
         TODO
-    buffer_size : int
+    transformers : sequence of transformer objects, optional
         TODO
-    chunk_length : int
+    buffer_size : int, optional
         TODO
-    n_threads : int
+    chunk_length : int, optional
+        TODO
+    n_threads : int, optional
         Experimental: number of additional threads to launch to parse in parallel.
         E.g., a value of 1 will launch 1 parsing thread, in addition to the main
         program thread. If you are feeling adventurous and/or impatient, try a value of 1
         or 2. May increase or decrease speed of parsing relative to single-threaded
         behaviour, depending on the data, your computer, the weather, and how the stars
         are aligned. A value of None (default) means single-threaded  parsing.
-    block_length : int
+    block_length : int, optional
         Only applies if n_threads is not None (multi-threaded parsing). Size of block
         (number of rows) that will be handed off to be parsed in parallel.
-    log : file-like
+    log : file-like, optional
         A file-like object (e.g., sys.stderr) to print progress information.
 
     Returns
@@ -163,8 +209,9 @@ def read_vcf(path,
 
     # setup
     samples, _, it = read_vcf_chunks(
-        path=path, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size, chunk_length=chunk_length,
-        block_length=block_length, n_threads=n_threads, fills=fills, region=region, tabix=tabix, samples=samples
+        input_path=input_path, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
+        chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, fills=fills, region=region,
+        tabix=tabix, samples=samples
     )
 
     # setup transformers
@@ -195,6 +242,17 @@ def read_vcf(path,
             output[k] = np.concatenate([chunk[k] for chunk in chunks], axis=0)
 
     return output
+
+
+read_vcf.__doc__ = read_vcf.__doc__.format(
+    input_path=_doc_param_input_path,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+)
 
 
 def vcf_to_npz(input_path, output_path,
@@ -265,7 +323,7 @@ def vcf_to_npz(input_path, output_path,
 
     # read all data into memory
     data = read_vcf(
-        path=input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        input_path=input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
         chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, log=log, fills=fills,
         region=region, tabix=tabix, samples=samples, transformers=transformers
     )
@@ -659,7 +717,7 @@ def vcf_to_zarr(input_path, output_path,
 import subprocess
 
 
-def read_vcf_chunks(path,
+def read_vcf_chunks(input_path,
                     fields=None,
                     types=None,
                     numbers=None,
@@ -683,13 +741,13 @@ def read_vcf_chunks(path,
                 chunk_length=chunk_length, block_length=block_length,
                 n_threads=n_threads, fills=fills, samples=samples)
 
-    if isinstance(path, str) and path.endswith('gz'):
+    if isinstance(input_path, str) and input_path.endswith('gz'):
 
         if region and tabix and os.name != 'nt':
 
             try:
                 # try tabix
-                p = subprocess.Popen([tabix, '-h', path, region],
+                p = subprocess.Popen([tabix, '-h', input_path, region],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
                                      bufsize=buffer_size)
@@ -706,25 +764,25 @@ def read_vcf_chunks(path,
             except FileNotFoundError:
                 # no tabix, fall back to scanning
                 warnings.warn('tabix not found, falling back to scanning to region')
-                fileobj = gzip.open(path, mode='rb')
+                fileobj = gzip.open(input_path, mode='rb')
 
             except Exception as e:
                 warnings.warn('error occurred attempting tabix (%s); falling back to '
                               'scanning to region' % e)
-                fileobj = gzip.open(path, mode='rb')
+                fileobj = gzip.open(input_path, mode='rb')
 
         else:
-            fileobj = gzip.open(path, mode='rb')
+            fileobj = gzip.open(input_path, mode='rb')
 
-    elif isinstance(path, str):
+    elif isinstance(input_path, str):
         # assume no compression
-        fileobj = open(path, mode='rb', buffering=buffer_size)
+        fileobj = open(input_path, mode='rb', buffering=buffer_size)
 
-    elif hasattr(path, 'readinto'):
-        fileobj = path
+    elif hasattr(input_path, 'readinto'):
+        fileobj = input_path
 
     else:
-        raise ValueError('path must be string or file-like, found %r' % path)
+        raise ValueError('path must be string or file-like, found %r' % input_path)
 
     stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
     kwds['region'] = region
