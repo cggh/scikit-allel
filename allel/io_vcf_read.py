@@ -29,7 +29,7 @@ import warnings
 
 import numpy as np
 
-
+# noinspection PyUnresolvedReferences
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
     VCFParallelChunkIterator, ANNTransformer
 

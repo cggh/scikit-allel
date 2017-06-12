@@ -656,10 +656,10 @@ def test_vcf_to_zarr():
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
                 for samples in None, ['NA00001', 'NA00003']:
-                    expect = read_vcf(fn, region=region, tabix=tabix, samples=samples)
+                    expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples)
                     if os.path.exists(zarr_path):
                         shutil.rmtree(zarr_path)
-                    vcf_to_zarr(fn, zarr_path, chunk_length=2, n_threads=n_threads,
+                    vcf_to_zarr(fn, zarr_path, fields='*', chunk_length=2, n_threads=n_threads,
                                 region=region, tabix=tabix, samples=samples)
                     actual = zarr.open_group(zarr_path, mode='r')
                     for key in expect.keys():
@@ -667,6 +667,10 @@ def test_vcf_to_zarr():
                             assert_array_almost_equal(expect[key], actual[key][:])
                         else:
                             assert_array_equal(expect[key], actual[key][:])
+                        eq_(actual['variants/NS'].attrs['Description'],
+                            'Number of Samples With Data')
+                        eq_(actual['calldata/GQ'].attrs['Description'],
+                            'Genotype Quality')
 
 
 def test_vcf_to_hdf5():
@@ -676,10 +680,10 @@ def test_vcf_to_hdf5():
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
                 for samples in None, ['NA00001', 'NA00003']:
-                    expect = read_vcf(fn, region=region, tabix=tabix, samples=samples)
+                    expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples)
                     if os.path.exists(h5_fn):
                         os.remove(h5_fn)
-                    vcf_to_hdf5(fn, h5_fn, chunk_length=2, n_threads=n_threads,
+                    vcf_to_hdf5(fn, h5_fn, fields='*', chunk_length=2, n_threads=n_threads,
                                 region=region, tabix=tabix, samples=samples)
                     with h5py.File(h5_fn, mode='r') as actual:
                         for key in expect.keys():
@@ -687,6 +691,10 @@ def test_vcf_to_hdf5():
                                 assert_array_almost_equal(expect[key], actual[key][:])
                             else:
                                 assert_array_equal(expect[key], actual[key][:])
+                        eq_(actual['variants/NS'].attrs['Description'],
+                            'Number of Samples With Data')
+                        eq_(actual['calldata/GQ'].attrs['Description'],
+                            'Genotype Quality')
 
 
 def test_read_vcf_info_types():
