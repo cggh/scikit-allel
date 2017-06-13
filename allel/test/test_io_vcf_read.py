@@ -709,12 +709,37 @@ def test_read_vcf_info_types():
 
 
 def test_read_vcf_genotype_types():
-    fn = 'fixture/sample.vcf'
 
-    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8':
+    fn = 'fixture/sample.vcf'
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'S3':
         callset = read_vcf(fn, fields=['GT'], types={'GT': dtype})
         eq_(np.dtype(dtype), callset['calldata/GT'].dtype)
         eq_((9, 3, 2), callset['calldata/GT'].shape)
+
+    # non-GT field with genotype dtype
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\tS2\tS3\n"
+                  b"2L\t12\t.\tA\t.\t.\t.\t.\tCustomGT:CustomGQ\t0/0/0:11\t0/1/2:12\t././.:.\n"
+                  b"2L\t34\t.\tC\tT\t.\t.\t.\tCustomGT:CustomGQ\t0/1/2:22\t3/3/.:33\t.\n"
+                  b"3R\t45\t.\tG\tA,T\t.\t.\t.\tCustomGT:CustomGQ\t0/1:.\t5:12\t\n")
+    callset = read_vcf(io.BytesIO(input_data),
+                       fields=['calldata/CustomGT', 'calldata/CustomGQ'],
+                       numbers={'calldata/CustomGT': 3, 'calldata/CustomGQ': 1},
+                       types={'calldata/CustomGT': 'genotype/i1', 'calldata/CustomGQ': 'i2'})
+
+    e = np.array([[[0, 0, 0], [0, 1, 2], [-1, -1, -1]],
+                  [[0, 1, 2], [3, 3, -1], [-1, -1, -1]],
+                  [[0, 1, -1], [5, -1, -1], [-1, -1, -1]]], dtype='i1')
+    a = callset['calldata/CustomGT']
+    assert_array_equal(e, a)
+    eq_(e.dtype, a.dtype)
+
+    e = np.array([[11, 12, -1],
+                  [22, 33, -1],
+                  [-1, 12, -1]], dtype='i2')
+    a = callset['calldata/CustomGQ']
+    assert_array_equal(e, a)
+    eq_(e.dtype, a.dtype)
 
 
 def test_read_vcf_calldata_types():

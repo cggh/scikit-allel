@@ -5,8 +5,6 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
-* Test GT as int16, int32, int64, S3
-* Test genotype/i1 special dtype on non-GT field
 * GT with special allele counts dtype (genotype_ac/i1)
 * Port any relevant tests from vcfnp
 * PY2 compatibility
