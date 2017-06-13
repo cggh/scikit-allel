@@ -2202,17 +2202,24 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                     parser = self.skip_parser
 
             # special handling of "genotype_ac" dtypes for any field
-            if isinstance(t, str) and t.startswith('genotype_ac/'):
-                fill = fills.get(key, 0)
+            elif isinstance(t, str) and t.startswith('genotype_ac/'):
                 t = np.dtype(t.split('/')[1])
                 if t == np.dtype('int8'):
-                    parser = VCFGenotypeACInt8Parser(key, number=n, fill=fills.get(key, -1), **kwds)
-                # elif t == np.dtype('int16'):
-                #     parser = VCFGenotypeACInt16Parser(key, number=n, fill=fills.get(key, -1), **kwds)
-                # elif t == np.dtype('int32'):
-                #     parser = VCFGenotypeACInt32Parser(key, number=n, fill=fills.get(key, -1), **kwds)
-                # elif t == np.dtype('int64'):
-                #     parser = VCFGenotypeACInt64Parser(key, number=n, fill=fills.get(key, -1), **kwds)
+                    parser = VCFGenotypeACInt8Parser(key, number=n, **kwds)
+                elif t == np.dtype('int16'):
+                    parser = VCFGenotypeACInt16Parser(key, number=n, **kwds)
+                elif t == np.dtype('int32'):
+                    parser = VCFGenotypeACInt32Parser(key, number=n, **kwds)
+                elif t == np.dtype('int64'):
+                    parser = VCFGenotypeACInt64Parser(key, number=n, **kwds)
+                elif t == np.dtype('uint8'):
+                    parser = VCFGenotypeACUInt8Parser(key, number=n, **kwds)
+                elif t == np.dtype('uint16'):
+                    parser = VCFGenotypeACUInt16Parser(key, number=n, **kwds)
+                elif t == np.dtype('uint32'):
+                    parser = VCFGenotypeACUInt32Parser(key, number=n, **kwds)
+                elif t == np.dtype('uint64'):
+                    parser = VCFGenotypeACUInt64Parser(key, number=n, **kwds)
                 else:
                     warnings.warn('type %r not supported for genotype_ac field %r, field will be skipped' % (t, key))
                     parser = self.skip_parser
@@ -2628,7 +2635,7 @@ cdef class VCFGenotypeACInt8Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'int8'
-        kwargs.setdefault('fill', 0)
+        kwargs['fill'] = 0
         super(VCFGenotypeACInt8Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2648,7 +2655,7 @@ cdef class VCFGenotypeACInt16Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'int16'
-        kwargs.setdefault('fill', 0)
+        kwargs['fill'] = 0
         super(VCFGenotypeACInt16Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2668,7 +2675,7 @@ cdef class VCFGenotypeACInt32Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'int32'
-        kwargs.setdefault('fill', 0)
+        kwargs['fill'] = 0
         super(VCFGenotypeACInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2688,8 +2695,88 @@ cdef class VCFGenotypeACInt64Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'int64'
-        kwargs.setdefault('fill', 0)
+        kwargs['fill'] = 0
         super(VCFGenotypeACInt64Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACUInt8Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.uint8_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'uint8'
+        kwargs['fill'] = 0
+        super(VCFGenotypeACUInt8Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACUInt16Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.uint16_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'uint16'
+        kwargs['fill'] = 0
+        super(VCFGenotypeACUInt16Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACUInt32Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.uint32_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'uint32'
+        kwargs['fill'] = 0
+        super(VCFGenotypeACUInt32Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACUInt64Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.uint64_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'uint64'
+        kwargs['fill'] = 0
+        super(VCFGenotypeACUInt64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         return vcf_genotype_ac_parse(stream, context, self.memory)
