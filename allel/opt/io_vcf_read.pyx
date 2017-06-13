@@ -32,25 +32,11 @@ from multiprocessing.pool import ThreadPool
 
 
 #########################################################################################
-# Constants
+# Constants.
 
 
 # for Windows compatibility
 cdef double NAN = np.nan
-
-# pre-define these characters for convenience and speed
-# cdef enum:
-#     TAB = b'\t'
-#     LF = b'\n'
-#     CR = b'\r'
-#     HASH = b'#'
-#     COLON = b':'
-#     SEMICOLON = b';'
-#     PERIOD = b'.'
-#     COMMA = b','
-#     SLASH = b'/'
-#     PIPE = b'|'
-#     EQUALS = b'='
 
 cdef char TAB = b'\t'
 cdef char LF = b'\n'
@@ -83,7 +69,7 @@ iu64 = np.iinfo(np.uint64)
 
 
 ##########################################################################################
-# Fused Types
+# Fused Types.
 
 
 ctypedef fused integer:
@@ -103,7 +89,7 @@ ctypedef fused floating:
 
 
 ##########################################################################################
-# Vectors
+# Vectors, written in pure C for speed and ease of use without GIL.
 
 
 cdef struct CharVector:
@@ -177,7 +163,7 @@ cdef inline void IntVector_terminate(IntVector* self) nogil:
 
 
 ##########################################################################################
-# C string utilities
+# C string utilities.
 
 
 cdef inline int cstr_search_sorted(char* query, char** compare, int n_items) nogil:
@@ -195,7 +181,7 @@ cdef inline int cstr_search_sorted(char* query, char** compare, int n_items) nog
 
 
 ##########################################################################################
-# General I/O
+# General I/O utilities.
 
 
 cdef class InputStreamBase:
@@ -334,7 +320,7 @@ cdef class CharVectorInputStream(InputStreamBase):
 
 
 ##########################################################################################
-# VCF Parsing
+# VCF Parsing.
 
 
 cdef enum VCFState:
@@ -417,7 +403,6 @@ def check_samples(samples, headers):
 
 
 cdef class VCFChunkIterator:
-    """TODO"""
 
     cdef:
         InputStreamBase stream
@@ -596,7 +581,6 @@ cdef class VCFParser:
         if QUAL_FIELD in fields:
             if QUAL_FIELD in types:
                 t = types[QUAL_FIELD]
-                # TODO support user-provided type?
                 if t != np.dtype('float32'):
                     warnings.warn('only float32 supported for QUAL field, ignoring requested type: %r' % t)
             fill = fills.get(QUAL_FIELD, -1)
@@ -903,7 +887,6 @@ cdef int vcf_skip_variant(InputStreamBase stream, VCFContext context) nogil exce
 
 
 cdef class VCFChromPosParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef:
         np.uint8_t[:] chrom_memory
@@ -1028,7 +1011,6 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
 
 
 cdef class VCFStringFieldParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef np.uint8_t[:] memory
 
@@ -1080,7 +1062,6 @@ cdef class VCFStringFieldParser(VCFFieldParserBase):
 
 
 cdef class VCFAltParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef np.uint8_t[:] memory
 
@@ -1143,7 +1124,6 @@ cdef class VCFAltParser(VCFFieldParserBase):
 
 
 cdef class VCFQualParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef np.float32_t[:] memory
 
@@ -1176,7 +1156,6 @@ cdef class VCFQualParser(VCFFieldParserBase):
 
 
 cdef class VCFFilterParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef:
         np.uint8_t[:, :] memory
@@ -1295,7 +1274,6 @@ cdef class VCFFilterParser(VCFFieldParserBase):
     cdef int make_chunk(self, chunk, limit=None) except -1:
         for i, filter in enumerate(self.filters):
             field = 'variants/FILTER_' + str(filter, 'ascii')
-            # TODO any need to make it a contiguous array?
             chunk[field] = self.values[:limit, i]
 
 
@@ -1304,7 +1282,6 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 
 
 cdef class VCFInfoParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef:
         tuple infos
@@ -1526,7 +1503,6 @@ cdef class VCFInfoParser(VCFFieldParserBase):
 
 
 cdef class VCFInfoParserBase:
-    """TODO"""
 
     cdef:
         bytes key
@@ -1962,7 +1938,6 @@ cdef int vcf_info_store_floating(VCFContext context,
 
 
 cdef class VCFFormatParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef:
         tuple formats
@@ -2061,7 +2036,6 @@ cdef class VCFSkipAllCallDataParser(VCFFieldParserBase):
 
 
 cdef class VCFCallDataParser(VCFFieldParserBase):
-    """TODO"""
 
     cdef:
         tuple formats
@@ -3311,7 +3285,6 @@ cdef class ANNTransformer:
         shape = chunk_length, number
 
         # allocate output arrays
-        # TODO user types
         if ANN_ALLELE_FIELD in self.fields:
             allele = np.zeros(shape, dtype=self.types[ANN_ALLELE_FIELD])
         else:
