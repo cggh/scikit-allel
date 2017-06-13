@@ -1111,6 +1111,7 @@ def test_format_inconsistencies():
     assert_array_equal([-1, -1, -1, -1], gq[1])
 
 
+# noinspection PyTypeChecker
 def test_warnings():
     import warnings
     with warnings.catch_warnings():
@@ -1207,3 +1208,53 @@ def test_warnings():
                       b"2L\t34\t.\t.\t.\t.\t.\tfoo=bar;=34;baz\t.\t.\t.\t.\t.\n")
         with assert_raises(UserWarning):
             read_vcf(io.BytesIO(input_data), fields=['variants/MQ'])
+
+        # INFO not declared in header
+        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                      b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data), fields=['variants/foo'])
+
+        # FORMAT not declared in header
+        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                      b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
+
+
+# noinspection PyTypeChecker
+def test_no_samples():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+                  b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+
+    callset = read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ', 'samples', 'POS'])
+
+    assert 'variants/POS' in callset
+    assert 'samples' not in callset
+    assert 'calldata/GT' not in callset
+    assert 'calldata/GQ' not in callset
+
+    h5_fn = 'temp/sample.h5'
+    if os.path.exists(h5_fn):
+        os.remove(h5_fn)
+    vcf_to_hdf5(io.BytesIO(input_data), h5_fn,
+                fields=['calldata/GT', 'calldata/GQ', 'samples', 'POS'])
+    with h5py.File(h5_fn, mode='r') as callset:
+        assert 'variants/POS' in callset
+        assert 'samples' not in callset
+        assert 'calldata/GT' not in callset
+        assert 'calldata/GQ' not in callset
+
+    zarr_fn = 'temp/sample.zarr'
+    if os.path.exists(zarr_fn):
+        shutil.rmtree(zarr_fn)
+    vcf_to_zarr(io.BytesIO(input_data), zarr_fn,
+                fields=['calldata/GT', 'calldata/GQ', 'samples', 'POS'])
+    callset = zarr.open_group(zarr_fn, mode='r')
+    assert 'variants/POS' in callset
+    assert 'samples' not in callset
+    assert 'calldata/GT' not in callset
+    assert 'calldata/GQ' not in callset

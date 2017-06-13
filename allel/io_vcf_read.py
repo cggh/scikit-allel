@@ -2,12 +2,11 @@
 """
 TODO:
 
-* Test vcf_to_... if no samples, in general calldata fields but no samples
 * Special fields:
-** num_alleles
-** is_snp
-** svlen
-** genotype_ac
+** num_alleles -> NUMALT
+** svlen -> SVLEN
+** is_snp -> SVTYPE (SNP|INS|DEL|COMPLEX)
+** genotype_ac -> GTAC
 ** is_phased
 * Port any relevant tests from vcfnp
 * PY2 compatibility?
@@ -252,7 +251,7 @@ def read_vcf(input_path,
     # setup output
     output = dict()
 
-    if store_samples:
+    if samples and store_samples:
         # use binary string type
         output['samples'] = np.array(samples).astype('S')
 
@@ -569,7 +568,7 @@ def vcf_to_hdf5(input_path, output_path,
         if log is not None:
             it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
-        if store_samples:
+        if samples and store_samples:
             # store samples
             name = 'samples'
             if name in root[group]:
@@ -759,7 +758,7 @@ def vcf_to_zarr(input_path, output_path,
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
-    if store_samples:
+    if samples and store_samples:
         # store samples
         root[group].create_dataset('samples', data=np.array(samples).astype('S'), compressor=None, overwrite=overwrite)
 
@@ -882,7 +881,7 @@ def iter_vcf_chunks(input_path,
                 p = subprocess.Popen([tabix, '-h', input_path, region],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
-                                     bufsize=buffer_size)
+                                     bufsize=0)
 
                 # check if tabix exited early, look for tabix error
                 time.sleep(.5)
@@ -908,7 +907,7 @@ def iter_vcf_chunks(input_path,
 
     elif isinstance(input_path, str):
         # assume no compression
-        fileobj = open(input_path, mode='rb', buffering=buffer_size)
+        fileobj = open(input_path, mode='rb', buffering=0)
 
     elif hasattr(input_path, 'readinto'):
         fileobj = input_path
@@ -917,7 +916,7 @@ def iter_vcf_chunks(input_path,
         raise ValueError('path must be string or file-like, found %r' % input_path)
 
     # setup input stream
-    stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
+    stream = FileInputStream(fileobj, buffer_size=buffer_size)
 
     # deal with region
     kwds['region'] = region
