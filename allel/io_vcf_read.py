@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 """
+Functions for extracting data from Variant Call Format (VCF) files and loading
+into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
+
 TODO:
 
+* Test GT as int16, int32, int64, S3
 * Test genotype/i1 special dtype on non-GT field
 * GT with special allele counts dtype (genotype_ac/i1)
 * Port any relevant tests from vcfnp
 * PY2 compatibility
-* Test GT as int16, int32, int64, S3
 
-* [WONTFIX] is_snp -> SVTYPE (SNP|INS|DEL|COMPLEX)
-* [WONTFIX] is_phased special field
-* [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via transformer.
-* [WONTFIX] Specialised parser for EFF - obsolete.
+WONTFIX:
+
+* is_snp or SVTYPE (SNP|INS|DEL|COMPLEX) computed field
+* is_phased computed field
+* Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via transformer.
+* Specialised parser for EFF - obsolete.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -67,7 +72,7 @@ def _prep_fields_param(fields):
 import time
 
 
-def chunk_iter_progress(it, log, prefix):
+def _chunk_iter_progress(it, log, prefix):
     """Wrap a chunk iterator for progress logging."""
     n_variants = 0
     before_all = time.time()
@@ -91,7 +96,7 @@ def chunk_iter_progress(it, log, prefix):
     log.flush()
 
 
-def chunk_iter_transform(it, transformers):
+def _chunk_iter_transform(it, transformers):
     for chunk, chunk_length, chrom, pos in it:
         for transformer in transformers:
             transformer.transform(chunk)
@@ -242,7 +247,7 @@ def read_vcf(input_path,
 
     # setup progress logging
     if log is not None:
-        it = chunk_iter_progress(it, log, prefix='[read_vcf]')
+        it = _chunk_iter_progress(it, log, prefix='[read_vcf]')
 
     # read all chunks into a list
     chunks = [chunk for chunk, _, _, _ in it]
@@ -350,7 +355,6 @@ def vcf_to_npz(input_path, output_path,
 
     # guard condition
     if not overwrite and os.path.exists(output_path):
-        # TODO right exception class?
         raise ValueError('file exists at path %r; use overwrite=True to replace' % output_path)
 
     # read all data into memory
@@ -565,7 +569,7 @@ def vcf_to_hdf5(input_path, output_path,
 
         # setup progress logging
         if log is not None:
-            it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
+            it = _chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
         if samples and store_samples:
             # store samples
@@ -755,7 +759,7 @@ def vcf_to_zarr(input_path, output_path,
 
     # setup progress logging
     if log is not None:
-        it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
+        it = _chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
     if samples and store_samples:
         # store samples
@@ -925,7 +929,7 @@ def iter_vcf_chunks(input_path,
 
     # setup transformers
     if transformers is not None:
-        it = chunk_iter_transform(it, transformers)
+        it = _chunk_iter_transform(it, transformers)
 
     return samples, headers, it
 
@@ -964,23 +968,23 @@ def _normalize_field_prefix(field, headers):
     if field.startswith('variants/') or field.startswith('calldata/'):
         return field
 
-    # try to find in fixed fields first
+    # try to find in fixed fields
     elif field in FIXED_VARIANTS_FIELDS:
         return 'variants/' + field
 
-    # try to find in FILTER next
+    # try to find in FILTER
     elif field.startswith('FILTER_'):
         return 'variants/' + field
 
-    # try to find in FILTER next
+    # try to find in FILTER
     elif field in headers.filters:
         return 'variants/FILTER_' + field
 
-    # try to find in INFO next
+    # try to find in INFO
     elif field in headers.infos:
         return 'variants/' + field
 
-    # try to find in FORMAT next
+    # try to find in FORMAT
     elif field in headers.formats:
         return 'calldata/' + field
 
@@ -1080,7 +1084,7 @@ def _normalize_fields(fields, headers, samples):
 
         # special cases: be lenient about how to specify
 
-        if f == '*':
+        if f in ['*', 'kitchen sink']:
             _add_all_fields(normed_fields, headers, samples)
 
         elif f in ['variants', 'variants*', 'variants/*']:
@@ -1103,7 +1107,7 @@ def _normalize_fields(fields, headers, samples):
             # normalize field specification
             f = _normalize_field_prefix(f, headers)
             _check_field(f, headers)
-            if f.startswith('calldata/') and not headers.samples:
+            if f.startswith('calldata/') and not samples:
                 # only add calldata fields if there are samples
                 pass
             else:
@@ -1127,6 +1131,7 @@ def _normalize_type(t):
     elif t == 'Flag':
         return np.dtype(bool)
     elif isinstance(t, str) and t.startswith('genotype/'):
+        # custom genotype dtype
         return t
     else:
         return np.dtype(t)
@@ -1156,7 +1161,6 @@ default_types = {
 
 
 def _normalize_types(types, fields, headers):
-    """TODO"""
 
     # normalize user-provided types
     if types is None:
@@ -1252,7 +1256,6 @@ def _normalize_number(field, n):
 
 
 def _normalize_numbers(numbers, fields, headers):
-    """TODO"""
 
     # normalize user-provided numbers
     if numbers is None:
