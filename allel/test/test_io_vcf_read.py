@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
-from allel.io_vcf_read import read_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
+from allel.io_vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
     vcf_to_npz, debug, ANNTransformer
 
 
@@ -20,7 +20,7 @@ def test_read_vcf_chunks():
     fn = 'fixture/sample.vcf'
 
     for n_threads in 1, 2:
-        samples, headers, it = read_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
+        samples, headers, it = iter_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
                                                buffer_size=100, n_threads=n_threads)
 
         # check headers

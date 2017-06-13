@@ -2,7 +2,6 @@
 """
 TODO:
 
-* Docstrings
 * Test vcf_to_... if no samples, in general calldata fields but no samples
 * Special fields:
 ** num_alleles
@@ -44,9 +43,10 @@ DEFAULT_BLOCK_LENGTH = 2**11
 DEFAULT_CHUNK_WIDTH = 2**6
 
 
-def _prep_fields_arg(fields):
+def _prep_fields_param(fields):
+    """Prepare the `fields` parameter, and determine whether or not to store samples."""
 
-    add_samples = False
+    store_samples = False
 
     if fields is None:
         # add samples by default
@@ -59,11 +59,11 @@ def _prep_fields_arg(fields):
 
     if 'samples' in fields:
         fields.remove('samples')
-        add_samples = True
+        store_samples = True
     elif '*' in fields:
-        add_samples = True
+        store_samples = True
 
-    return add_samples, fields
+    return store_samples, fields
 
 
 import time
@@ -105,7 +105,7 @@ _doc_param_input_path = \
         compressed file. May also be a file-like object (e.g., `io.BytesIO`)."""
 
 _doc_param_fields = \
-    """Fields to extract data for. Should be a sequence of strings, e.g., `['variants/CHROM',
+    """Fields to extract data for. Should be a list of strings, e.g., `['variants/CHROM',
         'variants/POS', 'variants/DP', 'calldata/GT']`. If you are feeling lazy, you can drop
         the 'variants/' and 'calldata/' prefixes, in which case the fields will be matched against
         fields declared in the VCF header, with variants taking priority over calldata if a field
@@ -143,6 +143,39 @@ _doc_param_tabix = \
         may be much slower than tabix but the only option if tabix is not available on your system
         and/or the VCF file has not been tabix-indexed."""
 
+_doc_param_samples = \
+    """Selection of samples to extract calldata for. If provided, should be a list of strings
+        giving sample identifiers. May also be a list of integers giving indices of selected
+        samples."""
+
+_doc_param_transformers = \
+    """Transformers for post-processing data. If provided, should be a list of Transformer
+        objects, each of which must implement a "transform()" method that accepts a dict
+        containing the chunk of data to be transformed. See also the :class:`ANNTransformer`
+        class which implements post-processing of data from SNPEFF."""
+
+_doc_param_buffer_size = \
+    """Size in bytes of the I/O buffer used when reading data from the underlying file or
+        tabix stream."""
+
+_doc_param_chunk_length = \
+    """Length (number of variants) of chunks in which data are processed."""
+
+_doc_param_n_threads = \
+    """Experimental: number of additional threads to launch to parse in parallel.
+        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
+        program thread. If you are feeling adventurous and/or impatient, try a value of 1
+        or 2. May increase or decrease speed of parsing relative to single-threaded
+        behaviour, depending on the data, your computer, the weather, and how the stars
+        are aligned. A value of None (default) means single-threaded  parsing."""
+
+_doc_param_block_length = \
+    """Only applies if n_threads is not None (multi-threaded parsing). Size of block
+        (number of rows) that will be handed off to be parsed in parallel."""
+
+_doc_param_log = \
+    """A file-like object (e.g., `sys.stderr`) to print progress information."""
+
 
 def read_vcf(input_path,
              fields=None,
@@ -164,7 +197,7 @@ def read_vcf(input_path,
     ----------
     input_path : string
         {input_path}
-    fields : sequence of strings, optional
+    fields : list of strings, optional
         {fields}
     types : dict, optional
         {types}
@@ -176,26 +209,20 @@ def read_vcf(input_path,
         {region}
     tabix : string, optional
         {tabix}
-    samples : sequence of strings
-        TODO
-    transformers : sequence of transformer objects, optional
-        TODO
+    samples : list of strings
+        {samples}
+    transformers : list of transformer objects, optional
+        {transformers}
     buffer_size : int, optional
-        TODO
+        {buffer_size}
     chunk_length : int, optional
-        TODO
+        {chunk_length}
     n_threads : int, optional
-        Experimental: number of additional threads to launch to parse in parallel.
-        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
-        program thread. If you are feeling adventurous and/or impatient, try a value of 1
-        or 2. May increase or decrease speed of parsing relative to single-threaded
-        behaviour, depending on the data, your computer, the weather, and how the stars
-        are aligned. A value of None (default) means single-threaded  parsing.
+        {n_threads}
     block_length : int, optional
-        Only applies if n_threads is not None (multi-threaded parsing). Size of block
-        (number of rows) that will be handed off to be parsed in parallel.
+        {block_length}
     log : file-like, optional
-        A file-like object (e.g., sys.stderr) to print progress information.
+        {log}
 
     Returns
     -------
@@ -205,18 +232,15 @@ def read_vcf(input_path,
     """
 
     # samples requested?
-    add_samples, fields = _prep_fields_arg(fields)
+    # noinspection PyTypeChecker
+    store_samples, fields = _prep_fields_param(fields)
 
     # setup
-    samples, _, it = read_vcf_chunks(
+    samples, _, it = iter_vcf_chunks(
         input_path=input_path, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
         chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, fills=fills, region=region,
-        tabix=tabix, samples=samples
+        tabix=tabix, samples=samples, transformers=transformers
     )
-
-    # setup transformers
-    if transformers is not None:
-        it = chunk_iter_transform(it, transformers)
 
     # setup progress logging
     if log is not None:
@@ -228,7 +252,7 @@ def read_vcf(input_path,
     # setup output
     output = dict()
 
-    if add_samples:
+    if store_samples:
         # use binary string type
         output['samples'] = np.array(samples).astype('S')
 
@@ -252,7 +276,21 @@ read_vcf.__doc__ = read_vcf.__doc__.format(
     fills=_doc_param_fills,
     region=_doc_param_region,
     tabix=_doc_param_tabix,
+    samples=_doc_param_samples,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    n_threads=_doc_param_n_threads,
+    block_length=_doc_param_block_length,
+    log=_doc_param_log,
 )
+
+
+_doc_param_output_path = \
+    """File-system path to write output to."""
+
+_doc_param_overwrite = \
+    """If False (default), do not overwrite an existing file."""
 
 
 def vcf_to_npz(input_path, output_path,
@@ -276,43 +314,39 @@ def vcf_to_npz(input_path, output_path,
     Parameters
     ----------
     input_path : string
-        TODO
+        {input_path}
     output_path : string
-        TODO
-    compressed : bool
+        {output_path}
+    compressed : bool, optional
         If True (default), save with compression.
-    overwrite : bool
-        If False (default), do not overwrite an existing file.
-    fields : sequence of str
-        TODO
-    types : dict
-        TODO
-    numbers : dict
-        TODO
-    fills : dict
-        TODO
-    region : string
-        TODO
-    tabix : string
-        TODO
-    samples : sequence of strings
-        TODO
-    buffer_size : int
-        TODO
-    chunk_length : int
-        TODO
-    n_threads : int
-        Experimental: number of additional threads to launch to parse in parallel.
-        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
-        program thread. If you are feeling adventurous and/or impatient, try a value of 1
-        or 2. May increase or decrease speed of parsing relative to single-threaded
-        behaviour, depending on the data, your computer, the weather, and how the stars
-        are aligned. A value of None (default) means single-threaded  parsing.
-    block_length : int
-        Only applies if n_threads is not None (multi-threaded parsing). Size of block
-        (number of rows) that will be handed off to be parsed in parallel.
-    log : file-like
-        A file-like object (e.g., sys.stderr) to print progress information.
+    overwrite : bool, optional
+        {overwrite}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    samples : list of strings
+        {samples}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    n_threads : int, optional
+        {n_threads}
+    block_length : int, optional
+        {block_length}
+    log : file-like, optional
+        {log}
 
     """
 
@@ -336,6 +370,26 @@ def vcf_to_npz(input_path, output_path,
 
     # save as npz
     savez(output_path, **data)
+
+
+vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
+    input_path=_doc_param_input_path,
+    output_path=_doc_param_output_path,
+    overwrite=_doc_param_overwrite,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    samples=_doc_param_samples,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    n_threads=_doc_param_n_threads,
+    block_length=_doc_param_block_length,
+    log=_doc_param_log,
+)
 
 
 def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts, shuffle, overwrite,
@@ -416,6 +470,10 @@ def _hdf5_store_chunk(root, keys, chunk):
         dataset[old_length:new_length, ...] = data
 
 
+_doc_param_chunk_width = \
+    """Width (number of samples) to use when storing chunks in output."""
+
+
 def vcf_to_hdf5(input_path, output_path,
                 group='/',
                 compression='gzip',
@@ -441,58 +499,55 @@ def vcf_to_hdf5(input_path, output_path,
     Parameters
     ----------
     input_path : string
-        TODO
+        {input_path}
     output_path : string
-        TODO
+        {output_path}
     group : string
-        TODO
+        Group within destination HDF5 file to store data in.
     compression : string
         Compression algorithm, e.g., 'gzip' (default).
     compression_opts : int
         Compression level, e.g., 1 (default).
     shuffle : bool
-        Use byte shuffling to improve compression (default is False).
+        Use byte shuffling, which may improve compression (default is False).
     overwrite : bool
-        If False (default), do not overwrite an existing file.
-    fields : sequence of strings
-        TODO
-    types : dict
-        TODO
-    numbers : dict
-        TODO
-    fills : dict
-        TODO
-    region : string
-        TODO
-    tabix : string
-        TODO
-    samples : sequence of strings
-        TODO
-    buffer_size : int
-        TODO
-    chunk_length : int
-        TODO
-    chunk_width : int
-        TODO
-    n_threads : int
-        Experimental: number of additional threads to launch to parse in parallel.
-        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
-        program thread. If you are feeling adventurous and/or impatient, try a value of 1
-        or 2. May increase or decrease speed of parsing relative to single-threaded
-        behaviour, depending on the data, your computer, the weather, and how the stars
-        are aligned. A value of None (default) means single-threaded  parsing.
-    block_length : int
-        Only applies if n_threads is not None (multi-threaded parsing). Size of block
-        (number of rows) that will be handed off to be parsed in parallel.
-    log : file-like
-        A file-like object (e.g., sys.stderr) to print progress information.
+        {overwrite}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    samples : list of strings
+        {samples}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    chunk_width : int, optional
+        {chunk_width}
+    n_threads : int, optional
+        {n_threads}
+    block_length : int, optional
+        {block_length}
+    log : file-like, optional
+        {log}
 
     """
 
     import h5py
 
     # samples requested?
-    add_samples, fields = _prep_fields_arg(fields)
+    # noinspection PyTypeChecker
+    store_samples, fields = _prep_fields_param(fields)
 
     with h5py.File(output_path, mode='a') as h5f:
 
@@ -504,21 +559,17 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        samples, headers, it = read_vcf_chunks(
+        samples, headers, it = iter_vcf_chunks(
             input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
             chunk_length=chunk_length, block_length=block_length, n_threads=n_threads,
-            fills=fills, region=region, tabix=tabix, samples=samples
+            fills=fills, region=region, tabix=tabix, samples=samples, transformers=transformers
         )
-
-        # setup transformers
-        if transformers is not None:
-            it = chunk_iter_transform(it, transformers)
 
         # setup progress logging
         if log is not None:
             it = chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
-        if add_samples:
+        if store_samples:
             # store samples
             name = 'samples'
             if name in root[group]:
@@ -534,6 +585,7 @@ def vcf_to_hdf5(input_path, output_path,
         chunk, _, _, _ = next(it)
 
         # setup datasets
+        # noinspection PyTypeChecker
         keys = _hdf5_setup_datasets(
             chunk=chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compression=compression,
             compression_opts=compression_opts, shuffle=shuffle, overwrite=overwrite, headers=headers
@@ -546,6 +598,27 @@ def vcf_to_hdf5(input_path, output_path,
         for chunk, _, _, _ in it:
 
             _hdf5_store_chunk(root, keys, chunk)
+
+
+vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
+    input_path=_doc_param_input_path,
+    output_path=_doc_param_output_path,
+    overwrite=_doc_param_overwrite,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    samples=_doc_param_samples,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    chunk_width=_doc_param_chunk_width,
+    n_threads=_doc_param_n_threads,
+    block_length=_doc_param_block_length,
+    log=_doc_param_log,
+)
 
 
 def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers):
@@ -622,54 +695,51 @@ def vcf_to_zarr(input_path, output_path,
     Parameters
     ----------
     input_path : string
-        TODO
+        {input_path}
     output_path : string
-        TODO
+        {output_path}
     group : string
-        TODO
+        Group within destination Zarr hierarchy to store data in.
     compressor : compressor
         Compression algorithm, e.g., zarr.Blosc(cname='zstd', clevel=1, shuffle=1).
     overwrite : bool
-        If False (default), do not overwrite an existing file.
-    fields : sequence of strings
-        TODO
-    types : dict
-        TODO
-    numbers : dict
-        TODO
-    fills : dict
-        TODO
-    region : string
-        TODO
-    tabix : string
-        TODO
-    samples : sequence of strings
-        TODO
-    buffer_size : int
-        TODO
-    chunk_length : int
-        TODO
-    chunk_width : int
-        TODO
-    n_threads : int
-        Experimental: number of additional threads to launch to parse in parallel.
-        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
-        program thread. If you are feeling adventurous and/or impatient, try a value of 1
-        or 2. May increase or decrease speed of parsing relative to single-threaded
-        behaviour, depending on the data, your computer, the weather, and how the stars
-        are aligned. A value of None (default) means single-threaded  parsing.
-    block_length : int
-        Only applies if n_threads is not None (multi-threaded parsing). Size of block
-        (number of rows) that will be handed off to be parsed in parallel.
-    log : file-like
-        A file-like object (e.g., sys.stderr) to print progress information.
+        {overwrite}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    samples : list of strings
+        {samples}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    chunk_width : int, optional
+        {chunk_width}
+    n_threads : int, optional
+        {n_threads}
+    block_length : int, optional
+        {block_length}
+    log : file-like, optional
+        {log}
 
     """
 
     import zarr
 
     # samples requested?
-    add_samples, fields = _prep_fields_arg(fields)
+    # noinspection PyTypeChecker
+    store_samples, fields = _prep_fields_param(fields)
 
     # open root group
     root = zarr.open_group(output_path, mode='a', path=group)
@@ -679,20 +749,17 @@ def vcf_to_zarr(input_path, output_path,
     root.require_group('calldata')
 
     # setup chunk iterator
-    samples, headers, it = read_vcf_chunks(
+    samples, headers, it = iter_vcf_chunks(
         input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
-        fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples
+        fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples,
+        transformers=transformers
     )
-
-    # setup transformers
-    if transformers is not None:
-        it = chunk_iter_transform(it, transformers)
 
     # setup progress logging
     if log is not None:
         it = chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
-    if add_samples:
+    if store_samples:
         # store samples
         root[group].create_dataset('samples', data=np.array(samples).astype('S'), compressor=None, overwrite=overwrite)
 
@@ -700,6 +767,7 @@ def vcf_to_zarr(input_path, output_path,
     chunk, _, _, _ = next(it)
 
     # setup datasets
+    # noinspection PyTypeChecker
     keys = _zarr_setup_datasets(
         chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compressor=compressor,
         overwrite=overwrite, headers=headers
@@ -714,10 +782,31 @@ def vcf_to_zarr(input_path, output_path,
         _zarr_store_chunk(root, keys, chunk)
 
 
+vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
+    input_path=_doc_param_input_path,
+    output_path=_doc_param_output_path,
+    overwrite=_doc_param_overwrite,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    samples=_doc_param_samples,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    chunk_width=_doc_param_chunk_width,
+    n_threads=_doc_param_n_threads,
+    block_length=_doc_param_block_length,
+    log=_doc_param_log,
+)
+
+
 import subprocess
 
 
-def read_vcf_chunks(input_path,
+def iter_vcf_chunks(input_path,
                     fields=None,
                     types=None,
                     numbers=None,
@@ -725,11 +814,52 @@ def read_vcf_chunks(input_path,
                     region=None,
                     tabix='tabix',
                     samples=None,
-                    chunk_length=DEFAULT_CHUNK_LENGTH,
-                    block_length=DEFAULT_BLOCK_LENGTH,
+                    transformers=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
-                    n_threads=None):
-    """Returns an iterator over chunks of data from a VCF file as NumPy arrays."""
+                    chunk_length=DEFAULT_CHUNK_LENGTH,
+                    n_threads=None,
+                    block_length=DEFAULT_BLOCK_LENGTH):
+    """Iterate over chunks of data from a VCF file as NumPy arrays.
+
+    Parameters
+    ----------
+    input_path : string
+        {input_path}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    samples : list of strings
+        {samples}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    n_threads : int, optional
+        {n_threads}
+    block_length : int, optional
+        {block_length}
+
+    Returns
+    -------
+    samples : list of strings
+        Samples for which data will be extracted.
+    headers : tuple
+        Tuple of metadata extracted from VCF headers.
+    it : iterator
+        Chunk iterator.
+
+    """
 
     # guard condition
     if n_threads is not None and region:
@@ -737,10 +867,12 @@ def read_vcf_chunks(input_path,
                       'single-threaded implementation')
         n_threads = None
 
+    # setup commmon keyword args
     kwds = dict(fields=fields, types=types, numbers=numbers,
                 chunk_length=chunk_length, block_length=block_length,
                 n_threads=n_threads, fills=fills, samples=samples)
 
+    # obtain a file-like object
     if isinstance(input_path, str) and input_path.endswith('gz'):
 
         if region and tabix and os.name != 'nt':
@@ -784,9 +916,38 @@ def read_vcf_chunks(input_path,
     else:
         raise ValueError('path must be string or file-like, found %r' % input_path)
 
+    # setup input stream
     stream = FileInputStream(fileobj, buffer_size=DEFAULT_BUFFER_SIZE)
+
+    # deal with region
     kwds['region'] = region
-    return _read_vcf(stream, **kwds)
+
+    # setup iterator
+    samples, headers, it = _read_vcf(stream, **kwds)
+
+    # setup transformers
+    if transformers is not None:
+        it = chunk_iter_transform(it, transformers)
+
+    return samples, headers, it
+
+
+iter_vcf_chunks.__doc__ = iter_vcf_chunks.__doc__.format(
+    input_path=_doc_param_input_path,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    samples=_doc_param_samples,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    n_threads=_doc_param_n_threads,
+    block_length=_doc_param_block_length,
+    log=_doc_param_log,
+)
 
 
 FIXED_VARIANTS_FIELDS = (
