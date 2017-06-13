@@ -2,15 +2,14 @@
 """
 TODO:
 
-* Special fields:
-** num_alleles -> NUMALT
-** svlen -> SVLEN
-** is_snp -> SVTYPE (SNP|INS|DEL|COMPLEX)
-** genotype_ac -> GTAC
-** is_phased
+* Test genotype/i1 special dtype on non-GT field
+* GT with special allele counts dtype (genotype_ac/i1)
 * Port any relevant tests from vcfnp
-* PY2 compatibility?
+* PY2 compatibility
+* Test GT as int16, int32, int64, S3
 
+* [WONTFIX] is_snp -> SVTYPE (SNP|INS|DEL|COMPLEX)
+* [WONTFIX] is_phased special field
 * [WONTFIX] Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via transformer.
 * [WONTFIX] Specialised parser for EFF - obsolete.
 
@@ -1000,6 +999,10 @@ def _check_field(field, headers):
         if name in FIXED_VARIANTS_FIELDS:
             return
 
+        elif name in ['numalt', 'svlen']:
+            # computed fields
+            return
+
         elif name.startswith('FILTER_'):
             filter_name = name[7:]
             if filter_name in headers.filters:
@@ -1026,15 +1029,19 @@ def _check_field(field, headers):
         raise ValueError('invalid field specification: %r' % field)
 
 
-def _add_all_fields(fields, headers):
+def _add_all_fields(fields, headers, samples):
     _add_all_variants_fields(fields, headers)
-    _add_all_calldata_fields(fields, headers)
+    if samples:
+        _add_all_calldata_fields(fields, headers)
 
 
 def _add_all_variants_fields(fields, headers):
     _add_all_fixed_variants_fields(fields)
     _add_all_info_fields(fields, headers)
     _add_all_filter_fields(fields, headers)
+    # add in special computed fields
+    fields.add('variants/numalt')
+    fields.add('variants/svlen')
 
 
 def _add_all_fixed_variants_fields(fields):
@@ -1060,7 +1067,7 @@ def _add_all_calldata_fields(fields, headers):
             fields.add('calldata/' + f)
 
 
-def _normalize_fields(fields, headers):
+def _normalize_fields(fields, headers, samples):
 
     # setup normalized fields
     normed_fields = set()
@@ -1074,12 +1081,12 @@ def _normalize_fields(fields, headers):
         # special cases: be lenient about how to specify
 
         if f == '*':
-            _add_all_fields(normed_fields, headers)
+            _add_all_fields(normed_fields, headers, samples)
 
         elif f in ['variants', 'variants*', 'variants/*']:
             _add_all_variants_fields(normed_fields, headers)
 
-        elif f in ['calldata', 'calldata*', 'calldata/*']:
+        elif f in ['calldata', 'calldata*', 'calldata/*'] and samples:
             _add_all_calldata_fields(normed_fields, headers)
 
         elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*', 'variants/INFO/*']:
@@ -1172,7 +1179,11 @@ def _normalize_types(types, fields, headers):
 
         elif group == 'variants':
 
-            if name.startswith('FILTER_'):
+            if name in ['numalt', 'svlen']:
+                # computed fields, special case
+                continue
+
+            elif name.startswith('FILTER_'):
                 normed_types[f] = np.dtype(bool)
 
             elif name in headers.infos:
@@ -1264,7 +1275,11 @@ def _normalize_numbers(numbers, fields, headers):
 
         elif group == 'variants':
 
-            if name.startswith('FILTER_'):
+            if name in ['numalt', 'svlen']:
+                # computed fields, special case - number depends on ALT
+                continue
+
+            elif name.startswith('FILTER_'):
                 normed_numbers[f] = 0
 
             elif name in headers.infos:
@@ -1340,6 +1355,9 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
     # read VCF headers
     headers = _read_vcf_headers(stream)
 
+    # setup samples
+    samples, loc_samples = _normalize_samples(samples, headers)
+
     # setup fields to read
     if fields is None:
 
@@ -1347,11 +1365,11 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
         fields = set()
         _add_all_fixed_variants_fields(fields)
         fields.add('variants/FILTER_PASS')
-        if headers.samples and 'GT' in headers.formats:
+        if samples and 'GT' in headers.formats:
             fields.add('calldata/GT')
 
     else:
-        fields = _normalize_fields(fields, headers)
+        fields = _normalize_fields(fields, headers, samples)
 
     # setup data types
     types = _normalize_types(types, fields, headers)
@@ -1361,9 +1379,6 @@ def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_thre
 
     # setup fills
     fills = _normalize_fills(fills, fields, headers)
-
-    # setup samples
-    samples, loc_samples = _normalize_samples(samples, headers)
 
     # setup chunks iterator
     if n_threads is None:

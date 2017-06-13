@@ -75,6 +75,9 @@ def test_read_vcf_chunks():
             'variants/DP',
             'variants/H2',
             'variants/NS',
+            # special computed fields
+            'variants/numalt',
+            'variants/svlen',
             # FORMAT fields
             'calldata/GT',
             'calldata/GQ',
@@ -109,6 +112,9 @@ def test_read_vcf_fields_all():
         'variants/DP',
         'variants/H2',
         'variants/NS',
+        # special computed fields
+        'variants/numalt',
+        'variants/svlen',
         # FORMAT fields
         'calldata/GT',
         'calldata/GQ',
@@ -158,6 +164,9 @@ def test_read_vcf_fields_all_variants():
         'variants/DP',
         'variants/H2',
         'variants/NS',
+        # special computed fields
+        'variants/numalt',
+        'variants/svlen',
     ]
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
@@ -207,7 +216,7 @@ def test_read_vcf_fields_selected():
 
     # without samples
     callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
-                                   'calldata/HQ', 'FILTER_q10'],
+                                   'calldata/HQ', 'FILTER_q10', 'variants/numalt'],
                        chunk_length=4, buffer_size=100)
     expected_fields = [
         'variants/CHROM',
@@ -215,6 +224,7 @@ def test_read_vcf_fields_selected():
         'variants/FILTER_q10',
         'variants/AC',
         'variants/AF',
+        'variants/numalt',
         # FORMAT fields
         'calldata/GT',
         'calldata/HQ',
@@ -223,7 +233,7 @@ def test_read_vcf_fields_selected():
 
     # with samples
     callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
-                                   'calldata/HQ', 'FILTER_q10', 'samples'],
+                                   'calldata/HQ', 'FILTER_q10', 'variants/numalt', 'samples'],
                        chunk_length=4, buffer_size=100)
     expected_fields = [
         'samples',
@@ -232,6 +242,7 @@ def test_read_vcf_fields_selected():
         'variants/FILTER_q10',
         'variants/AC',
         'variants/AF',
+        'variants/numalt',
         # FORMAT fields
         'calldata/GT',
         'calldata/HQ',
@@ -257,6 +268,8 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     # fixed fields
     print(callset['variants/CHROM'])
     print(callset['variants/POS'])
+    print(callset['variants/REF'])
+    print(callset['variants/ALT'])
     eq_((9,), callset['variants/CHROM'].shape)
     eq_(b'19', callset['variants/CHROM'][0])
     eq_((9,), callset['variants/POS'].shape)
@@ -296,10 +309,6 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
 
     # TODO test GT as int16, int32, int64, S3
 
-    # TODO special fields?
-    # eq_(True, a[0]['NA00001']['is_called'])
-    # eq_(True, a[0]['NA00001']['is_phased'])
-
 
 def test_read_vcf_content_inputs():
     fn = 'fixture/sample.vcf'
@@ -320,6 +329,7 @@ def test_read_vcf_content_inputs():
     n_threads = 1
 
     for input in inputs:
+        print(repr(input))
         _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
 
@@ -362,11 +372,10 @@ def test_truncation_chrom():
         callset = read_vcf(input_file, fields=['CHROM', 'samples'])
 
         # check fields
-        expected_fields = ['variants/CHROM', 'samples']
+        expected_fields = ['variants/CHROM']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/CHROM']
         eq_(2, len(a))
         eq_(b'2L', a[0])
@@ -386,11 +395,10 @@ def test_truncation_pos():
         callset = read_vcf(input_file, fields=['POS', 'samples'])
 
         # check fields
-        expected_fields = ['variants/POS', 'samples']
+        expected_fields = ['variants/POS']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/POS']
         eq_(2, len(a))
         eq_(12, a[0])
@@ -410,11 +418,10 @@ def test_truncation_id():
         callset = read_vcf(input_file, fields=['ID', 'samples'])
 
         # check fields
-        expected_fields = ['variants/ID', 'samples']
+        expected_fields = ['variants/ID']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/ID']
         eq_(2, len(a))
         eq_(b'foo', a[0])
@@ -434,11 +441,10 @@ def test_truncation_ref():
         callset = read_vcf(input_file, fields=['REF', 'samples'])
 
         # check fields
-        expected_fields = ['variants/REF', 'samples']
+        expected_fields = ['variants/REF']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/REF']
         eq_(2, len(a))
         eq_(b'A', a[0])
@@ -458,11 +464,10 @@ def test_truncation_alt():
         callset = read_vcf(input_file, fields=['ALT', 'samples'], numbers=dict(ALT=1))
 
         # check fields
-        expected_fields = ['variants/ALT', 'samples']
+        expected_fields = ['variants/ALT']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/ALT']
         eq_(2, len(a))
         eq_(b'C', a[0])
@@ -482,11 +487,10 @@ def test_truncation_qual():
         callset = read_vcf(input_file, fields=['QUAL', 'samples'])
 
         # check fields
-        expected_fields = ['variants/QUAL', 'samples']
+        expected_fields = ['variants/QUAL']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/QUAL']
         eq_(2, len(a))
         assert_almost_equal(1.2, a[0], places=6)
@@ -504,11 +508,10 @@ def test_truncation_filter():
     for data in (input_data, input_data[:-1]):
 
         input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['FILTER_PASS', 'FILTER_q10', 'FILTER_s50'])
+        callset = read_vcf(input_file, fields=['FILTER_PASS', 'FILTER_q10', 'FILTER_s50', 'samples'])
 
         # check fields
-        expected_fields = ['variants/FILTER_PASS', 'variants/FILTER_q10',
-                           'variants/FILTER_s50']
+        expected_fields = ['variants/FILTER_PASS', 'variants/FILTER_q10', 'variants/FILTER_s50']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
@@ -535,7 +538,7 @@ def test_truncation_info():
 
         input_file = io.BytesIO(data)
         callset = read_vcf(input_file,
-                           fields=['foo', 'bar'],
+                           fields=['foo', 'bar', 'samples'],
                            types=dict(foo='Integer', bar='Float'))
 
         # check fields
@@ -571,11 +574,10 @@ def test_truncation_format():
                            types=dict(foo='Integer', bar='Float'))
 
         # check fields
-        expected_fields = ['variants/foo', 'variants/bar', 'samples']
+        expected_fields = ['variants/foo', 'variants/bar']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
-        eq_(0, len(callset['samples']))
         a = callset['variants/foo']
         eq_(3, len(a))
         eq_(42, a[0])
@@ -1258,3 +1260,40 @@ def test_no_samples():
     assert 'samples' not in callset
     assert 'calldata/GT' not in callset
     assert 'calldata/GQ' not in callset
+
+
+def test_numalt_svlen():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+                  b"2L\t12\t.\tA\t.\t.\t.\t.\t.\n"
+                  b"2L\t34\t.\tC\tT\t.\t.\t.\t.\n"
+                  b"3R\t45\t.\tG\tA,T\t.\t.\t.\t.\n"
+                  b"3R\t56\t.\tG\tA,GTAC\t.\t.\t.\t.\n"
+                  b"3R\t56\t.\tCATG\tC,GATG\t.\t.\t.\t.\n"
+                  b"3R\t56\t.\tGTAC\tATAC,GTACTACTAC,G,GTACA,GTA\t.\t.\t.\t.\n")
+    callset = read_vcf(io.BytesIO(input_data),
+                       fields='*',
+                       numbers={'ALT': 5}, types={'ALT': 'S20'})
+
+    a = callset['variants/ALT']
+    eq_((6, 5), a.shape)
+    e = np.array([[b'', b'', b'', b'', b''],
+                  [b'T', b'', b'', b'', b''],
+                  [b'A', b'T', b'', b'', b''],
+                  [b'A', b'GTAC', b'', b'', b''],
+                  [b'C', b'GATG', b'', b'', b''],
+                  [b'ATAC', b'GTACTACTAC', b'G', b'GTACA', b'GTA']])
+    assert_array_equal(e, a)
+
+    a = callset['variants/numalt']
+    eq_((6,), a.shape)
+    assert_array_equal([0, 1, 2, 2, 2, 5], a)
+
+    a = callset['variants/svlen']
+    eq_((6, 5), a.shape)
+    assert_array_equal([[0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 3, 0, 0, 0],
+                        [-3, 0, 0, 0, 0],
+                        [0, 6, -3, 1, -1]], a)
