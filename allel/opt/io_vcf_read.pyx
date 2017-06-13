@@ -343,6 +343,8 @@ cdef class VCFContext:
     cdef:
         # useful stuff
         object headers
+        object fields
+        object formats
 
         # dynamic attributes - reflect current state during parsing
         int state  # overall parser state
@@ -365,8 +367,14 @@ cdef class VCFContext:
         # track size of reference allele (needed for svlen)
         int ref_len
 
-    def __cinit__(self, headers):
+    def __cinit__(self, headers, fields):
         self.headers = headers
+        self.fields = fields
+        self.formats = list()
+        for f in fields:
+            group, name = f.split('/')
+            if group == 'calldata':
+                self.formats.append(name)
 
         # initialise dynamic state
         self.state = VCFState.CHROM
@@ -428,7 +436,8 @@ cdef class VCFChunkIterator:
         self.stream = stream
 
         # setup context
-        self.context = VCFContext(headers)
+        fields = sorted(fields)
+        self.context = VCFContext(headers, fields)
 
         # setup parser
         samples = check_samples(samples, headers)
@@ -486,9 +495,6 @@ cdef class VCFParser:
     def __init__(self, fields, types, numbers, chunk_length, samples, fills, region):
         self.chunk_length = chunk_length
         self.samples = samples
-
-        # copy so we don't modify someone else's data
-        fields = set(fields)
 
         # handle region
         self._init_region(region)
@@ -3280,14 +3286,26 @@ vcf_state_labels = [
 
 
 cdef int warn(message, VCFContext context) nogil except -1:
+    cdef int format_index
     with gil:
         message += '; field: %s' % vcf_state_labels[context.state]
         message += '; variant: %s' % context.variant_index
         if context.state > VCFState.POS:
             message += ' (%s:%s)' % (str(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
         if context.state == VCFState.CALLDATA:
-            message += '; sample: %s:%s (%s)' % (context.sample_index, context.sample_field_index,
-                                                 context.headers.samples[context.sample_index])
+            if context.sample_index >= len(context.headers.samples):
+                sample = 'unknown'
+            else:
+                sample = context.headers.samples[context.sample_index]
+            if context.sample_field_index >= context.variant_format_indices.size:
+                format = 'unknown'
+            else:
+                format_index = context.variant_format_indices.data[context.sample_field_index]
+                format = context.formats[format_index]
+            message += '; sample: %s:%s (%s:%s)' % (context.sample_index,
+                                                    context.sample_field_index,
+                                                    sample,
+                                                    format)
         warnings.warn(message)
 
 
@@ -3319,9 +3337,9 @@ cdef class VCFParallelParser:
         object pool
         object result
 
-    def __cinit__(self, stream, parser, chunk_length, block_length, pool, headers):
+    def __cinit__(self, stream, parser, chunk_length, block_length, pool, headers, fields):
         self.buffer = CharVectorInputStream(2**14)
-        self.context = VCFContext(headers)
+        self.context = VCFContext(headers, fields)
         self.stream = stream
         self.parser = parser
         self.chunk_length = chunk_length
@@ -3372,6 +3390,7 @@ cdef class VCFParallelChunkIterator:
                   int chunk_length, int block_length, int n_threads,
                   headers, fields, types, numbers, fills, region, samples):
 
+        fields = sorted(fields)
         self.stream = stream
         self.chunk_length = chunk_length
         self.n_threads = n_threads
@@ -3391,7 +3410,8 @@ cdef class VCFParallelChunkIterator:
         )
         self.chunk_index = -1
         self.workers = [VCFParallelParser(stream=stream, parser=self.parser, chunk_length=self.chunk_length,
-                                          block_length=self.block_length, pool=self.pool, headers=headers)
+                                          block_length=self.block_length, pool=self.pool, headers=headers,
+                                          fields=fields)
                         for _ in range(self.n_workers)]
 
     def __iter__(self):
