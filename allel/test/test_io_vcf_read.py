@@ -88,7 +88,7 @@ def test_read_vcf_chunks():
             assert_list_equal(sorted(expected_fields), sorted(chunk.keys()))
 
 
-def test_read_vcf_fields_all():
+def test_fields_all():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='*', chunk_length=4, buffer_size=100)
     expected_fields = [
@@ -124,7 +124,7 @@ def test_read_vcf_fields_all():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_fields_default():
+def test_fields_default():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, chunk_length=3, buffer_size=30)
     expected_fields = [
@@ -141,7 +141,7 @@ def test_read_vcf_fields_default():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_fields_all_variants():
+def test_fields_all_variants():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='variants/*', chunk_length=2, buffer_size=20)
     expected_fields = [
@@ -171,7 +171,7 @@ def test_read_vcf_fields_all_variants():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_fields_info():
+def test_fields_info():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='INFO', chunk_length=5, buffer_size=10)
     expected_fields = [
@@ -188,7 +188,7 @@ def test_read_vcf_fields_info():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_fields_filter():
+def test_fields_filter():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='FILTER', chunk_length=1, buffer_size=2)
     expected_fields = [
@@ -199,7 +199,7 @@ def test_read_vcf_fields_filter():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_fields_all_calldata():
+def test_fields_all_calldata():
     fn = 'fixture/sample.vcf'
     callset = read_vcf(fn, fields='calldata/*', chunk_length=6, buffer_size=1000)
     expected_fields = [
@@ -211,7 +211,7 @@ def test_read_vcf_fields_all_calldata():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def test_read_vcf_fields_selected():
+def test_fields_selected():
     fn = 'fixture/sample.vcf'
 
     # without samples
@@ -307,10 +307,8 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     eq_((9, 3), callset['calldata/DP'].shape)
     eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
 
-    # TODO test GT as int16, int32, int64, S3
 
-
-def test_read_vcf_content_inputs():
+def test_inputs():
     fn = 'fixture/sample.vcf'
 
     data = open(fn, mode='rb').read(-1)
@@ -326,33 +324,33 @@ def test_read_vcf_content_inputs():
     chunk_length = 3
     block_length = 2
     buffer_size = 10
-    n_threads = 1
+    n_threadses = None, 1, 2
 
-    for input in inputs:
-        print(repr(input))
-        _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
+    for n_threads in n_threadses:
+        for input in inputs:
+            _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
 
-def test_read_vcf_content_chunk_block_lengths():
+def test_chunk_block_lengths():
     fn = 'fixture/sample.vcf'
     input = fn
     chunk_lengths = 1, 2, 3, 5, 10, 20
     block_lengths = 1, 2, 3, 5, 10, 20
     buffer_size = 10
-    n_threadses = 1, 2
+    n_threadses = None, 1, 2
 
     for chunk_length, n_threads, block_length in itertools.product(
             chunk_lengths, n_threadses, block_lengths):
         _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length)
 
 
-def test_read_vcf_content_buffer_size():
+def test_buffer_sizes():
     fn = 'fixture/sample.vcf'
     input = fn
     chunk_length = 3
     block_length = 2
     buffer_sizes = 1, 2, 4, 8, 16, 32, 64, 128, 256, 512
-    n_threadses = 1, 2
+    n_threadses = None, 1, 2
 
     for n_threads, buffer_size in itertools.product(
             n_threadses, buffer_sizes):
@@ -699,7 +697,7 @@ def test_vcf_to_hdf5():
                             'Genotype Quality')
 
 
-def test_read_vcf_info_types():
+def test_info_types():
     fn = 'fixture/sample.vcf'
 
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8':
@@ -708,7 +706,7 @@ def test_read_vcf_info_types():
         eq_((9,), callset['variants/DP'].shape)
 
 
-def test_read_vcf_genotype_types():
+def test_genotype_types():
 
     fn = 'fixture/sample.vcf'
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'S3':
@@ -742,7 +740,7 @@ def test_read_vcf_genotype_types():
     eq_(e.dtype, a.dtype)
 
 
-def test_read_vcf_calldata_types():
+def test_calldata_types():
     fn = 'fixture/sample.vcf'
 
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8':
@@ -1322,3 +1320,25 @@ def test_numalt_svlen():
                         [0, 3, 0, 0, 0],
                         [-3, 0, 0, 0, 0],
                         [0, 6, -3, 1, -1]], a)
+
+
+def test_genotype_ac():
+
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\tS2\tS3\n"
+                  b"2L\t12\t.\tA\t.\t.\t.\t.\tGT:GQ\t0/0/0:11\t0/1/2:12\t././.:.\n"
+                  b"2L\t34\t.\tC\tT\t.\t.\t.\tGT:GQ\t0/1/2:22\t3/3/.:33\t.\n"
+                  b"3R\t45\t.\tG\tA,T\t.\t.\t.\tGT:GQ\t0/1:.\t3:12\t\n"
+                  b"X\t55\t.\tG\tA,T\t.\t.\t.\tGT:GQ\t0/1/1/3/4:.\t1/1/2/2/4/4/5:12\t0/0/1/2/3/./4\n")
+
+    for t in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8':
+        callset = read_vcf(io.BytesIO(input_data),
+                           fields=['calldata/GT'],
+                           numbers={'calldata/GT': 4},
+                           types={'calldata/GT': 'genotype_ac/' + t})
+        e = np.array([[[3, 0, 0, 0], [1, 1, 1, 0], [0, 0, 0, 0]],
+                      [[1, 1, 1, 0], [0, 0, 0, 2], [0, 0, 0, 0]],
+                      [[1, 1, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0]],
+                      [[1, 2, 0, 1], [0, 2, 2, 0], [2, 1, 1, 1]]], dtype=t)
+        a = callset['calldata/GT']
+        eq_(e.dtype, a.dtype)
+        assert_array_equal(e, a)

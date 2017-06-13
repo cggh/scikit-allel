@@ -1131,6 +1131,9 @@ def _normalize_type(t):
     elif isinstance(t, str) and t.startswith('genotype/'):
         # custom genotype dtype
         return t
+    elif isinstance(t, str) and t.startswith('genotype_ac/'):
+        # custom genotype allele counts dtype
+        return t
     else:
         return np.dtype(t)
 
@@ -1148,7 +1151,7 @@ default_types = {
     'variants/AF': 'f4',
     'variants/MQ': 'f4',
     'variants/ANN': 'S400',
-    'calldata/GT': 'i1',
+    'calldata/GT': 'genotype/i1',
     'calldata/GQ': 'i1',
     'calldata/HQ': 'i1',
     'calldata/DP': 'i2',

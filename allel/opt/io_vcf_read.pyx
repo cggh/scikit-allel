@@ -2201,6 +2201,22 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                     warnings.warn('type %r not supported for genotype field %r, field will be skipped' % (t, key))
                     parser = self.skip_parser
 
+            # special handling of "genotype_ac" dtypes for any field
+            if isinstance(t, str) and t.startswith('genotype_ac/'):
+                fill = fills.get(key, 0)
+                t = np.dtype(t.split('/')[1])
+                if t == np.dtype('int8'):
+                    parser = VCFGenotypeACInt8Parser(key, number=n, fill=fills.get(key, -1), **kwds)
+                # elif t == np.dtype('int16'):
+                #     parser = VCFGenotypeACInt16Parser(key, number=n, fill=fills.get(key, -1), **kwds)
+                # elif t == np.dtype('int32'):
+                #     parser = VCFGenotypeACInt32Parser(key, number=n, fill=fills.get(key, -1), **kwds)
+                # elif t == np.dtype('int64'):
+                #     parser = VCFGenotypeACInt64Parser(key, number=n, fill=fills.get(key, -1), **kwds)
+                else:
+                    warnings.warn('type %r not supported for genotype_ac field %r, field will be skipped' % (t, key))
+                    parser = self.skip_parser
+
             # special handling of GT field
             elif key == b'GT' and t == np.dtype('int8'):
                 parser = VCFGenotypeInt8Parser(key, number=n, fill=fills.get(key, -1), **kwds)
@@ -2603,6 +2619,126 @@ cdef int vcf_genotype_store(VCFContext context,
     # store value
     if parsed > 0:
         memory[context.chunk_variant_index, context.sample_output_index, value_index] = allele
+
+
+cdef class VCFGenotypeACInt8Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.int8_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int8'
+        kwargs.setdefault('fill', 0)
+        super(VCFGenotypeACInt8Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACInt16Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.int16_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int16'
+        kwargs.setdefault('fill', 0)
+        super(VCFGenotypeACInt16Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACInt32Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.int32_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int32'
+        kwargs.setdefault('fill', 0)
+        super(VCFGenotypeACInt32Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef class VCFGenotypeACInt64Parser(VCFCallDataParserBase):
+
+    cdef:
+        np.int64_t[:, :, :] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = 'int64'
+        kwargs.setdefault('fill', 0)
+        super(VCFGenotypeACInt64Parser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        return vcf_genotype_ac_parse(stream, context, self.memory)
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.memory = self.values
+        self.memory[:] = 0
+
+
+cdef int vcf_genotype_ac_parse(InputStreamBase stream,
+                               VCFContext context,
+                               integer[:, :, :] memory) nogil except -1:
+    # reset temporary buffer
+    CharVector_clear(&context.temp)
+
+    while True:
+
+        if stream.c == SLASH or stream.c == PIPE:
+            vcf_genotype_ac_store(context, memory)
+            CharVector_clear(&context.temp)
+
+        elif stream.c == COLON or \
+                stream.c == TAB or \
+                stream.c == LF or \
+                stream.c == CR or \
+                stream.c == 0:
+            vcf_genotype_ac_store(context, memory)
+            break
+
+        else:
+            CharVector_append(&context.temp, stream.c)
+
+        stream.advance()
+
+
+cdef int vcf_genotype_ac_store(VCFContext context,
+                               integer[:, :, :] memory) nogil except -1:
+    cdef:
+        int parsed
+        long allele
+
+    # attempt to parse allele
+    parsed = vcf_strtol(&context.temp, context, &allele)
+
+    # store value
+    if parsed > 0 and allele < memory.shape[2]:
+        memory[context.chunk_variant_index, context.sample_output_index, allele] += 1
 
 
 cdef class VCFCallDataInt8Parser(VCFCallDataParserBase):
