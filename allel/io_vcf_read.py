@@ -5,6 +5,7 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
+* Put FORMAT into warning to help locate problems.
 * Port any relevant tests from vcfnp
 * PY2 compatibility
 

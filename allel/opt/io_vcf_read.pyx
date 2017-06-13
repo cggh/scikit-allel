@@ -38,6 +38,7 @@ from multiprocessing.pool import ThreadPool
 # for Windows compatibility
 cdef double NAN = np.nan
 
+# predefine useful characters
 cdef char TAB = b'\t'
 cdef char LF = b'\n'
 cdef char CR = b'\r'
@@ -58,14 +59,15 @@ REF_FIELD = 'variants/REF'
 ALT_FIELD = 'variants/ALT'
 QUAL_FIELD = 'variants/QUAL'
 
-ii8 = np.iinfo(np.int8)
-ii16 = np.iinfo(np.int16)
-ii32 = np.iinfo(np.int32)
-ii64 = np.iinfo(np.int64)
-iu8 = np.iinfo(np.uint8)
-iu16 = np.iinfo(np.uint16)
-iu32 = np.iinfo(np.uint32)
-iu64 = np.iinfo(np.uint64)
+# useful to lookup max int values
+II8 = np.iinfo(np.int8)
+II16 = np.iinfo(np.int16)
+II32 = np.iinfo(np.int32)
+II64 = np.iinfo(np.int64)
+IU8 = np.iinfo(np.uint8)
+IU16 = np.iinfo(np.uint16)
+IU32 = np.iinfo(np.uint32)
+IU64 = np.iinfo(np.uint64)
 
 
 ##########################################################################################
@@ -280,8 +282,6 @@ cdef class FileInputStream(InputStreamBase):
                 n_lines_read += 1
 
         return n_lines_read
-
-    # PYTHON API
 
     def readline(self):
         """Read characters up to end of line or end of file and return as Python bytes
@@ -1470,19 +1470,19 @@ cdef class VCFInfoParser(VCFFieldParserBase):
                 parser = VCFInfoInt64Parser(key, number=n, chunk_length=chunk_length,
                                             fill=fill)
             elif t == np.dtype('uint8'):
-                fill = fills.get(key, iu8.max)
+                fill = fills.get(key, IU8.max)
                 parser = VCFInfoUInt8Parser(key, number=n, chunk_length=chunk_length,
                                             fill=fill)
             elif t == np.dtype('uint16'):
-                fill = fills.get(key, iu16.max)
+                fill = fills.get(key, IU16.max)
                 parser = VCFInfoUInt16Parser(key, number=n, chunk_length=chunk_length,
                                              fill=fill)
             elif t == np.dtype('uint32'):
-                fill = fills.get(key, iu32.max)
+                fill = fills.get(key, IU32.max)
                 parser = VCFInfoUInt32Parser(key, number=n, chunk_length=chunk_length,
                                              fill=fill)
             elif t == np.dtype('uint64'):
-                fill = fills.get(key, iu64.max)
+                fill = fills.get(key, IU64.max)
                 parser = VCFInfoUInt64Parser(key, number=n, chunk_length=chunk_length,
                                              fill=fill)
             elif t == np.dtype('float32'):
@@ -1737,7 +1737,7 @@ cdef class VCFInfoUInt8Parser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint8'
-        kwargs.setdefault('fill', iu8.max)
+        kwargs.setdefault('fill', IU8.max)
         super(VCFInfoUInt8Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -1756,7 +1756,7 @@ cdef class VCFInfoUInt16Parser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint16'
-        kwargs.setdefault('fill', iu16.max)
+        kwargs.setdefault('fill', IU16.max)
         super(VCFInfoUInt16Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -1775,7 +1775,7 @@ cdef class VCFInfoUInt32Parser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint32'
-        kwargs.setdefault('fill', iu32.max)
+        kwargs.setdefault('fill', IU32.max)
         super(VCFInfoUInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -1794,7 +1794,7 @@ cdef class VCFInfoUInt64Parser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint64'
-        kwargs.setdefault('fill', iu64.max)
+        kwargs.setdefault('fill', IU64.max)
         super(VCFInfoUInt64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2128,8 +2128,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
         CharVector_terminate(&context.temp)
 
         # find format index
-        format_index = cstr_search_sorted(context.temp.data, self.formats_c,
-                                          self.n_formats)
+        format_index = cstr_search_sorted(context.temp.data, self.formats_c, self.n_formats)
 
         # add to vector of indices for the current variant
         IntVector_append(&context.variant_format_indices, format_index)
@@ -2190,13 +2189,13 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                 elif t == np.dtype('int64'):
                     parser = VCFGenotypeInt64Parser(key, number=n, fill=fills.get(key, -1), **kwds)
                 elif t == np.dtype('uint8'):
-                    parser = VCFGenotypeUInt8Parser(key, number=n, fill=fills.get(key, iu8.max), **kwds)
+                    parser = VCFGenotypeUInt8Parser(key, number=n, fill=fills.get(key, IU8.max), **kwds)
                 elif t == np.dtype('uint16'):
-                    parser = VCFGenotypeUInt16Parser(key, number=n, fill=fills.get(key, iu16.max), **kwds)
+                    parser = VCFGenotypeUInt16Parser(key, number=n, fill=fills.get(key, IU16.max), **kwds)
                 elif t == np.dtype('uint32'):
-                    parser = VCFGenotypeUInt32Parser(key, number=n, fill=fills.get(key, iu32.max), **kwds)
+                    parser = VCFGenotypeUInt32Parser(key, number=n, fill=fills.get(key, IU32.max), **kwds)
                 elif t == np.dtype('uint64'):
-                    parser = VCFGenotypeUInt64Parser(key, number=n, fill=fills.get(key, iu64.max), **kwds)
+                    parser = VCFGenotypeUInt64Parser(key, number=n, fill=fills.get(key, IU64.max), **kwds)
                 else:
                     warnings.warn('type %r not supported for genotype field %r, field will be skipped' % (t, key))
                     parser = self.skip_parser
@@ -2234,13 +2233,13 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
             elif key == b'GT' and t == np.dtype('int64'):
                 parser = VCFGenotypeInt64Parser(key, number=n, fill=fills.get(key, -1), **kwds)
             elif key == b'GT' and t == np.dtype('uint8'):
-                parser = VCFGenotypeUInt8Parser(key, number=n, fill=fills.get(key, iu8.max), **kwds)
+                parser = VCFGenotypeUInt8Parser(key, number=n, fill=fills.get(key, IU8.max), **kwds)
             elif key == b'GT' and t == np.dtype('uint16'):
-                parser = VCFGenotypeUInt16Parser(key, number=n, fill=fills.get(key, iu16.max), **kwds)
+                parser = VCFGenotypeUInt16Parser(key, number=n, fill=fills.get(key, IU16.max), **kwds)
             elif key == b'GT' and t == np.dtype('uint32'):
-                parser = VCFGenotypeUInt32Parser(key, number=n, fill=fills.get(key, iu32.max), **kwds)
+                parser = VCFGenotypeUInt32Parser(key, number=n, fill=fills.get(key, IU32.max), **kwds)
             elif key == b'GT' and t == np.dtype('uint64'):
-                parser = VCFGenotypeUInt64Parser(key, number=n, fill=fills.get(key, iu64.max), **kwds)
+                parser = VCFGenotypeUInt64Parser(key, number=n, fill=fills.get(key, IU64.max), **kwds)
 
             # all other calldata
             elif t == np.dtype('int8'):
@@ -2252,13 +2251,13 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
             elif t == np.dtype('int64'):
                 parser = VCFCallDataInt64Parser(key, number=n, fill=fills.get(key, -1), **kwds)
             elif t == np.dtype('uint8'):
-                parser = VCFCallDataUInt8Parser(key, number=n, fill=fills.get(key, iu8.max), **kwds)
+                parser = VCFCallDataUInt8Parser(key, number=n, fill=fills.get(key, IU8.max), **kwds)
             elif t == np.dtype('uint16'):
-                parser = VCFCallDataUInt16Parser(key, number=n, fill=fills.get(key, iu16.max), **kwds)
+                parser = VCFCallDataUInt16Parser(key, number=n, fill=fills.get(key, IU16.max), **kwds)
             elif t == np.dtype('uint32'):
-                parser = VCFCallDataUInt32Parser(key, number=n, fill=fills.get(key, iu32.max), **kwds)
+                parser = VCFCallDataUInt32Parser(key, number=n, fill=fills.get(key, IU32.max), **kwds)
             elif t == np.dtype('uint64'):
-                parser = VCFCallDataUInt64Parser(key, number=n, fill=fills.get(key, iu64.max), **kwds)
+                parser = VCFCallDataUInt64Parser(key, number=n, fill=fills.get(key, IU64.max), **kwds)
             elif t == np.dtype('float32'):
                 parser = VCFCallDataFloat32Parser(key, number=n, fill=fills.get(key, NAN), **kwds)
             elif t == np.dtype('float64'):
@@ -2506,7 +2505,7 @@ cdef class VCFGenotypeUInt8Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint8'
-        kwargs.setdefault('fill', iu8.max)
+        kwargs.setdefault('fill', IU8.max)
         super(VCFGenotypeUInt8Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2526,7 +2525,7 @@ cdef class VCFGenotypeUInt16Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint16'
-        kwargs.setdefault('fill', iu16.max)
+        kwargs.setdefault('fill', IU16.max)
         super(VCFGenotypeUInt16Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2546,7 +2545,7 @@ cdef class VCFGenotypeUInt32Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint32'
-        kwargs.setdefault('fill', iu32.max)
+        kwargs.setdefault('fill', IU32.max)
         super(VCFGenotypeUInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2566,7 +2565,7 @@ cdef class VCFGenotypeUInt64Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint64'
-        kwargs.setdefault('fill', iu64.max)
+        kwargs.setdefault('fill', IU64.max)
         super(VCFGenotypeUInt64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2910,7 +2909,7 @@ cdef class VCFCallDataUInt8Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint8'
-        kwargs.setdefault('fill', iu8.max)
+        kwargs.setdefault('fill', IU8.max)
         super(VCFCallDataUInt8Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2929,7 +2928,7 @@ cdef class VCFCallDataUInt16Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint16'
-        kwargs.setdefault('fill', iu16.max)
+        kwargs.setdefault('fill', IU16.max)
         super(VCFCallDataUInt16Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2948,7 +2947,7 @@ cdef class VCFCallDataUInt32Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint32'
-        kwargs.setdefault('fill', iu32.max)
+        kwargs.setdefault('fill', IU32.max)
         super(VCFCallDataUInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -2967,7 +2966,7 @@ cdef class VCFCallDataUInt64Parser(VCFCallDataParserBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['dtype'] = 'uint64'
-        kwargs.setdefault('fill', iu64.max)
+        kwargs.setdefault('fill', IU64.max)
         super(VCFCallDataUInt64Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
