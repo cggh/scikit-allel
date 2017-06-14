@@ -1249,6 +1249,27 @@ def test_warnings():
             read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
 
 
+def test_extra_samples():
+    # more calldata samples than samples declared in header
+    path = 'fixture/test48b.vcf'
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t.\tGT:GQ\t0/0:34\t0/1:45\t1/1:56\t1/2:99\t2/3:101\n")
+
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='error')
+        with assert_raises(UserWarning):
+            read_vcf(path)
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
+
+    # try again without raising warnings to check data
+    callset = read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
+    eq_((1, 4, 2), callset['calldata/GT'].shape)
+    callset = read_vcf(path)
+    eq_((9, 2, 2), callset['calldata/GT'].shape)
+
+
 # noinspection PyTypeChecker
 def test_no_samples():
 
@@ -1351,3 +1372,26 @@ def test_region_truncate():
         pos = callset['variants/POS']
         eq_(2, pos.shape[0])
         assert_array_equal([20, 30], pos)
+
+
+def test_errors():
+
+    # try to open a directory
+    path = '.'
+    with assert_raises(IsADirectoryError):
+        read_vcf(path)
+
+    # try to open a file that doesn't exist
+    path = 'doesnotexist.vcf'
+    with assert_raises(FileNotFoundError):
+        read_vcf(path)
+
+    # try to open a file that doesn't exist
+    path = 'doesnotexist.vcf.gz'
+    with assert_raises(FileNotFoundError):
+        read_vcf(path)
+
+    # file is nothing like a VCF (has no header)
+    path = 'fixture/test48a.vcf'
+    with assert_raises(RuntimeError):
+        read_vcf(path)

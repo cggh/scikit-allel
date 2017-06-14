@@ -403,15 +403,15 @@ cdef class VCFContext:
         CharVector_free(&self.chrom)
 
 
-def check_samples(samples, headers):
+def check_samples(loc_samples, headers):
     n_samples = len(headers.samples)
-    if samples is None:
-        samples = np.ones(n_samples, dtype='u1')
+    if loc_samples is None:
+        loc_samples = np.ones(n_samples, dtype='u1')
     else:
         # assume samples is already a boolean indexing array
-        samples = samples.view('u1')
-        assert samples.shape[0] == n_samples
-    return samples
+        loc_samples = loc_samples.view('u1')
+        assert loc_samples.shape[0] == n_samples
+    return loc_samples
 
 
 cdef class VCFChunkIterator:
@@ -430,7 +430,7 @@ cdef class VCFChunkIterator:
                  numbers,
                  fills,
                  region,
-                 samples):
+                 loc_samples):
 
         # store reference to input stream
         self.stream = stream
@@ -440,9 +440,9 @@ cdef class VCFChunkIterator:
         self.context = VCFContext(headers, fields)
 
         # setup parser
-        samples = check_samples(samples, headers)
+        loc_samples = check_samples(loc_samples, headers)
         self.parser = VCFParser(fields=fields, types=types, numbers=numbers,
-                                chunk_length=chunk_length, samples=samples,
+                                chunk_length=chunk_length, loc_samples=loc_samples,
                                 fills=fills, region=region)
 
     def __iter__(self):
@@ -478,7 +478,7 @@ cdef class VCFParser:
 
     cdef:
         int chunk_length
-        np.uint8_t[:] samples
+        np.uint8_t[:] loc_samples
         VCFFieldParserBase chrom_pos_parser
         VCFFieldParserBase id_parser
         VCFFieldParserBase ref_parser
@@ -492,9 +492,9 @@ cdef class VCFParser:
         int region_begin
         int region_end
 
-    def __init__(self, fields, types, numbers, chunk_length, samples, fills, region):
+    def __init__(self, fields, types, numbers, chunk_length, loc_samples, fills, region):
         self.chunk_length = chunk_length
-        self.samples = samples
+        self.loc_samples = loc_samples
 
         # handle region
         self._init_region(region)
@@ -682,7 +682,7 @@ cdef class VCFParser:
                                                 types=format_types,
                                                 numbers=format_numbers,
                                                 chunk_length=self.chunk_length,
-                                                samples=self.samples,
+                                                loc_samples=self.loc_samples,
                                                 fills=format_fills)
         else:
             format_parser = VCFSkipFieldParser(key=b'FORMAT')
@@ -2162,13 +2162,13 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
         tuple parsers
         PyObject** parsers_c
         VCFCallDataParserBase skip_parser
-        np.uint8_t[:] samples
+        np.uint8_t[:] loc_samples
         int n_samples_out
 
-    def __cinit__(self, formats, types, numbers, chunk_length, samples, fills):
+    def __cinit__(self, formats, types, numbers, chunk_length, loc_samples, fills):
         self.chunk_length = chunk_length
-        self.samples = samples
-        self.n_samples_out = np.count_nonzero(np.asarray(samples))
+        self.loc_samples = loc_samples
+        self.n_samples_out = np.count_nonzero(loc_samples)
 
         # setup formats
         self.formats = tuple(sorted(formats))
@@ -2283,7 +2283,7 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
         for i in range(self.n_formats):
             self.parsers_c[i] = <PyObject*> self.parsers[i]
 
-    def __init__(self, formats, types, numbers, chunk_length, samples, fills):
+    def __init__(self, formats, types, numbers, chunk_length, loc_samples, fills):
         super(VCFCallDataParser, self).__init__(chunk_length=chunk_length)
 
     def __dealloc__(self):
@@ -2301,7 +2301,7 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
         context.sample_field_index = 0
 
         # setup output indexing
-        if self.samples[0]:
+        if self.loc_samples[0]:
             context.sample_output_index += 1
         else:
             # skip to next sample
@@ -2322,15 +2322,15 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                 stream.advance()
                 context.sample_index += 1
                 context.sample_field_index = 0
-                if self.samples[context.sample_index]:
+                if self.loc_samples[context.sample_index]:
                     context.sample_output_index += 1
                 else:
                     # skip to next sample
                     while stream.c != 0 and stream.c != LF and stream.c != CR and stream.c != TAB:
                         stream.advance()
 
-            elif context.sample_index >= self.samples.shape[0]:
-                # more samples than we expected, skip to EOL
+            elif context.sample_index >= self.loc_samples.shape[0]:
+                warn('more samples than given in header', context)
                 while stream.c != 0 and stream.c != LF and stream.c != CR:
                     stream.advance()
 
@@ -3388,7 +3388,7 @@ cdef class VCFParallelChunkIterator:
     def __cinit__(self,
                   FileInputStream stream,
                   int chunk_length, int block_length, int n_threads,
-                  headers, fields, types, numbers, fills, region, samples):
+                  headers, fields, types, numbers, fills, region, loc_samples):
 
         fields = sorted(fields)
         self.stream = stream
@@ -3403,9 +3403,9 @@ cdef class VCFParallelChunkIterator:
         self.block_length = min(block_length, chunk_length//self.n_workers)
         if self.block_length < 1:
             self.block_length = 1
-        samples = check_samples(samples, headers)
+        loc_samples = check_samples(loc_samples, headers)
         self.parser = VCFParser(
-            fields=fields, types=types, numbers=numbers, chunk_length=chunk_length, samples=samples, fills=fills,
+            fields=fields, types=types, numbers=numbers, chunk_length=chunk_length, loc_samples=loc_samples, fills=fills,
             region=region
         )
         self.chunk_index = -1

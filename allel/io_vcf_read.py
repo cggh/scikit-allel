@@ -1393,13 +1393,13 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length,
     if n_threads is None:
         chunks = VCFChunkIterator(
             stream, chunk_length=chunk_length, headers=headers, fields=fields, types=types, numbers=numbers,
-            fills=fills, region=region, samples=loc_samples
+            fills=fills, region=region, loc_samples=loc_samples
         )
     else:
         # noinspection PyArgumentList
         chunks = VCFParallelChunkIterator(
             stream, chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, headers=headers,
-            fields=fields, types=types, numbers=numbers, fills=fills, region=region, samples=loc_samples
+            fields=fields, types=types, numbers=numbers, fills=fills, region=region, loc_samples=loc_samples
         )
 
     return samples, headers, chunks
