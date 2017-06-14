@@ -1440,6 +1440,8 @@ def _read_vcf_headers(stream):
                 warnings.warn('invalid FILTER header: %r' % header)
             else:
                 k, d = match.groups()
+                if k in filters:
+                    warnings.warn('multiple FILTER headers for %r' % k)
                 filters[k] = {'ID': k, 'Description': d}
 
         elif header.startswith('##INFO'):
@@ -1449,6 +1451,8 @@ def _read_vcf_headers(stream):
                 warnings.warn('invalid INFO header: %r' % header)
             else:
                 k, n, t, d = match.groups()
+                if k in infos:
+                    warnings.warn('multiple INFO headers for %r' % k)
                 infos[k] = {'ID': k, 'Number': n, 'Type': t, 'Description': d}
 
         elif header.startswith('##FORMAT'):
@@ -1458,6 +1462,8 @@ def _read_vcf_headers(stream):
                 warnings.warn('invalid FORMAT header: %r' % header)
             else:
                 k, n, t, d = match.groups()
+                if k in formats:
+                    warnings.warn('multiple FORMAT headers for %r' % k)
                 formats[k] = {'ID': k, 'Number': n, 'Type': t, 'Description': d}
 
         elif header.startswith('#CHROM'):

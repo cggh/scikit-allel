@@ -1426,3 +1426,57 @@ def test_errors():
     path = 'fixture/test48a.vcf'
     with assert_raises(RuntimeError):
         read_vcf(path)
+
+
+def test_dup_headers():
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action='error')
+
+        # dup FILTER
+        input_data = b"""##fileformat=VCFv4.1
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=ZZ,Number=1,Type=String,Description="ZZ">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test1	test2	test3	test4
+chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
+chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
+chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
+"""
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
+
+        # dup INFO
+        input_data = b"""##fileformat=VCFv4.1
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=ZZ,Number=1,Type=String,Description="ZZ">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test1	test2	test3	test4
+chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
+chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
+chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
+"""
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
+
+        # dup FORMAT
+        input_data = b"""##fileformat=VCFv4.1
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=ZZ,Number=1,Type=String,Description="ZZ">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test1	test2	test3	test4
+chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
+chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
+chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
+"""
+        with assert_raises(UserWarning):
+            read_vcf(io.BytesIO(input_data))
