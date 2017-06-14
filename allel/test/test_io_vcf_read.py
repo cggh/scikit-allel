@@ -1480,3 +1480,12 @@ chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
         with assert_raises(UserWarning):
             read_vcf(io.BytesIO(input_data))
+
+
+def test_override_vcf_type():
+    fn = 'fixture/test4.vcf'
+    callset = read_vcf(fn, fields=['MQ0FractionTest'])
+    eq_(0, callset['variants/MQ0FractionTest'][2])
+    callset = read_vcf(fn, fields=['MQ0FractionTest'],
+                       types={'MQ0FractionTest': 'Float'})
+    assert_almost_equal(0.03, callset['variants/MQ0FractionTest'][2], places=6)
