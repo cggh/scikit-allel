@@ -1489,3 +1489,17 @@ def test_override_vcf_type():
     callset = read_vcf(fn, fields=['MQ0FractionTest'],
                        types={'MQ0FractionTest': 'Float'})
     assert_almost_equal(0.03, callset['variants/MQ0FractionTest'][2], places=6)
+
+
+def test_calldata_cleared():
+    fn = 'fixture/test32.vcf'
+    callset = read_vcf(fn, fields=['calldata/GT', 'calldata/DP', 'calldata/GQ'])
+    gt = callset['calldata/GT']
+    dp = callset['calldata/DP']
+    gq = callset['calldata/GQ']
+    eq_((0, 0), tuple(gt[0, 3]))
+    eq_(8, dp[0, 3])
+    eq_(3, gq[0, 3])
+    eq_((-1, -1), tuple(gt[1, 3]))
+    eq_(-1, dp[1, 3])
+    eq_(-1, gq[1, 3])
