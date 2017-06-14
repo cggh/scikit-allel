@@ -1527,3 +1527,14 @@ def test_calldata_cleared():
     eq_((-1, -1), tuple(gt[1, 3]))
     eq_(-1, dp[1, 3])
     eq_(-1, gq[1, 3])
+
+
+def test_calldata_quirks():
+    fn = 'fixture/test1.vcf'
+    callset = read_vcf(fn, fields=['AD', 'GT'], numbers={'AD': 2})
+    gt = callset['calldata/GT']
+    ad = callset['calldata/AD']
+    e = np.array([[-1, -1], [0, -1], [1, -1]])
+    assert_array_equal(e, gt[:, 1])
+    e = np.array([[1, 0], [1, 0], [1, 0]])
+    assert_array_equal(e, ad[:, 1])
