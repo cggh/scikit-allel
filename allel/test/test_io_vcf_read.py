@@ -1342,3 +1342,12 @@ def test_genotype_ac():
         a = callset['calldata/GT']
         eq_(e.dtype, a.dtype)
         assert_array_equal(e, a)
+
+
+def test_region_truncate():
+    fn = 'fixture/test54.vcf.gz'
+    for tabix in 'tabix', None:
+        callset = read_vcf(fn, region='chr1:10-100', tabix=tabix)
+        pos = callset['variants/POS']
+        eq_(2, pos.shape[0])
+        assert_array_equal([20, 30], pos)

@@ -135,7 +135,11 @@ _doc_param_fills = \
 _doc_param_region = \
     """Genomic region to extract variants for. If provided, should be a tabix-style region string,
         which can be either just a chromosome name (e.g., '2L'), or a chromosome name followed by
-        1-based beginning and end coordinates (e.g., '2L:100000-200000')."""
+        1-based beginning and end coordinates (e.g., '2L:100000-200000'). Note that only variants
+        whose start position (POS) is within the request range will be included. This is slightly
+        different from the default tabix behaviour, where a variant (e.g., deletion) may be included
+        if its position (POS) occurs before the requested region but its reference allele overlaps the
+        region - such a variant will *not* be included in the data returned by this function."""
 
 _doc_param_tabix = \
     """Name or path to tabix executable. Only required if `region` is given. Setting `tabix` to
@@ -890,7 +894,9 @@ def iter_vcf_chunks(input_path,
                     err = p.stderr.read(-1)
                     raise Exception(str(err, 'ascii').strip())
                 fileobj = p.stdout
-                region = None
+                # N.B., still pass the region parameter through so we get strictly only
+                # variants that start within the requested region. See also
+                # https://github.com/alimanfoo/vcfnp/issues/54
 
             except FileNotFoundError:
                 # no tabix, fall back to scanning
@@ -922,7 +928,7 @@ def iter_vcf_chunks(input_path,
     kwds['region'] = region
 
     # setup iterator
-    samples, headers, it = _read_vcf(stream, **kwds)
+    samples, headers, it = _iter_vcf_stream(stream, **kwds)
 
     # setup transformers
     if transformers is not None:
@@ -1141,8 +1147,8 @@ default_types = {
     'variants/CHROM': 'S12',
     'variants/POS': 'i4',
     'variants/ID': 'S12',
-    'variants/REF': 'S1',
-    'variants/ALT': 'S1',
+    'variants/REF': 'S30',
+    'variants/ALT': 'S30',
     'variants/QUAL': 'f4',
     'variants/DP': 'i4',
     'variants/AN': 'i4',
@@ -1352,8 +1358,8 @@ def _normalize_samples(samples, headers):
     return normed_samples, loc_samples
 
 
-def _read_vcf(stream, fields, types, numbers, chunk_length, block_length, n_threads,
-              fills, region, samples):
+def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length, n_threads,
+                     fills, region, samples):
 
     # read VCF headers
     headers = _read_vcf_headers(stream)
