@@ -1015,13 +1015,13 @@ def _check_field(field, headers):
             if filter_name in headers.filters:
                 return
             else:
-                warnings.warn('FILTER not declared in header: %r' % filter_name)
+                warnings.warn('%r FILTER not declared in header' % filter_name)
 
         elif name in headers.infos:
             return
 
         else:
-            warnings.warn('INFO not declared in header: %r' % name)
+            warnings.warn('%r INFO not declared in header' % name)
 
     elif group == 'calldata':
 
@@ -1029,7 +1029,7 @@ def _check_field(field, headers):
             return
 
         else:
-            warnings.warn('FORMAT not declared in header: %r' % name)
+            warnings.warn('%r FORMAT not declared in header' % name)
 
     else:
         # should never be reached
@@ -1202,7 +1202,7 @@ def _normalize_types(types, fields, headers):
             else:
                 # fall back to string
                 normed_types[f] = _normalize_type('String')
-                warnings.warn('could not determine type for field %r, falling back to %s' %
+                warnings.warn('no type for field %r, assuming %s' %
                               (f, normed_types[f]))
 
         elif group == 'calldata':
@@ -1213,7 +1213,7 @@ def _normalize_types(types, fields, headers):
             else:
                 # fall back to string
                 normed_types[f] = _normalize_type('String')
-                warnings.warn('could not determine type for field %r, falling back to %s' %
+                warnings.warn('no type for field %r, assuming %s' %
                               (f, normed_types[f]))
 
         else:
@@ -1297,7 +1297,7 @@ def _normalize_numbers(numbers, fields, headers):
             else:
                 # fall back to 1
                 normed_numbers[f] = 1
-                warnings.warn('could not determine number for field %r, falling back to 1' % f)
+                warnings.warn('no number for field %r, assuming 1' % f)
 
         elif group == 'calldata':
 
@@ -1307,7 +1307,7 @@ def _normalize_numbers(numbers, fields, headers):
             else:
                 # fall back to 1
                 normed_numbers[f] = 1
-                warnings.warn('could not determine number for field %r, falling back to 1' % f)
+                warnings.warn('no number for field %r, assuming 1' % f)
 
         else:
             raise RuntimeError('unpected field: %r' % f)
@@ -1353,7 +1353,7 @@ def _normalize_samples(samples, headers):
                 samples.remove(s)
                 loc_samples[i] = 1
         if samples:
-            warnings.warn('samples not found, will be ignored: ' + ', '.join(map(repr, sorted(samples))))
+            warnings.warn('some samples not found, will be ignored: ' + ', '.join(map(repr, sorted(samples))))
 
     return normed_samples, loc_samples
 

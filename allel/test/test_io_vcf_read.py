@@ -1260,6 +1260,26 @@ def test_warnings():
             read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
 
 
+def test_missing_headers():
+    fn = 'fixture/test14.vcf'
+
+    # INFO DP not declared
+    callset = read_vcf(fn, fields=['DP'], types={'DP': 'String'})
+    a = callset['variants/DP']
+    eq_(b'14', a[2])  # default type is string
+    callset = read_vcf(fn, fields=['DP'], types={'DP': 'Integer'})
+    a = callset['variants/DP']
+    eq_(14, a[2])
+    # what about a field which isn't present at all?
+    callset = read_vcf(fn, fields=['FOO'])
+    eq_(b'', callset['variants/FOO'][2])  # default missing value for string field
+
+    # FORMAT field DP not declared in VCF header
+    callset = read_vcf(fn, fields=['calldata/DP'],
+                       types={'calldata/DP': 'Integer'})
+    eq_(1, callset['calldata/DP'][2, 0])
+
+
 def test_extra_samples():
     # more calldata samples than samples declared in header
     path = 'fixture/test48b.vcf'
