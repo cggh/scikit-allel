@@ -90,7 +90,7 @@ def test_read_vcf_chunks():
 
 def test_fields_all():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='*', chunk_length=4, buffer_size=100)
+    callset = read_vcf(fn, fields='*')
     expected_fields = [
         'samples',
         # fixed fields
@@ -126,7 +126,7 @@ def test_fields_all():
 
 def test_fields_default():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, chunk_length=3, buffer_size=30)
+    callset = read_vcf(fn)
     expected_fields = [
         'samples',
         'variants/CHROM',
@@ -143,7 +143,7 @@ def test_fields_default():
 
 def test_fields_all_variants():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='variants/*', chunk_length=2, buffer_size=20)
+    callset = read_vcf(fn, fields='variants/*')
     expected_fields = [
         # fixed fields
         'variants/CHROM',
@@ -173,7 +173,7 @@ def test_fields_all_variants():
 
 def test_fields_info():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='INFO', chunk_length=5, buffer_size=10)
+    callset = read_vcf(fn, fields='INFO')
     expected_fields = [
         # INFO fields
         'variants/AA',
@@ -190,18 +190,30 @@ def test_fields_info():
 
 def test_fields_filter():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='FILTER', chunk_length=1, buffer_size=2)
+    callset1 = read_vcf(fn, fields='FILTER')
     expected_fields = [
         'variants/FILTER_PASS',
         'variants/FILTER_q10',
         'variants/FILTER_s50',
     ]
-    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+    assert_list_equal(sorted(expected_fields), sorted(callset1.keys()))
+
+    # this has explicit PASS definition in header, shouldn't cause problems
+    fn = 'fixture/test16.vcf'
+    callset2 = read_vcf(fn, fields='FILTER')
+    expected_fields = [
+        'variants/FILTER_PASS',
+        'variants/FILTER_q10',
+        'variants/FILTER_s50',
+    ]
+    assert_list_equal(sorted(expected_fields), sorted(callset2.keys()))
+    for k in callset1.keys():
+        assert_array_equal(callset1[k], callset2[k])
 
 
 def test_fields_all_calldata():
     fn = 'fixture/sample.vcf'
-    callset = read_vcf(fn, fields='calldata/*', chunk_length=6, buffer_size=1000)
+    callset = read_vcf(fn, fields='calldata/*')
     expected_fields = [
         'calldata/GT',
         'calldata/GQ',
@@ -216,8 +228,7 @@ def test_fields_selected():
 
     # without samples
     callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
-                                   'calldata/HQ', 'FILTER_q10', 'variants/numalt'],
-                       chunk_length=4, buffer_size=100)
+                                   'calldata/HQ', 'FILTER_q10', 'variants/numalt'])
     expected_fields = [
         'variants/CHROM',
         'variants/POS',
