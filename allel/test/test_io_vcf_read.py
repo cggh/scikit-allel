@@ -5,6 +5,7 @@ import os
 import shutil
 import itertools
 import gzip
+import warnings
 
 
 import zarr
@@ -13,7 +14,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
 from allel.io_vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
-    vcf_to_npz, debug, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
+    vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
 
 
 def test_read_vcf_chunks():
@@ -300,9 +301,6 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     eq_(False, callset['variants/FILTER_PASS'][3])
     eq_((9,), callset['variants/FILTER_q10'].shape)
     eq_(True, callset['variants/FILTER_q10'][3])
-    # TODO special fields
-    # eq_(2, callset['variants/num_alleles'][0])
-    # eq_(False, callset['variants/is_snp'][5])
 
     # INFO fields
     eq_(3, callset['variants/NS'][2])
@@ -939,8 +937,6 @@ def test_read_region():
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
-        # debug(chrom)
-        # debug(pos)
         eq_(2, len(chrom))
         assert np.all(chrom == b'19')
         eq_(2, len(pos))
@@ -1151,115 +1147,117 @@ def test_format_inconsistencies():
 
 # noinspection PyTypeChecker
 def test_warnings():
-    import warnings
-    with warnings.catch_warnings():
-        warnings.filterwarnings(action='error')
 
-        # empty CHROM
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"\t12\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
+    warnings.resetwarnings()
+    warnings.simplefilter('error')
 
-        # empty POS
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
-
-        # dodgy POS
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\taaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
-
-        # dodgy POS
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12aaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
-
-        # dodgy QUAL
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\taaa\t.\t.\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
-
-        # dodgy QUAL
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t1.2aaa\t.\t.\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
-
-        # empty QUAL - no warning
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\t.\n")
+    # empty CHROM
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"\t12\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
-        # empty FILTER - no warning
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\n")
+    # empty POS
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
-        # empty INFO - no warning
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\n")
+    # dodgy POS
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\taaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
-        # empty FORMAT - no warning
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\n")
+    # dodgy POS
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12aaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
-        # dodgy calldata (integer)
-        input_data = (b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-                      b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\taa/bb\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
+    # dodgy QUAL
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\taaa\t.\t.\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data))
 
-        # dodgy calldata (integer)
-        input_data = (b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-                      b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\t12aa/22\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
+    # dodgy QUAL
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t1.2aaa\t.\t.\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data))
 
-        # dodgy calldata (float)
-        input_data = (b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
-                      b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\taaa\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
+    # empty QUAL - no warning
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\t.\n")
+    read_vcf(io.BytesIO(input_data))
 
-        # dodgy calldata (float)
-        input_data = (b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
-                      b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\t34.5aaa\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
+    # empty FILTER - no warning
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\n")
+    read_vcf(io.BytesIO(input_data))
 
-        # dodgy INFO (missing key)
-        input_data = (b'##INFO=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
-                      b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\t.\t.\t.\t.\t.\tfoo=qux;MQ=12\t.\t.\t.\t.\t.\n"
-                      b"2L\t34\t.\t.\t.\t.\t.\tfoo=bar;=34;baz\t.\t.\t.\t.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['variants/MQ'])
+    # empty INFO - no warning
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\n")
+    read_vcf(io.BytesIO(input_data))
 
-        # INFO not declared in header
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['variants/foo'])
+    # empty FORMAT - no warning
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\n")
+    read_vcf(io.BytesIO(input_data))
 
-        # FORMAT not declared in header
-        input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                      b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
+    # dodgy calldata (integer)
+    input_data = (b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\taa/bb\t.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
+
+    # dodgy calldata (integer)
+    input_data = (b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\t12aa/22\t.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
+
+    # dodgy calldata (float)
+    input_data = (b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
+                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\taaa\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
+
+    # dodgy calldata (float)
+    input_data = (b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
+                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\t34.5aaa\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
+
+    # dodgy INFO (missing key)
+    input_data = (b'##INFO=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
+                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\t.\t.\t.\t.\t.\tfoo=qux;MQ=12\t.\t.\t.\t.\t.\n"
+                  b"2L\t34\t.\t.\t.\t.\t.\tfoo=bar;=34;baz\t.\t.\t.\t.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['variants/MQ'])
+
+    # INFO not declared in header
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['variants/foo'])
+
+    # FORMAT not declared in header
+    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+                  b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
+
+    warnings.resetwarnings()
 
 
 def test_missing_headers():
@@ -1288,14 +1286,14 @@ def test_extra_samples():
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
                   b"2L\t12\t.\t.\t.\t.\t.\t.\tGT:GQ\t0/0:34\t0/1:45\t1/1:56\t1/2:99\t2/3:101\n")
 
-    import warnings
-    with warnings.catch_warnings():
-        warnings.filterwarnings(action='error')
-        with assert_raises(UserWarning):
-            read_vcf(path)
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
+    warnings.resetwarnings()
+    warnings.simplefilter('error')
+    with assert_raises(UserWarning):
+        read_vcf(path)
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
 
+    warnings.resetwarnings()
     # try again without raising warnings to check data
     callset = read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
     eq_((1, 4, 2), callset['calldata/GT'].shape)
@@ -1442,12 +1440,12 @@ def test_errors():
 
 
 def test_dup_headers():
-    import warnings
-    with warnings.catch_warnings():
-        warnings.filterwarnings(action='error')
 
-        # dup FILTER
-        input_data = b"""##fileformat=VCFv4.1
+    warnings.resetwarnings()
+    warnings.simplefilter('error')
+
+    # dup FILTER
+    input_data = b"""##fileformat=VCFv4.1
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data">
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
@@ -1459,11 +1457,11 @@ chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
 chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
 chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data))
 
-        # dup INFO
-        input_data = b"""##fileformat=VCFv4.1
+    # dup INFO
+    input_data = b"""##fileformat=VCFv4.1
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
@@ -1475,11 +1473,11 @@ chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
 chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
 chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data))
 
-        # dup FORMAT
-        input_data = b"""##fileformat=VCFv4.1
+    # dup FORMAT
+    input_data = b"""##fileformat=VCFv4.1
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
@@ -1491,8 +1489,10 @@ chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
 chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
 chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
-        with assert_raises(UserWarning):
-            read_vcf(io.BytesIO(input_data))
+    with assert_raises(UserWarning):
+        read_vcf(io.BytesIO(input_data))
+
+    warnings.resetwarnings()
 
 
 def test_override_vcf_type():

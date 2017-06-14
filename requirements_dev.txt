@@ -1,8 +1,0 @@
-cython
-numpydoc
-flake8
-psutil
-memory-profiler
-humanize
-mock
-twine

@@ -16,6 +16,7 @@ from . import stats
 from .stats import *
 from . import plot
 from . import io
+from .io import *
 from . import chunked
 from . import constants
 from . import util

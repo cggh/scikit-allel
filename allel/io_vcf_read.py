@@ -5,11 +5,11 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
-* vcf_to_recarray
+* PY2 compatibility
 * GenotypeArray.from_vcf
 * HaplotypeArray.from_vcf(ploidy)
 * VariantTable.from_vcf
-* PY2 compatibility
+* svlen handle missing alt?
 
 WONTFIX:
 
@@ -30,7 +30,9 @@ import warnings
 
 import numpy as np
 
+
 # noinspection PyUnresolvedReferences
+from allel.compat import text_type
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
     VCFParallelChunkIterator, ANNTransformer
 
@@ -84,7 +86,7 @@ def _chunk_iter_progress(it, log, prefix):
         n_variants += chunk_length
         print('%s %s rows in %.2fs; chunk in %.2fs (%s rows/s); %s:%s' %
               (prefix, n_variants, elapsed, elapsed_chunk,
-               int(chunk_length//elapsed_chunk), str(chrom, 'ascii'), pos),
+               int(chunk_length//elapsed_chunk), text_type(chrom, 'ascii'), pos),
               file=log)
         log.flush()
         yield chunk, chunk_length, chrom, pos
@@ -879,6 +881,7 @@ def iter_vcf_chunks(input,
                 n_threads=n_threads, fills=fills, samples=samples)
 
     # obtain a file-like object
+    close = False
     if isinstance(input, str) and input.endswith('gz'):
 
         if region and tabix and os.name != 'nt':
@@ -895,7 +898,7 @@ def iter_vcf_chunks(input,
                 poll = p.poll()
                 if poll is not None and poll > 0:
                     err = p.stderr.read(-1)
-                    raise Exception(str(err, 'ascii').strip())
+                    raise Exception(text_type(err, 'ascii').strip())
                 fileobj = p.stdout
                 # N.B., still pass the region parameter through so we get strictly only
                 # variants that start within the requested region. See also
@@ -905,18 +908,22 @@ def iter_vcf_chunks(input,
                 # no tabix, fall back to scanning
                 warnings.warn('tabix not found, falling back to scanning to region')
                 fileobj = gzip.open(input, mode='rb')
+                close = True
 
             except Exception as e:
                 warnings.warn('error occurred attempting tabix (%s); falling back to '
                               'scanning to region' % e)
                 fileobj = gzip.open(input, mode='rb')
+                close = True
 
         else:
             fileobj = gzip.open(input, mode='rb')
+            close = True
 
     elif isinstance(input, str):
         # assume no compression
         fileobj = open(input, mode='rb', buffering=0)
+        close = True
 
     elif hasattr(input, 'readinto'):
         fileobj = input
@@ -925,7 +932,7 @@ def iter_vcf_chunks(input,
         raise ValueError('path must be string or file-like, found %r' % input)
 
     # setup input stream
-    stream = FileInputStream(fileobj, buffer_size=buffer_size)
+    stream = FileInputStream(fileobj, buffer_size=buffer_size, close=close)
 
     # deal with region
     kwds['region'] = region
@@ -1439,7 +1446,7 @@ def _read_vcf_headers(stream):
     formats = dict()
 
     # read first header line
-    header = str(stream.readline(), 'ascii')
+    header = text_type(stream.readline(), 'ascii')
 
     while header and header[0] == '#':
 
@@ -1485,7 +1492,7 @@ def _read_vcf_headers(stream):
             break
 
         # read next header line
-        header = str(stream.readline(), 'ascii')
+        header = text_type(stream.readline(), 'ascii')
 
     # check if we saw the mandatory header line or not
     if samples is None:

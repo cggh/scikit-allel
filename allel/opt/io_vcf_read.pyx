@@ -1,4 +1,3 @@
-# cython: language_level=3
 # cython: linetrace=False
 # cython: profile=False
 # cython: binding=False
@@ -13,9 +12,9 @@
 # cython: profile=True
 # cython: binding=True
 """
+from __future__ import absolute_import, print_function, division
 
 
-import sys
 import warnings
 # noinspection PyUnresolvedReferences
 from cpython.bytes cimport PyBytes_AS_STRING, PyBytes_FromStringAndSize
@@ -29,6 +28,9 @@ from cpython.ref cimport PyObject
 cdef extern from "Python.h":
     char* PyByteArray_AS_STRING(object string)
 from multiprocessing.pool import ThreadPool
+
+
+from allel.compat import text_type
 
 
 #########################################################################################
@@ -208,16 +210,22 @@ cdef class FileInputStream(InputStreamBase):
         char* buffer_start
         char* buffer_end
         char* stream
+        bint close
 
-    def __init__(self, fileobj, buffer_size=2**14):
+    def __init__(self, fileobj, buffer_size=2**14, close=False):
         self.fileobj = fileobj
         self.buffer_size = buffer_size
         # initialise input buffer
         self.buffer = bytearray(buffer_size)
         self.buffer_start = PyByteArray_AS_STRING(self.buffer)
         self.stream = self.buffer_start
+        self.close = close
         self._bufferup()
         self.advance()
+
+    def __dealloc__(self):
+        if self.close:
+            self.fileobj.close()
 
     cdef int _bufferup(self) nogil except -1:
         """Read as many bytes as possible from the underlying file object into the
@@ -713,7 +721,8 @@ cdef class VCFParser:
                             stream.advance()
                     else:
                         # shouldn't ever happen
-                        warn('unexpected EOL character', context)
+                        with gil:
+                            warn('unexpected EOL character', context)
                         break
 
                     # advance state
@@ -753,7 +762,8 @@ cdef class VCFParser:
 
                 else:
                     # shouldn't ever happen
-                    warn('unexpected parser state', context)
+                    with gil:
+                        warn('unexpected parser state', context)
                     break
 
     cdef int malloc_chunk(self) except -1:
@@ -819,7 +829,7 @@ cdef class VCFFieldParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'variants/' + str(self.key, 'ascii')
+        field = 'variants/' + text_type(self.key, 'ascii')
         values = self.values
         if self.values.ndim > 1 and self.number == 1:
             values = values.squeeze(axis=1)
@@ -980,7 +990,8 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
         # read chrom
         vcf_read_field(stream, context, &context.chrom)
         if context.chrom.size == 0:
-            warn('empty CHROM', context)
+            with gil:
+                warn('empty CHROM', context)
         CharVector_terminate(&context.chrom)
 
         # read pos
@@ -989,7 +1000,8 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
             # read pos
             vcf_read_field(stream, context, &context.temp)
             if context.temp.size == 0:
-                warn('empty POS', context)
+                with gil:
+                    warn('empty POS', context)
             else:
                 vcf_strtol(&context.temp, context, &context.pos)
 
@@ -1275,7 +1287,7 @@ cdef class VCFAltParser(VCFFieldParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store_alt:
-            field = 'variants/' + str(self.key, 'ascii')
+            field = 'variants/' + text_type(self.key, 'ascii')
             values = self.values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
@@ -1419,7 +1431,7 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         for i, filter in enumerate(self.filters):
-            field = 'variants/FILTER_' + str(filter, 'ascii')
+            field = 'variants/FILTER_' + text_type(filter, 'ascii')
             chunk[field] = self.values[:limit, i]
 
 
@@ -1579,7 +1591,8 @@ cdef class VCFInfoParser(VCFFieldParserBase):
                 if context.info_key.size > 0:
                     self.parse_info(stream, context)
                 else:
-                    warn('missing INFO key', context)
+                    with gil:
+                        warn('missing INFO key', context)
                     self.skip_parser.parse(stream, context)
 
             else:
@@ -1651,7 +1664,7 @@ cdef class VCFInfoParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'variants/' + str(self.key, 'ascii')
+        field = 'variants/' + text_type(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=1)
@@ -1872,7 +1885,7 @@ cdef class VCFInfoFlagParser(VCFInfoParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         # override to view as bool array
-        field = 'variants/' + str(self.key, 'ascii')
+        field = 'variants/' + text_type(self.key, 'ascii')
         chunk[field] = self.values[:limit].view(bool)
 
     cdef int malloc_chunk(self) except -1:
@@ -2163,11 +2176,13 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
         PyObject** parsers_c
         VCFCallDataParserBase skip_parser
         np.uint8_t[:] loc_samples
+        int n_samples
         int n_samples_out
 
     def __cinit__(self, formats, types, numbers, chunk_length, loc_samples, fills):
         self.chunk_length = chunk_length
         self.loc_samples = loc_samples
+        self.n_samples = loc_samples.shape[0]
         self.n_samples_out = np.count_nonzero(loc_samples)
 
         # setup formats
@@ -2183,7 +2198,7 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
             n = numbers[key]
 
             # special handling of "genotype" dtypes for any field
-            if isinstance(t, str) and t.startswith('genotype/'):
+            if isinstance(t, text_type) and t.startswith('genotype/'):
                 fill = fills.get(key, -1)
                 t = np.dtype(t.split('/')[1])
                 if t == np.dtype('int8'):
@@ -2207,7 +2222,7 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                     parser = self.skip_parser
 
             # special handling of "genotype_ac" dtypes for any field
-            elif isinstance(t, str) and t.startswith('genotype_ac/'):
+            elif isinstance(t, text_type) and t.startswith('genotype_ac/'):
                 t = np.dtype(t.split('/')[1])
                 if t == np.dtype('int8'):
                     parser = VCFGenotypeACInt8Parser(key, number=n, **kwds)
@@ -2310,6 +2325,12 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
 
         while True:
 
+            if context.sample_index >= self.n_samples:
+                with gil:
+                    warn('more samples than given in header', context)
+                while stream.c != 0 and stream.c != LF and stream.c != CR:
+                    stream.advance()
+
             if stream.c == 0:
                 context.state = VCFState.EOF
                 break
@@ -2328,11 +2349,6 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                     # skip to next sample
                     while stream.c != 0 and stream.c != LF and stream.c != CR and stream.c != TAB:
                         stream.advance()
-
-            elif context.sample_index >= self.loc_samples.shape[0]:
-                warn('more samples than given in header', context)
-                while stream.c != 0 and stream.c != LF and stream.c != CR:
-                    stream.advance()
 
             elif stream.c == COLON:
                 context.sample_field_index += 1
@@ -2397,7 +2413,7 @@ cdef class VCFCallDataParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'calldata/' + str(self.key, 'ascii')
+        field = 'calldata/' + text_type(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3184,7 +3200,7 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
         self.memory = self.values.reshape(-1).view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'calldata/' + str(<bytes>self.key, 'ascii')
+        field = 'calldata/' + text_type(<bytes>self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3222,11 +3238,13 @@ cdef int vcf_strtol(CharVector* value, VCFContext context, long* l) nogil except
         return parsed
 
     elif parsed > 0:
-        warn('not all characters parsed for integer value', context)
+        with gil:
+            warn('not all characters parsed for integer value', context)
         return parsed
 
     else:
-        warn('error parsing integer value', context)
+        with gil:
+            warn('error parsing integer value', context)
         return 0
 
 
@@ -3257,11 +3275,13 @@ cdef int vcf_strtod(CharVector* value, VCFContext context, double* d) nogil exce
         return parsed
 
     elif parsed > 0:
-        warn('not all characters parsed for floating point value', context)
+        with gil:
+            warn('not all characters parsed for floating point value', context)
         return parsed
 
     else:
-        warn('error parsing floating point value', context)
+        with gil:
+            warn('error parsing floating point value', context)
         return 0
 
 
@@ -3285,32 +3305,34 @@ vcf_state_labels = [
 ]
 
 
-cdef int warn(message, VCFContext context) nogil except -1:
+cdef int warn(message, VCFContext context) except -1:
     cdef int format_index
-    with gil:
-        message += '; field: %s' % vcf_state_labels[context.state]
-        message += '; variant: %s' % context.variant_index
-        if context.state > VCFState.POS:
-            message += ' (%s:%s)' % (str(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
-        if context.state == VCFState.CALLDATA:
-            if context.sample_index >= len(context.headers.samples):
-                sample = 'unknown'
-            else:
-                sample = context.headers.samples[context.sample_index]
-            if context.sample_field_index >= context.variant_format_indices.size:
-                format = 'unknown'
-            else:
-                format_index = context.variant_format_indices.data[context.sample_field_index]
-                format = context.formats[format_index]
-            message += '; sample: %s:%s (%s:%s)' % (context.sample_index,
-                                                    context.sample_field_index,
-                                                    sample,
-                                                    format)
-        warnings.warn(message)
+    message += '; field: %s' % vcf_state_labels[context.state]
+    message += '; variant: %s' % context.variant_index
+    if context.state > VCFState.POS:
+        message += ' (%s:%s)' % (text_type(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
+    if context.state == VCFState.CALLDATA:
+        if context.sample_index >= len(context.headers.samples):
+            sample = 'unknown'
+        else:
+            sample = context.headers.samples[context.sample_index]
+        if context.sample_field_index >= context.variant_format_indices.size:
+            format = 'unknown'
+        else:
+            format_index = context.variant_format_indices.data[context.sample_field_index]
+            format = context.formats[format_index]
+        message += '; sample: %s:%s (%s:%s)' % (context.sample_index,
+                                                context.sample_field_index,
+                                                sample,
+                                                format)
+    warnings.warn(message)
 
 
+# import sys
+#
+#
 # cdef int debug(message, vars=None) except -1:
-#     message = '[DEBUG] ' + str(message)
+#     message = '[DEBUG] ' + text_type(message)
 #     if vars:
 #         message = message % vars
 #     print(message, file=sys.stderr)
