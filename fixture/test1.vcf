@@ -1,0 +1,9 @@
+##fileformat=VCFv4.1
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depths">
+##FORMAT=<ID=ZZ,Number=1,Type=String,Description="ZZ">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test1	test2	test3	test4
+chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
+chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
+chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
