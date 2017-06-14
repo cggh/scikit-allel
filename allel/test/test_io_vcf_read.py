@@ -1395,6 +1395,17 @@ def test_genotype_ac():
         eq_(e.dtype, a.dtype)
         assert_array_equal(e, a)
 
+    fn = 'fixture/test63.vcf'
+    callset = read_vcf(fn, fields='GT', numbers={'GT': 3}, types={'GT': 'genotype_ac/i1'})
+    e = np.array([
+        [(2, 0, 0), (3, 0, 0), (1, 0, 0)],
+        [(0, 1, 0), (1, 1, 0), (1, 1, 1)],
+        [(0, 0, 0), (0, 0, 0), (0, 0, 0)],
+        [(0, 0, 0), (0, 0, 0), (0, 0, 0)],
+    ])
+    a = callset['calldata/GT']
+    assert_array_equal(e, a)
+
 
 def test_region_truncate():
     fn = 'fixture/test54.vcf.gz'
@@ -1489,6 +1500,19 @@ def test_override_vcf_type():
     callset = read_vcf(fn, fields=['MQ0FractionTest'],
                        types={'MQ0FractionTest': 'Float'})
     assert_almost_equal(0.03, callset['variants/MQ0FractionTest'][2], places=6)
+
+
+def test_missing_calldata():
+    fn = 'fixture/test1.vcf'
+    callset = read_vcf(fn, fields='calldata/*', numbers={'AD': 2})
+    gt = callset['calldata/GT']
+    ad = callset['calldata/AD']
+    eq_((-1, -1), tuple(gt[0, 1]))
+    eq_((1, 0), tuple(ad[0, 1]))
+    eq_((-1, -1), tuple(gt[2, 2]))
+    eq_((-1, -1), tuple(ad[2, 2]))
+    eq_((-1, -1), tuple(gt[2, 3]))
+    eq_((-1, -1), tuple(ad[2, 3]))
 
 
 def test_calldata_cleared():

@@ -992,7 +992,7 @@ def _normalize_field_prefix(field, headers):
         return 'calldata/' + field
 
     else:
-        # assume anything else in variants, even if not declared in header
+        # assume anything else in variants, even if header not found
         return 'variants/' + field
 
 
@@ -1015,13 +1015,13 @@ def _check_field(field, headers):
             if filter_name in headers.filters:
                 return
             else:
-                warnings.warn('%r FILTER not declared in header' % filter_name)
+                warnings.warn('%r FILTER header not found' % filter_name)
 
         elif name in headers.infos:
             return
 
         else:
-            warnings.warn('%r INFO not declared in header' % name)
+            warnings.warn('%r INFO header not found' % name)
 
     elif group == 'calldata':
 
@@ -1029,7 +1029,7 @@ def _check_field(field, headers):
             return
 
         else:
-            warnings.warn('%r FORMAT not declared in header' % name)
+            warnings.warn('%r FORMAT header not found' % name)
 
     else:
         # should never be reached
