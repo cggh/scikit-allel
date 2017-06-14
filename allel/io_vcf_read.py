@@ -5,7 +5,10 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
-* Port any relevant tests from vcfnp
+* vcf_to_recarray
+* GenotypeArray.from_vcf
+* HaplotypeArray.from_vcf(ploidy)
+* VariantTable.from_vcf
 * PY2 compatibility
 
 WONTFIX:
@@ -100,7 +103,7 @@ def _chunk_iter_transform(it, transformers):
         yield chunk, chunk_length, chrom, pos
 
 
-_doc_param_input_path = \
+_doc_param_input = \
     """Path to VCF file on the local file system. May be uncompressed or gzip-compatible
         compressed file. May also be a file-like object (e.g., `io.BytesIO`)."""
 
@@ -181,7 +184,7 @@ _doc_param_log = \
     """A file-like object (e.g., `sys.stderr`) to print progress information."""
 
 
-def read_vcf(input_path,
+def read_vcf(input,
              fields=None,
              types=None,
              numbers=None,
@@ -199,8 +202,8 @@ def read_vcf(input_path,
 
     Parameters
     ----------
-    input_path : string
-        {input_path}
+    input : string
+        {input}
     fields : list of strings, optional
         {fields}
     types : dict, optional
@@ -240,8 +243,8 @@ def read_vcf(input_path,
     store_samples, fields = _prep_fields_param(fields)
 
     # setup
-    samples, _, it = iter_vcf_chunks(
-        input_path=input_path, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
+    _, samples, _, it = iter_vcf_chunks(
+        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
         chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, fills=fills, region=region,
         tabix=tabix, samples=samples, transformers=transformers
     )
@@ -273,7 +276,7 @@ def read_vcf(input_path,
 
 
 read_vcf.__doc__ = read_vcf.__doc__.format(
-    input_path=_doc_param_input_path,
+    input=_doc_param_input,
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
@@ -290,14 +293,14 @@ read_vcf.__doc__ = read_vcf.__doc__.format(
 )
 
 
-_doc_param_output_path = \
+_doc_param_output = \
     """File-system path to write output to."""
 
 _doc_param_overwrite = \
     """If False (default), do not overwrite an existing file."""
 
 
-def vcf_to_npz(input_path, output_path,
+def vcf_to_npz(input, output,
                compressed=True,
                overwrite=False,
                fields=None,
@@ -317,10 +320,10 @@ def vcf_to_npz(input_path, output_path,
 
     Parameters
     ----------
-    input_path : string
-        {input_path}
-    output_path : string
-        {output_path}
+    input : string
+        {input}
+    output : string
+        {output}
     compressed : bool, optional
         If True (default), save with compression.
     overwrite : bool, optional
@@ -355,12 +358,12 @@ def vcf_to_npz(input_path, output_path,
     """
 
     # guard condition
-    if not overwrite and os.path.exists(output_path):
-        raise ValueError('file exists at path %r; use overwrite=True to replace' % output_path)
+    if not overwrite and os.path.exists(output):
+        raise ValueError('file exists at path %r; use overwrite=True to replace' % output)
 
     # read all data into memory
     data = read_vcf(
-        input_path=input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
         chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, log=log, fills=fills,
         region=region, tabix=tabix, samples=samples, transformers=transformers
     )
@@ -372,12 +375,12 @@ def vcf_to_npz(input_path, output_path,
         savez = np.savez
 
     # save as npz
-    savez(output_path, **data)
+    savez(output, **data)
 
 
 vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
-    input_path=_doc_param_input_path,
-    output_path=_doc_param_output_path,
+    input=_doc_param_input,
+    output=_doc_param_output,
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
     types=_doc_param_types,
@@ -477,7 +480,7 @@ _doc_param_chunk_width = \
     """Width (number of samples) to use when storing chunks in output."""
 
 
-def vcf_to_hdf5(input_path, output_path,
+def vcf_to_hdf5(input, output,
                 group='/',
                 compression='gzip',
                 compression_opts=1,
@@ -501,10 +504,10 @@ def vcf_to_hdf5(input_path, output_path,
 
     Parameters
     ----------
-    input_path : string
-        {input_path}
-    output_path : string
-        {output_path}
+    input : string
+        {input}
+    output : string
+        {output}
     group : string
         Group within destination HDF5 file to store data in.
     compression : string
@@ -552,7 +555,7 @@ def vcf_to_hdf5(input_path, output_path,
     # noinspection PyTypeChecker
     store_samples, fields = _prep_fields_param(fields)
 
-    with h5py.File(output_path, mode='a') as h5f:
+    with h5py.File(output, mode='a') as h5f:
 
         # obtain root group that data will be stored into
         root = h5f.require_group(group)
@@ -562,8 +565,8 @@ def vcf_to_hdf5(input_path, output_path,
         root.require_group('calldata')
 
         # setup chunk iterator
-        samples, headers, it = iter_vcf_chunks(
-            input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        _, samples, headers, it = iter_vcf_chunks(
+            input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
             chunk_length=chunk_length, block_length=block_length, n_threads=n_threads,
             fills=fills, region=region, tabix=tabix, samples=samples, transformers=transformers
         )
@@ -604,8 +607,8 @@ def vcf_to_hdf5(input_path, output_path,
 
 
 vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
-    input_path=_doc_param_input_path,
-    output_path=_doc_param_output_path,
+    input=_doc_param_input,
+    output=_doc_param_output,
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
     types=_doc_param_types,
@@ -675,7 +678,7 @@ def _zarr_store_chunk(root, keys, chunk):
         root[k].append(chunk[k], axis=0)
 
 
-def vcf_to_zarr(input_path, output_path,
+def vcf_to_zarr(input, output,
                 group='/',
                 compressor='default',
                 overwrite=False,
@@ -697,10 +700,10 @@ def vcf_to_zarr(input_path, output_path,
 
     Parameters
     ----------
-    input_path : string
-        {input_path}
-    output_path : string
-        {output_path}
+    input : string
+        {input}
+    output : string
+        {output}
     group : string
         Group within destination Zarr hierarchy to store data in.
     compressor : compressor
@@ -745,15 +748,15 @@ def vcf_to_zarr(input_path, output_path,
     store_samples, fields = _prep_fields_param(fields)
 
     # open root group
-    root = zarr.open_group(output_path, mode='a', path=group)
+    root = zarr.open_group(output, mode='a', path=group)
 
     # ensure sub-groups
     root.require_group('variants')
     root.require_group('calldata')
 
     # setup chunk iterator
-    samples, headers, it = iter_vcf_chunks(
-        input_path, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
+    _, samples, headers, it = iter_vcf_chunks(
+        input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
         fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples,
         transformers=transformers
     )
@@ -786,8 +789,8 @@ def vcf_to_zarr(input_path, output_path,
 
 
 vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
-    input_path=_doc_param_input_path,
-    output_path=_doc_param_output_path,
+    input=_doc_param_input,
+    output=_doc_param_output,
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
     types=_doc_param_types,
@@ -809,7 +812,7 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
 import subprocess
 
 
-def iter_vcf_chunks(input_path,
+def iter_vcf_chunks(input,
                     fields=None,
                     types=None,
                     numbers=None,
@@ -826,8 +829,8 @@ def iter_vcf_chunks(input_path,
 
     Parameters
     ----------
-    input_path : string
-        {input_path}
+    input : string
+        {input}
     fields : list of strings, optional
         {fields}
     types : dict, optional
@@ -876,13 +879,13 @@ def iter_vcf_chunks(input_path,
                 n_threads=n_threads, fills=fills, samples=samples)
 
     # obtain a file-like object
-    if isinstance(input_path, str) and input_path.endswith('gz'):
+    if isinstance(input, str) and input.endswith('gz'):
 
         if region and tabix and os.name != 'nt':
 
             try:
                 # try tabix
-                p = subprocess.Popen([tabix, '-h', input_path, region],
+                p = subprocess.Popen([tabix, '-h', input, region],
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
                                      bufsize=0)
@@ -901,25 +904,25 @@ def iter_vcf_chunks(input_path,
             except FileNotFoundError:
                 # no tabix, fall back to scanning
                 warnings.warn('tabix not found, falling back to scanning to region')
-                fileobj = gzip.open(input_path, mode='rb')
+                fileobj = gzip.open(input, mode='rb')
 
             except Exception as e:
                 warnings.warn('error occurred attempting tabix (%s); falling back to '
                               'scanning to region' % e)
-                fileobj = gzip.open(input_path, mode='rb')
+                fileobj = gzip.open(input, mode='rb')
 
         else:
-            fileobj = gzip.open(input_path, mode='rb')
+            fileobj = gzip.open(input, mode='rb')
 
-    elif isinstance(input_path, str):
+    elif isinstance(input, str):
         # assume no compression
-        fileobj = open(input_path, mode='rb', buffering=0)
+        fileobj = open(input, mode='rb', buffering=0)
 
-    elif hasattr(input_path, 'readinto'):
-        fileobj = input_path
+    elif hasattr(input, 'readinto'):
+        fileobj = input
 
     else:
-        raise ValueError('path must be string or file-like, found %r' % input_path)
+        raise ValueError('path must be string or file-like, found %r' % input)
 
     # setup input stream
     stream = FileInputStream(fileobj, buffer_size=buffer_size)
@@ -928,17 +931,17 @@ def iter_vcf_chunks(input_path,
     kwds['region'] = region
 
     # setup iterator
-    samples, headers, it = _iter_vcf_stream(stream, **kwds)
+    fields, samples, headers, it = _iter_vcf_stream(stream, **kwds)
 
     # setup transformers
     if transformers is not None:
         it = _chunk_iter_transform(it, transformers)
 
-    return samples, headers, it
+    return fields, samples, headers, it
 
 
 iter_vcf_chunks.__doc__ = iter_vcf_chunks.__doc__.format(
-    input_path=_doc_param_input_path,
+    input=_doc_param_input,
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
@@ -1047,37 +1050,46 @@ def _add_all_variants_fields(fields, headers):
     _add_all_info_fields(fields, headers)
     _add_all_filter_fields(fields, headers)
     # add in special computed fields
-    fields.add('variants/numalt')
-    fields.add('variants/svlen')
+    for f in 'variants/numalt', 'variants/svlen':
+        if f not in fields:
+            fields.append(f)
 
 
 def _add_all_fixed_variants_fields(fields):
-    for f in FIXED_VARIANTS_FIELDS:
-        fields.add('variants/' + f)
+    for k in FIXED_VARIANTS_FIELDS:
+        f = 'variants/' + k
+        if f not in fields:
+            fields.append(f)
 
 
 def _add_all_info_fields(fields, headers):
-    for f in headers.infos:
-        fields.add('variants/' + f)
+    for k in headers.infos:
+        f = 'variants/' + k
+        if f not in fields:
+            fields.append(f)
 
 
 def _add_all_filter_fields(fields, headers):
-    fields.add('variants/FILTER_PASS')
-    for f in headers.filters:
-        fields.add('variants/FILTER_' + f)
+    fields.append('variants/FILTER_PASS')
+    for k in headers.filters:
+        f = 'variants/FILTER_' + k
+        if f not in fields:
+            fields.append(f)
 
 
 def _add_all_calldata_fields(fields, headers):
     # only add calldata fields if there are samples
     if headers.samples:
-        for f in headers.formats:
-            fields.add('calldata/' + f)
+        for k in headers.formats:
+            f = 'calldata/' + k
+            if f not in fields:
+                fields.append(f)
 
 
 def _normalize_fields(fields, headers, samples):
 
     # setup normalized fields
-    normed_fields = set()
+    normed_fields = list()
 
     # special case, single field specification
     if isinstance(fields, str):
@@ -1113,8 +1125,8 @@ def _normalize_fields(fields, headers, samples):
             if f.startswith('calldata/') and not samples:
                 # only add calldata fields if there are samples
                 pass
-            else:
-                normed_fields.add(f)
+            elif f not in normed_fields:
+                normed_fields.append(f)
 
     return normed_fields
 
@@ -1371,11 +1383,11 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length,
     if fields is None:
 
         # choose default fields
-        fields = set()
+        fields = list()
         _add_all_fixed_variants_fields(fields)
-        fields.add('variants/FILTER_PASS')
+        fields.append('variants/FILTER_PASS')
         if samples and 'GT' in headers.formats:
-            fields.add('calldata/GT')
+            fields.append('calldata/GT')
 
     else:
         fields = _normalize_fields(fields, headers, samples)
@@ -1402,7 +1414,7 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length,
             fields=fields, types=types, numbers=numbers, fills=fills, region=region, loc_samples=loc_samples
         )
 
-    return samples, headers, chunks
+    return fields, samples, headers, chunks
 
 
 # pre-compile some regular expressions
@@ -1481,3 +1493,272 @@ def _read_vcf_headers(stream):
         raise RuntimeError('VCF file is missing mandatory header line ("#CHROM...")')
 
     return _VCFHeaders(headers, filters, infos, formats, samples)
+
+
+def _chunk_to_dataframe(fields, chunk):
+    import pandas
+    items = list()
+    for f in fields:
+        a = chunk[f]
+        group, name = f.split('/')
+        assert group == 'variants'
+        if a.dtype.kind == 'S':
+            a = a.astype('U')
+        if a.ndim == 1:
+            items.append((name, a))
+        elif a.ndim == 2:
+            for i in range(a.shape[1]):
+                items.append(('%s_%s' % (name, i+1), a[:, i]))
+        else:
+            warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
+    df = pandas.DataFrame.from_items(items)
+    return df
+
+
+def vcf_to_dataframe(input,
+                     fields=None,
+                     types=None,
+                     numbers=None,
+                     fills=None,
+                     region=None,
+                     tabix='tabix',
+                     transformers=None,
+                     buffer_size=DEFAULT_BUFFER_SIZE,
+                     chunk_length=DEFAULT_CHUNK_LENGTH,
+                     log=None):
+    """Read data from a VCF file into a pandas DataFrame.
+
+    Parameters
+    ----------
+    input : string
+        {input}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    log : file-like, optional
+        {log}
+
+    Returns
+    -------
+    df : pandas.DataFrame
+
+    """
+
+    import pandas
+
+    # samples requested?
+    # noinspection PyTypeChecker
+    _, fields = _prep_fields_param(fields)
+
+    # setup
+    fields, _, _, it = iter_vcf_chunks(
+        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
+        chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
+        tabix=tabix, samples=[], transformers=transformers
+    )
+
+    # setup progress logging
+    if log is not None:
+        it = _chunk_iter_progress(it, log, prefix='[vcf_to_dataframe]')
+
+    # read all chunks into a list
+    chunks = [chunk for chunk, _, _, _ in it]
+
+    # setup output
+    output = None
+
+    if chunks:
+
+        # concatenate chunks
+        output = pandas.concat([_chunk_to_dataframe(fields, chunk)
+                                for chunk in chunks])
+
+    return output
+
+
+def vcf_to_csv(input, output,
+               fields=None,
+               types=None,
+               numbers=None,
+               fills=None,
+               region=None,
+               tabix='tabix',
+               transformers=None,
+               buffer_size=DEFAULT_BUFFER_SIZE,
+               chunk_length=DEFAULT_CHUNK_LENGTH,
+               log=None,
+               **kwargs):
+    """Read data from a VCF file into a pandas DataFrame.
+
+    Parameters
+    ----------
+    input : string
+        {input}
+    output : string
+        {output}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    log : file-like, optional
+        {log}
+    kwargs : keyword arguments
+        All remaining keyword arguments are passed through to pandas.DataFrame.to_csv().
+        E.g., to write a tab-delimited file, provide `sep='\t'`.
+
+    Returns
+    -------
+    df : pandas.DataFrame
+
+    """
+
+    # samples requested?
+    # noinspection PyTypeChecker
+    _, fields = _prep_fields_param(fields)
+
+    # setup
+    fields, _, _, it = iter_vcf_chunks(
+        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
+        chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
+        tabix=tabix, samples=[], transformers=transformers
+    )
+
+    # setup progress logging
+    if log is not None:
+        it = _chunk_iter_progress(it, log, prefix='[vcf_to_csv]')
+
+    kwargs['index'] = False
+    for i, (chunk, _, _, _) in enumerate(it):
+        df = _chunk_to_dataframe(fields, chunk)
+        if i == 0:
+            kwargs['header'] = True
+            kwargs['mode'] = 'w'
+        else:
+            kwargs['header'] = False
+            kwargs['mode'] = 'a'
+        df.to_csv(output, **kwargs)
+
+
+def _chunk_to_recarray(fields, chunk):
+    arrays = list()
+    names = list()
+    for f in fields:
+        a = chunk[f]
+        group, name = f.split('/')
+        assert group == 'variants'
+        if a.ndim == 1:
+            arrays.append(a)
+            names.append(name)
+        elif a.ndim == 2:
+            for i in range(a.shape[1]):
+                arrays.append(a[:, i])
+                names.append('%s_%s' % (name, i+1))
+        else:
+            warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
+    ra = np.rec.fromarrays(arrays, names=names)
+    return ra
+
+
+def vcf_to_recarray(input,
+                    fields=None,
+                    types=None,
+                    numbers=None,
+                    fills=None,
+                    region=None,
+                    tabix='tabix',
+                    transformers=None,
+                    buffer_size=DEFAULT_BUFFER_SIZE,
+                    chunk_length=DEFAULT_CHUNK_LENGTH,
+                    log=None):
+    """Read data from a VCF file into a NumPy recarray.
+
+    Parameters
+    ----------
+    input : string
+        {input}
+    fields : list of strings, optional
+        {fields}
+    types : dict, optional
+        {types}
+    numbers : dict, optional
+        {numbers}
+    fills : dict, optional
+        {fills}
+    region : string, optional
+        {region}
+    tabix : string, optional
+        {tabix}
+    transformers : list of transformer objects, optional
+        {transformers}
+    buffer_size : int, optional
+        {buffer_size}
+    chunk_length : int, optional
+        {chunk_length}
+    log : file-like, optional
+        {log}
+
+    Returns
+    -------
+    ra : np.rec.array
+
+    """
+
+    import pandas
+
+    # samples requested?
+    # noinspection PyTypeChecker
+    _, fields = _prep_fields_param(fields)
+
+    # setup
+    fields, _, _, it = iter_vcf_chunks(
+        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
+        chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
+        tabix=tabix, samples=[], transformers=transformers
+    )
+
+    # setup progress logging
+    if log is not None:
+        it = _chunk_iter_progress(it, log, prefix='[vcf_to_recarray]')
+
+    # read all chunks into a list
+    chunks = [chunk for chunk, _, _, _ in it]
+
+    # setup output
+    output = None
+
+    if chunks:
+
+        # concatenate chunks
+        output = np.concatenate([_chunk_to_recarray(fields, chunk)
+                                 for chunk in chunks])
+
+    return output

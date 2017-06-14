@@ -63,4 +63,5 @@ example.*
 *.zarr
 *.npz
 profdata/*
+temp/*
 

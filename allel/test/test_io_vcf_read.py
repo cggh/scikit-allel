@@ -13,15 +13,17 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
 from allel.io_vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
-    vcf_to_npz, debug, ANNTransformer
+    vcf_to_npz, debug, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
 
 
 def test_read_vcf_chunks():
     fn = 'fixture/sample.vcf'
 
     for n_threads in 1, 2:
-        samples, headers, it = iter_vcf_chunks(fn, fields='*', chunk_length=4, block_length=2,
-                                               buffer_size=100, n_threads=n_threads)
+        fields, samples, headers, it = iter_vcf_chunks(
+            fn, fields='*', chunk_length=4, block_length=2,
+            buffer_size=100, n_threads=n_threads
+        )
 
         # check headers
         assert_in('q10', headers.filters)
@@ -1538,3 +1540,73 @@ def test_calldata_quirks():
     assert_array_equal(e, gt[:, 1])
     e = np.array([[1, 0], [1, 0], [1, 0]])
     assert_array_equal(e, ad[:, 1])
+
+
+def test_vcf_to_dataframe():
+    fn = 'fixture/sample.vcf'
+    fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
+    numbers = {'AC': 2, 'ALT': 2}
+    callset = read_vcf(fn, fields=fields, numbers=numbers)
+    df = vcf_to_dataframe(fn,
+                          fields=fields,
+                          numbers=numbers,
+                          chunk_length=2)
+    assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2'],
+                      df.columns.tolist())
+    eq_(np.dtype(object), df['CHROM'].dtype)
+    for k in callset:
+        group, name = k.split('/')
+        e = callset[k]
+        if e.dtype.kind == 'S':
+            e = e.astype('U')
+        if e.ndim == 1:
+            assert_array_equal(e, df[name].values)
+        elif e.ndim == 2:
+            for i in range(e.shape[1]):
+                assert_array_equal(e[:, i], df['%s_%s' % (name, i+1)])
+
+
+def test_vcf_to_csv():
+    fn = 'fixture/sample.vcf'
+    fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
+    numbers = {'AC': 2, 'ALT': 2}
+    df = vcf_to_dataframe(fn,
+                          fields=fields,
+                          numbers=numbers,
+                          chunk_length=2)
+    out_fn = 'temp/sample.csv'
+    if os.path.exists(out_fn):
+        os.remove(out_fn)
+    vcf_to_csv(fn, out_fn, fields=fields, numbers=numbers, chunk_length=2)
+    import pandas
+    adf = pandas.read_csv(out_fn, na_filter=False)
+    assert_list_equal(df.columns.tolist(), adf.columns.tolist())
+    for k in df.columns:
+        assert_array_equal(df[k].values, adf[k].values)
+
+
+def test_vcf_to_recarray():
+    fn = 'fixture/sample.vcf'
+    fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
+    numbers = {'AC': 2, 'ALT': 2}
+    callset = read_vcf(fn, fields=fields, numbers=numbers)
+    a = vcf_to_recarray(fn,
+                        fields=fields,
+                        numbers=numbers,
+                        chunk_length=2)
+    assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2'],
+                      list(a.dtype.names))
+    eq_('S', a['CHROM'].dtype.kind)
+    for k in callset:
+        group, name = k.split('/')
+        if group == 'variants':
+            e = callset[k]
+            if e.ndim == 1:
+                assert_array_equal(e, a[name])
+            elif e.ndim == 2:
+                for i in range(e.shape[1]):
+                    assert_array_equal(e[:, i], a['%s_%s' % (name, i+1)])
+            else:
+                assert False, (k, e.ndim)
+        else:
+            assert name not in a.dtype.names
