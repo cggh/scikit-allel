@@ -1,0 +1,7 @@
+##fileformat=VCFv4.1
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+##INFO=<ID=EFF,Number=.,Type=String,Description="Predicted effects for this variant.Format: 'Effect ( Effect_Impact | Functional_Class | Codon_Change | Amino_Acid_change| Amino_Acid_length | Gene_Name | Transcript_BioType | Gene_Coding | Transcript_ID | Exon  | GenotypeNum [ | ERRORS | WARNINGS ] )' ">
+#CHROM POS     ID        REF    ALT     QUAL FILTER INFO
+1	889455	.	G	A	100.0	PASS	AF=0.0005;EFF=STOP_GAINED(HIGH|NONSENSE|Cag/Tag|Q236*|749|NOC2L||CODING|NM_015658|)
+1	897062	.	C	T	100.0	PASS	AF=0.0005;EFF=NON_SYNONYMOUS_CODING(MODERATE|MISSENSE|gTt/gGt|V155G||PF3D7_0108900|||rna_PF3D7_0108900-1|1|1|WARNING_TRANSCRIPT_MULTIPLE_STOP_CODONS)
+1	897063	.	C	T	100.0	PASS	AF=0.0005
