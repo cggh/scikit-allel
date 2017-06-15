@@ -133,6 +133,20 @@ cdef bytes CharVector_to_pybytes(CharVector* self):
     return PyBytes_FromStringAndSize(self.data, self.size)
 
 
+cdef object CharVector_to_pystr(CharVector* self):
+    v = PyBytes_FromStringAndSize(self.data, self.size)
+    if not PY2:
+        v = str(v, 'ascii')
+    return v
+
+
+cdef object CharVector_to_pystr_sized(CharVector* self, int size):
+    v = PyBytes_FromStringAndSize(self.data, size)
+    if not PY2:
+        v = str(v, 'ascii')
+    return v
+
+
 cdef struct IntVector:
     int size
     int capacity
@@ -160,10 +174,6 @@ cdef inline void IntVector_append(IntVector* self, int c) nogil:
 
 cdef inline void IntVector_clear(IntVector* self) nogil:
     self.size = 0
-
-
-cdef inline void IntVector_terminate(IntVector* self) nogil:
-    IntVector_append(self, 0)
 
 
 ##########################################################################################
@@ -566,8 +576,12 @@ cdef class VCFParser:
     def _init_id(self, fields, types):
         """Setup ID parser."""
         if ID_FIELD in fields:
-            id_parser = VCFStringFieldParser(key=b'ID', dtype=types[ID_FIELD],
-                                             chunk_length=self.chunk_length)
+            t = types[ID_FIELD]
+            t = check_string_dtype(t)
+            if t.kind == 'S':
+                id_parser = VCFIDStringParser(dtype=t, chunk_length=self.chunk_length)
+            else:
+                id_parser = VCFIDObjectParser(chunk_length=self.chunk_length)
             fields.remove(ID_FIELD)
         else:
             id_parser = VCFSkipFieldParser(key=b'ID')
@@ -581,7 +595,11 @@ cdef class VCFParser:
         if REF_FIELD in fields:
             store = True
             fields.remove(REF_FIELD)
-        ref_parser = VCFRefParser(dtype=t, chunk_length=self.chunk_length, store=store)
+            t = check_string_dtype(t)
+        if t is not None and t.kind == 'S':
+            ref_parser = VCFRefStringParser(dtype=t, chunk_length=self.chunk_length, store=store)
+        else:
+            ref_parser = VCFRefObjectParser(chunk_length=self.chunk_length, store=store)
         ref_parser.malloc_chunk()
         self.ref_parser = ref_parser
 
@@ -604,8 +622,15 @@ cdef class VCFParser:
             fields.remove('variants/svlen')
 
         if store_alt or store_numalt or store_svlen:
-            alt_parser = VCFAltParser(dtype=t, number=n, chunk_length=self.chunk_length, store_alt=store_alt,
-                                      store_numalt=store_numalt, store_svlen=store_svlen)
+            if store_alt:
+                t = check_string_dtype(t)
+            if t is not None and t.kind == 'S':
+                alt_parser = VCFAltStringParser(dtype=t, number=n, chunk_length=self.chunk_length,
+                                                store_alt=store_alt, store_numalt=store_numalt,
+                                                store_svlen=store_svlen)
+            else:
+                alt_parser = VCFAltObjectParser(number=n, chunk_length=self.chunk_length, store_alt=store_alt,
+                                                store_numalt=store_numalt, store_svlen=store_svlen)
         else:
             alt_parser = VCFSkipFieldParser(key=b'ALT')
 
@@ -884,8 +909,8 @@ cdef class VCFSkipFieldParser(VCFFieldParserBase):
 
 def check_string_dtype(dtype):
     dtype = np.dtype(dtype)
-    if dtype.kind != 'S':
-        raise ValueError('expected byte string ("S") dtype, found: %r' % dtype)
+    if dtype.kind not in ['S', 'O']:
+        raise ValueError("expected string ('S') or object ('O') dtype, found: %r" % dtype)
     return dtype
 
 
@@ -971,8 +996,7 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
                  region_begin, region_end):
         if store_chrom:
             dtype = check_string_dtype(dtype)
-        super(VCFChromPosParser, self).__init__(key=b'CHROM', dtype=dtype, number=1,
-                                                chunk_length=chunk_length)
+        super(VCFChromPosParser, self).__init__(key=b'CHROM', dtype=dtype, number=1, chunk_length=chunk_length)
         self.store_chrom = store_chrom
         self.store_pos = store_pos
         if region_chrom:
@@ -1053,15 +1077,23 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
         # store in chunk
         if self.store_chrom:
 
-            # initialise memory index
-            memory_offset = context.chunk_variant_index * self.itemsize
+            if self.dtype.kind == 'S':
 
-            # figure out how many characters to store
-            n = min(context.chrom.size - 1, self.itemsize)
+                # initialise memory index
+                memory_offset = context.chunk_variant_index * self.itemsize
 
-            # store characters
-            for i in range(n):
-                self.chrom_memory[memory_offset + i] = context.chrom.data[i]
+                # figure out how many characters to store
+                n = min(context.chrom.size - 1, self.itemsize)
+
+                # store characters
+                for i in range(n):
+                    self.chrom_memory[memory_offset + i] = context.chrom.data[i]
+
+            else:
+                with gil:
+                    # N.B., don't include terminating null byte
+                    v = CharVector_to_pystr_sized(&context.chrom, context.chrom.size - 1)
+                    self.chrom_values[context.chunk_variant_index] = v
 
         if self.store_pos:
             self.pos_memory[context.chunk_variant_index] = context.pos
@@ -1069,7 +1101,10 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
     cdef int malloc_chunk(self) except -1:
         if self.store_chrom:
             self.chrom_values = np.zeros(self.chunk_length, dtype=self.dtype)
-            self.chrom_memory = self.chrom_values.view('u1')
+            if self.dtype.kind == 'S':
+                self.chrom_memory = self.chrom_values.view('u1')
+            else:
+                self.chrom_values.fill('')
         if self.store_pos:
             self.pos_values = np.zeros(self.chunk_length, dtype='int32')
             self.pos_memory = self.pos_values
@@ -1081,14 +1116,12 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
             chunk[POS_FIELD] = self.pos_values[:limit]
 
 
-cdef class VCFStringFieldParser(VCFFieldParserBase):
+cdef class VCFIDStringParser(VCFFieldParserBase):
 
     cdef np.uint8_t[:] memory
 
-    def __init__(self, key, dtype, chunk_length):
-        dtype = check_string_dtype(dtype)
-        super(VCFStringFieldParser, self).__init__(key=key, dtype=dtype, number=1,
-                                                   chunk_length=chunk_length)
+    def __init__(self, dtype, chunk_length):
+        super(VCFIDStringParser, self).__init__(key=b'ID', dtype=dtype, number=1, chunk_length=chunk_length)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1125,14 +1158,34 @@ cdef class VCFStringFieldParser(VCFFieldParserBase):
             # advance input stream
             stream.advance()
 
-        return 1
-
     cdef int malloc_chunk(self) except -1:
         self.values = np.zeros(self.chunk_length, dtype=self.dtype)
         self.memory = self.values.view('u1')
 
 
-cdef class VCFRefParser(VCFFieldParserBase):
+cdef class VCFIDObjectParser(VCFFieldParserBase):
+
+    def __init__(self, chunk_length):
+        super(VCFIDObjectParser, self).__init__(key=b'ID', dtype=np.dtype('object'), number=1,
+                                                chunk_length=chunk_length)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+
+        vcf_read_field(stream, context, &context.temp)
+
+        with gil:
+            v = CharVector_to_pystr(&context.temp)
+            self.values[context.chunk_variant_index] = v
+
+        if context.state == VCFState.ID:
+            context.state += 1
+
+    cdef int malloc_chunk(self) except -1:
+        self.values = np.empty(self.chunk_length, dtype=self.dtype)
+        self.values.fill('')
+
+
+cdef class VCFRefStringParser(VCFFieldParserBase):
 
     cdef:
         np.uint8_t[:] memory
@@ -1141,7 +1194,7 @@ cdef class VCFRefParser(VCFFieldParserBase):
     def __init__(self, dtype, chunk_length, store):
         if store:
             dtype = check_string_dtype(dtype)
-        super(VCFRefParser, self).__init__(key=b'REF', dtype=dtype, number=1, chunk_length=chunk_length)
+        super(VCFRefStringParser, self).__init__(key=b'REF', dtype=dtype, number=1, chunk_length=chunk_length)
         self.store = store
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
@@ -1169,7 +1222,8 @@ cdef class VCFRefParser(VCFFieldParserBase):
                 break
 
             else:
-                context.ref_len += 1
+                if stream.c != PERIOD:
+                    context.ref_len += 1
                 if self.store and chars_stored < self.itemsize:
                     # store value
                     self.memory[memory_index] = stream.c
@@ -1191,7 +1245,40 @@ cdef class VCFRefParser(VCFFieldParserBase):
             chunk[REF_FIELD] = self.values[:limit]
 
 
-cdef class VCFAltParser(VCFFieldParserBase):
+cdef class VCFRefObjectParser(VCFFieldParserBase):
+
+    cdef:
+        bint store
+
+    def __init__(self, chunk_length, store):
+        super(VCFRefObjectParser, self).__init__(key=b'REF', dtype=np.dtype('object'), number=1, chunk_length=chunk_length)
+        self.store = store
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+
+        vcf_read_field(stream, context, &context.temp)
+
+        with gil:
+            v = CharVector_to_pystr(&context.temp)
+            if v != '.':
+                context.ref_len = len(v)
+            if self.store:
+                self.values[context.chunk_variant_index] = v
+
+        if context.state == VCFState.REF:
+            context.state += 1
+
+    cdef int malloc_chunk(self) except -1:
+        if self.store:
+            self.values = np.empty(self.chunk_length, dtype=self.dtype)
+            self.values.fill('')
+
+    cdef int make_chunk(self, chunk, limit=None) except -1:
+        if self.store:
+            chunk[REF_FIELD] = self.values[:limit]
+
+
+cdef class VCFAltStringParser(VCFFieldParserBase):
 
     cdef:
         np.uint8_t[:] memory
@@ -1206,7 +1293,7 @@ cdef class VCFAltParser(VCFFieldParserBase):
     def __init__(self, dtype, number, chunk_length, store_alt, store_numalt, store_svlen):
         if store_alt:
             dtype = check_string_dtype(dtype)
-        super(VCFAltParser, self).__init__(key=b'ALT', dtype=dtype, number=number, chunk_length=chunk_length)
+        super(VCFAltStringParser, self).__init__(key=b'ALT', dtype=dtype, number=number, chunk_length=chunk_length)
         self.store_alt = store_alt
         self.store_numalt = store_numalt
         self.store_svlen = store_svlen
@@ -1291,6 +1378,137 @@ cdef class VCFAltParser(VCFFieldParserBase):
         if self.store_alt:
             self.values = np.zeros(shape, dtype=self.dtype, order='C')
             self.memory = self.values.reshape(-1).view('u1')
+        if self.store_numalt:
+            self.numalt_values = np.zeros(self.chunk_length, dtype='int32')
+            self.numalt_memory = self.numalt_values
+        if self.store_svlen:
+            self.svlen_values = np.zeros(shape, dtype='int32')
+            self.svlen_memory = self.svlen_values
+
+    cdef int make_chunk(self, chunk, limit=None) except -1:
+        if self.store_alt:
+            if PY2:
+                field = 'variants/' + self.key
+            else:
+                field = 'variants/' + str(self.key, 'ascii')
+            values = self.values
+            if self.values.ndim > 1 and self.number == 1:
+                values = values.squeeze(axis=1)
+            chunk[field] = values[:limit]
+        if self.store_numalt:
+            field = 'variants/numalt'
+            values = self.numalt_values
+            chunk[field] = values[:limit]
+        if self.store_svlen:
+            field = 'variants/svlen'
+            values = self.svlen_values
+            if self.values.ndim > 1 and self.number == 1:
+                values = values.squeeze(axis=1)
+            chunk[field] = values[:limit]
+
+
+cdef class VCFAltObjectParser(VCFFieldParserBase):
+
+    cdef:
+        np.int32_t[:] numalt_memory
+        np.int32_t[:, :] svlen_memory
+        np.ndarray numalt_values
+        np.ndarray svlen_values
+        bint store_alt
+        bint store_numalt
+        bint store_svlen
+
+    def __init__(self, number, chunk_length, store_alt, store_numalt, store_svlen):
+        super(VCFAltObjectParser, self).__init__(key=b'ALT', dtype=np.dtype('object'), number=number,
+                                                 chunk_length=chunk_length)
+        self.store_alt = store_alt
+        self.store_numalt = store_numalt
+        self.store_svlen = store_svlen
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        cdef:
+            # index of alt values
+            int alt_index = 0
+            # size of alt allele relative to ref
+            int svlen = -1 * context.ref_len
+
+        # bail out early for missing value
+        if stream.c == PERIOD:
+            # treat period as missing value, regardless of what comes next
+            return vcf_parse_missing(stream, context)
+
+        # bail out early for empty value
+        if stream.c == TAB:
+            stream.advance()
+            context.state += 1
+            return 0
+
+        # setup temp
+        CharVector_clear(&context.temp)
+
+        while True:
+
+            if stream.c == 0:
+                if self.store_svlen and alt_index < self.number:
+                    self.svlen_memory[context.chunk_variant_index, alt_index] = svlen
+                if self.store_alt and alt_index < self.number and context.temp.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.temp)
+                        self.values[context.chunk_variant_index, alt_index] = v
+                context.state = VCFState.EOF
+                break
+
+            elif stream.c == LF or stream.c == CR:
+                if self.store_svlen and alt_index < self.number:
+                    self.svlen_memory[context.chunk_variant_index, alt_index] = svlen
+                if self.store_alt and alt_index < self.number and context.temp.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.temp)
+                        self.values[context.chunk_variant_index, alt_index] = v
+                context.state = VCFState.EOL
+                break
+
+            if stream.c == TAB:
+                if self.store_svlen and alt_index < self.number:
+                    self.svlen_memory[context.chunk_variant_index, alt_index] = svlen
+                if self.store_alt and alt_index < self.number and context.temp.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.temp)
+                        self.values[context.chunk_variant_index, alt_index] = v
+                stream.advance()
+                context.state += 1
+                break
+
+            elif stream.c == COMMA:
+                if self.store_svlen and alt_index < self.number:
+                    self.svlen_memory[context.chunk_variant_index, alt_index] = svlen
+                if self.store_alt and alt_index < self.number:
+                    with gil:
+                        v = CharVector_to_pystr(&context.temp)
+                        self.values[context.chunk_variant_index, alt_index] = v
+                # advance value index
+                alt_index += 1
+                # reset
+                CharVector_clear(&context.temp)
+                svlen = -1 * context.ref_len
+
+            else:
+                if stream.c != PERIOD:
+                    svlen += 1
+                if self.store_alt and alt_index < self.number:
+                    CharVector_append(&context.temp, stream.c)
+
+            # advance input stream
+            stream.advance()
+
+        if self.store_numalt:
+            self.numalt_memory[context.chunk_variant_index] = alt_index + 1
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.number)
+        if self.store_alt:
+            self.values = np.empty(shape, dtype=self.dtype, order='C')
+            self.values.fill('')
         if self.store_numalt:
             self.numalt_values = np.zeros(self.chunk_length, dtype='int32')
             self.numalt_memory = self.numalt_values
@@ -1534,6 +1752,8 @@ cdef class VCFInfoParser(VCFFieldParserBase):
                 parser = VCFInfoFlagParser(key, chunk_length=chunk_length)
             elif t.kind == 'S':
                 parser = VCFInfoStringParser(key, dtype=t, number=n, chunk_length=chunk_length)
+            elif t.kind == 'O':
+                parser = VCFInfoObjectParser(key, number=n, chunk_length=chunk_length)
             else:
                 parser = VCFInfoSkipParser(key)
                 warnings.warn('type %s not supported for INFO field %r, field will be skipped' % (t, key))
@@ -1972,6 +2192,52 @@ cdef class VCFInfoStringParser(VCFInfoParserBase):
         self.memory = self.values.reshape(-1).view('u1')
 
 
+cdef class VCFInfoObjectParser(VCFInfoParserBase):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = np.dtype('object')
+        super(VCFInfoObjectParser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
+        cdef:
+            int value_index = 0
+
+        CharVector_clear(&context.info_val)
+
+        while True:
+
+            if stream.c == 0 or \
+                    stream.c == LF or \
+                    stream.c == CR or \
+                    stream.c == TAB or \
+                    stream.c == SEMICOLON:
+                if value_index < self.number and context.info_val.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.info_val)
+                        self.values[context.chunk_variant_index, value_index] = v
+                break
+
+            elif stream.c == COMMA:
+                if value_index < self.number and context.info_val.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.info_val)
+                        self.values[context.chunk_variant_index, value_index] = v
+                    CharVector_clear(&context.info_val)
+                # advance value index
+                value_index += 1
+
+            elif value_index < self.number:
+                CharVector_append(&context.info_val, stream.c)
+
+            # advance input stream
+            stream.advance()
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.values.fill('')
+
+
 cdef class VCFInfoSkipParser(VCFInfoParserBase):
 
     def __init__(self, *args, **kwargs):
@@ -2310,6 +2576,8 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                 parser = VCFCallDataFloat64Parser(key, number=n, fill=fills.get(key, NAN), **kwds)
             elif t.kind == 'S':
                 parser = VCFCallDataStringParser(key, dtype=t, number=n, **kwds)
+            elif t.kind == 'O':
+                parser = VCFCallDataObjectParser(key, number=n, **kwds)
 
             else:
                 parser = VCFCallDataSkipParser(key)
@@ -3238,6 +3506,67 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
         chunk[field] = values
 
 
+cdef class VCFCallDataObjectParser(VCFCallDataParserBase):
+
+    cdef np.uint8_t[:] memory
+
+    def __init__(self, *args, **kwargs):
+        kwargs['dtype'] = np.dtype('object')
+        super(VCFCallDataObjectParser, self).__init__(*args, **kwargs)
+
+    cdef int parse(self,
+                   InputStreamBase stream,
+                   VCFContext context) nogil except -1:
+        cdef:
+            int value_index = 0
+
+        CharVector_clear(&context.temp)
+
+        # read characters until tab
+        while True:
+
+            if stream.c == TAB or \
+                    stream.c == COLON or \
+                    stream.c == CR or \
+                    stream.c == LF or \
+                    stream.c == 0:
+                if value_index < self.number and context.temp.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.temp)
+                        self.values[context.chunk_variant_index, context.sample_output_index, value_index] = v
+                break
+
+            elif stream.c == COMMA:
+                if value_index < self.number and context.temp.size > 0:
+                    with gil:
+                        v = CharVector_to_pystr(&context.temp)
+                        self.values[context.chunk_variant_index, context.sample_output_index, value_index] = v
+                CharVector_clear(&context.temp)
+                # advance value index
+                value_index += 1
+
+            elif value_index < self.number:
+                CharVector_append(&context.temp, stream.c)
+
+            # advance input stream
+            stream.advance()
+
+    cdef int malloc_chunk(self) except -1:
+        shape = (self.chunk_length, self.n_samples_out, self.number)
+        self.values = np.empty(shape, dtype=self.dtype)
+        self.values.fill('')
+
+    cdef int make_chunk(self, chunk, limit=None) except -1:
+        if PY2:
+            field = 'calldata/' + self.key
+        else:
+            field = 'calldata/' + str(self.key, 'ascii')
+        values = self.values[:limit]
+        if self.number == 1:
+            values = values.squeeze(axis=2)
+        chunk[field] = values
+
+
 ##########################################################################################
 # Low-level VCF value parsing functions
 
@@ -3362,15 +3691,15 @@ cdef int warn(message, VCFContext context) except -1:
     warnings.warn(message)
 
 
-import sys
-
-
-cdef int debug(message, vars=None) except -1:
-    message = '[DEBUG] ' + str(message)
-    if vars:
-        message = message % vars
-    print(message, file=sys.stderr)
-    sys.stderr.flush()
+# import sys
+#
+#
+# cdef int debug(message, vars=None) except -1:
+#     message = '[DEBUG] ' + str(message)
+#     if vars:
+#         message = message % vars
+#     print(message, file=sys.stderr)
+#     sys.stderr.flush()
 
 
 ##########################################################################################
@@ -3611,32 +3940,32 @@ def _normalize_ann_field_prefix(f):
 
 
 def _normalize_ann_fields(fields):
-    normed_fields = set()
+    normed_fields = list()
 
     if fields is None:
-        return set(ANN_FIELDS)
+        return list(ANN_FIELDS)
 
     else:
         for f in fields:
             f = _normalize_ann_field_prefix(f)
-            if f:
-                normed_fields.add(f)
+            if f is not None and f not in normed_fields:
+                normed_fields.append(f)
 
     return normed_fields
 
 
 default_ann_types = dict()
-default_ann_types[ANN_ALLELE_FIELD] = np.dtype('S1')
-default_ann_types[ANN_ANNOTATION_FIELD] = np.dtype('S34')
-default_ann_types[ANN_ANNOTATION_IMPACT_FIELD] = np.dtype('S8')
-default_ann_types[ANN_GENE_NAME_FIELD] = np.dtype('S14')
-default_ann_types[ANN_GENE_ID_FIELD] = np.dtype('S14')
-default_ann_types[ANN_FEATURE_TYPE_FIELD] = np.dtype('S20')
-default_ann_types[ANN_FEATURE_ID_FIELD] = np.dtype('S14')
-default_ann_types[ANN_TRANSCRIPT_BIOTYPE_FIELD] = np.dtype('S20')
+default_ann_types[ANN_ALLELE_FIELD] = np.dtype('object')
+default_ann_types[ANN_ANNOTATION_FIELD] = np.dtype('object')
+default_ann_types[ANN_ANNOTATION_IMPACT_FIELD] = np.dtype('object')
+default_ann_types[ANN_GENE_NAME_FIELD] = np.dtype('object')
+default_ann_types[ANN_GENE_ID_FIELD] = np.dtype('object')
+default_ann_types[ANN_FEATURE_TYPE_FIELD] = np.dtype('object')
+default_ann_types[ANN_FEATURE_ID_FIELD] = np.dtype('object')
+default_ann_types[ANN_TRANSCRIPT_BIOTYPE_FIELD] = np.dtype('object')
 default_ann_types[ANN_RANK_FIELD] = np.dtype('int8')
-default_ann_types[ANN_HGVS_C_FIELD] = np.dtype('S16')
-default_ann_types[ANN_HGVS_P_FIELD] = np.dtype('S16')
+default_ann_types[ANN_HGVS_C_FIELD] = np.dtype('object')
+default_ann_types[ANN_HGVS_P_FIELD] = np.dtype('object')
 default_ann_types[ANN_CDNA_FIELD] = np.dtype('int32')
 default_ann_types[ANN_CDS_FIELD] = np.dtype('int32')
 default_ann_types[ANN_AA_FIELD] = np.dtype('int32')
@@ -3663,7 +3992,7 @@ def _normalize_ann_types(fields, types):
 cdef class ANNTransformer:
 
     cdef:
-        set fields
+        list fields
         object types
         bint keep_original
         np.uint8_t[:] emit
@@ -3673,12 +4002,44 @@ cdef class ANNTransformer:
         self.types = _normalize_ann_types(self.fields, types)
         self.keep_original = keep_original
 
-    def transform(self, chunk):
+    def transform_fields(self, fields):
+        fields_transformed = list()
+        for f in fields:
+            if f == ANN_FIELD:
+                if self.keep_original:
+                    fields_transformed.append(f)
+                fields_transformed.extend(self.fields)
+            else:
+                fields_transformed.append(f)
+        return fields_transformed
+
+    def _malloc_string_array(self, field, shape):
+        if field in self.fields:
+            t = check_string_dtype(self.types[field])
+            a = np.empty(shape, dtype=t)
+            if t.kind == 'S':
+                a.fill(b'')
+            else:
+                a.fill('')
+        else:
+            a = None
+        return a
+
+    def _malloc_integer_array(self, field, shape):
+        if field in self.fields:
+            t = self.types[field]
+            if t.kind != 'i':
+                raise ValueError('only signed integer dtype supported for field %r' % field)
+            a = np.empty(shape, dtype=t)
+            a.fill(-1)
+        else:
+            a = None
+        return a
+
+    def transform_chunk(self, chunk):
         cdef:
             int i, j, chunk_length, number
-            bytes raw
             list vals
-            bytes v
             list vv
 
         # obtain array to be transformed
@@ -3694,156 +4055,88 @@ cdef class ANNTransformer:
         shape = chunk_length, number
 
         # allocate output arrays
-        if ANN_ALLELE_FIELD in self.fields:
-            allele = np.zeros(shape, dtype=self.types[ANN_ALLELE_FIELD])
-        else:
-            allele = None
-        if ANN_ANNOTATION_FIELD in self.fields:
-            annotation = np.zeros(shape, dtype=self.types[ANN_ANNOTATION_FIELD])
-        else:
-            annotation = None
-        if ANN_ANNOTATION_IMPACT_FIELD in self.fields:
-            annotation_impact = np.zeros(shape, dtype=self.types[ANN_ANNOTATION_IMPACT_FIELD])
-        else:
-            annotation_impact = None
-        if ANN_GENE_NAME_FIELD in self.fields:
-            gene_name = np.zeros(shape, dtype=self.types[ANN_GENE_NAME_FIELD])
-        else:
-            gene_name = None
-        if ANN_GENE_ID_FIELD in self.fields:
-            gene_id = np.zeros(shape, dtype=self.types[ANN_GENE_ID_FIELD])
-        else:
-            gene_id = None
-        if ANN_FEATURE_TYPE_FIELD in self.fields:
-            feature_type = np.zeros(shape, dtype=self.types[ANN_FEATURE_TYPE_FIELD])
-        else:
-            feature_type = None
-        if ANN_FEATURE_ID_FIELD in self.fields:
-            feature_id = np.zeros(shape, dtype=self.types[ANN_FEATURE_ID_FIELD])
-        else:
-            feature_id = None
-        if ANN_TRANSCRIPT_BIOTYPE_FIELD in self.fields:
-            transcript_biotype = np.zeros(shape, dtype=self.types[ANN_TRANSCRIPT_BIOTYPE_FIELD])
-        else:
-            transcript_biotype = None
-        if ANN_RANK_FIELD in self.fields:
-            rank = np.empty(shape + (2,), dtype=self.types[ANN_RANK_FIELD])
-            rank.fill(-1)
-        else:
-            rank = None
-        if ANN_HGVS_C_FIELD in self.fields:
-            hgvs_c = np.zeros(shape, dtype=self.types[ANN_HGVS_C_FIELD])
-        else:
-            hgvs_c = None
-        if ANN_HGVS_P_FIELD in self.fields:
-            hgvs_p = np.zeros(shape, dtype=self.types[ANN_HGVS_P_FIELD])
-        else:
-            hgvs_p = None
-        if ANN_CDNA_FIELD in self.fields:
-            cdna = np.empty(shape + (2,), dtype=self.types[ANN_CDNA_FIELD])
-            cdna.fill(-1)
-        else:
-            cdna = None
-        if ANN_CDS_FIELD in self.fields:
-            cds = np.empty(shape + (2,), dtype=self.types[ANN_CDS_FIELD])
-            cds.fill(-1)
-        else:
-            cds = None
-        if ANN_AA_FIELD in self.fields:
-            aa = np.empty(shape + (2,), dtype=self.types[ANN_AA_FIELD])
-            aa.fill(-1)
-        else:
-            aa = None
-        if ANN_DISTANCE_FIELD in self.fields:
-            distance = np.empty(shape, dtype=self.types[ANN_DISTANCE_FIELD])
-            distance.fill(-1)
-        else:
-            distance = None
+        allele = self._malloc_string_array(ANN_ALLELE_FIELD, shape)
+        annotation = self._malloc_string_array(ANN_ANNOTATION_FIELD, shape)
+        annotation_impact = self._malloc_string_array(ANN_ANNOTATION_IMPACT_FIELD, shape)
+        gene_name = self._malloc_string_array(ANN_GENE_NAME_FIELD, shape)
+        gene_id = self._malloc_string_array(ANN_GENE_ID_FIELD, shape)
+        feature_type = self._malloc_string_array(ANN_FEATURE_TYPE_FIELD, shape)
+        feature_id = self._malloc_string_array(ANN_FEATURE_ID_FIELD, shape)
+        transcript_biotype = self._malloc_string_array(ANN_TRANSCRIPT_BIOTYPE_FIELD, shape)
+        rank = self._malloc_integer_array(ANN_RANK_FIELD, shape + (2,))
+        hgvs_c = self._malloc_string_array(ANN_HGVS_C_FIELD, shape)
+        hgvs_p = self._malloc_string_array(ANN_HGVS_P_FIELD, shape)
+        cdna = self._malloc_integer_array(ANN_CDNA_FIELD, shape + (2,))
+        cds = self._malloc_integer_array(ANN_CDS_FIELD, shape + (2,))
+        aa = self._malloc_integer_array(ANN_AA_FIELD, shape + (2,))
+        distance = self._malloc_integer_array(ANN_DISTANCE_FIELD, shape)
 
         # start working
         for i in range(chunk_length):
             for j in range(number):
 
-                # obtain raw value
-                raw = <bytes>ann[i, j]
+                # obtain raw string value
+                raw = ann[i, j]
+                if not PY2 and isinstance(raw, bytes):
+                    raw = str(raw, 'ascii')
 
                 # bail early if no content
-                if raw == b'' or raw == b'.':
+                if raw == '' or raw == '.':
                     continue
 
                 # split fields
-                vals = raw.split(b'|')
+                vals = raw.split('|')
 
                 # convert and store values
                 try:
                     if allele is not None:
-                        v = vals[ANNFidx.ALLELE]
-                        if v:
-                            allele[i, j] = v
+                        allele[i, j] = vals[ANNFidx.ALLELE]
                     if annotation is not None:
-                        v = vals[ANNFidx.ANNOTATION]
-                        if v:
-                            annotation[i, j] = v
+                        annotation[i, j] = vals[ANNFidx.ANNOTATION]
                     if annotation_impact is not None:
-                        v = vals[ANNFidx.ANNOTATION_IMPACT]
-                        if v:
-                            annotation_impact[i, j] = v
+                        annotation_impact[i, j] = vals[ANNFidx.ANNOTATION_IMPACT]
                     if gene_name is not None:
-                        v = vals[ANNFidx.GENE_NAME]
-                        if v:
-                            gene_name[i, j] = v
+                        gene_name[i, j] = vals[ANNFidx.GENE_NAME]
                     if gene_id is not None:
-                        v = vals[ANNFidx.GENE_ID]
-                        if v:
-                            gene_id[i, j] = v
+                        gene_id[i, j] = vals[ANNFidx.GENE_ID]
                     if feature_type is not None:
-                        v = vals[ANNFidx.FEATURE_TYPE]
-                        if v:
-                            feature_type[i, j] = v
+                        feature_type[i, j] = vals[ANNFidx.FEATURE_TYPE]
                     if feature_id is not None:
-                        v = vals[ANNFidx.FEATURE_ID]
-                        if v:
-                            feature_id[i, j] = v
+                        feature_id[i, j] = vals[ANNFidx.FEATURE_ID]
                     if transcript_biotype is not None:
-                        v = vals[ANNFidx.TRANSCRIPT_BIOTYPE]
-                        if v:
-                            transcript_biotype[i, j] = v
+                        transcript_biotype[i, j] = vals[ANNFidx.TRANSCRIPT_BIOTYPE]
                     if rank is not None:
                         v = vals[ANNFidx.RANK]
                         if v:
-                            vv = v.split(b'/')
+                            vv = v.split('/')
                             rank[i, j, 0] = int(vv[0])
                             rank[i, j, 1] = int(vv[1])
                     if hgvs_c is not None:
-                        v = vals[ANNFidx.HGVS_C]
-                        if v:
-                            hgvs_c[i, j] = v[2:]
+                        hgvs_c[i, j] = vals[ANNFidx.HGVS_C]
                     if hgvs_p is not None:
-                        v = vals[ANNFidx.HGVS_P]
-                        if v:
-                            hgvs_p[i, j] = v[2:]
+                        hgvs_p[i, j] = vals[ANNFidx.HGVS_P]
                     if cdna is not None:
                         v = vals[ANNFidx.CDNA]
                         if v:
-                            vv = v.split(b'/')
+                            vv = v.split('/')
                             cdna[i, j, 0] = int(vv[0])
                             cdna[i, j, 1] = int(vv[1])
                     if cds is not None:
                         v = vals[ANNFidx.CDS]
                         if v:
-                            vv = v.split(b'/')
+                            vv = v.split('/')
                             cds[i, j, 0] = int(vv[0])
                             cds[i, j, 1] = int(vv[1])
                     if aa is not None:
                         v = vals[ANNFidx.AA]
                         if v:
-                            vv = v.split(b'/')
+                            vv = v.split('/')
                             aa[i, j, 0] = int(vv[0])
                             aa[i, j, 1] = int(vv[1])
                     if distance is not None:
                         v = vals[ANNFidx.DISTANCE]
                         if v:
-                            distance[i, j] = v
+                            distance[i, j] = int(v)
 
                 except IndexError:
                     warnings.warn('missing fields in ANN value')

@@ -5,10 +5,7 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
-* read_vcf: object dtype for strings
 * rework ann transformer to use object dtype
-* vcf_to_hdf5: handle object dtype as vlen=str
-* vcf_to_zarr: handle object dtype with msgpack encoding
 * is_snp
 * GenotypeArray.from_vcf
 * HaplotypeArray.from_vcf(ploidy)
@@ -107,7 +104,7 @@ def _chunk_iter_progress(it, log, prefix):
 def _chunk_iter_transform(it, transformers):
     for chunk, chunk_length, chrom, pos in it:
         for transformer in transformers:
-            transformer.transform(chunk)
+            transformer.transform_chunk(chunk)
         yield chunk, chunk_length, chrom, pos
 
 
@@ -267,9 +264,8 @@ def read_vcf(input,
     # setup output
     output = dict()
 
-    if samples and store_samples:
-        # use binary string type
-        output['samples'] = np.array(samples).astype('S')
+    if len(samples) > 0 and store_samples:
+        output['samples'] = samples
 
     if chunks:
 
@@ -408,6 +404,7 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
 
 def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts, shuffle, overwrite,
                          headers):
+    import h5py
 
     # handle no input
     if chunk is None:
@@ -437,8 +434,12 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
 
         shape = (0,) + data.shape[1:]
         maxshape = (None,) + data.shape[1:]
+        if data.dtype.kind == 'O':
+            dt = h5py.special_dtype(vlen=str)
+        else:
+            dt = data.dtype
         ds = root[group].create_dataset(
-            name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=data.dtype, compression=compression,
+            name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=dt, compression=compression,
             compression_opts=compression_opts, shuffle=shuffle
         )
 
@@ -583,7 +584,7 @@ def vcf_to_hdf5(input, output,
         if log is not None:
             it = _chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
-        if samples and store_samples:
+        if len(samples) > 0 and store_samples:
             # store samples
             name = 'samples'
             if name in root[group]:
@@ -592,8 +593,11 @@ def vcf_to_hdf5(input, output,
                 else:
                     # TODO right exception class?
                     raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
-            root[group].create_dataset(name, data=np.array(samples).astype('S'),
-                                       chunks=None)
+            if samples.dtype.kind == 'O':
+                t = h5py.special_dtype(vlen=str)
+            else:
+                t = samples.dtype
+            root[group].create_dataset(name, data=samples, chunks=None, dtype=t)
 
         # read first chunk
         chunk, _, _, _ = next(it)
@@ -635,6 +639,30 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
 )
 
 
+_zarr_string_codec = None
+
+
+def _get_zarr_string_codec():
+    global _zarr_string_codec
+    if _zarr_string_codec is None:
+        import zarr
+        import numcodecs
+        from distutils.version import StrictVersion
+        # need to register codecs for string encoding for zarr < 2.2
+        need_to_register = StrictVersion(zarr.__version__) < StrictVersion('2.2')
+        try:
+            from numcodecs import MsgPack
+            _zarr_string_codec = MsgPack()
+            if need_to_register:
+                zarr.codecs.codec_registry[numcodecs.MsgPack.codec_id] = MsgPack
+        except ImportError:
+            from numcodecs import Pickle
+            _zarr_string_codec = Pickle()
+            if need_to_register:
+                zarr.codecs.codec_registry[numcodecs.Pickle.codec_id] = Pickle
+    return _zarr_string_codec
+
+
 def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers):
 
     # handle no input
@@ -654,12 +682,14 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
         else:
             chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
 
-        # debug(k, data.ndim, data.shape, chunk_shape)
-
         # create dataset
         shape = (0,) + data.shape[1:]
+        if data.dtype.kind == 'O':
+            filters = [_get_zarr_string_codec()]
+        else:
+            filters = None
         ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype, compressor=compressor,
-                            overwrite=overwrite)
+                                 overwrite=overwrite, filters=filters)
 
         # copy metadata from VCF headers
         group, name = k.split('/')
@@ -773,9 +803,14 @@ def vcf_to_zarr(input, output,
     if log is not None:
         it = _chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
-    if samples and store_samples:
+    if len(samples) > 0 and store_samples:
         # store samples
-        root[group].create_dataset('samples', data=np.array(samples).astype('S'), compressor=None, overwrite=overwrite)
+        if samples.dtype.kind == 'O':
+            filters = [_get_zarr_string_codec()]
+        else:
+            filters = None
+        root[group].create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
+                                   filters=filters)
 
     # read first chunk
     chunk, _, _, _ = next(it)
@@ -896,16 +931,18 @@ def iter_vcf_chunks(input,
                 # try tabix
                 p = subprocess.Popen([tabix, '-h', input, region],
                                      stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT,
                                      bufsize=0)
 
                 # check if tabix exited early, look for tabix error
                 time.sleep(.5)
                 poll = p.poll()
                 if poll is not None and poll > 0:
-                    err = p.stderr.read(-1)
+                    err = p.stdout.read(-1)
+                    p.stdout.close()
                     raise Exception(err.strip())
                 fileobj = p.stdout
+                close = True
                 # N.B., still pass the region parameter through so we get strictly only
                 # variants that start within the requested region. See also
                 # https://github.com/alimanfoo/vcfnp/issues/54
@@ -948,6 +985,8 @@ def iter_vcf_chunks(input,
 
     # setup transformers
     if transformers is not None:
+        for trans in transformers:
+            fields = trans.transform_fields(fields)
         it = _chunk_iter_transform(it, transformers)
 
     return fields, samples, headers, it
@@ -1054,7 +1093,7 @@ def _check_field(field, headers):
 
 def _add_all_fields(fields, headers, samples):
     _add_all_variants_fields(fields, headers)
-    if samples:
+    if len(samples) > 0:
         _add_all_calldata_fields(fields, headers)
 
 
@@ -1118,7 +1157,7 @@ def _normalize_fields(fields, headers, samples):
         elif f in ['variants', 'variants*', 'variants/*']:
             _add_all_variants_fields(normed_fields, headers)
 
-        elif f in ['calldata', 'calldata*', 'calldata/*'] and samples:
+        elif f in ['calldata', 'calldata*', 'calldata/*'] and len(samples) > 0:
             _add_all_calldata_fields(normed_fields, headers)
 
         elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*', 'variants/INFO/*']:
@@ -1135,7 +1174,7 @@ def _normalize_fields(fields, headers, samples):
             # normalize field specification
             f = _normalize_field_prefix(f, headers)
             _check_field(f, headers)
-            if f.startswith('calldata/') and not samples:
+            if f.startswith('calldata/') and len(samples) == 0:
                 # only add calldata fields if there are samples
                 pass
             elif f not in normed_fields:
@@ -1146,7 +1185,7 @@ def _normalize_fields(fields, headers, samples):
 
 default_integer_dtype = 'i4'
 default_float_dtype = 'f4'
-default_string_dtype = 'S12'
+default_string_dtype = 'object'
 
 
 def _normalize_type(t):
@@ -1169,18 +1208,18 @@ def _normalize_type(t):
 
 
 default_types = {
-    'variants/CHROM': 'S12',
+    'variants/CHROM': 'object',
     'variants/POS': 'i4',
-    'variants/ID': 'S12',
-    'variants/REF': 'S30',
-    'variants/ALT': 'S30',
+    'variants/ID': 'object',
+    'variants/REF': 'object',
+    'variants/ALT': 'object',
     'variants/QUAL': 'f4',
     'variants/DP': 'i4',
     'variants/AN': 'i4',
     'variants/AC': 'i4',
     'variants/AF': 'f4',
     'variants/MQ': 'f4',
-    'variants/ANN': 'S400',
+    'variants/ANN': 'object',
     'calldata/GT': 'genotype/i1',
     'calldata/GQ': 'i1',
     'calldata/HQ': 'i1',
@@ -1358,11 +1397,11 @@ def _normalize_fills(fills, fields, headers):
     return normed_fills
 
 
-def _normalize_samples(samples, headers):
+def _normalize_samples(samples, headers, types):
     loc_samples = np.zeros(len(headers.samples), dtype='u1')
 
     if samples is None:
-        normed_samples = headers.samples
+        normed_samples = list(headers.samples)
         loc_samples.fill(1)
 
     else:
@@ -1377,8 +1416,13 @@ def _normalize_samples(samples, headers):
                 normed_samples.append(s)
                 samples.remove(s)
                 loc_samples[i] = 1
-        if samples:
+        if len(samples) > 0:
             warnings.warn('some samples not found, will be ignored: ' + ', '.join(map(repr, sorted(samples))))
+
+    t = default_string_dtype
+    if types is not None:
+        t = types.get('samples', t)
+    normed_samples = np.array(normed_samples, dtype=t)
 
     return normed_samples, loc_samples
 
@@ -1390,7 +1434,7 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length,
     headers = _read_vcf_headers(stream)
 
     # setup samples
-    samples, loc_samples = _normalize_samples(samples, headers)
+    samples, loc_samples = _normalize_samples(samples, headers, types)
 
     # setup fields to read
     if fields is None:
@@ -1399,7 +1443,7 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length,
         fields = list()
         _add_all_fixed_variants_fields(fields)
         fields.append('variants/FILTER_PASS')
-        if samples and 'GT' in headers.formats:
+        if len(samples) > 0 and 'GT' in headers.formats:
             fields.append('calldata/GT')
 
     else:
@@ -1520,6 +1564,7 @@ def _chunk_to_dataframe(fields, chunk):
         group, name = f.split('/')
         assert group == 'variants'
         if a.dtype.kind == 'S':
+            # always convert strings for pandas - if U then pandas will use object dtype
             a = a.astype('U')
         if a.ndim == 1:
             items.append((name, a))

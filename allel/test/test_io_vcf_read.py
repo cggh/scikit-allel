@@ -17,7 +17,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
 from allel.io_vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
-    vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
+    vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray, debug
 from allel.compat import PY2
 
 
@@ -46,7 +46,7 @@ def test_read_vcf_chunks():
         assert_in('GT', headers.formats)
         assert_in('HQ', headers.formats)
         eq_(['NA00001', 'NA00002', 'NA00003'], headers.samples)
-        eq_(['NA00001', 'NA00002', 'NA00003'], samples)
+        assert_list_equal(['NA00001', 'NA00002', 'NA00003'], samples.tolist())
         eq_('1', headers.infos['AA']['Number'])
         eq_('String', headers.infos['AA']['Type'])
         eq_('Ancestral Allele', headers.infos['AA']['Description'])
@@ -289,11 +289,12 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     if close:
         input_file.close()
 
+    # samples
+    eq_((3,), callset['samples'].shape)
+    eq_('O', callset['samples'].dtype.kind)
+    assert_list_equal(['NA00001', 'NA00002', 'NA00003'], callset['samples'].tolist())
+
     # fixed fields
-    print(callset['variants/CHROM'])
-    print(callset['variants/POS'])
-    print(callset['variants/REF'])
-    print(callset['variants/ALT'])
     eq_((9,), callset['variants/CHROM'].shape)
     eq_(np.dtype(object), callset['variants/CHROM'].dtype)
     eq_('19', callset['variants/CHROM'][0])
@@ -347,11 +348,17 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
                        fields='*',
                        chunk_length=chunk_length,
                        buffer_size=buffer_size,
-                       types={'CHROM': 'S12', 'ID': 'S20', 'REF': 'S20', 'ALT': 'S20', 'calldata/DP': 'S3'},
+                       types={'CHROM': 'S12', 'ID': 'S20', 'REF': 'S20', 'ALT': 'S20', 'calldata/DP': 'S3',
+                              'samples': 'S20'},
                        block_length=block_length,
                        n_threads=n_threads)
     if close:
         input_file.close()
+
+    # samples
+    eq_((3,), callset['samples'].shape)
+    eq_('S', callset['samples'].dtype.kind)
+    assert_list_equal([b'NA00001', b'NA00002', b'NA00003'], callset['samples'].tolist())
 
     # fixed fields
     print(callset['variants/CHROM'])
@@ -458,18 +465,23 @@ def test_truncation_chrom():
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
 
-        input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['CHROM', 'samples'])
+        for string_type in 'S10', 'object':
+            input_file = io.BytesIO(data)
+            callset = read_vcf(input_file, fields=['CHROM', 'samples'], types={'CHROM': string_type})
 
-        # check fields
-        expected_fields = ['variants/CHROM']
-        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+            # check fields
+            expected_fields = ['variants/CHROM']
+            assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
-        # check data content
-        a = callset['variants/CHROM']
-        eq_(2, len(a))
-        eq_(b'2L', a[0])
-        eq_(b'2R', a[1])
+            # check data content
+            a = callset['variants/CHROM']
+            eq_(2, len(a))
+            if string_type == 'S10':
+                eq_(b'2L', a[0])
+                eq_(b'2R', a[1])
+            else:
+                eq_('2L', a[0])
+                eq_('2R', a[1])
 
 
 def test_truncation_pos():
@@ -504,18 +516,23 @@ def test_truncation_id():
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
 
-        input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['ID', 'samples'])
+        for string_type in 'S10', 'object':
+            input_file = io.BytesIO(data)
+            callset = read_vcf(input_file, fields=['ID', 'samples'], types={'ID': string_type})
 
-        # check fields
-        expected_fields = ['variants/ID']
-        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+            # check fields
+            expected_fields = ['variants/ID']
+            assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
-        # check data content
-        a = callset['variants/ID']
-        eq_(2, len(a))
-        eq_(b'foo', a[0])
-        eq_(b'bar', a[1])
+            # check data content
+            a = callset['variants/ID']
+            eq_(2, len(a))
+            if string_type == 'S10':
+                eq_(b'foo', a[0])
+                eq_(b'bar', a[1])
+            else:
+                eq_('foo', a[0])
+                eq_('bar', a[1])
 
 
 def test_truncation_ref():
@@ -527,18 +544,23 @@ def test_truncation_ref():
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
 
-        input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['REF', 'samples'])
+        for string_type in 'S10', 'object':
+            input_file = io.BytesIO(data)
+            callset = read_vcf(input_file, fields=['REF', 'samples'], types={'REF': string_type})
 
-        # check fields
-        expected_fields = ['variants/REF']
-        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+            # check fields
+            expected_fields = ['variants/REF']
+            assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
-        # check data content
-        a = callset['variants/REF']
-        eq_(2, len(a))
-        eq_(b'A', a[0])
-        eq_(b'C', a[1])
+            # check data content
+            a = callset['variants/REF']
+            eq_(2, len(a))
+            if string_type == 'S10':
+                eq_(b'A', a[0])
+                eq_(b'C', a[1])
+            else:
+                eq_('A', a[0])
+                eq_('C', a[1])
 
 
 def test_truncation_alt():
@@ -550,18 +572,24 @@ def test_truncation_alt():
     # with and without final line terminator
     for data in (input_data, input_data[:-1]):
 
-        input_file = io.BytesIO(data)
-        callset = read_vcf(input_file, fields=['ALT', 'samples'], numbers=dict(ALT=1))
+        for string_type in 'S10', 'object':
+            input_file = io.BytesIO(data)
+            callset = read_vcf(input_file, fields=['ALT', 'samples'], numbers=dict(ALT=1),
+                               types={'ALT': string_type})
 
-        # check fields
-        expected_fields = ['variants/ALT']
-        assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+            # check fields
+            expected_fields = ['variants/ALT']
+            assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
-        # check data content
-        a = callset['variants/ALT']
-        eq_(2, len(a))
-        eq_(b'C', a[0])
-        eq_(b'G', a[1])
+            # check data content
+            a = callset['variants/ALT']
+            eq_(2, len(a))
+            if string_type == 'S10':
+                eq_(b'C', a[0])
+                eq_(b'G', a[1])
+            else:
+                eq_('C', a[0])
+                eq_('G', a[1])
 
 
 def test_truncation_qual():
@@ -701,7 +729,7 @@ def test_truncation_calldata():
 
         # check data content
         eq_(2, len(callset['samples']))
-        assert_list_equal([b'S2', b'S1'], callset['samples'].tolist())
+        assert_list_equal(['S2', 'S1'], callset['samples'].tolist())
         a = callset['calldata/GT']
         eq_((3, 2, 2), a.shape)
         print(a)
@@ -729,17 +757,20 @@ def test_vcf_to_npz():
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
                 for samples in None, ['NA00001', 'NA00003']:
-                    expect = read_vcf(fn, region=region, tabix=tabix, samples=samples)
-                    if os.path.exists(npz_fn):
-                        os.remove(npz_fn)
-                    vcf_to_npz(fn, npz_fn, chunk_length=2, n_threads=n_threads,
-                               region=region, tabix=tabix, samples=samples)
-                    actual = np.load(npz_fn)
-                    for key in expect.keys():
-                        if expect[key].dtype.kind == 'f':
-                            assert_array_almost_equal(expect[key], actual[key])
-                        else:
-                            assert_array_equal(expect[key], actual[key])
+                    for string_type in 'S10', 'object':
+                        types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
+                        expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples,
+                                          types=types)
+                        if os.path.exists(npz_fn):
+                            os.remove(npz_fn)
+                        vcf_to_npz(fn, npz_fn, fields='*', chunk_length=2, n_threads=n_threads,
+                                   region=region, tabix=tabix, samples=samples, types=types)
+                        actual = np.load(npz_fn)
+                        for key in expect.keys():
+                            if expect[key].dtype.kind == 'f':
+                                assert_array_almost_equal(expect[key], actual[key])
+                            else:
+                                assert_array_equal(expect[key], actual[key])
 
 
 def test_vcf_to_zarr():
@@ -749,21 +780,23 @@ def test_vcf_to_zarr():
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
                 for samples in None, ['NA00001', 'NA00003']:
-                    expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples)
-                    if os.path.exists(zarr_path):
-                        shutil.rmtree(zarr_path)
-                    vcf_to_zarr(fn, zarr_path, fields='*', chunk_length=2, n_threads=n_threads,
-                                region=region, tabix=tabix, samples=samples)
-                    actual = zarr.open_group(zarr_path, mode='r')
-                    for key in expect.keys():
-                        if expect[key].dtype.kind == 'f':
-                            assert_array_almost_equal(expect[key], actual[key][:])
-                        else:
-                            assert_array_equal(expect[key], actual[key][:])
-                        eq_(actual['variants/NS'].attrs['Description'],
-                            'Number of Samples With Data')
-                        eq_(actual['calldata/GQ'].attrs['Description'],
-                            'Genotype Quality')
+                    for string_type in 'S10', 'object':
+                        types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
+                        expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples, types=types)
+                        if os.path.exists(zarr_path):
+                            shutil.rmtree(zarr_path)
+                        vcf_to_zarr(fn, zarr_path, fields='*', chunk_length=2, n_threads=n_threads,
+                                    region=region, tabix=tabix, samples=samples, types=types)
+                        actual = zarr.open_group(zarr_path, mode='r')
+                        for key in expect.keys():
+                            if expect[key].dtype.kind == 'f':
+                                assert_array_almost_equal(expect[key], actual[key][:])
+                            else:
+                                assert_array_equal(expect[key], actual[key][:])
+                            eq_(actual['variants/NS'].attrs['Description'],
+                                'Number of Samples With Data')
+                            eq_(actual['calldata/GQ'].attrs['Description'],
+                                'Genotype Quality')
 
 
 def test_vcf_to_hdf5():
@@ -773,37 +806,44 @@ def test_vcf_to_hdf5():
         for region in None, '20', '20:10000-20000':
             for tabix in 'tabix', None:
                 for samples in None, ['NA00001', 'NA00003']:
-                    expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples)
-                    if os.path.exists(h5_fn):
-                        os.remove(h5_fn)
-                    vcf_to_hdf5(fn, h5_fn, fields='*', chunk_length=2, n_threads=n_threads,
-                                region=region, tabix=tabix, samples=samples)
-                    with h5py.File(h5_fn, mode='r') as actual:
-                        for key in expect.keys():
-                            if expect[key].dtype.kind == 'f':
-                                assert_array_almost_equal(expect[key], actual[key][:])
-                            else:
-                                assert_array_equal(expect[key], actual[key][:])
-                        eq_(actual['variants/NS'].attrs['Description'],
-                            'Number of Samples With Data')
-                        eq_(actual['calldata/GQ'].attrs['Description'],
-                            'Genotype Quality')
+                    for string_type in 'S10', 'object':
+                        types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
+                        expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples,
+                                          types=types)
+                        if os.path.exists(h5_fn):
+                            os.remove(h5_fn)
+                        vcf_to_hdf5(fn, h5_fn, fields='*', chunk_length=2, n_threads=n_threads,
+                                    region=region, tabix=tabix, samples=samples,
+                                    types=types)
+                        with h5py.File(h5_fn, mode='r') as actual:
+                            for key in expect.keys():
+                                if expect[key].dtype.kind == 'f':
+                                    assert_array_almost_equal(expect[key], actual[key][:])
+                                else:
+                                    assert_array_equal(expect[key], actual[key][:])
+                            eq_(actual['variants/NS'].attrs['Description'],
+                                'Number of Samples With Data')
+                            eq_(actual['calldata/GQ'].attrs['Description'],
+                                'Genotype Quality')
 
 
 def test_info_types():
     fn = 'fixture/sample.vcf'
 
-    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8':
-        callset = read_vcf(fn, fields=['variants/DP'], types={'variants/DP': dtype})
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10', 'object':
+        callset = read_vcf(fn, fields=['variants/DP', 'variants/AC'],
+                           types={'variants/DP': dtype, 'variants/AC': dtype},
+                           numbers={'variants/AC': 3})
         eq_(np.dtype(dtype), callset['variants/DP'].dtype)
         eq_((9,), callset['variants/DP'].shape)
+        eq_((9, 3), callset['variants/AC'].shape)
 
 
 def test_genotype_types():
 
     fn = 'fixture/sample.vcf'
-    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'S3':
-        callset = read_vcf(fn, fields=['GT'], types={'GT': dtype})
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'S3', 'object':
+        callset = read_vcf(fn, fields=['GT'], types={'GT': dtype}, numbers={'GT': 2})
         eq_(np.dtype(dtype), callset['calldata/GT'].dtype)
         eq_((9, 3, 2), callset['calldata/GT'].shape)
 
@@ -836,8 +876,8 @@ def test_genotype_types():
 def test_calldata_types():
     fn = 'fixture/sample.vcf'
 
-    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8':
-        callset = read_vcf(fn, fields=['HQ'], types={'HQ': dtype})
+    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10', 'object':
+        callset = read_vcf(fn, fields=['HQ'], types={'HQ': dtype}, numbers={'HQ': 2})
         eq_(np.dtype(dtype), callset['calldata/HQ'].dtype)
         eq_((9, 3, 2), callset['calldata/HQ'].shape)
 
@@ -946,7 +986,7 @@ def test_numbers():
     callset = read_vcf(fn, fields=['ALT'], numbers=dict(ALT=1))
     a = callset['variants/ALT']
     eq_((9,), a.shape)
-    eq_(b'A', a[8])
+    eq_('A', a[8])
 
     callset = read_vcf(fn, fields=['ALT'], numbers=dict(ALT=2), types=dict(ALT='S4'))
     a = callset['variants/ALT']
@@ -1014,13 +1054,13 @@ def test_read_region():
     fn = 'fixture/sample.vcf.gz'
 
     for tabix in 'tabix', None:
-
+        debug(tabix)
         region = '19'
         callset = read_vcf(fn, region=region, tabix=tabix)
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
         eq_(2, len(chrom))
-        assert np.all(chrom == b'19')
+        assert np.all(chrom == '19')
         eq_(2, len(pos))
         assert_array_equal([111, 112], pos)
 
@@ -1029,7 +1069,7 @@ def test_read_region():
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
         eq_(6, len(chrom))
-        assert np.all(chrom == b'20')
+        assert np.all(chrom == '20')
         eq_(6, len(pos))
         assert_array_equal([14370, 17330, 1110696, 1230237, 1234567, 1235237], pos)
 
@@ -1038,7 +1078,7 @@ def test_read_region():
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
         eq_(1, len(chrom))
-        assert np.all(chrom == b'X')
+        assert np.all(chrom == 'X')
         eq_(1, len(pos))
         assert_array_equal([10], pos)
 
@@ -1052,7 +1092,7 @@ def test_read_region():
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
         eq_(2, len(chrom))
-        assert np.all(chrom == b'20')
+        assert np.all(chrom == '20')
         eq_(2, len(pos))
         assert_array_equal([14370, 17330], pos)
 
@@ -1061,7 +1101,7 @@ def test_read_region():
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
         eq_(2, len(chrom))
-        assert np.all(chrom == b'20')
+        assert np.all(chrom == '20')
         eq_(2, len(pos))
         assert_array_equal([1110696, 1230237], pos)
 
@@ -1070,7 +1110,7 @@ def test_read_region():
         chrom = callset['variants/CHROM']
         pos = callset['variants/POS']
         eq_(2, len(chrom))
-        assert np.all(chrom == b'20')
+        assert np.all(chrom == '20')
         eq_(2, len(pos))
         assert_array_equal([1234567, 1235237], pos)
 
@@ -1125,63 +1165,81 @@ def test_ann():
                       sorted(callset.keys()))
     a = callset['variants/ANN_Allele']
     eq_((3,), a.shape)
-    assert_array_equal([b'T', b'', b'T'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['T', '', 'T'], a)
     a = callset['variants/ANN_Annotation']
     eq_((3,), a.shape)
-    assert_array_equal([b'intergenic_region', b'', b'missense_variant'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['intergenic_region', '', 'missense_variant'], a)
     a = callset['variants/ANN_Annotation_Impact']
     eq_((3,), a.shape)
-    assert_array_equal([b'MODIFIER', b'', b'MODERATE'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['MODIFIER', '', 'MODERATE'], a)
     a = callset['variants/ANN_Gene_Name']
     eq_((3,), a.shape)
-    assert_array_equal([b'AGAP004677', b'', b'AGAP005273'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['AGAP004677', '', 'AGAP005273'], a)
     a = callset['variants/ANN_Gene_ID']
     eq_((3,), a.shape)
-    assert_array_equal([b'AGAP004677', b'', b'AGAP005273'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['AGAP004677', '', 'AGAP005273'], a)
     a = callset['variants/ANN_Feature_Type']
     eq_((3,), a.shape)
-    assert_array_equal([b'intergenic_region', b'', b'transcript'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['intergenic_region', '', 'transcript'], a)
     a = callset['variants/ANN_Feature_ID']
     eq_((3,), a.shape)
-    assert_array_equal([b'AGAP004677', b'', b'AGAP005273-RA'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['AGAP004677', '', 'AGAP005273-RA'], a)
     a = callset['variants/ANN_Transcript_BioType']
+    eq_(np.dtype('object'), a.dtype)
     eq_((3,), a.shape)
-    assert_array_equal([b'', b'', b'VectorBase'], a)
+    assert_array_equal(['', '', 'VectorBase'], a)
+    eq_(np.dtype('object'), a.dtype)
     a = callset['variants/ANN_Rank']
     eq_((3, 2), a.shape)
+    eq_(np.dtype('int8'), a.dtype)
     assert_array_equal([-1, -1, 1], a[:, 0])
     assert_array_equal([-1, -1, 4], a[:, 1])
     a = callset['variants/ANN_HGVS_c']
     eq_((3,), a.shape)
-    assert_array_equal([b'', b'', b'17A>T'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['', '', 'n.17A>T'], a)
     a = callset['variants/ANN_HGVS_p']
     eq_((3,), a.shape)
-    assert_array_equal([b'', b'', b'Asp6Val'], a)
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['', '', 'p.Asp6Val'], a)
     a = callset['variants/ANN_cDNA']
     eq_((3, 2), a.shape)
+    eq_(np.dtype('int32'), a.dtype)
     assert_array_equal([-1, -1, 17], a[:, 0])
     assert_array_equal([-1, -1, 4788], a[:, 1])
     a = callset['variants/ANN_CDS']
     eq_((3, 2), a.shape)
+    eq_(np.dtype('int32'), a.dtype)
     assert_array_equal([-1, -1, 17], a[:, 0])
     assert_array_equal([-1, -1, -1], a[:, 1])
     a = callset['variants/ANN_AA']
     eq_((3, 2), a.shape)
+    eq_(np.dtype('int32'), a.dtype)
     assert_array_equal([-1, -1, 6], a[:, 0])
     assert_array_equal([-1, -1, -1], a[:, 1])
     a = callset['variants/ANN_Distance']
     eq_((3,), a.shape)
+    eq_(np.dtype('int32'), a.dtype)
     assert_array_equal([-1, -1, -1], a)
 
     # numbers=2
     callset = read_vcf(fn, fields=['ANN'], numbers={'ANN': 2}, transformers=[ANNTransformer()])
     a = callset['variants/ANN_Allele']
     eq_((3, 2), a.shape)
-    assert_array_equal([b'T', b''], a[0])
-    assert_array_equal([b'', b''], a[1])
-    assert_array_equal([b'T', b'G'], a[2])
+    eq_(np.dtype('object'), a.dtype)
+    assert_array_equal(['T', ''], a[0])
+    assert_array_equal(['', ''], a[1])
+    assert_array_equal(['T', 'G'], a[2])
     a = callset['variants/ANN_cDNA']
     eq_((3, 2, 2), a.shape)
+    eq_(np.dtype('int32'), a.dtype)
     assert_array_equal([-1, -1, 17], a[:, 0, 0])
     assert_array_equal([-1, -1, 4788], a[:, 0, 1])
 
@@ -1201,7 +1259,7 @@ def test_ann():
     a = callset['variants/ANN_HGVS_c']
     eq_((3,), a.shape)
     eq_(np.dtype('S20'), a.dtype)
-    assert_array_equal([b'', b'', b'17A>T'], a)
+    assert_array_equal([b'', b'', b'n.17A>T'], a)
     a = callset['variants/ANN_cDNA']
     eq_((3, 2), a.shape)
     eq_(np.dtype('i8'), a.dtype)
@@ -1349,13 +1407,13 @@ def test_missing_headers():
     # INFO DP not declared
     callset = read_vcf(fn, fields=['DP'], types={'DP': 'String'})
     a = callset['variants/DP']
-    eq_(b'14', a[2])  # default type is string
+    eq_('14', a[2])  # default type is string
     callset = read_vcf(fn, fields=['DP'], types={'DP': 'Integer'})
     a = callset['variants/DP']
     eq_(14, a[2])
     # what about a field which isn't present at all?
     callset = read_vcf(fn, fields=['FOO'])
-    eq_(b'', callset['variants/FOO'][2])  # default missing value for string field
+    eq_('', callset['variants/FOO'][2])  # default missing value for string field
 
     # FORMAT field DP not declared in VCF header
     callset = read_vcf(fn, fields=['calldata/DP'],
@@ -1430,32 +1488,37 @@ def test_numalt_svlen():
                   b"3R\t56\t.\tG\tA,GTAC\t.\t.\t.\t.\n"
                   b"3R\t56\t.\tCATG\tC,GATG\t.\t.\t.\t.\n"
                   b"3R\t56\t.\tGTAC\tATAC,GTACTACTAC,G,GTACA,GTA\t.\t.\t.\t.\n")
-    callset = read_vcf(io.BytesIO(input_data),
-                       fields='*',
-                       numbers={'ALT': 5}, types={'ALT': 'S20'})
 
-    a = callset['variants/ALT']
-    eq_((6, 5), a.shape)
-    e = np.array([[b'', b'', b'', b'', b''],
-                  [b'T', b'', b'', b'', b''],
-                  [b'A', b'T', b'', b'', b''],
-                  [b'A', b'GTAC', b'', b'', b''],
-                  [b'C', b'GATG', b'', b'', b''],
-                  [b'ATAC', b'GTACTACTAC', b'G', b'GTACA', b'GTA']])
-    assert_array_equal(e, a)
+    for string_dtype in 'S20', 'object':
 
-    a = callset['variants/numalt']
-    eq_((6,), a.shape)
-    assert_array_equal([0, 1, 2, 2, 2, 5], a)
+        callset = read_vcf(io.BytesIO(input_data),
+                           fields='*',
+                           numbers={'ALT': 5}, types={'REF': string_dtype, 'ALT': string_dtype})
 
-    a = callset['variants/svlen']
-    eq_((6, 5), a.shape)
-    assert_array_equal([[0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 3, 0, 0, 0],
-                        [-3, 0, 0, 0, 0],
-                        [0, 6, -3, 1, -1]], a)
+        a = callset['variants/ALT']
+        eq_((6, 5), a.shape)
+        e = np.array([[b'', b'', b'', b'', b''],
+                      [b'T', b'', b'', b'', b''],
+                      [b'A', b'T', b'', b'', b''],
+                      [b'A', b'GTAC', b'', b'', b''],
+                      [b'C', b'GATG', b'', b'', b''],
+                      [b'ATAC', b'GTACTACTAC', b'G', b'GTACA', b'GTA']])
+        if a.dtype.kind == 'O':
+            e = e.astype('U').astype(object)
+        assert_array_equal(e, a)
+
+        a = callset['variants/numalt']
+        eq_((6,), a.shape)
+        assert_array_equal([0, 1, 2, 2, 2, 5], a)
+
+        a = callset['variants/svlen']
+        eq_((6, 5), a.shape)
+        assert_array_equal([[0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0],
+                            [0, 3, 0, 0, 0],
+                            [-3, 0, 0, 0, 0],
+                            [0, 6, -3, 1, -1]], a)
 
 
 def test_genotype_ac():
@@ -1639,26 +1702,31 @@ def test_calldata_quirks():
 
 def test_vcf_to_dataframe():
     fn = 'fixture/sample.vcf'
-    fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
+    fields = ['CHROM', 'POS', 'REF', 'ALT', 'ANN', 'DP', 'AC', 'GT']
     numbers = {'AC': 2, 'ALT': 2}
-    callset = read_vcf(fn, fields=fields, numbers=numbers)
-    df = vcf_to_dataframe(fn,
-                          fields=fields,
-                          numbers=numbers,
-                          chunk_length=2)
-    assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2'],
-                      df.columns.tolist())
-    eq_(np.dtype(object), df['CHROM'].dtype)
-    for k in callset:
-        group, name = k.split('/')
-        e = callset[k]
-        if e.dtype.kind == 'S':
-            e = e.astype('U')
-        if e.ndim == 1:
-            assert_array_equal(e, df[name].values)
-        elif e.ndim == 2:
-            for i in range(e.shape[1]):
-                assert_array_equal(e[:, i], df['%s_%s' % (name, i+1)])
+    for string_type in 'S10', 'object':
+        types = {'CHROM': string_type, 'ALT': string_type}
+        transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
+                                       types={'Allele': string_type, 'HGVS_c': string_type})]
+        callset = read_vcf(fn, fields=fields, numbers=numbers, types=types, transformers=transformers)
+        df = vcf_to_dataframe(fn, fields=fields, numbers=numbers, chunk_length=2, types=types,
+                              transformers=transformers)
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'ANN_Allele', 'ANN_HGVS_c', 'ANN_AA', 'DP', 'AC_1',
+                           'AC_2'],
+                          df.columns.tolist())
+        # always convert strings to object dtype for pandas
+        eq_(np.dtype(object), df['CHROM'].dtype)
+        eq_(np.dtype(object), df['ALT_1'].dtype)
+        for k in callset:
+            group, name = k.split('/')
+            e = callset[k]
+            if e.dtype.kind == 'S':
+                e = e.astype('U')
+            if e.ndim == 1:
+                assert_array_equal(e, df[name].values)
+            elif e.ndim == 2:
+                for i in range(e.shape[1]):
+                    assert_array_equal(e[:, i], df['%s_%s' % (name, i+1)])
 
 
 def test_vcf_to_csv():
@@ -1691,7 +1759,7 @@ def test_vcf_to_recarray():
                         chunk_length=2)
     assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2'],
                       list(a.dtype.names))
-    eq_('S', a['CHROM'].dtype.kind)
+    eq_('O', a['CHROM'].dtype.kind)
     for k in callset:
         group, name = k.split('/')
         if group == 'variants':
