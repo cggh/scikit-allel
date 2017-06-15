@@ -270,6 +270,8 @@ def test_fields_selected():
 
 def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_length):
 
+    # object dtype for strings
+
     if isinstance(input, str):
         input_file = input
         close = False
@@ -281,7 +283,7 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
                        fields='*',
                        chunk_length=chunk_length,
                        buffer_size=buffer_size,
-                       types={'ALT': 'S3', 'calldata/DP': 'S3'},
+                       types={'calldata/DP': object},
                        block_length=block_length,
                        n_threads=n_threads)
     if close:
@@ -293,15 +295,19 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     print(callset['variants/REF'])
     print(callset['variants/ALT'])
     eq_((9,), callset['variants/CHROM'].shape)
-    eq_(b'19', callset['variants/CHROM'][0])
+    eq_(np.dtype(object), callset['variants/CHROM'].dtype)
+    eq_('19', callset['variants/CHROM'][0])
     eq_((9,), callset['variants/POS'].shape)
     eq_(111, callset['variants/POS'][0])
     eq_((9,), callset['variants/ID'].shape)
-    eq_(b'rs6054257', callset['variants/ID'][2])
+    eq_(np.dtype(object), callset['variants/ID'].dtype)
+    eq_('rs6054257', callset['variants/ID'][2])
     eq_((9,), callset['variants/REF'].shape)
-    eq_(b'A', callset['variants/REF'][0])
+    eq_(np.dtype(object), callset['variants/REF'].dtype)
+    eq_('A', callset['variants/REF'][0])
     eq_((9, 3), callset['variants/ALT'].shape)
-    eq_(b'ATG', callset['variants/ALT'][8, 1])
+    eq_(np.dtype(object), callset['variants/ALT'].dtype)
+    eq_('ATG', callset['variants/ALT'][8, 1])
     eq_((9,), callset['variants/QUAL'].shape)
     eq_(10.0, callset['variants/QUAL'][1])
     eq_((9,), callset['variants/FILTER_PASS'].shape)
@@ -325,6 +331,71 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     eq_((9, 3, 2), callset['calldata/HQ'].shape)
     eq_((10, 15), tuple(callset['calldata/HQ'][0, 0]))
     eq_((9, 3), callset['calldata/DP'].shape)
+    eq_(np.dtype(object), callset['calldata/DP'].dtype)
+    eq_(('4', '2', '3'), tuple(callset['calldata/DP'][6]))
+
+    # String (S) dtype
+
+    if isinstance(input, str):
+        input_file = input
+        close = False
+    else:
+        input_file = input()
+        close = True
+
+    callset = read_vcf(input_file,
+                       fields='*',
+                       chunk_length=chunk_length,
+                       buffer_size=buffer_size,
+                       types={'CHROM': 'S12', 'ID': 'S20', 'REF': 'S20', 'ALT': 'S20', 'calldata/DP': 'S3'},
+                       block_length=block_length,
+                       n_threads=n_threads)
+    if close:
+        input_file.close()
+
+    # fixed fields
+    print(callset['variants/CHROM'])
+    print(callset['variants/POS'])
+    print(callset['variants/REF'])
+    print(callset['variants/ALT'])
+    eq_((9,), callset['variants/CHROM'].shape)
+    eq_('S', callset['variants/CHROM'].dtype.kind)
+    eq_(b'19', callset['variants/CHROM'][0])
+    eq_((9,), callset['variants/POS'].shape)
+    eq_(111, callset['variants/POS'][0])
+    eq_((9,), callset['variants/ID'].shape)
+    eq_('S', callset['variants/ID'].dtype.kind)
+    eq_(b'rs6054257', callset['variants/ID'][2])
+    eq_((9,), callset['variants/REF'].shape)
+    eq_(b'A', callset['variants/REF'][0])
+    eq_('S', callset['variants/REF'].dtype.kind)
+    eq_((9, 3), callset['variants/ALT'].shape)
+    eq_(b'ATG', callset['variants/ALT'][8, 1])
+    eq_('S', callset['variants/ALT'].dtype.kind)
+    eq_((9,), callset['variants/QUAL'].shape)
+    eq_(10.0, callset['variants/QUAL'][1])
+    eq_((9,), callset['variants/FILTER_PASS'].shape)
+    print(callset['variants/FILTER_PASS'])
+    eq_(True, callset['variants/FILTER_PASS'][2])
+    eq_(False, callset['variants/FILTER_PASS'][3])
+    eq_((9,), callset['variants/FILTER_q10'].shape)
+    eq_(True, callset['variants/FILTER_q10'][3])
+
+    # INFO fields
+    eq_(3, callset['variants/NS'][2])
+    eq_(.5, callset['variants/AF'][2, 0])
+    eq_(True, callset['variants/DB'][2])
+    eq_((3, 1, -1), tuple(callset['variants/AC'][6]))
+
+    # test calldata content
+    eq_((9, 3, 2), callset['calldata/GT'].shape)
+    eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
+    eq_((9, 3, 2), callset['calldata/HQ'].shape)
+    eq_((10, 15), tuple(callset['calldata/HQ'][0, 0]))
+    eq_((9, 3), callset['calldata/DP'].shape)
+    eq_('S', callset['calldata/DP'].dtype.kind)
     eq_((b'4', b'2', b'3'), tuple(callset['calldata/DP'][6]))
 
 

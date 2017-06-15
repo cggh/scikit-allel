@@ -4222,7 +4222,7 @@ class VariantTable(NumpyRecArrayWrapper):
 
     Access multiple columns::
 
-        >>> vt[['DP', 'QD']]  # doctest: +ELLIPSIS
+        >>> vt[['DP', 'QD']]
         <VariantTable shape=(5,) dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8')])>
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
@@ -4233,9 +4233,9 @@ class VariantTable(NumpyRecArrayWrapper):
 
     Access multiple rows::
 
-        >>> vt[2:4]  # doctest: +ELLIPSIS
+        >>> vt[2:4]
         <VariantTable shape=(2,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
-        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
+        [(b'chr2', 3, 78, 1.2, [5, 6]) (b'chr2', 9, 22, 4.4, ...
 
     Evaluate expressions against the table::
 
@@ -4248,19 +4248,19 @@ class VariantTable(NumpyRecArrayWrapper):
 
     Query the table::
 
-        >>> vt.query('DP > 30')  # doctest: +ELLIPSIS
+        >>> vt.query('DP > 30')
         <VariantTable shape=(3,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
-        [(b'chr1', 2, 35, 4.5, array([1, 2])) (b'chr2', 3, 78, 1.2, array([...
-         (b'chr3', 6, 99, 2.8, array([ 9, 10]))]
-        >>> vt.query('(DP > 30) & (QD > 4)')  # doctest: +ELLIPSIS
+        [(b'chr1', 2, 35,  4.5, [ 1,  2]) (b'chr2', 3, 78,  1.2, ...
+         (b'chr3', 6, 99,  2.8, [ 9, 10])]
+        >>> vt.query('(DP > 30) & (QD > 4)')
         <VariantTable shape=(1,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
-        [(b'chr1', 2, 35, 4.5, array([1, 2]))]
+        [(b'chr1', 2, 35, 4.5, [1, 2])]
 
     Use the index to query variants::
 
-        >>> vt.query_region(b'chr2', 1, 10)  # doctest: +ELLIPSIS
+        >>> vt.query_region(b'chr2', 1, 10)
         <VariantTable shape=(2,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<u4'), ...
-        [(b'chr2', 3, 78, 1.2, array([5, 6])) (b'chr2', 9, 22, 4.4, array([...
+        [(b'chr2', 3, 78,  1.2, [5, 6]) (b'chr2', 9, 22,  4.4, ...
 
     """
 
@@ -4419,7 +4419,7 @@ class VariantTable(NumpyRecArrayWrapper):
             >>> description = {'ac': 'Allele counts', 'filter_dp': 'Low depth'}
             >>> vt.to_vcf('example.vcf', rename=rename, fill=fill,
             ...           number=number, description=description)
-            >>> print(open('example.vcf').read())  # doctest: +ELLIPSIS
+            >>> print(open('example.vcf').read())
             ##fileformat=VCFv4.1
             ##fileDate=...
             ##source=...

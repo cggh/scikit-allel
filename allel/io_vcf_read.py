@@ -5,8 +5,6 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
-* PY2 compatibility
-* avoid use of text_type in pyx, unnecessary?
 * read_vcf: object dtype for strings
 * rework ann transformer to use object dtype
 * vcf_to_hdf5: handle object dtype as vlen=str
