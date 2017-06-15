@@ -6,6 +6,12 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 TODO:
 
 * PY2 compatibility
+* avoid use of text_type in pyx, unnecessary?
+* read_vcf: object dtype for strings
+* rework ann transformer to use object dtype
+* vcf_to_hdf5: handle object dtype as vlen=str
+* vcf_to_zarr: handle object dtype with msgpack encoding
+* is_snp
 * GenotypeArray.from_vcf
 * HaplotypeArray.from_vcf(ploidy)
 * VariantTable.from_vcf
@@ -32,7 +38,7 @@ import numpy as np
 
 
 # noinspection PyUnresolvedReferences
-from allel.compat import text_type
+from allel.compat import PY2, FileNotFoundError
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
     VCFParallelChunkIterator, ANNTransformer
 
@@ -84,9 +90,11 @@ def _chunk_iter_progress(it, log, prefix):
         elapsed_chunk = after_chunk - before_chunk
         elapsed = after_chunk - before_all
         n_variants += chunk_length
+        if not PY2:
+            chrom = str(chrom, 'ascii')
         print('%s %s rows in %.2fs; chunk in %.2fs (%s rows/s); %s:%s' %
               (prefix, n_variants, elapsed, elapsed_chunk,
-               int(chunk_length//elapsed_chunk), text_type(chrom, 'ascii'), pos),
+               int(chunk_length//elapsed_chunk), chrom, pos),
               file=log)
         log.flush()
         yield chunk, chunk_length, chrom, pos
@@ -898,7 +906,7 @@ def iter_vcf_chunks(input,
                 poll = p.poll()
                 if poll is not None and poll > 0:
                     err = p.stderr.read(-1)
-                    raise Exception(text_type(err, 'ascii').strip())
+                    raise Exception(err.strip())
                 fileobj = p.stdout
                 # N.B., still pass the region parameter through so we get strictly only
                 # variants that start within the requested region. See also
@@ -1014,21 +1022,21 @@ def _check_field(field, headers):
     if group == 'variants':
 
         if name in FIXED_VARIANTS_FIELDS:
-            return
+            pass
 
         elif name in ['numalt', 'svlen']:
             # computed fields
-            return
+            pass
 
         elif name.startswith('FILTER_'):
             filter_name = name[7:]
             if filter_name in headers.filters:
-                return
+                pass
             else:
                 warnings.warn('%r FILTER header not found' % filter_name)
 
         elif name in headers.infos:
-            return
+            pass
 
         else:
             warnings.warn('%r INFO header not found' % name)
@@ -1036,7 +1044,7 @@ def _check_field(field, headers):
     elif group == 'calldata':
 
         if name in headers.formats:
-            return
+            pass
 
         else:
             warnings.warn('%r FORMAT header not found' % name)
@@ -1446,7 +1454,9 @@ def _read_vcf_headers(stream):
     formats = dict()
 
     # read first header line
-    header = text_type(stream.readline(), 'ascii')
+    header = stream.readline()
+    if not PY2:
+        header = str(header, 'ascii')
 
     while header and header[0] == '#':
 
@@ -1492,7 +1502,9 @@ def _read_vcf_headers(stream):
             break
 
         # read next header line
-        header = text_type(stream.readline(), 'ascii')
+        header = stream.readline()
+        if not PY2:
+            header = str(header, 'ascii')
 
     # check if we saw the mandatory header line or not
     if samples is None:

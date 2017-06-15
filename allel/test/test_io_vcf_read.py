@@ -6,6 +6,9 @@ import shutil
 import itertools
 import gzip
 import warnings
+# needed for PY2/PY3 consistent behaviour
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 import zarr
@@ -15,6 +18,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
 from allel.io_vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
     vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
+from allel.compat import PY2
 
 
 def test_read_vcf_chunks():
@@ -268,8 +272,10 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
 
     if isinstance(input, str):
         input_file = input
+        close = False
     else:
         input_file = input()
+        close = True
 
     callset = read_vcf(input_file,
                        fields='*',
@@ -278,6 +284,8 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
                        types={'ALT': 'S3', 'calldata/DP': 'S3'},
                        block_length=block_length,
                        n_threads=n_threads)
+    if close:
+        input_file.close()
 
     # fixed fields
     print(callset['variants/CHROM'])
@@ -297,6 +305,7 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
     eq_((9,), callset['variants/QUAL'].shape)
     eq_(10.0, callset['variants/QUAL'][1])
     eq_((9,), callset['variants/FILTER_PASS'].shape)
+    print(callset['variants/FILTER_PASS'])
     eq_(True, callset['variants/FILTER_PASS'][2])
     eq_(False, callset['variants/FILTER_PASS'][3])
     eq_((9,), callset['variants/FILTER_q10'].shape)
@@ -322,7 +331,8 @@ def _test_read_vcf_content(input, chunk_length, buffer_size, n_threads, block_le
 def test_inputs():
     fn = 'fixture/sample.vcf'
 
-    data = open(fn, mode='rb').read(-1)
+    with open(fn, mode='rb') as f:
+        data = f.read(-1)
 
     inputs = (fn,
               fn + '.gz',
@@ -623,6 +633,7 @@ def test_truncation_calldata():
         assert_list_equal([b'S2', b'S1'], callset['samples'].tolist())
         a = callset['calldata/GT']
         eq_((3, 2, 2), a.shape)
+        print(a)
         eq_((0, 1), tuple(a[0, 0]))
         eq_((1, 2), tuple(a[0, 1]))
         eq_((-1, -1), tuple(a[1, 0]))
@@ -1258,6 +1269,7 @@ def test_warnings():
         read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
 
     warnings.resetwarnings()
+    warnings.simplefilter('always')
 
 
 def test_missing_headers():
@@ -1294,6 +1306,7 @@ def test_extra_samples():
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
 
     warnings.resetwarnings()
+    warnings.simplefilter('always')
     # try again without raising warnings to check data
     callset = read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
     eq_((1, 4, 2), callset['calldata/GT'].shape)
@@ -1409,7 +1422,8 @@ def test_genotype_ac():
 
 def test_region_truncate():
     fn = 'fixture/test54.vcf.gz'
-    for tabix in 'tabix', None:
+#    for tabix in 'tabix', None:
+    for tabix in None,:
         callset = read_vcf(fn, region='chr1:10-100', tabix=tabix)
         pos = callset['variants/POS']
         eq_(2, pos.shape[0])
@@ -1420,17 +1434,26 @@ def test_errors():
 
     # try to open a directory
     path = '.'
-    with assert_raises(IsADirectoryError):
+    if PY2:
+        excls = IOError
+    else:
+        excls = IsADirectoryError
+    with assert_raises(excls):
         read_vcf(path)
+
+    if PY2:
+        excls = IOError
+    else:
+        excls = FileNotFoundError
 
     # try to open a file that doesn't exist
     path = 'doesnotexist.vcf'
-    with assert_raises(FileNotFoundError):
+    with assert_raises(excls):
         read_vcf(path)
 
     # try to open a file that doesn't exist
     path = 'doesnotexist.vcf.gz'
-    with assert_raises(FileNotFoundError):
+    with assert_raises(excls):
         read_vcf(path)
 
     # file is nothing like a VCF (has no header)
@@ -1493,6 +1516,7 @@ chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
         read_vcf(io.BytesIO(input_data))
 
     warnings.resetwarnings()
+    warnings.simplefilter('always')
 
 
 def test_override_vcf_type():

@@ -30,7 +30,7 @@ cdef extern from "Python.h":
 from multiprocessing.pool import ThreadPool
 
 
-from allel.compat import text_type
+from allel.compat import PY2
 
 
 #########################################################################################
@@ -170,7 +170,7 @@ cdef inline void IntVector_terminate(IntVector* self) nogil:
 # C string utilities.
 
 
-cdef inline int cstr_search_sorted(char* query, char** compare, int n_items) nogil:
+cdef inline int search_sorted_cstr(char* query, char** compare, int n_items) nogil:
     cdef:
         int i
 
@@ -351,8 +351,8 @@ cdef class VCFContext:
     cdef:
         # useful stuff
         object headers
-        object fields
-        object formats
+        list fields
+        list formats
 
         # dynamic attributes - reflect current state during parsing
         int state  # overall parser state
@@ -377,7 +377,7 @@ cdef class VCFContext:
 
     def __cinit__(self, headers, fields):
         self.headers = headers
-        self.fields = fields
+        self.fields = list(fields)
         self.formats = list()
         for f in fields:
             group, name = f.split('/')
@@ -529,7 +529,10 @@ cdef class VCFParser:
             tokens = region.split(':')
             if len(tokens) == 0:
                 raise ValueError('bad region string: %r' % region)
-            self.region_chrom = tokens[0].encode('ascii')
+            if PY2:
+                self.region_chrom = tokens[0]
+            else:
+                self.region_chrom = tokens[0].encode('ascii')
             if len(tokens) > 1:
                 range_tokens = tokens[1].split('-')
                 if len(range_tokens) != 2:
@@ -629,12 +632,13 @@ cdef class VCFParser:
         filter_keys = list()
         for field in list(fields):
             if field.startswith('variants/FILTER_'):
-                filter = field[16:].encode('ascii')
-                filter_keys.append(filter)
+                k = field[16:]
+                if not PY2:
+                    k = k.encode('ascii')
+                filter_keys.append(k)
                 fields.remove(field)
         if filter_keys:
-            filter_parser = VCFFilterParser(filters=filter_keys,
-                                            chunk_length=self.chunk_length)
+            filter_parser = VCFFilterParser(filter_keys=filter_keys, chunk_length=self.chunk_length)
         else:
             filter_parser = VCFSkipFieldParser(key=b'FILTER')
         filter_parser.malloc_chunk()
@@ -650,7 +654,10 @@ cdef class VCFParser:
         for field in list(fields):
             group, name = field.split('/')
             if group == 'variants':
-                key = name.encode('ascii')
+                if not PY2:
+                    key = name.encode('ascii')
+                else:
+                    key = name
                 info_keys.append(key)
                 fields.remove(field)
                 info_types[key] = types[field]
@@ -658,7 +665,7 @@ cdef class VCFParser:
                 if field in fills:
                     info_fills[key] = fills[field]
         if info_keys:
-            info_parser = VCFInfoParser(infos=info_keys,
+            info_parser = VCFInfoParser(info_keys=info_keys,
                                         types=info_types,
                                         numbers=info_numbers,
                                         chunk_length=self.chunk_length,
@@ -677,7 +684,10 @@ cdef class VCFParser:
         for field in list(fields):
             group, name = field.split('/')
             if group == 'calldata':
-                key = name.encode('ascii')
+                if not PY2:
+                    key = name.encode('ascii')
+                else:
+                    key = name
                 format_keys.append(key)
                 fields.remove(field)
                 format_types[key] = types[field]
@@ -685,8 +695,8 @@ cdef class VCFParser:
                 if field in fills:
                     format_fills[key] = fills[field]
         if format_keys:
-            format_parser = VCFFormatParser(formats=format_keys)
-            calldata_parser = VCFCallDataParser(formats=format_keys,
+            format_parser = VCFFormatParser(format_keys=format_keys)
+            calldata_parser = VCFCallDataParser(format_keys=format_keys,
                                                 types=format_types,
                                                 numbers=format_numbers,
                                                 chunk_length=self.chunk_length,
@@ -829,7 +839,10 @@ cdef class VCFFieldParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'variants/' + text_type(self.key, 'ascii')
+        if PY2:
+            field = 'variants/' + self.key
+        else:
+            field = 'variants/' + str(self.key, 'ascii')
         values = self.values
         if self.values.ndim > 1 and self.number == 1:
             values = values.squeeze(axis=1)
@@ -963,7 +976,7 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
         self.store_chrom = store_chrom
         self.store_pos = store_pos
         if region_chrom:
-            self.region_chrom = PyBytes_AS_STRING(region_chrom)
+            self.region_chrom = <char*> region_chrom
             self.region_begin = region_begin
             self.region_end = region_end
         else:
@@ -1287,7 +1300,10 @@ cdef class VCFAltParser(VCFFieldParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store_alt:
-            field = 'variants/' + text_type(self.key, 'ascii')
+            if PY2:
+                field = 'variants/' + self.key
+            else:
+                field = 'variants/' + str(self.key, 'ascii')
             values = self.values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
@@ -1340,25 +1356,27 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 
     cdef:
         np.uint8_t[:, :] memory
-        tuple filters
+        tuple filter_keys
         int n_filters
-        char** filters_c
+        char** filter_keys_cstr
 
-    def __cinit__(self, filters, chunk_length):
-        self.filters = tuple(sorted(filters))
-        self.n_filters = len(self.filters)
-        self.filters_c = <char**> malloc(sizeof(char*) * self.n_filters)
+    def __cinit__(self, filter_keys, chunk_length):
+        cdef:
+            int i
+        # N.B., need to keep a reference to these, otherwise C strings will not behave
+        self.filter_keys = tuple(sorted(filter_keys))
+        self.n_filters = len(self.filter_keys)
+        self.filter_keys_cstr = <char**> malloc(sizeof(char*) * self.n_filters)
         for i in range(self.n_filters):
-            self.filters_c[i] = <char*> self.filters[i]
+            self.filter_keys_cstr[i] = <char*> self.filter_keys[i]
 
-    def __init__(self, filters, chunk_length):
-        super(VCFFilterParser, self).__init__(key=b'FILTER', dtype='bool',
-                                              number=len(filters), fill=0,
+    def __init__(self, filter_keys, chunk_length):
+        super(VCFFilterParser, self).__init__(key=b'FILTER', dtype='bool', number=len(filter_keys), fill=0,
                                               chunk_length=chunk_length)
 
     def __dealloc__(self):
-        if self.filters_c is not NULL:
-            free(self.filters_c)
+        if self.filter_keys_cstr is not NULL:
+            free(self.filter_keys_cstr)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -1408,7 +1426,6 @@ cdef class VCFFilterParser(VCFFieldParserBase):
         cdef:
             int filter_index
             int i
-            char* f
 
         if context.temp.size == 0:
             # not strictly kosher, treat as missing/empty
@@ -1417,8 +1434,7 @@ cdef class VCFFilterParser(VCFFieldParserBase):
         CharVector_terminate(&context.temp)
 
         # search through filters to find index
-        filter_index = cstr_search_sorted(context.temp.data, self.filters_c,
-                                          self.n_filters)
+        filter_index = search_sorted_cstr(context.temp.data, self.filter_keys_cstr, self.n_filters)
 
         # store value
         if filter_index >= 0:
@@ -1430,8 +1446,10 @@ cdef class VCFFilterParser(VCFFieldParserBase):
         self.memory = self.values.view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        for i, filter in enumerate(self.filters):
-            field = 'variants/FILTER_' + text_type(filter, 'ascii')
+        for i, f in enumerate(self.filter_keys):
+            if not PY2:
+                f = str(f, 'ascii')
+            field = 'variants/FILTER_' + f
             chunk[field] = self.values[:limit, i]
 
 
@@ -1442,29 +1460,30 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 cdef class VCFInfoParser(VCFFieldParserBase):
 
     cdef:
-        tuple infos
+        tuple info_keys
         int n_infos
-        char** infos_c
+        char** info_keys_cstr
         tuple info_parsers
-        PyObject** info_parsers_c
+        PyObject** info_parsers_cptr
         VCFInfoParserBase skip_parser
         object fills
 
-    def __cinit__(self, infos, types, numbers, chunk_length, fills):
+    def __cinit__(self, info_keys, types, numbers, chunk_length, fills):
 
         # setup INFO keys
-        self.infos = tuple(sorted(infos))
-        self.n_infos = len(self.infos)
+        # N.B., need to keep a reference to these, otherwise C strings will not behave
+        self.info_keys = tuple(sorted(info_keys))
+        self.n_infos = len(self.info_keys)
 
         # setup INFO keys as C strings for nogil searching
-        self.infos_c = <char**> malloc(sizeof(char*) * self.n_infos)
+        self.info_keys_cstr = <char**> malloc(sizeof(char*) * self.n_infos)
         for i in range(self.n_infos):
-            self.infos_c[i] = <char*> self.infos[i]
+            self.info_keys_cstr[i] = <char*> self.info_keys[i]
 
         # setup INFO parsers
         info_parsers = list()
         self.skip_parser = VCFInfoSkipParser(key=None)
-        for key in self.infos:
+        for key in self.info_keys:
             t = types[key]
             n = numbers[key]
             if t == np.dtype(bool) or n == 0:
@@ -1522,19 +1541,19 @@ cdef class VCFInfoParser(VCFFieldParserBase):
         self.info_parsers = tuple(info_parsers)
 
         # store pointers to parsers for nogil trickery
-        self.info_parsers_c = <PyObject**> malloc(sizeof(PyObject*) * self.n_infos)
+        self.info_parsers_cptr = <PyObject**> malloc(sizeof(PyObject*) * self.n_infos)
         for i in range(self.n_infos):
-            self.info_parsers_c[i] = <PyObject*> self.info_parsers[i]
+            self.info_parsers_cptr[i] = <PyObject*> self.info_parsers[i]
 
-    def __init__(self, infos, types, numbers, chunk_length, fills):
+    def __init__(self, info_keys, types, numbers, chunk_length, fills):
         super(VCFInfoParser, self).__init__(key=b'INFO', chunk_length=chunk_length)
         self.fills = fills
 
     def __dealloc__(self):
-        if self.infos_c is not NULL:
-            free(self.infos_c)
-        if self.info_parsers_c is not NULL:
-            free(self.info_parsers_c)
+        if self.info_keys_cstr is not NULL:
+            free(self.info_keys_cstr)
+        if self.info_parsers_cptr is not NULL:
+            free(self.info_parsers_cptr)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
 
@@ -1612,15 +1631,14 @@ cdef class VCFInfoParser(VCFFieldParserBase):
         CharVector_terminate(&context.info_key)
 
         # search for index of current INFO key
-        parser_index = cstr_search_sorted(context.info_key.data, self.infos_c,
-                                          self.n_infos)
+        parser_index = search_sorted_cstr(context.info_key.data, self.info_keys_cstr, self.n_infos)
 
         # clear out key for good measure
         CharVector_clear(&context.info_key)
 
         if parser_index >= 0:
             # obtain parser, use trickery for nogil
-            parser = self.info_parsers_c[parser_index]
+            parser = self.info_parsers_cptr[parser_index]
             (<VCFInfoParserBase> parser).parse(stream, context)
         else:
             self.skip_parser.parse(stream, context)
@@ -1664,7 +1682,10 @@ cdef class VCFInfoParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'variants/' + text_type(self.key, 'ascii')
+        if PY2:
+            field = 'variants/' + self.key
+        else:
+            field = 'variants/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=1)
@@ -1885,7 +1906,10 @@ cdef class VCFInfoFlagParser(VCFInfoParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         # override to view as bool array
-        field = 'variants/' + text_type(self.key, 'ascii')
+        if PY2:
+            field = 'variants/' + self.key
+        else:
+            field = 'variants/' + str(self.key, 'ascii')
         chunk[field] = self.values[:limit].view(bool)
 
     cdef int malloc_chunk(self) except -1:
@@ -2074,27 +2098,28 @@ cdef int vcf_info_store_floating(VCFContext context,
 cdef class VCFFormatParser(VCFFieldParserBase):
 
     cdef:
-        tuple formats
+        tuple format_keys
         int n_formats
-        char** formats_c
+        char** format_keys_cstr
 
-    def __cinit__(self, formats):
+    def __cinit__(self, format_keys):
 
         # setup FORMAT keys
-        self.formats = tuple(sorted(formats))
-        self.n_formats = len(self.formats)
+        # N.B., need to keep a reference to these, otherwise C strings will not behave
+        self.format_keys = tuple(sorted(format_keys))
+        self.n_formats = len(self.format_keys)
 
         # setup FORMAT keys as C strings for nogil searching
-        self.formats_c = <char**> malloc(sizeof(char*) * self.n_formats)
+        self.format_keys_cstr = <char**> malloc(sizeof(char*) * self.n_formats)
         for i in range(self.n_formats):
-            self.formats_c[i] = <char*> self.formats[i]
+            self.format_keys_cstr[i] = <char*> self.format_keys[i]
 
-    def __init__(self, formats):
+    def __init__(self, format_keys):
         super(VCFFormatParser, self).__init__(key=b'FORMAT')
 
     def __dealloc__(self):
-        if self.formats_c is not NULL:
-            free(self.formats_c)
+        if self.format_keys_cstr is not NULL:
+            free(self.format_keys_cstr)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -2147,7 +2172,7 @@ cdef class VCFFormatParser(VCFFieldParserBase):
         CharVector_terminate(&context.temp)
 
         # find format index
-        format_index = cstr_search_sorted(context.temp.data, self.formats_c, self.n_formats)
+        format_index = search_sorted_cstr(context.temp.data, self.format_keys_cstr, self.n_formats)
 
         # add to vector of indices for the current variant
         IntVector_append(&context.variant_format_indices, format_index)
@@ -2170,35 +2195,35 @@ cdef class VCFSkipAllCallDataParser(VCFFieldParserBase):
 cdef class VCFCallDataParser(VCFFieldParserBase):
 
     cdef:
-        tuple formats
+        tuple format_keys
         int n_formats
         tuple parsers
-        PyObject** parsers_c
+        PyObject** parsers_cptr
         VCFCallDataParserBase skip_parser
         np.uint8_t[:] loc_samples
         int n_samples
         int n_samples_out
 
-    def __cinit__(self, formats, types, numbers, chunk_length, loc_samples, fills):
+    def __cinit__(self, format_keys, types, numbers, chunk_length, loc_samples, fills):
         self.chunk_length = chunk_length
         self.loc_samples = loc_samples
         self.n_samples = loc_samples.shape[0]
         self.n_samples_out = np.count_nonzero(loc_samples)
 
         # setup formats
-        self.formats = tuple(sorted(formats))
-        self.n_formats = len(self.formats)
+        self.format_keys = tuple(sorted(format_keys))
+        self.n_formats = len(self.format_keys)
 
         # setup parsers
         self.skip_parser = VCFCallDataSkipParser(key=None)
         parsers = list()
         kwds = dict(chunk_length=chunk_length, n_samples_out=self.n_samples_out)
-        for key in self.formats:
+        for key in self.format_keys:
             t = types[key]
             n = numbers[key]
 
             # special handling of "genotype" dtypes for any field
-            if isinstance(t, text_type) and t.startswith('genotype/'):
+            if isinstance(t, str) and t.startswith('genotype/'):
                 fill = fills.get(key, -1)
                 t = np.dtype(t.split('/')[1])
                 if t == np.dtype('int8'):
@@ -2222,7 +2247,7 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
                     parser = self.skip_parser
 
             # special handling of "genotype_ac" dtypes for any field
-            elif isinstance(t, text_type) and t.startswith('genotype_ac/'):
+            elif isinstance(t, str) and t.startswith('genotype_ac/'):
                 t = np.dtype(t.split('/')[1])
                 if t == np.dtype('int8'):
                     parser = VCFGenotypeACInt8Parser(key, number=n, **kwds)
@@ -2294,16 +2319,16 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
         self.parsers = tuple(parsers)
 
         # store pointers to parsers
-        self.parsers_c = <PyObject**> malloc(sizeof(PyObject*) * self.n_formats)
+        self.parsers_cptr = <PyObject**> malloc(sizeof(PyObject*) * self.n_formats)
         for i in range(self.n_formats):
-            self.parsers_c[i] = <PyObject*> self.parsers[i]
+            self.parsers_cptr[i] = <PyObject*> self.parsers[i]
 
-    def __init__(self, formats, types, numbers, chunk_length, loc_samples, fills):
+    def __init__(self, format_keys, types, numbers, chunk_length, loc_samples, fills):
         super(VCFCallDataParser, self).__init__(chunk_length=chunk_length)
 
     def __dealloc__(self):
-        if self.parsers_c is not NULL:
-            free(self.parsers_c)
+        if self.parsers_cptr is not NULL:
+            free(self.parsers_cptr)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) nogil except -1:
         cdef:
@@ -2365,7 +2390,7 @@ cdef class VCFCallDataParser(VCFFieldParserBase):
 
                 # find parser
                 if format_index >= 0:
-                    parser = self.parsers_c[format_index]
+                    parser = self.parsers_cptr[format_index]
                     # jump through some hoops to avoid references (which need the GIL)
                     (<VCFCallDataParserBase>parser).parse(stream, context)
 
@@ -2413,7 +2438,10 @@ cdef class VCFCallDataParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'calldata/' + text_type(self.key, 'ascii')
+        if PY2:
+            field = 'calldata/' + self.key
+        else:
+            field = 'calldata/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3200,7 +3228,10 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
         self.memory = self.values.reshape(-1).view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = 'calldata/' + text_type(<bytes>self.key, 'ascii')
+        if PY2:
+            field = 'calldata/' + self.key
+        else:
+            field = 'calldata/' + str(self.key, 'ascii')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3310,7 +3341,10 @@ cdef int warn(message, VCFContext context) except -1:
     message += '; field: %s' % vcf_state_labels[context.state]
     message += '; variant: %s' % context.variant_index
     if context.state > VCFState.POS:
-        message += ' (%s:%s)' % (text_type(CharVector_to_pybytes(&context.chrom), 'ascii'), context.pos)
+        chrom = CharVector_to_pybytes(&context.chrom)
+        if not PY2:
+            chrom = str(chrom, 'ascii')
+        message += ' (%s:%s)' % (chrom, context.pos)
     if context.state == VCFState.CALLDATA:
         if context.sample_index >= len(context.headers.samples):
             sample = 'unknown'
@@ -3328,15 +3362,15 @@ cdef int warn(message, VCFContext context) except -1:
     warnings.warn(message)
 
 
-# import sys
-#
-#
-# cdef int debug(message, vars=None) except -1:
-#     message = '[DEBUG] ' + text_type(message)
-#     if vars:
-#         message = message % vars
-#     print(message, file=sys.stderr)
-#     sys.stderr.flush()
+import sys
+
+
+cdef int debug(message, vars=None) except -1:
+    message = '[DEBUG] ' + str(message)
+    if vars:
+        message = message % vars
+    print(message, file=sys.stderr)
+    sys.stderr.flush()
 
 
 ##########################################################################################
