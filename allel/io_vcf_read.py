@@ -6,7 +6,7 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 TODO:
 
 * is_snp
-* is_snp or SVTYPE (SNP|INS|DEL|COMPLEX) computed field
+* is_snp or svtype (SNP|INS|DEL|COMPLEX) computed field
 * svlen handle missing alt?
 
 WONTFIX/POSTPONED:
