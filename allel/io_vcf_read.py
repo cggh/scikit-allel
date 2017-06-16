@@ -34,8 +34,13 @@ import numpy as np
 
 # noinspection PyUnresolvedReferences
 from allel.compat import PY2, FileNotFoundError
+# noinspection PyUnresolvedReferences
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
-    VCFParallelChunkIterator, ANNTransformer
+    VCFParallelChunkIterator, ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, ANN_ALLELE_FIELD, \
+    ANN_ANNOTATION_FIELD, ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD, \
+    ANN_CDS_LENGTH_FIELD, ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, ANN_FEATURE_ID_FIELD, ANN_FEATURE_TYPE_FIELD, \
+    ANN_FIELD, ANN_FIELDS, ANN_GENE_ID_FIELD, ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, ANN_HGVS_P_FIELD, \
+    ANN_RANK_FIELD, ANN_TRANSCRIPT_BIOTYPE_FIELD
 
 
 def debug(*msg):
@@ -982,12 +987,17 @@ def iter_vcf_chunks(input,
 
     # setup iterator
     fields, samples, headers, it = _iter_vcf_stream(stream, **kwds)
+    print('fields before transform: %s' % repr(fields))
 
     # setup transformers
     if transformers is not None:
+        # API flexibility
+        if not isinstance(transformers, (list, tuple)):
+            transformers = [transformers]
         for trans in transformers:
             fields = trans.transform_fields(fields)
         it = _chunk_iter_transform(it, transformers)
+    print('fields after transform: %s' % repr(fields))
 
     return fields, samples, headers, it
 
@@ -1298,6 +1308,7 @@ default_numbers = {
     'variants/AC': 3,
     'variants/AF': 3,
     'variants/MQ': 1,
+    'variants/ANN': 1,
     'calldata/DP': 1,
     'calldata/GT': 2,
     'calldata/GQ': 1,
@@ -1736,7 +1747,6 @@ def _chunk_to_recarray(fields, chunk):
     for f in fields:
         a = chunk[f]
         group, name = f.split('/')
-        assert group == 'variants'
         if a.ndim == 1:
             arrays.append(a)
             names.append(name)
@@ -1745,7 +1755,7 @@ def _chunk_to_recarray(fields, chunk):
                 arrays.append(a[:, i])
                 names.append('%s_%s' % (name, i+1))
         else:
-            warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
+            warnings.warn('cannot handle arrays with >2 dimensions, ignoring %r' % name)
     ra = np.rec.fromarrays(arrays, names=names)
     return ra
 
@@ -1800,7 +1810,8 @@ def vcf_to_recarray(input,
     # noinspection PyTypeChecker
     _, fields = _prep_fields_param(fields)
 
-    # setup
+    # setup chunk iterator
+    # N.B., set samples to empty list so we don't get any calldata fields
     fields, _, _, it = iter_vcf_chunks(
         input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
         chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
@@ -1820,7 +1831,6 @@ def vcf_to_recarray(input,
     if chunks:
 
         # concatenate chunks
-        output = np.concatenate([_chunk_to_recarray(fields, chunk)
-                                 for chunk in chunks])
+        output = np.concatenate([_chunk_to_recarray(fields, chunk) for chunk in chunks])
 
     return output

@@ -3870,22 +3870,23 @@ cdef class VCFParallelChunkIterator:
 # ANN transformer
 
 
+# ANN field indices
 cdef enum ANNFidx:
-    ALLELE
-    ANNOTATION
-    ANNOTATION_IMPACT
-    GENE_NAME
-    GENE_ID
-    FEATURE_TYPE
-    FEATURE_ID
-    TRANSCRIPT_BIOTYPE
-    RANK
-    HGVS_C
-    HGVS_P
-    CDNA
-    CDS
-    AA
-    DISTANCE
+    ALLELE = 0,
+    ANNOTATION = 1,
+    ANNOTATION_IMPACT = 2,
+    GENE_NAME = 3,
+    GENE_ID = 4,
+    FEATURE_TYPE = 5,
+    FEATURE_ID = 6,
+    TRANSCRIPT_BIOTYPE = 7,
+    RANK = 8,
+    HGVS_C = 9,
+    HGVS_P = 10,
+    CDNA = 11,
+    CDS = 12,
+    AA = 13,
+    DISTANCE = 14
 
 
 ANN_FIELD = 'variants/ANN'
@@ -3901,8 +3902,14 @@ ANN_RANK_FIELD = 'variants/ANN_Rank'
 ANN_HGVS_C_FIELD = 'variants/ANN_HGVS_c'
 ANN_HGVS_P_FIELD = 'variants/ANN_HGVS_p'
 ANN_CDNA_FIELD = 'variants/ANN_cDNA'
+ANN_CDNA_POS_FIELD = 'variants/ANN_cDNA_pos'
+ANN_CDNA_LENGTH_FIELD = 'variants/ANN_cDNA_length'
 ANN_CDS_FIELD = 'variants/ANN_CDS'
+ANN_CDS_POS_FIELD = 'variants/ANN_CDS_pos'
+ANN_CDS_LENGTH_FIELD = 'variants/ANN_CDS_length'
 ANN_AA_FIELD = 'variants/ANN_AA'
+ANN_AA_POS_FIELD = 'variants/ANN_AA_pos'
+ANN_AA_LENGTH_FIELD = 'variants/ANN_AA_length'
 ANN_DISTANCE_FIELD = 'variants/ANN_Distance'
 
 
@@ -3918,9 +3925,12 @@ ANN_FIELDS = (
     ANN_RANK_FIELD,
     ANN_HGVS_C_FIELD,
     ANN_HGVS_P_FIELD,
-    ANN_CDNA_FIELD,
-    ANN_CDS_FIELD,
-    ANN_AA_FIELD,
+    ANN_CDNA_POS_FIELD,
+    ANN_CDNA_LENGTH_FIELD,
+    ANN_CDS_POS_FIELD,
+    ANN_CDS_LENGTH_FIELD,
+    ANN_AA_POS_FIELD,
+    ANN_AA_LENGTH_FIELD,
     ANN_DISTANCE_FIELD
 )
 
@@ -3933,9 +3943,6 @@ def _normalize_ann_field_prefix(f):
         f = 'variants/' + f
     else:
         f = 'variants/ANN_' + f
-    if f not in ANN_FIELDS:
-        warnings.warn('invalid ANN field %r, will be ignored' % f)
-        f = None
     return f
 
 
@@ -3948,8 +3955,25 @@ def _normalize_ann_fields(fields):
     else:
         for f in fields:
             f = _normalize_ann_field_prefix(f)
-            if f is not None and f not in normed_fields:
-                normed_fields.append(f)
+            # convenience features
+            if f == ANN_CDNA_FIELD:
+                for ff in ANN_CDNA_POS_FIELD, ANN_CDNA_LENGTH_FIELD:
+                    if ff not in normed_fields:
+                        normed_fields.append(ff)
+            elif f == ANN_CDS_FIELD:
+                for ff in ANN_CDS_POS_FIELD, ANN_CDS_LENGTH_FIELD:
+                    if ff not in normed_fields:
+                        normed_fields.append(ff)
+            elif f == ANN_AA_FIELD:
+                for ff in ANN_AA_POS_FIELD, ANN_AA_LENGTH_FIELD:
+                    if ff not in normed_fields:
+                        normed_fields.append(ff)
+            # all other fields
+            elif f is not None and f not in normed_fields:
+                if f not in ANN_FIELDS:
+                    warnings.warn('invalid ANN field %r, will be ignored' % f)
+                else:
+                    normed_fields.append(f)
 
     return normed_fields
 
@@ -3966,9 +3990,12 @@ default_ann_types[ANN_TRANSCRIPT_BIOTYPE_FIELD] = np.dtype('object')
 default_ann_types[ANN_RANK_FIELD] = np.dtype('int8')
 default_ann_types[ANN_HGVS_C_FIELD] = np.dtype('object')
 default_ann_types[ANN_HGVS_P_FIELD] = np.dtype('object')
-default_ann_types[ANN_CDNA_FIELD] = np.dtype('int32')
-default_ann_types[ANN_CDS_FIELD] = np.dtype('int32')
-default_ann_types[ANN_AA_FIELD] = np.dtype('int32')
+default_ann_types[ANN_CDNA_POS_FIELD] = np.dtype('int32')
+default_ann_types[ANN_CDNA_LENGTH_FIELD] = np.dtype('int32')
+default_ann_types[ANN_CDS_POS_FIELD] = np.dtype('int32')
+default_ann_types[ANN_CDS_LENGTH_FIELD] = np.dtype('int32')
+default_ann_types[ANN_AA_POS_FIELD] = np.dtype('int32')
+default_ann_types[ANN_AA_LENGTH_FIELD] = np.dtype('int32')
 default_ann_types[ANN_DISTANCE_FIELD] = np.dtype('int32')
 
 
@@ -3995,7 +4022,6 @@ cdef class ANNTransformer:
         list fields
         object types
         bint keep_original
-        np.uint8_t[:] emit
 
     def __init__(self, fields=None, types=None, keep_original=False):
         self.fields = _normalize_ann_fields(fields)
@@ -4038,7 +4064,7 @@ cdef class ANNTransformer:
 
     def transform_chunk(self, chunk):
         cdef:
-            int i, j, chunk_length, number
+            int i, j, chunk_length, number, n_vals
             list vals
             list vv
 
@@ -4063,12 +4089,15 @@ cdef class ANNTransformer:
         feature_type = self._malloc_string_array(ANN_FEATURE_TYPE_FIELD, shape)
         feature_id = self._malloc_string_array(ANN_FEATURE_ID_FIELD, shape)
         transcript_biotype = self._malloc_string_array(ANN_TRANSCRIPT_BIOTYPE_FIELD, shape)
-        rank = self._malloc_integer_array(ANN_RANK_FIELD, shape + (2,))
+        rank = self._malloc_integer_array(ANN_RANK_FIELD, shape)
         hgvs_c = self._malloc_string_array(ANN_HGVS_C_FIELD, shape)
         hgvs_p = self._malloc_string_array(ANN_HGVS_P_FIELD, shape)
-        cdna = self._malloc_integer_array(ANN_CDNA_FIELD, shape + (2,))
-        cds = self._malloc_integer_array(ANN_CDS_FIELD, shape + (2,))
-        aa = self._malloc_integer_array(ANN_AA_FIELD, shape + (2,))
+        cdna_pos = self._malloc_integer_array(ANN_CDNA_POS_FIELD, shape)
+        cdna_length = self._malloc_integer_array(ANN_CDNA_LENGTH_FIELD, shape)
+        cds_pos = self._malloc_integer_array(ANN_CDS_POS_FIELD, shape)
+        cds_length = self._malloc_integer_array(ANN_CDS_LENGTH_FIELD, shape)
+        aa_pos = self._malloc_integer_array(ANN_AA_POS_FIELD, shape)
+        aa_length = self._malloc_integer_array(ANN_AA_LENGTH_FIELD, shape)
         distance = self._malloc_integer_array(ANN_DISTANCE_FIELD, shape)
 
         # start working
@@ -4086,60 +4115,65 @@ cdef class ANNTransformer:
 
                 # split fields
                 vals = raw.split('|')
+                n_vals = len(vals)
 
                 # convert and store values
-                try:
-                    if allele is not None:
-                        allele[i, j] = vals[ANNFidx.ALLELE]
-                    if annotation is not None:
-                        annotation[i, j] = vals[ANNFidx.ANNOTATION]
-                    if annotation_impact is not None:
-                        annotation_impact[i, j] = vals[ANNFidx.ANNOTATION_IMPACT]
-                    if gene_name is not None:
-                        gene_name[i, j] = vals[ANNFidx.GENE_NAME]
-                    if gene_id is not None:
-                        gene_id[i, j] = vals[ANNFidx.GENE_ID]
-                    if feature_type is not None:
-                        feature_type[i, j] = vals[ANNFidx.FEATURE_TYPE]
-                    if feature_id is not None:
-                        feature_id[i, j] = vals[ANNFidx.FEATURE_ID]
-                    if transcript_biotype is not None:
-                        transcript_biotype[i, j] = vals[ANNFidx.TRANSCRIPT_BIOTYPE]
-                    if rank is not None:
-                        v = vals[ANNFidx.RANK]
-                        if v:
-                            vv = v.split('/')
-                            rank[i, j, 0] = int(vv[0])
-                            rank[i, j, 1] = int(vv[1])
-                    if hgvs_c is not None:
-                        hgvs_c[i, j] = vals[ANNFidx.HGVS_C]
-                    if hgvs_p is not None:
-                        hgvs_p[i, j] = vals[ANNFidx.HGVS_P]
-                    if cdna is not None:
-                        v = vals[ANNFidx.CDNA]
-                        if v:
-                            vv = v.split('/')
-                            cdna[i, j, 0] = int(vv[0])
-                            cdna[i, j, 1] = int(vv[1])
-                    if cds is not None:
-                        v = vals[ANNFidx.CDS]
-                        if v:
-                            vv = v.split('/')
-                            cds[i, j, 0] = int(vv[0])
-                            cds[i, j, 1] = int(vv[1])
-                    if aa is not None:
-                        v = vals[ANNFidx.AA]
-                        if v:
-                            vv = v.split('/')
-                            aa[i, j, 0] = int(vv[0])
-                            aa[i, j, 1] = int(vv[1])
-                    if distance is not None:
-                        v = vals[ANNFidx.DISTANCE]
-                        if v:
-                            distance[i, j] = int(v)
-
-                except IndexError:
-                    warnings.warn('missing fields in ANN value')
+                if allele is not None and n_vals > ANNFidx.ALLELE:
+                    allele[i, j] = vals[ANNFidx.ALLELE]
+                if annotation is not None and n_vals > ANNFidx.ANNOTATION:
+                    annotation[i, j] = vals[ANNFidx.ANNOTATION]
+                if annotation_impact is not None and n_vals > ANNFidx.ANNOTATION_IMPACT:
+                    annotation_impact[i, j] = vals[ANNFidx.ANNOTATION_IMPACT]
+                if gene_name is not None and n_vals > ANNFidx.GENE_NAME:
+                    gene_name[i, j] = vals[ANNFidx.GENE_NAME]
+                if gene_id is not None and n_vals > ANNFidx.GENE_ID:
+                    gene_id[i, j] = vals[ANNFidx.GENE_ID]
+                if feature_type is not None and n_vals > ANNFidx.FEATURE_TYPE:
+                    feature_type[i, j] = vals[ANNFidx.FEATURE_TYPE]
+                if feature_id is not None and n_vals > ANNFidx.FEATURE_ID:
+                    feature_id[i, j] = vals[ANNFidx.FEATURE_ID]
+                if transcript_biotype is not None and n_vals > ANNFidx.TRANSCRIPT_BIOTYPE:
+                    transcript_biotype[i, j] = vals[ANNFidx.TRANSCRIPT_BIOTYPE]
+                if rank is not None and n_vals > ANNFidx.RANK:
+                    v = vals[ANNFidx.RANK]
+                    if v:
+                        vv = v.split('/')
+                        # ignore second part of rank
+                        rank[i, j] = int(vv[0])
+                if hgvs_c is not None and n_vals > ANNFidx.HGVS_C:
+                    # strip of leading 'n.' as redundant information
+                    hgvs_c[i, j] = vals[ANNFidx.HGVS_C][2:]
+                if hgvs_p is not None and n_vals > ANNFidx.HGVS_P:
+                    # strip of leading 'p.' as redundant information
+                    hgvs_p[i, j] = vals[ANNFidx.HGVS_P][2:]
+                if cdna_pos is not None or cdna_length is not None and n_vals > ANNFidx.CDNA:
+                    v = vals[ANNFidx.CDNA]
+                    if v:
+                        vv = v.split('/')
+                        if cdna_pos is not None:
+                            cdna_pos[i, j] = int(vv[0])
+                        if cdna_length is not None and len(vv) > 1:
+                            cdna_length[i, j] = int(vv[1])
+                if cds_pos is not None or cds_length is not None and n_vals > ANNFidx.CDS:
+                    v = vals[ANNFidx.CDS]
+                    if v:
+                        vv = v.split('/')
+                        if cds_pos is not None:
+                            cds_pos[i, j] = int(vv[0])
+                        if cds_length is not None and len(vv) > 1:
+                            cds_length[i, j] = int(vv[1])
+                if aa_pos is not None or aa_length is not None and n_vals > ANNFidx.AA:
+                    v = vals[ANNFidx.AA]
+                    if v:
+                        vv = v.split('/')
+                        if aa_pos is not None:
+                            aa_pos[i, j] = int(vv[0])
+                        if aa_length is not None and len(vv) > 1:
+                            aa_length[i, j] = int(vv[1])
+                if distance is not None and n_vals > ANNFidx.DISTANCE:
+                    v = vals[ANNFidx.DISTANCE]
+                    if v:
+                        distance[i, j] = int(v)
 
         ann_chunk = dict()
         if allele is not None:
@@ -4164,12 +4198,18 @@ cdef class ANNTransformer:
             ann_chunk[ANN_HGVS_C_FIELD] = hgvs_c
         if hgvs_p is not None:
             ann_chunk[ANN_HGVS_P_FIELD] = hgvs_p
-        if cdna is not None:
-            ann_chunk[ANN_CDNA_FIELD] = cdna
-        if cds is not None:
-            ann_chunk[ANN_CDS_FIELD] = cds
-        if aa is not None:
-            ann_chunk[ANN_AA_FIELD] = aa
+        if cdna_pos is not None:
+            ann_chunk[ANN_CDNA_POS_FIELD] = cdna_pos
+        if cdna_length is not None:
+            ann_chunk[ANN_CDNA_LENGTH_FIELD] = cdna_length
+        if cds_pos is not None:
+            ann_chunk[ANN_CDS_POS_FIELD] = cds_pos
+        if cds_length is not None:
+            ann_chunk[ANN_CDS_LENGTH_FIELD] = cds_length
+        if aa_pos is not None:
+            ann_chunk[ANN_AA_POS_FIELD] = aa_pos
+        if aa_length is not None:
+            ann_chunk[ANN_AA_LENGTH_FIELD] = aa_length
         if distance is not None:
             ann_chunk[ANN_DISTANCE_FIELD] = distance
 
