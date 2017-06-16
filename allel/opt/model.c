@@ -3027,17 +3027,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_genotype_array_pack_diploid(CYTHON_
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint32_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
-  int __pyx_v____pyx_int8_t_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
   int __pyx_v_long_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
   int __pyx_v_short_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
+  int __pyx_v____pyx_uint32_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -3142,17 +3142,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_genotype_array_pack_diploid(CYTHON_
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
-  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
   __pyx_v_long_is_signed = (((long)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
   __pyx_v_short_is_signed = (((short)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
+  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 30, __pyx_L1_error)
@@ -8428,17 +8428,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_array_count_alleles(CYTH
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
-  int __pyx_v_long_is_signed;
-  int __pyx_v_short_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
   int __pyx_v____pyx_uint32_t_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
   int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
+  int __pyx_v_short_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
+  int __pyx_v_long_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -8543,17 +8543,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_4haplotype_array_count_alleles(CYTH
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
-  __pyx_v_long_is_signed = (((long)-1L) < 0);
-  __pyx_v_short_is_signed = (((short)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
   __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
   __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
+  __pyx_v_short_is_signed = (((short)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
+  __pyx_v_long_is_signed = (((long)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 125, __pyx_L1_error)
@@ -13323,17 +13323,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_array_count_alleles_subp
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
-  int __pyx_v_long_is_signed;
-  int __pyx_v_short_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
   int __pyx_v____pyx_uint32_t_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
   int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
+  int __pyx_v_short_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
+  int __pyx_v_long_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -13438,17 +13438,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_6haplotype_array_count_alleles_subp
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
-  __pyx_v_long_is_signed = (((long)-1L) < 0);
-  __pyx_v_short_is_signed = (((short)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
   __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
   __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
+  __pyx_v_short_is_signed = (((short)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
+  __pyx_v_long_is_signed = (((long)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 150, __pyx_L1_error)
@@ -18493,17 +18493,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_8genotype_array_count_alleles(CYTHO
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint32_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
-  int __pyx_v____pyx_int8_t_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
   int __pyx_v_long_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
   int __pyx_v_short_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
+  int __pyx_v____pyx_uint32_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -18608,17 +18608,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_8genotype_array_count_alleles(CYTHO
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
-  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
   __pyx_v_long_is_signed = (((long)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
   __pyx_v_short_is_signed = (((short)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
+  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 180, __pyx_L1_error)
@@ -23685,17 +23685,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_array_count_alleles_mask
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint32_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
-  int __pyx_v____pyx_int8_t_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
   int __pyx_v_long_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
   int __pyx_v_short_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
+  int __pyx_v____pyx_uint32_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -23800,17 +23800,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_10genotype_array_count_alleles_mask
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
-  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
   __pyx_v_long_is_signed = (((long)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
   __pyx_v_short_is_signed = (((short)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
+  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 210, __pyx_L1_error)
@@ -29273,17 +29273,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_array_count_alleles_subp
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint32_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
-  int __pyx_v____pyx_int8_t_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
   int __pyx_v_long_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
   int __pyx_v_short_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
+  int __pyx_v____pyx_uint32_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -29388,17 +29388,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_12genotype_array_count_alleles_subp
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
-  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
   __pyx_v_long_is_signed = (((long)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
   __pyx_v_short_is_signed = (((short)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
+  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 243, __pyx_L1_error)
@@ -34740,17 +34740,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_array_count_alleles_subp
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint32_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
-  int __pyx_v____pyx_int8_t_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
   int __pyx_v_long_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
   int __pyx_v_short_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
+  int __pyx_v____pyx_uint32_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -34855,17 +34855,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_14genotype_array_count_alleles_subp
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
-  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
   __pyx_v_long_is_signed = (((long)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
   __pyx_v_short_is_signed = (((short)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
+  __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 275, __pyx_L1_error)
@@ -40604,17 +40604,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_16haplotype_array_map_alleles(CYTHO
   Py_ssize_t __pyx_v_itemsize;
   int __pyx_v_dtype_signed;
   char __pyx_v_kind;
-  int __pyx_v____pyx_uint64_t_is_signed;
-  int __pyx_v_int_is_signed;
-  int __pyx_v_long_is_signed;
-  int __pyx_v_short_is_signed;
+  int __pyx_v____pyx_int64_t_is_signed;
   int __pyx_v____pyx_uint32_t_is_signed;
   int __pyx_v____pyx_int32_t_is_signed;
-  int __pyx_v____pyx_uint16_t_is_signed;
-  int __pyx_v____pyx_uint8_t_is_signed;
-  int __pyx_v____pyx_int64_t_is_signed;
   int __pyx_v____pyx_int8_t_is_signed;
+  int __pyx_v____pyx_uint64_t_is_signed;
+  int __pyx_v_short_is_signed;
+  int __pyx_v_int_is_signed;
+  int __pyx_v____pyx_uint8_t_is_signed;
+  int __pyx_v_long_is_signed;
   int __pyx_v____pyx_int16_t_is_signed;
+  int __pyx_v____pyx_uint16_t_is_signed;
   PyObject *__pyx_v_arg = NULL;
   PyObject *__pyx_v_dtype = NULL;
   PyObject *__pyx_v_arg_base = NULL;
@@ -40719,17 +40719,17 @@ static PyObject *__pyx_pf_5allel_3opt_5model_16haplotype_array_map_alleles(CYTHO
     __pyx_L11_try_end:;
   }
   __pyx_v_itemsize = -1L;
-  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
-  __pyx_v_int_is_signed = (((int)-1L) < 0);
-  __pyx_v_long_is_signed = (((long)-1L) < 0);
-  __pyx_v_short_is_signed = (((short)-1L) < 0);
+  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
   __pyx_v____pyx_uint32_t_is_signed = (((__pyx_t_5numpy_uint32_t)-1L) < 0);
   __pyx_v____pyx_int32_t_is_signed = (((__pyx_t_5numpy_int32_t)-1L) < 0);
-  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
-  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
-  __pyx_v____pyx_int64_t_is_signed = (((__pyx_t_5numpy_int64_t)-1L) < 0);
   __pyx_v____pyx_int8_t_is_signed = (((__pyx_t_5numpy_int8_t)-1L) < 0);
+  __pyx_v____pyx_uint64_t_is_signed = (((__pyx_t_5numpy_uint64_t)-1L) < 0);
+  __pyx_v_short_is_signed = (((short)-1L) < 0);
+  __pyx_v_int_is_signed = (((int)-1L) < 0);
+  __pyx_v____pyx_uint8_t_is_signed = (((__pyx_t_5numpy_uint8_t)-1L) < 0);
+  __pyx_v_long_is_signed = (((long)-1L) < 0);
   __pyx_v____pyx_int16_t_is_signed = (((__pyx_t_5numpy_int16_t)-1L) < 0);
+  __pyx_v____pyx_uint16_t_is_signed = (((__pyx_t_5numpy_uint16_t)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(0, 310, __pyx_L1_error)

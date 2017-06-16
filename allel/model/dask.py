@@ -405,7 +405,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 for k, v in subpops.items()}
 
     def to_packed(self, boundscheck=True):
-        return self._method_drop_ploidy('to_packed', boundscheck=boundscheck)
+        return self._method_drop_ploidy('to_packed', boundscheck=boundscheck, dtype='u1')
 
     @classmethod
     def from_packed(cls, packed, chunks=None):
