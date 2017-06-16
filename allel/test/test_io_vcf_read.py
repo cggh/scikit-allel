@@ -83,6 +83,7 @@ def test_read_vcf_chunks():
         # special computed fields
         'variants/numalt',
         'variants/svlen',
+        'variants/is_snp',
         # FORMAT fields
         'calldata/GT',
         'calldata/GQ',
@@ -120,6 +121,7 @@ def test_fields_all():
         # special computed fields
         'variants/numalt',
         'variants/svlen',
+        'variants/is_snp',
         # FORMAT fields
         'calldata/GT',
         'calldata/GQ',
@@ -172,6 +174,7 @@ def test_fields_all_variants():
         # special computed fields
         'variants/numalt',
         'variants/svlen',
+        'variants/is_snp',
     ]
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
