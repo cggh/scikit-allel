@@ -1,3 +1,7 @@
+branches:
+  only:
+    - master
+
 environment:
   # See README for information on the token
   binstar_token:
