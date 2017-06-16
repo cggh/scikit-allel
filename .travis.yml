@@ -1,10 +1,17 @@
 language: python
+
+branches:
+  only:
+    - master
+
+sudo: false
+
 python:
   - "2.7"
-  - "3.4"
   - "3.5"
+#  - "3.6"
+
 install:
-  - sudo apt-get update
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
@@ -15,6 +22,7 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
+  - conda config --add channels bioconda
   - conda config --add channels conda-forge
   - conda info -a
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
@@ -22,14 +30,17 @@ install:
   - conda clean --lock
   - conda install --yes gcc
   - conda install --yes --name=test-environment --file=requirements_ci.txt
+  # get tabix and pyfasta -- linux only via bioconda
+  - conda install --yes --name=test-environment htslib==1.4.1
+  - conda install --yes --name=test-environment pyfasta==0.5.2
 
 script:
   - python setup.py build_ext --inplace
   - export PYTHONHASHSEED=42
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
-      nosetests allel -v --exclude=from_gff3_region --with-doctest --doctest-options=+NORMALIZE_WHITESPACE;
+      nosetests allel -v --with-doctest --doctest-options=+NORMALIZE_WHITESPACE,+ELLIPSIS;
+      flake8 --max-line-length=100 allel;
     else
-      nosetests allel -v --exclude=from_gff3_region;
+      nosetests allel -v;
     fi
-  - flake8 --max-line-length=95 allel
   - python setup.py bdist_wheel

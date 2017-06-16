@@ -87,6 +87,11 @@ def setup_extensions(metadata):
                           include_dirs=[np.get_include()],
                           # define_macros=[('CYTHON_TRACE', 1)],
                           ),
+                Extension('allel.opt.io_vcf_read',
+                          sources=['allel/opt/io_vcf_read.pyx'],
+                          include_dirs=[np.get_include()],
+                          # define_macros=[('CYTHON_TRACE', 1)],
+                          ),
             ])
         except ImportError:
             print('[scikit-allel] build from C')

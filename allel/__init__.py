@@ -16,8 +16,9 @@ from . import stats
 from .stats import *
 from . import plot
 from . import io
+from .io import *
 from . import chunked
 from . import constants
 from . import util
 
-__version__ = '1.0.3'
+__version__ = '1.1.0.dev0'

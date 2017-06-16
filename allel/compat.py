@@ -21,6 +21,8 @@ if PY2:
     zip_longest = itertools.izip_longest
     reduce = reduce
     from urllib import unquote_plus
+    FileNotFoundError = IOError
+    IsADirectoryError = IOError
 
     def copy_method_doc(m, n):
         """Copy docstring from `n` to `m`."""
@@ -38,6 +40,8 @@ else:
     import functools
     reduce = functools.reduce
     from urllib.parse import unquote_plus
+    FileNotFoundError = FileNotFoundError
+    IsADirectoryError = IsADirectoryError
 
     def copy_method_doc(m, n):
         """Copy docstring from `n` to `m`."""

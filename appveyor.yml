@@ -1,3 +1,7 @@
+branches:
+  only:
+    - master
+
 environment:
   # See README for information on the token
   binstar_token:
@@ -14,37 +18,37 @@ environment:
       PYTHON_VERSION: "2.7"
       PYTHON_ARCH: "32"
       CONDA_PY: "27"
-      CONDA_NPY: "111"
+      CONDA_NPY: "112"
 
     - PYTHON: "C:\\Python27_64"
       PYTHON_VERSION: "2.7"
       PYTHON_ARCH: "64"
       CONDA_PY: "27"
-      CONDA_NPY: "111"
-
-    - PYTHON: "C:\\Python34_32"
-      PYTHON_VERSION: "3.4"
-      PYTHON_ARCH: "32"
-      CONDA_PY: "34"
-      CONDA_NPY: "111"
-
-    - PYTHON: "C:\\Python34_64"
-      PYTHON_VERSION: "3.4"
-      PYTHON_ARCH: "64"
-      CONDA_PY: "34"
-      CONDA_NPY: "111"
+      CONDA_NPY: "112"
 
     - PYTHON: "C:\\Python35_32"
       PYTHON_VERSION: "3.5"
       PYTHON_ARCH: "32"
       CONDA_PY: "35"
-      CONDA_NPY: "111"
+      CONDA_NPY: "112"
 
     - PYTHON: "C:\\Python35_64"
       PYTHON_VERSION: "3.5"
       PYTHON_ARCH: "64"
       CONDA_PY: "35"
-      CONDA_NPY: "111"
+      CONDA_NPY: "112"
+
+#    - PYTHON: "C:\\Python36_32"
+#      PYTHON_VERSION: "3.6"
+#      PYTHON_ARCH: "32"
+#      CONDA_PY: "35"
+#      CONDA_NPY: "112"
+#
+#    - PYTHON: "C:\\Python36_64"
+#      PYTHON_VERSION: "3.6"
+#      PYTHON_ARCH: "64"
+#      CONDA_PY: "35"
+#      CONDA_NPY: "112"
 
 install:
   # this installs the appropriate Miniconda (Py2/Py3, 32/64 bit),
@@ -59,6 +63,7 @@ test_script:
   - "%CMD_IN_ENV% conda create --yes -n test-environment python=%PYTHON_VERSION%"
   - "%CMD_IN_ENV% activate test-environment"
   - "%CMD_IN_ENV% conda install --yes --file=requirements_ci.txt"
+  - "%CMD_IN_ENV% pip install pyfasta==0.5.2"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
   - "%CMD_IN_ENV% nosetests -v allel --exclude=from_gff3_region"
 

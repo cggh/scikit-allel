@@ -16,6 +16,8 @@ import numpy as np
 
 
 import allel
+from allel.io_vcf_read import read_vcf, iter_vcf_chunks, vcf_to_npz, vcf_to_hdf5, vcf_to_zarr, \
+    vcf_to_csv, vcf_to_dataframe, vcf_to_recarray, ANNTransformer  # flake8: noqa
 from allel.util import asarray_ndim
 
 

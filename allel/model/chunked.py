@@ -97,19 +97,13 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
 
         >>> g.copy()
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
-           nbytes=12 cbytes=359 cratio=0.0
-           compression=blosc compression_opts={'shuffle': 1, 'cname': 'lz4', 'clevel': 5}
-           values=zarr.core.Array>
-        >>> g.copy(storage='bcolzmem')  # doctest: +ELLIPSIS
+           ...
+        >>> g.copy(storage='bcolzmem')
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(4096, 2, 2)
-           nbytes=12 cbytes=16.0K cratio=0.0
-           compression=blosc compression_opts=cparams(clevel=5, shuffle=1, cname='blosclz')
-           values=bcolz.carray_ext.carray>
+           ...
         >>> g.copy(storage='hdf5mem_zlib1')
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
-           nbytes=12 cbytes=20 cratio=0.6
-           compression=gzip compression_opts=1
-           values=h5py._hl.dataset.Dataset>
+           ...
 
     """  # flake8: noqa
 
@@ -766,10 +760,9 @@ class VariantChunkedTable(ChunkedTableWrapper):
         >>> callset = h5py.File('callset.h5', mode='r')
         >>> vt = allel.VariantChunkedTable(callset['/3L/variants'],
         ...                                names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
-        >>> vt  # doctest: +ELLIPSIS
+        >>> vt
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'S4'), ('POS', '<i8'), ('AC', ...
-           nbytes=220 cbytes=220 cratio=1.0
-           values=h5py._hl.group.Group>
+           ...
 
     Obtain a single row::
 
@@ -780,9 +773,9 @@ class VariantChunkedTable(ChunkedTableWrapper):
 
         >>> vt[:]  # doctest: +ELLIPSIS
         <VariantTable shape=(5,) dtype=(numpy.record, [('CHROM', 'S4'), ('POS', '<i8'), ...
-        [(b'chr1', 2, array([1, 2]), 4.5, 35) (b'chr1', 7, array([3, 4]), 6.7, 12)
-         (b'chr2', 3, array([5, 6]), 1.2, 78) (b'chr2', 9, array([7, 8]), 4.4, 22)
-         (b'chr3', 6, array([ 9, 10]), 2.8, 99)]
+        [(b'chr1', 2, [ 1,  2], 4.5, 35) (b'chr1', 7, [ 3,  4], 6.7, 12)
+         (b'chr2', 3, [ 5,  6], 1.2, 78) (b'chr2', 9, [ 7,  8], 4.4, 22)
+         (b'chr3', 6, [ 9, 10], 2.8, 99)]
 
     Access a subset of columns::
 
