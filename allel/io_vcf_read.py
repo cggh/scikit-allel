@@ -3,12 +3,6 @@
 Functions for extracting data from Variant Call Format (VCF) files and loading
 into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
-TODO:
-
-* is_snp
-* is_snp or svtype (SNP|INS|DEL|COMPLEX) computed field
-* svlen handle missing alt?
-
 WONTFIX/POSTPONED:
 
 * GenotypeArray.from_vcf
@@ -1005,7 +999,7 @@ def _check_field(field, headers):
         if name in FIXED_VARIANTS_FIELDS:
             pass
 
-        elif name in ['numalt', 'svlen']:
+        elif name in ['numalt', 'svlen', 'is_snp']:
             # computed fields
             pass
 
@@ -1045,8 +1039,8 @@ def _add_all_variants_fields(fields, headers):
     _add_all_fixed_variants_fields(fields)
     _add_all_info_fields(fields, headers)
     _add_all_filter_fields(fields, headers)
-    # add in special computed fields
-    for f in 'variants/numalt', 'variants/svlen':
+    # add in computed fields
+    for f in 'variants/numalt', 'variants/svlen', 'variants/is_snp':
         if f not in fields:
             fields.append(f)
 
@@ -1197,7 +1191,7 @@ def _normalize_types(types, fields, headers):
 
         elif group == 'variants':
 
-            if name in ['numalt', 'svlen']:
+            if name in ['numalt', 'svlen', 'is_snp']:
                 # computed fields, special case
                 continue
 
@@ -1293,7 +1287,7 @@ def _normalize_numbers(numbers, fields, headers):
 
         elif group == 'variants':
 
-            if name in ['numalt', 'svlen']:
+            if name in ['numalt', 'svlen', 'is_snp']:
                 # computed fields, special case - number depends on ALT
                 continue
 

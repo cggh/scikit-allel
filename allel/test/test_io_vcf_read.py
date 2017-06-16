@@ -1409,9 +1409,11 @@ def test_no_samples():
     assert 'calldata/GQ' not in callset
 
 
-def test_numalt_svlen():
+def test_computed_fields():
 
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+                  b"2L\t2\t.\t.\t.\t.\t.\t.\t.\n"
+                  b"2L\t4\t.\t.\tG\t.\t.\t.\t.\n"
                   b"2L\t12\t.\tA\t.\t.\t.\t.\t.\n"
                   b"2L\t34\t.\tC\tT\t.\t.\t.\t.\n"
                   b"3R\t45\t.\tG\tA,T\t.\t.\t.\t.\n"
@@ -1426,8 +1428,10 @@ def test_numalt_svlen():
                            numbers={'ALT': 5}, types={'REF': string_dtype, 'ALT': string_dtype})
 
         a = callset['variants/ALT']
-        eq_((6, 5), a.shape)
+        eq_((8, 5), a.shape)
         e = np.array([[b'', b'', b'', b'', b''],
+                      [b'G', b'', b'', b'', b''],
+                      [b'', b'', b'', b'', b''],
                       [b'T', b'', b'', b'', b''],
                       [b'A', b'T', b'', b'', b''],
                       [b'A', b'GTAC', b'', b'', b''],
@@ -1438,17 +1442,27 @@ def test_numalt_svlen():
         assert_array_equal(e, a)
 
         a = callset['variants/numalt']
-        eq_((6,), a.shape)
-        assert_array_equal([0, 1, 2, 2, 2, 5], a)
+        eq_((8,), a.shape)
+        assert_array_equal([0, 1, 0, 1, 2, 2, 2, 5], a)
 
         a = callset['variants/svlen']
-        eq_((6, 5), a.shape)
-        assert_array_equal([[0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0],
-                            [0, 3, 0, 0, 0],
-                            [-3, 0, 0, 0, 0],
-                            [0, 6, -3, 1, -1]], a)
+        eq_((8, 5), a.shape)
+        e = np.array([[0, 0, 0, 0, 0],
+                      [1, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0],
+                      [0, 3, 0, 0, 0],
+                      [-3, 0, 0, 0, 0],
+                      [0, 6, -3, 1, -1]])
+        print(e)
+        print(a)
+        assert_array_equal(e, a)
+
+        a = callset['variants/is_snp']
+        eq_((8,), a.shape)
+        eq_(np.dtype(bool), a.dtype)
+        assert_array_equal([False, False, False, True, True, False, False, False], a)
 
 
 def test_genotype_ac():
