@@ -14,3 +14,4 @@ ipython
 h5py
 bcolz
 zarr
+numcodecs

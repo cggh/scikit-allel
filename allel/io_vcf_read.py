@@ -5,28 +5,29 @@ into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 TODO:
 
-* rework ann transformer to use object dtype
 * is_snp
+* is_snp or SVTYPE (SNP|INS|DEL|COMPLEX) computed field
+* svlen handle missing alt?
+
+WONTFIX/POSTPONED:
+
 * GenotypeArray.from_vcf
 * HaplotypeArray.from_vcf(ploidy)
 * VariantTable.from_vcf
-* svlen handle missing alt?
-
-WONTFIX:
-
-* is_snp or SVTYPE (SNP|INS|DEL|COMPLEX) computed field
 * is_phased computed field
-* Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via transformer.
+* Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via
+  transformer.
 * Specialised parser for EFF - obsolete.
 
 """
 from __future__ import absolute_import, print_function, division
 import gzip
-import sys
 import os
 import re
 from collections import namedtuple
 import warnings
+import time
+import subprocess
 
 
 import numpy as np
@@ -36,21 +37,15 @@ import numpy as np
 from allel.compat import PY2, FileNotFoundError
 # noinspection PyUnresolvedReferences
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream, \
-    VCFParallelChunkIterator, ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, ANN_ALLELE_FIELD, \
-    ANN_ANNOTATION_FIELD, ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD, \
-    ANN_CDS_LENGTH_FIELD, ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, ANN_FEATURE_ID_FIELD, ANN_FEATURE_TYPE_FIELD, \
-    ANN_FIELD, ANN_FIELDS, ANN_GENE_ID_FIELD, ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, ANN_HGVS_P_FIELD, \
-    ANN_RANK_FIELD, ANN_TRANSCRIPT_BIOTYPE_FIELD
-
-
-def debug(*msg):
-    print(*msg, file=sys.stderr)
-    sys.stderr.flush()
+    ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, ANN_ALLELE_FIELD, ANN_ANNOTATION_FIELD, \
+    ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD, ANN_CDS_LENGTH_FIELD, \
+    ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, ANN_FEATURE_ID_FIELD, ANN_FEATURE_TYPE_FIELD, \
+    ANN_FIELD, ANN_FIELDS, ANN_GENE_ID_FIELD, ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, \
+    ANN_HGVS_P_FIELD, ANN_RANK_FIELD, ANN_TRANSCRIPT_BIOTYPE_FIELD
 
 
 DEFAULT_BUFFER_SIZE = 2**14
 DEFAULT_CHUNK_LENGTH = 2**16
-DEFAULT_BLOCK_LENGTH = 2**11
 DEFAULT_CHUNK_WIDTH = 2**6
 
 
@@ -75,9 +70,6 @@ def _prep_fields_param(fields):
         store_samples = True
 
     return store_samples, fields
-
-
-import time
 
 
 def _chunk_iter_progress(it, log, prefix):
@@ -122,11 +114,12 @@ _doc_param_fields = \
         'variants/POS', 'variants/DP', 'calldata/GT']`. If you are feeling lazy, you can drop
         the 'variants/' and 'calldata/' prefixes, in which case the fields will be matched against
         fields declared in the VCF header, with variants taking priority over calldata if a field
-        with the same ID exists both in INFO and FORMAT headers. I.e., `['CHROM', 'POS', 'DP', 'GT']`
-        will also work as well, although watch out for fields like 'DP' which can be both INFO and
-        FORMAT. For convenience, some special string values are also recognized. To extract all fields,
-        provide just the string '*'. To extract all variants fields (including all INFO fields) provide
-        'variants/*'. To extract all calldata fields (i.e., defined in FORMAT headers) provide 'calldata/*'."""
+        with the same ID exists both in INFO and FORMAT headers. I.e., `['CHROM', 'POS', 'DP',
+        'GT']` will also work as well, although watch out for fields like 'DP' which can be both
+        INFO and FORMAT. For convenience, some special string values are also recognized. To
+        extract all fields, provide just the string '*'. To extract all variants fields
+        (including all INFO fields) provide 'variants/*'. To extract all calldata fields (i.e.,
+        defined in FORMAT headers) provide 'calldata/*'."""
 
 _doc_param_types = \
     """Overide data types. Should be a dictionary mapping field names to NumPy data types.
@@ -151,8 +144,8 @@ _doc_param_region = \
         1-based beginning and end coordinates (e.g., '2L:100000-200000'). Note that only variants
         whose start position (POS) is within the request range will be included. This is slightly
         different from the default tabix behaviour, where a variant (e.g., deletion) may be included
-        if its position (POS) occurs before the requested region but its reference allele overlaps the
-        region - such a variant will *not* be included in the data returned by this function."""
+        if its position (POS) occurs before the requested region but its reference allele overlaps
+        the region - such a variant will *not* be included in the data returned by this function."""
 
 _doc_param_tabix = \
     """Name or path to tabix executable. Only required if `region` is given. Setting `tabix` to
@@ -172,23 +165,11 @@ _doc_param_transformers = \
         class which implements post-processing of data from SNPEFF."""
 
 _doc_param_buffer_size = \
-    """Size in bytes of the I/O buffer used when reading data from the underlying file or
-        tabix stream."""
+    """Size in bytes of the I/O buffer used when reading data from the underlying file or tabix
+    stream."""
 
 _doc_param_chunk_length = \
     """Length (number of variants) of chunks in which data are processed."""
-
-_doc_param_n_threads = \
-    """Experimental: number of additional threads to launch to parse in parallel.
-        E.g., a value of 1 will launch 1 parsing thread, in addition to the main
-        program thread. If you are feeling adventurous and/or impatient, try a value of 1
-        or 2. May increase or decrease speed of parsing relative to single-threaded
-        behaviour, depending on the data, your computer, the weather, and how the stars
-        are aligned. A value of None (default) means single-threaded  parsing."""
-
-_doc_param_block_length = \
-    """Only applies if n_threads is not None (multi-threaded parsing). Size of block
-        (number of rows) that will be handed off to be parsed in parallel."""
 
 _doc_param_log = \
     """A file-like object (e.g., `sys.stderr`) to print progress information."""
@@ -205,14 +186,12 @@ def read_vcf(input,
              transformers=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
              chunk_length=DEFAULT_CHUNK_LENGTH,
-             n_threads=None,
-             block_length=DEFAULT_BLOCK_LENGTH,
              log=None):
     """Read data from a VCF file into NumPy arrays.
 
     Parameters
     ----------
-    input : string
+    input : string or file-like
         {input}
     fields : list of strings, optional
         {fields}
@@ -234,16 +213,12 @@ def read_vcf(input,
         {buffer_size}
     chunk_length : int, optional
         {chunk_length}
-    n_threads : int, optional
-        {n_threads}
-    block_length : int, optional
-        {block_length}
     log : file-like, optional
         {log}
 
     Returns
     -------
-    data : dict[str -> ndarray]
+    data : dict[str, ndarray]
         A dictionary holding arrays.
 
     """
@@ -254,9 +229,9 @@ def read_vcf(input,
 
     # setup
     _, samples, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
-        chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, fills=fills, region=region,
-        tabix=tabix, samples=samples, transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        chunk_length=chunk_length,  fills=fills, region=region, tabix=tabix, samples=samples,
+        transformers=transformers
     )
 
     # setup progress logging
@@ -296,8 +271,6 @@ read_vcf.__doc__ = read_vcf.__doc__.format(
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
-    n_threads=_doc_param_n_threads,
-    block_length=_doc_param_block_length,
     log=_doc_param_log,
 )
 
@@ -322,8 +295,6 @@ def vcf_to_npz(input, output,
                transformers=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
-               n_threads=None,
-               block_length=DEFAULT_BLOCK_LENGTH,
                log=None):
     """Read data from a VCF file into NumPy arrays and save as a .npz file.
 
@@ -357,10 +328,6 @@ def vcf_to_npz(input, output,
         {buffer_size}
     chunk_length : int, optional
         {chunk_length}
-    n_threads : int, optional
-        {n_threads}
-    block_length : int, optional
-        {block_length}
     log : file-like, optional
         {log}
 
@@ -373,7 +340,7 @@ def vcf_to_npz(input, output,
     # read all data into memory
     data = read_vcf(
         input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, log=log, fills=fills,
+        chunk_length=chunk_length,  log=log, fills=fills,
         region=region, tabix=tabix, samples=samples, transformers=transformers
     )
 
@@ -401,14 +368,12 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
-    n_threads=_doc_param_n_threads,
-    block_length=_doc_param_block_length,
     log=_doc_param_log,
 )
 
 
-def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts, shuffle, overwrite,
-                         headers):
+def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts,
+                         shuffle, overwrite, headers):
     import h5py
 
     # handle no input
@@ -434,7 +399,6 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
             if overwrite:
                 del root[group][name]
             else:
-                # TODO right exception class?
                 raise ValueError('dataset exists at path %r; use overwrite=True to replace' % k)
 
         shape = (0,) + data.shape[1:]
@@ -444,8 +408,8 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
         else:
             dt = data.dtype
         ds = root[group].create_dataset(
-            name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=dt, compression=compression,
-            compression_opts=compression_opts, shuffle=shuffle
+            name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=dt,
+            compression=compression, compression_opts=compression_opts, shuffle=shuffle
         )
 
         # copy metadata from VCF headers
@@ -511,8 +475,6 @@ def vcf_to_hdf5(input, output,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
-                n_threads=None,
-                block_length=DEFAULT_BLOCK_LENGTH,
                 log=None):
     """Read data from a VCF file and load into an HDF5 file.
 
@@ -554,10 +516,6 @@ def vcf_to_hdf5(input, output,
         {chunk_length}
     chunk_width : int, optional
         {chunk_width}
-    n_threads : int, optional
-        {n_threads}
-    block_length : int, optional
-        {block_length}
     log : file-like, optional
         {log}
 
@@ -581,8 +539,8 @@ def vcf_to_hdf5(input, output,
         # setup chunk iterator
         _, samples, headers, it = iter_vcf_chunks(
             input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-            chunk_length=chunk_length, block_length=block_length, n_threads=n_threads,
-            fills=fills, region=region, tabix=tabix, samples=samples, transformers=transformers
+            chunk_length=chunk_length,  fills=fills, region=region,
+            tabix=tabix, samples=samples, transformers=transformers
         )
 
         # setup progress logging
@@ -596,8 +554,8 @@ def vcf_to_hdf5(input, output,
                 if overwrite:
                     del root[group][name]
                 else:
-                    # TODO right exception class?
-                    raise ValueError('dataset exists at path %r; use overwrite=True to replace' % name)
+                    raise ValueError('dataset exists at path %r; use overwrite=True to replace'
+                                     % name)
             if samples.dtype.kind == 'O':
                 t = h5py.special_dtype(vlen=str)
             else:
@@ -610,8 +568,9 @@ def vcf_to_hdf5(input, output,
         # setup datasets
         # noinspection PyTypeChecker
         keys = _hdf5_setup_datasets(
-            chunk=chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compression=compression,
-            compression_opts=compression_opts, shuffle=shuffle, overwrite=overwrite, headers=headers
+            chunk=chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width,
+            compression=compression, compression_opts=compression_opts, shuffle=shuffle,
+            overwrite=overwrite, headers=headers
         )
 
         # store first chunk
@@ -638,8 +597,6 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
     chunk_width=_doc_param_chunk_width,
-    n_threads=_doc_param_n_threads,
-    block_length=_doc_param_block_length,
     log=_doc_param_log,
 )
 
@@ -647,6 +604,7 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
 _zarr_string_codec = None
 
 
+# noinspection PyUnresolvedReferences
 def _get_zarr_string_codec():
     global _zarr_string_codec
     if _zarr_string_codec is None:
@@ -693,8 +651,8 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
             filters = [_get_zarr_string_codec()]
         else:
             filters = None
-        ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype, compressor=compressor,
-                                 overwrite=overwrite, filters=filters)
+        ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
+                                 compressor=compressor, overwrite=overwrite, filters=filters)
 
         # copy metadata from VCF headers
         group, name = k.split('/')
@@ -736,8 +694,6 @@ def vcf_to_zarr(input, output,
                 buffer_size=DEFAULT_BUFFER_SIZE,
                 chunk_length=DEFAULT_CHUNK_LENGTH,
                 chunk_width=DEFAULT_CHUNK_WIDTH,
-                n_threads=None,
-                block_length=DEFAULT_BLOCK_LENGTH,
                 log=None):
     """Read data from a VCF file and load into a Zarr on-disk store.
 
@@ -775,10 +731,6 @@ def vcf_to_zarr(input, output,
         {chunk_length}
     chunk_width : int, optional
         {chunk_width}
-    n_threads : int, optional
-        {n_threads}
-    block_length : int, optional
-        {block_length}
     log : file-like, optional
         {log}
 
@@ -799,8 +751,8 @@ def vcf_to_zarr(input, output,
 
     # setup chunk iterator
     _, samples, headers, it = iter_vcf_chunks(
-        input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size, chunk_length=chunk_length,
-        fills=fills, block_length=block_length, n_threads=n_threads, region=region, tabix=tabix, samples=samples,
+        input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills,  region=region, tabix=tabix, samples=samples,
         transformers=transformers
     )
 
@@ -851,13 +803,8 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
     chunk_width=_doc_param_chunk_width,
-    n_threads=_doc_param_n_threads,
-    block_length=_doc_param_block_length,
     log=_doc_param_log,
 )
-
-
-import subprocess
 
 
 def iter_vcf_chunks(input,
@@ -870,9 +817,7 @@ def iter_vcf_chunks(input,
                     samples=None,
                     transformers=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
-                    chunk_length=DEFAULT_CHUNK_LENGTH,
-                    n_threads=None,
-                    block_length=DEFAULT_BLOCK_LENGTH):
+                    chunk_length=DEFAULT_CHUNK_LENGTH):
     """Iterate over chunks of data from a VCF file as NumPy arrays.
 
     Parameters
@@ -899,32 +844,24 @@ def iter_vcf_chunks(input,
         {buffer_size}
     chunk_length : int, optional
         {chunk_length}
-    n_threads : int, optional
-        {n_threads}
-    block_length : int, optional
-        {block_length}
 
     Returns
     -------
-    samples : list of strings
+    fields : list of strings
+        Normalised names of fields that will be extracted.
+    samples : ndarray
         Samples for which data will be extracted.
-    headers : tuple
+    headers : VCFHeaders
         Tuple of metadata extracted from VCF headers.
     it : iterator
         Chunk iterator.
 
     """
 
-    # guard condition
-    if n_threads is not None and region:
-        warnings.warn('cannot use multiple threads if region is given, falling back to '
-                      'single-threaded implementation')
-        n_threads = None
-
     # setup commmon keyword args
     kwds = dict(fields=fields, types=types, numbers=numbers,
-                chunk_length=chunk_length, block_length=block_length,
-                n_threads=n_threads, fills=fills, samples=samples)
+                chunk_length=chunk_length,
+                fills=fills, samples=samples)
 
     # obtain a file-like object
     close = False
@@ -987,7 +924,6 @@ def iter_vcf_chunks(input,
 
     # setup iterator
     fields, samples, headers, it = _iter_vcf_stream(stream, **kwds)
-    print('fields before transform: %s' % repr(fields))
 
     # setup transformers
     if transformers is not None:
@@ -997,7 +933,6 @@ def iter_vcf_chunks(input,
         for trans in transformers:
             fields = trans.transform_fields(fields)
         it = _chunk_iter_transform(it, transformers)
-    print('fields after transform: %s' % repr(fields))
 
     return fields, samples, headers, it
 
@@ -1014,8 +949,6 @@ iter_vcf_chunks.__doc__ = iter_vcf_chunks.__doc__.format(
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
-    n_threads=_doc_param_n_threads,
-    block_length=_doc_param_block_length,
     log=_doc_param_log,
 )
 
@@ -1428,7 +1361,8 @@ def _normalize_samples(samples, headers, types):
                 samples.remove(s)
                 loc_samples[i] = 1
         if len(samples) > 0:
-            warnings.warn('some samples not found, will be ignored: ' + ', '.join(map(repr, sorted(samples))))
+            warnings.warn('some samples not found, will be ignored: ' +
+                          ', '.join(map(repr, sorted(samples))))
 
     t = default_string_dtype
     if types is not None:
@@ -1438,8 +1372,7 @@ def _normalize_samples(samples, headers, types):
     return normed_samples, loc_samples
 
 
-def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length, n_threads,
-                     fills, region, samples):
+def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, fills, region, samples):
 
     # read VCF headers
     headers = _read_vcf_headers(stream)
@@ -1470,17 +1403,10 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, block_length,
     fills = _normalize_fills(fills, fields, headers)
 
     # setup chunks iterator
-    if n_threads is None:
-        chunks = VCFChunkIterator(
-            stream, chunk_length=chunk_length, headers=headers, fields=fields, types=types, numbers=numbers,
-            fills=fills, region=region, loc_samples=loc_samples
-        )
-    else:
-        # noinspection PyArgumentList
-        chunks = VCFParallelChunkIterator(
-            stream, chunk_length=chunk_length, block_length=block_length, n_threads=n_threads, headers=headers,
-            fields=fields, types=types, numbers=numbers, fills=fills, region=region, loc_samples=loc_samples
-        )
+    chunks = VCFChunkIterator(
+        stream, chunk_length=chunk_length, headers=headers, fields=fields, types=types,
+        numbers=numbers, fills=fills, region=region, loc_samples=loc_samples
+    )
 
     return fields, samples, headers, chunks
 
@@ -1494,7 +1420,7 @@ _re_format_header = \
     re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
 
 
-_VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
+VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
 
 
 def _read_vcf_headers(stream):
@@ -1564,7 +1490,7 @@ def _read_vcf_headers(stream):
         # can't warn about this, it's fatal
         raise RuntimeError('VCF file is missing mandatory header line ("#CHROM...")')
 
-    return _VCFHeaders(headers, filters, infos, formats, samples)
+    return VCFHeaders(headers, filters, infos, formats, samples)
 
 
 def _chunk_to_dataframe(fields, chunk):
@@ -1640,9 +1566,9 @@ def vcf_to_dataframe(input,
 
     # setup
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
-        chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
-        tabix=tabix, samples=[], transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        transformers=transformers
     )
 
     # setup progress logging
@@ -1720,9 +1646,9 @@ def vcf_to_csv(input, output,
 
     # setup
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
-        chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
-        tabix=tabix, samples=[], transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        transformers=transformers
     )
 
     # setup progress logging
@@ -1804,8 +1730,6 @@ def vcf_to_recarray(input,
 
     """
 
-    import pandas
-
     # samples requested?
     # noinspection PyTypeChecker
     _, fields = _prep_fields_param(fields)
@@ -1813,9 +1737,9 @@ def vcf_to_recarray(input,
     # setup chunk iterator
     # N.B., set samples to empty list so we don't get any calldata fields
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers,buffer_size=buffer_size,
-        chunk_length=chunk_length, n_threads=None, fills=fills, region=region,
-        tabix=tabix, samples=[], transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        transformers=transformers
     )
 
     # setup progress logging
