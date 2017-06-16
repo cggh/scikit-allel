@@ -1653,6 +1653,7 @@ def test_vcf_to_npz():
                 assert_array_almost_equal(expect[key], actual[key])
             else:
                 assert_array_equal(expect[key], actual[key])
+        actual.close()
 
 
 def test_vcf_to_zarr():
