@@ -1519,7 +1519,7 @@ def test_errors():
     if PY2:
         excls = IOError
     else:
-        excls = IsADirectoryError
+        excls = OSError
     with assert_raises(excls):
         read_vcf(path)
 
