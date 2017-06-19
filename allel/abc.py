@@ -180,18 +180,27 @@ def arr1d_to_html(indices, items, caption):
 
     # build table
     html += '<table>'
+    html += '<thead>'
     html += '<tr>'
     for i in indices:
         html += '<th style="text-align: center">%s</th>' % i
     html += '</tr>'
+    html += '</thead>'
+    html += '<tbody>'
     html += '<tr>'
     for item in items:
         html += '<td style="text-align: center">%s</td>' % item
     html += '</tr>'
+    html += '</tbody>'
     html += '</table>'
     html += '</div>'
 
     return html
+
+
+_row_index_style = ('text-align: center; '
+                    'background-color: white; '
+                    'border-right: 1px solid black; ')
 
 
 def arr2d_to_html(row_indices, col_indices, items, caption):
@@ -205,20 +214,24 @@ def arr2d_to_html(row_indices, col_indices, items, caption):
 
     # build table
     html += '<table>'
+    html += '<thead>'
     html += '<tr><th></th>'
     for i in col_indices:
         html += '<th style="text-align: center">%s</th>' % i
     html += '</tr>'
+    html += '</thead>'
+    html += '<tbody>'
     for row_index, row in zip(row_indices, items):
         if row_index == ellipsis_str:
-            html += '<tr><th style="text-align: center">...</th>' \
-                    '<td style="text-align: center" colspan="%s">...</td></tr>' % \
-                    (len(col_indices) + 1)
+            html += (('<tr><th style="%s">...</th>' % _row_index_style) +
+                     ('<td style="text-align: center" colspan="%s">...</td></tr>' %
+                      (len(col_indices) + 1)))
         else:
-            html += '<tr><th style="text-align: center">%s</th>' % row_index
+            html += '<tr><th style="%s">%s</th>' % (_row_index_style, row_index)
             for item in row:
                 html += '<td style="text-align: center">%s</td>' % item
             html += '</tr>'
+    html += '</tbody>'
     html += '</table>'
     html += '</div>'
 
@@ -236,20 +249,24 @@ def recarr_to_html(names, indices, items, caption):
 
     # build table
     html += '<table>'
+    html += '<thead>'
     html += '<tr><th></th>'
     for n in names:
         html += '<th style="text-align: center">%s</th>' % n
     html += '</tr>'
+    html += '</thead>'
+    html += '<tbody>'
     for row_index, row in zip(indices, items):
         if row_index == ellipsis_str:
-            html += '<tr><th style="text-align: center">...</th>' \
-                    '<td style="text-align: center" colspan="%s">...</td></tr>' % \
-                    (len(names) + 1)
+            html += (('<tr><th style="%s">...</th>' % _row_index_style) +
+                     ('<td style="text-align: center" colspan="%s">...</td></tr>' %
+                      (len(names) + 1)))
         else:
-            html += '<tr><th style="text-align: center">%s</th>' % row_index
+            html += '<tr><th style="%s">%s</th>' % (_row_index_style, row_index)
             for item in row:
                 html += '<td style="text-align: center">%s</td>' % item
             html += '</tr>'
+    html += '</tbody>'
     html += '</table>'
     html += '</div>'
 
