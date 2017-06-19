@@ -27,6 +27,7 @@ worked examples with real data, see the following articles:
 * `A tour of scikit-allel <http://alimanfoo.github.io/2016/06/10/scikit-allel-tour.html>`_
 * |Estimating FST|
 * `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_
+* `Mendelian transmission <http://alimanfoo.github.io/2017/02/14/mendelian-transmission.html>`_
 
 .. |Estimating FST| raw:: HTML
 
@@ -66,6 +67,9 @@ N.B., this package requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
 scikit-learn_, h5py_, numexpr_, bcolz_, zarr_ and dask_. If installing via conda, these
 should be installed automatically. If installing via pip, please install these dependencies
 first, then use pip to install scikit-allel.
+
+If you have never installed Python before, you might find the following article useful:
+`Installing Python for data analysis <http://alimanfoo.github.io/2017/05/18/installing-python.html>`_
 
 Contents
 --------
