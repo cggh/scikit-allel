@@ -7,12 +7,12 @@ from multiprocessing.pool import ThreadPool
 import numpy as np
 
 
-from allel.util import asarray_ndim, check_dim0_aligned, check_ndim
+from allel.util import asarray_ndim, check_dim0_aligned, check_ndim, check_integer_dtype
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
 from allel.stats.diversity import moving_tajima_d
-from allel.opt.stats import pairwise_shared_prefix_lengths_int8, paint_shared_prefixes_int8, \
-    ihh01_scan_int8, ihh_scan_int8, nsl01_scan_int8, nsl_scan_int8
+from allel.opt.stats import pairwise_shared_prefix_lengths, paint_shared_prefixes, \
+    ihh01_scan, ihh_scan, nsl01_scan, nsl_scan
 
 
 def ehh_decay(h, truncate=False):
@@ -35,7 +35,7 @@ def ehh_decay(h, truncate=False):
 
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
-    h = HaplotypeArray(np.asarray(h, dtype='i1'), copy=False)
+    h = HaplotypeArray(np.asarray(h), copy=False)
     if h.max() > 1:
         raise NotImplementedError('only biallelic variants are supported')
     if h.min() < 0:
@@ -47,7 +47,7 @@ def ehh_decay(h, truncate=False):
     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
 
     # compute the shared prefix length between all pairs of haplotypes
-    spl = pairwise_shared_prefix_lengths_int8(h)
+    spl = pairwise_shared_prefix_lengths(np.asarray(h))
 
     # compute EHH by counting the number of shared prefixes extending beyond
     # each variant
@@ -79,7 +79,7 @@ def voight_painting(h):
 
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
-    h = HaplotypeArray(np.asarray(h, dtype='i1'), copy=False)
+    h = HaplotypeArray(np.asarray(h), copy=False)
     if h.max() > 1:
         raise NotImplementedError('only biallelic variants are supported')
     if h.min() < 0:
@@ -90,7 +90,7 @@ def voight_painting(h):
     h = np.take(h, indices, axis=1)
 
     # paint
-    painting = paint_shared_prefixes_int8(h)
+    painting = paint_shared_prefixes(np.asarray(h))
 
     return painting, indices
 
@@ -251,6 +251,7 @@ def fig_voight_painting(h, index=None, palette='colorblind',
     return fig
 
 
+# noinspection PyAugmentAssignment
 def compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible):
     """Compute spacing between variants for integrating haplotype
     homozygosity.
@@ -385,8 +386,8 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
     """
 
     # check inputs
-    h = np.asarray(h, dtype='i1')
-    check_ndim(h, 2)
+    h = asarray_ndim(h, 2)
+    check_integer_dtype(h)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(h, pos)
 
@@ -403,10 +404,10 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
         pool = ThreadPool(2)
 
         # scan forward
-        result_fwd = pool.apply_async(ihh01_scan_int8, (h, gaps), kwargs)
+        result_fwd = pool.apply_async(ihh01_scan, (h, gaps), kwargs)
 
         # scan backward
-        result_rev = pool.apply_async(ihh01_scan_int8, (h[::-1], gaps[::-1]),
+        result_rev = pool.apply_async(ihh01_scan, (h[::-1], gaps[::-1]),
                                       kwargs)
 
         # wait for both to finish
@@ -424,10 +425,10 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
         # run without threads
 
         # scan forward
-        ihh0_fwd, ihh1_fwd = ihh01_scan_int8(h, gaps, **kwargs)
+        ihh0_fwd, ihh1_fwd = ihh01_scan(h, gaps, **kwargs)
 
         # scan backward
-        ihh0_rev, ihh1_rev = ihh01_scan_int8(h[::-1], gaps[::-1], **kwargs)
+        ihh0_rev, ihh1_rev = ihh01_scan(h[::-1], gaps[::-1], **kwargs)
 
     # handle reverse scan
     ihh0_rev = ihh0_rev[::-1]
@@ -503,10 +504,10 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     """
 
     # check inputs
-    h1 = np.asarray(h1, dtype='i1')
-    h2 = np.asarray(h2, dtype='i1')
-    check_ndim(h1, 2)
-    check_ndim(h2, 2)
+    h1 = asarray_ndim(h1, 2)
+    check_integer_dtype(h1)
+    h2 = asarray_ndim(h2, 2)
+    check_integer_dtype(h2)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(h1, h2, pos)
 
@@ -523,12 +524,12 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
         pool = ThreadPool(min(4, multiprocessing.cpu_count()))
 
         # scan forward
-        res1_fwd = pool.apply_async(ihh_scan_int8, (h1, gaps), kwargs)
-        res2_fwd = pool.apply_async(ihh_scan_int8, (h2, gaps), kwargs)
+        res1_fwd = pool.apply_async(ihh_scan, (h1, gaps), kwargs)
+        res2_fwd = pool.apply_async(ihh_scan, (h2, gaps), kwargs)
 
         # scan backward
-        res1_rev = pool.apply_async(ihh_scan_int8, (h1[::-1], gaps[::-1]), kwargs)
-        res2_rev = pool.apply_async(ihh_scan_int8, (h2[::-1], gaps[::-1]), kwargs)
+        res1_rev = pool.apply_async(ihh_scan, (h1[::-1], gaps[::-1]), kwargs)
+        res2_rev = pool.apply_async(ihh_scan, (h2[::-1], gaps[::-1]), kwargs)
 
         # wait for both to finish
         pool.close()
@@ -547,12 +548,12 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
         # compute without threads
 
         # scan forward
-        ihh1_fwd = ihh_scan_int8(h1, gaps, **kwargs)
-        ihh2_fwd = ihh_scan_int8(h2, gaps, **kwargs)
+        ihh1_fwd = ihh_scan(h1, gaps, **kwargs)
+        ihh2_fwd = ihh_scan(h2, gaps, **kwargs)
 
         # scan backward
-        ihh1_rev = ihh_scan_int8(h1[::-1], gaps[::-1], **kwargs)
-        ihh2_rev = ihh_scan_int8(h2[::-1], gaps[::-1], **kwargs)
+        ihh1_rev = ihh_scan(h1[::-1], gaps[::-1], **kwargs)
+        ihh2_rev = ihh_scan(h2[::-1], gaps[::-1], **kwargs)
 
     # handle reverse scans
     ihh1_rev = ihh1_rev[::-1]
@@ -606,8 +607,8 @@ def nsl(h, use_threads=True):
     """
 
     # check inputs
-    h = np.asarray(h, dtype='i1')
-    check_ndim(h, 2)
+    h = asarray_ndim(h, 2)
+    check_integer_dtype(h)
 
     # # check there are no invariant sites
     # ac = h.count_alleles()
@@ -619,10 +620,10 @@ def nsl(h, use_threads=True):
         pool = ThreadPool(2)
 
         # scan forward
-        result_fwd = pool.apply_async(nsl01_scan_int8, args=(h,))
+        result_fwd = pool.apply_async(nsl01_scan, args=(h,))
 
         # scan backward
-        result_rev = pool.apply_async(nsl01_scan_int8, args=(h[::-1],))
+        result_rev = pool.apply_async(nsl01_scan, args=(h[::-1],))
 
         # wait for both to finish
         pool.close()
@@ -635,10 +636,10 @@ def nsl(h, use_threads=True):
     else:
 
         # scan forward
-        nsl0_fwd, nsl1_fwd = nsl01_scan_int8(h)
+        nsl0_fwd, nsl1_fwd = nsl01_scan(h)
 
         # scan backward
-        nsl0_rev, nsl1_rev = nsl01_scan_int8(h[::-1])
+        nsl0_rev, nsl1_rev = nsl01_scan(h[::-1])
 
     # handle backwards
     nsl0_rev = nsl0_rev[::-1]
@@ -672,10 +673,10 @@ def xpnsl(h1, h2, use_threads=True):
     """
 
     # check inputs
-    h1 = np.asarray(h1, dtype='i1')
-    h2 = np.asarray(h2, dtype='i1')
-    check_ndim(h1, 2)
-    check_ndim(h2, 2)
+    h1 = asarray_ndim(h1, 2)
+    check_integer_dtype(h1)
+    h2 = asarray_ndim(h2, 2)
+    check_integer_dtype(h2)
     check_dim0_aligned(h1, h2)
 
     if use_threads and multiprocessing.cpu_count() > 1:
@@ -685,12 +686,12 @@ def xpnsl(h1, h2, use_threads=True):
         pool = ThreadPool(min(4, multiprocessing.cpu_count()))
 
         # scan forward
-        res1_fwd = pool.apply_async(nsl_scan_int8, args=(h1,))
-        res2_fwd = pool.apply_async(nsl_scan_int8, args=(h2,))
+        res1_fwd = pool.apply_async(nsl_scan, args=(h1,))
+        res2_fwd = pool.apply_async(nsl_scan, args=(h2,))
 
         # scan backward
-        res1_rev = pool.apply_async(nsl_scan_int8, args=(h1[::-1],))
-        res2_rev = pool.apply_async(nsl_scan_int8, args=(h2[::-1],))
+        res1_rev = pool.apply_async(nsl_scan, args=(h1[::-1],))
+        res2_rev = pool.apply_async(nsl_scan, args=(h2[::-1],))
 
         # wait for both to finish
         pool.close()
@@ -709,12 +710,12 @@ def xpnsl(h1, h2, use_threads=True):
         # compute without threads
 
         # scan forward
-        nsl1_fwd = nsl_scan_int8(h1)
-        nsl2_fwd = nsl_scan_int8(h2)
+        nsl1_fwd = nsl_scan(h1)
+        nsl2_fwd = nsl_scan(h2)
 
         # scan backward
-        nsl1_rev = nsl_scan_int8(h1[::-1])
-        nsl2_rev = nsl_scan_int8(h2[::-1])
+        nsl1_rev = nsl_scan(h1[::-1])
+        nsl2_rev = nsl_scan(h2[::-1])
 
     # handle reverse scans
     nsl1_rev = nsl1_rev[::-1]

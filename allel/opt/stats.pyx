@@ -14,10 +14,7 @@ from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 
 
-ctypedef fused integral_t:
-    short
-    int
-    long
+ctypedef fused integer:
     cnp.int8_t
     cnp.int16_t
     cnp.int32_t
@@ -26,6 +23,11 @@ ctypedef fused integral_t:
     cnp.uint16_t
     cnp.uint32_t
     cnp.uint64_t
+
+
+ctypedef fused floating:
+    cnp.float32_t
+    cnp.float64_t
 
 
 # work around NAN undeclared in windows
@@ -235,8 +237,8 @@ def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn not None,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef Py_ssize_t shared_prefix_length_int8(cnp.int8_t[:] a,
-                                           cnp.int8_t[:] b) nogil:
+cpdef Py_ssize_t shared_prefix_length(integer[:] a,
+                                      integer[:] b) nogil:
     """Compute the length of the shared prefix between two arrays."""
 
     cdef:
@@ -256,7 +258,7 @@ cpdef Py_ssize_t shared_prefix_length_int8(cnp.int8_t[:] a,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef pairwise_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
+cpdef pairwise_shared_prefix_lengths(integer[:, :] h):
     """Compute the length of the shared prefix between all pairs of
     columns in a 2-dimensional array."""
 
@@ -274,7 +276,7 @@ cpdef pairwise_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
     with nogil:
         for i in range(n):
             for j in range(i+1, n):
-                lengths[k] = shared_prefix_length_int8(h[:, i], h[:, j])
+                lengths[k] = shared_prefix_length(h[:, i], h[:, j])
                 k += 1
 
     return np.asarray(lengths)
@@ -282,7 +284,7 @@ cpdef pairwise_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef neighbour_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
+cpdef neighbour_shared_prefix_lengths(integer[:, :] h):
     """Compute the length of the shared prefix between neighbouring
     columns in a 2-dimensional array."""
 
@@ -297,21 +299,24 @@ cpdef neighbour_shared_prefix_lengths_int8(cnp.int8_t[:, :] h):
     # iterate over columns
     with nogil:
         for i in range(n-1):
-            lengths[i] = shared_prefix_length_int8(h[:, i], h[:, i+1])
+            lengths[i] = shared_prefix_length(h[:, i], h[:, i+1])
 
     return np.asarray(lengths)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef neighbour_shared_prefix_lengths_unsorted_int8(cnp.int8_t[:, :] h,
-                                                    cnp.int64_t[:] indices):
+cpdef neighbour_shared_prefix_lengths_unsorted(integer[:, :] h,
+                                               indices):
     """Compute the length of the shared prefix between neighbouring
     columns in a 2-dimensional array."""
 
     cdef:
         Py_ssize_t i, n, ix, jx
         cnp.int32_t[:] lengths
+        cnp.int32_t[:] cindices
+
+    cindices = np.asarray(indices, dtype='i4')
 
     # initialise variables
     n = h.shape[1]
@@ -320,16 +325,16 @@ cpdef neighbour_shared_prefix_lengths_unsorted_int8(cnp.int8_t[:, :] h,
     # iterate over columns
     with nogil:
         for i in range(n-1):
-            ix = indices[i]
-            jx = indices[i+1]
-            lengths[i] = shared_prefix_length_int8(h[:, ix], h[:, jx])
+            ix = cindices[i]
+            jx = cindices[i+1]
+            lengths[i] = shared_prefix_length(h[:, ix], h[:, jx])
 
     return np.asarray(lengths)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef inline Py_ssize_t bisect_left_int8(cnp.int8_t[:] s, int x) nogil:
+cpdef inline Py_ssize_t bisect_left(integer[:] s, integer x) nogil:
     """Optimized implementation of bisect_left."""
     cdef:
         Py_ssize_t l, u, m, v
@@ -356,7 +361,7 @@ cpdef inline Py_ssize_t bisect_left_int8(cnp.int8_t[:] s, int x) nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def paint_shared_prefixes_int8(cnp.int8_t[:, :] h not None):
+def paint_shared_prefixes(integer[:, :] h):
     """Paint each shared prefix with a different number. N.B., `h` must be
     already sorted by prefix.
 
@@ -366,7 +371,7 @@ def paint_shared_prefixes_int8(cnp.int8_t[:, :] h not None):
         Py_ssize_t n_variants, n_haplotypes, pp_start, pp_stop, pp_size, n0, n1
         cnp.int32_t pp_color, next_color
         cnp.int32_t[:, :] painting
-        cnp.int8_t[:] s
+        integer[:] s
 
     # initialise variables
     n_variants = h.shape[0]
@@ -393,7 +398,7 @@ def paint_shared_prefixes_int8(cnp.int8_t[:, :] h not None):
             # find the split point
             s = h[i, pp_start:pp_stop]
             # number of reference alleles
-            n0 = bisect_left_int8(s, 1)
+            n0 = bisect_left(s, 1)
             # number of alternate alleles
             n1 = pp_size - n0
 
@@ -538,10 +543,10 @@ cpdef cnp.float64_t ssl2ihh(cnp.int32_t[:] ssl,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ihh_scan_int8(cnp.int8_t[:, :] h,
-                  cnp.float64_t[:] gaps,
-                  cnp.float64_t min_ehh=0,
-                  bint include_edges=False):
+def ihh_scan(integer[:, :] h,
+             cnp.float64_t[:] gaps,
+             cnp.float64_t min_ehh=0,
+             bint include_edges=False):
     """Scan forwards over haplotypes, computing the integrated haplotype
     homozygosity backwards for each variant."""
 
@@ -549,7 +554,7 @@ def ihh_scan_int8(cnp.int8_t[:, :] h,
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, s
         cnp.int32_t[:] ssl
         cnp.int32_t l, l_max
-        cnp.int8_t a1, a2
+        integer a1, a2
         cnp.float64_t[:] vihh
         cnp.float64_t ihh
 
@@ -602,7 +607,7 @@ def ihh_scan_int8(cnp.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def nsl_scan_int8(cnp.int8_t[:, :] h):
+def nsl_scan(integer[:, :] h):
     """Scan forwards over haplotypes, computing NSL backwards for each variant."""
 
     cdef:
@@ -610,7 +615,7 @@ def nsl_scan_int8(cnp.int8_t[:, :] h):
         cnp.int32_t[:] ssl
         cnp.int64_t ssl_sum
         cnp.int32_t l
-        cnp.int8_t a1, a2
+        integer a1, a2
         cnp.float64_t[:] vnsl
         cnp.float64_t nsl
 
@@ -659,7 +664,7 @@ def nsl_scan_int8(cnp.int8_t[:, :] h):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ssl01_scan_int8(cnp.int8_t[:, :] h, stat, **kwargs):
+def ssl01_scan(integer[:, :] h, stat, **kwargs):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
     reference (0) and alternate (1) alleles separately."""
@@ -668,7 +673,7 @@ def ssl01_scan_int8(cnp.int8_t[:, :] h, stat, **kwargs):
         Py_ssize_t n_variants, n_haplotypes, n_pairs, i, j, k, u, u00, u11
         cnp.int32_t l
         cnp.int32_t[:] ssl, ssl00, ssl11
-        cnp.int8_t a1, a2
+        integer a1, a2
         cnp.float64_t[:] vstat0, vstat1
 
     # initialise
@@ -726,11 +731,11 @@ def ssl01_scan_int8(cnp.int8_t[:, :] h, stat, **kwargs):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ihh01_scan_int8(cnp.int8_t[:, :] h,
-                    cnp.float64_t[:] gaps,
-                    cnp.float64_t min_ehh=0,
-                    cnp.float64_t min_maf=0,
-                    bint include_edges=False):
+def ihh01_scan(integer[:, :] h,
+               cnp.float64_t[:] gaps,
+               cnp.float64_t min_ehh=0,
+               cnp.float64_t min_maf=0,
+               bint include_edges=False):
     """Scan forwards over haplotypes, computing a summary statistic derived
     from the pairwise shared suffix lengths for each variant, for the
     reference (0) and alternate (1) alleles separately."""
@@ -740,7 +745,7 @@ def ihh01_scan_int8(cnp.int8_t[:, :] h,
             c0, c1
         cnp.int32_t l, l_max_00, l_max_11
         cnp.int32_t[:] ssl, ssl00, ssl11
-        cnp.int8_t a1, a2
+        integer a1, a2
         cnp.float64_t[:] vstat0, vstat1
         cnp.float64_t maf
 
@@ -823,7 +828,7 @@ def ihh01_scan_int8(cnp.int8_t[:, :] h,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def nsl01_scan_int8(cnp.int8_t[:, :] h):
+def nsl01_scan(integer[:, :] h):
     """Scan forwards over haplotypes, computing the number of segregating
     sites by length backwards for each variant for the reference (0) and
     alternate (1) alleles separately."""
@@ -833,7 +838,7 @@ def nsl01_scan_int8(cnp.int8_t[:, :] h):
         cnp.int32_t l
         cnp.int32_t[:] ssl
         cnp.int64_t ssl00_sum, ssl11_sum
-        cnp.int8_t a1, a2
+        integer a1, a2
         cnp.float64_t[:] vstat0, vstat1
 
     # initialise
@@ -892,13 +897,13 @@ def nsl01_scan_int8(cnp.int8_t[:, :] h):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def phase_progeny_by_transmission_int8(cnp.int8_t[:, :, :] g):
+def phase_progeny_by_transmission(integer[:, :, :] g):
     # N.B., here we will modify g in-place
 
     cdef:
         Py_ssize_t n_variants, n_samples, n_progeny, i, j, max_allele
         cnp.uint8_t[:, :] is_phased
-        cnp.int8_t a1, a2, ma1, ma2, pa1, pa2
+        integer a1, a2, ma1, ma2, pa1, pa2
         cnp.uint8_t[:] mac, pac
 
     # guard conditions
@@ -980,14 +985,14 @@ def phase_progeny_by_transmission_int8(cnp.int8_t[:, :, :] g):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def phase_parents_by_transmission_int8(cnp.int8_t[:, :, :] g,
-                                       cnp.uint8_t[:, :] is_phased,
-                                       Py_ssize_t window_size):
+def phase_parents_by_transmission(integer[:, :, :] g,
+                                  cnp.uint8_t[:, :] is_phased,
+                                  Py_ssize_t window_size):
     # N.B., here we will modify g and is_phased in-place
 
     cdef:
         Py_ssize_t i, parent, ii, n_variants, n_samples, keep, flip, n_inf
-        cnp.int8_t a1, a2, max_allele, pa1, pa2, x, y
+        integer a1, a2, max_allele, pa1, pa2, x, y
         cnp.uint32_t[:] block_start
         cnp.uint32_t[:] n_progeny_phased
         cnp.uint32_t[:, :] linkage
@@ -1086,7 +1091,7 @@ def phase_parents_by_transmission_int8(cnp.int8_t[:, :, :] g,
                     g[i, parent, 1] = a1
 
 
-def state_transitions(integral_t[:] x, states):
+def state_transitions(integer[:] x, states):
     """Find state transitions in a sequence of state values.
 
     Parameters
@@ -1118,7 +1123,7 @@ def state_transitions(integral_t[:] x, states):
 
     cdef:
         Py_ssize_t cur_idx, prv_idx, n, observed
-        integral_t cur, prv
+        integer cur, prv
         list switch_points, transitions, observations
         cnp.uint8_t[:] is_state
 

@@ -7,338 +7,338 @@ from nose.tools import eq_ as eq, assert_is_instance, assert_raises
 from allel.test.tools import assert_array_equal, assert_array_nanclose
 
 
-from allel import ihs, xpehh, nsl, xpnsl
-from allel.opt.stats import ssl01_scan_int8, nsl01_scan_int8, ihh01_scan_int8,\
-    ssl2ihh, ihh_scan_int8
+from allel import ihs, xpehh, nsl, xpnsl, ehh_decay, voight_painting
+from allel.opt.stats import ssl01_scan, nsl01_scan, ihh01_scan,\
+    ssl2ihh, ihh_scan
 
 
 def sum_ssl(ssl, *args, **kwargs):
     return np.sum(ssl)
 
 
-def test_ssl01_scan_int8_a():
+def test_ssl01_scan_a():
 
     # 2 haplotypes, identical
     h = np.array([[0, 0],
                   [0, 0],
-                  [0, 0]], dtype='i1')
+                  [0, 0]])
     expect0 = [1, 2, 3]
     expect1 = [0, 0, 0]
-    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    actual0, actual1 = ssl01_scan(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
-def test_ssl01_scan_int8_b():
+def test_ssl01_scan_b():
 
     # 2 haplotypes, identical
     h = np.array([[1, 1],
                   [1, 1],
-                  [1, 1]], dtype='i1')
+                  [1, 1]])
     expect0 = [0, 0, 0]
     expect1 = [1, 2, 3]
-    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    actual0, actual1 = ssl01_scan(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
-def test_ssl01_scan_int8_c():
+def test_ssl01_scan_c():
 
     # 2 haplotypes, identical
     h = np.array([[0, 0],
                   [0, 0],
                   [1, 1],
-                  [1, 1]], dtype='i1')
+                  [1, 1]])
     expect0 = [1, 2, 0, 0]
     expect1 = [0, 0, 3, 4]
-    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    actual0, actual1 = ssl01_scan(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
-def test_ssl01_scan_int8_d():
+def test_ssl01_scan_d():
 
     # 2 haplotypes, different
     h = np.array([[0, 1],
                   [0, 1],
                   [1, 0],
-                  [1, 0]], dtype='i1')
+                  [1, 0]])
     expect0 = [0, 0, 0, 0]
     expect1 = [0, 0, 0, 0]
-    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    actual0, actual1 = ssl01_scan(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
-def test_ssl01_scan_int8_e():
+def test_ssl01_scan_e():
 
     # 3 haplotypes, 3 pairs, identical
     h = np.array([[0, 0, 0],
                   [0, 0, 0],
-                  [0, 0, 0]], dtype='i1')
+                  [0, 0, 0]])
     expect0 = [3, 6, 9]
     expect1 = [0, 0, 0]
-    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    actual0, actual1 = ssl01_scan(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
-def test_ssl01_scan_int8_f():
+def test_ssl01_scan_f():
 
     # 4 haplotypes,
     h = np.array([[0, 0, 1, 1],
                   [0, 0, 1, 1],
-                  [0, 0, 1, 1]], dtype='i1')
+                  [0, 0, 1, 1]])
     expect0 = [1, 2, 3]
     expect1 = [1, 2, 3]
-    actual0, actual1 = ssl01_scan_int8(h, sum_ssl)
+    actual0, actual1 = ssl01_scan(h, sum_ssl)
     assert_array_equal(expect0, actual0)
     assert_array_equal(expect1, actual1)
 
 
-def test_nsl01_scan_int8_a():
+def test_nsl01_scan_a():
 
     h = np.array([[0, 0, 0, 1, 1, 1],
                   [0, 0, 0, 1, 1, 1],
                   [0, 0, 0, 1, 1, 1],
-                  [0, 0, 0, 1, 1, 1]], dtype='i1')
-    nsl0, nsl1 = nsl01_scan_int8(h)
+                  [0, 0, 0, 1, 1, 1]])
+    nsl0, nsl1 = nsl01_scan(h)
     expect_nsl0 = [1, 2, 3, 4]
     assert_array_nanclose(expect_nsl0, nsl0)
     expect_nsl1 = [1, 2, 3, 4]
     assert_array_nanclose(expect_nsl1, nsl1)
 
 
-def test_nsl01_scan_int8_b():
+def test_nsl01_scan_b():
 
     h = np.array([[0, 0, 0, 1],
                   [0, 0, 1, 0],
                   [0, 1, 0, 0],
-                  [1, 0, 0, 0]], dtype='i1')
-    nsl0, nsl1 = nsl01_scan_int8(h)
+                  [1, 0, 0, 0]])
+    nsl0, nsl1 = nsl01_scan(h)
     expect_nsl0 = [1, 4 / 3, 4 / 3, 4 / 3]
     assert_array_nanclose(expect_nsl0, nsl0)
     expect_nsl1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_nsl1, nsl1)
 
 
-def test_nsl01_scan_int8_c():
+def test_nsl01_scan_c():
 
     h = np.array([[0, 0, 1],
                   [0, 1, 1],
                   [1, 1, 0],
-                  [1, 0, 0]], dtype='i1')
-    nsl0, nsl1 = nsl01_scan_int8(h)
+                  [1, 0, 0]])
+    nsl0, nsl1 = nsl01_scan(h)
     expect_nsl0 = [1, np.nan, np.nan, 1]
     assert_array_nanclose(expect_nsl0, nsl0)
     expect_nsl1 = [np.nan, 1, 1, np.nan]
     assert_array_nanclose(expect_nsl1, nsl1)
 
 
-def test_ihh_scan_int8_a():
+def test_ihh_scan_a():
     # simple case: 1 haplotype pair, haplotype homozygosity over all variants
     gaps = np.array([10, 10], dtype='f8')
     h = np.array([[0, 0],
                   [0, 0],
-                  [0, 0]], dtype='i1')
+                  [0, 0]])
 
     # do not include edges
     expect = [np.nan, np.nan, np.nan]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=False)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
     assert_array_nanclose(expect, actual)
 
     # include edges
     expect = [0, 10, 20]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
     assert_array_nanclose(expect, actual)
 
 
-def test_ihh_scan_int8_b():
+def test_ihh_scan_b():
     # 1 haplotype pair, haplotype homozygosity over all variants
     # handling of large gap (encoded as -1)
     gaps = np.array([10, -1], dtype='f8')
     h = np.array([[0, 0],
                   [0, 0],
-                  [0, 0]], dtype='i1')
+                  [0, 0]])
 
     # do not include edges
     expect = [np.nan, np.nan, np.nan]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=False)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
     assert_array_nanclose(expect, actual)
 
     # include edges
     expect = [0, 10, np.nan]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
     assert_array_nanclose(expect, actual)
 
 
-def test_ihh_scan_int8_c():
+def test_ihh_scan_c():
     # simple case: 1 haplotype pair, haplotype homozygosity decays
     gaps = np.array([10, 10], dtype='f8')
     h = np.array([[0, 1],
                   [0, 0],
-                  [0, 0]], dtype='i1')
+                  [0, 0]])
 
     # do not include edges
     expect = [0, 5, 15]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=False)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
     assert_array_nanclose(expect, actual)
 
     # include edges
     expect = [0, 5, 15]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
     assert_array_nanclose(expect, actual)
 
 
-def test_ihh_scan_int8_d():
+def test_ihh_scan_d():
     # edge case: start from 0 haplotype homozygosity
     gaps = np.array([10], dtype='f8')
     h = np.array([[0, 1],
-                  [1, 0]], dtype='i1')
+                  [1, 0]])
 
     expect = [0, 0]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=False)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
     assert_array_nanclose(expect, actual)
 
     expect = [0, 0]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
     assert_array_nanclose(expect, actual)
 
 
-def test_ihh_scan_int8_e():
+def test_ihh_scan_e():
     # edge case: start from haplotype homozygosity below min_ehh
     gaps = np.array([10], dtype='f8')
     h = np.array([[0, 0, 1],
-                  [0, 1, 0]], dtype='i1')
+                  [0, 1, 0]])
 
     expect = [np.nan, 10/6]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=False)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
     assert_array_nanclose(expect, actual)
 
     expect = [0, 10/6]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
     assert_array_nanclose(expect, actual)
 
     expect = [0, 0]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0.5, include_edges=False)
+    actual = ihh_scan(h, gaps, min_ehh=0.5, include_edges=False)
     assert_array_nanclose(expect, actual)
 
     expect = [0, 0]
-    actual = ihh_scan_int8(h, gaps, min_ehh=0.5, include_edges=True)
+    actual = ihh_scan(h, gaps, min_ehh=0.5, include_edges=True)
     assert_array_nanclose(expect, actual)
 
 
-def test_ihh01_scan_int8_a():
+def test_ihh01_scan_a():
     gaps = np.array([10, 10, 10], dtype='f8')
     h = np.array([[0, 0, 1],
                   [0, 1, 1],
                   [1, 1, 0],
-                  [1, 0, 0]], dtype='i1')
+                  [1, 0, 0]])
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0.05, include_edges=False)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05, include_edges=False)
     expect_ihh0 = [np.nan, np.nan, np.nan, 5]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, 5, 5, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, np.nan, np.nan, 5]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, 5, 5, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
 
-def test_ihh01_scan_int8_b():
+def test_ihh01_scan_b():
     gaps = np.array([10, 10, 10], dtype='f8')
     h = np.array([[0, 0, 0, 1],
                   [0, 0, 1, 0],
                   [0, 1, 0, 0],
-                  [1, 0, 0, 0]], dtype='i1')
+                  [1, 0, 0, 0]])
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0.05, include_edges=False)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05, include_edges=False)
     x = (10 * (1 + 1 / 3) / 2) + (10 * (1 / 3 + 0) / 2)
     expect_ihh0 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=False)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=False)
     expect_ihh0 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, 10 * (1 + 1 / 3) / 2, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
 
-def test_ihh01_scan_int8_c():
+def test_ihh01_scan_c():
     gaps = np.array([10, 10, 10], dtype='f8')
     h = np.array([[0, 0, 0, 1, 1, 1],
                   [0, 0, 0, 1, 1, 1],
                   [0, 0, 0, 1, 1, 1],
-                  [0, 0, 0, 1, 1, 1]], dtype='i1')
+                  [0, 0, 0, 1, 1, 1]])
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0.05)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05)
     expect_ihh0 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
     assert_array_nanclose(expect_ihh1, ihh1)
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, 10, 20, 30]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [0, 10, 20, 30]
     assert_array_nanclose(expect_ihh1, ihh1)
 
 
-def test_ihh01_scan_int8_d():
+def test_ihh01_scan_d():
     gaps = np.array([10, 10, 10], dtype='f8')
     h = np.array([[0, 0, 1, 1, 1, 0],
                   [0, 1, 0, 1, 0, 1],
                   [1, 0, 0, 0, 1, 1],
-                  [0, 0, 0, 1, 1, 1]], dtype='i1')
+                  [0, 0, 0, 1, 1, 1]])
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0.05)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05)
     x = (10 * (1 + 1 / 3) / 2) + (10 * (1 / 3 + 0) / 2)
     expect_ihh0 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh1, ihh1)
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0)
     expect_ihh0 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, x, x]
     assert_array_nanclose(expect_ihh1, ihh1)
 
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0, include_edges=True)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, 10 * 2 / 3, x, x]
     assert_array_nanclose(expect_ihh0, ihh0)
     expect_ihh1 = [0, 10 * 2 / 3, x, x]
     assert_array_nanclose(expect_ihh1, ihh1)
 
 
-def test_ihh01_scan_int8_e():
+def test_ihh01_scan_e():
     # min_maf
     gaps = np.array([10, 10], dtype='f8')
     h = np.array([[0, 0, 1],
                   [0, 0, 1],
-                  [0, 0, 1]], dtype='i1')
+                  [0, 0, 1]])
 
     expect_ihh0 = [0, 10, 20]
     expect_ihh1 = [np.nan, np.nan, np.nan]
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0,
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0,
                                  min_maf=0, include_edges=True)
     assert_array_nanclose(expect_ihh0, ihh0)
     assert_array_nanclose(expect_ihh1, ihh1)
 
     expect_ihh0 = [np.nan, np.nan, np.nan]
     expect_ihh1 = [np.nan, np.nan, np.nan]
-    ihh0, ihh1 = ihh01_scan_int8(h, gaps, min_ehh=0,
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0,
                                  min_maf=0.4, include_edges=True)
     assert_array_nanclose(expect_ihh0, ihh0)
     assert_array_nanclose(expect_ihh1, ihh1)
@@ -592,3 +592,29 @@ def test_xpnsl():
         assert_is_instance(score, np.ndarray)
         eq((n_variants,), score.shape)
         eq(np.dtype('f8'), score.dtype)
+
+
+def test_ehh_decay():
+    h = [[0, 0, 1, 1],
+         [0, 0, 1, 1],
+         [0, 0, 0, 1],
+         [0, 0, 0, 0],
+         [0, 1, 0, 0]]
+    e = [2/6, 2/6, 1/6, 1/6, 0]
+    a = ehh_decay(h)
+    assert_array_equal(e, a)
+
+
+def test_voight_painting():
+    h = [[0, 0, 1, 1],
+         [0, 0, 1, 1],
+         [0, 0, 0, 1],
+         [0, 0, 0, 0],
+         [0, 1, 0, 0]]
+    e = [[1, 1, 2, 2],
+         [1, 1, 2, 2],
+         [1, 1, 0, 0],
+         [1, 1, 0, 0],
+         [0, 0, 0, 0]]
+    a, _ = voight_painting(h)
+    assert_array_equal(e, a)
