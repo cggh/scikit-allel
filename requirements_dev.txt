@@ -1,0 +1,8 @@
+cython
+numpydoc
+flake8
+psutil
+memory_profiler
+humanize
+mock
+twine
