@@ -1458,8 +1458,32 @@ def test_computed_fields():
                       [0, 3, 0, 0, 0],
                       [-3, 0, 0, 0, 0],
                       [0, 6, -3, 1, -1]])
-        print(e)
-        print(a)
+        assert_array_equal(e, a)
+
+        a = callset['variants/is_snp']
+        eq_((8,), a.shape)
+        eq_(np.dtype(bool), a.dtype)
+        assert_array_equal([False, False, False, True, True, False, False, False], a)
+
+        # test is_snp with reduced ALT number
+        callset = read_vcf(io.BytesIO(input_data),
+                           fields='*',
+                           numbers={'ALT': 1}, types={'REF': string_dtype, 'ALT': string_dtype})
+
+        a = callset['variants/ALT']
+        eq_((8,), a.shape)
+        e = np.array([b'', b'G', b'', b'T', b'A', b'A', b'C', b'ATAC'])
+        if a.dtype.kind == 'O':
+            e = e.astype('U').astype(object)
+        assert_array_equal(e, a)
+
+        a = callset['variants/numalt']
+        eq_((8,), a.shape)
+        assert_array_equal([0, 1, 0, 1, 2, 2, 2, 5], a)
+
+        a = callset['variants/svlen']
+        eq_((8,), a.shape)
+        e = np.array([0, 1, 0, 0, 0, 0, -3, 0])
         assert_array_equal(e, a)
 
         a = callset['variants/is_snp']
