@@ -202,14 +202,14 @@ def joint_sfs(dac1, dac2):
     check_integer_dtype(dac2)
 
     # compute site frequency spectrum
-    n = np.max(dac1) + 1
-    m = np.max(dac2) + 1
+    n = int(np.max(dac1) + 1)
+    m = int(np.max(dac2) + 1)
 
     # need platform integer for bincount
     tmp = (dac1 * m + dac2).astype(int, copy=False)
 
     s = np.bincount(tmp)
-    s.resize((n, m))
+    s.resize(n, m)
     return s
 
 
@@ -246,11 +246,11 @@ def joint_sfs_folded(ac1, ac2):
     mac2 = np.amin(ac2, axis=1)
 
     # compute site frequency spectrum
-    m = np.max(mac1) + 1
-    n = np.max(mac2) + 1
+    m = int(np.max(mac1) + 1)
+    n = int(np.max(mac2) + 1)
     tmp = (mac1 * n + mac2).astype(int, copy=False)
     s = np.bincount(tmp)
-    s.resize((m, n))
+    s.resize(m, n)
     return s
 
 
