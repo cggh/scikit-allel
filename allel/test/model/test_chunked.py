@@ -619,6 +619,13 @@ class VariantChunkedTableTestsZarrStorage(VariantChunkedTableTests):
         vt = self.setup_instance(a)
         assert isinstance(vt.values, ZarrTable)
 
+    def test_zarr_group(self):
+        z = zarr.group()
+        z.create_dataset('chrom', data=['1', '2', '3'])
+        z.create_dataset('pos', data=[2, 4, 6])
+        vt = VariantChunkedTable(z)
+        assert isinstance(vt.values, zarr.Group)
+
 
 class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
 
