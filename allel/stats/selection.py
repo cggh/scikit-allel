@@ -7,7 +7,7 @@ from multiprocessing.pool import ThreadPool
 import numpy as np
 
 
-from allel.util import asarray_ndim, check_dim0_aligned, check_ndim, check_integer_dtype
+from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
 from allel.stats.diversity import moving_tajima_d

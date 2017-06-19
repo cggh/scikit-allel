@@ -331,15 +331,13 @@ def test_ihh01_scan_e():
 
     expect_ihh0 = [0, 10, 20]
     expect_ihh1 = [np.nan, np.nan, np.nan]
-    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0,
-                                 min_maf=0, include_edges=True)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, min_maf=0, include_edges=True)
     assert_array_nanclose(expect_ihh0, ihh0)
     assert_array_nanclose(expect_ihh1, ihh1)
 
     expect_ihh0 = [np.nan, np.nan, np.nan]
     expect_ihh1 = [np.nan, np.nan, np.nan]
-    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0,
-                                 min_maf=0.4, include_edges=True)
+    ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, min_maf=0.4, include_edges=True)
     assert_array_nanclose(expect_ihh0, ihh0)
     assert_array_nanclose(expect_ihh1, ihh1)
 
