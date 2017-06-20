@@ -4304,12 +4304,13 @@ class VariantTable(NumpyRecArrayWrapper):
                     new_data[k] = data[k]
             names = []
             arrays = []
+            # put fields in VCF-style order
             for k in ('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL'):
                 if k in new_data:
                     names.append(k)
                     arrays.append(new_data[k])
                     del new_data[k]
-            for k in new_data:
+            for k in list(new_data):
                 if k.startswith('FILTER'):
                     names.append(k)
                     arrays.append(new_data[k])
