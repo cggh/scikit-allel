@@ -1,6 +1,45 @@
 Release notes
 =============
 
+v1.1.0
+------
+
+Extracting data from Variant Call Format (VCF) files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This release includes new functions in the :mod:`allel.io` module for extracting
+data from VCF files and loading into NumPy arrays, HDF5 files and other storage containers.
+These functions are backed by VCF parsing code implemented in Cython, so should be reasonably
+fast. This is new code so there may be bugs, please report any issues via
+`GitHub <https://github.com/cggh/scikit-allel/issues/new?milestone=v1.1>`_.
+
+For a tutorial and worked examples, see the following article: `Extracting data from VCF <TODO>`_.
+For API documentation, see the following functions: :func:`allel.io.read_vcf`,
+:func:`allel.io.vcf_to_npz`, :func:`allel.io.vcf_to_hdf5`, :func:`allel.io.vcf_to_zarr`,
+:func:`allel.io.vcf_to_dataframe`, :func:`allel.io.vcf_to_csv`, :func:`allel.io.vcf_to_recarray`,
+:func:`allel.io.iter_vcf_chunks`.
+
+Maintenance work
+~~~~~~~~~~~~~~~~
+
+* scikit-allel is now compatible with Dask versions 0.12 and later
+  (`#148# <https://github.com/cggh/scikit-allel/issues/148>`_).
+* Fixed issue within functions :func:`allel.stats.sf.joint_sfs` and
+  :func:`allel.stats.sf.joint_sfs_folded` relating to data types
+  (`#144# <https://github.com/cggh/scikit-allel/issues/144>`_).
+* Fixed regression in functions :func:`allel.stats.selection.ehh_decay` and
+  :func:`allel.stats.selection.voight_painting` following refactoring of array
+  data structures in version 1.0.0
+  (`#142# <https://github.com/cggh/scikit-allel/issues/142>`_).
+* HTML representations of arrays have been tweaked to look better in Jupyter notebooks
+  (`#141# <https://github.com/cggh/scikit-allel/issues/141>`_).
+
+End of support for Python 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. important:: This is the last version of scikit-allel that will support Python 2. The
+    next version of scikit-allel will support Python versions 3.5 and later only.
+
 v1.0.3
 ------
 
