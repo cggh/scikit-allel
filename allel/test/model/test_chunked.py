@@ -11,16 +11,15 @@ from nose.tools import assert_raises, eq_ as eq
 
 
 from allel import GenotypeArray, HaplotypeArray, AlleleCountsArray, VariantTable, \
-    FeatureTable, GenotypeVector, GenotypeAlleleCountsArray, GenotypeAlleleCountsVector
+    GenotypeVector, GenotypeAlleleCountsArray, GenotypeAlleleCountsVector
 from allel import GenotypeChunkedArray, HaplotypeChunkedArray, AlleleCountsChunkedArray, \
-    VariantChunkedTable, FeatureChunkedTable, GenotypeAlleleCountsChunkedArray
+    VariantChunkedTable, GenotypeAlleleCountsChunkedArray
 from allel.test.tools import assert_array_equal as aeq
 from allel.test.model.test_api import GenotypeArrayInterface, \
     diploid_genotype_data, triploid_genotype_data, HaplotypeArrayInterface, \
     haplotype_data, allele_counts_data, AlleleCountsArrayInterface, \
     VariantTableInterface, variant_table_data, variant_table_dtype, \
-    variant_table_names, feature_table_data, feature_table_dtype, \
-    feature_table_names, FeatureTableInterface, GenotypeAlleleCountsArrayInterface, \
+    variant_table_names, GenotypeAlleleCountsArrayInterface, \
     diploid_genotype_ac_data, triploid_genotype_ac_data
 from allel import chunked
 from allel.chunked.storage_zarr import ZarrTable
@@ -625,93 +624,6 @@ class VariantChunkedTableTestsZarrStorage(VariantChunkedTableTests):
         z.create_dataset('pos', data=[2, 4, 6])
         vt = VariantChunkedTable(z)
         assert isinstance(vt.values, zarr.Group)
-
-
-class FeatureChunkedTableTests(FeatureTableInterface, unittest.TestCase):
-
-    _class = FeatureChunkedTable
-
-    def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolzmem_storage
-
-    def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data, chunklen=2)
-        return FeatureChunkedTable(data, **kwargs)
-
-    def test_storage(self):
-        a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
-        vt = self.setup_instance(a)
-        assert isinstance(vt.values, bcolz.ctable)
-
-    def test_constructor(self):
-
-        # missing data arg
-        with self.assertRaises(TypeError):
-            # noinspection PyArgumentList
-            FeatureChunkedTable()
-
-        # recarray
-        ra = np.rec.array(feature_table_data, dtype=feature_table_dtype)
-        ft = FeatureChunkedTable(ra)
-        eq(6, len(ft))
-        aeq(ra, ft)
-
-        # dict
-        d = {n: ra[n] for n in feature_table_names}
-        ft = FeatureChunkedTable(d, names=feature_table_names)
-        eq(6, len(ft))
-        aeq(ra, ft)
-
-    def test_slice_types(self):
-        ra = np.rec.array(feature_table_data, dtype=feature_table_dtype)
-        ft = FeatureChunkedTable(ra)
-
-        # row slice
-        s = ft[1:]
-        self.assertNotIsInstance(s, FeatureChunkedTable)
-        self.assertIsInstance(s, FeatureTable)
-
-        # row index
-        s = ft[0]
-        self.assertNotIsInstance(s, FeatureChunkedTable)
-        self.assertNotIsInstance(s, FeatureTable)
-        self.assertIsInstance(s, (np.record, np.void, tuple))
-
-        # col access
-        s = ft['seqid']
-        self.assertNotIsInstance(s, FeatureChunkedTable)
-        self.assertNotIsInstance(s, FeatureTable)
-        self.assertIsInstance(s, chunked.ChunkedArrayWrapper)
-
-
-class FeatureChunkedTableTestsHDF5Storage(FeatureChunkedTableTests):
-
-    def setUp(self):
-        chunked.storage_registry['default'] = chunked.hdf5mem_storage
-
-    def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data)
-        return FeatureChunkedTable(data, **kwargs)
-
-    def test_storage(self):
-        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
-        ft = self.setup_instance(a)
-        assert isinstance(ft.values, h5py.Group)
-
-
-class FeatureChunkedTableTestsZarrStorage(FeatureChunkedTableTests):
-
-    def setUp(self):
-        chunked.storage_registry['default'] = chunked.zarrmem_storage
-
-    def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data)
-        return FeatureChunkedTable(data, **kwargs)
-
-    def test_storage(self):
-        a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
-        ft = self.setup_instance(a)
-        assert isinstance(ft.values, ZarrTable)
 
 
 class AlleleCountsChunkedTableTests(unittest.TestCase):

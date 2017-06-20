@@ -105,28 +105,28 @@ _doc_param_input = \
         compressed file. May also be a file-like object (e.g., `io.BytesIO`)."""
 
 _doc_param_fields = \
-    """Fields to extract data for. Should be a list of strings, e.g., `['variants/CHROM',
-        'variants/POS', 'variants/DP', 'calldata/GT']`. If you are feeling lazy, you can drop
+    """Fields to extract data for. Should be a list of strings, e.g., ``['variants/CHROM',
+        'variants/POS', 'variants/DP', 'calldata/GT']``. If you are feeling lazy, you can drop
         the 'variants/' and 'calldata/' prefixes, in which case the fields will be matched against
         fields declared in the VCF header, with variants taking priority over calldata if a field
-        with the same ID exists both in INFO and FORMAT headers. I.e., `['CHROM', 'POS', 'DP',
-        'GT']` will also work as well, although watch out for fields like 'DP' which can be both
+        with the same ID exists both in INFO and FORMAT headers. I.e., ``['CHROM', 'POS', 'DP',
+        'GT']`` will work, although watch out for fields like 'DP' which can be both
         INFO and FORMAT. For convenience, some special string values are also recognized. To
-        extract all fields, provide just the string '*'. To extract all variants fields
-        (including all INFO fields) provide 'variants/*'. To extract all calldata fields (i.e.,
-        defined in FORMAT headers) provide 'calldata/*'."""
+        extract all fields, provide just the string ``'*'``. To extract all variants fields
+        (including all INFO fields) provide ``'variants/*'``. To extract all calldata fields (i.e.,
+        defined in FORMAT headers) provide ``'calldata/*'``."""
 
 _doc_param_types = \
     """Overide data types. Should be a dictionary mapping field names to NumPy data types.
-        E.g., providing the dictionary `{'variants/DP': 'i8', 'calldata/GQ': 'i2'}` will mean
-        the 'variants/DP' field is stored in a 64-bit integer array, and the `calldata/GQ` field
+        E.g., providing the dictionary ``{'variants/DP': 'i8', 'calldata/GQ': 'i2'}`` will mean
+        the 'variants/DP' field is stored in a 64-bit integer array, and the 'calldata/GQ' field
         is stored in a 16-bit integer array."""
 
 _doc_param_numbers = \
     """Override the expected number of values. Should be a dictionary mapping field names to
-        integers. E.g., providing the dictionary `{'variants/ALT': 3, 'variants/AC': 3,
-        'calldata/HQ': 2}` will mean that, for each variant, 3 values are stored for the
-        'variants/ALT' field, 3 values are stored for the 'variants/AC' field, and for each
+        integers. E.g., providing the dictionary ``{'variants/ALT': 5, 'variants/AC': 5,
+        'calldata/HQ': 2}`` will mean that, for each variant, 5 values are stored for the
+        'variants/ALT' field, 5 values are stored for the 'variants/AC' field, and for each
         sample, 2 values are stored for the 'calldata/HQ' field."""
 
 _doc_param_fills = \
@@ -137,7 +137,7 @@ _doc_param_region = \
     """Genomic region to extract variants for. If provided, should be a tabix-style region string,
         which can be either just a chromosome name (e.g., '2L'), or a chromosome name followed by
         1-based beginning and end coordinates (e.g., '2L:100000-200000'). Note that only variants
-        whose start position (POS) is within the request range will be included. This is slightly
+        whose start position (POS) is within the requested range will be included. This is slightly
         different from the default tabix behaviour, where a variant (e.g., deletion) may be included
         if its position (POS) occurs before the requested region but its reference allele overlaps
         the region - such a variant will *not* be included in the data returned by this function."""

@@ -116,7 +116,7 @@ def setup_package():
         download_url=DOWNLOAD_URL,
         version=VERSION,
         package_dir={'': '.'},
-        packages=['allel', 'allel.model', 'allel.chunked', 'allel.stats',
+        packages=['allel', 'allel.model', 'allel.chunked', 'allel.stats', 'allel.io',
                   'allel.opt', 'allel.test', 'allel.test.model', 'allel.test.stats'],
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,

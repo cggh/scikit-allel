@@ -2,6 +2,6 @@ Miscellanea
 ===========
 
 .. automodule:: allel.stats.misc
-.. autofunction:: plot_variant_locator
-.. autofunction:: tabulate_state_transitions
-.. autofunction:: tabulate_state_blocks
+.. autofunction:: allel.plot_variant_locator
+.. autofunction:: allel.tabulate_state_transitions
+.. autofunction:: allel.tabulate_state_blocks

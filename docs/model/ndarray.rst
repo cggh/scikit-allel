@@ -6,7 +6,7 @@ In-memory data structures
 GenotypeArray
 -------------
 
-.. autoclass:: GenotypeArray
+.. autoclass:: allel.GenotypeArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_samples
@@ -25,7 +25,7 @@ GenotypeArray
 GenotypeVector
 --------------
 
-.. autoclass:: GenotypeVector
+.. autoclass:: allel.GenotypeVector
 
     .. autoattribute:: n_calls
     .. autoattribute:: ploidy
@@ -36,7 +36,7 @@ Genotypes
 
 Methods available on both :class:`GenotypeArray` and :class:`GenotypeVector` classes:
 
-.. autoclass:: Genotypes
+.. autoclass:: allel.Genotypes
 
     .. autoattribute:: mask
     .. autoattribute:: is_phased
@@ -67,7 +67,7 @@ Methods available on both :class:`GenotypeArray` and :class:`GenotypeVector` cla
 HaplotypeArray
 --------------
 
-.. autoclass:: HaplotypeArray
+.. autoclass:: allel.HaplotypeArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_haplotypes
@@ -101,7 +101,7 @@ HaplotypeArray
 AlleleCountsArray
 -----------------
 
-.. autoclass:: AlleleCountsArray
+.. autoclass:: allel.AlleleCountsArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_alleles
@@ -130,7 +130,7 @@ AlleleCountsArray
 GenotypeAlleleCountsArray
 -------------------------
 
-.. autoclass:: GenotypeAlleleCountsArray
+.. autoclass:: allel.GenotypeAlleleCountsArray
 
     .. autoattribute:: n_variants
     .. autoattribute:: n_samples
@@ -141,7 +141,7 @@ GenotypeAlleleCountsArray
 GenotypeAlleleCountsVector
 --------------------------
 
-.. autoclass:: GenotypeAlleleCountsVector
+.. autoclass:: allel.GenotypeAlleleCountsVector
 
     .. autoattribute:: n_calls
     .. autoattribute:: n_alleles
@@ -152,7 +152,7 @@ GenotypeAlleleCounts
 Methods available on both :class:`GenotypeAlleleCountsArray` and
 :class:`GenotypeAlleleCountsVector` classes:
 
-.. autoclass:: GenotypeAlleleCounts
+.. autoclass:: allel.GenotypeAlleleCounts
 
     .. automethod:: is_called
     .. automethod:: is_missing
@@ -167,7 +167,7 @@ Methods available on both :class:`GenotypeAlleleCountsArray` and
 VariantTable
 ------------
 
-.. autoclass:: VariantTable
+.. autoclass:: allel.VariantTable
 
     .. autoattribute:: n_variants
     .. autoattribute:: names
@@ -180,7 +180,7 @@ VariantTable
 FeatureTable
 ------------
 
-.. autoclass:: FeatureTable
+.. autoclass:: allel.FeatureTable
 
     .. autoattribute:: n_features
     .. autoattribute:: names
@@ -192,7 +192,7 @@ FeatureTable
 SortedIndex
 -----------
 
-.. autoclass:: SortedIndex
+.. autoclass:: allel.SortedIndex
 
     .. autoattribute:: is_unique
     .. automethod:: locate_key
@@ -209,7 +209,7 @@ SortedIndex
 SortedMultiIndex
 ----------------
 
-.. autoclass:: SortedMultiIndex
+.. autoclass:: allel.SortedMultiIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_range
@@ -217,7 +217,7 @@ SortedMultiIndex
 UniqueIndex
 -----------
 
-.. autoclass:: UniqueIndex
+.. autoclass:: allel.UniqueIndex
 
     .. automethod:: locate_key
     .. automethod:: locate_keys

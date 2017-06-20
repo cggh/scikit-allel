@@ -6,14 +6,14 @@ Dask arrays
 GenotypeDaskArray
 -----------------
 
-.. autoclass:: GenotypeDaskArray
+.. autoclass:: allel.GenotypeDaskArray
 
 HaplotypeDaskArray
 ------------------
 
-.. autoclass:: HaplotypeDaskArray
+.. autoclass:: allel.HaplotypeDaskArray
 
 AlleleCountsDaskArray
 ---------------------
 
-.. autoclass:: AlleleCountsDaskArray
+.. autoclass:: allel.AlleleCountsDaskArray

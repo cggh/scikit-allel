@@ -5,7 +5,7 @@ scikit-allel - Explore and analyse genetic variation
 
 This package provides utilities for exploratory analysis of large
 scale genetic variation data. It is based on numpy_, scipy_ and other
-established Python scientific libraries.
+general-purpose Python scientific libraries.
 
 * Source: https://github.com/cggh/scikit-allel
 * Documentation: http://scikit-allel.readthedocs.org/
@@ -23,7 +23,6 @@ on GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
 This site provides reference documentation for `scikit-allel`. For
 worked examples with real data, see the following articles:
 
-* `Introducing scikit-allel <http://alimanfoo.github.io/2015/09/15/introducing-scikit-allel.html>`_
 * `A tour of scikit-allel <http://alimanfoo.github.io/2016/06/10/scikit-allel-tour.html>`_
 * |Estimating FST|
 * `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_
@@ -55,21 +54,33 @@ such as the different nucleotides observed at a single nucleotide polymorphism
 Installation
 ------------
 
-Install pre-built binaries via conda::
+Pre-built binaries are available for Windows, Mac and Linux, and can be installed via conda::
 
     $ conda install -c conda-forge scikit-allel
 
-Install and compile source code via pip::
+Alternatively, if you have a C compiler on your system, `scikit-allel` can be installed via pip::
 
     $ pip install scikit-allel
 
-N.B., this package requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
+N.B., `scikit-allel` requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
 scikit-learn_, h5py_, numexpr_, bcolz_, zarr_ and dask_. If installing via conda, these
 should be installed automatically. If installing via pip, please install these dependencies
 first, then use pip to install scikit-allel.
 
 If you have never installed Python before, you might find the following article useful:
-`Installing Python for data analysis <http://alimanfoo.github.io/2017/05/18/installing-python.html>`_
+`Installing Python for data analysis
+<http://alimanfoo.github.io/2017/05/18/installing-python.html>`_
+
+Contributing
+------------
+
+This is academic software, written in the cracks of free time between other commitments, by people
+who are often learning as we code. We greatly appreciate bug reports, pull requests, and any other
+feedback or advice. If you do find a bug, we'll do our best to fix it, but apologies in advance if
+we are not able to respond quickly. If you are doing any serious work with this package, please do
+not expect everything to work perfectly first time or be 100% correct. Treat everything with a
+healthy dose of suspicion, and don't be afraid to dive into the source code if you have to. Pull
+requests are always welcome.
 
 Contents
 --------

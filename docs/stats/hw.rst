@@ -2,7 +2,7 @@ Hardy-Weinberg equilibrium
 ==========================
 
 .. automodule:: allel.stats.hw
-.. autofunction:: heterozygosity_observed
-.. autofunction:: heterozygosity_expected
-.. autofunction:: inbreeding_coefficient
+.. autofunction:: allel.heterozygosity_observed
+.. autofunction:: allel.heterozygosity_expected
+.. autofunction:: allel.inbreeding_coefficient
 

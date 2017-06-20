@@ -13,7 +13,7 @@ import h5py
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, assert_raises
-from allel.io_vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
+from allel.io.vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
     vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
 from allel.compat import PY2
 

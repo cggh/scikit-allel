@@ -2,20 +2,20 @@ Selection
 =========
 
 .. automodule:: allel.stats.selection
-.. autofunction:: ihs
-.. autofunction:: xpehh
-.. autofunction:: nsl
-.. autofunction:: xpnsl
-.. autofunction:: standardize
-.. autofunction:: standardize_by_allele_count
-.. autofunction:: ehh_decay
-.. autofunction:: voight_painting
-.. autofunction:: plot_voight_painting
-.. autofunction:: fig_voight_painting
-.. autofunction:: haplotype_diversity
-.. autofunction:: moving_haplotype_diversity
-.. autofunction:: garud_h
-.. autofunction:: moving_garud_h
-.. autofunction:: plot_haplotype_frequencies
-.. autofunction:: plot_moving_haplotype_frequencies
-.. autofunction:: moving_delta_tajima_d
+.. autofunction:: allel.ihs
+.. autofunction:: allel.xpehh
+.. autofunction:: allel.nsl
+.. autofunction:: allel.xpnsl
+.. autofunction:: allel.standardize
+.. autofunction:: allel.standardize_by_allele_count
+.. autofunction:: allel.ehh_decay
+.. autofunction:: allel.voight_painting
+.. autofunction:: allel.plot_voight_painting
+.. autofunction:: allel.fig_voight_painting
+.. autofunction:: allel.haplotype_diversity
+.. autofunction:: allel.moving_haplotype_diversity
+.. autofunction:: allel.garud_h
+.. autofunction:: allel.moving_garud_h
+.. autofunction:: allel.plot_haplotype_frequencies
+.. autofunction:: allel.plot_moving_haplotype_frequencies
+.. autofunction:: allel.moving_delta_tajima_d

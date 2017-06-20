@@ -2,5 +2,5 @@ Principal components analysis
 =============================
 
 .. automodule:: allel.stats.decomposition
-.. autofunction:: pca
-.. autofunction:: randomized_pca
+.. autofunction:: allel.pca
+.. autofunction:: allel.randomized_pca

@@ -19,7 +19,13 @@ class ArrayWrapper(object):
 
     @property
     def values(self):
-        """The underlying array of values."""
+        """The underlying array of values.
+
+        Returns
+        -------
+        ndarray
+
+        """
         return self._values
 
     @property
