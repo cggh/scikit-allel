@@ -24,9 +24,6 @@ DOWNLOAD_URL = 'http://pypi.python.org/pypi/scikit-allel'
 
 LICENSE = 'MIT'
 
-# strictly speaking, allel requires numpy, scipy and numexpr, but numexpr
-# won't install unless numpy is already installed, so leave this blank for now
-# and require user to pre-install numpy, scipy and numexpr themselves
 INSTALL_REQUIRES = []
 
 CLASSIFIERS = [
@@ -61,15 +58,12 @@ VERSION = get_version()
 # noinspection PyUnresolvedReferences
 def setup_extensions(metadata):
 
-    # TODO review this, numpy as optional dependency doesn't really work,
-    # lots of stuff breaks if the C extensions don't get built
-
     try:
         # only build extensions if numpy is available
         import numpy as np
     except ImportError:
-        # numpy not available
-        pass
+        print('NumPy not found. Please install NumPy then retry installation of scikit-allel.')
+        sys.exit(1)
     else:
 
         # check for cython
@@ -101,6 +95,9 @@ def setup_extensions(metadata):
                           include_dirs=[np.get_include()]),
                 Extension('allel.opt.stats',
                           sources=['allel/opt/stats.c'],
+                          include_dirs=[np.get_include()]),
+                Extension('allel.opt.io_vcf_read',
+                          sources=['allel/opt/io_vcf_read.c'],
                           include_dirs=[np.get_include()]),
             ]
         metadata['ext_modules'] = ext_modules
