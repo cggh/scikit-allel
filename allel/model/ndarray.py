@@ -4291,35 +4291,6 @@ class VariantTable(NumpyRecArrayWrapper):
     """
 
     def __init__(self, data, index=None, copy=False, **kwargs):
-
-        if isinstance(data, dict):
-            # tidy up
-            new_data = dict()
-            for k in data:
-                if k.startswith('calldata/'):
-                    continue
-                if k.startswith('variants/'):
-                    new_data[k[9:]] = data[k]
-                else:
-                    new_data[k] = data[k]
-            names = []
-            arrays = []
-            # put fields in VCF-style order
-            for k in ('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL'):
-                if k in new_data:
-                    names.append(k)
-                    arrays.append(new_data[k])
-                    del new_data[k]
-            for k in list(new_data):
-                if k.startswith('FILTER'):
-                    names.append(k)
-                    arrays.append(new_data[k])
-                    del new_data[k]
-            for k in new_data:
-                names.append(k)
-                arrays.append(new_data[k])
-            data = np.rec.fromarrays(arrays, names=names)
-
         super(VariantTable, self).__init__(data, copy=copy, **kwargs)
         self.set_index(index)
 
