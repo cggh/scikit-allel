@@ -337,7 +337,8 @@ cpdef neighbour_shared_prefix_lengths_unsorted(integer[:, :] h,
 cpdef inline Py_ssize_t bisect_left(integer[:] s, integer x) nogil:
     """Optimized implementation of bisect_left."""
     cdef:
-        Py_ssize_t l, u, m, v
+        Py_ssize_t l, u, m
+        integer v
 
     # initialise
     l = 0  # lower index
