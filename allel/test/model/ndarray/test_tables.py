@@ -26,6 +26,14 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
 
     def test_constructor(self):
 
+        # accepts result of read_vcf()
+        callset = {'variants/CHROM': ['1', '2', '2'],
+                   'variants/POS': [1, 4, 7],
+                   'variants/QD': [1.2, 3.4, 5.6],
+                   'calldata/GT': [[[1, 0]], [[0, 1]], [[2, 3]]]}
+        vt = VariantTable(callset)
+        eq(('CHROM', 'POS', 'QD'), vt.names)
+
         # missing data arg
         with assert_raises(TypeError):
             # noinspection PyArgumentList

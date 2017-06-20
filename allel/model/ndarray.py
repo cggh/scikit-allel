@@ -74,8 +74,13 @@ class NumpyArrayWrapper(ArrayWrapper):
 class NumpyRecArrayWrapper(DisplayAsTable):
 
     def __init__(self, data, copy=False, **kwargs):
-        values = np.rec.array(data, copy=copy, **kwargs)
-        check_ndim(values, 1)
+        if isinstance(data, dict):
+            names = kwargs.get('names', sorted(data.keys()))
+            arrays = [data[n] for n in names]
+            values = np.rec.fromarrays(arrays, names=names)
+        else:
+            values = np.rec.array(data, copy=copy, **kwargs)
+            check_ndim(values, 1)
         if not values.dtype.names:
             raise ValueError('expected recarray')
         super(NumpyRecArrayWrapper, self).__init__(values)
@@ -85,6 +90,27 @@ class NumpyRecArrayWrapper(DisplayAsTable):
         if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
             return type(self)(s)
         return s
+
+    @property
+    def names(self):
+        return tuple(self.dtype.names)
+
+    @classmethod
+    def fromdict(cls, data, **kwargs):
+        names = kwargs.get('names', sorted(data.keys()))
+        arrays = [data[n] for n in names]
+        a = np.rec.fromarrays(arrays, names=names)
+        return cls(a, copy=False)
+
+    @classmethod
+    def fromarrays(cls, *args, **kwargs):
+        a = np.rec.fromarrays(*args, **kwargs)
+        return cls(a, copy=False)
+
+    @classmethod
+    def fromrecords(cls, *args, **kwargs):
+        a = np.rec.fromrecords(*args, **kwargs)
+        return cls(a, copy=False)
 
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
@@ -4265,6 +4291,34 @@ class VariantTable(NumpyRecArrayWrapper):
     """
 
     def __init__(self, data, index=None, copy=False, **kwargs):
+
+        if isinstance(data, dict):
+            # tidy up
+            new_data = dict()
+            for k in data:
+                if k.startswith('calldata/'):
+                    continue
+                if k.startswith('variants/'):
+                    new_data[k[9:]] = data[k]
+                else:
+                    new_data[k] = data[k]
+            names = []
+            arrays = []
+            for k in ('CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL'):
+                if k in new_data:
+                    names.append(k)
+                    arrays.append(new_data[k])
+                    del new_data[k]
+            for k in new_data:
+                if k.startswith('FILTER'):
+                    names.append(k)
+                    arrays.append(new_data[k])
+                    del new_data[k]
+            for k in new_data:
+                names.append(k)
+                arrays.append(new_data[k])
+            data = np.rec.fromarrays(arrays, names=names)
+
         super(VariantTable, self).__init__(data, copy=copy, **kwargs)
         self.set_index(index)
 
