@@ -119,6 +119,7 @@ def setup_package():
         packages=['allel', 'allel.model', 'allel.chunked', 'allel.stats', 'allel.io',
                   'allel.opt', 'allel.test', 'allel.test.model', 'allel.test.stats',
                   'allel.test.data'],
+        package_data={'allel.test': 'data/*'},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         include_package_data=True,

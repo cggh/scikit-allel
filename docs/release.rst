@@ -1,7 +1,7 @@
 Release notes
 =============
 
-v1.1.2
+v1.1.3
 ------
 
 Include fixture data in release to aid testing and binary builds.
