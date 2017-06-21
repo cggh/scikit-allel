@@ -23,6 +23,7 @@ on GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
 This site provides reference documentation for `scikit-allel`. For
 worked examples with real data, see the following articles:
 
+* `Extracting data from VCF files <http://alimanfoo.github.io/2017/06/14/read-vcf.html>`_
 * `A tour of scikit-allel <http://alimanfoo.github.io/2016/06/10/scikit-allel-tour.html>`_
 * |Estimating FST|
 * `Fast PCA <http://alimanfoo.github.io/2015/09/28/fast-pca.html>`_

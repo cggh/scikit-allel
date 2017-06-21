@@ -13,7 +13,8 @@ implemented in Cython, so should be reasonably fast. This is new code so there m
 report any issues via
 `GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
 
-For a tutorial and worked examples, see the following article: `Extracting data from VCF <TODO>`_.
+For a tutorial and worked examples, see the following article:
+`Extracting data from VCF <http://alimanfoo.github.io/2017/06/14/read-vcf.html>`_.
 
 For API documentation, see the following functions: :func:`allel.read_vcf`,
 :func:`allel.vcf_to_npz`, :func:`allel.vcf_to_hdf5`, :func:`allel.vcf_to_zarr`,
