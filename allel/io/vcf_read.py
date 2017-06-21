@@ -166,7 +166,7 @@ _doc_param_transformers = \
 
 _doc_param_buffer_size = \
     """Size in bytes of the I/O buffer used when reading data from the underlying file or tabix
-    stream."""
+        stream."""
 
 _doc_param_chunk_length = \
     """Length (number of variants) of chunks in which data are processed."""
