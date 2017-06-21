@@ -961,6 +961,34 @@ def test_numbers():
     eq_((-1, -1), tuple(a[6, 0]))
 
 
+def test_alt_number():
+    fn = 'fixture/sample.vcf'
+
+    callset = read_vcf(fn, fields=['ALT', 'AC', 'AF'], alt_number=2)
+    a = callset['variants/ALT']
+    eq_((9, 2), a.shape)
+    a = callset['variants/AC']
+    eq_((9, 2), a.shape)
+    a = callset['variants/AF']
+    eq_((9, 2), a.shape)
+
+    callset = read_vcf(fn, fields=['ALT', 'AC', 'AF'], alt_number=1)
+    a = callset['variants/ALT']
+    eq_((9,), a.shape)
+    a = callset['variants/AC']
+    eq_((9,), a.shape)
+    a = callset['variants/AF']
+    eq_((9,), a.shape)
+
+    callset = read_vcf(fn, fields=['ALT', 'AC', 'AF'], alt_number=5)
+    a = callset['variants/ALT']
+    eq_((9, 5), a.shape)
+    a = callset['variants/AC']
+    eq_((9, 5), a.shape)
+    a = callset['variants/AF']
+    eq_((9, 5), a.shape)
+
+
 def test_read_region():
 
     for fn in 'fixture/sample.vcf.gz', 'fixture/sample.vcf':

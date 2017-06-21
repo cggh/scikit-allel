@@ -42,6 +42,7 @@ from allel.opt.io_vcf_read import ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_PO
 DEFAULT_BUFFER_SIZE = 2**14
 DEFAULT_CHUNK_LENGTH = 2**16
 DEFAULT_CHUNK_WIDTH = 2**6
+DEFAULT_ALT_NUMBER = 3
 
 
 def _prep_fields_param(fields):
@@ -129,6 +130,10 @@ _doc_param_numbers = \
         'variants/ALT' field, 5 values are stored for the 'variants/AC' field, and for each
         sample, 2 values are stored for the 'calldata/HQ' field."""
 
+_doc_param_alt_number = \
+    """Assume this number of alternate alleles and set expected number of values accordingly for
+        any field declared with number 'A' or 'R' in the VCF meta-information."""
+
 _doc_param_fills = \
     """Override the fill value used for empty values. Should be a dictionary mapping field names
         to fill values."""
@@ -174,6 +179,7 @@ def read_vcf(input,
              fields=None,
              types=None,
              numbers=None,
+             alt_number=DEFAULT_ALT_NUMBER,
              fills=None,
              region=None,
              tabix='tabix',
@@ -194,6 +200,8 @@ def read_vcf(input,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -224,9 +232,9 @@ def read_vcf(input,
 
     # setup
     _, samples, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length,  fills=fills, region=region, tabix=tabix, samples=samples,
-        transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+        buffer_size=buffer_size, chunk_length=chunk_length,  fills=fills, region=region,
+        tabix=tabix, samples=samples, transformers=transformers
     )
 
     # setup progress logging
@@ -259,6 +267,7 @@ read_vcf.__doc__ = read_vcf.__doc__.format(
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
     tabix=_doc_param_tabix,
@@ -283,6 +292,7 @@ def vcf_to_npz(input, output,
                fields=None,
                types=None,
                numbers=None,
+               alt_number=DEFAULT_ALT_NUMBER,
                fills=None,
                region=None,
                tabix=True,
@@ -309,6 +319,8 @@ def vcf_to_npz(input, output,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -334,8 +346,8 @@ def vcf_to_npz(input, output,
 
     # read all data into memory
     data = read_vcf(
-        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length,  log=log, fills=fills,
+        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+        buffer_size=buffer_size, chunk_length=chunk_length,  log=log, fills=fills,
         region=region, tabix=tabix, samples=samples, transformers=transformers
     )
 
@@ -356,6 +368,7 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
     tabix=_doc_param_tabix,
@@ -462,6 +475,7 @@ def vcf_to_hdf5(input, output,
                 fields=None,
                 types=None,
                 numbers=None,
+                alt_number=DEFAULT_ALT_NUMBER,
                 fills=None,
                 region=None,
                 tabix='tabix',
@@ -495,6 +509,8 @@ def vcf_to_hdf5(input, output,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -533,8 +549,8 @@ def vcf_to_hdf5(input, output,
 
         # setup chunk iterator
         _, samples, headers, it = iter_vcf_chunks(
-            input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-            chunk_length=chunk_length,  fills=fills, region=region,
+            input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+            buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
             tabix=tabix, samples=samples, transformers=transformers
         )
 
@@ -584,6 +600,7 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
     tabix=_doc_param_tabix,
@@ -681,6 +698,7 @@ def vcf_to_zarr(input, output,
                 fields=None,
                 types=None,
                 numbers=None,
+                alt_number=DEFAULT_ALT_NUMBER,
                 fills=None,
                 region=None,
                 tabix='tabix',
@@ -710,6 +728,8 @@ def vcf_to_zarr(input, output,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -746,9 +766,9 @@ def vcf_to_zarr(input, output,
 
     # setup chunk iterator
     _, samples, headers, it = iter_vcf_chunks(
-        input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills,  region=region, tabix=tabix, samples=samples,
-        transformers=transformers
+        input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills,  region=region, tabix=tabix,
+        samples=samples, transformers=transformers
     )
 
     # setup progress logging
@@ -790,6 +810,7 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
     tabix=_doc_param_tabix,
@@ -806,6 +827,7 @@ def iter_vcf_chunks(input,
                     fields=None,
                     types=None,
                     numbers=None,
+                    alt_number=DEFAULT_ALT_NUMBER,
                     fills=None,
                     region=None,
                     tabix='tabix',
@@ -825,6 +847,8 @@ def iter_vcf_chunks(input,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -854,9 +878,8 @@ def iter_vcf_chunks(input,
     """
 
     # setup commmon keyword args
-    kwds = dict(fields=fields, types=types, numbers=numbers,
-                chunk_length=chunk_length,
-                fills=fills, samples=samples)
+    kwds = dict(fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+                chunk_length=chunk_length, fills=fills, samples=samples)
 
     # obtain a file-like object
     close = False
@@ -875,9 +898,11 @@ def iter_vcf_chunks(input,
                 time.sleep(.5)
                 poll = p.poll()
                 if poll is not None and poll > 0:
-                    err = p.stdout.read(-1)
+                    err = p.stdout.read()
+                    if not PY2:
+                        err = str(err, 'ascii')
                     p.stdout.close()
-                    raise Exception(err.strip())
+                    raise RuntimeError(err.strip())
                 fileobj = p.stdout
                 close = True
                 # N.B., still pass the region parameter through so we get strictly only
@@ -937,6 +962,7 @@ iter_vcf_chunks.__doc__ = iter_vcf_chunks.__doc__.format(
     fields=_doc_param_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
     tabix=_doc_param_tabix,
@@ -1229,31 +1255,31 @@ default_numbers = {
     'variants/POS': 1,
     'variants/ID': 1,
     'variants/REF': 1,
-    'variants/ALT': 3,
+    'variants/ALT': 'A',
     'variants/QUAL': 1,
     'variants/DP': 1,
     'variants/AN': 1,
-    'variants/AC': 3,
-    'variants/AF': 3,
+    'variants/AC': 'A',
+    'variants/AF': 'A',
     'variants/MQ': 1,
     'variants/ANN': 1,
     'calldata/DP': 1,
     'calldata/GT': 2,
     'calldata/GQ': 1,
     'calldata/HQ': 2,
-    'calldata/AD': 4,
+    'calldata/AD': 'R',
     'calldata/MQ0': 1,
     'calldata/MQ': 1,
 }
 
 
-def _normalize_number(field, n):
+def _normalize_number(field, n, alt_number):
     if n == '.':
         return 1
     elif n == 'A':
-        return 3
+        return alt_number
     elif n == 'R':
-        return 4
+        return alt_number + 1
     elif n == 'G':
         return 3
     else:
@@ -1264,13 +1290,12 @@ def _normalize_number(field, n):
         return 1
 
 
-def _normalize_numbers(numbers, fields, headers):
+def _normalize_numbers(numbers, fields, headers, alt_number):
 
-    # normalize user-provided numbers
+    # normalize field prefixes
     if numbers is None:
         numbers = dict()
-    numbers = {_normalize_field_prefix(f, headers): _normalize_number(f, n)
-               for f, n in numbers.items()}
+    numbers = {_normalize_field_prefix(f, headers): n for f, n in numbers.items()}
 
     # setup output
     normed_numbers = dict()
@@ -1280,22 +1305,22 @@ def _normalize_numbers(numbers, fields, headers):
         group, name = f.split('/')
 
         if f in numbers:
-            normed_numbers[f] = numbers[f]
+            normed_numbers[f] = _normalize_number(f, numbers[f], alt_number)
 
         elif f in default_numbers:
-            normed_numbers[f] = default_numbers[f]
+            normed_numbers[f] = _normalize_number(f, default_numbers[f], alt_number)
 
         elif group == 'variants':
 
             if name in ['numalt', 'svlen', 'is_snp']:
-                # computed fields, special case - number depends on ALT
+                # computed fields, special case (for svlen, number depends on ALT)
                 continue
 
             elif name.startswith('FILTER_'):
                 normed_numbers[f] = 0
 
             elif name in headers.infos:
-                normed_numbers[f] = _normalize_number(f, headers.infos[name]['Number'])
+                normed_numbers[f] = _normalize_number(f, headers.infos[name]['Number'], alt_number)
 
             else:
                 # fall back to 1
@@ -1305,7 +1330,8 @@ def _normalize_numbers(numbers, fields, headers):
         elif group == 'calldata':
 
             if name in headers.formats:
-                normed_numbers[f] = _normalize_number(f, headers.formats[name]['Number'])
+                normed_numbers[f] = _normalize_number(f, headers.formats[name]['Number'],
+                                                      alt_number)
 
             else:
                 # fall back to 1
@@ -1313,7 +1339,7 @@ def _normalize_numbers(numbers, fields, headers):
                 warnings.warn('no number for field %r, assuming 1' % f)
 
         else:
-            raise RuntimeError('unpected field: %r' % f)
+            raise RuntimeError('unexpected field: %r' % f)
 
     return normed_numbers
 
@@ -1367,13 +1393,14 @@ def _normalize_samples(samples, headers, types):
     return normed_samples, loc_samples
 
 
-def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, fills, region, samples):
+def _iter_vcf_stream(stream, fields, types, numbers, alt_number, chunk_length, fills, region,
+                     samples):
 
     # read VCF headers
     headers = _read_vcf_headers(stream)
 
     # setup samples
-    samples, loc_samples = _normalize_samples(samples, headers, types)
+    samples, loc_samples = _normalize_samples(samples=samples, headers=headers, types=types)
 
     # setup fields to read
     if fields is None:
@@ -1386,16 +1413,17 @@ def _iter_vcf_stream(stream, fields, types, numbers, chunk_length, fills, region
             fields.append('calldata/GT')
 
     else:
-        fields = _normalize_fields(fields, headers, samples)
+        fields = _normalize_fields(fields=fields, headers=headers, samples=samples)
 
     # setup data types
-    types = _normalize_types(types, fields, headers)
+    types = _normalize_types(types=types, fields=fields, headers=headers)
 
     # setup numbers (a.k.a., arity)
-    numbers = _normalize_numbers(numbers, fields, headers)
+    numbers = _normalize_numbers(numbers=numbers, fields=fields, headers=headers,
+                                 alt_number=alt_number)
 
     # setup fills
-    fills = _normalize_fills(fills, fields, headers)
+    fills = _normalize_fills(fills=fills, fields=fields, headers=headers)
 
     # setup chunks iterator
     chunks = VCFChunkIterator(
