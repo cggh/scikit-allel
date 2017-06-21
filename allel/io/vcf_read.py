@@ -1541,6 +1541,7 @@ def vcf_to_dataframe(input,
                      fields=None,
                      types=None,
                      numbers=None,
+                     alt_number=DEFAULT_ALT_NUMBER,
                      fills=None,
                      region=None,
                      tabix='tabix',
@@ -1560,6 +1561,8 @@ def vcf_to_dataframe(input,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -1589,9 +1592,9 @@ def vcf_to_dataframe(input,
 
     # setup
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
-        transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
+        tabix=tabix, samples=[], transformers=transformers
     )
 
     # setup progress logging
@@ -1613,10 +1616,27 @@ def vcf_to_dataframe(input,
     return output
 
 
+vcf_to_dataframe.__doc__ = vcf_to_dataframe.__doc__.format(
+    input=_doc_param_input,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    log=_doc_param_log,
+)
+
+
 def vcf_to_csv(input, output,
                fields=None,
                types=None,
                numbers=None,
+               alt_number=DEFAULT_ALT_NUMBER,
                fills=None,
                region=None,
                tabix='tabix',
@@ -1625,7 +1645,7 @@ def vcf_to_csv(input, output,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                log=None,
                **kwargs):
-    """Read data from a VCF file into a pandas DataFrame.
+    """Read data from a VCF file and write out to a comma-separated values (CSV) file.
 
     Parameters
     ----------
@@ -1639,6 +1659,8 @@ def vcf_to_csv(input, output,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -1657,10 +1679,6 @@ def vcf_to_csv(input, output,
         All remaining keyword arguments are passed through to pandas.DataFrame.to_csv().
         E.g., to write a tab-delimited file, provide `sep='\t'`.
 
-    Returns
-    -------
-    df : pandas.DataFrame
-
     """
 
     # samples requested?
@@ -1669,9 +1687,9 @@ def vcf_to_csv(input, output,
 
     # setup
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
-        transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        samples=[], transformers=transformers
     )
 
     # setup progress logging
@@ -1688,6 +1706,23 @@ def vcf_to_csv(input, output,
             kwargs['header'] = False
             kwargs['mode'] = 'a'
         df.to_csv(output, **kwargs)
+
+
+vcf_to_csv.__doc__ = vcf_to_csv.__doc__.format(
+    input=_doc_param_input,
+    output=_doc_param_output,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    log=_doc_param_log,
+)
 
 
 def _chunk_to_recarray(fields, chunk):
@@ -1713,6 +1748,7 @@ def vcf_to_recarray(input,
                     fields=None,
                     types=None,
                     numbers=None,
+                    alt_number=DEFAULT_ALT_NUMBER,
                     fills=None,
                     region=None,
                     tabix='tabix',
@@ -1732,6 +1768,8 @@ def vcf_to_recarray(input,
         {types}
     numbers : dict, optional
         {numbers}
+    alt_number : int, optional
+        {alt_number}
     fills : dict, optional
         {fills}
     region : string, optional
@@ -1760,9 +1798,9 @@ def vcf_to_recarray(input,
     # setup chunk iterator
     # N.B., set samples to empty list so we don't get any calldata fields
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
-        transformers=transformers
+        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
+        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
+        tabix=tabix, samples=[], transformers=transformers
     )
 
     # setup progress logging
@@ -1781,3 +1819,19 @@ def vcf_to_recarray(input,
         output = np.concatenate([_chunk_to_recarray(fields, chunk) for chunk in chunks])
 
     return output
+
+
+vcf_to_recarray.__doc__ = vcf_to_recarray.__doc__.format(
+    input=_doc_param_input,
+    fields=_doc_param_fields,
+    types=_doc_param_types,
+    numbers=_doc_param_numbers,
+    alt_number=_doc_param_alt_number,
+    fills=_doc_param_fills,
+    region=_doc_param_region,
+    tabix=_doc_param_tabix,
+    transformers=_doc_param_transformers,
+    buffer_size=_doc_param_buffer_size,
+    chunk_length=_doc_param_chunk_length,
+    log=_doc_param_log,
+)

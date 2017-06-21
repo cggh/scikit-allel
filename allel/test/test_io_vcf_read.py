@@ -988,6 +988,16 @@ def test_alt_number():
     a = callset['variants/AF']
     eq_((9, 5), a.shape)
 
+    # can override
+    callset = read_vcf(fn, fields=['ALT', 'AC', 'AF'],
+                       alt_number=5, numbers={'ALT': 2, 'AC': 4})
+    a = callset['variants/ALT']
+    eq_((9, 2), a.shape)
+    a = callset['variants/AC']
+    eq_((9, 4), a.shape)
+    a = callset['variants/AF']
+    eq_((9, 5), a.shape)
+
 
 def test_read_region():
 
@@ -1711,10 +1721,11 @@ def test_vcf_to_npz():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples, types=types)
+        expect = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
+                          samples=samples, types=types)
         if os.path.exists(npz_fn):
             os.remove(npz_fn)
-        vcf_to_npz(fn, npz_fn, fields='*', chunk_length=2, region=region, tabix=tabix,
+        vcf_to_npz(fn, npz_fn, fields='*', chunk_length=2, alt_number=2, region=region, tabix=tabix,
                    samples=samples, types=types)
         actual = np.load(npz_fn)
         for key in expect.keys():
@@ -1736,11 +1747,12 @@ def test_vcf_to_zarr():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples, types=types)
+        expect = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
+                          samples=samples, types=types)
         if os.path.exists(zarr_path):
             shutil.rmtree(zarr_path)
-        vcf_to_zarr(fn, zarr_path, fields='*', chunk_length=2, region=region, tabix=tabix,
-                    samples=samples, types=types)
+        vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, region=region,
+                    tabix=tabix, samples=samples, types=types)
         actual = zarr.open_group(zarr_path, mode='r')
         for key in expect.keys():
             if expect[key].dtype.kind == 'f':
@@ -1760,10 +1772,10 @@ def test_vcf_to_zarr_ann():
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
                                        types={'Allele': string_type, 'HGVS_c': string_type})]
-        expect = read_vcf(fn, fields='*', types=types, transformers=transformers)
+        expect = read_vcf(fn, fields='*', alt_number=2, types=types, transformers=transformers)
         if os.path.exists(zarr_path):
             shutil.rmtree(zarr_path)
-        vcf_to_zarr(fn, zarr_path, fields='*', chunk_length=2, types=types,
+        vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, types=types,
                     transformers=transformers)
         actual = zarr.open_group(zarr_path, mode='r')
         for key in expect.keys():
@@ -1784,10 +1796,11 @@ def test_vcf_to_hdf5():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', region=region, tabix=tabix, samples=samples, types=types)
+        expect = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
+                          samples=samples, types=types)
         if os.path.exists(h5_fn):
             os.remove(h5_fn)
-        vcf_to_hdf5(fn, h5_fn, fields='*', chunk_length=2, region=region, tabix=tabix,
+        vcf_to_hdf5(fn, h5_fn, fields='*', alt_number=2, chunk_length=2, region=region, tabix=tabix,
                     samples=samples, types=types)
         with h5py.File(h5_fn, mode='r') as actual:
             for key in expect.keys():
@@ -1823,13 +1836,14 @@ def test_vcf_to_hdf5_ann():
 def test_vcf_to_dataframe():
     fn = 'fixture/sample.vcf'
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
-    numbers = {'AC': 2, 'ALT': 2}
+    numbers = {'AC': 3}
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type}
-        callset = read_vcf(fn, fields=fields, numbers=numbers, types=types)
-        df = vcf_to_dataframe(fn, fields=fields, numbers=numbers, chunk_length=2, types=types)
+        callset = read_vcf(fn, fields=fields, alt_number=2, numbers=numbers, types=types)
+        df = vcf_to_dataframe(fn, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
+                              types=types)
         print(df.columns.tolist())
-        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2'],
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3'],
                           df.columns.tolist())
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
@@ -1881,14 +1895,16 @@ def test_vcf_to_dataframe_ann():
 def test_vcf_to_csv():
     fn = 'fixture/sample.vcf'
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
-    numbers = {'AC': 2, 'ALT': 2}
+    numbers = {'AC': 3}
     for string_type in 'S20', 'object':
         types = {'REF': string_type, 'ALT': string_type}
-        df = vcf_to_dataframe(fn, fields=fields, numbers=numbers, types=types, chunk_length=2)
+        df = vcf_to_dataframe(fn, fields=fields, alt_number=2, numbers=numbers, types=types,
+                              chunk_length=2)
         out_fn = 'temp/test.csv'
         if os.path.exists(out_fn):
             os.remove(out_fn)
-        vcf_to_csv(fn, out_fn, fields=fields, numbers=numbers, types=types, chunk_length=2)
+        vcf_to_csv(fn, out_fn, fields=fields, alt_number=2, numbers=numbers, types=types,
+                   chunk_length=2)
         import pandas
         adf = pandas.read_csv(out_fn, na_filter=False)
         assert_list_equal(df.columns.tolist(), adf.columns.tolist())
@@ -1921,12 +1937,13 @@ def test_vcf_to_csv_ann():
 def test_vcf_to_recarray():
     fn = 'fixture/sample.vcf'
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
-    numbers = {'AC': 2, 'ALT': 2}
+    numbers = {'AC': 3}
     for string_type in 'S20', 'object':
         types = {'CHROM': string_type, 'REF': string_type, 'ALT': string_type}
-        callset = read_vcf(fn, fields=fields, numbers=numbers, types=types)
-        a = vcf_to_recarray(fn, fields=fields, numbers=numbers, chunk_length=2, types=types)
-        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2'],
+        callset = read_vcf(fn, fields=fields, alt_number=2, numbers=numbers, types=types)
+        a = vcf_to_recarray(fn, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
+                            types=types)
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3'],
                           list(a.dtype.names))
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         for k in callset:
