@@ -24,7 +24,7 @@ warnings.simplefilter('always')
 
 
 def test_read_vcf_chunks():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     fields, samples, headers, it = iter_vcf_chunks(fn, fields='*', chunk_length=4, buffer_size=100)
 
@@ -95,7 +95,7 @@ def test_read_vcf_chunks():
 
 
 def test_fields_all():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset = read_vcf(fn, fields='*')
     expected_fields = [
         'samples',
@@ -132,7 +132,7 @@ def test_fields_all():
 
 
 def test_fields_default():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset = read_vcf(fn)
     expected_fields = [
         'samples',
@@ -149,7 +149,7 @@ def test_fields_default():
 
 
 def test_fields_all_variants():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset = read_vcf(fn, fields='variants/*')
     expected_fields = [
         # fixed fields
@@ -180,7 +180,7 @@ def test_fields_all_variants():
 
 
 def test_fields_info():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset = read_vcf(fn, fields='INFO')
     expected_fields = [
         # INFO fields
@@ -197,7 +197,7 @@ def test_fields_info():
 
 
 def test_fields_filter():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset1 = read_vcf(fn, fields='FILTER')
     expected_fields = [
         'variants/FILTER_PASS',
@@ -207,7 +207,7 @@ def test_fields_filter():
     assert_list_equal(sorted(expected_fields), sorted(callset1.keys()))
 
     # this has explicit PASS definition in header, shouldn't cause problems
-    fn = 'fixture/test16.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test16.vcf')
     callset2 = read_vcf(fn, fields='FILTER')
     expected_fields = [
         'variants/FILTER_PASS',
@@ -220,7 +220,7 @@ def test_fields_filter():
 
 
 def test_fields_all_calldata():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset = read_vcf(fn, fields='calldata/*')
     expected_fields = [
         'calldata/GT',
@@ -232,7 +232,7 @@ def test_fields_all_calldata():
 
 
 def test_fields_selected():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     # without samples
     callset = read_vcf(fn, fields=['CHROM', 'variants/POS', 'AC', 'variants/AF', 'GT',
@@ -402,7 +402,7 @@ def _test_read_vcf_content(input, chunk_length, buffer_size):
 
 
 def test_inputs():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     with open(fn, mode='rb') as f:
         data = f.read(-1)
@@ -423,7 +423,7 @@ def test_inputs():
 
 
 def test_chunk_lengths():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     input = fn
     chunk_lengths = 1, 2, 3, 5, 10, 20
     buffer_size = 10
@@ -433,7 +433,7 @@ def test_chunk_lengths():
 
 
 def test_buffer_sizes():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     input = fn
     chunk_length = 3
     buffer_sizes = 1, 2, 4, 8, 16, 32, 64, 128, 256, 512
@@ -739,7 +739,7 @@ def test_truncation_calldata():
 
 
 def test_info_types():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10', 'object':
         callset = read_vcf(fn, fields=['variants/DP', 'variants/AC'],
@@ -752,7 +752,7 @@ def test_info_types():
 
 def test_genotype_types():
 
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'S3', 'object':
         callset = read_vcf(fn, fields=['GT'], types={'GT': dtype}, numbers={'GT': 2})
         eq_(np.dtype(dtype), callset['calldata/GT'].dtype)
@@ -785,7 +785,7 @@ def test_genotype_types():
 
 
 def test_calldata_types():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10', 'object':
         callset = read_vcf(fn, fields=['HQ'], types={'HQ': dtype}, numbers={'HQ': 2})
@@ -794,7 +794,7 @@ def test_calldata_types():
 
 
 def test_genotype_ploidy():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     callset = read_vcf(fn, fields='GT', numbers=dict(GT=1))
     gt = callset['calldata/GT']
@@ -817,7 +817,7 @@ def test_genotype_ploidy():
 
 
 def test_fills_info():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     callset = read_vcf(fn, fields='AN', numbers=dict(AN=1))
     a = callset['variants/AN']
@@ -842,7 +842,7 @@ def test_fills_info():
 
 
 def test_fills_genotype():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     callset = read_vcf(fn, fields='GT', numbers=dict(GT=2))
     gt = callset['calldata/GT']
@@ -867,7 +867,7 @@ def test_fills_genotype():
 
 
 def test_fills_calldata():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     callset = read_vcf(fn, fields='HQ', numbers=dict(HQ=2))
     a = callset['calldata/HQ']
@@ -892,7 +892,7 @@ def test_fills_calldata():
 
 
 def test_numbers():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     callset = read_vcf(fn, fields=['ALT'], numbers=dict(ALT=1))
     a = callset['variants/ALT']
@@ -962,7 +962,7 @@ def test_numbers():
 
 
 def test_alt_number():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     callset = read_vcf(fn, fields=['ALT', 'AC', 'AF'], alt_number=2)
     a = callset['variants/ALT']
@@ -1001,7 +1001,8 @@ def test_alt_number():
 
 def test_read_region():
 
-    for fn in 'fixture/sample.vcf.gz', 'fixture/sample.vcf':
+    for fn in (os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf.gz'),
+               os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')):
         for tabix in 'tabix', None, 'foobar':
 
             region = '19'
@@ -1071,7 +1072,7 @@ def test_read_region():
 
 
 def test_read_samples():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
     for samples in ['NA00001', 'NA00003'], [0, 2], ['NA00003', 'NA00001'], [2, 'NA00001']:
         callset = read_vcf(fn, fields=['samples', 'GT'], samples=samples)
@@ -1093,7 +1094,7 @@ def test_read_samples():
 
 
 def test_ann():
-    fn = 'fixture/ann.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
 
     # all ANN fields
     callset = read_vcf(fn, fields=['ANN'], transformers=[ANNTransformer()])
@@ -1372,7 +1373,7 @@ def test_warnings():
 
 
 def test_missing_headers():
-    fn = 'fixture/test14.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test14.vcf')
 
     # INFO DP not declared
     callset = read_vcf(fn, fields=['DP'], types={'DP': 'String'})
@@ -1393,7 +1394,7 @@ def test_missing_headers():
 
 def test_extra_samples():
     # more calldata samples than samples declared in header
-    path = 'fixture/test48b.vcf'
+    path = os.path.join(os.path.dirname(__file__), 'data', 'test48b.vcf')
     input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
                   b"2L\t12\t.\t.\t.\t.\t.\t.\tGT:GQ\t0/0:34\t0/1:45\t1/1:56\t1/2:99\t2/3:101\n")
 
@@ -1553,7 +1554,7 @@ def test_genotype_ac():
         eq_(e.dtype, a.dtype)
         assert_array_equal(e, a)
 
-    fn = 'fixture/test63.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test63.vcf')
     callset = read_vcf(fn, fields='GT', numbers={'GT': 3}, types={'GT': 'genotype_ac/i1'})
     e = np.array([
         [(2, 0, 0), (3, 0, 0), (1, 0, 0)],
@@ -1566,7 +1567,7 @@ def test_genotype_ac():
 
 
 def test_region_truncate():
-    fn = 'fixture/test54.vcf.gz'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test54.vcf.gz')
     for tabix in 'tabix', None:
         callset = read_vcf(fn, region='chr1:10-100', tabix=tabix)
         pos = callset['variants/POS']
@@ -1601,7 +1602,7 @@ def test_errors():
         read_vcf(path)
 
     # file is nothing like a VCF (has no header)
-    path = 'fixture/test48a.vcf'
+    path = os.path.join(os.path.dirname(__file__), 'data', 'test48a.vcf')
     with assert_raises(RuntimeError):
         read_vcf(path)
 
@@ -1664,7 +1665,7 @@ chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 
 
 def test_override_vcf_type():
-    fn = 'fixture/test4.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test4.vcf')
     callset = read_vcf(fn, fields=['MQ0FractionTest'])
     eq_(0, callset['variants/MQ0FractionTest'][2])
     callset = read_vcf(fn, fields=['MQ0FractionTest'],
@@ -1673,7 +1674,7 @@ def test_override_vcf_type():
 
 
 def test_missing_calldata():
-    fn = 'fixture/test1.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test1.vcf')
     callset = read_vcf(fn, fields='calldata/*', numbers={'AD': 2})
     gt = callset['calldata/GT']
     ad = callset['calldata/AD']
@@ -1686,7 +1687,7 @@ def test_missing_calldata():
 
 
 def test_calldata_cleared():
-    fn = 'fixture/test32.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test32.vcf')
     callset = read_vcf(fn, fields=['calldata/GT', 'calldata/DP', 'calldata/GQ'])
     gt = callset['calldata/GT']
     dp = callset['calldata/DP']
@@ -1700,7 +1701,7 @@ def test_calldata_cleared():
 
 
 def test_calldata_quirks():
-    fn = 'fixture/test1.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test1.vcf')
     callset = read_vcf(fn, fields=['AD', 'GT'], numbers={'AD': 2})
     gt = callset['calldata/GT']
     ad = callset['calldata/AD']
@@ -1711,7 +1712,7 @@ def test_calldata_quirks():
 
 
 def test_vcf_to_npz():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     npz_fn = 'temp/sample.npz'
     region_values = None, '20', '20:10000-20000'
     tabix_values = 'tabix', None
@@ -1737,7 +1738,7 @@ def test_vcf_to_npz():
 
 
 def test_vcf_to_zarr():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     zarr_path = 'temp/sample.zarr'
     region_values = None, '20', '20:10000-20000'
     tabix_values = 'tabix', None
@@ -1766,7 +1767,7 @@ def test_vcf_to_zarr():
 
 
 def test_vcf_to_zarr_ann():
-    fn = 'fixture/ann.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     zarr_path = 'temp/ann.zarr'
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
@@ -1786,7 +1787,7 @@ def test_vcf_to_zarr_ann():
 
 
 def test_vcf_to_hdf5():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     h5_fn = 'temp/sample.h5'
     region_values = None, '20', '20:10000-20000'
     tabix_values = 'tabix', None
@@ -1815,7 +1816,7 @@ def test_vcf_to_hdf5():
 
 
 def test_vcf_to_hdf5_ann():
-    fn = 'fixture/ann.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     h5_fn = 'temp/ann.h5'
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
@@ -1834,7 +1835,7 @@ def test_vcf_to_hdf5_ann():
 
 
 def test_vcf_to_dataframe():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
     numbers = {'AC': 3}
     for string_type in 'S10', 'object':
@@ -1861,7 +1862,7 @@ def test_vcf_to_dataframe():
 
 
 def test_vcf_to_dataframe_ann():
-    fn = 'fixture/ann.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'ANN', 'DP', 'AC', 'GT']
     numbers = {'AC': 2, 'ALT': 2}
     for string_type in 'S10', 'object':
@@ -1893,7 +1894,7 @@ def test_vcf_to_dataframe_ann():
 
 
 def test_vcf_to_csv():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
     numbers = {'AC': 3}
     for string_type in 'S20', 'object':
@@ -1913,7 +1914,7 @@ def test_vcf_to_csv():
 
 
 def test_vcf_to_csv_ann():
-    fn = 'fixture/ann.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'ANN', 'GT']
     numbers = {'AC': 2, 'ALT': 2}
     for string_type in 'S20', 'object':
@@ -1935,7 +1936,7 @@ def test_vcf_to_csv_ann():
 
 
 def test_vcf_to_recarray():
-    fn = 'fixture/sample.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
     numbers = {'AC': 3}
     for string_type in 'S20', 'object':
@@ -1962,7 +1963,7 @@ def test_vcf_to_recarray():
 
 
 def test_vcf_to_recarray_ann():
-    fn = 'fixture/ann.vcf'
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'ANN', 'DP', 'AC', 'GT']
     numbers = {'AC': 2, 'ALT': 2}
     for string_type in 'S20', 'object':

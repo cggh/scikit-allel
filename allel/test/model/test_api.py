@@ -5,8 +5,7 @@ tests can be re-used for alternative implementations of the same interfaces.
 
 """
 from __future__ import absolute_import, print_function, division
-
-
+import os
 from datetime import date
 import tempfile
 
@@ -2697,18 +2696,19 @@ class FeatureTableInterface(object):
             aeq(a.take([2, 3]), r)
 
     def test_from_gff3(self):
-        ft = self._class.from_gff3('fixture/sample.gff')
+        fn = os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'sample.gff')
+        ft = self._class.from_gff3(fn)
         eq(177, len(ft))
         eq(np.dtype(object), ft.seqid.dtype)
 
     def test_from_gff3_region(self):
-        ft = self._class.from_gff3('fixture/sample.sorted.gff.gz', region='apidb|MAL1')
+        fn = os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'sample.sorted.gff.gz')
+        ft = self._class.from_gff3(fn, region='apidb|MAL1')
         eq(44, len(ft))
-        ft = self._class.from_gff3('fixture/sample.sorted.gff.gz',
-                                   region='apidb|MAL1:42000-50000')
+        ft = self._class.from_gff3(fn, region='apidb|MAL1:42000-50000')
         eq(7, len(ft))
         # should be empty region
-        assert None is self._class.from_gff3('fixture/sample.sorted.gff.gz', region='foo')
+        assert None is self._class.from_gff3(fn, region='foo')
 
 
 def test_create_allele_mapping():
