@@ -1,27 +1,29 @@
 Input/output utilities
 ======================
 
-.. automodule:: allel.io
-
 Variant Call Format (VCF)
 -------------------------
 
-.. autofunction:: read_vcf
-.. autofunction:: vcf_to_npz
-.. autofunction:: vcf_to_hdf5
-.. autofunction:: vcf_to_zarr
-.. autofunction:: vcf_to_dataframe
-.. autofunction:: vcf_to_csv
-.. autofunction:: vcf_to_recarray
-.. autofunction:: iter_vcf_chunks
-.. autofunction:: write_vcf
-
-Fasta
------
-
-.. autofunction:: write_fasta
+.. autofunction:: allel.read_vcf
+.. autofunction:: allel.vcf_to_npz
+.. autofunction:: allel.vcf_to_hdf5
+.. autofunction:: allel.vcf_to_zarr
+.. autofunction:: allel.vcf_to_dataframe
+.. autofunction:: allel.vcf_to_csv
+.. autofunction:: allel.vcf_to_recarray
+.. autofunction:: allel.iter_vcf_chunks
+.. autoclass:: allel.ANNTransformer
+.. autofunction:: allel.write_vcf
 
 GFF3
 ----
 
-.. autofunction:: iter_gff3
+.. autofunction:: allel.gff3_to_dataframe
+.. autofunction:: allel.gff3_to_recarray
+.. autofunction:: allel.iter_gff3
+
+Fasta
+-----
+
+.. autofunction:: allel.write_fasta
+

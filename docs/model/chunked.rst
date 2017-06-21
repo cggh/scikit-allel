@@ -6,29 +6,24 @@ Chunked arrays
 GenotypeChunkedArray
 --------------------
 
-.. autoclass:: GenotypeChunkedArray
+.. autoclass:: allel.GenotypeChunkedArray
 
 HaplotypeChunkedArray
 ---------------------
 
-.. autoclass:: HaplotypeChunkedArray
+.. autoclass:: allel.HaplotypeChunkedArray
 
 AlleleCountsChunkedArray
 ------------------------
 
-.. autoclass:: AlleleCountsChunkedArray
+.. autoclass:: allel.AlleleCountsChunkedArray
 
 VariantChunkedTable
 -------------------
 
-.. autoclass:: VariantChunkedTable
-
-FeatureChunkedTable
--------------------
-
-.. autoclass:: FeatureChunkedTable
+.. autoclass:: allel.VariantChunkedTable
 
 AlleleCountsChunkedTable
 ------------------------
 
-.. autoclass:: FeatureChunkedTable
+.. autoclass:: allel.AlleleCountsChunkedTable

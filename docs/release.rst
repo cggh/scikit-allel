@@ -1,6 +1,51 @@
 Release notes
 =============
 
+v1.1.0
+------
+
+Reading Variant Call Format (VCF) files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This release includes new functions for extracting data from VCF files and loading into NumPy
+arrays, HDF5 files and other storage containers. These functions are backed by VCF parsing code
+implemented in Cython, so should be reasonably fast. This is new code so there may be bugs, please
+report any issues via
+`GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
+
+For a tutorial and worked examples, see the following article: `Extracting data from VCF <TODO>`_.
+
+For API documentation, see the following functions: :func:`allel.read_vcf`,
+:func:`allel.vcf_to_npz`, :func:`allel.vcf_to_hdf5`, :func:`allel.vcf_to_zarr`,
+:func:`allel.vcf_to_dataframe`, :func:`allel.vcf_to_csv`, :func:`allel.vcf_to_recarray`,
+:func:`allel.iter_vcf_chunks`.
+
+Reading GFF3 files
+~~~~~~~~~~~~~~~~~~
+
+Added convenience functions :func:`allel.gff3_to_dataframe` and :func:`allel.gff3_to_recarray`.
+
+Maintenance work
+~~~~~~~~~~~~~~~~
+
+* scikit-allel is now compatible with Dask versions 0.12 and later
+  (`#148# <https://github.com/cggh/scikit-allel/issues/148>`_).
+* Fixed issue within functions :func:`allel.joint_sfs` and
+  :func:`allel.joint_sfs_folded` relating to data types
+  (`#144# <https://github.com/cggh/scikit-allel/issues/144>`_).
+* Fixed regression in functions :func:`allel.ehh_decay` and
+  :func:`allel.voight_painting` following refactoring of array
+  data structures in version 1.0.0
+  (`#142# <https://github.com/cggh/scikit-allel/issues/142>`_).
+* HTML representations of arrays have been tweaked to look better in Jupyter notebooks
+  (`#141# <https://github.com/cggh/scikit-allel/issues/141>`_).
+
+End of support for Python 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. important:: This is the last version of scikit-allel that will support Python 2. The
+    next version of scikit-allel will support Python versions 3.5 and later only.
+
 v1.0.3
 ------
 
@@ -33,17 +78,17 @@ Mendelian errors and phasing by transmission
 
 This release includes a new :mod:`allel.stats.mendel` module with functions to
 help with analysis of related individuals. The function
-:func:`allel.stats.mendel.mendel_errors` locates genotype calls within a trio or
+:func:`allel.mendel_errors` locates genotype calls within a trio or
 cross that are not consistent with Mendelian segregation of alleles. The
-function :func:`allel.stats.mendel.phase_by_transmission` will resolve unphased
+function :func:`allel.phase_by_transmission` will resolve unphased
 diploid genotypes into phased haplotypes for a trio or cross using Mendelian
-transmission rules. The function :func:`allel.stats.mendel.paint_transmission`
+transmission rules. The function :func:`allel.paint_transmission`
 can help with evaluating and visualizing the results of phasing a trio or cross.
 
 Runs of homozygosity
 ~~~~~~~~~~~~~~~~~~~~
 
-A new :func:`allel.stats.roh.roh_mhmm` function provides support for locating
+A new :func:`allel.roh_mhmm` function provides support for locating
 long runs of homozygosity within a single sample. The function uses a
 multinomial hidden Markov model to predict runs of homozygosity based on the
 rate of heterozygosity over the genome. The function can also incorporate
@@ -122,19 +167,19 @@ This release resolves compatibility issues with Zarr version 2.1.
 v0.21.1
 -------
 
-* Added parameter `min_maf` to :func:`allel.stats.selection.ihs` to skip IHS
+* Added parameter `min_maf` to :func:`allel.ihs` to skip IHS
   calculation for variants below a given minor allele frequency.
 * Minor change to calculation of integrated haplotype homozygosity to enable
   values to be reported for first and last variants if `include_edges` is
   `True`.
-* Minor change to :func:`allel.stats.selection.standardize_by_allele_count`
+* Minor change to :func:`allel.standardize_by_allele_count`
   to better handle missing values.
 
 v0.21.0
 -------
 
-In this release the implementations of :func:`allel.stats.selection.ihs`
-and :func:`allel.stats.selection.xpehh` selection statistics have been
+In this release the implementations of :func:`allel.ihs`
+and :func:`allel.xpehh` selection statistics have been
 reworked to address a number of issues:
 
 * Both functions can now integrate over either a genetic map (via the
@@ -150,26 +195,26 @@ reworked to address a number of issues:
 * Several bugs in the previous implementations of these functions have been
   fixed (`#91 <https://github.com/cggh/scikit-allel/issues/91>`_).
 * New utility functions are provided for standardising selection scores,
-  see :func:`allel.stats.selection.standardize_by_allele_count` (for use
+  see :func:`allel.standardize_by_allele_count` (for use
   with IHS and NSL) and
-  :func:`allel.stats.selection.standardize` (for use with XPEHH).
+  :func:`allel.standardize` (for use with XPEHH).
 
 Other changes:
 
-* Added functions :func:`allel.stats.diversity.moving_tajima_d` and
-  :func:`allel.stats.selection.moving_delta_tajima_d`
+* Added functions :func:`allel.moving_tajima_d` and
+  :func:`allel.moving_delta_tajima_d`
   (`#81 <https://github.com/cggh/scikit-allel/issues/81>`_,
   `#70 <https://github.com/cggh/scikit-allel/issues/70>`_).
-* Added functions :func:`allel.stats.fst.moving_weir_cockerham_fst`,
-  :func:`allel.stats.fst.moving_hudson_fst`,
-  :func:`allel.stats.fst.moving_patterson_fst`.
-* Added functions :func:`allel.stats.admixture.moving_patterson_f3` and
-  :func:`allel.stats.admixture.moving_patterson_d`.
+* Added functions :func:`allel.moving_weir_cockerham_fst`,
+  :func:`allel.moving_hudson_fst`,
+  :func:`allel.moving_patterson_fst`.
+* Added functions :func:`allel.moving_patterson_f3` and
+  :func:`allel.moving_patterson_d`.
 * Renamed "blockwise" to "average" in function names in
   :mod:`allel.stats.fst` and :mod:`allel.stats.admixture` for clarity.
 * Added convenience methods
-  :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic` and
-  :func:`allel.model.ndarray.AlleleCountsArray.is_biallelic_01` for locating
+  :func:`allel.AlleleCountsArray.is_biallelic` and
+  :func:`allel.AlleleCountsArray.is_biallelic_01` for locating
   biallelic variants.
 * Added support for `zarr <http://zarr.readthedocs.io>`_ in the
   :mod:`allel.chunked` module
@@ -177,14 +222,14 @@ Other changes:
 * Changed HDF5 default chunked storage to use gzip level 1 compression
   instead of no compression
   (`#100 <https://github.com/cggh/scikit-allel/issues/100>`_).
-* Fixed bug in :func:`allel.stats.diversity.sequence_divergence`
+* Fixed bug in :func:`allel.sequence_divergence`
   (`#75 <https://github.com/cggh/scikit-allel/issues/75>`_).
 * Added workaround for chunked arrays if passed as arguments into numpy
   aggregation functions
   (`#66 <https://github.com/cggh/scikit-allel/issues/66>`_).
 * Protect against invalid coordinates when mapping from square to condensed
   coords (`#83 <https://github.com/cggh/scikit-allel/issues/83>`_).
-* Fixed bug in :func:`allel.stats.sf.plot_sfs_folded` and added docstrings
+* Fixed bug in :func:`allel.plot_sfs_folded` and added docstrings
   for all plotting functions in :mod:`allel.stats.sf`
   (`#80 <https://github.com/cggh/scikit-allel/issues/80>`_).
 * Fixed bug related to taking views of genotype and haplotype arrays
@@ -218,8 +263,8 @@ v0.20.2
 v0.20.1
 -------
 
-* Changed functions :func:`allel.stats.fst.weir_cockerham_fst` and
-  :func:`allel.stats.ld.locate_unlinked` such that chunked implementations
+* Changed functions :func:`allel.weir_cockerham_fst` and
+  :func:`allel.locate_unlinked` such that chunked implementations
   are now used by default, to avoid accidentally and unnecessarily loading
   very large arrays into memory
   (`#50 <https://github.com/cggh/scikit-allel/issues/50>`_).
@@ -254,21 +299,21 @@ Other changes:
 
 * Added function for computing the number of segregating sites by length
   (nSl), a summary statistic comparing haplotype homozygosity between
-  different alleles (similar to IHS), see :func:`allel.stats.selection.nsl`
+  different alleles (similar to IHS), see :func:`allel.nsl`
   (`#40 <https://github.com/cggh/scikit-allel/issues/40>`_).
 * Added functions for computing haplotype diversity, see
-  :func:`allel.stats.selection.haplotype_diversity` and
-  :func:`allel.stats.selection.moving_haplotype_diversity`
+  :func:`allel.haplotype_diversity` and
+  :func:`allel.moving_haplotype_diversity`
   (`#29 <https://github.com/cggh/scikit-allel/issues/29>`_).
 * Added function
-  :func:`allel.stats.selection.plot_moving_haplotype_frequencies` for
+  :func:`allel.plot_moving_haplotype_frequencies` for
   visualising haplotype frequency spectra in moving windows over the genome
   (`#30 <https://github.com/cggh/scikit-allel/issues/30>`_).
 * Added `vstack()` and `hstack()` methods to genotype and haplotype arrays to
   enable combining data from multiple arrays
   (`#21 <https://github.com/cggh/scikit-allel/issues/21>`_).
 * Added convenience function
-  :func:`allel.stats.window.equally_accessible_windows`
+  :func:`allel.equally_accessible_windows`
   (`#16 <https://github.com/cggh/scikit-allel/issues/16>`_).
 * Added methods `from_hdf5_group()` and `to_hdf5_group()` to
   :class:`allel.model.ndarray.VariantTable`
@@ -279,7 +324,7 @@ Other changes:
   haplotypes do not decay below a specified threshold
   (`#39 <https://github.com/cggh/scikit-allel/issues/39>`_).
 * Fixed missing return value in
-  :func:`allel.stats.selection.plot_voight_painting`
+  :func:`allel.plot_voight_painting`
   (`#23 <https://github.com/cggh/scikit-allel/issues/23>`_).
 * Fixed return type from array reshape()
   (`#34 <https://github.com/cggh/scikit-allel/issues/34>`_).
@@ -298,14 +343,14 @@ v0.18.0
 -------
 
 * Added functions for computing H statistics for detecting signatures of soft
-  sweeps, see :func:`allel.stats.selection.garud_h`,
-  :func:`allel.stats.selection.moving_garud_h`,
-  :func:`allel.stats.selection.plot_haplotype_frequencies`
+  sweeps, see :func:`allel.garud_h`,
+  :func:`allel.moving_garud_h`,
+  :func:`allel.plot_haplotype_frequencies`
   (`#19 <https://github.com/cggh/scikit-allel/issues/19>`_).
-* Added function :func:`allel.stats.selection.fig_voight_painting` to paint
+* Added function :func:`allel.fig_voight_painting` to paint
   both flanks either side of some variant under selection in a single figure
   (`#17 <https://github.com/cggh/scikit-allel/issues/17>`_).
-* Changed return values from :func:`allel.stats.selection.voight_painting` to
+* Changed return values from :func:`allel.voight_painting` to
   also return the indices used for sorting haplotypes by prefix
   (`#18 <https://github.com/cggh/scikit-allel/issues/18>`_).
 
@@ -335,7 +380,7 @@ v0.16.2
 v0.16.1
 -------
 
-* Added block-wise implementation to :func:`allel.stats.ld.locate_unlinked` so
+* Added block-wise implementation to :func:`allel.locate_unlinked` so
   it can be used with compressed arrays as input.
 
 v0.16.0
@@ -363,23 +408,23 @@ v0.15
 
 * Added functions to estimate Fst with standard error via a
   block-jackknife:
-  :func:`allel.stats.fst.blockwise_weir_cockerham_fst`,
-  :func:`allel.stats.fst.blockwise_hudson_fst`,
-  :func:`allel.stats.fst.blockwise_patterson_fst`.
+  :func:`allel.blockwise_weir_cockerham_fst`,
+  :func:`allel.blockwise_hudson_fst`,
+  :func:`allel.blockwise_patterson_fst`.
 
-* Fixed a serious bug in :func:`allel.stats.fst.weir_cockerham_fst`
+* Fixed a serious bug in :func:`allel.weir_cockerham_fst`
   related to incorrect estimation of heterozygosity, which manifested
   if the subpopulations being compared were not a partition of the
   total population (i.e., there were one or more samples in the
   genotype array that were not included in the subpopulations to
   compare).
 
-* Added method :func:`allel.model.AlleleCountsArray.max_allele` to
+* Added method :func:`allel.AlleleCountsArray.max_allele` to
   determine highest allele index for each variant.
 
 * Changed first return value from admixture functions
-  :func:`allel.stats.admixture.blockwise_patterson_f3` and
-  :func:`allel.stats.admixture.blockwise_patterson_d` to return the
+  :func:`allel.blockwise_patterson_f3` and
+  :func:`allel.blockwise_patterson_d` to return the
   estimator from the whole dataset.
 
 * Added utility functions to the :mod:`allel.stats.distance` module
@@ -411,8 +456,8 @@ v0.14
 * Added a new module :mod:`allel.stats.admixture` with statistical
   tests for admixture between populations, implementing the f2, f3 and
   D statistics from Patterson (2012). Functions include
-  :func:`allel.stats.admixture.blockwise_patterson_f3` and
-  :func:`allel.stats.admixture.blockwise_patterson_d` which compute
+  :func:`allel.blockwise_patterson_f3` and
+  :func:`allel.blockwise_patterson_d` which compute
   the f3 and D statistics respectively in blocks of a given number of
   variants and perform a block-jackknife to estimate the standard
   error.
@@ -422,15 +467,15 @@ v0.12
 
 * Added functions for principal components analysis of genotype
   data. Functions in the new module :mod:`allel.stats.decomposition`
-  include :func:`allel.stats.decomposition.pca` to perform a PCA via
+  include :func:`allel.pca` to perform a PCA via
   full singular value decomposition, and
-  :func:`allel.stats.decomposition.randomized_pca` which uses an
+  :func:`allel.randomized_pca` which uses an
   approximate truncated singular value decomposition to speed up
   computation. In tests with real data the randomized PCA is around 5
   times faster and uses half as much memory as the conventional PCA,
   producing highly similar results.
 
-* Added function :func:`allel.stats.distance.pcoa` for principal
+* Added function :func:`allel.pcoa` for principal
   coordinate analysis (a.k.a. classical multi-dimensional scaling) of
   a distance matrix.
 
@@ -442,18 +487,18 @@ v0.12
   functions can improve the ability to resolve population structure
   via PCA or PCoA.
 
-* Added method :func:`allel.model.GenotypeArray.to_n_ref`. Also added
-  ``dtype`` argument to :func:`allel.model.GenotypeArray.to_n_ref()`
-  and :func:`allel.model.GenotypeArray.to_n_alt()` methods to enable
+* Added method :func:`allel.GenotypeArray.to_n_ref`. Also added
+  ``dtype`` argument to :func:`allel.GenotypeArray.to_n_ref()`
+  and :func:`allel.GenotypeArray.to_n_alt()` methods to enable
   direct output as float arrays, which can be convenient if these
   arrays are then going to be scaled for use in PCA or PCoA.
 
-* Added :attr:`allel.model.GenotypeArray.mask` property which can be
+* Added :attr:`allel.GenotypeArray.mask` property which can be
   set with a Boolean mask to filter genotype calls from genotype and
   allele counting operations. A similar property is available on the
-  :class:`allel.bcolz.GenotypeCArray` class. Also added method
-  :func:`allel.model.GenotypeArray.fill_masked` and similar method
-  on the :class:`allel.bcolz.GenotypeCArray` class to fill masked
+  :class:`allel.GenotypeCArray` class. Also added method
+  :func:`allel.GenotypeArray.fill_masked` and similar method
+  on the :class:`allel.GenotypeCArray` class to fill masked
   genotype calls with a value (e.g., -1).
 
 v0.11
@@ -461,25 +506,25 @@ v0.11
 
 * Added functions for calculating Watterson's theta (proportional to
   the number of segregating variants):
-  :func:`allel.stats.diversity.watterson_theta` for calculating over a
+  :func:`allel.watterson_theta` for calculating over a
   given region, and
-  :func:`allel.stats.diversity.windowed_watterson_theta` for
+  :func:`allel.windowed_watterson_theta` for
   calculating in windows over a chromosome/contig.
 
 * Added functions for calculating Tajima's D statistic (balance
   between nucleotide diversity and number of segregating sites):
-  :func:`allel.stats.diversity.tajima_d` for calculating over a given
-  region and :func:`allel.stats.diversity.windowed_tajima_d` for
+  :func:`allel.tajima_d` for calculating over a given
+  region and :func:`allel.windowed_tajima_d` for
   calculating in windows over a chromosome/contig.
 
-* Added :func:`allel.stats.diversity.windowed_df` for calculating the
+* Added :func:`allel.windowed_df` for calculating the
   rate of fixed differences between two populations.
 
-* Added function :func:`allel.model.locate_fixed_differences` for
+* Added function :func:`allel.locate_fixed_differences` for
   locating variants that are fixed for different alleles in two
   different populations.
 
-* Added function :func:`allel.model.locate_private_alleles` for
+* Added function :func:`allel.locate_private_alleles` for
   locating alleles and variants that are private to a single
   population.
 
@@ -488,33 +533,33 @@ v0.10
 
 * Added functions implementing the Weir and Cockerham (1984)
   estimators for F-statistics:
-  :func:`allel.stats.fst.weir_cockerham_fst` and
-  :func:`allel.stats.fst.windowed_weir_cockerham_fst`.
+  :func:`allel.weir_cockerham_fst` and
+  :func:`allel.windowed_weir_cockerham_fst`.
 
 * Added functions implementing the Hudson (1992) estimator for Fst:
-  :func:`allel.stats.fst.hudson_fst` and
-  :func:`allel.stats.fst.windowed_hudson_fst`.
+  :func:`allel.hudson_fst` and
+  :func:`allel.windowed_hudson_fst`.
 
 * Added new module :mod:`allel.stats.ld` with functions for
   calculating linkage disequilibrium estimators, including
-  :func:`allel.stats.ld.rogers_huff_r` for pairwise variant LD
-  calculation, :func:`allel.stats.ld.windowed_r_squared` for windowed
-  LD calculations, and :func:`allel.stats.ld.locate_unlinked` for
+  :func:`allel.rogers_huff_r` for pairwise variant LD
+  calculation, :func:`allel.windowed_r_squared` for windowed
+  LD calculations, and :func:`allel.locate_unlinked` for
   locating variants in approximate linkage equilibrium.
 
-* Added function :func:`allel.plot.pairwise_ld` for visualising a
+* Added function :func:`allel.plot_pairwise_ld` for visualising a
   matrix of linkage disequilbrium values between pairs of variants.
 
-* Added function :func:`allel.model.create_allele_mapping` for
+* Added function :func:`allel.create_allele_mapping` for
   creating a mapping of alleles into a different index system, i.e.,
   if you want 0 and 1 to represent something other than REF and ALT,
   e.g., ancestral and derived. Also added methods
-  :func:`allel.model.GenotypeArray.map_alleles`,
-  :func:`allel.model.HaplotypeArray.map_alleles` and
-  :func:`allel.model.AlleleCountsArray.map_alleles` which will perform
+  :func:`allel.GenotypeArray.map_alleles`,
+  :func:`allel.HaplotypeArray.map_alleles` and
+  :func:`allel.AlleleCountsArray.map_alleles` which will perform
   an allele transformation given an allele mapping.
 
-* Added function :func:`allel.plot.variant_locator` ported across from
+* Added function :func:`allel.plot_variant_locator` ported across from
   anhima.
 
 * Refactored the :mod:`allel.stats` module into a package with
@@ -535,13 +580,13 @@ v0.8
 ----
 
 * Added `subpop` argument to
-  :func:`allel.model.GenotypeArray.count_alleles` and
-  :func:`allel.model.HaplotypeArray.count_alleles` to enable count
+  :func:`allel.GenotypeArray.count_alleles` and
+  :func:`allel.HaplotypeArray.count_alleles` to enable count
   alleles within a sub-population without subsetting the array.
 
 * Added functions
-  :func:`allel.model.GenotypeArray.count_alleles_subpops` and
-  :func:`allel.model.HaplotypeArray.count_alleles_subpops` to enable
+  :func:`allel.GenotypeArray.count_alleles_subpops` and
+  :func:`allel.HaplotypeArray.count_alleles_subpops` to enable
   counting alleles in multiple sub-populations in a single pass over
   the array, without sub-setting.
 
@@ -550,17 +595,17 @@ v0.8
   genomic features (genes, etc.), with functions for parsing from a GFF3
   file.
 
-* Added convenience function :func:`allel.stats.distance.pairwise_dxy`
+* Added convenience function :func:`allel.pairwise_dxy`
   for computing a distance matrix using Dxy as the metric.
 
 v0.7
 ----
 
-* Added function :func:`allel.io.write_fasta` for writing a nucleotide
+* Added function :func:`allel.write_fasta` for writing a nucleotide
   sequence stored as a NumPy array out to a FASTA format file.
 
 v0.6
 ----
 
-* Added method :func:`allel.model.VariantTable.to_vcf` for writing a
+* Added method :func:`allel.VariantTable.to_vcf` for writing a
   variant table to a VCF format file.

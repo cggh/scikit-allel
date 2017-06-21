@@ -2,4 +2,4 @@ Runs of homozygosity (ROH)
 ==========================
 
 .. automodule:: allel.stats.roh
-.. autofunction:: roh_mhmm
+.. autofunction:: allel.roh_mhmm

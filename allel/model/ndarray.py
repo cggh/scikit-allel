@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function, division
 import collections
 import bisect
-import itertools
 
 
 # third-party imports
@@ -13,7 +12,7 @@ import numpy as np
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
     check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
 from allel.compat import PY2, copy_method_doc, integer_types
-from allel.io import write_vcf, iter_gff3, recarray_from_hdf5_group, recarray_to_hdf5_group
+from allel.io import write_vcf, gff3_to_recarray, recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
     genotype_array_count_alleles, genotype_array_count_alleles_masked, \
@@ -29,9 +28,13 @@ from .generic import index_genotype_vector, compress_genotypes, \
     take_genotype_ac, concatenate_genotype_ac, subset_genotype_ac_array
 
 
-__all__ = ['GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
-           'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector', 'SortedIndex',
-           'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+__all__ = ['Genotypes', 'GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
+           'GenotypeAlleleCounts', 'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector',
+           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+
+
+# noinspection PyTypeChecker
+_total_slice = slice(None)
 
 
 def subset(data, sel0, sel1):
@@ -56,9 +59,9 @@ def subset(data, sel0, sel1):
 
     # deal with None arguments
     if sel0 is None:
-        sel0 = slice(None)
+        sel0 = _total_slice
     if sel1 is None:
-        sel1 = slice(None)
+        sel1 = _total_slice
 
     return data[sel0, sel1]
 
@@ -74,8 +77,13 @@ class NumpyArrayWrapper(ArrayWrapper):
 class NumpyRecArrayWrapper(DisplayAsTable):
 
     def __init__(self, data, copy=False, **kwargs):
-        values = np.rec.array(data, copy=copy, **kwargs)
-        check_ndim(values, 1)
+        if isinstance(data, dict):
+            names = kwargs.get('names', sorted(data.keys()))
+            arrays = [data[n] for n in names]
+            values = np.rec.fromarrays(arrays, names=names)
+        else:
+            values = np.rec.array(data, copy=copy, **kwargs)
+            check_ndim(values, 1)
         if not values.dtype.names:
             raise ValueError('expected recarray')
         super(NumpyRecArrayWrapper, self).__init__(values)
@@ -85,6 +93,27 @@ class NumpyRecArrayWrapper(DisplayAsTable):
         if isinstance(item, (slice, list, np.ndarray, type(Ellipsis))):
             return type(self)(s)
         return s
+
+    @property
+    def names(self):
+        return tuple(self.dtype.names)
+
+    @classmethod
+    def fromdict(cls, data, **kwargs):
+        names = kwargs.get('names', sorted(data.keys()))
+        arrays = [data[n] for n in names]
+        a = np.rec.fromarrays(arrays, names=names)
+        return cls(a, copy=False)
+
+    @classmethod
+    def fromarrays(cls, *args, **kwargs):
+        a = np.rec.fromarrays(*args, **kwargs)
+        return cls(a, copy=False)
+
+    @classmethod
+    def fromrecords(cls, *args, **kwargs):
+        a = np.rec.fromrecords(*args, **kwargs)
+        return cls(a, copy=False)
 
     @classmethod
     def from_hdf5_group(cls, *args, **kwargs):
@@ -376,7 +405,7 @@ class Genotypes(NumpyArrayWrapper):
 
         """
 
-        out = np.all(self >= 0, axis=-1)
+        out = np.all(self.values >= 0, axis=-1)
 
         # handle mask
         if self.mask is not None:
@@ -413,7 +442,7 @@ class Genotypes(NumpyArrayWrapper):
 
         """
 
-        out = np.any(self < 0, axis=-1)
+        out = np.any(self.values < 0, axis=-1)
 
         # handle mask
         if self.mask is not None:
@@ -465,7 +494,7 @@ class Genotypes(NumpyArrayWrapper):
             tmp = (allele1 >= 0) & (allele1 == other_alleles)
             out = np.all(tmp, axis=-1)
         else:
-            out = np.all(self == allele, axis=-1)
+            out = np.all(self.values == allele, axis=-1)
 
         # handle mask
         if self.mask is not None:
@@ -580,11 +609,11 @@ class Genotypes(NumpyArrayWrapper):
 
         """
 
-        allele1 = self.values[..., 0, np.newaxis]
-        other_alleles = self.values[..., 1:]
-        out = np.all(self >= 0, axis=-1) & np.any(allele1 != other_alleles, axis=-1)
+        allele1 = self.values[..., 0, np.newaxis]  # type: np.ndarray
+        other_alleles = self.values[..., 1:]  # type: np.ndarray
+        out = np.all(self.values >= 0, axis=-1) & np.any(allele1 != other_alleles, axis=-1)
         if allele is not None:
-            out &= np.any(self == allele, axis=-1)
+            out &= np.any(self.values == allele, axis=-1)
 
         # handle mask
         if self.mask is not None:
@@ -633,7 +662,7 @@ class Genotypes(NumpyArrayWrapper):
             call = np.asarray(call)[np.newaxis, :]
         else:
             call = np.asarray(call)[np.newaxis, np.newaxis, :]
-        out = np.all(self == call, axis=-1)
+        out = np.all(self.values == call, axis=-1)
 
         # handle mask
         if self.mask is not None:
@@ -779,7 +808,7 @@ class Genotypes(NumpyArrayWrapper):
 
         # count number of alternate alleles
         out = np.empty(self.shape[:-1], dtype=dtype)
-        np.sum(self == 0, axis=-1, out=out)
+        np.sum(self.values == 0, axis=-1, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -844,7 +873,7 @@ class Genotypes(NumpyArrayWrapper):
 
         # count number of alternate alleles
         out = np.empty(self.shape[:-1], dtype=dtype)
-        np.sum(self > 0, axis=-1, out=out)
+        np.sum(self.values > 0, axis=-1, out=out)
 
         # fill missing calls
         if fill != 0:
@@ -905,7 +934,7 @@ class Genotypes(NumpyArrayWrapper):
 
         for allele in alleles:
             # count alleles along ploidy dimension
-            allele_match = self == allele
+            allele_match = self.values == allele
             if self.mask is not None:
                 allele_match &= ~self.mask[..., np.newaxis]
             np.sum(allele_match, axis=-1, out=out[..., allele])
@@ -1017,10 +1046,6 @@ class Genotypes(NumpyArrayWrapper):
         -------
         gm : GenotypeArray
 
-        Notes
-        -----
-        If a mask has been set, it is ignored by this function.
-
         Examples
         --------
 
@@ -1050,6 +1075,8 @@ class Genotypes(NumpyArrayWrapper):
 
         Notes
         -----
+        If a mask has been set, it is ignored by this function.
+
         For arrays with dtype int8 an optimised implementation is used which is
         faster and uses far less memory. It is recommended to convert arrays to
         dtype int8 where possible before calling this method.
@@ -2126,22 +2153,22 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         return out
 
     def is_called(self):
-        return self >= 0
+        return self.values >= 0
 
     def is_missing(self):
-        return self < 0
+        return self.values < 0
 
     def is_ref(self):
-        return self == 0
+        return self.values == 0
 
     def is_alt(self, allele=None):
         if allele is None:
-            return self > 0
+            return self.values > 0
         else:
-            return self == allele
+            return self.values == allele
 
     def is_call(self, allele):
-        return self == allele
+        return self.values == allele
 
     def count_called(self, axis=None):
         b = self.is_called()
@@ -2674,7 +2701,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return np.sum(self > 0, axis=1)
+        return np.sum(self.values > 0, axis=1)
 
     def max_allele(self):
         """Return the highest allele index for each variant.
@@ -2727,7 +2754,8 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return np.any(self.values[:, 1:] > 0, axis=1)
+        t = self.values[:, 1:] > 0  # type: np.ndarray
+        return np.any(t, axis=1)
 
     def is_non_variant(self):
         """Find variants with no non-reference allele calls.
@@ -2752,7 +2780,8 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return np.all(self.values[:, 1:] == 0, axis=1)
+        t = self.values[:, 1:] == 0  # type: np.ndarray
+        return np.all(t, axis=1)
 
     def is_segregating(self):
         """Find segregating variants (where more than one allele is observed).
@@ -2909,6 +2938,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         """
         loc = self.is_biallelic() & (self.max_allele() == 1)
         if min_mac is not None:
+            # noinspection PyAugmentAssignment
             loc = loc & (self.values[:, :2].min(axis=1) >= min_mac)
         return loc
 
@@ -3007,6 +3037,7 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
     def is_called(self):
         return np.sum(self.values, axis=-1) > 0
 
+    # noinspection PyAugmentAssignment
     def is_hom(self, allele=None):
         out = np.sum(self.values > 0, axis=-1) == 1
         if allele is not None:
@@ -3016,11 +3047,13 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
     def is_hom_ref(self):
         return self.is_hom(0)
 
+    # noinspection PyAugmentAssignment
     def is_hom_alt(self):
         out = np.sum(self.values > 0, axis=-1) == 1
         out = out & (self.values[..., 0] == 0)
         return out
 
+    # noinspection PyAugmentAssignment
     def is_het(self, allele=None):
         out = np.sum(self.values > 0, axis=-1) > 1
         if allele is not None:
@@ -3034,7 +3067,7 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
         return af
 
     def allelism(self):
-        return np.sum(self > 0, axis=-1)
+        return np.sum(self.values > 0, axis=-1)
 
     def max_allele(self):
         out = np.empty(self.shape[:-1], dtype='i1')
@@ -3045,10 +3078,12 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
         return out
 
     def is_variant(self):
-        return np.any(self.values[..., 1:] > 0, axis=-1)
+        t = self.values[..., 1:] > 0  # type: np.ndarray
+        return np.any(t, axis=-1)
 
     def is_non_variant(self):
-        return np.all(self.values[..., 1:] == 0, axis=-1)
+        t = self.values[..., 1:] == 0  # type: np.ndarray
+        return np.all(t, axis=-1)
 
     def is_segregating(self):
         return self.allelism() > 1
@@ -3348,7 +3383,8 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         super(SortedIndex, self).__init__(data, copy=copy, **kwargs)
         check_ndim(self.values, 1)
         # check sorted ascending
-        if np.any(self.values[:-1] > self.values[1:]):
+        t = self.values[:-1] > self.values[1:]  # type: np.ndarray
+        if np.any(t):
             raise ValueError('values must be monotonically increasing')
         self._is_unique = None
 
@@ -3356,7 +3392,8 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
     def is_unique(self):
         """True if no duplicate entries."""
         if self._is_unique is None:
-            self._is_unique = ~np.any(self.values[:-1] == self.values[1:])
+            t = self.values[:-1] == self.values[1:]  # type: np.ndarray
+            self._is_unique = ~np.any(t)
         return self._is_unique
 
     def __getitem__(self, item):
@@ -3382,7 +3419,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
 
         Parameters
         ----------
-        key : int
+        key : object
             Value to locate.
 
         Returns
@@ -3470,7 +3507,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
 
         Parameters
         ----------
-        keys : array_like, int
+        keys : array_like
             Array of keys to locate.
         strict : bool, optional
             If True, raise KeyError if any keys are not found in the index.
@@ -3796,7 +3833,8 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
         # check unique
         # noinspection PyTupleAssignmentBalance
         _, counts = np.unique(self.values, return_counts=True)
-        if np.any(counts > 1):
+        t = counts > 1  # type: np.ndarray
+        if np.any(t):
             raise ValueError('values are not unique')
         self.lookup = {v: i for i, v in enumerate(self.values)}
 
@@ -4439,7 +4477,7 @@ class VariantTable(NumpyRecArrayWrapper):
 
         """
 
-        write_vcf(path, variants=self, rename=rename, number=number,
+        write_vcf(path, callset=self, rename=rename, number=number,
                   description=description, fill=fill,
                   write_header=write_header)
 
@@ -4507,9 +4545,9 @@ class FeatureTable(NumpyRecArrayWrapper):
             Genome region to extract. If given, file must be position
             sorted, bgzipped and tabix indexed. Tabix must also be installed
             and on the system path.
-        score_fill : object, optional
+        score_fill : int, optional
             Value to use where score field has a missing value.
-        phase_fill : object, optional
+        phase_fill : int, optional
             Value to use where phase field has a missing value.
         attributes_fill : object or list of objects, optional
             Value(s) to use where attribute field(s) have a missing value.
@@ -4522,24 +4560,10 @@ class FeatureTable(NumpyRecArrayWrapper):
 
         """
 
-        # setup iterator
-        recs = iter_gff3(path, attributes=attributes, region=region,
-                         score_fill=score_fill, phase_fill=phase_fill,
-                         attributes_fill=attributes_fill)
-
-        # determine dtype from sample of initial records
-        if dtype is None:
-            names = 'seqid', 'source', 'type', 'start', 'end', 'score', \
-                    'strand', 'phase'
-            if attributes is not None:
-                names += tuple(attributes)
-            recs_sample = list(itertools.islice(recs, 1000))
-            if not recs_sample:
-                raise ValueError('no records found')
-            a = np.rec.array(recs_sample, names=names)
-            dtype = a.dtype
-            recs = itertools.chain(recs_sample, recs)
-
-        a = np.fromiter(recs, dtype=dtype)
-        ft = FeatureTable(a, copy=False)
-        return ft
+        a = gff3_to_recarray(path, attributes=attributes, region=region,
+                             score_fill=score_fill, phase_fill=phase_fill,
+                             attributes_fill=attributes_fill, dtype=dtype)
+        if a is None:
+            return None
+        else:
+            return FeatureTable(a, copy=False)

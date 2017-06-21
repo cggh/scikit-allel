@@ -2699,6 +2699,7 @@ class FeatureTableInterface(object):
     def test_from_gff3(self):
         ft = self._class.from_gff3('fixture/sample.gff')
         eq(177, len(ft))
+        eq(np.dtype(object), ft.seqid.dtype)
 
     def test_from_gff3_region(self):
         ft = self._class.from_gff3('fixture/sample.sorted.gff.gz', region='apidb|MAL1')
@@ -2706,9 +2707,8 @@ class FeatureTableInterface(object):
         ft = self._class.from_gff3('fixture/sample.sorted.gff.gz',
                                    region='apidb|MAL1:42000-50000')
         eq(7, len(ft))
-        with assert_raises(ValueError):
-            # should be empty
-            self._class.from_gff3('fixture/sample.sorted.gff.gz', region='foo')
+        # should be empty region
+        assert None is self._class.from_gff3('fixture/sample.sorted.gff.gz', region='foo')
 
 
 def test_create_allele_mapping():

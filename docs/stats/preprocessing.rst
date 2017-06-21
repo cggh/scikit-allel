@@ -2,7 +2,7 @@ Preprocessing utilities
 =======================
 
 .. automodule:: allel.stats.preprocessing
-.. autofunction:: get_scaler
-.. autoclass:: CenterScaler
-.. autoclass:: StandardScaler
-.. autoclass:: PattersonScaler
+.. autofunction:: allel.get_scaler
+.. autoclass:: allel.CenterScaler
+.. autoclass:: allel.StandardScaler
+.. autoclass:: allel.PattersonScaler

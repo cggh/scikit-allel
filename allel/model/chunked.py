@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""This module provides alternative implementations of array and table
+"""This module is maintained for backwards-compatibility, however it is recommended
+to migrate to use the equivalent classes from the :mod:`allel.model.dask` module
+where possible.
+
+This module provides alternative implementations of array and table
 classes defined in the :mod:`allel.model.ndarray` module, using
 chunked arrays for data storage. Chunked arrays can be compressed and
 optionally stored on disk, providing a means for working with data too
@@ -15,7 +19,6 @@ information about controlling storage see the :mod:`allel.chunked` module.
 
 """
 from __future__ import absolute_import, print_function, division
-import itertools
 
 
 import numpy as np
@@ -24,11 +27,11 @@ import numpy as np
 from allel.compat import copy_method_doc, string_types
 from allel import chunked as _chunked
 from allel.chunked import ChunkedArrayWrapper, ChunkedTableWrapper
-from allel.io import write_vcf_header, write_vcf_data, iter_gff3
+from allel.io import write_vcf_header, write_vcf_data, normalize_callset
 from allel.util import check_ndim, check_integer_dtype
 from allel.abc import DisplayAs2D
 from .ndarray import GenotypeVector, GenotypeArray, HaplotypeArray, AlleleCountsArray, \
-    VariantTable, FeatureTable, SortedIndex, SortedMultiIndex, GenotypeAlleleCountsArray, \
+    VariantTable, SortedIndex, SortedMultiIndex, GenotypeAlleleCountsArray, \
     GenotypeAlleleCountsVector
 from .generic import compress_genotypes, take_genotypes, concatenate_genotypes, \
     index_genotype_array, subset_genotype_array, index_haplotype_array, \
@@ -41,8 +44,7 @@ from .generic import compress_genotypes, take_genotypes, concatenate_genotypes, 
 
 __all__ = ['GenotypeChunkedArray', 'HaplotypeChunkedArray',
            'AlleleCountsChunkedArray', 'VariantChunkedTable',
-           'FeatureChunkedTable', 'AlleleCountsChunkedTable',
-           'GenotypeAlleleCountsChunkedArray']
+           'AlleleCountsChunkedTable', 'GenotypeAlleleCountsChunkedArray']
 
 
 class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
@@ -826,88 +828,16 @@ class VariantChunkedTable(ChunkedTableWrapper):
 
     def to_vcf(self, path, rename=None, number=None, description=None,
                fill=None, blen=None, write_header=True):
+        names, callset = normalize_callset(self)
         with open(path, 'w') as vcf_file:
             if write_header:
-                write_vcf_header(vcf_file, self, rename=rename, number=number,
+                write_vcf_header(vcf_file, names, callset, rename=rename, number=number,
                                  description=description)
             blen = _chunked.get_blen_table(self, blen)
             for i in range(0, len(self), blen):
                 j = min(i+blen, len(self))
                 block = self[i:j]
-                write_vcf_data(vcf_file, block, rename=rename, fill=fill)
-
-
-class FeatureChunkedTable(ChunkedTableWrapper):
-    """Alternative implementation of the
-    :class:`allel.model.ndarray.FeatureTable` class, using a chunked table as
-    the backing store.
-
-    Parameters
-    ----------
-    data: table_like
-        Data to be wrapped. May be a tuple or list of columns (array-like),
-        a dict mapping names to columns, a bcolz ctable, h5py group,
-        numpy recarray, or anything providing a similar interface.
-    names : sequence of strings
-        Column names.
-
-    """
-
-    array_cls = FeatureTable
-
-    def __init__(self, data, names=None):
-        super(FeatureChunkedTable, self).__init__(data, names=names)
-
-    @property
-    def n_features(self):
-        return len(self)
-
-    def to_mask(self, size, start_name='start', stop_name='end'):
-        m = np.zeros(size, dtype=bool)
-        start = self[start_name]
-        stop = self[stop_name]
-        for i, j in zip(start, stop):
-            # assume 1-based inclusive coords
-            m[i-1:j] = True
-        return m
-
-    @staticmethod
-    def from_gff3(path, attributes=None, region=None, score_fill=-1,
-                  phase_fill=-1, attributes_fill=b'.', dtype=None,
-                  blen=None, storage=None, create='table', expectedlen=200000,
-                  **kwargs):
-
-        # setup iterator
-        recs = iter_gff3(path, attributes=attributes, region=region,
-                         score_fill=score_fill, phase_fill=phase_fill,
-                         attributes_fill=attributes_fill)
-
-        # read a sample to determine dtype, blen
-        recs_sample = list(itertools.islice(recs, 1000))
-        if not recs_sample:
-            raise ValueError('no records found')
-        names = 'seqid', 'source', 'type', 'start', 'end', 'score', 'strand', \
-                'phase'
-        if attributes:
-            names += tuple(attributes)
-        ra = np.rec.array(recs_sample, names=names, dtype=dtype)
-        dtype = ra.dtype
-
-        # setup output
-        storage = _chunked.get_storage(storage)
-        out = getattr(storage, create)(ra, expectedlen=expectedlen,
-                                       **kwargs)
-        blen = _chunked.get_blen_table(out, blen=blen)
-
-        # read block-wise
-        block = list(itertools.islice(recs, 0, blen))
-        while block:
-            a = np.asarray(block, dtype=dtype)
-            out.append(a)
-            block = list(itertools.islice(recs, 0, blen))
-
-        out = FeatureChunkedTable(out)
-        return out
+                write_vcf_data(vcf_file, names, block, rename=rename, fill=fill)
 
 
 class AlleleCountsChunkedTable(ChunkedTableWrapper):
