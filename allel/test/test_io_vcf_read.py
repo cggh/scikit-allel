@@ -6,6 +6,8 @@ import shutil
 import itertools
 import gzip
 import warnings
+import tempfile
+import atexit
 
 
 import zarr
@@ -21,6 +23,11 @@ from allel.compat import PY2
 # needed for PY2/PY3 consistent behaviour
 warnings.resetwarnings()
 warnings.simplefilter('always')
+
+
+# setup temp dir for testing
+tempdir = tempfile.mkdtemp()
+atexit.register(shutil.rmtree, tempdir)
 
 
 def test_read_vcf_chunks():
@@ -1428,7 +1435,7 @@ def test_no_samples():
     assert 'calldata/GT' not in callset
     assert 'calldata/GQ' not in callset
 
-    h5_fn = 'temp/sample.h5'
+    h5_fn = os.path.join(tempdir, 'sample.h5')
     if os.path.exists(h5_fn):
         os.remove(h5_fn)
     vcf_to_hdf5(io.BytesIO(input_data), h5_fn,
@@ -1439,7 +1446,7 @@ def test_no_samples():
         assert 'calldata/GT' not in callset
         assert 'calldata/GQ' not in callset
 
-    zarr_fn = 'temp/sample.zarr'
+    zarr_fn = os.path.join(tempdir, 'sample.zarr')
     if os.path.exists(zarr_fn):
         shutil.rmtree(zarr_fn)
     vcf_to_zarr(io.BytesIO(input_data), zarr_fn,
@@ -1713,7 +1720,7 @@ def test_calldata_quirks():
 
 def test_vcf_to_npz():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
-    npz_fn = 'temp/sample.npz'
+    npz_fn = os.path.join(tempdir, 'sample.npz')
     region_values = None, '20', '20:10000-20000'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
@@ -1739,7 +1746,7 @@ def test_vcf_to_npz():
 
 def test_vcf_to_zarr():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
-    zarr_path = 'temp/sample.zarr'
+    zarr_path = os.path.join(tempdir, 'sample.zarr')
     region_values = None, '20', '20:10000-20000'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
@@ -1768,7 +1775,7 @@ def test_vcf_to_zarr():
 
 def test_vcf_to_zarr_ann():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
-    zarr_path = 'temp/ann.zarr'
+    zarr_path = os.path.join(tempdir, 'ann.zarr')
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
@@ -1788,7 +1795,7 @@ def test_vcf_to_zarr_ann():
 
 def test_vcf_to_hdf5():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
-    h5_fn = 'temp/sample.h5'
+    h5_fn = os.path.join(tempdir, 'sample.h5')
     region_values = None, '20', '20:10000-20000'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
@@ -1817,7 +1824,7 @@ def test_vcf_to_hdf5():
 
 def test_vcf_to_hdf5_ann():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
-    h5_fn = 'temp/ann.h5'
+    h5_fn = os.path.join(tempdir, 'ann.h5')
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
@@ -1901,7 +1908,7 @@ def test_vcf_to_csv():
         types = {'REF': string_type, 'ALT': string_type}
         df = vcf_to_dataframe(fn, fields=fields, alt_number=2, numbers=numbers, types=types,
                               chunk_length=2)
-        out_fn = 'temp/test.csv'
+        out_fn = os.path.join(tempdir, 'test.csv')
         if os.path.exists(out_fn):
             os.remove(out_fn)
         vcf_to_csv(fn, out_fn, fields=fields, alt_number=2, numbers=numbers, types=types,
@@ -1923,7 +1930,7 @@ def test_vcf_to_csv_ann():
                                        types={'Allele': string_type, 'HGVS_c': string_type})]
         df = vcf_to_dataframe(fn, fields=fields, numbers=numbers, types=types, chunk_length=2,
                               transformers=transformers)
-        out_fn = 'temp/test.csv'
+        out_fn = os.path.join(tempdir, 'test.csv')
         if os.path.exists(out_fn):
             os.remove(out_fn)
         vcf_to_csv(fn, out_fn, fields=fields, numbers=numbers, types=types, chunk_length=2,

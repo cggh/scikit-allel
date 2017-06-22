@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 from ast import literal_eval
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 
 
 DISTNAME = 'scikit-allel'
@@ -116,13 +116,11 @@ def setup_package():
         download_url=DOWNLOAD_URL,
         version=VERSION,
         package_dir={'': '.'},
-        packages=['allel', 'allel.model', 'allel.chunked', 'allel.stats', 'allel.io',
-                  'allel.opt', 'allel.test', 'allel.test.model', 'allel.test.stats',
-                  'allel.test.data'],
-        package_data={'allel.test': 'data/*'},
+        packages=find_packages(),
+        package_data={'allel.test': ['data/*']},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
-        include_package_data=True,
+        zip_safe=False,
     )
     setup_extensions(metadata)
     setup(**metadata)

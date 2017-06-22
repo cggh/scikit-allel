@@ -1,4 +1,13 @@
-recursive-include docs *.rst
-recursive-include allel *.c
-recursive-include allel *.pyx
-include allel/test/data/*
+include MANIFEST.in
+include LICENSE
+include README.rst
+include setup.py
+
+graft docs
+prune docs/_build
+
+graft allel
+
+global-exclude *.so
+global-exclude *.pyd
+global-exclude *.pyc
