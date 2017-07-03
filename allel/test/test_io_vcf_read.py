@@ -1812,6 +1812,7 @@ def test_vcf_to_hdf5():
                     samples=samples, types=types)
         with h5py.File(h5_fn, mode='r') as actual:
             for key in expect.keys():
+                eq_(expect[key].dtype, actual[key][:].dtype)
                 if expect[key].dtype.kind == 'f':
                     assert_array_almost_equal(expect[key], actual[key][:])
                 else:
@@ -1837,6 +1838,28 @@ def test_vcf_to_hdf5_ann():
             for key in expect.keys():
                 if expect[key].dtype.kind == 'f':
                     assert_array_almost_equal(expect[key], actual[key][:])
+                else:
+                    assert_array_equal(expect[key], actual[key][:])
+
+
+def test_vcf_to_hdf5_vlen():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    h5_fn = os.path.join(tempdir, 'sample.h5')
+    fields = ['CHROM', 'ID', 'samples']
+    for string_type in 'S10', 'object':
+        types = {'CHROM': string_type, 'ID': string_type, 'samples': string_type}
+        expect = read_vcf(fn, fields=fields, alt_number=2, types=types)
+        if os.path.exists(h5_fn):
+            os.remove(h5_fn)
+        vcf_to_hdf5(fn, h5_fn, fields=fields, alt_number=2, chunk_length=3, types=types, vlen=False)
+        with h5py.File(h5_fn, mode='r') as actual:
+            for key in expect.keys():
+                if expect[key].dtype.kind == 'f':
+                    assert_array_almost_equal(expect[key], actual[key][:])
+                elif expect[key].dtype.kind == 'O':
+                    # strings always stored as fixed length if vlen=False
+                    eq_('S', actual[key].dtype.kind)
+                    assert_array_equal(expect[key].astype('S'), actual[key][:])
                 else:
                     assert_array_equal(expect[key], actual[key][:])
 

@@ -381,7 +381,7 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
 
 
 def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts,
-                         shuffle, overwrite, headers):
+                         shuffle, overwrite, headers, vlen):
     import h5py
 
     # handle no input
@@ -412,7 +412,11 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
         shape = (0,) + data.shape[1:]
         maxshape = (None,) + data.shape[1:]
         if data.dtype.kind == 'O':
-            dt = h5py.special_dtype(vlen=str)
+            if vlen:
+                dt = h5py.special_dtype(vlen=str)
+            else:
+                data = data.astype('S')
+                dt = data.dtype
         else:
             dt = data.dtype
         ds = root[group].create_dataset(
@@ -435,7 +439,7 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
     return keys
 
 
-def _hdf5_store_chunk(root, keys, chunk):
+def _hdf5_store_chunk(root, keys, chunk, vlen):
 
     # compute length of current chunk
     current_chunk_length = chunk[keys[0]].shape[0]
@@ -455,7 +459,17 @@ def _hdf5_store_chunk(root, keys, chunk):
         # obtain dataset
         dataset = root[k]
 
-        # ensure dataset is large enough
+        # handle variable length strings
+        if data.dtype.kind == 'O' and not vlen:
+            data = data.astype('S')
+            if data.dtype.itemsize > dataset.dtype.itemsize:
+                warnings.warn(
+                    'found string length %s longer than %s guessed for field %r, values will be '
+                    'truncated; recommend rerunning setting type to at least "S%s"' %
+                    (data.dtype.itemsize, dataset.dtype.itemsize, k, data.dtype.itemsize)
+                )
+
+        # ensure dataset is long enough
         dataset.resize(new_length, axis=0)
 
         # store the data
@@ -472,6 +486,7 @@ def vcf_to_hdf5(input, output,
                 compression_opts=1,
                 shuffle=False,
                 overwrite=False,
+                vlen=True,
                 fields=None,
                 types=None,
                 numbers=None,
@@ -503,6 +518,16 @@ def vcf_to_hdf5(input, output,
         Use byte shuffling, which may improve compression (default is False).
     overwrite : bool
         {overwrite}
+    vlen : bool
+        If True, store variable length strings. Note that there is considerable storage overhead
+        for variable length strings in HDF5, and leaving this option as True (default) may lead
+        to large file sizes. If False, all strings will be stored in the HDF5 file as fixed length
+        strings, even if they are specified as 'object' type. In this case, the string length for
+        any field with 'object' type will be determined based on the maximum length of strings
+        found in the first chunk, and this may cause values to be truncated if longer values are
+        found in later chunks. To avoid truncation and large file sizes, manually set the type for
+        all string fields to an explicit fixed length string type, e.g., 'S10' for a field where
+        you know at most 10 characters are required.
     fields : list of strings, optional
         {fields}
     types : dict, optional
@@ -568,7 +593,11 @@ def vcf_to_hdf5(input, output,
                     raise ValueError('dataset exists at path %r; use overwrite=True to replace'
                                      % name)
             if samples.dtype.kind == 'O':
-                t = h5py.special_dtype(vlen=str)
+                if vlen:
+                    t = h5py.special_dtype(vlen=str)
+                else:
+                    samples = samples.astype('S')
+                    t = samples.dtype
             else:
                 t = samples.dtype
             root[group].create_dataset(name, data=samples, chunks=None, dtype=t)
@@ -581,16 +610,16 @@ def vcf_to_hdf5(input, output,
         keys = _hdf5_setup_datasets(
             chunk=chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width,
             compression=compression, compression_opts=compression_opts, shuffle=shuffle,
-            overwrite=overwrite, headers=headers
+            overwrite=overwrite, headers=headers, vlen=vlen
         )
 
         # store first chunk
-        _hdf5_store_chunk(root, keys, chunk)
+        _hdf5_store_chunk(root, keys, chunk, vlen)
 
         # store remaining chunks
         for chunk, _, _, _ in it:
 
-            _hdf5_store_chunk(root, keys, chunk)
+            _hdf5_store_chunk(root, keys, chunk, vlen)
 
 
 vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
