@@ -4,7 +4,8 @@ Release notes
 v1.1.7
 ------
 
-@@TODO
+Added an option to :func:`allel.vcf_to_hdf5` to disable use of variable length strings because they
+can cause large HDF5 file size (`#153 <https://github.com/cggh/scikit-allel/issues/153>`_).
 
 v1.1.6
 ------
@@ -40,16 +41,16 @@ Maintenance work
 ~~~~~~~~~~~~~~~~
 
 * scikit-allel is now compatible with Dask versions 0.12 and later
-  (`#148# <https://github.com/cggh/scikit-allel/issues/148>`_).
+  (`#148 <https://github.com/cggh/scikit-allel/issues/148>`_).
 * Fixed issue within functions :func:`allel.joint_sfs` and
   :func:`allel.joint_sfs_folded` relating to data types
-  (`#144# <https://github.com/cggh/scikit-allel/issues/144>`_).
+  (`#144 <https://github.com/cggh/scikit-allel/issues/144>`_).
 * Fixed regression in functions :func:`allel.ehh_decay` and
   :func:`allel.voight_painting` following refactoring of array
   data structures in version 1.0.0
-  (`#142# <https://github.com/cggh/scikit-allel/issues/142>`_).
+  (`#142 <https://github.com/cggh/scikit-allel/issues/142>`_).
 * HTML representations of arrays have been tweaked to look better in Jupyter notebooks
-  (`#141# <https://github.com/cggh/scikit-allel/issues/141>`_).
+  (`#141 <https://github.com/cggh/scikit-allel/issues/141>`_).
 
 End of support for Python 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

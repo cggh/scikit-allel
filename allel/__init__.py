@@ -21,4 +21,4 @@ from . import chunked
 from . import constants
 from . import util
 
-__version__ = '1.1.7b1'
+__version__ = '1.1.7'
