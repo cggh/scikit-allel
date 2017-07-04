@@ -7,6 +7,7 @@ v1.1.8
 * Changed semantics of `is_snp` computed field when extracting data from VCF to exclude variants
   where one of the alternate alleles is a spanning deletion ('*')
   (`#155 <https://github.com/cggh/scikit-allel/issues/155>`_).
+* Resolved minor logging bug (`#152 <https://github.com/cggh/scikit-allel/issues/152>`_)
 
 v1.1.7
 ------
