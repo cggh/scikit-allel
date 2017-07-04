@@ -80,10 +80,13 @@ def _chunk_iter_progress(it, log, prefix):
         n_variants += chunk_length
         if not PY2:
             chrom = str(chrom, 'ascii')
-        print('%s %s rows in %.2fs; chunk in %.2fs (%s rows/s); %s:%s' %
-              (prefix, n_variants, elapsed, elapsed_chunk,
-               int(chunk_length//elapsed_chunk), chrom, pos),
-              file=log)
+        message = (
+            '%s %s rows in %.2fs; chunk in %.2fs (%s rows/s)' %
+            (prefix, n_variants, elapsed, elapsed_chunk, int(chunk_length//elapsed_chunk))
+        )
+        if chrom:
+            message += '; %s:%s' % (chrom, pos)
+        print(message, file=log)
         log.flush()
         yield chunk, chunk_length, chrom, pos
         before_chunk = after_chunk
