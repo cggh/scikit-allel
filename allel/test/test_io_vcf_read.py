@@ -1466,6 +1466,7 @@ def test_computed_fields():
                   b"2L\t12\t.\tA\t.\t.\t.\t.\t.\n"
                   b"2L\t34\t.\tC\tT\t.\t.\t.\t.\n"
                   b"3R\t45\t.\tG\tA,T\t.\t.\t.\t.\n"
+                  b"3R\t47\t.\tG\tC,T,*\t.\t.\t.\t.\n"
                   b"3R\t56\t.\tG\tA,GTAC\t.\t.\t.\t.\n"
                   b"3R\t56\t.\tCATG\tC,GATG\t.\t.\t.\t.\n"
                   b"3R\t56\t.\tGTAC\tATAC,GTACTACTAC,G,GTACA,GTA\t.\t.\t.\t.\n")
@@ -1477,12 +1478,13 @@ def test_computed_fields():
                            numbers={'ALT': 5}, types={'REF': string_dtype, 'ALT': string_dtype})
 
         a = callset['variants/ALT']
-        eq_((8, 5), a.shape)
+        eq_((9, 5), a.shape)
         e = np.array([[b'', b'', b'', b'', b''],
                       [b'G', b'', b'', b'', b''],
                       [b'', b'', b'', b'', b''],
                       [b'T', b'', b'', b'', b''],
                       [b'A', b'T', b'', b'', b''],
+                      [b'C', b'T', b'*', b'', b''],
                       [b'A', b'GTAC', b'', b'', b''],
                       [b'C', b'GATG', b'', b'', b''],
                       [b'ATAC', b'GTACTACTAC', b'G', b'GTACA', b'GTA']])
@@ -1491,25 +1493,26 @@ def test_computed_fields():
         assert_array_equal(e, a)
 
         a = callset['variants/numalt']
-        eq_((8,), a.shape)
-        assert_array_equal([0, 1, 0, 1, 2, 2, 2, 5], a)
+        eq_((9,), a.shape)
+        assert_array_equal([0, 1, 0, 1, 2, 3, 2, 2, 5], a)
 
         a = callset['variants/svlen']
-        eq_((8, 5), a.shape)
+        eq_((9, 5), a.shape)
         e = np.array([[0, 0, 0, 0, 0],
                       [1, 0, 0, 0, 0],
                       [0, 0, 0, 0, 0],
                       [0, 0, 0, 0, 0],
                       [0, 0, 0, 0, 0],
+                      [0, 0, -1, 0, 0],
                       [0, 3, 0, 0, 0],
                       [-3, 0, 0, 0, 0],
                       [0, 6, -3, 1, -1]])
         assert_array_equal(e, a)
 
         a = callset['variants/is_snp']
-        eq_((8,), a.shape)
+        eq_((9,), a.shape)
         eq_(np.dtype(bool), a.dtype)
-        assert_array_equal([False, False, False, True, True, False, False, False], a)
+        assert_array_equal([False, False, False, True, True, False, False, False, False], a)
 
         # test is_snp with reduced ALT number
         callset = read_vcf(io.BytesIO(input_data),
@@ -1517,25 +1520,25 @@ def test_computed_fields():
                            numbers={'ALT': 1}, types={'REF': string_dtype, 'ALT': string_dtype})
 
         a = callset['variants/ALT']
-        eq_((8,), a.shape)
-        e = np.array([b'', b'G', b'', b'T', b'A', b'A', b'C', b'ATAC'])
+        eq_((9,), a.shape)
+        e = np.array([b'', b'G', b'', b'T', b'A', b'C', b'A', b'C', b'ATAC'])
         if a.dtype.kind == 'O':
             e = e.astype('U').astype(object)
         assert_array_equal(e, a)
 
         a = callset['variants/numalt']
-        eq_((8,), a.shape)
-        assert_array_equal([0, 1, 0, 1, 2, 2, 2, 5], a)
+        eq_((9,), a.shape)
+        assert_array_equal([0, 1, 0, 1, 2, 3, 2, 2, 5], a)
 
         a = callset['variants/svlen']
-        eq_((8,), a.shape)
-        e = np.array([0, 1, 0, 0, 0, 0, -3, 0])
+        eq_((9,), a.shape)
+        e = np.array([0, 1, 0, 0, 0, 0, 0, -3, 0])
         assert_array_equal(e, a)
 
         a = callset['variants/is_snp']
-        eq_((8,), a.shape)
+        eq_((9,), a.shape)
         eq_(np.dtype(bool), a.dtype)
-        assert_array_equal([False, False, False, True, True, False, False, False], a)
+        assert_array_equal([False, False, False, True, True, False, False, False, False], a)
 
 
 def test_genotype_ac():

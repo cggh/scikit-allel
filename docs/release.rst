@@ -1,16 +1,23 @@
 Release notes
 =============
 
+v1.1.8
+------
+
+* Changed semantics of `is_snp` computed field when extracting data from VCF to exclude variants
+  where one of the alternate alleles is a spanning deletion ('*')
+  (`#155 <https://github.com/cggh/scikit-allel/issues/155>`_).
+
 v1.1.7
 ------
 
-Added an option to :func:`allel.vcf_to_hdf5` to disable use of variable length strings because they
-can cause large HDF5 file size (`#153 <https://github.com/cggh/scikit-allel/issues/153>`_).
+* Added an option to :func:`allel.vcf_to_hdf5` to disable use of variable length strings because they
+  can cause large HDF5 file size (`#153 <https://github.com/cggh/scikit-allel/issues/153>`_).
 
 v1.1.6
 ------
 
-Include fixture data in release to aid testing and binary builds.
+* Include fixture data in release to aid testing and binary builds.
 
 v1.1.0
 ------

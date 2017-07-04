@@ -53,6 +53,7 @@ cdef char COMMA = b','
 cdef char SLASH = b'/'
 cdef char PIPE = b'|'
 cdef char EQUALS = b'='
+cdef char ASTERISK = b'*'
 
 # user field specifications for fixed fields
 CHROM_FIELD = 'variants/CHROM'
@@ -1380,7 +1381,7 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
                 chars_stored = 0
 
             else:
-                if stream.c != PERIOD:
+                if stream.c != PERIOD and stream.c != ASTERISK:
                     alt_len += 1
                 if self.store_alt and chars_stored < self.itemsize and alt_index < self.number:
                     # store value
@@ -1539,7 +1540,7 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
                 alt_len = 0
 
             else:
-                if stream.c != PERIOD:
+                if stream.c != PERIOD and stream.c != ASTERISK:
                     alt_len += 1
                 if self.store_alt and alt_index < self.number:
                     CharVector_append(&context.temp, stream.c)
