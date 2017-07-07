@@ -1189,7 +1189,7 @@ def _normalize_type(t):
         return np.dtype(default_integer_dtype)
     elif t == 'Float':
         return np.dtype(default_float_dtype)
-    elif t == 'String':
+    elif t == 'String' or t == 'Character':
         return np.dtype(default_string_dtype)
     elif t == 'Flag':
         return np.dtype(bool)
