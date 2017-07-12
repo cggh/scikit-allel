@@ -2025,7 +2025,7 @@ cdef class VCFInfoInt32Parser(VCFInfoParserBase):
         super(VCFInfoInt32Parser, self).__init__(*args, **kwargs)
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) except -1:  # nogil
-        return info_parse_integer(stream, context, self.memory)
+        vcf_info_parse_integer(stream, context, self.memory)
 
     cdef int malloc_chunk(self) except -1:
         shape = (self.chunk_length, self.number)
