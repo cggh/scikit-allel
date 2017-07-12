@@ -1191,6 +1191,8 @@ def _normalize_type(t):
         return np.dtype(default_float_dtype)
     elif t == 'String':
         return np.dtype(default_string_dtype)
+    elif t == 'Character':
+        return np.dtype('S1')
     elif t == 'Flag':
         return np.dtype(bool)
     elif isinstance(t, str) and t.startswith('genotype/'):

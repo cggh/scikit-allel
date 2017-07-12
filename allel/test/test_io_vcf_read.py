@@ -757,6 +757,41 @@ def test_info_types():
         eq_((9, 3), callset['variants/AC'].shape)
 
 
+def test_vcf_types():
+
+    input_data = (
+        b'##INFO=<ID=foo,Number=1,Type=String,Description="Testing 123.">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        b"2L\t12\t.\tA\tC\t.\t.\tfoo=bar\t.\n"
+    )
+    callset = read_vcf(io.BytesIO(input_data), fields=['foo'])
+    eq_(np.dtype(object), callset['variants/foo'].dtype)
+
+    input_data = (
+        b'##INFO=<ID=foo,Number=1,Type=Integer,Description="Testing 123.">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        b"2L\t12\t.\tA\tC\t.\t.\tfoo=42\t.\n"
+    )
+    callset = read_vcf(io.BytesIO(input_data), fields=['foo'])
+    eq_(np.dtype('i4'), callset['variants/foo'].dtype)
+
+    input_data = (
+        b'##INFO=<ID=foo,Number=1,Type=Float,Description="Testing 123.">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        b"2L\t12\t.\tA\tC\t.\t.\tfoo=42.0\t.\n"
+    )
+    callset = read_vcf(io.BytesIO(input_data), fields=['foo'])
+    eq_(np.dtype('f4'), callset['variants/foo'].dtype)
+
+    input_data = (
+        b'##INFO=<ID=foo,Number=1,Type=Character,Description="Testing 123.">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        b"2L\t12\t.\tA\tC\t.\t.\tfoo=b\t.\n"
+    )
+    callset = read_vcf(io.BytesIO(input_data), fields=['foo'])
+    eq_(np.dtype('S1'), callset['variants/foo'].dtype)
+
+
 def test_genotype_types():
 
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
