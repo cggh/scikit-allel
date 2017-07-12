@@ -262,7 +262,7 @@ def plot_pairwise_ld(m, colorbar=True, ax=None, imshow_kwargs=None):
     # set up axes
     if ax is None:
         # make a square figure with enough pixels to represent each variant
-        x = m_square.shape[0] / plt.rcParams['savefig.dpi']
+        x = m_square.shape[0] / plt.rcParams['figure.dpi']
         x = max(x, plt.rcParams['figure.figsize'][0])
         fig, ax = plt.subplots(figsize=(x, x))
         fig.tight_layout(pad=0)
