@@ -1926,7 +1926,7 @@ def test_vcf_to_dataframe():
                 assert_array_equal(e, df[name].values)
             elif e.ndim == 2:
                 for i in range(e.shape[1]):
-                    assert_array_equal(e[:, i], df['%s_%s' % (name, i+1)])
+                    assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
 
 
 def test_vcf_to_dataframe_ann():
@@ -1958,7 +1958,7 @@ def test_vcf_to_dataframe_ann():
                 assert_array_equal(e, df[name].values)
             elif e.ndim == 2:
                 for i in range(e.shape[1]):
-                    assert_array_equal(e[:, i], df['%s_%s' % (name, i+1)])
+                    assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
 
 
 def test_vcf_to_csv():
@@ -2023,7 +2023,7 @@ def test_vcf_to_recarray():
                     assert_array_equal(e, a[name])
                 elif e.ndim == 2:
                     for i in range(e.shape[1]):
-                        assert_array_equal(e[:, i], a['%s_%s' % (name, i+1)])
+                        assert_array_equal(e[:, i], a['%s_%s' % (name, i + 1)])
                 else:
                     assert False, (k, e.ndim)
             else:
@@ -2055,7 +2055,7 @@ def test_vcf_to_recarray_ann():
                     assert_array_equal(e, a[name])
                 elif e.ndim == 2:
                     for i in range(e.shape[1]):
-                        assert_array_equal(e[:, i], a['%s_%s' % (name, i+1)])
+                        assert_array_equal(e[:, i], a['%s_%s' % (name, i + 1)])
                 else:
                     assert False, (k, e.ndim)
             else:
