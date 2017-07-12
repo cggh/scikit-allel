@@ -1,17 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Functions for extracting data from Variant Call Format (VCF) files and loading
+Extract data from VCF files.
+
+This module contains Functions for extracting data from Variant Call Format (VCF) files and loading
 into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
-
-WONTFIX/POSTPONED:
-
-* GenotypeArray.from_vcf
-* HaplotypeArray.from_vcf(ploidy)
-* VariantTable.from_vcf
-* is_phased computed field
-* Feature to rename fields, e.g., calldata/GT -> calldata/genotype. Could be implemented via
-  transformer.
-* Specialised parser for EFF - obsolete.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -30,13 +22,13 @@ import numpy as np
 from allel.compat import PY2, FileNotFoundError
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 # expose some names from cython extension
-# noinspection PyUnresolvedReferences
-from allel.opt.io_vcf_read import ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, \
-    ANN_ALLELE_FIELD, ANN_ANNOTATION_FIELD, ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, \
-    ANN_CDNA_POS_FIELD, ANN_CDS_LENGTH_FIELD, ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, \
-    ANN_FEATURE_ID_FIELD, ANN_FEATURE_TYPE_FIELD, ANN_FIELD, ANN_FIELDS, ANN_GENE_ID_FIELD, \
-    ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, ANN_HGVS_P_FIELD, ANN_RANK_FIELD, \
-    ANN_TRANSCRIPT_BIOTYPE_FIELD  # flake8: noqa
+from allel.opt.io_vcf_read import (  # noqa: F401
+    ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, ANN_ANNOTATION_FIELD,
+    ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD, ANN_CDS_LENGTH_FIELD,
+    ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, ANN_FEATURE_ID_FIELD, ANN_FEATURE_TYPE_FIELD, ANN_FIELD,
+    ANN_FIELDS, ANN_GENE_ID_FIELD, ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, ANN_HGVS_P_FIELD,
+    ANN_RANK_FIELD, ANN_TRANSCRIPT_BIOTYPE_FIELD
+)
 
 
 DEFAULT_BUFFER_SIZE = 2**14
@@ -82,7 +74,7 @@ def _chunk_iter_progress(it, log, prefix):
             chrom = str(chrom, 'ascii')
         message = (
             '%s %s rows in %.2fs; chunk in %.2fs (%s rows/s)' %
-            (prefix, n_variants, elapsed, elapsed_chunk, int(chunk_length//elapsed_chunk))
+            (prefix, n_variants, elapsed, elapsed_chunk, int(chunk_length // elapsed_chunk))
         )
         if chrom:
             message += '; %s:%s' % (chrom, pos)
@@ -93,7 +85,7 @@ def _chunk_iter_progress(it, log, prefix):
     after_all = time.time()
     elapsed = after_all - before_all
     print('%s all done (%s rows/s)' %
-          (prefix, int(n_variants//elapsed)), file=log)
+          (prefix, int(n_variants // elapsed)), file=log)
     log.flush()
 
 
@@ -236,7 +228,7 @@ def read_vcf(input,
     # setup
     _, samples, _, it = iter_vcf_chunks(
         input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length,  fills=fills, region=region,
+        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
         tabix=tabix, samples=samples, transformers=transformers
     )
 
@@ -245,7 +237,7 @@ def read_vcf(input,
         it = _chunk_iter_progress(it, log, prefix='[read_vcf]')
 
     # read all chunks into a list
-    chunks = [chunk for chunk, _, _, _ in it]
+    chunks = [d[0] for d in it]
 
     # setup output
     output = dict()
@@ -350,7 +342,7 @@ def vcf_to_npz(input, output,
     # read all data into memory
     data = read_vcf(
         input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length,  log=log, fills=fills,
+        buffer_size=buffer_size, chunk_length=chunk_length, log=log, fills=fills,
         region=region, tabix=tabix, samples=samples, transformers=transformers
     )
 
@@ -799,8 +791,8 @@ def vcf_to_zarr(input, output,
     # setup chunk iterator
     _, samples, headers, it = iter_vcf_chunks(
         input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills,  region=region, tabix=tabix,
-        samples=samples, transformers=transformers
+        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
+        tabix=tabix, samples=samples, transformers=transformers
     )
 
     # setup progress logging
@@ -1564,7 +1556,7 @@ def _chunk_to_dataframe(fields, chunk):
             items.append((name, a))
         elif a.ndim == 2:
             for i in range(a.shape[1]):
-                items.append(('%s_%s' % (name, i+1), a[:, i]))
+                items.append(('%s_%s' % (name, i + 1), a[:, i]))
         else:
             warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
     df = pandas.DataFrame.from_items(items)
@@ -1636,7 +1628,7 @@ def vcf_to_dataframe(input,
         it = _chunk_iter_progress(it, log, prefix='[vcf_to_dataframe]')
 
     # read all chunks into a list
-    chunks = [chunk for chunk, _, _, _ in it]
+    chunks = [d[0] for d in it]
 
     # setup output
     output = None
@@ -1679,7 +1671,7 @@ def vcf_to_csv(input, output,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                log=None,
                **kwargs):
-    """Read data from a VCF file and write out to a comma-separated values (CSV) file.
+    r"""Read data from a VCF file and write out to a comma-separated values (CSV) file.
 
     Parameters
     ----------
@@ -1771,7 +1763,7 @@ def _chunk_to_recarray(fields, chunk):
         elif a.ndim == 2:
             for i in range(a.shape[1]):
                 arrays.append(a[:, i])
-                names.append('%s_%s' % (name, i+1))
+                names.append('%s_%s' % (name, i + 1))
         else:
             warnings.warn('cannot handle arrays with >2 dimensions, ignoring %r' % name)
     ra = np.rec.fromarrays(arrays, names=names)
@@ -1842,7 +1834,7 @@ def vcf_to_recarray(input,
         it = _chunk_iter_progress(it, log, prefix='[vcf_to_recarray]')
 
     # read all chunks into a list
-    chunks = [chunk for chunk, _, _, _ in it]
+    chunks = [d[0] for d in it]
 
     # setup output
     output = None
