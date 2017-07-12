@@ -1,6 +1,19 @@
 Release notes
 =============
 
+v1.1.9
+------
+
+* Added support for Type=Character in VCF files
+  (`Kunal Bhutani <https://github.com/kunalbhutani>`_;
+  `#159 <https://github.com/cggh/scikit-allel/issues/159>`_)
+* Fixed type of indexing variables in VCF reading functions to handle larger datasets
+  (`#160 <https://github.com/cggh/scikit-allel/issues/160>`_).
+* Added option to specify string codec in :func:`allel.vcf_to_zarr`
+  (`#156 <https://github.com/cggh/scikit-allel/issues/156>`_).
+* Fixed bug in LD plotting function
+  (`#161 <https://github.com/cggh/scikit-allel/issues/161>`_).
+
 v1.1.8
 ------
 
