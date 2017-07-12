@@ -637,32 +637,76 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
 )
 
 
-_zarr_string_codec = None
+# ensure string codecs are registered
+def _zarr_register_codecs():
+    try:
+        import zarr
+    except ImportError:
+        # Zarr not installed
+        return
+
+    # only need to register codecs for string encoding for zarr < 2.2
+    from distutils.version import StrictVersion
+    need_to_register = StrictVersion(zarr.__version__) < StrictVersion('2.2')
+    if not need_to_register:
+        return
+
+    from zarr.codecs import codec_registry as registry
+
+    # register Pickle
+    try:
+        from numcodecs import Pickle
+    except ImportError:
+        pass
+    else:
+        if Pickle.codec_id not in registry:
+            registry[Pickle.codec_id] = Pickle
+
+    # register MsgPack, only available if MsgPack is installed
+    try:
+        from numcodecs import MsgPack
+    except ImportError:
+        pass
+    else:
+        if MsgPack.codec_id not in registry:
+            registry[MsgPack.codec_id] = MsgPack
+
+
+_zarr_register_codecs()
 
 
 # noinspection PyUnresolvedReferences
-def _get_zarr_string_codec():
-    global _zarr_string_codec
-    if _zarr_string_codec is None:
-        import zarr
-        import numcodecs
-        from distutils.version import StrictVersion
-        # need to register codecs for string encoding for zarr < 2.2
-        need_to_register = StrictVersion(zarr.__version__) < StrictVersion('2.2')
+def _get_zarr_string_codec(string_codec):
+    from zarr.codecs import codec_registry as registry
+
+    # default case
+    if string_codec is None:
+        if 'msgpack' in registry:
+            codec = registry['msgpack']()
+        elif 'pickle' in registry:
+            codec = registry['pickle']()
+        else:
+            raise RuntimeError('no string codec available, please install numcodecs')
+
+    # explicit case (string)
+    elif isinstance(string_codec, str):
         try:
-            from numcodecs import MsgPack
-            _zarr_string_codec = MsgPack()
-            if need_to_register:
-                zarr.codecs.codec_registry[numcodecs.MsgPack.codec_id] = MsgPack
-        except ImportError:
-            from numcodecs import Pickle
-            _zarr_string_codec = Pickle()
-            if need_to_register:
-                zarr.codecs.codec_registry[numcodecs.Pickle.codec_id] = Pickle
-    return _zarr_string_codec
+            codec = registry[string_codec]()
+        except KeyError:
+            raise ValueError('codec not available: %r' % string_codec)
+
+    # explicit case (codec)
+    elif hasattr(string_codec, 'encode'):
+        codec = string_codec
+
+    else:
+        raise ValueError('expected string or codec, found %r' % string_codec)
+
+    return codec
 
 
-def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers):
+def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers,
+                         string_codec):
 
     # handle no input
     if chunk is None:
@@ -684,7 +728,7 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
         # create dataset
         shape = (0,) + data.shape[1:]
         if data.dtype.kind == 'O':
-            filters = [_get_zarr_string_codec()]
+            filters = [_get_zarr_string_codec(string_codec)]
         else:
             filters = None
         ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
@@ -718,6 +762,7 @@ def _zarr_store_chunk(root, keys, chunk):
 def vcf_to_zarr(input, output,
                 group='/',
                 compressor='default',
+                string_codec=None,
                 overwrite=False,
                 fields=None,
                 types=None,
@@ -744,6 +789,9 @@ def vcf_to_zarr(input, output,
         Group within destination Zarr hierarchy to store data in.
     compressor : compressor
         Compression algorithm, e.g., zarr.Blosc(cname='zstd', clevel=1, shuffle=1).
+    string_codec : string
+        Codec to use for variable length string storage, defaults to 'msgpack' if msgpack is
+        installed, falls back to 'pickle'.
     overwrite : bool
         {overwrite}
     fields : list of strings, optional
@@ -802,7 +850,7 @@ def vcf_to_zarr(input, output,
     if len(samples) > 0 and store_samples:
         # store samples
         if samples.dtype.kind == 'O':
-            filters = [_get_zarr_string_codec()]
+            filters = [_get_zarr_string_codec(string_codec)]
         else:
             filters = None
         root[group].create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
@@ -815,7 +863,7 @@ def vcf_to_zarr(input, output,
     # noinspection PyTypeChecker
     keys = _zarr_setup_datasets(
         chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compressor=compressor,
-        overwrite=overwrite, headers=headers
+        string_codec=string_codec, overwrite=overwrite, headers=headers
     )
 
     # store first chunk
