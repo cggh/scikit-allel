@@ -905,7 +905,11 @@ def tajima_d(ac, pos=None, start=None, stop=None):
 
     # count segregating variants
     S = ac.count_segregating()
-
+    
+    # need to deal with the case if TajD undefined. Could return NaN. Here I'm just returning 0.0 which shouldn't mess up much
+    if S < 3:
+        return(0.0)
+    
     # (n-1)th harmonic number
     a1 = np.sum(1 / np.arange(1, n))
 
