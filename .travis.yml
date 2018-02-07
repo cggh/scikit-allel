@@ -29,7 +29,7 @@ install:
   - source activate test-environment
   - conda clean --lock
   - conda install --yes gcc
-  - conda install --yes --name=test-environment --file=requirements_ci.txt
+  - conda install --yes --name=test-environment --file=requirements_dev.txt
   # get tabix and pyfasta -- linux only via bioconda
   - conda install --yes --name=test-environment htslib==1.4.1
   - conda install --yes --name=test-environment pyfasta==0.5.2
