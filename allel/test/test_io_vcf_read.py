@@ -1812,6 +1812,30 @@ def test_vcf_to_zarr():
             eq_(actual['calldata/GQ'].attrs['Description'], 'Genotype Quality')
 
 
+def test_vcf_to_zarr_group():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf.gz')
+    zarr_path = os.path.join(tempdir, 'sample.zarr')
+    chroms = ['19', '20', 'X']
+    for chrom in chroms:
+        vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, region=chrom,
+                    group=chrom)
+    actual = zarr.open_group(zarr_path, mode='r')
+    assert chroms == sorted(actual)
+    for chrom in chroms:
+        assert ['calldata', 'samples', 'variants'] == sorted(actual[chrom])
+        expect = read_vcf(fn, fields='*', alt_number=2, region=chrom)
+        for key in expect.keys():
+            e = expect[key]
+            a = actual[chrom][key][:]
+            eq_(e.dtype, a.dtype)
+            if e.dtype.kind == 'f':
+                assert_array_almost_equal(e, a)
+            else:
+                assert_array_equal(e, a)
+            eq_(actual[chrom]['variants/NS'].attrs['Description'], 'Number of Samples With Data')
+            eq_(actual[chrom]['calldata/GQ'].attrs['Description'], 'Genotype Quality')
+
+
 def test_vcf_to_zarr_string_codec():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     zarr_path = os.path.join(tempdir, 'sample.zarr')
@@ -1879,6 +1903,32 @@ def test_vcf_to_hdf5():
                 'Number of Samples With Data')
             eq_(actual['calldata/GQ'].attrs['Description'],
                 'Genotype Quality')
+
+
+def test_vcf_to_hdf5_group():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf.gz')
+    h5_fn = os.path.join(tempdir, 'sample.h5')
+    chroms = ['19', '20', 'X']
+    for chrom in chroms:
+        vcf_to_hdf5(fn, h5_fn, fields='*', alt_number=2, chunk_length=2, region=chrom,
+                    group=chrom)
+    with h5py.File(h5_fn, mode='r') as actual:
+        assert chroms == sorted(actual)
+        for chrom in chroms:
+            assert ['calldata', 'samples', 'variants'] == sorted(actual[chrom])
+            expect = read_vcf(fn, fields='*', alt_number=2, region=chrom)
+            for key in expect.keys():
+                e = expect[key]
+                a = actual[chrom][key][:]
+                eq_(e.dtype, a.dtype)
+                if e.dtype.kind == 'f':
+                    assert_array_almost_equal(e, a)
+                else:
+                    assert_array_equal(e, a)
+                eq_(actual[chrom]['variants/NS'].attrs['Description'],
+                    'Number of Samples With Data')
+                eq_(actual[chrom]['calldata/GQ'].attrs['Description'],
+                    'Genotype Quality')
 
 
 def test_vcf_to_hdf5_ann():

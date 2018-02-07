@@ -581,9 +581,9 @@ def vcf_to_hdf5(input, output,
         if len(samples) > 0 and store_samples:
             # store samples
             name = 'samples'
-            if name in root[group]:
+            if name in root:
                 if overwrite:
-                    del root[group][name]
+                    del root[name]
                 else:
                     raise ValueError('dataset exists at path %r; use overwrite=True to replace'
                                      % name)
@@ -595,7 +595,7 @@ def vcf_to_hdf5(input, output,
                     t = samples.dtype
             else:
                 t = samples.dtype
-            root[group].create_dataset(name, data=samples, chunks=None, dtype=t)
+            root.create_dataset(name, data=samples, chunks=None, dtype=t)
 
         # read first chunk
         chunk, _, _, _ = next(it)
@@ -780,11 +780,14 @@ def vcf_to_zarr(input, output,
     if len(samples) > 0 and store_samples:
         # store samples
         if samples.dtype.kind == 'O':
-            dtype = 'str'
+            if PY2:
+                dtype = 'unicode'
+            else:
+                dtype = 'str'
         else:
             dtype = samples.dtype
-        root[group].create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
-                                   dtype=dtype)
+        root.create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
+                            dtype=dtype)
 
     # read first chunk
     chunk, _, _, _ = next(it)
