@@ -1440,11 +1440,11 @@ def _iter_vcf_stream(stream, fields, types, numbers, alt_number, chunk_length, f
 
 # pre-compile some regular expressions
 _re_filter_header = \
-    re.compile('##FILTER=<ID=([^,]+),Description="([^"]+)">')
+    re.compile('##FILTER=<ID=([^,]+),Description="([^"]*)">')
 _re_info_header = \
-    re.compile('##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+    re.compile('##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]*)">')
 _re_format_header = \
-    re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+    re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]*)">')
 
 
 VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
