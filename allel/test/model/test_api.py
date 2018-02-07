@@ -67,11 +67,11 @@ allele_counts_data = [
 ]
 
 variant_table_data = [
-    [b'chr1', 2, 35, 4.5, (1, 2)],
-    [b'chr1', 7, 12, 6.7, (3, 4)],
-    [b'chr2', 3, 78, 1.2, (5, 6)],
-    [b'chr2', 9, 22, 4.4, (7, 8)],
-    [b'chr3', 6, 99, 2.8, (9, 10)]
+    (b'chr1', 2, 35, 4.5, (1, 2)),
+    (b'chr1', 7, 12, 6.7, (3, 4)),
+    (b'chr2', 3, 78, 1.2, (5, 6)),
+    (b'chr2', 9, 22, 4.4, (7, 8)),
+    (b'chr3', 6, 99, 2.8, (9, 10))
 ]
 variant_table_dtype = [
     ('CHROM', 'S4'),
@@ -83,12 +83,12 @@ variant_table_dtype = [
 variant_table_names = tuple(t[0] for t in variant_table_dtype)
 
 feature_table_data = [
-    [b'chr1', b'DB', b'gene', 1000, 2000, -1, b'+', -1, b'gene1', b'.'],
-    [b'chr1', b'DB', b'mRNA', 1000, 2000, -1, b'+', -1, b'rna1', b'gene1'],
-    [b'chr1', b'DB', b'exon', 1100, 1300, -1, b'+', -1, b'exon1', b'rna1'],
-    [b'chr1', b'DB', b'exon', 1500, 1800, -1, b'+', -1, b'exon2', b'rna1'],
-    [b'chr1', b'DB', b'CDS', 1100, 1400, -1, b'+', 0, b'.', b'rna1'],
-    [b'chr1', b'DB', b'CDS', 1431, 1800, -1, b'+', 1, b'.', b'rna1'],
+    (b'chr1', b'DB', b'gene', 1000, 2000, -1, b'+', -1, b'gene1', b'.'),
+    (b'chr1', b'DB', b'mRNA', 1000, 2000, -1, b'+', -1, b'rna1', b'gene1'),
+    (b'chr1', b'DB', b'exon', 1100, 1300, -1, b'+', -1, b'exon1', b'rna1'),
+    (b'chr1', b'DB', b'exon', 1500, 1800, -1, b'+', -1, b'exon2', b'rna1'),
+    (b'chr1', b'DB', b'CDS', 1100, 1400, -1, b'+', 0, b'.', b'rna1'),
+    (b'chr1', b'DB', b'CDS', 1431, 1800, -1, b'+', 1, b'.', b'rna1'),
 ]
 feature_table_dtype = [
     ('seqid', 'S4'),

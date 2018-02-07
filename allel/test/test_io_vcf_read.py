@@ -1815,25 +1815,20 @@ def test_vcf_to_zarr():
 def test_vcf_to_zarr_string_codec():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     zarr_path = os.path.join(tempdir, 'sample.zarr')
-    import numcodecs
-    string_codecs = None, 'pickle', 'msgpack', numcodecs.Pickle(protocol=1)
-    string_type = 'object'
-    for string_codec in string_codecs:
-        types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', alt_number=2, types=types)
-        if os.path.exists(zarr_path):
-            shutil.rmtree(zarr_path)
-        vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, types=types,
-                    string_codec=string_codec)
-        actual = zarr.open_group(zarr_path, mode='r')
-        for key in expect.keys():
-            e = expect[key]
-            a = actual[key][:]
-            eq_(e.dtype, a.dtype)
-            if e.dtype.kind == 'f':
-                assert_array_almost_equal(e, a)
-            else:
-                assert_array_equal(e, a)
+    types = {'CHROM': object, 'ALT': object, 'samples': object}
+    expect = read_vcf(fn, fields='*', alt_number=2, types=types)
+    if os.path.exists(zarr_path):
+        shutil.rmtree(zarr_path)
+    vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, types=types)
+    actual = zarr.open_group(zarr_path, mode='r')
+    for key in expect.keys():
+        e = expect[key]
+        a = actual[key][:]
+        eq_(e.dtype, a.dtype)
+        if e.dtype.kind == 'f':
+            assert_array_almost_equal(e, a)
+        else:
+            assert_array_equal(e, a)
 
 
 def test_vcf_to_zarr_ann():
