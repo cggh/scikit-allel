@@ -449,6 +449,69 @@ def test_buffer_sizes():
         _test_read_vcf_content(input, chunk_length, buffer_size)
 
 
+def test_utf8():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.utf8.vcf')
+    callset = read_vcf(fn, fields='*')
+
+    # samples
+    eq_((3,), callset['samples'].shape)
+    eq_('O', callset['samples'].dtype.kind)
+    assert_list_equal([u'NA00001', u'Γεια σου κόσμε!', u'NA00003'], callset['samples'].tolist())
+
+    # CHROM
+    eq_((9,), callset['variants/CHROM'].shape)
+    eq_(np.dtype(object), callset['variants/CHROM'].dtype)
+    eq_('19', callset['variants/CHROM'][0])
+    eq_(u'Njatjeta Botë!', callset['variants/CHROM'][-2])
+
+    # POS
+    eq_((9,), callset['variants/POS'].shape)
+    eq_(111, callset['variants/POS'][0])
+
+    # ID
+    eq_((9,), callset['variants/ID'].shape)
+    eq_(np.dtype(object), callset['variants/ID'].dtype)
+    eq_('foo', callset['variants/ID'][0])
+    eq_(u'¡Hola mundo!', callset['variants/ID'][1])
+
+    # REF
+    eq_((9,), callset['variants/REF'].shape)
+    eq_(np.dtype(object), callset['variants/REF'].dtype)
+    eq_('A', callset['variants/REF'][0])
+
+    # ALT
+    eq_((9, 3), callset['variants/ALT'].shape)
+    eq_(np.dtype(object), callset['variants/ALT'].dtype)
+    eq_('ATG', callset['variants/ALT'][8, 1])
+
+    # QUAL
+    eq_((9,), callset['variants/QUAL'].shape)
+    eq_(10.0, callset['variants/QUAL'][1])
+
+    # FILTER
+    eq_((9,), callset['variants/FILTER_PASS'].shape)
+    eq_(True, callset['variants/FILTER_PASS'][2])
+    eq_(False, callset['variants/FILTER_PASS'][5])
+    eq_((9,), callset[u'variants/FILTER_Helló_világ!'].shape)
+    eq_(False, callset[u'variants/FILTER_Helló_világ!'][0])
+    eq_(True, callset[u'variants/FILTER_Helló_világ!'][5])
+
+    # INFO fields
+    eq_(u'foo', callset['variants/TEXT'][0])
+    eq_(u'こんにちは世界', callset['variants/TEXT'][4])
+
+    # calldata
+    eq_((9, 3, 2), callset['calldata/GT'].shape)
+    eq_((0, 0), tuple(callset['calldata/GT'][0, 0]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][6, 2]))
+    eq_((-1, -1), tuple(callset['calldata/GT'][7, 2]))
+    eq_((9, 3, 2), callset['calldata/HQ'].shape)
+    eq_((10, 15), tuple(callset['calldata/HQ'][0, 0]))
+    eq_((9, 3), callset['calldata/DP'].shape)
+    eq_((4, 2, 3), tuple(callset['calldata/DP'][6]))
+    eq_((u'foo', u'Hej Världen!', u'.'), tuple(callset['calldata/GTXT'][0]))
+
+
 def test_truncation_chrom():
 
     input_data = (b"#CHROM\n"
@@ -1815,12 +1878,14 @@ def test_vcf_to_zarr():
 def test_vcf_to_zarr_group():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf.gz')
     zarr_path = os.path.join(tempdir, 'sample.zarr')
+    if os.path.exists(zarr_path):
+        shutil.rmtree(zarr_path)
     chroms = ['19', '20', 'X']
     for chrom in chroms:
         vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, region=chrom,
                     group=chrom)
     actual = zarr.open_group(zarr_path, mode='r')
-    assert chroms == sorted(actual)
+    eq_(chroms, sorted(actual))
     for chrom in chroms:
         assert ['calldata', 'samples', 'variants'] == sorted(actual[chrom])
         expect = read_vcf(fn, fields='*', alt_number=2, region=chrom)
@@ -1908,6 +1973,8 @@ def test_vcf_to_hdf5():
 def test_vcf_to_hdf5_group():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf.gz')
     h5_fn = os.path.join(tempdir, 'sample.h5')
+    if os.path.exists(h5_fn):
+        os.remove(h5_fn)
     chroms = ['19', '20', 'X']
     for chrom in chroms:
         vcf_to_hdf5(fn, h5_fn, fields='*', alt_number=2, chunk_length=2, region=chrom,

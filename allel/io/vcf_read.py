@@ -19,7 +19,7 @@ import subprocess
 import numpy as np
 
 
-from allel.compat import PY2, FileNotFoundError
+from allel.compat import PY2, FileNotFoundError, text_type
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 # expose some names from cython extension
 from allel.opt.io_vcf_read import (  # noqa: F401
@@ -70,8 +70,7 @@ def _chunk_iter_progress(it, log, prefix):
         elapsed_chunk = after_chunk - before_chunk
         elapsed = after_chunk - before_all
         n_variants += chunk_length
-        if not PY2:
-            chrom = str(chrom, 'ascii')
+        chrom = text_type(chrom, 'utf8')
         message = (
             '%s %s rows in %.2fs; chunk in %.2fs (%s rows/s)' %
             (prefix, n_variants, elapsed, elapsed_chunk, int(chunk_length // elapsed_chunk))
@@ -1464,8 +1463,7 @@ def _read_vcf_headers(stream):
 
     # read first header line
     header = stream.readline()
-    if not PY2:
-        header = str(header, 'ascii')
+    header = text_type(header, 'utf8')
 
     while header and header[0] == '#':
 
@@ -1512,8 +1510,7 @@ def _read_vcf_headers(stream):
 
         # read next header line
         header = stream.readline()
-        if not PY2:
-            header = str(header, 'ascii')
+        header = text_type(header, 'utf8')
 
     # check if we saw the mandatory header line or not
     if samples is None:
