@@ -19,7 +19,7 @@ import subprocess
 import numpy as np
 
 
-from allel.compat import PY2, FileNotFoundError
+from allel.compat import PY2, FileNotFoundError, text_type
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 # expose some names from cython extension
 from allel.opt.io_vcf_read import (  # noqa: F401
@@ -70,8 +70,7 @@ def _chunk_iter_progress(it, log, prefix):
         elapsed_chunk = after_chunk - before_chunk
         elapsed = after_chunk - before_all
         n_variants += chunk_length
-        if not PY2:
-            chrom = str(chrom, 'ascii')
+        chrom = text_type(chrom, 'utf8')
         message = (
             '%s %s rows in %.2fs; chunk in %.2fs (%s rows/s)' %
             (prefix, n_variants, elapsed, elapsed_chunk, int(chunk_length // elapsed_chunk))
@@ -581,9 +580,9 @@ def vcf_to_hdf5(input, output,
         if len(samples) > 0 and store_samples:
             # store samples
             name = 'samples'
-            if name in root[group]:
+            if name in root:
                 if overwrite:
-                    del root[group][name]
+                    del root[name]
                 else:
                     raise ValueError('dataset exists at path %r; use overwrite=True to replace'
                                      % name)
@@ -595,7 +594,7 @@ def vcf_to_hdf5(input, output,
                     t = samples.dtype
             else:
                 t = samples.dtype
-            root[group].create_dataset(name, data=samples, chunks=None, dtype=t)
+            root.create_dataset(name, data=samples, chunks=None, dtype=t)
 
         # read first chunk
         chunk, _, _, _ = next(it)
@@ -637,76 +636,7 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
 )
 
 
-# ensure string codecs are registered
-def _zarr_register_codecs():
-    try:
-        import zarr
-    except ImportError:
-        # Zarr not installed
-        return
-
-    # only need to register codecs for string encoding for zarr < 2.2
-    from distutils.version import StrictVersion
-    need_to_register = StrictVersion(zarr.__version__) < StrictVersion('2.2')
-    if not need_to_register:
-        return
-
-    from zarr.codecs import codec_registry as registry
-
-    # register Pickle
-    try:
-        from numcodecs import Pickle
-    except ImportError:
-        pass
-    else:
-        if Pickle.codec_id not in registry:
-            registry[Pickle.codec_id] = Pickle
-
-    # register MsgPack, only available if MsgPack is installed
-    try:
-        from numcodecs import MsgPack
-    except ImportError:
-        pass
-    else:
-        if MsgPack.codec_id not in registry:
-            registry[MsgPack.codec_id] = MsgPack
-
-
-_zarr_register_codecs()
-
-
-# noinspection PyUnresolvedReferences
-def _get_zarr_string_codec(string_codec):
-    from zarr.codecs import codec_registry as registry
-
-    # default case
-    if string_codec is None:
-        if 'msgpack' in registry:
-            codec = registry['msgpack']()
-        elif 'pickle' in registry:
-            codec = registry['pickle']()
-        else:
-            raise RuntimeError('no string codec available, please install numcodecs')
-
-    # explicit case (string)
-    elif isinstance(string_codec, str):
-        try:
-            codec = registry[string_codec]()
-        except KeyError:
-            raise ValueError('codec not available: %r' % string_codec)
-
-    # explicit case (codec)
-    elif hasattr(string_codec, 'encode'):
-        codec = string_codec
-
-    else:
-        raise ValueError('expected string or codec, found %r' % string_codec)
-
-    return codec
-
-
-def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers,
-                         string_codec):
+def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers):
 
     # handle no input
     if chunk is None:
@@ -728,11 +658,14 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
         # create dataset
         shape = (0,) + data.shape[1:]
         if data.dtype.kind == 'O':
-            filters = [_get_zarr_string_codec(string_codec)]
+            if PY2:
+                dtype = 'unicode'
+            else:
+                dtype = 'str'
         else:
-            filters = None
-        ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=data.dtype,
-                                 compressor=compressor, overwrite=overwrite, filters=filters)
+            dtype = data.dtype
+        ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=dtype,
+                                 compressor=compressor, overwrite=overwrite)
 
         # copy metadata from VCF headers
         group, name = k.split('/')
@@ -762,7 +695,6 @@ def _zarr_store_chunk(root, keys, chunk):
 def vcf_to_zarr(input, output,
                 group='/',
                 compressor='default',
-                string_codec=None,
                 overwrite=False,
                 fields=None,
                 types=None,
@@ -789,9 +721,6 @@ def vcf_to_zarr(input, output,
         Group within destination Zarr hierarchy to store data in.
     compressor : compressor
         Compression algorithm, e.g., zarr.Blosc(cname='zstd', clevel=1, shuffle=1).
-    string_codec : string
-        Codec to use for variable length string storage, defaults to 'msgpack' if msgpack is
-        installed, falls back to 'pickle'.
     overwrite : bool
         {overwrite}
     fields : list of strings, optional
@@ -850,11 +779,14 @@ def vcf_to_zarr(input, output,
     if len(samples) > 0 and store_samples:
         # store samples
         if samples.dtype.kind == 'O':
-            filters = [_get_zarr_string_codec(string_codec)]
+            if PY2:
+                dtype = 'unicode'
+            else:
+                dtype = 'str'
         else:
-            filters = None
-        root[group].create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
-                                   filters=filters)
+            dtype = samples.dtype
+        root.create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
+                            dtype=dtype)
 
     # read first chunk
     chunk, _, _, _ = next(it)
@@ -863,7 +795,7 @@ def vcf_to_zarr(input, output,
     # noinspection PyTypeChecker
     keys = _zarr_setup_datasets(
         chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compressor=compressor,
-        string_codec=string_codec, overwrite=overwrite, headers=headers
+        overwrite=overwrite, headers=headers
     )
 
     # store first chunk
@@ -1282,12 +1214,13 @@ def _normalize_types(types, fields, headers):
     for f in fields:
 
         group, name = f.split('/')
+        default_type = default_types.get(f)
+        if default_type:
+            default_type = _normalize_type(default_type)
 
         if f in types:
+            # user had manually specified the type
             normed_types[f] = types[f]
-
-        elif f in default_types:
-            normed_types[f] = _normalize_type(default_types[f])
 
         elif group == 'variants':
 
@@ -1299,24 +1232,52 @@ def _normalize_types(types, fields, headers):
                 normed_types[f] = np.dtype(bool)
 
             elif name in headers.infos:
-                normed_types[f] = _normalize_type(headers.infos[name]['Type'])
+                header_type = _normalize_type(headers.infos[name]['Type'])
+                if isinstance(default_type, np.dtype):
+                    # check that default is compatible with header
+                    if default_type.kind in 'ifb' and default_type.kind != header_type.kind:
+                        # default is not compatible with header, fall back to header
+                        t = header_type
+                    else:
+                        t = default_type
+                elif default_type:
+                    t = default_type
+                else:
+                    t = header_type
+                normed_types[f] = t
+
+            elif default_type:
+                normed_types[f] = default_type
 
             else:
                 # fall back to string
                 normed_types[f] = _normalize_type('String')
-                warnings.warn('no type for field %r, assuming %s' %
-                              (f, normed_types[f]))
+                warnings.warn('no type for field %r, assuming %s' % (f, normed_types[f]))
 
         elif group == 'calldata':
 
             if name in headers.formats:
-                normed_types[f] = _normalize_type(headers.formats[name]['Type'])
+                header_type = _normalize_type(headers.formats[name]['Type'])
+                if isinstance(default_type, np.dtype):
+                    # check that default is compatible with header
+                    if default_type.kind in 'ifb' and default_type.kind != header_type.kind:
+                        # default is not compatible with header, fall back to header
+                        t = header_type
+                    else:
+                        t = default_type
+                elif default_type:
+                    t = default_type
+                else:
+                    t = header_type
+                normed_types[f] = t
+
+            elif default_type:
+                normed_types[f] = default_type
 
             else:
                 # fall back to string
                 normed_types[f] = _normalize_type('String')
-                warnings.warn('no type for field %r, assuming %s' %
-                              (f, normed_types[f]))
+                warnings.warn('no type for field %r, assuming %s' % (f, normed_types[f]))
 
         else:
             raise RuntimeError('unpected field: %r' % f)
@@ -1510,11 +1471,11 @@ def _iter_vcf_stream(stream, fields, types, numbers, alt_number, chunk_length, f
 
 # pre-compile some regular expressions
 _re_filter_header = \
-    re.compile('##FILTER=<ID=([^,]+),Description="([^"]+)">')
+    re.compile('##FILTER=<ID=([^,]+),Description="([^"]*)">')
 _re_info_header = \
-    re.compile('##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+    re.compile('##INFO=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]*)">')
 _re_format_header = \
-    re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]+)">')
+    re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]*)">')
 
 
 VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
@@ -1531,8 +1492,7 @@ def _read_vcf_headers(stream):
 
     # read first header line
     header = stream.readline()
-    if not PY2:
-        header = str(header, 'ascii')
+    header = text_type(header, 'utf8')
 
     while header and header[0] == '#':
 
@@ -1579,8 +1539,7 @@ def _read_vcf_headers(stream):
 
         # read next header line
         header = stream.readline()
-        if not PY2:
-            header = str(header, 'ascii')
+        header = text_type(header, 'utf8')
 
     # check if we saw the mandatory header line or not
     if samples is None:

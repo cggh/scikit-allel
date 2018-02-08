@@ -31,7 +31,7 @@ cdef extern from "Python.h":
 # from multiprocessing.pool import ThreadPool
 
 
-from allel.compat import PY2
+from allel.compat import PY2, text_type
 
 
 #########################################################################################
@@ -137,15 +137,13 @@ cdef bytes CharVector_to_pybytes(CharVector* self):
 
 cdef object CharVector_to_pystr(CharVector* self):
     v = PyBytes_FromStringAndSize(self.data, self.size)
-    if not PY2:
-        v = str(v, 'ascii')
+    v = text_type(v, 'utf8')
     return v
 
 
 cdef object CharVector_to_pystr_sized(CharVector* self, Py_ssize_t size):
     v = PyBytes_FromStringAndSize(self.data, size)
-    if not PY2:
-        v = str(v, 'ascii')
+    v = text_type(v, 'utf8')
     return v
 
 
@@ -544,7 +542,7 @@ cdef class VCFParser:
             if PY2:
                 self.region_chrom = tokens[0]
             else:
-                self.region_chrom = tokens[0].encode('ascii')
+                self.region_chrom = tokens[0].encode('utf8')
             if len(tokens) > 1:
                 range_tokens = tokens[1].split('-')
                 if len(range_tokens) != 2:
@@ -665,8 +663,8 @@ cdef class VCFParser:
         for field in list(fields):
             if field.startswith('variants/FILTER_'):
                 k = field[16:]
-                if not PY2:
-                    k = k.encode('ascii')
+                if isinstance(k, text_type):
+                    k = k.encode('utf8')
                 filter_keys.append(k)
                 fields.remove(field)
         if filter_keys:
@@ -686,8 +684,8 @@ cdef class VCFParser:
         for field in list(fields):
             group, name = field.split('/')
             if group == 'variants':
-                if not PY2:
-                    key = name.encode('ascii')
+                if isinstance(name, text_type):
+                    key = name.encode('utf8')
                 else:
                     key = name
                 info_keys.append(key)
@@ -716,8 +714,8 @@ cdef class VCFParser:
         for field in list(fields):
             group, name = field.split('/')
             if group == 'calldata':
-                if not PY2:
-                    key = name.encode('ascii')
+                if isinstance(name, text_type):
+                    key = name.encode('utf8')
                 else:
                     key = name
                 format_keys.append(key)
@@ -871,10 +869,7 @@ cdef class VCFFieldParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        if PY2:
-            field = 'variants/' + self.key
-        else:
-            field = 'variants/' + str(self.key, 'ascii')
+        field = u'variants/' + text_type(self.key, 'utf8')
         values = self.values
         if self.values.ndim > 1 and self.number == 1:
             values = values.squeeze(axis=1)
@@ -1113,7 +1108,7 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
             if self.dtype.kind == 'S':
                 self.chrom_memory = self.chrom_values.view('u1')
             else:
-                self.chrom_values.fill('')
+                self.chrom_values.fill(u'')
         if self.store_pos:
             self.pos_values = np.zeros(self.chunk_length, dtype='int32')
             self.pos_memory = self.pos_values
@@ -1191,7 +1186,7 @@ cdef class VCFIDObjectParser(VCFFieldParserBase):
 
     cdef int malloc_chunk(self) except -1:
         self.values = np.empty(self.chunk_length, dtype=self.dtype)
-        self.values.fill('')
+        self.values.fill(u'')
 
 
 cdef class VCFRefStringParser(VCFFieldParserBase):
@@ -1280,7 +1275,7 @@ cdef class VCFRefObjectParser(VCFFieldParserBase):
     cdef int malloc_chunk(self) except -1:
         if self.store:
             self.values = np.empty(self.chunk_length, dtype=self.dtype)
-            self.values.fill('')
+            self.values.fill(u'')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store:
@@ -1419,26 +1414,23 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store_alt:
-            if PY2:
-                field = 'variants/' + self.key
-            else:
-                field = 'variants/' + str(self.key, 'ascii')
+            field = u'variants/' + text_type(self.key, 'utf8')
             values = self.values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_numalt:
-            field = 'variants/numalt'
+            field = u'variants/numalt'
             values = self.numalt_values
             chunk[field] = values[:limit]
         if self.store_svlen:
-            field = 'variants/svlen'
+            field = u'variants/svlen'
             values = self.svlen_values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_is_snp:
-            field = 'variants/is_snp'
+            field = u'variants/is_snp'
             values = self.is_snp_values
             chunk[field] = values[:limit]
 
@@ -1561,7 +1553,7 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
         shape = (self.chunk_length, self.number)
         if self.store_alt:
             self.values = np.empty(shape, dtype=self.dtype, order='C')
-            self.values.fill('')
+            self.values.fill(u'')
         if self.store_numalt:
             self.numalt_values = np.zeros(self.chunk_length, dtype='int32')
             self.numalt_memory = self.numalt_values
@@ -1574,26 +1566,23 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store_alt:
-            if PY2:
-                field = 'variants/' + self.key
-            else:
-                field = 'variants/' + str(self.key, 'ascii')
+            field = u'variants/' + text_type(self.key, 'utf8')
             values = self.values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_numalt:
-            field = 'variants/numalt'
+            field = u'variants/numalt'
             values = self.numalt_values
             chunk[field] = values[:limit]
         if self.store_svlen:
-            field = 'variants/svlen'
+            field = u'variants/svlen'
             values = self.svlen_values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_is_snp:
-            field = 'variants/is_snp'
+            field = u'variants/is_snp'
             values = self.is_snp_values
             chunk[field] = values[:limit]
 
@@ -1726,9 +1715,8 @@ cdef class VCFFilterParser(VCFFieldParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         for i, f in enumerate(self.filter_keys):
-            if not PY2:
-                f = str(f, 'ascii')
-            field = 'variants/FILTER_' + f
+            f = text_type(f, 'utf8')
+            field = u'variants/FILTER_' + f
             chunk[field] = self.values[:limit, i]
 
 
@@ -1964,10 +1952,7 @@ cdef class VCFInfoParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        if PY2:
-            field = 'variants/' + self.key
-        else:
-            field = 'variants/' + str(self.key, 'ascii')
+        field = u'variants/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=1)
@@ -2188,10 +2173,7 @@ cdef class VCFInfoFlagParser(VCFInfoParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         # override to view as bool array
-        if PY2:
-            field = 'variants/' + self.key
-        else:
-            field = 'variants/' + str(self.key, 'ascii')
+        field = u'variants/' + text_type(self.key, 'utf8')
         chunk[field] = self.values[:limit].view(bool)
 
     cdef int malloc_chunk(self) except -1:
@@ -2297,7 +2279,7 @@ cdef class VCFInfoObjectParser(VCFInfoParserBase):
     cdef int malloc_chunk(self) except -1:
         shape = (self.chunk_length, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
-        self.values.fill('')
+        self.values.fill(u'')
 
 
 cdef class VCFInfoSkipParser(VCFInfoParserBase):
@@ -2765,10 +2747,7 @@ cdef class VCFCallDataParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        if PY2:
-            field = 'calldata/' + self.key
-        else:
-            field = 'calldata/' + str(self.key, 'ascii')
+        field = u'calldata/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3555,10 +3534,7 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
         self.memory = self.values.reshape(-1).view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        if PY2:
-            field = 'calldata/' + self.key
-        else:
-            field = 'calldata/' + str(self.key, 'ascii')
+        field = u'calldata/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3613,13 +3589,10 @@ cdef class VCFCallDataObjectParser(VCFCallDataParserBase):
     cdef int malloc_chunk(self) except -1:
         shape = (self.chunk_length, self.n_samples_out, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
-        self.values.fill('')
+        self.values.fill(u'')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        if PY2:
-            field = 'calldata/' + self.key
-        else:
-            field = 'calldata/' + str(self.key, 'ascii')
+        field = u'calldata/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3731,7 +3704,7 @@ cdef int warn(message, VCFContext context) except -1:
     if context.state > VCFState.POS:
         chrom = CharVector_to_pybytes(&context.chrom)
         if not PY2:
-            chrom = str(chrom, 'ascii')
+            chrom = str(chrom, 'utf8')
         message += ' (%s:%s)' % (chrom, context.pos)
     if context.state == VCFState.CALLDATA:
         if context.sample_index >= len(context.headers.samples):
@@ -4109,7 +4082,7 @@ cdef class ANNTransformer:
             if t.kind == 'S':
                 a.fill(b'')
             else:
-                a.fill('')
+                a.fill(u'')
         else:
             a = None
         return a
@@ -4170,7 +4143,7 @@ cdef class ANNTransformer:
                 # obtain raw string value
                 raw = ann[i, j]
                 if not PY2 and isinstance(raw, bytes):
-                    raw = str(raw, 'ascii')
+                    raw = str(raw, 'utf8')
 
                 # bail early if no content
                 if raw == '' or raw == '.':
