@@ -13,10 +13,9 @@ flake8==3.5.0
 bcolz==1.1.2
 matplotlib==2.1.2
 pandas==0.22.0
-msgpack-python==0.5.4
+msgpack-python==0.5.1
 numpydoc==0.7.0
 psutil==5.4.3
-memory_profiler==0.51.0
 humanize==0.5.1
 mock==2.0.0
 seaborn==0.8.1
