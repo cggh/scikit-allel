@@ -1214,12 +1214,13 @@ def _normalize_types(types, fields, headers):
     for f in fields:
 
         group, name = f.split('/')
+        default_type = default_types.get(f)
+        if default_type:
+            default_type = _normalize_type(default_type)
 
         if f in types:
+            # user had manually specified the type
             normed_types[f] = types[f]
-
-        elif f in default_types:
-            normed_types[f] = _normalize_type(default_types[f])
 
         elif group == 'variants':
 
@@ -1231,24 +1232,52 @@ def _normalize_types(types, fields, headers):
                 normed_types[f] = np.dtype(bool)
 
             elif name in headers.infos:
-                normed_types[f] = _normalize_type(headers.infos[name]['Type'])
+                header_type = _normalize_type(headers.infos[name]['Type'])
+                if isinstance(default_type, np.dtype):
+                    # check that default is compatible with header
+                    if default_type.kind in 'ifb' and default_type.kind != header_type.kind:
+                        # default is not compatible with header, fall back to header
+                        t = header_type
+                    else:
+                        t = default_type
+                elif default_type:
+                    t = default_type
+                else:
+                    t = header_type
+                normed_types[f] = t
+
+            elif default_type:
+                normed_types[f] = default_type
 
             else:
                 # fall back to string
                 normed_types[f] = _normalize_type('String')
-                warnings.warn('no type for field %r, assuming %s' %
-                              (f, normed_types[f]))
+                warnings.warn('no type for field %r, assuming %s' % (f, normed_types[f]))
 
         elif group == 'calldata':
 
             if name in headers.formats:
-                normed_types[f] = _normalize_type(headers.formats[name]['Type'])
+                header_type = _normalize_type(headers.formats[name]['Type'])
+                if isinstance(default_type, np.dtype):
+                    # check that default is compatible with header
+                    if default_type.kind in 'ifb' and default_type.kind != header_type.kind:
+                        # default is not compatible with header, fall back to header
+                        t = header_type
+                    else:
+                        t = default_type
+                elif default_type:
+                    t = default_type
+                else:
+                    t = header_type
+                normed_types[f] = t
+
+            elif default_type:
+                normed_types[f] = default_type
 
             else:
                 # fall back to string
                 normed_types[f] = _normalize_type('String')
-                warnings.warn('no type for field %r, assuming %s' %
-                              (f, normed_types[f]))
+                warnings.warn('no type for field %r, assuming %s' % (f, normed_types[f]))
 
         else:
             raise RuntimeError('unpected field: %r' % f)

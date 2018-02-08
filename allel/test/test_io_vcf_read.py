@@ -1781,6 +1781,20 @@ def test_override_vcf_type():
     assert_almost_equal(0.03, callset['variants/MQ0FractionTest'][2], places=6)
 
 
+def test_header_overrides_default_vcf_type():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'test176.vcf')
+    callset = read_vcf(fn, fields='*')
+    gq = callset['calldata/GQ']
+    eq_('f', gq.dtype.kind)
+    assert np.isnan(gq[0, 0])
+    assert_almost_equal(48.2, gq[2, 0], places=2)
+    assert_almost_equal(48.1, gq[2, 1], places=2)
+    assert_almost_equal(43.9, gq[2, 2], places=2)
+    assert_almost_equal(49., gq[3, 0], places=2)
+    assert_almost_equal(3., gq[3, 1], places=2)
+    assert_almost_equal(41., gq[3, 2], places=2)
+
+
 def test_missing_calldata():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'test1.vcf')
     callset = read_vcf(fn, fields='calldata/*', numbers={'AD': 2})
