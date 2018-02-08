@@ -663,7 +663,7 @@ cdef class VCFParser:
         for field in list(fields):
             if field.startswith('variants/FILTER_'):
                 k = field[16:]
-                if not PY2:
+                if isinstance(k, text_type):
                     k = k.encode('utf8')
                 filter_keys.append(k)
                 fields.remove(field)
@@ -684,7 +684,7 @@ cdef class VCFParser:
         for field in list(fields):
             group, name = field.split('/')
             if group == 'variants':
-                if not PY2:
+                if isinstance(name, text_type):
                     key = name.encode('utf8')
                 else:
                     key = name
@@ -714,7 +714,7 @@ cdef class VCFParser:
         for field in list(fields):
             group, name = field.split('/')
             if group == 'calldata':
-                if not PY2:
+                if isinstance(name, text_type):
                     key = name.encode('utf8')
                 else:
                     key = name
@@ -1108,7 +1108,7 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
             if self.dtype.kind == 'S':
                 self.chrom_memory = self.chrom_values.view('u1')
             else:
-                self.chrom_values.fill('')
+                self.chrom_values.fill(u'')
         if self.store_pos:
             self.pos_values = np.zeros(self.chunk_length, dtype='int32')
             self.pos_memory = self.pos_values
@@ -1186,7 +1186,7 @@ cdef class VCFIDObjectParser(VCFFieldParserBase):
 
     cdef int malloc_chunk(self) except -1:
         self.values = np.empty(self.chunk_length, dtype=self.dtype)
-        self.values.fill('')
+        self.values.fill(u'')
 
 
 cdef class VCFRefStringParser(VCFFieldParserBase):
@@ -1275,7 +1275,7 @@ cdef class VCFRefObjectParser(VCFFieldParserBase):
     cdef int malloc_chunk(self) except -1:
         if self.store:
             self.values = np.empty(self.chunk_length, dtype=self.dtype)
-            self.values.fill('')
+            self.values.fill(u'')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store:
@@ -1553,7 +1553,7 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
         shape = (self.chunk_length, self.number)
         if self.store_alt:
             self.values = np.empty(shape, dtype=self.dtype, order='C')
-            self.values.fill('')
+            self.values.fill(u'')
         if self.store_numalt:
             self.numalt_values = np.zeros(self.chunk_length, dtype='int32')
             self.numalt_memory = self.numalt_values
@@ -2279,7 +2279,7 @@ cdef class VCFInfoObjectParser(VCFInfoParserBase):
     cdef int malloc_chunk(self) except -1:
         shape = (self.chunk_length, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
-        self.values.fill('')
+        self.values.fill(u'')
 
 
 cdef class VCFInfoSkipParser(VCFInfoParserBase):
@@ -3589,7 +3589,7 @@ cdef class VCFCallDataObjectParser(VCFCallDataParserBase):
     cdef int malloc_chunk(self) except -1:
         shape = (self.chunk_length, self.n_samples_out, self.number)
         self.values = np.empty(shape, dtype=self.dtype)
-        self.values.fill('')
+        self.values.fill(u'')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         field = u'calldata/' + text_type(self.key, 'utf8')
@@ -4082,7 +4082,7 @@ cdef class ANNTransformer:
             if t.kind == 'S':
                 a.fill(b'')
             else:
-                a.fill('')
+                a.fill(u'')
         else:
             a = None
         return a
