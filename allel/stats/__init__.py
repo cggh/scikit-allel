@@ -61,4 +61,4 @@ from .mendel import mendel_errors, paint_transmission, \
     INHERIT_NONSEG_REF, INHERIT_PARENT1, INHERIT_PARENT2, INHERIT_PARENT_MISSING, \
     INHERIT_UNDETERMINED
 
-from allel.stats.roh import roh_mhmm
+from allel.stats.roh import roh_mhmm, roh_poissionhmm
