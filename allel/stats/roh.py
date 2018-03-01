@@ -87,13 +87,11 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
 
     # probability of inaccessible
     if is_accessible is None:
-        assert contig_size is not None, \
-            "If accessibility not provided must specify size of contig"
+        if contig_size is None:
+            raise ValueError("If is_accessibile argument is not provided, you must provide contig_size")
         p_accessible = 1.0
     else:
         p_accessible = is_accessible.mean()
-        assert contig_size is None, "contig_size should only provided when " \
-                                    "is_accessible is not provided"
         contig_size = is_accessible.size
 
     emission_mx = _mhmm_derive_emission_matrix(het_px, p_accessible)
@@ -151,8 +149,8 @@ def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
     return predictions, observations
 
 
-def roh_poissionhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-3,
-                    window_size=1000, is_accessible=None, contig_size=None):
+def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-3,
+                   window_size=1000, min_roh=0, is_accessible=None, contig_size=None):
 
 
     """Call ROH (runs of homozygosity) in a single individual given a genotype vector.
@@ -180,11 +178,13 @@ def roh_poissionhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transit
         the population, but also on mutation rate and genotype error rate.
     transition: float, optional
         Probability of moving between states. This is based on windows, so a larger window size may call for a
-        commeasurately larger transitional probability
+        larger transitional probability
     window_size: integer, optional
         Window size (equally accessible bases) to consider as a potential ROH.
         and recombination rate. Setting this window too small may result in spurious ROH calls, while too large will
         result in a lack of resolution.
+    min_roh: integer, optional
+        Minimum size (bp) to condsider as a ROH. Will depend on contig size and recombination rate.
     is_accessible: array_like, bool, shape (`contig_size`,), optional
         Boolean array for each position in contig describing whether accessible
         or not. Although optional, highly recommended so invariant sites are distinguishable from sites where variation
@@ -210,13 +210,14 @@ def roh_poissionhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transit
     """
 
     from pomegranate import HiddenMarkovModel, PoissonDistribution
-    from intervaltree import Interval, IntervalTree
 
     # equally accessbile windows
     if is_accessible is None:
-        assert contig_size is not None, \
-            "If accessibility not provided must specify size of contig"
+        if contig_size is None:
+            raise ValueError("If is_accessibile argument is not provided, you must provide contig_size")
         is_accessible = np.ones((contig_size,), dtype="bool")
+    else:
+        contig_size = is_accessible.size
 
     eqw = equally_accessible_windows(is_accessible, window_size)
 
@@ -239,25 +240,23 @@ def roh_poissionhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transit
                                           starts=start_prob)
 
     prediction = np.array(model.predict(counts[:, None]))
-    pred_roh = np.where(prediction == 0)[0]
 
-    index_ivtree = IntervalTree.from_tuples([(x, x + 1) for x in pred_roh])
-    index_ivtree.merge_overlaps()
+    df_blocks = tabulate_state_blocks(prediction, states=list(range(len(het_px))))
+    df_roh = df_blocks[(df_blocks.state == 0)].reset_index(drop=True)
 
-    pos_ivtree = IntervalTree()
-    for iv in index_ivtree.items():
-        pos_ivtree.append(Interval(eqw[iv.begin, 0], eqw[iv.end - 1, 1]))
+    # adapt the dataframe for ROH
+    df_roh["start"] = df_roh.start_ridx.apply(lambda y: eqw[y, 0])
+    df_roh["stop"] = df_roh.stop_lidx.apply(lambda y: eqw[y, 1])
+    df_roh["length"] = df_roh.stop - df_roh.start
 
-    df = pd.DataFrame([(x.begin, x.end) for x in pos_ivtree.items()], columns=["start", "stop"])
+    # filter by ROH size
+    if min_roh > 0:
+       df_roh = df_roh[df_roh.length >= min_roh]
 
-    df["length"] = df["stop"] - df["start"]
-    df["is_marginal"] = (df["start"] == eqw[0][0]) | (df["stop"] == eqw[-1][1])
+    # compute FROH
+    froh = df_roh.length.sum() / contig_size
 
-    df = df.sort_values("start", inplace=False).reset_index(drop=True)
-
-    froh = df["length"].sum() / np.diff(eqw, 1).sum()
-
-    return df, froh
+    return df_roh[["start", "stop", "length", "is_marginal"]], froh
 
 
 def _mhmm_derive_emission_matrix(het_px, p_accessible):
