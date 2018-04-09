@@ -6,8 +6,8 @@ numexpr==2.6.4
 toolz==0.9.0
 dask==0.16.1
 h5py==2.7.1
-zarr==2.2.0rc3
-numcodecs==0.5.3
+zarr==2.2.0
+numcodecs==0.5.4
 nose==1.3.7
 flake8==3.5.0
 bcolz==1.1.2
