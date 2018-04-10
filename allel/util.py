@@ -109,9 +109,9 @@ def check_same_ndim(*arrays):
 
 
 def check_equal_length(a, *others):
-    l = len(a)
+    expected_length = len(a)
     for b in others:
-        if len(b) != l:
+        if len(b) != expected_length:
             raise ValueError('sequences do not have matching length')
 
 
@@ -129,8 +129,8 @@ def resize_dim1(a, l, fill=0):
 
 def ensure_dim1_aligned(*arrays, **kwargs):
     fill = kwargs.get('fill', 0)
-    l = max(a.shape[1] for a in arrays)
-    arrays = [resize_dim1(a, l, fill=fill) for a in arrays]
+    dim1_length = max(a.shape[1] for a in arrays)
+    arrays = [resize_dim1(a, dim1_length, fill=fill) for a in arrays]
     return arrays
 
 

@@ -86,9 +86,9 @@ def recarray_from_hdf5_group(*args, **kwargs):
         h5f = h5py.File(file_path, mode='r')
         try:
             group = h5f[node_path]
-        except:
+        except Exception as e:
             h5f.close()
-            raise
+            raise e
 
     else:
         raise ValueError('bad arguments; expected group or (file_path, '
