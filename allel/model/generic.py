@@ -163,10 +163,11 @@ def _check_condition_length(a, condition, axis):
     # because numpy allows condition to be shorter than the axis under selection,
     # however we've found this allows mistakes to creep through and so we'll be stricter here
     if axis is not None:
-        l = a.shape[axis]
+        expected_length = a.shape[axis]
         k = condition.shape[0]
-        if k != l:
-            raise ValueError('bad length of condition; expected %s, found %s' % (l, k))
+        if k != expected_length:
+            raise ValueError('bad length of condition; expected %s, found %s' %
+                             (expected_length, k))
 
 
 def compress_genotypes(g, condition, axis, wrap_axes, cls, compress, **kwargs):

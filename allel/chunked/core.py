@@ -27,11 +27,11 @@ def store(data, arr, start=0, stop=None, offset=0, blen=None):
         raise ValueError('invalid stop/start')
 
     # copy block-wise
-    for i in range(start, stop, blen):
-        j = min(i+blen, stop)
-        l = j-i
-        arr[offset:offset+l] = data[i:j]
-        offset += l
+    for bi in range(start, stop, blen):
+        bj = min(bi+blen, stop)
+        bl = bj - bi
+        arr[offset:offset+bl] = data[bi:bj]
+        offset += bl
 
 
 def copy(data, start=0, stop=None, blen=None, storage=None, create='array',
@@ -900,13 +900,13 @@ class ChunkedTableWrapper(DisplayAsTable):
 
     @property
     def dtype(self):
-        l = []
+        items = []
         for n, c in zip(self._names, self._columns):
             # need to account for multidimensional columns
             t = (n, c.dtype) if len(c.shape) == 1 else \
                 (n, c.dtype, c.shape[1:])
-            l.append(t)
-        return np.dtype(l)
+            items.append(t)
+        return np.dtype(items)
 
     @property
     def nbytes(self):

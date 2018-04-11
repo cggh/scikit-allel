@@ -150,8 +150,8 @@ def plot_variant_locator(pos, step=None, ax=None, start=None,
             start +
             ((i * step / n_variants) * (stop-start))
         )
-        l = plt.Line2D([xfrom, xto], [0, 1], **line_kwargs)
-        ax.add_line(l)
+        line = plt.Line2D([xfrom, xto], [0, 1], **line_kwargs)
+        ax.add_line(line)
 
     # invert?
     if flip:
@@ -163,8 +163,8 @@ def plot_variant_locator(pos, step=None, ax=None, start=None,
     # tidy up
     ax.set_yticks([])
     ax.xaxis.set_tick_params(direction='out')
-    for l in 'left', 'right':
-        ax.spines[l].set_visible(False)
+    for spine in 'left', 'right':
+        ax.spines[spine].set_visible(False)
 
     return ax
 

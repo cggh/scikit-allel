@@ -28,8 +28,7 @@ For example::
     >>> import numpy as np
     >>> a = np.arange(10000000)
     >>> chunked.copy(a)
-    Array((10000000,), int64, chunks=(39063,), order=C)
-      ...
+    <zarr.core.Array (10000000,) int64>
     >>> chunked.copy(a, storage='bcolzmem')
     carray((10000000,), int64)
       ...
@@ -37,11 +36,9 @@ For example::
     carray((10000000,), int64)
       ...
     >>> chunked.copy(a, storage='zarrmem')
-    Array((10000000,), int64, chunks=(39063,), order=C)
-      ...
+    <zarr.core.Array (10000000,) int64>
     >>> chunked.copy(a, storage='zarrtmp')
-    Array((10000000,), int64, chunks=(39063,), order=C)
-      ...
+    <zarr.core.Array (10000000,) int64>
     >>> chunked.copy(a, storage=chunked.BcolzStorage(cparams=bcolz.cparams(cname='lz4')))
     carray((10000000,), int64)
       ...
