@@ -14,9 +14,9 @@ DESCRIPTION = 'A Python package for exploring and analysing genetic ' \
 with open('README.rst') as f:
     LONG_DESCRIPTION = f.read()
 
-MAINTAINER = 'Alistair Miles',
+MAINTAINER = 'Alistair Miles'
 
-MAINTAINER_EMAIL = 'alimanfoo@googlemail.com',
+MAINTAINER_EMAIL = 'alimanfoo@googlemail.com'
 
 URL = 'https://github.com/cggh/scikit-allel'
 
