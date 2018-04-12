@@ -6,7 +6,7 @@ v1.1.10
 
 * Various VCF parsing improvements and bug fixes
   (`#183 <https://github.com/cggh/scikit-allel/issues/183>`_,
-   `#189 <https://github.com/cggh/scikit-allel/issues/189>`_).
+  `#189 <https://github.com/cggh/scikit-allel/issues/189>`_).
 
 v1.1.9
 ------

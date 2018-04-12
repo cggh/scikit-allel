@@ -10,19 +10,17 @@ general-purpose Python scientific libraries.
 * Source: https://github.com/cggh/scikit-allel
 * Documentation: http://scikit-allel.readthedocs.org/
 * Download: https://pypi.python.org/pypi/scikit-allel
-* Gitter: https://gitter.im/cggh/pygenomics
+* Mailing list: https://groups.google.com/forum/#!forum/scikit-allel
 
-Please feel free to ask questions via
-`cggh/pygenomics <https://gitter.im/cggh/pygenomics>`_  on Gitter. Release
-announcements are posted to the
-`cggh/pygenomics <https://gitter.im/cggh/pygenomics>`_ Gitter channel and the
-`biovalidation mailing list <https://groups.google.com/forum/#!forum/biovalidation>`_.
+Please feel free to ask questions via the `mailing list <https://groups.google.com/forum/#!forum/scikit-allel>`_.
+
 If you find a bug or would like to suggest a feature, please `raise an issue
 on GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
 
 This site provides reference documentation for `scikit-allel`. For
 worked examples with real data, see the following articles:
 
+* `Selecting variants <http://alimanfoo.github.io/2018/04/09/selecting-variants.html>`_
 * `Extracting data from VCF files <http://alimanfoo.github.io/2017/06/14/read-vcf.html>`_
 * `A tour of scikit-allel <http://alimanfoo.github.io/2016/06/10/scikit-allel-tour.html>`_
 * |Estimating FST|
