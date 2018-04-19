@@ -20,7 +20,7 @@ on GitHub <https://github.com/cggh/scikit-allel/issues/new>`_.
 This site provides reference documentation for `scikit-allel`. For
 worked examples with real data, see the following articles:
 
-* `Selecting variants <http://alimanfoo.github.io/2018/04/09/selecting-variants.html>`_
+* `Selecting variants and samples <http://alimanfoo.github.io/2018/04/09/selecting-variants.html>`_
 * `Extracting data from VCF files <http://alimanfoo.github.io/2017/06/14/read-vcf.html>`_
 * `A tour of scikit-allel <http://alimanfoo.github.io/2016/06/10/scikit-allel-tour.html>`_
 * |Estimating FST|
