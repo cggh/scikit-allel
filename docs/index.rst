@@ -62,9 +62,9 @@ Alternatively, if you have a C compiler on your system, `scikit-allel` can be in
     $ pip install scikit-allel
 
 N.B., `scikit-allel` requires numpy_, scipy_, matplotlib_, seaborn_, pandas_,
-scikit-learn_, h5py_, numexpr_, bcolz_, zarr_ and dask_. If installing via conda, these
-should be installed automatically. If installing via pip, please install these dependencies
-first, then use pip to install scikit-allel.
+scikit-learn_, h5py_, numexpr_, bcolz_, zarr_ and dask_. hmmlearn_ and pomegranate_ are required for specific functions
+ to compute runs of homozygosity. If installing via conda, these should be installed automatically. If installing via
+ pip, please install these dependencies first, then use pip to install scikit-allel.
 
 If you have never installed Python before, you might find the following article useful:
 `Installing Python for data analysis

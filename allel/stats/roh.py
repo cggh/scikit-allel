@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 
-
 import numpy as np
-
 
 from allel.model.ndarray import GenotypeVector
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.stats.misc import tabulate_state_blocks
+from allel.stats import equally_accessible_windows, windowed_statistic
 
 
 def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6,
@@ -82,17 +81,16 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     start_prob = np.repeat(1/het_px.size, het_px.size)
 
     # transition between underlying states
-    transition_mx = _mhmm_derive_transition_matrix(transition, het_px.size)
+    transition_mx = _hmm_derive_transition_matrix(transition, het_px.size)
 
     # probability of inaccessible
     if is_accessible is None:
-        assert contig_size is not None, \
-            "If accessibility not provided must specify size of contig"
+        if contig_size is None:
+            raise ValueError(
+                "If is_accessibile argument is not provided, you must provide contig_size")
         p_accessible = 1.0
     else:
         p_accessible = is_accessible.mean()
-        assert contig_size is None, "contig_size should only provided when " \
-                                    "is_accessible is not provided"
         contig_size = is_accessible.size
 
     emission_mx = _mhmm_derive_emission_matrix(het_px, p_accessible)
@@ -150,6 +148,116 @@ def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
     return predictions, observations
 
 
+def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-3,
+                   window_size=1000, min_roh=0, is_accessible=None, contig_size=None):
+
+    """Call ROH (runs of homozygosity) in a single individual given a genotype vector.
+
+    This function computes the likely ROH using a Poisson HMM model. The chromosome is divided into
+    equally accessible windows of specified size, then the number of hets observed in each is used
+    to fit a Poisson HMM. Note this is much faster than `roh_mhmm`, but at the cost of some
+    resolution.
+
+    The model is provided with a probability of observing a het in a ROH (`phet_roh`) and one
+    or more probabilities of observing a het in a non-ROH, as this probability may not be
+    constant across the genome (`phet_nonroh`).
+
+    Parameters
+    ----------
+    gv : array_like, int, shape (n_variants, ploidy)
+        Genotype vector.
+    pos: array_like, int, shape (n_variants,)
+        Positions of variants, same 0th dimension as `gv`.
+    phet_roh: float, optional
+        Probability of observing a heterozygote in a ROH. Appropriate values
+        will depend on de novo mutation rate and genotype error rate.
+    phet_nonroh: tuple of floats, optional
+        One or more probabilites of observing a heterozygote outside of ROH.
+        Appropriate values will depend primarily on nucleotide diversity within
+        the population, but also on mutation rate and genotype error rate.
+    transition: float, optional
+        Probability of moving between states. This is based on windows, so a larger window size may
+        call for a larger transitional probability
+    window_size: integer, optional
+        Window size (equally accessible bases) to consider as a potential ROH. Setting this window
+        too small may result in spurious ROH calls, while too large will result in a lack of
+        resolution.
+    min_roh: integer, optional
+        Minimum size (bp) to condsider as a ROH. Will depend on contig size and recombination rate.
+    is_accessible: array_like, bool, shape (`contig_size`,), optional
+        Boolean array for each position in contig describing whether accessible
+        or not. Although optional, highly recommended so invariant sites are distinguishable from
+        sites where variation is inaccessible
+    contig_size: integer, optional
+        If is_accessible is not available, use this to specify the size of the contig, and assume
+        all sites are accessible.
+
+
+    Returns
+    -------
+    df_roh: DataFrame
+        Data frame where each row describes a run of homozygosity. Columns are 'start',
+        'stop', 'length' and 'is_marginal'. Start and stop are 1-based, stop-inclusive.
+    froh: float
+        Proportion of genome in a ROH.
+
+    Notes
+    -----
+    This function requires `pomegranate` (>= 0.9.0) to be installed.
+
+    """
+
+    from pomegranate import HiddenMarkovModel, PoissonDistribution
+
+    # equally accessbile windows
+    if is_accessible is None:
+        if contig_size is None:
+            raise ValueError(
+                "If is_accessibile argument is not provided, you must provide contig_size")
+        is_accessible = np.ones((contig_size,), dtype="bool")
+    else:
+        contig_size = is_accessible.size
+
+    eqw = equally_accessible_windows(is_accessible, window_size)
+
+    ishet = GenotypeVector(gv).is_het()
+    counts, wins, records = windowed_statistic(pos, ishet, np.sum, windows=eqw)
+
+    # heterozygote probabilities
+    het_px = np.concatenate([(phet_roh,), phet_nonroh])
+
+    # start probabilities (all equal)
+    start_prob = np.repeat(1/het_px.size, het_px.size)
+
+    # transition between underlying states
+    transition_mx = _hmm_derive_transition_matrix(transition, het_px.size)
+
+    dists = [PoissonDistribution(x * window_size) for x in het_px]
+
+    model = HiddenMarkovModel.from_matrix(transition_probabilities=transition_mx,
+                                          distributions=dists,
+                                          starts=start_prob)
+
+    prediction = np.array(model.predict(counts[:, None]))
+
+    df_blocks = tabulate_state_blocks(prediction, states=list(range(len(het_px))))
+    df_roh = df_blocks[(df_blocks.state == 0)].reset_index(drop=True)
+
+    # adapt the dataframe for ROH
+    df_roh["start"] = df_roh.start_ridx.apply(lambda y: eqw[y, 0])
+    df_roh["stop"] = df_roh.stop_lidx.apply(lambda y: eqw[y, 1])
+    df_roh["length"] = df_roh.stop - df_roh.start
+
+    # filter by ROH size
+    if min_roh > 0:
+        df_roh = df_roh[df_roh.length >= min_roh]
+
+    # compute FROH
+    froh = df_roh.length.sum() / contig_size
+
+    return df_roh[["start", "stop", "length", "is_marginal"]], froh
+
+
 def _mhmm_derive_emission_matrix(het_px, p_accessible):
     # one row per p in prob
     # hom, het, unobserved
@@ -159,7 +267,7 @@ def _mhmm_derive_emission_matrix(het_px, p_accessible):
     return mx
 
 
-def _mhmm_derive_transition_matrix(transition, nstates):
+def _hmm_derive_transition_matrix(transition, nstates):
     # this is a symmetric matrix
     mx = np.zeros((nstates, nstates))
     effective_tp = transition / (nstates - 1)
