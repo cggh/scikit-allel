@@ -18,7 +18,6 @@ python:
 
 install:
   - pip install -U tox-travis pip setuptools wheel
-  - pip install -r requirements_dev.txt
   - python setup.py build_ext --inplace
 
 script:
