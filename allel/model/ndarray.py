@@ -1582,7 +1582,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
                 raise ValueError('min allele for packing is -1, found %s' % amn)
 
         # pack data
-        values = memoryview_safe(self.value)
+        values = memoryview_safe(self.values)
         packed = genotype_array_pack_diploid(values)
 
         return packed
