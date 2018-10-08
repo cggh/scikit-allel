@@ -7,6 +7,7 @@ from multiprocessing.pool import ThreadPool
 import numpy as np
 
 
+from allel.compat import memoryview_safe
 from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype
 from allel.model.ndarray import HaplotypeArray
 from allel.stats.window import moving_statistic, index_windows
@@ -47,7 +48,7 @@ def ehh_decay(h, truncate=False):
     n_pairs = (n_haplotypes * (n_haplotypes - 1)) // 2
 
     # compute the shared prefix length between all pairs of haplotypes
-    spl = pairwise_shared_prefix_lengths(np.asarray(h))
+    spl = pairwise_shared_prefix_lengths(memoryview_safe(np.asarray(h)))
 
     # compute EHH by counting the number of shared prefixes extending beyond
     # each variant
@@ -90,7 +91,7 @@ def voight_painting(h):
     h = np.take(h, indices, axis=1)
 
     # paint
-    painting = paint_shared_prefixes(np.asarray(h))
+    painting = paint_shared_prefixes(memoryview_safe(np.asarray(h)))
 
     return painting, indices
 
@@ -390,6 +391,8 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
     check_integer_dtype(h)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(h, pos)
+    h = memoryview_safe(h)
+    pos = memoryview_safe(pos)
 
     # compute gaps between variants for integration
     gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
@@ -407,8 +410,7 @@ def ihs(h, pos, map_pos=None, min_ehh=0.05, min_maf=0.05, include_edges=False,
         result_fwd = pool.apply_async(ihh01_scan, (h, gaps), kwargs)
 
         # scan backward
-        result_rev = pool.apply_async(ihh01_scan, (h[::-1], gaps[::-1]),
-                                      kwargs)
+        result_rev = pool.apply_async(ihh01_scan, (h[::-1], gaps[::-1]), kwargs)
 
         # wait for both to finish
         pool.close()
@@ -510,6 +512,9 @@ def xpehh(h1, h2, pos, map_pos=None, min_ehh=0.05, include_edges=False,
     check_integer_dtype(h2)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(h1, h2, pos)
+    h1 = memoryview_safe(h1)
+    h2 = memoryview_safe(h2)
+    pos = memoryview_safe(pos)
 
     # compute gaps between variants for integration
     gaps = compute_ihh_gaps(pos, map_pos, gap_scale, max_gap, is_accessible)
@@ -609,6 +614,7 @@ def nsl(h, use_threads=True):
     # check inputs
     h = asarray_ndim(h, 2)
     check_integer_dtype(h)
+    h = memoryview_safe(h)
 
     # # check there are no invariant sites
     # ac = h.count_alleles()
@@ -678,6 +684,8 @@ def xpnsl(h1, h2, use_threads=True):
     h2 = asarray_ndim(h2, 2)
     check_integer_dtype(h2)
     check_dim0_aligned(h1, h2)
+    h1 = memoryview_safe(h1)
+    h2 = memoryview_safe(h2)
 
     if use_threads and multiprocessing.cpu_count() > 1:
         # use multiple threads
