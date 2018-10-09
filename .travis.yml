@@ -18,7 +18,7 @@ python:
   - "3.6"
 
 install:
-  - apt-get install tabix
+  - sudo apt-get install tabix
   - pip install -U tox-travis pip setuptools wheel
 
 script:
