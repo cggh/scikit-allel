@@ -9,9 +9,10 @@ import numpy as np
 
 from allel.compat import memoryview_safe
 from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype
-from allel.model.ndarray import HaplotypeArray
+from allel.model.ndarray import HaplotypeArray, AlleleCountsArray
 from allel.stats.window import moving_statistic, index_windows
 from allel.stats.diversity import moving_tajima_d
+from allel.stats.fst import moving_hudson_fst
 from allel.opt.stats import pairwise_shared_prefix_lengths, paint_shared_prefixes, \
     ihh01_scan, ihh_scan, nsl01_scan, nsl_scan
 
@@ -1259,3 +1260,82 @@ def standardize_by_allele_count(score, aac, bins=None, n_bins=None,
         score_standardized[loc] = (score[loc] - m) / s
 
     return score_standardized, bins
+
+
+def pbs(ac1, ac2, ac3, window_size, window_start=0, window_stop=None,
+        window_step=None, normed=True):
+    """Compute the population branching statistic (PBS) which performs a comparison
+    of allele frequencies between three populations to detect genome regions that are
+    unusually differentiated in one population relative to the other two populations.
+
+    Parameters
+    ----------
+    ac1 : array_like, int
+        Allele counts from the first population.
+    ac2 : array_like, int
+        Allele counts from the second population.
+    ac3 : array_like, int
+        Allele counts from the third population.
+    window_size : int
+        The window size (number of variants) within which to compute PBS values.
+    window_start : int, optional
+        The variant index at which to start windowed calculations.
+    window_stop : int, optional
+        The variant index at which to stop windowed calculations.
+    window_step : int, optional
+        The number of variants between start positions of windows. If not given, defaults
+        to the window size, i.e., non-overlapping windows.
+    normed : bool, optional
+        If True (default), use the normalised version of PBS, also known as PBSn1 [2]_.
+        Otherwise, use the PBS statistic as originally defined in [1]_.
+
+    Returns
+    -------
+    pbs : ndarray, float
+        Windowed PBS values.
+
+    Notes
+    -----
+    The F\ :sub:`ST` calculations use Hudson's estimator.
+
+    References
+    ----------
+    .. [1] Yi et al., "Sequencing of Fifty Human Exomes Reveals Adaptation to High
+       Altitude", Science, 329(5987): 75–78, 2 July 2010.
+    .. [2] Malaspinas et al., "A genomic history of Aboriginal Australia", Nature. volume
+       538, pages 207–214, 13 October 2016.
+
+    """
+
+    # normalise and check inputs
+    ac1 = AlleleCountsArray(ac1)
+    ac2 = AlleleCountsArray(ac2)
+    ac3 = AlleleCountsArray(ac3)
+    check_dim0_aligned(ac1, ac2, ac3)
+
+    # compute fst
+    fst12 = moving_hudson_fst(ac1, ac2, size=window_size, start=window_start,
+                              stop=window_stop, step=window_step)
+    fst13 = moving_hudson_fst(ac1, ac3, size=window_size, start=window_start,
+                              stop=window_stop, step=window_step)
+    fst23 = moving_hudson_fst(ac2, ac3, size=window_size, start=window_start,
+                              stop=window_stop, step=window_step)
+
+    # clip fst values to avoid infinite if fst is 1
+    for x in fst12, fst13, fst23:
+        np.clip(x, a_min=0, a_max=0.99999, out=x)
+
+    # compute fst transform
+    t12 = -np.log(1 - fst12)
+    t13 = -np.log(1 - fst13)
+    t23 = -np.log(1 - fst23)
+
+    # compute pbs
+    ret = (t12 + t13 - t23) / 2
+
+    if normed:
+        # compute pbs normalising constant
+        norm = 1 + (t12 + t13 + t23) / 2
+        ret = ret / norm
+
+    return ret

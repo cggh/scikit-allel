@@ -7,7 +7,7 @@ from nose.tools import eq_ as eq, assert_is_instance, assert_raises
 from allel.test.tools import assert_array_equal, assert_array_nanclose
 
 
-from allel import ihs, xpehh, nsl, xpnsl, ehh_decay, voight_painting
+from allel import ihs, xpehh, nsl, xpnsl, ehh_decay, voight_painting, pbs
 from allel.opt.stats import ssl01_scan, nsl01_scan, ihh01_scan,\
     ssl2ihh, ihh_scan
 
@@ -616,3 +616,21 @@ def test_voight_painting():
          [0, 0, 0, 0]]
     a, _ = voight_painting(h)
     assert_array_equal(e, a)
+
+
+def test_pbs():
+
+    # minimal input data, sanity check for output existence and type
+    ac1 = [[2, 0], [0, 2], [1, 1], [2, 0], [0, 2]]
+    ac2 = [[1, 1], [2, 0], [0, 2], [2, 0], [0, 2]]
+    ac3 = [[0, 2], [1, 1], [2, 0], [2, 0], [0, 2]]
+    ret = pbs(ac1, ac2, ac3, window_size=2, window_step=1)
+    assert isinstance(ret, np.ndarray)
+    assert 1 == ret.ndim
+    assert 4 == ret.shape[0]
+    assert 'f' == ret.dtype.kind
+    # regression check
+    expect = [0.52349464,  0., -0.85199356, np.nan]
+    assert_array_nanclose(expect, ret)
+    # final value is nan because variants in final window are non-segregating
+    assert np.isnan(ret[3])
