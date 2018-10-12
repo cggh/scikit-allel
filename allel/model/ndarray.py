@@ -11,7 +11,7 @@ import numpy as np
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
     check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
-from allel.compat import PY2, copy_method_doc, integer_types
+from allel.compat import PY2, copy_method_doc, integer_types, memoryview_safe
 from allel.io import write_vcf, gff3_to_recarray, recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
@@ -1582,7 +1582,8 @@ class GenotypeArray(Genotypes, DisplayAs2D):
                 raise ValueError('min allele for packing is -1, found %s' % amn)
 
         # pack data
-        packed = genotype_array_pack_diploid(self.values)
+        values = memoryview_safe(self.values)
+        packed = genotype_array_pack_diploid(values)
 
         return packed
 
@@ -1621,6 +1622,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         packed = np.asarray(packed)
         check_ndim(packed, 2)
         check_dtype(packed, 'u1')
+        packed = memoryview_safe(packed)
 
         data = genotype_array_unpack_diploid(packed)
         return cls(data)
@@ -1822,24 +1824,23 @@ class GenotypeArray(Genotypes, DisplayAs2D):
                 raise ValueError('index out of bounds')
             if np.any(subpop < 0):
                 raise ValueError('negative indices not supported')
+            subpop = memoryview_safe(subpop)
 
         # determine alleles to count
         if max_allele is None:
             max_allele = self.max()
 
         # use optimisations
-        if subpop is None and self.mask is None:
-            ac = genotype_array_count_alleles(self.values, max_allele)
+        values = memoryview_safe(self.values)
+        mask = memoryview_safe(self.mask).view(dtype='u1') if self.mask is not None else None
+        if subpop is None and mask is None:
+            ac = genotype_array_count_alleles(values, max_allele)
         elif subpop is None:
-            ac = genotype_array_count_alleles_masked(
-                self.values, self.mask.view(dtype='u1'), max_allele
-            )
-        elif self.mask is None:
-            ac = genotype_array_count_alleles_subpop(self.values, max_allele, subpop)
+            ac = genotype_array_count_alleles_masked(values, mask, max_allele)
+        elif mask is None:
+            ac = genotype_array_count_alleles_subpop(values, max_allele, subpop)
         else:
-            ac = genotype_array_count_alleles_subpop_masked(
-                self.values, self.mask.view(dtype='u1'), max_allele, subpop
-            )
+            ac = genotype_array_count_alleles_subpop_masked(values, mask, max_allele, subpop)
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -2384,17 +2385,19 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
                 raise ValueError('index out of bounds')
             if np.any(subpop < 0):
                 raise ValueError('negative indices not supported')
+            subpop = memoryview_safe(subpop)
 
         # determine alleles to count
         if max_allele is None:
             max_allele = self.max()
 
         # use optimisations
+        values = memoryview_safe(self.values)
         if subpop is None:
-            ac = haplotype_array_count_alleles(self.values, max_allele)
+            ac = haplotype_array_count_alleles(values, max_allele)
 
         else:
-            ac = haplotype_array_count_alleles_subpop(self.values, max_allele, subpop)
+            ac = haplotype_array_count_alleles_subpop(values, max_allele, subpop)
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -2474,7 +2477,9 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         # use optimisation
         mapping = np.asarray(mapping, dtype=self.dtype)
-        data = haplotype_array_map_alleles(self.values, mapping, copy=copy)
+        mapping = memoryview_safe(mapping)
+        values = memoryview_safe(self.values)
+        data = haplotype_array_map_alleles(values, mapping, copy=copy)
 
         return HaplotypeArray(data, copy=False)
 

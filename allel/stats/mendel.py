@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
+from allel.compat import memoryview_safe
 from allel.model.ndarray import GenotypeArray, HaplotypeArray
 from allel.util import check_ploidy, check_min_samples, check_type, check_dtype
 from allel.opt.stats import phase_progeny_by_transmission as _opt_phase_progeny_by_transmission, \
@@ -396,6 +397,7 @@ def phase_progeny_by_transmission(g):
     check_min_samples(g.n_samples, 3)
 
     # run the phasing
+    # N.B., a copy has already been made, so no need to make memoryview safe
     is_phased = _opt_phase_progeny_by_transmission(g.values)
     g.is_phased = np.asarray(is_phased).view(bool)
 
@@ -433,8 +435,9 @@ def phase_parents_by_transmission(g, window_size):
     check_min_samples(g.n_samples, 3)
 
     # run the phasing
-    is_phased = g.is_phased.view('u1')
-    _opt_phase_parents_by_transmission(g.values, is_phased, window_size)
+    g._values = memoryview_safe(g.values)
+    g._is_phased = memoryview_safe(g.is_phased)
+    _opt_phase_parents_by_transmission(g.values, g.is_phased.view('u1'), window_size)
 
     # outputs
     return g
@@ -466,7 +469,9 @@ def phase_by_transmission(g, window_size, copy=True):
     """
 
     # setup
-    g = GenotypeArray(g, dtype='i1', copy=copy)
+    g = np.asarray(g, dtype='i1')
+    g = GenotypeArray(g, copy=copy)
+    g._values = memoryview_safe(g.values)
     check_ploidy(g.ploidy, 2)
     check_min_samples(g.n_samples, 3)
 

@@ -8,6 +8,7 @@ import numpy as np
 from allel.stats.window import windowed_statistic
 from allel.util import asarray_ndim, ensure_square
 from allel.chunked import get_blen_array
+from allel.compat import memoryview_safe
 from allel.opt.stats import gn_pairwise_corrcoef_int8, gn_pairwise2_corrcoef_int8, \
     gn_locate_unlinked_int8
 
@@ -59,6 +60,7 @@ def rogers_huff_r(gn, fill=np.nan):
 
     # check inputs
     gn = asarray_ndim(gn, 2, dtype='i1')
+    gn = memoryview_safe(gn)
 
     # compute correlation coefficients
     r = gn_pairwise_corrcoef_int8(gn, fill)
@@ -93,6 +95,8 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
     # check inputs
     gna = asarray_ndim(gna, 2, dtype='i1')
     gnb = asarray_ndim(gnb, 2, dtype='i1')
+    gna = memoryview_safe(gna)
+    gnb = memoryview_safe(gnb)
 
     # compute correlation coefficients
     r = gn_pairwise2_corrcoef_int8(gna, gnb, fill)
@@ -152,6 +156,7 @@ def locate_unlinked(gn, size=100, step=20, threshold=.1, blen=None):
         # N.B., ensure overlap with next window
         j = min(n_variants, i+blen+size)
         gnb = np.asarray(gn[i:j], dtype='i1')
+        gnb = memoryview_safe(gnb)
         locb = loc[i:j]
         gn_locate_unlinked_int8(gnb, locb, size, step, threshold)
 

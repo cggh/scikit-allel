@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 
 
+from allel.compat import memoryview_safe
 from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype
 from allel.opt.stats import state_transitions
@@ -215,6 +216,7 @@ def tabulate_state_transitions(x, states, pos=None):
     # check inputs
     x = asarray_ndim(x, 1)
     check_integer_dtype(x)
+    x = memoryview_safe(x)
 
     # find state transitions
     switch_points, transitions, _ = state_transitions(x, states)
@@ -296,6 +298,7 @@ def tabulate_state_blocks(x, states, pos=None):
     # check inputs
     x = asarray_ndim(x, 1)
     check_integer_dtype(x)
+    x = memoryview_safe(x)
 
     # find state transitions
     switch_points, transitions, observations = state_transitions(x, states)
