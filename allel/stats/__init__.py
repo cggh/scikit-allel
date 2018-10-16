@@ -18,8 +18,9 @@ from .diversity import mean_pairwise_difference, \
 from .fst import weir_cockerham_fst, hudson_fst, \
     windowed_weir_cockerham_fst, windowed_hudson_fst, patterson_fst, \
     windowed_patterson_fst, blockwise_weir_cockerham_fst, \
-    blockwise_hudson_fst, blockwise_patterson_fst, average_hudson_fst, average_patterson_fst, \
-    average_weir_cockerham_fst, moving_hudson_fst, moving_patterson_fst, moving_weir_cockerham_fst
+    blockwise_hudson_fst, blockwise_patterson_fst, average_hudson_fst, \
+    average_patterson_fst, average_weir_cockerham_fst, moving_hudson_fst, \
+    moving_patterson_fst, moving_weir_cockerham_fst
 
 from .distance import pairwise_distance, pairwise_dxy, pcoa, \
     plot_pairwise_distance, condensed_coords, condensed_coords_between, \
@@ -36,14 +37,14 @@ from .decomposition import pca, randomized_pca
 from .preprocessing import StandardScaler, CenterScaler, PattersonScaler, get_scaler
 
 from .admixture import patterson_f2, patterson_f3, patterson_d, \
-    blockwise_patterson_f3, blockwise_patterson_d, average_patterson_d, average_patterson_f3, \
-    moving_patterson_d, moving_patterson_f3
+    blockwise_patterson_f3, blockwise_patterson_d, average_patterson_d, \
+    average_patterson_f3, moving_patterson_d, moving_patterson_f3
 
 from .selection import ehh_decay, voight_painting, xpehh, ihs, \
     plot_voight_painting, fig_voight_painting, plot_haplotype_frequencies, \
     plot_moving_haplotype_frequencies, haplotype_diversity, \
     moving_haplotype_diversity, garud_h, moving_garud_h, nsl, xpnsl, \
-    standardize, standardize_by_allele_count, moving_delta_tajima_d
+    standardize, standardize_by_allele_count, moving_delta_tajima_d, pbs
 
 from .sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
     joint_sfs, joint_sfs_folded, joint_sfs_scaled, joint_sfs_folded_scaled, \
