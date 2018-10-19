@@ -27,7 +27,7 @@ DOWNLOAD_URL = 'http://pypi.python.org/pypi/scikit-allel'
 
 LICENSE = 'MIT'
 
-INSTALL_REQUIRES = ['cython', 'numpy', 'scipy', 'dask[array]']
+INSTALL_REQUIRES = ['cython', 'numpy', 'dask[array]']
 
 # full installation with all optional dependencies
 EXTRAS_REQUIRE = {'full': ['scipy', 'matplotlib', 'seaborn', 'pandas', 'scikit-learn',
@@ -70,8 +70,8 @@ VERSION = get_version()
 def setup_extensions(metadata):
     # check for cython
     try:
-        print('[scikit-allel] setup extensions with cython')
         from Cython.Build import cythonize
+        print('[scikit-allel] setup extensions with cython')
         ext_modules = cythonize([
             Extension('allel.opt.model',
                       sources=['allel/opt/model.pyx']
