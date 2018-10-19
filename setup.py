@@ -49,6 +49,9 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
 ]
 
 
@@ -59,6 +62,7 @@ def get_version(source='allel/__init__.py'):
                 return literal_eval(line.split('=')[-1].lstrip())
     raise ValueError("__version__ not found")
 
+
 VERSION = get_version()
 
 
@@ -66,33 +70,34 @@ VERSION = get_version()
 def setup_extensions(metadata):
     # check for cython
     try:
-        print('[scikit-allel] build with cython')
+        print('[scikit-allel] setup extensions with cython')
         from Cython.Build import cythonize
         ext_modules = cythonize([
             Extension('allel.opt.model',
-                        sources=['allel/opt/model.pyx']
-                        # define_macros=[('CYTHON_TRACE', 1)],
-                        ),
+                      sources=['allel/opt/model.pyx']
+                      # define_macros=[('CYTHON_TRACE', 1)],
+                      ),
             Extension('allel.opt.stats',
-                        sources=['allel/opt/stats.pyx']
-                        # define_macros=[('CYTHON_TRACE', 1)],
-                        ),
+                      sources=['allel/opt/stats.pyx']
+                      # define_macros=[('CYTHON_TRACE', 1)],
+                      ),
             Extension('allel.opt.io_vcf_read',
-                        sources=['allel/opt/io_vcf_read.pyx'],
-                        # define_macros=[('CYTHON_TRACE', 1)],
-                        ),
+                      sources=['allel/opt/io_vcf_read.pyx'],
+                      # define_macros=[('CYTHON_TRACE', 1)],
+                      ),
         ])
     except ImportError:
-        print('[scikit-allel] build from C')
+        print('[scikit-allel] setup extensions without cython')
         ext_modules = [
             Extension('allel.opt.model',
-                        sources=['allel/opt/model.c']),
+                      sources=['allel/opt/model.c']),
             Extension('allel.opt.stats',
-                        sources=['allel/opt/stats.c']),
+                      sources=['allel/opt/stats.c']),
             Extension('allel.opt.io_vcf_read',
-                        sources=['allel/opt/io_vcf_read.c'])
+                      sources=['allel/opt/io_vcf_read.c'])
         ]
     metadata['ext_modules'] = ext_modules
+
 
 class CustomBuildExtCommand(build_ext):
     """build_ext command for use when numpy headers are needed."""
@@ -121,8 +126,7 @@ def setup_package():
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
         zip_safe=False,
-        cmdclass= {'build_ext': CustomBuildExtCommand},
-
+        cmdclass={'build_ext': CustomBuildExtCommand},
     )
     setup_extensions(metadata)
     setup(**metadata)
