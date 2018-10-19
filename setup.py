@@ -55,17 +55,6 @@ CLASSIFIERS = [
 ]
 
 
-def get_version(source='allel/__init__.py'):
-    with open(source) as sf:
-        for line in sf:
-            if line.startswith('__version__'):
-                return literal_eval(line.split('=')[-1].lstrip())
-    raise ValueError("__version__ not found")
-
-
-VERSION = get_version()
-
-
 # noinspection PyUnresolvedReferences
 def setup_extensions(metadata):
     # check for cython
@@ -118,13 +107,21 @@ def setup_package():
         license=LICENSE,
         url=URL,
         download_url=DOWNLOAD_URL,
-        version=VERSION,
         package_dir={'': '.'},
         packages=find_packages(),
         package_data={'allel.test': ['data/*']},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
+        setup_requires=[
+            'setuptools>18.0',
+            'setuptools-scm>1.5.4'
+        ],
+        use_scm_version={
+            'version_scheme': 'guess-next-dev',
+            'local_scheme': 'dirty-tag',
+            'write_to': 'allel/version.py'
+        },
         zip_safe=False,
         cmdclass={'build_ext': CustomBuildExtCommand},
     )
