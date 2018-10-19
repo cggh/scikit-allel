@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function, division
 from ast import literal_eval
 from setuptools import setup, Extension, find_packages
-import sys
 try:
     from Cython.setuptools import built_ext
 except ImportError:
@@ -30,8 +29,9 @@ LICENSE = 'MIT'
 
 INSTALL_REQUIRES = ['cython', 'numpy', 'scipy', 'dask[array]']
 
-#Full installation with all optional dependencies
-EXTRAS_REQUIRE = {'full': ['matplotlib', 'seaborn', 'pandas', 'scikit-learn', 'h5py', 'numexpr', 'bcolz', 'zarr']}
+# full installation with all optional dependencies
+EXTRAS_REQUIRE = {'full': ['scipy', 'matplotlib', 'seaborn', 'pandas', 'scikit-learn',
+                           'h5py', 'numexpr', 'bcolz', 'zarr']}
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
