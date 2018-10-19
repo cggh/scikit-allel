@@ -31,7 +31,7 @@ INSTALL_REQUIRES = ['cython', 'numpy', 'dask[array]']
 
 # full installation with all optional dependencies
 EXTRAS_REQUIRE = {'full': ['scipy', 'matplotlib', 'seaborn', 'pandas', 'scikit-learn',
-                           'h5py', 'numexpr', 'bcolz', 'zarr']}
+                           'h5py', 'numexpr', 'bcolz', 'zarr', 'hmmlearn', 'pomegranate']}
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
