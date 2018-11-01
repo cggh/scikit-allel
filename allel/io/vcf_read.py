@@ -22,6 +22,7 @@ import numpy as np
 from allel.compat import PY2, FileNotFoundError, text_type
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 # expose some names from cython extension
+# noinspection PyUnresolvedReferences
 from allel.opt.io_vcf_read import (  # noqa: F401
     ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, ANN_ANNOTATION_FIELD,
     ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD, ANN_CDS_LENGTH_FIELD,
@@ -118,6 +119,9 @@ _doc_param_fields = \
         (including all INFO fields) provide ``'variants/*'``. To extract all calldata fields (i.e.,
         defined in FORMAT headers) provide ``'calldata/*'``."""
 
+_doc_param_exclude_fields = \
+    """Fields to exclude. E.g., for use in combination with ``fields='*'``."""
+
 _doc_param_types = \
     """Overide data types. Should be a dictionary mapping field names to NumPy data types.
         E.g., providing the dictionary ``{'variants/DP': 'i8', 'calldata/GQ': 'i2'}`` will mean
@@ -178,6 +182,7 @@ _doc_param_log = \
 
 def read_vcf(input,
              fields=None,
+             exclude_fields=None,
              types=None,
              numbers=None,
              alt_number=DEFAULT_ALT_NUMBER,
@@ -197,6 +202,8 @@ def read_vcf(input,
         {input}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -233,9 +240,10 @@ def read_vcf(input,
 
     # setup
     _, samples, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
-        tabix=tabix, samples=samples, transformers=transformers
+        input=input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        samples=samples, transformers=transformers
     )
 
     # setup progress logging
@@ -266,6 +274,7 @@ def read_vcf(input,
 read_vcf.__doc__ = read_vcf.__doc__.format(
     input=_doc_param_input,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -291,6 +300,7 @@ def vcf_to_npz(input, output,
                compressed=True,
                overwrite=False,
                fields=None,
+               exclude_fields=None,
                types=None,
                numbers=None,
                alt_number=DEFAULT_ALT_NUMBER,
@@ -316,6 +326,8 @@ def vcf_to_npz(input, output,
         {overwrite}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -347,9 +359,10 @@ def vcf_to_npz(input, output,
 
     # read all data into memory
     data = read_vcf(
-        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, log=log, fills=fills,
-        region=region, tabix=tabix, samples=samples, transformers=transformers
+        input=input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, log=log, fills=fills, region=region, tabix=tabix,
+        samples=samples, transformers=transformers
     )
 
     # setup save function
@@ -367,6 +380,7 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
     output=_doc_param_output,
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -489,6 +503,7 @@ def vcf_to_hdf5(input, output,
                 overwrite=False,
                 vlen=True,
                 fields=None,
+                exclude_fields=None,
                 types=None,
                 numbers=None,
                 alt_number=DEFAULT_ALT_NUMBER,
@@ -531,6 +546,8 @@ def vcf_to_hdf5(input, output,
         you know at most 10 characters are required.
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -575,9 +592,10 @@ def vcf_to_hdf5(input, output,
 
         # setup chunk iterator
         _, samples, headers, it = iter_vcf_chunks(
-            input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-            buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
-            tabix=tabix, samples=samples, transformers=transformers
+            input, fields=fields, exclude_fields=exclude_fields, types=types,
+            numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+            chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+            samples=samples, transformers=transformers
         )
 
         # setup progress logging
@@ -628,6 +646,7 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
     output=_doc_param_output,
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -704,6 +723,7 @@ def vcf_to_zarr(input, output,
                 compressor='default',
                 overwrite=False,
                 fields=None,
+                exclude_fields=None,
                 types=None,
                 numbers=None,
                 alt_number=DEFAULT_ALT_NUMBER,
@@ -732,6 +752,8 @@ def vcf_to_zarr(input, output,
         {overwrite}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -774,9 +796,10 @@ def vcf_to_zarr(input, output,
 
     # setup chunk iterator
     _, samples, headers, it = iter_vcf_chunks(
-        input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
-        tabix=tabix, samples=samples, transformers=transformers
+        input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        samples=samples, transformers=transformers
     )
 
     # setup progress logging
@@ -819,6 +842,7 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
     output=_doc_param_output,
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -836,6 +860,7 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
 
 def iter_vcf_chunks(input,
                     fields=None,
+                    exclude_fields=None,
                     types=None,
                     numbers=None,
                     alt_number=DEFAULT_ALT_NUMBER,
@@ -854,6 +879,8 @@ def iter_vcf_chunks(input,
         {input}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -889,8 +916,9 @@ def iter_vcf_chunks(input,
     """
 
     # setup commmon keyword args
-    kwds = dict(fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-                chunk_length=chunk_length, fills=fills, samples=samples)
+    kwds = dict(fields=fields, exclude_fields=exclude_fields, types=types,
+                numbers=numbers, alt_number=alt_number, chunk_length=chunk_length,
+                fills=fills, samples=samples)
 
     # obtain a file-like object
     close = False
@@ -971,6 +999,7 @@ def iter_vcf_chunks(input,
 iter_vcf_chunks.__doc__ = iter_vcf_chunks.__doc__.format(
     input=_doc_param_input,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -1439,8 +1468,8 @@ def _normalize_samples(samples, headers, types):
     return normed_samples, loc_samples
 
 
-def _iter_vcf_stream(stream, fields, types, numbers, alt_number, chunk_length, fills, region,
-                     samples):
+def _iter_vcf_stream(stream, fields, exclude_fields, types, numbers, alt_number,
+                     chunk_length, fills, region, samples):
 
     # read VCF headers
     headers = _read_vcf_headers(stream)
@@ -1460,6 +1489,12 @@ def _iter_vcf_stream(stream, fields, types, numbers, alt_number, chunk_length, f
 
     else:
         fields = _normalize_fields(fields=fields, headers=headers, samples=samples)
+
+    # deal with field exclusions
+    if exclude_fields:
+        exclude_fields = _normalize_fields(fields=exclude_fields, headers=headers,
+                                           samples=samples)
+        fields = [f for f in fields if f not in exclude_fields]
 
     # setup data types
     types = _normalize_types(types=types, fields=fields, headers=headers)
@@ -1578,11 +1613,14 @@ def _chunk_to_dataframe(fields, chunk):
         else:
             warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
     df = pandas.DataFrame.from_items(items)
+    # treat empty string as missing
+    df.replace('', np.nan, inplace=True)
     return df
 
 
 def vcf_to_dataframe(input,
                      fields=None,
+                     exclude_fields=None,
                      types=None,
                      numbers=None,
                      alt_number=DEFAULT_ALT_NUMBER,
@@ -1601,6 +1639,8 @@ def vcf_to_dataframe(input,
         {input}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -1636,9 +1676,10 @@ def vcf_to_dataframe(input,
 
     # setup
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
-        tabix=tabix, samples=[], transformers=transformers
+        input=input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        transformers=transformers
     )
 
     # setup progress logging
@@ -1663,6 +1704,7 @@ def vcf_to_dataframe(input,
 vcf_to_dataframe.__doc__ = vcf_to_dataframe.__doc__.format(
     input=_doc_param_input,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -1678,6 +1720,7 @@ vcf_to_dataframe.__doc__ = vcf_to_dataframe.__doc__.format(
 
 def vcf_to_csv(input, output,
                fields=None,
+               exclude_fields=None,
                types=None,
                numbers=None,
                alt_number=DEFAULT_ALT_NUMBER,
@@ -1699,6 +1742,8 @@ def vcf_to_csv(input, output,
         {output}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -1731,9 +1776,10 @@ def vcf_to_csv(input, output,
 
     # setup
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
-        samples=[], transformers=transformers
+        input=input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        transformers=transformers
     )
 
     # setup progress logging
@@ -1756,6 +1802,7 @@ vcf_to_csv.__doc__ = vcf_to_csv.__doc__.format(
     input=_doc_param_input,
     output=_doc_param_output,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -1790,6 +1837,7 @@ def _chunk_to_recarray(fields, chunk):
 
 def vcf_to_recarray(input,
                     fields=None,
+                    exclude_fields=None,
                     types=None,
                     numbers=None,
                     alt_number=DEFAULT_ALT_NUMBER,
@@ -1808,6 +1856,8 @@ def vcf_to_recarray(input,
         {input}
     fields : list of strings, optional
         {fields}
+    exclude_fields : list of strings, optional
+        {exclude_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -1842,9 +1892,10 @@ def vcf_to_recarray(input,
     # setup chunk iterator
     # N.B., set samples to empty list so we don't get any calldata fields
     fields, _, _, it = iter_vcf_chunks(
-        input=input, fields=fields, types=types, numbers=numbers, alt_number=alt_number,
-        buffer_size=buffer_size, chunk_length=chunk_length, fills=fills, region=region,
-        tabix=tabix, samples=[], transformers=transformers
+        input=input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        transformers=transformers
     )
 
     # setup progress logging
@@ -1868,6 +1919,7 @@ def vcf_to_recarray(input,
 vcf_to_recarray.__doc__ = vcf_to_recarray.__doc__.format(
     input=_doc_param_input,
     fields=_doc_param_fields,
+    exclude_fields=_doc_param_exclude_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
