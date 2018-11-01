@@ -18,6 +18,7 @@ from nose.tools import assert_almost_equal, eq_, assert_in, assert_list_equal, a
 from allel.io.vcf_read import iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5, \
     vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv, vcf_to_recarray
 from allel.compat import PY2
+from allel.test.tools import compare_arrays
 
 
 # needed for PY2/PY3 consistent behaviour
@@ -353,7 +354,6 @@ def _test_read_vcf_content(input, chunk_length, buffer_size):
     eq_((9,), callset['variants/QUAL'].shape)
     eq_(10.0, callset['variants/QUAL'][1])
     eq_((9,), callset['variants/FILTER_PASS'].shape)
-    print(callset['variants/FILTER_PASS'])
     eq_(True, callset['variants/FILTER_PASS'][2])
     eq_(False, callset['variants/FILTER_PASS'][3])
     eq_((9,), callset['variants/FILTER_q10'].shape)
@@ -398,10 +398,6 @@ def _test_read_vcf_content(input, chunk_length, buffer_size):
     assert_list_equal([b'NA00001', b'NA00002', b'NA00003'], callset['samples'].tolist())
 
     # fixed fields
-    print(callset['variants/CHROM'])
-    print(callset['variants/POS'])
-    print(callset['variants/REF'])
-    print(callset['variants/ALT'])
     eq_((9,), callset['variants/CHROM'].shape)
     eq_('S', callset['variants/CHROM'].dtype.kind)
     eq_(b'19', callset['variants/CHROM'][0])
@@ -419,7 +415,6 @@ def _test_read_vcf_content(input, chunk_length, buffer_size):
     eq_((9,), callset['variants/QUAL'].shape)
     eq_(10.0, callset['variants/QUAL'][1])
     eq_((9,), callset['variants/FILTER_PASS'].shape)
-    print(callset['variants/FILTER_PASS'])
     eq_(True, callset['variants/FILTER_PASS'][2])
     eq_(False, callset['variants/FILTER_PASS'][3])
     eq_((9,), callset['variants/FILTER_q10'].shape)
@@ -825,7 +820,6 @@ def test_truncation_calldata():
         assert_list_equal(['S2', 'S1'], callset['samples'].tolist())
         a = callset['calldata/GT']
         eq_((3, 2, 2), a.shape)
-        print(a)
         eq_((0, 1), tuple(a[0, 0]))
         eq_((1, 2), tuple(a[0, 1]))
         eq_((-1, -1), tuple(a[1, 0]))
@@ -2173,6 +2167,27 @@ def test_vcf_to_hdf5_vlen():
                     assert_array_equal(expect[key], actual[key][:])
 
 
+def to_pandas_expectation(e):
+    # expect that all string fields end up as objects with nans for missing
+    if e.dtype.kind == 'S':
+        e = e.astype('U').astype(object)
+    if e.dtype == object:
+        e[e == ''] = np.nan
+    return e
+
+
+def check_dataframe(callset, df):
+    for k in callset:
+        if k.startswith('variants/'):
+            group, name = k.split('/')
+            e = to_pandas_expectation(callset[k])
+            if e.ndim == 1:
+                compare_arrays(e, df[name].values)
+            elif e.ndim == 2:
+                for i in range(e.shape[1]):
+                    compare_arrays(e[:, i], df['%s_%s' % (name, i + 1)])
+
+
 def test_vcf_to_dataframe():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'GT']
@@ -2182,48 +2197,29 @@ def test_vcf_to_dataframe():
         callset = read_vcf(fn, fields=fields, alt_number=2, numbers=numbers, types=types)
         df = vcf_to_dataframe(fn, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
                               types=types)
-        print(df.columns.tolist())
         assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3'],
                           df.columns.tolist())
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
         eq_(np.dtype(object), df['ALT_1'].dtype)
-        for k in callset:
-            group, name = k.split('/')
-            e = callset[k]
-            if e.dtype.kind == 'S':
-                e = e.astype('U')
-            if e.ndim == 1:
-                assert_array_equal(e, df[name].values)
-            elif e.ndim == 2:
-                for i in range(e.shape[1]):
-                    assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
+        check_dataframe(callset, df)
 
 
 def test_vcf_to_dataframe_all():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     fields = '*'
+    numbers = {'AC': 3}
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type}
         callset = read_vcf(fn, fields=fields, alt_number=2, numbers=numbers, types=types)
         df = vcf_to_dataframe(fn, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
                               types=types)
-        print(df.columns.tolist())
         for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3']:
             assert k in df.columns.tolist()
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
         eq_(np.dtype(object), df['ALT_1'].dtype)
-        for k in callset:
-            group, name = k.split('/')
-            e = callset[k]
-            if e.dtype.kind == 'S':
-                e = e.astype('U')
-            if e.ndim == 1:
-                assert_array_equal(e, df[name].values)
-            elif e.ndim == 2:
-                for i in range(e.shape[1]):
-                    assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
+        check_dataframe(callset, df)
 
 
 def test_vcf_to_dataframe_exclude():
@@ -2249,24 +2245,13 @@ def test_vcf_to_dataframe_ann():
                            transformers=transformers)
         df = vcf_to_dataframe(fn, fields=fields, numbers=numbers, chunk_length=2, types=types,
                               transformers=transformers)
-        print(df.columns.tolist())
-        print(df)
         assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'ANN_Allele', 'ANN_HGVS_c',
                            'ANN_AA_pos', 'ANN_AA_length', 'DP', 'AC_1', 'AC_2'],
                           df.columns.tolist())
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
         eq_(np.dtype(object), df['ALT_1'].dtype)
-        for k in callset:
-            group, name = k.split('/')
-            e = callset[k]
-            if e.dtype.kind == 'S':
-                e = e.astype('U')
-            if e.ndim == 1:
-                assert_array_equal(e, df[name].values)
-            elif e.ndim == 2:
-                for i in range(e.shape[1]):
-                    assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
+        check_dataframe(callset, df)
 
 
 def test_vcf_to_csv():
@@ -2283,10 +2268,10 @@ def test_vcf_to_csv():
         vcf_to_csv(fn, out_fn, fields=fields, alt_number=2, numbers=numbers, types=types,
                    chunk_length=2)
         import pandas
-        adf = pandas.read_csv(out_fn, na_filter=False)
+        adf = pandas.read_csv(out_fn, na_filter=True)
         assert_list_equal(df.columns.tolist(), adf.columns.tolist())
         for k in df.columns:
-            assert_array_equal(df[k].values, adf[k].values)
+            compare_arrays(df[k].values, adf[k].values)
 
 
 def test_vcf_to_csv_all():
@@ -2298,10 +2283,10 @@ def test_vcf_to_csv_all():
         os.remove(out_fn)
     vcf_to_csv(fn, out_fn, fields=fields)
     import pandas
-    adf = pandas.read_csv(out_fn, na_filter=False)
+    adf = pandas.read_csv(out_fn, na_filter=True)
     assert_list_equal(df.columns.tolist(), adf.columns.tolist())
     for k in df.columns:
-        assert_array_equal(df[k].values, adf[k].values)
+        compare_arrays(df[k].values, adf[k].values)
 
 
 def test_vcf_to_csv_exclude():
@@ -2314,10 +2299,8 @@ def test_vcf_to_csv_exclude():
         os.remove(out_fn)
     vcf_to_csv(fn, out_fn, fields=fields, exclude_fields=exclusions)
     import pandas
-    adf = pandas.read_csv(out_fn, na_filter=False)
+    adf = pandas.read_csv(out_fn, na_filter=True)
     assert_list_equal(df.columns.tolist(), adf.columns.tolist())
-    for k in df.columns:
-        assert_array_equal(df[k].values, adf[k].values)
 
 
 def test_vcf_to_csv_ann():
@@ -2336,10 +2319,10 @@ def test_vcf_to_csv_ann():
         vcf_to_csv(fn, out_fn, fields=fields, numbers=numbers, types=types, chunk_length=2,
                    transformers=transformers)
         import pandas
-        adf = pandas.read_csv(out_fn, na_filter=False)
+        adf = pandas.read_csv(out_fn, na_filter=True)
         assert_list_equal(df.columns.tolist(), adf.columns.tolist())
         for k in df.columns:
-            assert_array_equal(df[k].values, adf[k].values)
+            compare_arrays(df[k].values, adf[k].values)
 
 
 def test_vcf_to_recarray():
@@ -2355,9 +2338,8 @@ def test_vcf_to_recarray():
                           list(a.dtype.names))
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         for k in callset:
-            group, name = k.split('/')
-            assert group != 'calldata'
-            if group == 'variants':
+            if k.startswith('variants/'):
+                group, name = k.split('/')
                 e = callset[k]
                 if e.ndim == 1:
                     assert_array_equal(e, a[name])
@@ -2366,8 +2348,6 @@ def test_vcf_to_recarray():
                         assert_array_equal(e[:, i], a['%s_%s' % (name, i + 1)])
                 else:
                     assert False, (k, e.ndim)
-            else:
-                assert name not in a.dtype.names
 
 
 def test_vcf_to_recarray_all():
@@ -2383,9 +2363,8 @@ def test_vcf_to_recarray_all():
             assert k in a.dtype.names
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         for k in callset:
-            group, name = k.split('/')
-            assert group != 'calldata'
-            if group == 'variants':
+            if k.startswith('variants/'):
+                group, name = k.split('/')
                 e = callset[k]
                 if e.ndim == 1:
                     assert_array_equal(e, a[name])
@@ -2394,8 +2373,6 @@ def test_vcf_to_recarray_all():
                         assert_array_equal(e[:, i], a['%s_%s' % (name, i + 1)])
                 else:
                     assert False, (k, e.ndim)
-            else:
-                assert name not in a.dtype.names
 
 
 def test_vcf_to_recarray_exclude():

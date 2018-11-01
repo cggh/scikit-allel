@@ -2459,8 +2459,6 @@ chr3\t1\te\tN\tX\t5.6\tPASS\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
         actual_vcf = open(f.name).read()
         # compare line-by-line
         for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
-            print('expect:', l1)
-            print('actual:', l2)
             eq(l1, l2)
 
     def test_to_vcf_no_filters(self):
@@ -2538,8 +2536,6 @@ chr3\t1\te\tN\tX\t5.6\t.\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
         actual_vcf = open(f.name).read()
         # compare line-by-line
         for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
-            print('expect:', l1)
-            print('actual:', l2)
             eq(l1, l2)
 
     def test_to_vcf_no_info(self):
@@ -2598,8 +2594,6 @@ chr3\t1\te\tN\tX\t5.6\t.\t.
         actual_vcf = open(f.name).read()
         # compare line-by-line
         for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
-            print('expect:', l1)
-            print('actual:', l2)
             eq(l1, l2)
 
 

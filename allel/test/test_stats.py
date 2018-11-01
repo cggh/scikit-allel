@@ -7,8 +7,7 @@ import unittest
 
 import numpy as np
 from nose.tools import assert_raises, eq_ as eq
-from allel.test.tools import assert_array_equal as aeq, assert_array_close, \
-    assert_array_nanclose
+from allel.test.tools import assert_array_equal as aeq, assert_array_almost_equal
 
 
 import allel
@@ -181,7 +180,7 @@ class TestDiversityDivergence(unittest.TestCase):
         ac = h.count_alleles()
         expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         actual = allel.mean_pairwise_difference(ac, fill=-1)
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
     def test_sequence_divergence(self):
         from allel import sequence_divergence
@@ -229,7 +228,7 @@ class TestDiversityDivergence(unittest.TestCase):
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
         expect = [(7/6)/10, (13/6)/10, 1/11]
         actual, _, _, _ = allel.windowed_diversity(pos, ac, size=10, start=1, stop=31)
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
     def test_mean_pairwise_divergence(self):
 
@@ -275,7 +274,7 @@ class TestDiversityDivergence(unittest.TestCase):
         actual, _, _, _ = allel.windowed_divergence(
             pos, ac1, ac2, size=10, start=1, stop=31
         )
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
 
 class TestHardyWeinberg(unittest.TestCase):
@@ -349,11 +348,11 @@ class TestHardyWeinberg(unittest.TestCase):
         af = g.count_alleles().to_frequencies()
         expect2 = refimpl(af, ploidy=g.ploidy, fill=-1)
         actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
-        assert_array_close(expect1, actual)
-        assert_array_close(expect2, actual)
+        assert_array_almost_equal(expect1, actual)
+        assert_array_almost_equal(expect2, actual)
         expect3 = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, 0]
         actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=0)
-        assert_array_close(expect3, actual)
+        assert_array_almost_equal(expect3, actual)
 
         # polyploid
         g = GenotypeArray([[[0, 0, 0], [0, 0, 0]],
@@ -370,7 +369,7 @@ class TestHardyWeinberg(unittest.TestCase):
         af = g.count_alleles().to_frequencies()
         expect = refimpl(af, ploidy=g.ploidy, fill=-1)
         actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
     def test_inbreeding_coefficient(self):
 
@@ -392,7 +391,7 @@ class TestHardyWeinberg(unittest.TestCase):
         expect = [-1, -1, 1-0, 1-(.5/.375), 1-(.5/.375), 1-(.5/.375),
                   1-(1/.5), 1-(1/.625), -1, 1-(1/.5), -1]
         actual = allel.inbreeding_coefficient(g, fill=-1)
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
 
 class TestDistance(unittest.TestCase):
@@ -559,7 +558,7 @@ class TestLinkageDisequilibrium(unittest.TestCase):
               [0, 1]]
         expect = [-1, 1, -1]
         actual = allel.rogers_huff_r(gn)
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
         gn = [[0, 2, 0],
               [0, 2, 0],
@@ -567,7 +566,7 @@ class TestLinkageDisequilibrium(unittest.TestCase):
               [0, 2, -1]]
         expect = [1, -1, 1, -1, 1, -1]
         actual = allel.rogers_huff_r(gn)
-        assert_array_close(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
     def test_rogers_huff_r_between(self):
 
@@ -637,7 +636,7 @@ class TestAdmixture(unittest.TestCase):
                [0, 2]]
         expect = [0., 1., 0., np.nan]
         actual = allel.patterson_f2(aca, acb)
-        assert_array_nanclose(expect, actual)
+        assert_array_almost_equal(expect, actual)
 
     def test_patterson_f3(self):
         aca = [[0, 2],
@@ -657,9 +656,9 @@ class TestAdmixture(unittest.TestCase):
                [1, 1]]
         expect_f3 = [-.5, -.5, 0., 1., np.nan]
         actual_f3, actual_hzc = allel.patterson_f3(acc, aca, acb)
-        assert_array_nanclose(expect_f3, actual_f3)
+        assert_array_almost_equal(expect_f3, actual_f3)
         expect_hzc = [1., 1., 0., 0., 1.]
-        assert_array_nanclose(expect_hzc, actual_hzc)
+        assert_array_almost_equal(expect_hzc, actual_hzc)
 
     def test_patterson_d(self):
         aca = [[0, 2],
@@ -685,8 +684,8 @@ class TestAdmixture(unittest.TestCase):
         num, den = allel.patterson_d(aca, acb, acc, acd)
         expect_num = [0., 1., -1., 0., np.nan]
         expect_den = [0., 1., 1., 0.25, np.nan]
-        assert_array_nanclose(expect_num, num)
-        assert_array_nanclose(expect_den, den)
+        assert_array_almost_equal(expect_num, num)
+        assert_array_almost_equal(expect_den, den)
 
 
 class TestSF(unittest.TestCase):
