@@ -138,6 +138,41 @@ def test_fields_all():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
+def test_fields_excluded():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    exclusions = ['variants/altlen', 'ID', 'calldata/DP']
+    callset = read_vcf(fn, fields='*', exclude_fields=exclusions)
+    expected_fields = [
+        'samples',
+        # fixed fields
+        'variants/CHROM',
+        'variants/POS',
+        'variants/REF',
+        'variants/ALT',
+        'variants/QUAL',
+        'variants/FILTER_PASS',
+        'variants/FILTER_q10',
+        'variants/FILTER_s50',
+        # INFO fields
+        'variants/AA',
+        'variants/AC',
+        'variants/AF',
+        'variants/AN',
+        'variants/DB',
+        'variants/DP',
+        'variants/H2',
+        'variants/NS',
+        # special computed fields
+        'variants/numalt',
+        'variants/is_snp',
+        # FORMAT fields
+        'calldata/GT',
+        'calldata/GQ',
+        'calldata/HQ',
+    ]
+    assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
+
+
 def test_fields_default():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     callset = read_vcf(fn)
@@ -1844,19 +1879,40 @@ def test_vcf_to_npz():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
-                          samples=samples, types=types)
+        expected = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
+                            samples=samples, types=types)
         if os.path.exists(npz_fn):
             os.remove(npz_fn)
         vcf_to_npz(fn, npz_fn, fields='*', chunk_length=2, alt_number=2, region=region, tabix=tabix,
                    samples=samples, types=types)
         actual = np.load(npz_fn)
-        for key in expect.keys():
-            if expect[key].dtype.kind == 'f':
-                assert_array_almost_equal(expect[key], actual[key])
+        for key in expected.keys():
+            if expected[key].dtype.kind == 'f':
+                assert_array_almost_equal(expected[key], actual[key])
             else:
-                assert_array_equal(expect[key], actual[key])
+                assert_array_equal(expected[key], actual[key])
+        for key in actual.keys():
+            assert key in expected
         actual.close()
+
+
+def test_vcf_to_npz_exclude():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    npz_fn = os.path.join(tempdir, 'sample.npz')
+    exclusions = ['variants/altlen', 'ID', 'calldata/DP']
+    expected = read_vcf(fn, fields='*', exclude_fields=exclusions)
+    if os.path.exists(npz_fn):
+        os.remove(npz_fn)
+    vcf_to_npz(fn, npz_fn, fields='*', exclude_fields=exclusions)
+    actual = np.load(npz_fn)
+    for key in expected.keys():
+        if expected[key].dtype.kind == 'f':
+            assert_array_almost_equal(expected[key], actual[key])
+        else:
+            assert_array_equal(expected[key], actual[key])
+    for key in actual.keys():
+        assert key in expected
+    actual.close()
 
 
 def test_vcf_to_zarr():
@@ -1870,15 +1926,15 @@ def test_vcf_to_zarr():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
-                          samples=samples, types=types)
+        expected = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
+                            samples=samples, types=types)
         if os.path.exists(zarr_path):
             shutil.rmtree(zarr_path)
         vcf_to_zarr(fn, zarr_path, fields='*', alt_number=2, chunk_length=2, region=region,
                     tabix=tabix, samples=samples, types=types)
         actual = zarr.open_group(zarr_path, mode='r')
-        for key in expect.keys():
-            e = expect[key]
+        for key in expected.keys():
+            e = expected[key]
             a = actual[key][:]
             eq_(e.dtype, a.dtype)
             if e.dtype.kind == 'f':
@@ -1887,6 +1943,39 @@ def test_vcf_to_zarr():
                 assert_array_equal(e, a)
             eq_(actual['variants/NS'].attrs['Description'], 'Number of Samples With Data')
             eq_(actual['calldata/GQ'].attrs['Description'], 'Genotype Quality')
+        for key in actual.keys():
+            if key not in {'variants', 'calldata'}:
+                assert key in expected
+        for key in actual['variants'].keys():
+            assert 'variants/' + key in expected
+        for key in actual['calldata'].keys():
+            assert 'calldata/' + key in expected
+
+
+def test_vcf_to_zarr_exclude():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    zarr_path = os.path.join(tempdir, 'sample.zarr')
+    exclusions = ['variants/altlen', 'ID', 'calldata/DP']
+    expected = read_vcf(fn, fields='*', exclude_fields=exclusions)
+    if os.path.exists(zarr_path):
+        shutil.rmtree(zarr_path)
+    vcf_to_zarr(fn, zarr_path, fields='*', exclude_fields=exclusions)
+    actual = zarr.open_group(zarr_path, mode='r')
+    for key in expected.keys():
+        e = expected[key]
+        a = actual[key][:]
+        eq_(e.dtype, a.dtype)
+        if e.dtype.kind == 'f':
+            assert_array_almost_equal(e, a)
+        else:
+            assert_array_equal(e, a)
+    for key in actual.keys():
+        if key not in {'variants', 'calldata'}:
+            assert key in expected
+    for key in actual['variants'].keys():
+        assert 'variants/' + key in expected
+    for key in actual['calldata'].keys():
+        assert 'calldata/' + key in expected
 
 
 def test_vcf_to_zarr_group():
@@ -1965,23 +2054,54 @@ def test_vcf_to_hdf5():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expect = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
-                          samples=samples, types=types)
+        expected = read_vcf(fn, fields='*', alt_number=2, region=region, tabix=tabix,
+                            samples=samples, types=types)
         if os.path.exists(h5_fn):
             os.remove(h5_fn)
         vcf_to_hdf5(fn, h5_fn, fields='*', alt_number=2, chunk_length=2, region=region, tabix=tabix,
                     samples=samples, types=types)
         with h5py.File(h5_fn, mode='r') as actual:
-            for key in expect.keys():
-                eq_(expect[key].dtype, actual[key][:].dtype)
-                if expect[key].dtype.kind == 'f':
-                    assert_array_almost_equal(expect[key], actual[key][:])
+            for key in expected.keys():
+                eq_(expected[key].dtype, actual[key][:].dtype)
+                if expected[key].dtype.kind == 'f':
+                    assert_array_almost_equal(expected[key], actual[key][:])
                 else:
-                    assert_array_equal(expect[key], actual[key][:])
+                    assert_array_equal(expected[key], actual[key][:])
             eq_(actual['variants/NS'].attrs['Description'],
                 'Number of Samples With Data')
             eq_(actual['calldata/GQ'].attrs['Description'],
                 'Genotype Quality')
+            for key in actual.keys():
+                if key not in {'variants', 'calldata'}:
+                    assert key in expected
+            for key in actual['variants'].keys():
+                assert 'variants/' + key in expected
+            for key in actual['calldata'].keys():
+                assert 'calldata/' + key in expected
+
+
+def test_vcf_to_hdf5_exclude():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    h5_fn = os.path.join(tempdir, 'sample.h5')
+    exclusions = ['variants/altlen', 'ID', 'calldata/DP']
+    expected = read_vcf(fn, fields='*', exclude_fields=exclusions)
+    if os.path.exists(h5_fn):
+        os.remove(h5_fn)
+    vcf_to_hdf5(fn, h5_fn, fields='*', exclude_fields=exclusions)
+    with h5py.File(h5_fn, mode='r') as actual:
+        for key in expected.keys():
+            eq_(expected[key].dtype, actual[key][:].dtype)
+            if expected[key].dtype.kind == 'f':
+                assert_array_almost_equal(expected[key], actual[key][:])
+            else:
+                assert_array_equal(expected[key], actual[key][:])
+        for key in actual.keys():
+            if key not in {'variants', 'calldata'}:
+                assert key in expected
+        for key in actual['variants'].keys():
+            assert 'variants/' + key in expected
+        for key in actual['calldata'].keys():
+            assert 'calldata/' + key in expected
 
 
 def test_vcf_to_hdf5_group():
@@ -2080,6 +2200,43 @@ def test_vcf_to_dataframe():
                     assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
 
 
+def test_vcf_to_dataframe_all():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    fields = '*'
+    for string_type in 'S10', 'object':
+        types = {'CHROM': string_type, 'ALT': string_type}
+        callset = read_vcf(fn, fields=fields, alt_number=2, numbers=numbers, types=types)
+        df = vcf_to_dataframe(fn, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
+                              types=types)
+        print(df.columns.tolist())
+        for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3']:
+            assert k in df.columns.tolist()
+        # always convert strings to object dtype for pandas
+        eq_(np.dtype(object), df['CHROM'].dtype)
+        eq_(np.dtype(object), df['ALT_1'].dtype)
+        for k in callset:
+            group, name = k.split('/')
+            e = callset[k]
+            if e.dtype.kind == 'S':
+                e = e.astype('U')
+            if e.ndim == 1:
+                assert_array_equal(e, df[name].values)
+            elif e.ndim == 2:
+                for i in range(e.shape[1]):
+                    assert_array_equal(e[:, i], df['%s_%s' % (name, i + 1)])
+
+
+def test_vcf_to_dataframe_exclude():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    fields = '*'
+    exclusions = ['ALT', 'ID']
+    df = vcf_to_dataframe(fn, fields=fields, exclude_fields=exclusions)
+    for k in ['CHROM', 'POS', 'REF', 'DP', 'AC_1', 'AC_2', 'AC_3']:
+        assert k in df.columns.tolist()
+    for k in ['ALT_1', 'ALT_2', 'ID']:
+        assert k not in df.columns.tolist()
+
+
 def test_vcf_to_dataframe_ann():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'ANN', 'DP', 'AC', 'GT']
@@ -2132,6 +2289,37 @@ def test_vcf_to_csv():
             assert_array_equal(df[k].values, adf[k].values)
 
 
+def test_vcf_to_csv_all():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    fields = '*'
+    df = vcf_to_dataframe(fn, fields=fields)
+    out_fn = os.path.join(tempdir, 'test.csv')
+    if os.path.exists(out_fn):
+        os.remove(out_fn)
+    vcf_to_csv(fn, out_fn, fields=fields)
+    import pandas
+    adf = pandas.read_csv(out_fn, na_filter=False)
+    assert_list_equal(df.columns.tolist(), adf.columns.tolist())
+    for k in df.columns:
+        assert_array_equal(df[k].values, adf[k].values)
+
+
+def test_vcf_to_csv_exclude():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    fields = '*'
+    exclusions = ['ALT', 'ID']
+    df = vcf_to_dataframe(fn, fields=fields, exclude_fields=exclusions)
+    out_fn = os.path.join(tempdir, 'test.csv')
+    if os.path.exists(out_fn):
+        os.remove(out_fn)
+    vcf_to_csv(fn, out_fn, fields=fields, exclude_fields=exclusions)
+    import pandas
+    adf = pandas.read_csv(out_fn, na_filter=False)
+    assert_list_equal(df.columns.tolist(), adf.columns.tolist())
+    for k in df.columns:
+        assert_array_equal(df[k].values, adf[k].values)
+
+
 def test_vcf_to_csv_ann():
     fn = os.path.join(os.path.dirname(__file__), 'data', 'ann.vcf')
     fields = ['CHROM', 'POS', 'REF', 'ALT', 'DP', 'AC', 'ANN', 'GT']
@@ -2168,6 +2356,7 @@ def test_vcf_to_recarray():
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         for k in callset:
             group, name = k.split('/')
+            assert group != 'calldata'
             if group == 'variants':
                 e = callset[k]
                 if e.ndim == 1:
@@ -2179,6 +2368,45 @@ def test_vcf_to_recarray():
                     assert False, (k, e.ndim)
             else:
                 assert name not in a.dtype.names
+
+
+def test_vcf_to_recarray_all():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    fields = '*'
+    numbers = {'AC': 3}
+    for string_type in 'S20', 'object':
+        types = {'CHROM': string_type, 'REF': string_type, 'ALT': string_type}
+        callset = read_vcf(fn, fields=fields, alt_number=2, numbers=numbers, types=types)
+        a = vcf_to_recarray(fn, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
+                            types=types)
+        for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3']:
+            assert k in a.dtype.names
+        eq_(np.dtype(string_type), a['CHROM'].dtype)
+        for k in callset:
+            group, name = k.split('/')
+            assert group != 'calldata'
+            if group == 'variants':
+                e = callset[k]
+                if e.ndim == 1:
+                    assert_array_equal(e, a[name])
+                elif e.ndim == 2:
+                    for i in range(e.shape[1]):
+                        assert_array_equal(e[:, i], a['%s_%s' % (name, i + 1)])
+                else:
+                    assert False, (k, e.ndim)
+            else:
+                assert name not in a.dtype.names
+
+
+def test_vcf_to_recarray_exclude():
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    fields = '*'
+    exclusions = ['ALT', 'ID']
+    a = vcf_to_recarray(fn, fields=fields, exclude_fields=exclusions)
+    for k in ['CHROM', 'POS', 'REF', 'DP', 'AC_1', 'AC_2', 'AC_3']:
+        assert k in a.dtype.names
+    for k in 'ALT_1', 'ALT_2', 'ALT', 'ID':
+        assert k not in a.dtype.names
 
 
 def test_vcf_to_recarray_ann():
