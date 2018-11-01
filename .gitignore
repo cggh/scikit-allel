@@ -65,6 +65,7 @@ example.*
 *.npz
 profdata/*
 temp/*
+allel/version.py
 
 # setuptools-scm
 allel/version.py
