@@ -37,6 +37,13 @@ DEFAULT_CHUNK_WIDTH = 2**6
 DEFAULT_ALT_NUMBER = 3
 
 
+# names for computed fields
+FIELD_NUMALT = 'numalt'
+FIELD_ALTLEN = 'altlen'
+FIELD_IS_SNP = 'is_snp'
+COMPUTED_FIELDS = [FIELD_NUMALT, FIELD_ALTLEN, FIELD_IS_SNP]
+
+
 def _prep_fields_param(fields):
     """Prepare the `fields` parameter, and determine whether or not to store samples."""
 
@@ -1029,7 +1036,7 @@ def _check_field(field, headers):
         if name in FIXED_VARIANTS_FIELDS:
             pass
 
-        elif name in ['numalt', 'svlen', 'is_snp']:
+        elif name in COMPUTED_FIELDS:
             # computed fields
             pass
 
@@ -1069,10 +1076,7 @@ def _add_all_variants_fields(fields, headers):
     _add_all_fixed_variants_fields(fields)
     _add_all_info_fields(fields, headers)
     _add_all_filter_fields(fields, headers)
-    # add in computed fields
-    for f in 'variants/numalt', 'variants/svlen', 'variants/is_snp':
-        if f not in fields:
-            fields.append(f)
+    _add_all_computed_fields(fields)
 
 
 def _add_all_fixed_variants_fields(fields):
@@ -1093,6 +1097,13 @@ def _add_all_filter_fields(fields, headers):
     fields.append('variants/FILTER_PASS')
     for k in headers.filters:
         f = 'variants/FILTER_' + k
+        if f not in fields:
+            fields.append(f)
+
+
+def _add_all_computed_fields(fields):
+    for k in COMPUTED_FIELDS:
+        f = 'variants/' + k
         if f not in fields:
             fields.append(f)
 
@@ -1224,7 +1235,7 @@ def _normalize_types(types, fields, headers):
 
         elif group == 'variants':
 
-            if name in ['numalt', 'svlen', 'is_snp']:
+            if name in COMPUTED_FIELDS:
                 # computed fields, special case
                 continue
 
@@ -1347,8 +1358,8 @@ def _normalize_numbers(numbers, fields, headers, alt_number):
 
         elif group == 'variants':
 
-            if name in ['numalt', 'svlen', 'is_snp']:
-                # computed fields, special case (for svlen, number depends on ALT)
+            if name in COMPUTED_FIELDS:
+                # computed fields, special case (for altlen, number depends on ALT)
                 continue
 
             elif name.startswith('FILTER_'):

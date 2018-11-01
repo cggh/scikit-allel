@@ -88,8 +88,8 @@ def test_read_vcf_chunks():
         'variants/H2',
         'variants/NS',
         # special computed fields
+        'variants/altlen',
         'variants/numalt',
-        'variants/svlen',
         'variants/is_snp',
         # FORMAT fields
         'calldata/GT',
@@ -126,8 +126,8 @@ def test_fields_all():
         'variants/H2',
         'variants/NS',
         # special computed fields
+        'variants/altlen',
         'variants/numalt',
-        'variants/svlen',
         'variants/is_snp',
         # FORMAT fields
         'calldata/GT',
@@ -179,8 +179,8 @@ def test_fields_all_variants():
         'variants/H2',
         'variants/NS',
         # special computed fields
+        'variants/altlen',
         'variants/numalt',
-        'variants/svlen',
         'variants/is_snp',
     ]
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
@@ -1594,7 +1594,7 @@ def test_computed_fields():
         eq_((9,), a.shape)
         assert_array_equal([0, 1, 0, 1, 2, 3, 2, 2, 5], a)
 
-        a = callset['variants/svlen']
+        a = callset['variants/altlen']
         eq_((9, 5), a.shape)
         e = np.array([[0, 0, 0, 0, 0],
                       [1, 0, 0, 0, 0],
@@ -1628,7 +1628,7 @@ def test_computed_fields():
         eq_((9,), a.shape)
         assert_array_equal([0, 1, 0, 1, 2, 3, 2, 2, 5], a)
 
-        a = callset['variants/svlen']
+        a = callset['variants/altlen']
         eq_((9,), a.shape)
         e = np.array([0, 1, 0, 0, 0, 0, 0, -3, 0])
         assert_array_equal(e, a)
