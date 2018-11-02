@@ -5,6 +5,7 @@
 # cython: wraparound=False
 # cython: initializedcheck=False
 # cython: nonecheck=False
+# cython: language_level=3
 """
 # options for profiling...
 # cython: profile=True
@@ -843,7 +844,7 @@ cdef class VCFFieldParserBase:
 
     cdef:
         bytes key
-        np.dtype dtype
+        # np.dtype dtype
         Py_ssize_t itemsize
         Py_ssize_t number
         object fill
