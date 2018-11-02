@@ -14,6 +14,8 @@ from collections import namedtuple
 import warnings
 import time
 import subprocess
+from collections import defaultdict
+import textwrap
 
 
 import numpy as np
@@ -103,6 +105,33 @@ def _chunk_iter_transform(it, transformers):
         yield chunk, chunk_length, chrom, pos
 
 
+def _do_rename(it, fields, rename_fields, headers):
+
+    # normalise keys
+    rename_fields = {_normalize_field_prefix(k, headers): v
+                     for k, v in rename_fields.items()}
+
+    # check all keys match selected fields
+    for k in rename_fields.keys():
+        if k not in fields:
+            raise ValueError('key {!r} in rename_fields does not match any selected '
+                             'fields {!r}'.format(k, fields))
+
+    # wrap iterator
+    it = _chunk_iter_rename(it, rename_fields=rename_fields)
+
+    return rename_fields, it
+
+
+def _chunk_iter_rename(it, rename_fields):
+    for chunk, chunk_length, chrom, pos in it:
+        renamed_chunk = dict()
+        for k, v in chunk.items():
+            k = rename_fields.get(k, k)
+            renamed_chunk[k] = v
+        yield renamed_chunk, chunk_length, chrom, pos
+
+
 _doc_param_input = \
     """Path to VCF file on the local file system. May be uncompressed or gzip-compatible
         compressed file. May also be a file-like object (e.g., `io.BytesIO`)."""
@@ -121,6 +150,10 @@ _doc_param_fields = \
 
 _doc_param_exclude_fields = \
     """Fields to exclude. E.g., for use in combination with ``fields='*'``."""
+
+_doc_param_rename_fields = \
+    """Fields to be renamed. Should be a dictionary mapping old to new names, 
+    giving the complete path, e.g., ``{'variants/FOO': 'variants/bar'}``."""
 
 _doc_param_types = \
     """Overide data types. Should be a dictionary mapping field names to NumPy data types.
@@ -183,6 +216,7 @@ _doc_param_log = \
 def read_vcf(input,
              fields=None,
              exclude_fields=None,
+             rename_fields=None,
              types=None,
              numbers=None,
              alt_number=DEFAULT_ALT_NUMBER,
@@ -204,6 +238,8 @@ def read_vcf(input,
         {fields}
     exclude_fields : list of strings, optional
         {exclude_fields}
+    rename_fields : dict[str -> str], optional
+        {rename_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -239,12 +275,18 @@ def read_vcf(input,
     store_samples, fields = _prep_fields_param(fields)
 
     # setup
-    _, samples, _, it = iter_vcf_chunks(
+    fields, samples, headers, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
         chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
         samples=samples, transformers=transformers
     )
+
+    # handle field renaming
+    if rename_fields:
+        rename_fields, it = _do_rename(it, fields=fields,
+                                       rename_fields=rename_fields,
+                                       headers=headers)
 
     # setup progress logging
     if log is not None:
@@ -275,6 +317,7 @@ read_vcf.__doc__ = read_vcf.__doc__.format(
     input=_doc_param_input,
     fields=_doc_param_fields,
     exclude_fields=_doc_param_exclude_fields,
+    rename_fields=_doc_param_rename_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -301,6 +344,7 @@ def vcf_to_npz(input, output,
                overwrite=False,
                fields=None,
                exclude_fields=None,
+               rename_fields=None,
                types=None,
                numbers=None,
                alt_number=DEFAULT_ALT_NUMBER,
@@ -328,6 +372,8 @@ def vcf_to_npz(input, output,
         {fields}
     exclude_fields : list of strings, optional
         {exclude_fields}
+    rename_fields : dict[str -> str], optional
+        {rename_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -359,10 +405,11 @@ def vcf_to_npz(input, output,
 
     # read all data into memory
     data = read_vcf(
-        input=input, fields=fields, exclude_fields=exclude_fields, types=types,
-        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, log=log, fills=fills, region=region, tabix=tabix,
-        samples=samples, transformers=transformers
+        input=input, fields=fields, exclude_fields=exclude_fields,
+        rename_fields=rename_fields, types=types, numbers=numbers,
+        alt_number=alt_number, buffer_size=buffer_size, chunk_length=chunk_length,
+        log=log, fills=fills, region=region, tabix=tabix, samples=samples,
+        transformers=transformers
     )
 
     # setup save function
@@ -381,6 +428,7 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
     exclude_fields=_doc_param_exclude_fields,
+    rename_fields=_doc_param_rename_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -417,12 +465,12 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
             chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
 
         # create dataset
-        group, name = k.split('/')
-        if name in root[group]:
+        if k in root:
             if overwrite:
-                del root[group][name]
+                del root[k]
             else:
-                raise ValueError('dataset exists at path %r; use overwrite=True to replace' % k)
+                raise ValueError('object exists at path %r; use overwrite=True to '
+                                 'replace' % k)
 
         shape = (0,) + data.shape[1:]
         maxshape = (None,) + data.shape[1:]
@@ -434,17 +482,21 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, co
                 dt = data.dtype
         else:
             dt = data.dtype
-        ds = root[group].create_dataset(
-            name, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=dt,
+        ds = root.create_dataset(
+            k, shape=shape, maxshape=maxshape, chunks=chunk_shape, dtype=dt,
             compression=compression, compression_opts=compression_opts, shuffle=shuffle
         )
 
         # copy metadata from VCF headers
         meta = None
-        if group == 'variants' and name in headers.infos:
-            meta = headers.infos[name]
-        elif group == 'calldata' and name in headers.formats:
-            meta = headers.formats[name]
+        if k.startswith('variants/'):
+            _, name = k.split('/', maxsplit=1)
+            if name in headers.infos:
+                meta = headers.infos[name]
+        elif k.startswith('calldata/'):
+            _, name = k.split('/', maxsplit=1)
+            if name in headers.formats:
+                meta = headers.formats[name]
         if meta is not None:
             ds.attrs['ID'] = meta['ID']
             ds.attrs['Number'] = meta['Number']
@@ -504,6 +556,7 @@ def vcf_to_hdf5(input, output,
                 vlen=True,
                 fields=None,
                 exclude_fields=None,
+                rename_fields=None,
                 types=None,
                 numbers=None,
                 alt_number=DEFAULT_ALT_NUMBER,
@@ -548,6 +601,8 @@ def vcf_to_hdf5(input, output,
         {fields}
     exclude_fields : list of strings, optional
         {exclude_fields}
+    rename_fields : dict[str -> str], optional
+        {rename_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -586,17 +641,19 @@ def vcf_to_hdf5(input, output,
         # obtain root group that data will be stored into
         root = h5f.require_group(group)
 
-        # ensure sub-groups
-        root.require_group('variants')
-        root.require_group('calldata')
-
         # setup chunk iterator
-        _, samples, headers, it = iter_vcf_chunks(
+        fields, samples, headers, it = iter_vcf_chunks(
             input, fields=fields, exclude_fields=exclude_fields, types=types,
             numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
             chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
             samples=samples, transformers=transformers
         )
+
+        # handle field renaming
+        if rename_fields:
+            rename_fields, it = _do_rename(it, fields=fields,
+                                           rename_fields=rename_fields,
+                                           headers=headers)
 
         # setup progress logging
         if log is not None:
@@ -609,8 +666,8 @@ def vcf_to_hdf5(input, output,
                 if overwrite:
                     del root[name]
                 else:
-                    raise ValueError('dataset exists at path %r; use overwrite=True to replace'
-                                     % name)
+                    raise ValueError(
+                        'dataset exists at path %r; use overwrite=True to replace' % name)
             if samples.dtype.kind == 'O':
                 if vlen:
                     t = h5py.special_dtype(vlen=str)
@@ -647,6 +704,7 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
     exclude_fields=_doc_param_exclude_fields,
+    rename_fields=_doc_param_rename_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -724,6 +782,7 @@ def vcf_to_zarr(input, output,
                 overwrite=False,
                 fields=None,
                 exclude_fields=None,
+                rename_fields=None,
                 types=None,
                 numbers=None,
                 alt_number=DEFAULT_ALT_NUMBER,
@@ -754,6 +813,8 @@ def vcf_to_zarr(input, output,
         {fields}
     exclude_fields : list of strings, optional
         {exclude_fields}
+    rename_fields : dict[str -> str], optional
+        {rename_fields}
     types : dict, optional
         {types}
     numbers : dict, optional
@@ -790,17 +851,37 @@ def vcf_to_zarr(input, output,
     # open root group
     root = zarr.open_group(output, mode='a', path=group)
 
-    # ensure sub-groups
-    root.require_group('variants')
-    root.require_group('calldata')
-
     # setup chunk iterator
-    _, samples, headers, it = iter_vcf_chunks(
+    fields, samples, headers, it = iter_vcf_chunks(
         input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
         chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
         samples=samples, transformers=transformers
     )
+
+    # handle field renaming
+    if rename_fields:
+        rename_fields, it = _do_rename(it, fields=fields,
+                                       rename_fields=rename_fields,
+                                       headers=headers)
+
+    # check for any case-insensitive duplicate fields
+    # https://github.com/cggh/scikit-allel/issues/215
+    ci_field_index = defaultdict(list)
+    for f in fields:
+        if rename_fields:
+            f = rename_fields.get(f, f)
+        ci_field_index[f.lower()].append(f)
+    for k, v in ci_field_index.items():
+        if len(v) > 1:
+            msg = textwrap.fill(
+                'Found two or more fields with the same name when compared '
+                'case-insensitive: {!r}; this is not supported because it causes '
+                'problems on platforms with a case-insensitive file system, which is '
+                'usually the default on Windows and Mac OS. Please rename fields so they '
+                'are distinct under a case-insensitive comparison via the '
+                'rename_fields argument.'.format(v), width=80)
+            raise ValueError(msg)
 
     # setup progress logging
     if log is not None:
@@ -843,6 +924,7 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
     overwrite=_doc_param_overwrite,
     fields=_doc_param_fields,
     exclude_fields=_doc_param_exclude_fields,
+    rename_fields=_doc_param_rename_fields,
     types=_doc_param_types,
     numbers=_doc_param_numbers,
     alt_number=_doc_param_alt_number,
@@ -1044,6 +1126,10 @@ def _normalize_field_prefix(field, headers):
 
     # try to find in INFO
     elif field in headers.infos:
+        return 'variants/' + field
+
+    # try to find in computed fields
+    elif field in COMPUTED_FIELDS:
         return 'variants/' + field
 
     # try to find in FORMAT
