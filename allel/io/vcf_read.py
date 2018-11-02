@@ -2,8 +2,8 @@
 """
 Extract data from VCF files.
 
-This module contains Functions for extracting data from Variant Call Format (VCF) files and loading
-into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
+This module contains Functions for extracting data from Variant Call Format (VCF) files
+and loading into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 """
 from __future__ import absolute_import, print_function, division
@@ -27,10 +27,11 @@ from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 # noinspection PyUnresolvedReferences
 from allel.opt.io_vcf_read import (  # noqa: F401
     ANNTransformer, ANN_AA_LENGTH_FIELD, ANN_AA_POS_FIELD, ANN_ANNOTATION_FIELD,
-    ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD, ANN_CDS_LENGTH_FIELD,
-    ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, ANN_FEATURE_ID_FIELD, ANN_FEATURE_TYPE_FIELD, ANN_FIELD,
-    ANN_FIELDS, ANN_GENE_ID_FIELD, ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, ANN_HGVS_P_FIELD,
-    ANN_RANK_FIELD, ANN_TRANSCRIPT_BIOTYPE_FIELD
+    ANN_ANNOTATION_IMPACT_FIELD, ANN_CDNA_LENGTH_FIELD, ANN_CDNA_POS_FIELD,
+    ANN_CDS_LENGTH_FIELD, ANN_CDS_POS_FIELD, ANN_DISTANCE_FIELD, ANN_FEATURE_ID_FIELD,
+    ANN_FEATURE_TYPE_FIELD, ANN_FIELD, ANN_FIELDS, ANN_GENE_ID_FIELD,
+    ANN_GENE_NAME_FIELD, ANN_HGVS_C_FIELD, ANN_HGVS_P_FIELD, ANN_RANK_FIELD,
+    ANN_TRANSCRIPT_BIOTYPE_FIELD
 )
 
 
@@ -83,7 +84,8 @@ def _chunk_iter_progress(it, log, prefix):
         chrom = text_type(chrom, 'utf8')
         message = (
             '%s %s rows in %.2fs; chunk in %.2fs (%s rows/s)' %
-            (prefix, n_variants, elapsed, elapsed_chunk, int(chunk_length // elapsed_chunk))
+            (prefix, n_variants, elapsed, elapsed_chunk,
+             int(chunk_length // elapsed_chunk))
         )
         if chrom:
             message += '; %s:%s' % (chrom, pos)
@@ -138,15 +140,16 @@ _doc_param_input = \
 
 _doc_param_fields = \
     """Fields to extract data for. Should be a list of strings, e.g., ``['variants/CHROM',
-        'variants/POS', 'variants/DP', 'calldata/GT']``. If you are feeling lazy, you can drop
-        the 'variants/' and 'calldata/' prefixes, in which case the fields will be matched against
-        fields declared in the VCF header, with variants taking priority over calldata if a field
-        with the same ID exists both in INFO and FORMAT headers. I.e., ``['CHROM', 'POS', 'DP',
-        'GT']`` will work, although watch out for fields like 'DP' which can be both
-        INFO and FORMAT. For convenience, some special string values are also recognized. To
-        extract all fields, provide just the string ``'*'``. To extract all variants fields
-        (including all INFO fields) provide ``'variants/*'``. To extract all calldata fields (i.e.,
-        defined in FORMAT headers) provide ``'calldata/*'``."""
+        'variants/POS', 'variants/DP', 'calldata/GT']``. If you are feeling lazy, 
+        you can drop the 'variants/' and 'calldata/' prefixes, in which case the fields 
+        will be matched against fields declared in the VCF header, with variants taking 
+        priority over calldata if a field with the same ID exists both in INFO and 
+        FORMAT headers. I.e., ``['CHROM', 'POS', 'DP', 'GT']`` will work, although 
+        watch out for fields like 'DP' which can be both INFO and FORMAT. For 
+        convenience, some special string values are also recognized. To extract all 
+        fields, provide just the string ``'*'``. To extract all variants fields 
+        (including all INFO fields) provide ``'variants/*'``. To extract all calldata 
+        fields (i.e., defined in FORMAT headers) provide ``'calldata/*'``."""
 
 _doc_param_exclude_fields = \
     """Fields to exclude. E.g., for use in combination with ``fields='*'``."""
@@ -157,54 +160,59 @@ _doc_param_rename_fields = \
 
 _doc_param_types = \
     """Overide data types. Should be a dictionary mapping field names to NumPy data types.
-        E.g., providing the dictionary ``{'variants/DP': 'i8', 'calldata/GQ': 'i2'}`` will mean
-        the 'variants/DP' field is stored in a 64-bit integer array, and the 'calldata/GQ' field
-        is stored in a 16-bit integer array."""
+        E.g., providing the dictionary ``{'variants/DP': 'i8', 'calldata/GQ': 'i2'}`` will 
+        mean the 'variants/DP' field is stored in a 64-bit integer array, and the 
+        'calldata/GQ' field is stored in a 16-bit integer array."""
 
 _doc_param_numbers = \
-    """Override the expected number of values. Should be a dictionary mapping field names to
-        integers. E.g., providing the dictionary ``{'variants/ALT': 5, 'variants/AC': 5,
-        'calldata/HQ': 2}`` will mean that, for each variant, 5 values are stored for the
-        'variants/ALT' field, 5 values are stored for the 'variants/AC' field, and for each
-        sample, 2 values are stored for the 'calldata/HQ' field."""
+    """Override the expected number of values. Should be a dictionary mapping field names 
+        to integers. E.g., providing the dictionary ``{'variants/ALT': 5, 
+        'variants/AC': 5, 'calldata/HQ': 2}`` will mean that, for each variant, 5 values 
+        are stored for the 'variants/ALT' field, 5 values are stored for the 
+        'variants/AC' field, and for each sample, 2 values are stored for the 
+        'calldata/HQ' field."""
 
 _doc_param_alt_number = \
-    """Assume this number of alternate alleles and set expected number of values accordingly for
-        any field declared with number 'A' or 'R' in the VCF meta-information."""
+    """Assume this number of alternate alleles and set expected number of values 
+        accordingly for any field declared with number 'A' or 'R' in the VCF 
+        meta-information."""
 
 _doc_param_fills = \
-    """Override the fill value used for empty values. Should be a dictionary mapping field names
-        to fill values."""
+    """Override the fill value used for empty values. Should be a dictionary mapping 
+        field names to fill values."""
 
 _doc_param_region = \
-    """Genomic region to extract variants for. If provided, should be a tabix-style region string,
-        which can be either just a chromosome name (e.g., '2L'), or a chromosome name followed by
-        1-based beginning and end coordinates (e.g., '2L:100000-200000'). Note that only variants
-        whose start position (POS) is within the requested range will be included. This is slightly
-        different from the default tabix behaviour, where a variant (e.g., deletion) may be included
-        if its position (POS) occurs before the requested region but its reference allele overlaps
-        the region - such a variant will *not* be included in the data returned by this function."""
+    """Genomic region to extract variants for. If provided, should be a tabix-style 
+        region string, which can be either just a chromosome name (e.g., '2L'), 
+        or a chromosome name followed by 1-based beginning and end coordinates (e.g., 
+        '2L:100000-200000'). Note that only variants whose start position (POS) is 
+        within the requested range will be included. This is slightly different from 
+        the default tabix behaviour, where a variant (e.g., deletion) may be included 
+        if its position (POS) occurs before the requested region but its reference allele 
+        overlaps the region - such a variant will *not* be included in the data 
+        returned by this function."""
 
 _doc_param_tabix = \
-    """Name or path to tabix executable. Only required if `region` is given. Setting `tabix` to
-        `None` will cause a fall-back to scanning through the VCF file from the beginning, which
-        may be much slower than tabix but the only option if tabix is not available on your system
-        and/or the VCF file has not been tabix-indexed."""
+    """Name or path to tabix executable. Only required if `region` is given. Setting 
+        `tabix` to `None` will cause a fall-back to scanning through the VCF file from 
+        the beginning, which may be much slower than tabix but the only option if tabix 
+        is not available on your system and/or the VCF file has not been tabix-indexed."""
 
 _doc_param_samples = \
-    """Selection of samples to extract calldata for. If provided, should be a list of strings
-        giving sample identifiers. May also be a list of integers giving indices of selected
-        samples."""
+    """Selection of samples to extract calldata for. If provided, should be a list of 
+        strings giving sample identifiers. May also be a list of integers giving 
+        indices of selected samples."""
 
 _doc_param_transformers = \
     """Transformers for post-processing data. If provided, should be a list of Transformer
         objects, each of which must implement a "transform()" method that accepts a dict
-        containing the chunk of data to be transformed. See also the :class:`ANNTransformer`
-        class which implements post-processing of data from SNPEFF."""
+        containing the chunk of data to be transformed. See also the 
+        :class:`ANNTransformer` class which implements post-processing of data from 
+        SNPEFF."""
 
 _doc_param_buffer_size = \
-    """Size in bytes of the I/O buffer used when reading data from the underlying file or tabix
-        stream."""
+    """Size in bytes of the I/O buffer used when reading data from the underlying file or 
+        tabix stream."""
 
 _doc_param_chunk_length = \
     """Length (number of variants) of chunks in which data are processed."""
@@ -213,6 +221,7 @@ _doc_param_log = \
     """A file-like object (e.g., `sys.stderr`) to print progress information."""
 
 
+# noinspection PyShadowingBuiltins
 def read_vcf(input,
              fields=None,
              exclude_fields=None,
@@ -339,6 +348,7 @@ _doc_param_overwrite = \
     """If False (default), do not overwrite an existing file."""
 
 
+# noinspection PyShadowingBuiltins
 def vcf_to_npz(input, output,
                compressed=True,
                overwrite=False,
@@ -443,8 +453,8 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
 )
 
 
-def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression, compression_opts,
-                         shuffle, overwrite, headers, vlen):
+def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
+                         compression_opts, shuffle, overwrite, headers, vlen):
     import h5py
 
     # handle no input
@@ -531,9 +541,10 @@ def _hdf5_store_chunk(root, keys, chunk, vlen):
             data = data.astype('S')
             if data.dtype.itemsize > dataset.dtype.itemsize:
                 warnings.warn(
-                    'found string length %s longer than %s guessed for field %r, values will be '
-                    'truncated; recommend rerunning setting type to at least "S%s"' %
-                    (data.dtype.itemsize, dataset.dtype.itemsize, k, data.dtype.itemsize)
+                    'found string length %s longer than %s guessed for field %r, values '
+                    'will be truncated; recommend rerunning, setting type to at least '
+                    '"S%s"' % (data.dtype.itemsize, dataset.dtype.itemsize, k,
+                               data.dtype.itemsize)
                 )
 
         # ensure dataset is long enough
@@ -547,6 +558,7 @@ _doc_param_chunk_width = \
     """Width (number of samples) to use when storing chunks in output."""
 
 
+# noinspection PyShadowingBuiltins
 def vcf_to_hdf5(input, output,
                 group='/',
                 compression='gzip',
@@ -588,15 +600,16 @@ def vcf_to_hdf5(input, output,
     overwrite : bool
         {overwrite}
     vlen : bool
-        If True, store variable length strings. Note that there is considerable storage overhead
-        for variable length strings in HDF5, and leaving this option as True (default) may lead
-        to large file sizes. If False, all strings will be stored in the HDF5 file as fixed length
-        strings, even if they are specified as 'object' type. In this case, the string length for
-        any field with 'object' type will be determined based on the maximum length of strings
-        found in the first chunk, and this may cause values to be truncated if longer values are
-        found in later chunks. To avoid truncation and large file sizes, manually set the type for
-        all string fields to an explicit fixed length string type, e.g., 'S10' for a field where
-        you know at most 10 characters are required.
+        If True, store variable length strings. Note that there is considerable storage
+        overhead for variable length strings in HDF5, and leaving this option as True (
+        default) may lead to large file sizes. If False, all strings will be stored in
+        the HDF5 file as fixed length strings, even if they are specified as 'object'
+        type. In this case, the string length for any field with 'object' type will be
+        determined based on the maximum length of strings found in the first chunk,
+        and this may cause values to be truncated if longer values are found in later
+        chunks. To avoid truncation and large file sizes, manually set the type for all
+        string fields to an explicit fixed length string type, e.g., 'S10' for a field
+        where you know at most 10 characters are required.
     fields : list of strings, optional
         {fields}
     exclude_fields : list of strings, optional
@@ -720,7 +733,8 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
 )
 
 
-def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite, headers):
+def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite,
+                         headers):
 
     # handle no input
     if chunk is None:
@@ -776,6 +790,7 @@ def _zarr_store_chunk(root, keys, chunk):
         root[k].append(chunk[k], axis=0)
 
 
+# noinspection PyShadowingBuiltins
 def vcf_to_zarr(input, output,
                 group='/',
                 compressor='default',
@@ -905,8 +920,8 @@ def vcf_to_zarr(input, output,
     # setup datasets
     # noinspection PyTypeChecker
     keys = _zarr_setup_datasets(
-        chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width, compressor=compressor,
-        overwrite=overwrite, headers=headers
+        chunk, root=root, chunk_length=chunk_length, chunk_width=chunk_width,
+        compressor=compressor, overwrite=overwrite, headers=headers
     )
 
     # store first chunk
@@ -940,6 +955,68 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
 )
 
 
+# noinspection PyShadowingBuiltins
+def _setup_input_stream(input, region=None, tabix=None, buffer_size=DEFAULT_BUFFER_SIZE):
+
+    # obtain a file-like object
+    close = False
+    if isinstance(input, str) and input.endswith('gz'):
+
+        if region and tabix and os.name != 'nt':
+
+            try:
+                # try tabix
+                p = subprocess.Popen([tabix, '-h', input, region],
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT,
+                                     bufsize=0)
+
+                # check if tabix exited early, look for tabix error
+                time.sleep(.5)
+                poll = p.poll()
+                if poll is not None and poll > 0:
+                    err = p.stdout.read()
+                    if not PY2:
+                        err = str(err, 'ascii')
+                    p.stdout.close()
+                    raise RuntimeError(err.strip())
+                fileobj = p.stdout
+                close = True
+                # N.B., still pass the region parameter through so we get strictly only
+                # variants that start within the requested region. See also
+                # https://github.com/alimanfoo/vcfnp/issues/54
+
+            except FileNotFoundError:
+                # no tabix, fall back to scanning
+                warnings.warn('tabix not found, falling back to scanning to region')
+                fileobj = gzip.open(input, mode='rb')
+                close = True
+
+            except Exception as e:
+                warnings.warn('error occurred attempting tabix (%s); falling back to '
+                              'scanning to region' % e)
+                fileobj = gzip.open(input, mode='rb')
+                close = True
+
+        else:
+            fileobj = gzip.open(input, mode='rb')
+            close = True
+
+    elif isinstance(input, str):
+        # assume no compression
+        fileobj = open(input, mode='rb', buffering=0)
+        close = True
+
+    elif hasattr(input, 'readinto'):
+        fileobj = input
+
+    else:
+        raise ValueError('path must be string or file-like, found %r' % input)
+
+    return FileInputStream(fileobj, buffer_size=buffer_size, close=close)
+
+
+# noinspection PyShadowingBuiltins
 def iter_vcf_chunks(input,
                     fields=None,
                     exclude_fields=None,
@@ -1000,68 +1077,11 @@ def iter_vcf_chunks(input,
     # setup commmon keyword args
     kwds = dict(fields=fields, exclude_fields=exclude_fields, types=types,
                 numbers=numbers, alt_number=alt_number, chunk_length=chunk_length,
-                fills=fills, samples=samples)
-
-    # obtain a file-like object
-    close = False
-    if isinstance(input, str) and input.endswith('gz'):
-
-        if region and tabix and os.name != 'nt':
-
-            try:
-                # try tabix
-                p = subprocess.Popen([tabix, '-h', input, region],
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.STDOUT,
-                                     bufsize=0)
-
-                # check if tabix exited early, look for tabix error
-                time.sleep(.5)
-                poll = p.poll()
-                if poll is not None and poll > 0:
-                    err = p.stdout.read()
-                    if not PY2:
-                        err = str(err, 'ascii')
-                    p.stdout.close()
-                    raise RuntimeError(err.strip())
-                fileobj = p.stdout
-                close = True
-                # N.B., still pass the region parameter through so we get strictly only
-                # variants that start within the requested region. See also
-                # https://github.com/alimanfoo/vcfnp/issues/54
-
-            except FileNotFoundError:
-                # no tabix, fall back to scanning
-                warnings.warn('tabix not found, falling back to scanning to region')
-                fileobj = gzip.open(input, mode='rb')
-                close = True
-
-            except Exception as e:
-                warnings.warn('error occurred attempting tabix (%s); falling back to '
-                              'scanning to region' % e)
-                fileobj = gzip.open(input, mode='rb')
-                close = True
-
-        else:
-            fileobj = gzip.open(input, mode='rb')
-            close = True
-
-    elif isinstance(input, str):
-        # assume no compression
-        fileobj = open(input, mode='rb', buffering=0)
-        close = True
-
-    elif hasattr(input, 'readinto'):
-        fileobj = input
-
-    else:
-        raise ValueError('path must be string or file-like, found %r' % input)
+                fills=fills, samples=samples, region=region)
 
     # setup input stream
-    stream = FileInputStream(fileobj, buffer_size=buffer_size, close=close)
-
-    # deal with region
-    kwds['region'] = region
+    stream = _setup_input_stream(input=input, region=region, tabix=tabix,
+                                 buffer_size=buffer_size)
 
     # setup iterator
     fields, samples, headers, it = _iter_vcf_stream(stream, **kwds)
@@ -1254,7 +1274,8 @@ def _normalize_fields(fields, headers, samples):
         elif f in ['calldata', 'calldata*', 'calldata/*'] and len(samples) > 0:
             _add_all_calldata_fields(normed_fields, headers)
 
-        elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*', 'variants/INFO/*']:
+        elif f in ['INFO', 'INFO*', 'INFO/*', 'variants/INFO', 'variants/INFO*',
+                   'variants/INFO/*']:
             _add_all_info_fields(normed_fields, headers)
 
         elif f in ['FILTER', 'FILTER*', 'FILTER/*', 'FILTER_*', 'variants/FILTER',
@@ -1361,7 +1382,8 @@ def _normalize_types(types, fields, headers):
                 header_type = _normalize_type(headers.infos[name]['Type'])
                 if isinstance(default_type, np.dtype):
                     # check that default is compatible with header
-                    if default_type.kind in 'ifb' and default_type.kind != header_type.kind:
+                    if (default_type.kind in 'ifb' and
+                            default_type.kind != header_type.kind):
                         # default is not compatible with header, fall back to header
                         t = header_type
                     else:
@@ -1386,7 +1408,8 @@ def _normalize_types(types, fields, headers):
                 header_type = _normalize_type(headers.formats[name]['Type'])
                 if isinstance(default_type, np.dtype):
                     # check that default is compatible with header
-                    if default_type.kind in 'ifb' and default_type.kind != header_type.kind:
+                    if (default_type.kind in 'ifb' and
+                            default_type.kind != header_type.kind):
                         # default is not compatible with header, fall back to header
                         t = header_type
                     else:
@@ -1481,7 +1504,8 @@ def _normalize_numbers(numbers, fields, headers, alt_number):
                 normed_numbers[f] = 0
 
             elif name in headers.infos:
-                normed_numbers[f] = _normalize_number(f, headers.infos[name]['Number'], alt_number)
+                normed_numbers[f] = _normalize_number(f, headers.infos[name]['Number'],
+                                                      alt_number)
 
             else:
                 # fall back to 1
@@ -1561,7 +1585,8 @@ def _iter_vcf_stream(stream, fields, exclude_fields, types, numbers, alt_number,
     headers = _read_vcf_headers(stream)
 
     # setup samples
-    samples, loc_samples = _normalize_samples(samples=samples, headers=headers, types=types)
+    samples, loc_samples = _normalize_samples(samples=samples, headers=headers,
+                                              types=types)
 
     # setup fields to read
     if fields is None:
@@ -1610,7 +1635,15 @@ _re_format_header = \
     re.compile('##FORMAT=<ID=([^,]+),Number=([^,]+),Type=([^,]+),Description="([^"]*)">')
 
 
-VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats', 'samples'])
+VCFHeaders = namedtuple('VCFHeaders', ['headers', 'filters', 'infos', 'formats',
+                                       'samples'])
+
+
+# noinspection PyShadowingBuiltins
+def read_vcf_headers(input):
+    """Read headers from a VCF file."""
+    stream = _setup_input_stream(input)
+    return _read_vcf_headers(stream)
 
 
 def _read_vcf_headers(stream):
@@ -1704,6 +1737,7 @@ def _chunk_to_dataframe(fields, chunk):
     return df
 
 
+# noinspection PyShadowingBuiltins
 def vcf_to_dataframe(input,
                      fields=None,
                      exclude_fields=None,
@@ -1804,6 +1838,7 @@ vcf_to_dataframe.__doc__ = vcf_to_dataframe.__doc__.format(
 )
 
 
+# noinspection PyShadowingBuiltins
 def vcf_to_csv(input, output,
                fields=None,
                exclude_fields=None,
@@ -1921,6 +1956,7 @@ def _chunk_to_recarray(fields, chunk):
     return ra
 
 
+# noinspection PyShadowingBuiltins
 def vcf_to_recarray(input,
                     fields=None,
                     exclude_fields=None,

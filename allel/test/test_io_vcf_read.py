@@ -385,15 +385,15 @@ def test_fields_dups_case_insensitive():
     assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
 
-def _test_read_vcf_content(input, chunk_length, buffer_size):
+def _test_read_vcf_content(vcf, chunk_length, buffer_size):
 
     # object dtype for strings
 
-    if isinstance(input, str):
-        input_file = input
+    if isinstance(vcf, str):
+        input_file = vcf
         close = False
     else:
-        input_file = input()
+        input_file = vcf()
         close = True
 
     callset = read_vcf(input_file,
@@ -451,17 +451,17 @@ def _test_read_vcf_content(input, chunk_length, buffer_size):
 
     # String (S) dtype
 
-    if isinstance(input, str):
-        input_file = input
+    if isinstance(vcf, str):
+        input_file = vcf
         close = False
     else:
-        input_file = input()
+        input_file = vcf()
         close = True
 
     types = {'CHROM': 'S12', 'ID': 'S20', 'REF': 'S20', 'ALT': 'S20', 'calldata/DP': 'S3',
              'samples': 'S20'}
-    callset = read_vcf(input_file, fields='*', chunk_length=chunk_length, buffer_size=buffer_size,
-                       types=types)
+    callset = read_vcf(input_file, fields='*', chunk_length=chunk_length,
+                       buffer_size=buffer_size, types=types)
     if close:
         input_file.close()
 
@@ -528,18 +528,17 @@ def test_inputs():
     chunk_length = 3
     buffer_size = 10
 
-    for input in inputs:
-        _test_read_vcf_content(input, chunk_length, buffer_size)
+    for i in inputs:
+        _test_read_vcf_content(i, chunk_length, buffer_size)
 
 
 def test_chunk_lengths():
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
-    input = vcf_path
     chunk_lengths = 1, 2, 3, 5, 10, 20
     buffer_size = 10
 
     for chunk_length in chunk_lengths:
-        _test_read_vcf_content(input, chunk_length, buffer_size)
+        _test_read_vcf_content(vcf_path, chunk_length, buffer_size)
 
 
 def test_buffer_sizes():
@@ -558,7 +557,8 @@ def test_utf8():
     # samples
     eq_((3,), callset['samples'].shape)
     eq_('O', callset['samples'].dtype.kind)
-    assert_list_equal([u'NA00001', u'Γεια σου κόσμε!', u'NA00003'], callset['samples'].tolist())
+    assert_list_equal([u'NA00001', u'Γεια σου κόσμε!', u'NA00003'],
+                      callset['samples'].tolist())
 
     # CHROM
     eq_((9,), callset['variants/CHROM'].shape)
@@ -677,7 +677,8 @@ def test_truncation_id():
 
         for string_type in 'S10', 'object':
             input_file = io.BytesIO(data)
-            callset = read_vcf(input_file, fields=['ID', 'samples'], types={'ID': string_type})
+            callset = read_vcf(input_file, fields=['ID', 'samples'],
+                               types={'ID': string_type})
 
             # check fields
             expected_fields = ['variants/ID']
@@ -705,7 +706,8 @@ def test_truncation_ref():
 
         for string_type in 'S10', 'object':
             input_file = io.BytesIO(data)
-            callset = read_vcf(input_file, fields=['REF', 'samples'], types={'REF': string_type})
+            callset = read_vcf(input_file, fields=['REF', 'samples'],
+                               types={'REF': string_type})
 
             # check fields
             expected_fields = ['variants/REF']
@@ -789,7 +791,8 @@ def test_truncation_filter():
                            fields=['FILTER_PASS', 'FILTER_q10', 'FILTER_s50', 'samples'])
 
         # check fields
-        expected_fields = ['variants/FILTER_PASS', 'variants/FILTER_q10', 'variants/FILTER_s50']
+        expected_fields = ['variants/FILTER_PASS', 'variants/FILTER_q10',
+                           'variants/FILTER_s50']
         assert_list_equal(sorted(expected_fields), sorted(callset.keys()))
 
         # check data content
@@ -912,7 +915,8 @@ def test_truncation_calldata():
 def test_info_types():
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
-    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10', 'object':
+    for dtype in ('i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10',
+                  'object'):
         callset = read_vcf(vcf_path, fields=['variants/DP', 'variants/AC'],
                            types={'variants/DP': dtype, 'variants/AC': dtype},
                            numbers={'variants/AC': 3})
@@ -960,20 +964,24 @@ def test_genotype_types():
 
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
     for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'S3', 'object':
-        callset = read_vcf(vcf_path, fields=['GT'], types={'GT': dtype}, numbers={'GT': 2})
+        callset = read_vcf(vcf_path, fields=['GT'], types={'GT': dtype},
+                           numbers={'GT': 2})
         eq_(np.dtype(dtype), callset['calldata/GT'].dtype)
         eq_((9, 3, 2), callset['calldata/GT'].shape)
 
     # non-GT field with genotype dtype
 
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\tS2\tS3\n"
-                  b"2L\t12\t.\tA\t.\t.\t.\t.\tCustomGT:CustomGQ\t0/0/0:11\t0/1/2:12\t././.:.\n"
-                  b"2L\t34\t.\tC\tT\t.\t.\t.\tCustomGT:CustomGQ\t0/1/2:22\t3/3/.:33\t.\n"
-                  b"3R\t45\t.\tG\tA,T\t.\t.\t.\tCustomGT:CustomGQ\t0/1:.\t5:12\t\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\tS2\tS3\n"
+        b"2L\t12\t.\tA\t.\t.\t.\t.\tCustomGT:CustomGQ\t0/0/0:11\t0/1/2:12\t././.:.\n"
+        b"2L\t34\t.\tC\tT\t.\t.\t.\tCustomGT:CustomGQ\t0/1/2:22\t3/3/.:33\t.\n"
+        b"3R\t45\t.\tG\tA,T\t.\t.\t.\tCustomGT:CustomGQ\t0/1:.\t5:12\t\n"
+    )
     callset = read_vcf(io.BytesIO(input_data),
                        fields=['calldata/CustomGT', 'calldata/CustomGQ'],
                        numbers={'calldata/CustomGT': 3, 'calldata/CustomGQ': 1},
-                       types={'calldata/CustomGT': 'genotype/i1', 'calldata/CustomGQ': 'i2'})
+                       types={'calldata/CustomGT': 'genotype/i1',
+                              'calldata/CustomGQ': 'i2'})
 
     e = np.array([[[0, 0, 0], [0, 1, 2], [-1, -1, -1]],
                   [[0, 1, 2], [3, 3, -1], [-1, -1, -1]],
@@ -993,8 +1001,10 @@ def test_genotype_types():
 def test_calldata_types():
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
-    for dtype in 'i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10', 'object':
-        callset = read_vcf(vcf_path, fields=['HQ'], types={'HQ': dtype}, numbers={'HQ': 2})
+    for dtype in ('i1', 'i2', 'i4', 'i8', 'u1', 'u2', 'u4', 'u8', 'f4', 'f8', 'S10',
+                  'object'):
+        callset = read_vcf(vcf_path, fields=['HQ'], types={'HQ': dtype},
+                           numbers={'HQ': 2})
         eq_(np.dtype(dtype), callset['calldata/HQ'].dtype)
         eq_((9, 3, 2), callset['calldata/HQ'].shape)
 
@@ -1105,13 +1115,15 @@ def test_numbers():
     eq_((9,), a.shape)
     eq_('A', a[8])
 
-    callset = read_vcf(vcf_path, fields=['ALT'], numbers=dict(ALT=2), types=dict(ALT='S4'))
+    callset = read_vcf(vcf_path, fields=['ALT'], numbers=dict(ALT=2),
+                       types=dict(ALT='S4'))
     a = callset['variants/ALT']
     eq_((9, 2), a.shape)
     eq_(b'A', a[8, 0])
     eq_(b'ATG', a[8, 1])
 
-    callset = read_vcf(vcf_path, fields=['ALT'], numbers=dict(ALT=3), types=dict(ALT='S4'))
+    callset = read_vcf(vcf_path, fields=['ALT'], numbers=dict(ALT=3),
+                       types=dict(ALT='S4'))
     a = callset['variants/ALT']
     eq_((9, 3), a.shape)
     eq_(b'A', a[8, 0])
@@ -1399,7 +1411,8 @@ def test_ann():
     assert_array_equal([3000, -1, -1], a)
 
     # numbers=2
-    callset = read_vcf(vcf_path, fields=['ANN'], numbers={'ANN': 2}, transformers=[ANNTransformer()])
+    callset = read_vcf(vcf_path, fields=['ANN'], numbers={'ANN': 2},
+                       transformers=[ANNTransformer()])
     a = callset['variants/ANN_Allele']
     eq_((3, 2), a.shape)
     eq_(np.dtype('object'), a.dtype)
@@ -1446,9 +1459,11 @@ def test_ann():
 
 def test_format_inconsistencies():
 
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\tfoo\tA\tC\t1.2\t.\t.\tGT:GQ\t0/1:12\t1/2\t2/3:34:67,89\t\n"
-                  b"2R\t34\tbar\tC\tG\t3.4\t.\t.\tGT\t./.\t\t3/3:45\t1/2:11:55,67\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\tfoo\tA\tC\t1.2\t.\t.\tGT:GQ\t0/1:12\t1/2\t2/3:34:67,89\t\n"
+        b"2R\t34\tbar\tC\tG\t3.4\t.\t.\tGT\t./.\t\t3/3:45\t1/2:11:55,67\n"
+    )
 
     input_file = io.BytesIO(input_data)
     callset = read_vcf(input_file, fields=['calldata/GT', 'calldata/GQ'])
@@ -1469,106 +1484,140 @@ def test_warnings():
     warnings.simplefilter('error')
 
     # empty CHROM
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"\t12\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"\t12\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # empty POS
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy POS
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\taaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\taaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy POS
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12aaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12aaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy QUAL
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\taaa\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\taaa\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy QUAL
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t1.2aaa\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t1.2aaa\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # empty QUAL - no warning
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\t.\n"
+    )
     read_vcf(io.BytesIO(input_data))
 
     # empty FILTER - no warning
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\t.\n"
+    )
     read_vcf(io.BytesIO(input_data))
 
     # empty INFO - no warning
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\t.\n"
+    )
     read_vcf(io.BytesIO(input_data))
 
     # empty FORMAT - no warning
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t.\t\t.\t.\t.\t.\n"
+    )
     read_vcf(io.BytesIO(input_data))
 
     # dodgy calldata (integer)
-    input_data = (b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\taa/bb\t.\t.\n")
+    input_data = (
+        b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\taa/bb\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
 
     # dodgy calldata (integer)
-    input_data = (b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\t12aa/22\t.\t.\n")
+    input_data = (
+        b'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\t12aa/22\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
 
     # dodgy calldata (float)
-    input_data = (b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
-                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\taaa\t.\n")
+    input_data = (
+        b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\taaa\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
 
     # dodgy calldata (float)
-    input_data = (b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
-                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\t34.5aaa\t.\n")
+    input_data = (
+        b'##FORMAT=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\t34.5aaa\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
 
     # dodgy INFO (missing key)
-    input_data = (b'##INFO=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
-                  b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\tfoo=qux;MQ=12\t.\t.\t.\t.\t.\n"
-                  b"2L\t34\t.\t.\t.\t.\t.\tfoo=bar;=34;baz\t.\t.\t.\t.\t.\n")
+    input_data = (
+        b'##INFO=<ID=MQ,Number=1,Type=Float,Description="Mapping Quality">\n'
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\tfoo=qux;MQ=12\t.\t.\t.\t.\t.\n"
+        b"2L\t34\t.\t.\t.\t.\t.\tfoo=bar;=34;baz\t.\t.\t.\t.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['variants/MQ'])
 
     # INFO not declared in header
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['variants/foo'])
 
     # FORMAT not declared in header
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n"
+    )
     with assert_raises(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
     with assert_raises(UserWarning):
@@ -1601,8 +1650,10 @@ def test_missing_headers():
 def test_extra_samples():
     # more calldata samples than samples declared in header
     path = os.path.join(os.path.dirname(__file__), 'data', 'test48b.vcf')
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
-                  b"2L\t12\t.\t.\t.\t.\t.\t.\tGT:GQ\t0/0:34\t0/1:45\t1/1:56\t1/2:99\t2/3:101\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
+        b"2L\t12\t.\t.\t.\t.\t.\t.\tGT:GQ\t0/0:34\t0/1:45\t1/1:56\t1/2:99\t2/3:101\n"
+    )
 
     warnings.resetwarnings()
     warnings.simplefilter('error')
@@ -1623,8 +1674,10 @@ def test_extra_samples():
 # noinspection PyTypeChecker
 def test_no_samples():
 
-    input_data = (b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
-                  b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n")
+    input_data = (
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n"
+    )
 
     callset = read_vcf(io.BytesIO(input_data),
                        fields=['calldata/GT', 'calldata/GQ', 'samples', 'POS'])
@@ -1674,7 +1727,8 @@ def test_computed_fields():
 
         callset = read_vcf(io.BytesIO(input_data),
                            fields='*',
-                           numbers={'ALT': 5}, types={'REF': string_dtype, 'ALT': string_dtype})
+                           numbers={'ALT': 5},
+                           types={'REF': string_dtype, 'ALT': string_dtype})
 
         a = callset['variants/ALT']
         eq_((9, 5), a.shape)
@@ -1711,12 +1765,14 @@ def test_computed_fields():
         a = callset['variants/is_snp']
         eq_((9,), a.shape)
         eq_(np.dtype(bool), a.dtype)
-        assert_array_equal([False, False, False, True, True, False, False, False, False], a)
+        assert_array_equal([False, False, False, True, True, False, False, False, False],
+                           a)
 
         # test is_snp with reduced ALT number
         callset = read_vcf(io.BytesIO(input_data),
                            fields='*',
-                           numbers={'ALT': 1}, types={'REF': string_dtype, 'ALT': string_dtype})
+                           numbers={'ALT': 1},
+                           types={'REF': string_dtype, 'ALT': string_dtype})
 
         a = callset['variants/ALT']
         eq_((9,), a.shape)
@@ -1737,7 +1793,8 @@ def test_computed_fields():
         a = callset['variants/is_snp']
         eq_((9,), a.shape)
         eq_(np.dtype(bool), a.dtype)
-        assert_array_equal([False, False, False, True, True, False, False, False, False], a)
+        assert_array_equal([False, False, False, True, True, False, False, False, False],
+                           a)
 
 
 def test_genotype_ac():
@@ -1764,7 +1821,8 @@ def test_genotype_ac():
         assert_array_equal(e, a)
 
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'test63.vcf')
-    callset = read_vcf(vcf_path, fields='GT', numbers={'GT': 3}, types={'GT': 'genotype_ac/i1'})
+    callset = read_vcf(vcf_path, fields='GT', numbers={'GT': 3},
+                       types={'GT': 'genotype_ac/i1'})
     e = np.array([
         [(2, 0, 0), (3, 0, 0), (1, 0, 0)],
         [(0, 1, 0), (1, 1, 0), (1, 1, 1)],
@@ -1945,12 +2003,12 @@ def test_vcf_to_npz():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region, tabix=tabix,
-                            samples=samples, types=types)
+        expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
+                            tabix=tabix, samples=samples, types=types)
         if os.path.exists(npz_path):
             os.remove(npz_path)
-        vcf_to_npz(vcf_path, npz_path, fields='*', chunk_length=2, alt_number=2, region=region, tabix=tabix,
-                   samples=samples, types=types)
+        vcf_to_npz(vcf_path, npz_path, fields='*', chunk_length=2, alt_number=2,
+                   region=region, tabix=tabix, samples=samples, types=types)
         actual = np.load(npz_path)
         for key in expected.keys():
             if expected[key].dtype.kind == 'f':
@@ -2013,12 +2071,12 @@ def test_vcf_to_zarr():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region, tabix=tabix,
-                            samples=samples, types=types)
+        expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
+                            tabix=tabix, samples=samples, types=types)
         if os.path.exists(zarr_path):
             shutil.rmtree(zarr_path)
-        vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2, region=region,
-                    tabix=tabix, samples=samples, types=types)
+        vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2,
+                    region=region, tabix=tabix, samples=samples, types=types)
         actual = zarr.open_group(zarr_path, mode='r')
         for key in expected.keys():
             e = expected[key]
@@ -2097,8 +2155,8 @@ def test_vcf_to_zarr_group():
         shutil.rmtree(zarr_path)
     chroms = ['19', '20', 'X']
     for chrom in chroms:
-        vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2, region=chrom,
-                    group=chrom)
+        vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2,
+                    region=chrom, group=chrom)
     actual = zarr.open_group(zarr_path, mode='r')
     eq_(chroms, sorted(actual))
     for chrom in chroms:
@@ -2108,8 +2166,10 @@ def test_vcf_to_zarr_group():
             e = expect[key]
             a = actual[chrom][key][:]
             compare_arrays(e, a)
-            eq_(actual[chrom]['variants/NS'].attrs['Description'], 'Number of Samples With Data')
-            eq_(actual[chrom]['calldata/GQ'].attrs['Description'], 'Genotype Quality')
+            eq_(actual[chrom]['variants/NS'].attrs['Description'],
+                'Number of Samples With Data')
+            eq_(actual[chrom]['calldata/GQ'].attrs['Description'],
+                'Genotype Quality')
 
 
 def test_vcf_to_zarr_string_codec():
@@ -2119,7 +2179,8 @@ def test_vcf_to_zarr_string_codec():
     expect = read_vcf(vcf_path, fields='*', alt_number=2, types=types)
     if os.path.exists(zarr_path):
         shutil.rmtree(zarr_path)
-    vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2, types=types)
+    vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2,
+                types=types)
     actual = zarr.open_group(zarr_path, mode='r')
     for key in expect.keys():
         e = expect[key]
@@ -2133,12 +2194,14 @@ def test_vcf_to_zarr_ann():
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
-                                       types={'Allele': string_type, 'HGVS_c': string_type})]
-        expected = read_vcf(vcf_path, fields='*', alt_number=2, types=types, transformers=transformers)
+                                       types={'Allele': string_type,
+                                              'HGVS_c': string_type})]
+        expected = read_vcf(vcf_path, fields='*', alt_number=2, types=types,
+                            transformers=transformers)
         if os.path.exists(zarr_path):
             shutil.rmtree(zarr_path)
-        vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2, types=types,
-                    transformers=transformers)
+        vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2,
+                    types=types, transformers=transformers)
         actual = zarr.open_group(zarr_path, mode='r')
         for key in expected.keys():
             compare_arrays(expected[key], actual[key][:])
@@ -2155,12 +2218,12 @@ def test_vcf_to_hdf5():
                                      string_type_values)
     for region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
-        expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region, tabix=tabix,
-                            samples=samples, types=types)
+        expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
+                            tabix=tabix, samples=samples, types=types)
         if os.path.exists(h5_path):
             os.remove(h5_path)
-        vcf_to_hdf5(vcf_path, h5_path, fields='*', alt_number=2, chunk_length=2, region=region, tabix=tabix,
-                    samples=samples, types=types)
+        vcf_to_hdf5(vcf_path, h5_path, fields='*', alt_number=2, chunk_length=2,
+                    region=region, tabix=tabix, samples=samples, types=types)
         with h5py.File(h5_path, mode='r') as actual:
             for key in expected.keys():
                 compare_arrays(expected[key], actual[key][:])
@@ -2223,8 +2286,8 @@ def test_vcf_to_hdf5_group():
         os.remove(h5_path)
     chroms = ['19', '20', 'X']
     for chrom in chroms:
-        vcf_to_hdf5(vcf_path, h5_path, fields='*', alt_number=2, chunk_length=2, region=chrom,
-                    group=chrom)
+        vcf_to_hdf5(vcf_path, h5_path, fields='*', alt_number=2, chunk_length=2,
+                    region=chrom, group=chrom)
     with h5py.File(h5_path, mode='r') as actual:
         assert chroms == sorted(actual)
         for chrom in chroms:
@@ -2246,7 +2309,8 @@ def test_vcf_to_hdf5_ann():
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
-                                       types={'Allele': string_type, 'HGVS_c': string_type})]
+                                       types={'Allele': string_type,
+                                              'HGVS_c': string_type})]
         expected = read_vcf(vcf_path, fields='*', types=types, transformers=transformers)
         if os.path.exists(h5_path):
             os.remove(h5_path)
@@ -2266,7 +2330,8 @@ def test_vcf_to_hdf5_vlen():
         expect = read_vcf(vcf_path, fields=fields, alt_number=2, types=types)
         if os.path.exists(h5_path):
             os.remove(h5_path)
-        vcf_to_hdf5(vcf_path, h5_path, fields=fields, alt_number=2, chunk_length=3, types=types, vlen=False)
+        vcf_to_hdf5(vcf_path, h5_path, fields=fields, alt_number=2, chunk_length=3,
+                    types=types, vlen=False)
         with h5py.File(h5_path, mode='r') as actual:
             for key in expect.keys():
                 if expect[key].dtype.kind == 'f':
@@ -2306,10 +2371,12 @@ def test_vcf_to_dataframe():
     numbers = {'AC': 3}
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type}
-        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers, types=types)
-        df = vcf_to_dataframe(vcf_path, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
-                              types=types)
-        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3'],
+        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                           types=types)
+        df = vcf_to_dataframe(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                              chunk_length=2, types=types)
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1',
+                           'AC_2', 'AC_3'],
                           df.columns.tolist())
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
@@ -2323,10 +2390,12 @@ def test_vcf_to_dataframe_all():
     numbers = {'AC': 3}
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type}
-        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers, types=types)
-        df = vcf_to_dataframe(vcf_path, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
-                              types=types)
-        for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3']:
+        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                           types=types)
+        df = vcf_to_dataframe(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                              chunk_length=2, types=types)
+        for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1',
+                  'AC_2', 'AC_3']:
             assert k in df.columns.tolist()
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
@@ -2352,13 +2421,15 @@ def test_vcf_to_dataframe_ann():
     for string_type in 'S10', 'object':
         types = {'CHROM': string_type, 'ALT': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
-                                       types={'Allele': string_type, 'HGVS_c': string_type})]
+                                       types={'Allele': string_type,
+                                              'HGVS_c': string_type})]
         callset = read_vcf(vcf_path, fields=fields, numbers=numbers, types=types,
                            transformers=transformers)
-        df = vcf_to_dataframe(vcf_path, fields=fields, numbers=numbers, chunk_length=2, types=types,
-                              transformers=transformers)
-        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'ANN_Allele', 'ANN_HGVS_c',
-                           'ANN_AA_pos', 'ANN_AA_length', 'DP', 'AC_1', 'AC_2'],
+        df = vcf_to_dataframe(vcf_path, fields=fields, numbers=numbers, chunk_length=2,
+                              types=types, transformers=transformers)
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'ANN_Allele',
+                           'ANN_HGVS_c', 'ANN_AA_pos', 'ANN_AA_length', 'DP', 'AC_1',
+                           'AC_2'],
                           df.columns.tolist())
         # always convert strings to object dtype for pandas
         eq_(np.dtype(object), df['CHROM'].dtype)
@@ -2372,13 +2443,13 @@ def test_vcf_to_csv():
     numbers = {'AC': 3}
     for string_type in 'S20', 'object':
         types = {'REF': string_type, 'ALT': string_type}
-        df = vcf_to_dataframe(vcf_path, fields=fields, alt_number=2, numbers=numbers, types=types,
-                              chunk_length=2)
+        df = vcf_to_dataframe(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                              types=types, chunk_length=2)
         csv_path = os.path.join(tempdir, 'test.csv')
         if os.path.exists(csv_path):
             os.remove(csv_path)
-        vcf_to_csv(vcf_path, csv_path, fields=fields, alt_number=2, numbers=numbers, types=types,
-                   chunk_length=2)
+        vcf_to_csv(vcf_path, csv_path, fields=fields, alt_number=2, numbers=numbers,
+                   types=types, chunk_length=2)
         import pandas
         adf = pandas.read_csv(csv_path, na_filter=True)
         assert_list_equal(df.columns.tolist(), adf.columns.tolist())
@@ -2422,14 +2493,15 @@ def test_vcf_to_csv_ann():
     for string_type in 'S20', 'object':
         types = {'CHROM': string_type, 'REF': string_type, 'ALT': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
-                                       types={'Allele': string_type, 'HGVS_c': string_type})]
-        df = vcf_to_dataframe(vcf_path, fields=fields, numbers=numbers, types=types, chunk_length=2,
-                              transformers=transformers)
+                                       types={'Allele': string_type,
+                                              'HGVS_c': string_type})]
+        df = vcf_to_dataframe(vcf_path, fields=fields, numbers=numbers, types=types,
+                              chunk_length=2, transformers=transformers)
         csv_path = os.path.join(tempdir, 'test.csv')
         if os.path.exists(csv_path):
             os.remove(csv_path)
-        vcf_to_csv(vcf_path, csv_path, fields=fields, numbers=numbers, types=types, chunk_length=2,
-                   transformers=transformers)
+        vcf_to_csv(vcf_path, csv_path, fields=fields, numbers=numbers, types=types,
+                   chunk_length=2, transformers=transformers)
         import pandas
         adf = pandas.read_csv(csv_path, na_filter=True)
         assert_list_equal(df.columns.tolist(), adf.columns.tolist())
@@ -2443,11 +2515,12 @@ def test_vcf_to_recarray():
     numbers = {'AC': 3}
     for string_type in 'S20', 'object':
         types = {'CHROM': string_type, 'REF': string_type, 'ALT': string_type}
-        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers, types=types)
-        a = vcf_to_recarray(vcf_path, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
-                            types=types)
-        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3'],
-                          list(a.dtype.names))
+        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                           types=types)
+        a = vcf_to_recarray(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                            chunk_length=2, types=types)
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2',
+                           'AC_3'], list(a.dtype.names))
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         for k in callset:
             if k.startswith('variants/'):
@@ -2468,10 +2541,12 @@ def test_vcf_to_recarray_all():
     numbers = {'AC': 3}
     for string_type in 'S20', 'object':
         types = {'CHROM': string_type, 'REF': string_type, 'ALT': string_type}
-        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers, types=types)
-        a = vcf_to_recarray(vcf_path, fields=fields, alt_number=2, numbers=numbers, chunk_length=2,
-                            types=types)
-        for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1', 'AC_2', 'AC_3']:
+        callset = read_vcf(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                           types=types)
+        a = vcf_to_recarray(vcf_path, fields=fields, alt_number=2, numbers=numbers,
+                            chunk_length=2, types=types)
+        for k in ['CHROM', 'POS', 'ID', 'REF', 'ALT_1', 'ALT_2', 'DP', 'AC_1',
+                  'AC_2', 'AC_3']:
             assert k in a.dtype.names
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         for k in callset:
@@ -2505,13 +2580,15 @@ def test_vcf_to_recarray_ann():
     for string_type in 'S20', 'object':
         types = {'CHROM': string_type, 'REF': string_type, 'ALT': string_type}
         transformers = [ANNTransformer(fields=['Allele', 'HGVS_c', 'AA'],
-                                       types={'Allele': string_type, 'HGVS_c': string_type})]
+                                       types={'Allele': string_type,
+                                              'HGVS_c': string_type})]
         callset = read_vcf(vcf_path, fields=fields, numbers=numbers, types=types,
                            transformers=transformers)
-        a = vcf_to_recarray(vcf_path, fields=fields, numbers=numbers, chunk_length=2, types=types,
-                            transformers=transformers)
-        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'ANN_Allele', 'ANN_HGVS_c',
-                           'ANN_AA_pos', 'ANN_AA_length', 'DP', 'AC_1', 'AC_2'],
+        a = vcf_to_recarray(vcf_path, fields=fields, numbers=numbers, chunk_length=2,
+                            types=types, transformers=transformers)
+        assert_list_equal(['CHROM', 'POS', 'REF', 'ALT_1', 'ALT_2', 'ANN_Allele',
+                           'ANN_HGVS_c', 'ANN_AA_pos', 'ANN_AA_length', 'DP', 'AC_1',
+                           'AC_2'],
                           list(a.dtype.names))
         eq_(np.dtype(string_type), a['CHROM'].dtype)
         eq_(np.dtype(string_type), a['ALT_1'].dtype)
