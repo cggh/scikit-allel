@@ -461,8 +461,13 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
     if chunk is None:
         raise RuntimeError('input file has no data?')
 
-    # setup datasets
+    # obtain dataset keys
     keys = sorted(chunk.keys())
+
+    # deal with overwriting existing data
+    _h5like_handle_overwrite(root, keys, overwrite)
+
+    # setup datasets
     for k in keys:
 
         # obtain initial data
@@ -475,13 +480,6 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
             chunk_shape = (chunk_length, min(chunk_width, data.shape[1])) + data.shape[2:]
 
         # create dataset
-        if k in root:
-            if overwrite:
-                del root[k]
-            else:
-                raise ValueError('object exists at path %r; use overwrite=True to '
-                                 'replace' % k)
-
         shape = (0,) + data.shape[1:]
         maxshape = (None,) + data.shape[1:]
         if data.dtype.kind == 'O':
@@ -733,6 +731,17 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
 )
 
 
+def _h5like_handle_overwrite(root, keys, overwrite):
+    # deal with overwriting existing data, do this up front
+    for k in keys:
+        if k in root:
+            if overwrite:
+                del root[k]
+            else:
+                raise ValueError('object exists at path %r; use overwrite=True to '
+                                 'replace' % k)
+
+
 def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, overwrite,
                          headers):
 
@@ -740,8 +749,13 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
     if chunk is None:
         raise RuntimeError('input file has no data?')
 
-    # setup datasets
+    # obtain dataset keys
     keys = sorted(chunk.keys())
+
+    # deal with overwriting existing data
+    _h5like_handle_overwrite(root, keys, overwrite)
+
+    # create datasets
     for k in keys:
 
         # obtain initial data
@@ -763,7 +777,7 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
         else:
             dtype = data.dtype
         ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=dtype,
-                                 compressor=compressor, overwrite=overwrite)
+                                 compressor=compressor, overwrite=False)
 
         # copy metadata from VCF headers
         group, name = k.split('/')
