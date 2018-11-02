@@ -18,7 +18,7 @@ from nose.tools import (assert_almost_equal, eq_, assert_in, assert_list_equal,
                         assert_raises)
 from allel.io.vcf_read import (iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5,
                                vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv,
-                               vcf_to_recarray)
+                               vcf_to_recarray, read_vcf_headers)
 from allel.compat import PY2
 from allel.test.tools import compare_arrays
 
@@ -2605,3 +2605,31 @@ def test_vcf_to_recarray_ann():
                     assert False, (k, e.ndim)
             else:
                 assert name not in a.dtype.names
+
+
+def test_read_vcf_headers():
+    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    headers = read_vcf_headers(vcf_path)
+
+    # check headers
+    assert_in('q10', headers.filters)
+    assert_in('s50', headers.filters)
+    assert_in('AA', headers.infos)
+    assert_in('AC', headers.infos)
+    assert_in('AF', headers.infos)
+    assert_in('AN', headers.infos)
+    assert_in('DB', headers.infos)
+    assert_in('DP', headers.infos)
+    assert_in('H2', headers.infos)
+    assert_in('NS', headers.infos)
+    assert_in('DP', headers.formats)
+    assert_in('GQ', headers.formats)
+    assert_in('GT', headers.formats)
+    assert_in('HQ', headers.formats)
+    eq_(['NA00001', 'NA00002', 'NA00003'], headers.samples)
+    eq_('1', headers.infos['AA']['Number'])
+    eq_('String', headers.infos['AA']['Type'])
+    eq_('Ancestral Allele', headers.infos['AA']['Description'])
+    eq_('2', headers.formats['HQ']['Number'])
+    eq_('Integer', headers.formats['HQ']['Type'])
+    eq_('Haplotype Quality', headers.formats['HQ']['Description'])
