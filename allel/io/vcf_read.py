@@ -453,6 +453,24 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
 )
 
 
+def _h5like_copy_metadata(k, headers, ds):
+    # copy metadata from VCF headers
+    meta = None
+    if k.startswith('variants/'):
+        _, name = k.split('/', 1)
+        if name in headers.infos:
+            meta = headers.infos[name]
+    elif k.startswith('calldata/'):
+        _, name = k.split('/', 1)
+        if name in headers.formats:
+            meta = headers.formats[name]
+    if meta is not None:
+        ds.attrs['ID'] = meta['ID']
+        ds.attrs['Number'] = meta['Number']
+        ds.attrs['Type'] = meta['Type']
+        ds.attrs['Description'] = meta['Description']
+
+
 def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
                          compression_opts, shuffle, overwrite, headers, vlen):
     import h5py
@@ -496,20 +514,7 @@ def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
         )
 
         # copy metadata from VCF headers
-        meta = None
-        if k.startswith('variants/'):
-            _, name = k.split('/', maxsplit=1)
-            if name in headers.infos:
-                meta = headers.infos[name]
-        elif k.startswith('calldata/'):
-            _, name = k.split('/', maxsplit=1)
-            if name in headers.formats:
-                meta = headers.formats[name]
-        if meta is not None:
-            ds.attrs['ID'] = meta['ID']
-            ds.attrs['Number'] = meta['Number']
-            ds.attrs['Type'] = meta['Type']
-            ds.attrs['Description'] = meta['Description']
+        _h5like_copy_metadata(k, headers, ds)
 
     return keys
 
@@ -780,17 +785,7 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
                                  compressor=compressor, overwrite=False)
 
         # copy metadata from VCF headers
-        group, name = k.split('/')
-        meta = None
-        if group == 'variants' and name in headers.infos:
-            meta = headers.infos[name]
-        elif group == 'calldata' and name in headers.formats:
-            meta = headers.formats[name]
-        if meta is not None:
-            ds.attrs['ID'] = meta['ID']
-            ds.attrs['Number'] = meta['Number']
-            ds.attrs['Type'] = meta['Type']
-            ds.attrs['Description'] = meta['Description']
+        _h5like_copy_metadata(k, headers, ds)
 
     return keys
 
