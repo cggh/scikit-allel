@@ -79,7 +79,7 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
         for line in buffer:
             if line[0] == b'>':
                 # assume begin embedded FASTA
-                raise StopIteration
+                return
             if line[0] == b'#':
                 # skip comment lines
                 continue
