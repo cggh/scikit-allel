@@ -2144,7 +2144,7 @@ def test_vcf_to_zarr_dup_fields_case_insensitive():
     with assert_raises(ValueError):
         vcf_to_zarr(vcf_path, zarr_path, fields=['variants/ALTLEN', 'variants/altlen'])
     # should be fine if renamed
-    vcf_to_zarr(vcf_path, zarr_path, fields=['ALTLEN', 'altlen'], 
+    vcf_to_zarr(vcf_path, zarr_path, fields=['ALTLEN', 'altlen'],
                 rename_fields={'altlen': 'variants/spam'})
 
 
