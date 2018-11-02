@@ -9,6 +9,9 @@ v1.2.0 (work in progress)
   (`#215 <https://github.com/cggh/scikit-allel/issues/215>`_,
   `#216 <https://github.com/cggh/scikit-allel/issues/216>`_).
 
+* Added a convenience function :func:`allel.read_vcf_headers`, to obtain just
+  header information from a VCF file.
+
 
 v1.1.10
 -------
