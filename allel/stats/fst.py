@@ -71,11 +71,11 @@ def weir_cockerham_fst(g, subpops, max_allele=None, blen=None):
                [ 0.        ,  0.125     ,  0.25      ],
                [ 0.41666667,  0.41666667,  0.        ]])
         >>> c
-        array([[ 0.        ,  0.        ,  0.        ],
-               [ 0.5       ,  0.5       ,  0.        ],
-               [ 0.        ,  0.        ,  0.        ],
-               [ 0.125     ,  0.25      ,  0.125     ],
-               [ 0.16666667,  0.16666667,  0.        ]])
+        array([[0.        , 0.        , 0.        ],
+               [0.5       , 0.5       , 0.        ],
+               [0.        , 0.        , 0.        ],
+               [0.125     , 0.25      , 0.125     ],
+               [0.16666667, 0.16666667, 0.        ]])
 
     Estimate the parameter theta (a.k.a., Fst) for each variant
     and each allele individually::
@@ -99,7 +99,7 @@ def weir_cockerham_fst(g, subpops, max_allele=None, blen=None):
 
         >>> fst = np.sum(a) / (np.sum(a) + np.sum(b) + np.sum(c))
         >>> fst
-        -4.3680905886891398e-17
+        -4.36809058868914e-17
 
     Note that estimated Fst values may be negative.
 
@@ -286,7 +286,7 @@ def hudson_fst(ac1, ac2, fill=np.nan):
         >>> num
         array([ 1.        , -0.16666667,  0.        , -0.125     , -0.33333333])
         >>> den
-        array([ 1.   ,  0.5  ,  0.   ,  0.625,  0.5  ])
+        array([1.   , 0.5  , 0.   , 0.625, 0.5  ])
 
     Estimate Fst for each variant individually::
 

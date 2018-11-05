@@ -46,9 +46,9 @@ def rogers_huff_r(gn, fill=np.nan):
            [ 0,  1, -1]], dtype=int8)
     >>> r = allel.stats.rogers_huff_r(gn)
     >>> r  # doctest: +ELLIPSIS
-    array([ 1.        , -1.00000012,  1.        , -1.00000012,  1.        , -1.        ], ...
+    array([ 1.       , -1.0000001,  1.       , -1.0000001,  1.       , ...])
     >>> r ** 2  # doctest: +ELLIPSIS
-    array([ 1.        ,  1.00000024,  1.        ,  1.00000024,  1.        ,  1.        ], ...
+    array([ 1.        ,  1.00000024,  1.        ,  1.00000024,  1.        ,  ...])
     >>> from scipy.spatial.distance import squareform
     >>> squareform(r ** 2)
     array([[ 0.        ,  1.        ,  1.00000024,  1.        ],

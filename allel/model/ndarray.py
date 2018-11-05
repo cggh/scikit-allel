@@ -254,7 +254,7 @@ class Genotypes(NumpyArrayWrapper):
         <GenotypeVector shape=(3, 2) dtype=int8>
         0/1 1/1 ./.
         >>> v.is_called()
-        array([ True,  True, False], dtype=bool)
+        array([ True,  True, False])
         >>> mask = [[True, False], [False, True], [False, False]]
         >>> g.mask = mask
         >>> g
@@ -274,7 +274,7 @@ class Genotypes(NumpyArrayWrapper):
         <GenotypeVector shape=(3, 2) dtype=int8>
         0/1 ./. ./.
         >>> v.is_called()
-        array([ True, False, False], dtype=bool)
+        array([ True, False, False])
 
         Notes
         -----
@@ -395,13 +395,13 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_called()
         array([[ True,  True],
                [ True,  True],
-               [ True, False]], dtype=bool)
+               [ True, False]])
         >>> v = g[:, 1]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/1 1/1 ./.
         >>> v.is_called()
-        array([ True,  True, False], dtype=bool)
+        array([ True,  True, False])
 
         """
 
@@ -432,13 +432,13 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_missing()
         array([[False, False],
                [False, False],
-               [False,  True]], dtype=bool)
+               [False,  True]])
         >>> v = g[:, 1]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/1 1/1 ./.
         >>> v.is_missing()
-        array([False, False,  True], dtype=bool)
+        array([False, False,  True])
 
         """
 
@@ -474,17 +474,17 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_hom()
         array([[ True, False],
                [False,  True],
-               [ True, False]], dtype=bool)
+               [ True, False]])
         >>> g.is_hom(allele=1)
         array([[False, False],
                [False,  True],
-               [False, False]], dtype=bool)
+               [False, False]])
         >>> v = g[:, 0]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/0 0/1 2/2
         >>> v.is_hom()
-        array([ True, False,  True], dtype=bool)
+        array([ True, False,  True])
 
         """
 
@@ -521,13 +521,13 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_hom_ref()
         array([[ True, False],
                [False, False],
-               [False, False]], dtype=bool)
+               [False, False]])
         >>> v = g[:, 0]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/0 0/1 0/2
         >>> v.is_hom_ref()
-        array([ True, False, False], dtype=bool)
+        array([ True, False, False])
 
         """
 
@@ -553,13 +553,13 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_hom_alt()
         array([[False, False],
                [False,  True],
-               [ True, False]], dtype=bool)
+               [ True, False]])
         >>> v = g[:, 1]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/1 1/1 ./.
         >>> v.is_hom_alt()
-        array([False,  True, False], dtype=bool)
+        array([False,  True, False])
 
         """
 
@@ -595,17 +595,17 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_het()
         array([[False,  True],
                [ True, False],
-               [ True, False]], dtype=bool)
+               [ True, False]])
         >>> g.is_het(2)
         array([[False, False],
                [False, False],
-               [ True, False]], dtype=bool)
+               [ True, False]])
         >>> v = g[:, 0]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/0 0/1 0/2
         >>> v.is_het()
-        array([False,  True,  True], dtype=bool)
+        array([False,  True,  True])
 
         """
 
@@ -644,13 +644,13 @@ class Genotypes(NumpyArrayWrapper):
         >>> g.is_call((0, 2))
         array([[False, False],
                [False, False],
-               [ True, False]], dtype=bool)
+               [ True, False]])
         >>> v = g[:, 0]
         >>> v
         <GenotypeVector shape=(3, 2) dtype=int64>
         0/0 0/1 0/2
         >>> v.is_call((0, 2))
-        array([False, False,  True], dtype=bool)
+        array([False, False,  True])
 
         """
 
@@ -974,7 +974,7 @@ class Genotypes(NumpyArrayWrapper):
         >>> v.to_gt()
         chararray([b'0/0', b'0/2', b'1/2', b'2/2'],
               dtype='|S3')
-        >>> g.is_phased = np.ones(g.shape[:-1], dtype=bool)
+        >>> g.is_phased = np.ones(g.shape[:-1])
         >>> g.to_gt()
         chararray([[b'0|0', b'0|1'],
                [b'0|2', b'1|1'],
@@ -2673,9 +2673,9 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.to_frequencies()
-        array([[ 0.75,  0.25,  0.  ],
-               [ 0.25,  0.5 ,  0.25],
-               [ 0.  ,  0.  ,  1.  ]])
+        array([[0.75, 0.25, 0.  ],
+               [0.25, 0.5 , 0.25],
+               [0.  , 0.  , 1.  ]])
 
         """
 
@@ -2755,7 +2755,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.is_variant()
-        array([False,  True,  True,  True], dtype=bool)
+        array([False,  True,  True,  True])
 
         """
 
@@ -2781,7 +2781,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.is_non_variant()
-        array([ True, False, False, False], dtype=bool)
+        array([ True, False, False, False])
 
         """
 
@@ -2807,7 +2807,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.is_segregating()
-        array([False,  True,  True, False], dtype=bool)
+        array([False,  True,  True, False])
 
         """
 
@@ -2838,9 +2838,9 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.is_non_segregating()
-        array([ True, False, False,  True], dtype=bool)
+        array([ True, False, False,  True])
         >>> ac.is_non_segregating(allele=2)
-        array([False, False, False,  True], dtype=bool)
+        array([False, False, False,  True])
 
         """
 
@@ -2873,9 +2873,9 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.is_singleton(allele=1)
-        array([False,  True, False, False], dtype=bool)
+        array([False,  True, False, False])
         >>> ac.is_singleton(allele=2)
-        array([False, False,  True, False], dtype=bool)
+        array([False, False,  True, False])
 
         """
 
@@ -2905,9 +2905,9 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...                          [[2, 2], [-1, -1]]])
         >>> ac = g.count_alleles()
         >>> ac.is_doubleton(allele=1)
-        array([False,  True, False, False], dtype=bool)
+        array([False,  True, False, False])
         >>> ac.is_doubleton(allele=2)
-        array([False, False, False,  True], dtype=bool)
+        array([False, False, False,  True])
 
         """
 
@@ -3485,9 +3485,9 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
         >>> loc1, loc2 = idx1.locate_intersection(idx2)
         >>> loc1
-        array([False,  True, False,  True, False], dtype=bool)
+        array([False,  True, False,  True, False])
         >>> loc2
-        array([False,  True,  True, False], dtype=bool)
+        array([False,  True,  True, False])
         >>> idx1[loc1]
         <SortedIndex shape=(2,) dtype=int64>
         [6, 20]
@@ -3530,7 +3530,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> idx2 = allel.SortedIndex([4, 6, 20, 39])
         >>> loc = idx1.locate_keys(idx2, strict=False)
         >>> loc
-        array([False,  True, False,  True, False], dtype=bool)
+        array([False,  True, False,  True, False])
         >>> idx1[loc]
         <SortedIndex shape=(2,) dtype=int64>
         [6, 20]
@@ -3685,9 +3685,9 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> stops = ranges[:, 1]
         >>> loc, loc_ranges = idx.locate_intersection_ranges(starts, stops)
         >>> loc
-        array([False,  True,  True, False,  True], dtype=bool)
+        array([False,  True,  True, False,  True])
         >>> loc_ranges
-        array([False,  True, False,  True, False], dtype=bool)
+        array([False,  True, False,  True, False])
         >>> idx[loc]
         <SortedIndex shape=(3,) dtype=int64>
         [6, 11, 35]
@@ -3745,7 +3745,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> stops = ranges[:, 1]
         >>> loc = idx.locate_ranges(starts, stops, strict=False)
         >>> loc
-        array([False,  True,  True, False,  True], dtype=bool)
+        array([False,  True,  True, False,  True])
         >>> idx[loc]
         <SortedIndex shape=(3,) dtype=int64>
         [6, 11, 35]
@@ -3917,9 +3917,9 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> idx2 = allel.UniqueIndex(['X', 'F', 'G', 'C', 'Z'], dtype=object)
         >>> loc1, loc2 = idx1.locate_intersection(idx2)
         >>> loc1
-        array([False,  True, False,  True], dtype=bool)
+        array([False,  True, False,  True])
         >>> loc2
-        array([False,  True, False,  True, False], dtype=bool)
+        array([False,  True, False,  True, False])
         >>> idx1[loc1]
         <UniqueIndex shape=(2,) dtype=object>
         ['C', 'F']
@@ -3960,9 +3960,9 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
         >>> import allel
         >>> idx = allel.UniqueIndex(['A', 'C', 'B', 'F'])
         >>> idx.locate_keys(['F', 'C'])
-        array([False,  True, False,  True], dtype=bool)
+        array([False,  True, False,  True])
         >>> idx.locate_keys(['X', 'F', 'G', 'C', 'Z'], strict=False)
-        array([False,  True, False,  True], dtype=bool)
+        array([False,  True, False,  True])
 
         """
 
@@ -4272,7 +4272,7 @@ class VariantTable(NumpyRecArrayWrapper):
     Access a row::
 
         >>> vt[2]
-        (b'chr2', 3, 78, 1.2, array([5, 6]))
+        (b'chr2', 3, 78, 1.2, [5, 6])
 
     Access multiple rows::
 
@@ -4283,9 +4283,9 @@ class VariantTable(NumpyRecArrayWrapper):
     Evaluate expressions against the table::
 
         >>> vt.eval('DP > 30')
-        array([ True, False,  True, False,  True], dtype=bool)
+        array([ True, False,  True, False,  True])
         >>> vt.eval('(DP > 30) & (QD > 4)')
-        array([ True, False, False, False, False], dtype=bool)
+        array([ True, False, False, False, False])
         >>> vt.eval('DP * 2')
         array([ 70,  24, 156,  44, 198])
 

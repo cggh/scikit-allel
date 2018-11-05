@@ -35,7 +35,7 @@ def heterozygosity_observed(g, fill=np.nan):
     ...                          [[0, 0], [1, 1], [2, 2]],
     ...                          [[1, 1], [1, 2], [-1, -1]]])
     >>> allel.stats.heterozygosity_observed(g)
-    array([ 0.        ,  0.33333333,  0.        ,  0.5       ])
+    array([0.        , 0.33333333, 0.        , 0.5       ])
 
     """
 
@@ -85,7 +85,7 @@ def heterozygosity_expected(af, ploidy, fill=np.nan):
     ...                          [[1, 1], [1, 2], [-1, -1]]])
     >>> af = g.count_alleles().to_frequencies()
     >>> allel.stats.heterozygosity_expected(af, ploidy=2)
-    array([ 0.        ,  0.5       ,  0.66666667,  0.375     ])
+    array([0.        , 0.5       , 0.66666667, 0.375     ])
 
     """
 
