@@ -1296,7 +1296,7 @@ def pbs(ac1, ac2, ac3, window_size, window_start=0, window_stop=None,
 
     Notes
     -----
-    The F\ :sub:`ST` calculations use Hudson's estimator.
+    The F:sub:`ST` calculations use Hudson's estimator.
 
     References
     ----------
