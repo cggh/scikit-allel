@@ -844,7 +844,7 @@ cdef class VCFFieldParserBase:
 
     cdef:
         bytes key
-        # np.dtype dtype
+        object dtype
         Py_ssize_t itemsize
         Py_ssize_t number
         object fill

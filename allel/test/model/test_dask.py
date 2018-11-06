@@ -4,8 +4,8 @@ from __future__ import absolute_import, print_function, division
 
 import unittest
 import numpy as np
+import dask.config
 import dask.array as da
-import dask.local
 from nose.tools import assert_raises, eq_ as eq
 import zarr
 
@@ -20,7 +20,7 @@ from allel.test.model.test_api import GenotypeArrayInterface, \
 
 
 # use synchronous scheduler because getting random hangs with default
-da.set_options(get=dask.local.get_sync)
+dask.config.set(scheduler='single-threaded')
 
 
 class GenotypeDaskArrayTests(GenotypeArrayInterface, unittest.TestCase):

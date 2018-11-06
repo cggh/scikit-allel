@@ -269,29 +269,19 @@ def tabulate_state_blocks(x, states, pos=None):
     >>> x = [1, 1, 0, 1, 1, 2, 2, 0, 2, 1, 1]
     >>> df = allel.tabulate_state_blocks(x, states={1, 2})
     >>> df
-       state  support  start_lidx  start_ridx  stop_lidx  stop_ridx  size_min  \\
-    0      1        4          -1           0          4          5         5
-    1      2        3           4           5          8          9         4
-    2      1        2           8           9         10         -1         2
-       size_max is_marginal
-    0        -1        True
-    1         4       False
-    2        -1        True
+       state  support  start_lidx     ...       size_min  size_max  is_marginal
+    0      1        4          -1     ...              5        -1         True
+    1      2        3           4     ...              4         4        False
+    2      1        2           8     ...              2        -1         True
+    [3 rows x 9 columns]
     >>> pos = [2, 4, 7, 8, 10, 14, 19, 23, 28, 30, 31]
     >>> df = allel.tabulate_state_blocks(x, states={1, 2}, pos=pos)
     >>> df
-       state  support  start_lidx  start_ridx  stop_lidx  stop_ridx  size_min  \\
-    0      1        4          -1           0          4          5         5
-    1      2        3           4           5          8          9         4
-    2      1        2           8           9         10         -1         2
-       size_max is_marginal  start_lpos  start_rpos  stop_lpos  stop_rpos  \\
-    0        -1        True          -1           2         10         14
-    1         4       False          10          14         28         30
-    2        -1        True          28          30         31         -1
-       length_min  length_max
-    0           9          -1
-    1          15          19
-    2           2          -1
+       state  support  start_lidx     ...      stop_rpos  length_min  length_max
+    0      1        4          -1     ...             14           9          -1
+    1      2        3           4     ...             30          15          19
+    2      1        2           8     ...             -1           2          -1
+    [3 rows x 15 columns]
 
     """
 
