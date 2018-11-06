@@ -20,13 +20,6 @@ environment:
       PYTHON_VERSION: "2.7"
       DISTUTILS_USE_SDK: "1"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4"
-
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4"
-      DISTUTILS_USE_SDK: "1"
-
     - PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5"
 
