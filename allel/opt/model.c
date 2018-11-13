@@ -6,7 +6,7 @@
         "depends": [],
         "name": "allel.opt.model",
         "sources": [
-            "allel/opt/model.pyx"
+            "/home/aliman/github/alimanfoo/scikit-allel/allel/opt/model.pyx"
         ]
     },
     "module_name": "allel.opt.model"
