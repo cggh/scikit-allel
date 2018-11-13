@@ -1289,6 +1289,83 @@ def test_read_region():
             assert_array_equal([1234567, 1235237], pos)
 
 
+# TODO shape 0 if no data
+# TODO something other than StopIteration if no data
+
+
+def test_read_region_unsorted():
+    # Test behaviour when data are not sorted by chromosome or position and tabix is
+    # not available.
+
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'unsorted.vcf')
+    tabix = None
+
+    region = '19'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '19')
+    eq_(2, len(pos))
+    assert_array_equal([111, 112], pos)
+
+    region = '20'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(6, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(6, len(pos))
+    assert_array_equal([14370, 1230237, 1234567, 1235237, 17330, 1110696], pos)
+
+    region = 'X'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(1, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == 'X')
+    eq_(1, len(pos))
+    assert_array_equal([10], pos)
+
+    region = 'Y'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    assert 'variants/POS' not in callset
+    assert 'variants/CHROM' not in callset
+
+    region = '20:1-100000'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(2, len(pos))
+    assert_array_equal([14370, 17330], pos)
+
+    region = '20:1000000-1233000'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(2, len(pos))
+    assert_array_equal([1230237, 1110696], pos)
+
+    region = '20:1233000-2000000'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(2, len(pos))
+    assert_array_equal([1234567, 1235237], pos)
+
+
 def test_read_samples():
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
