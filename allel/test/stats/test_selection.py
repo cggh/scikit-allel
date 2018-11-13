@@ -4,7 +4,7 @@ from __future__ import absolute_import, print_function, division
 
 import numpy as np
 from nose.tools import eq_ as eq, assert_is_instance, assert_raises
-from allel.test.tools import assert_array_equal, assert_array_nanclose
+from allel.test.tools import assert_array_equal, assert_array_almost_equal
 
 
 from allel import ihs, xpehh, nsl, xpnsl, ehh_decay, voight_painting, pbs
@@ -104,9 +104,9 @@ def test_nsl01_scan_a():
                   [0, 0, 0, 1, 1, 1]])
     nsl0, nsl1 = nsl01_scan(h)
     expect_nsl0 = [1, 2, 3, 4]
-    assert_array_nanclose(expect_nsl0, nsl0)
+    assert_array_almost_equal(expect_nsl0, nsl0)
     expect_nsl1 = [1, 2, 3, 4]
-    assert_array_nanclose(expect_nsl1, nsl1)
+    assert_array_almost_equal(expect_nsl1, nsl1)
 
 
 def test_nsl01_scan_b():
@@ -117,9 +117,9 @@ def test_nsl01_scan_b():
                   [1, 0, 0, 0]])
     nsl0, nsl1 = nsl01_scan(h)
     expect_nsl0 = [1, 4 / 3, 4 / 3, 4 / 3]
-    assert_array_nanclose(expect_nsl0, nsl0)
+    assert_array_almost_equal(expect_nsl0, nsl0)
     expect_nsl1 = [np.nan, np.nan, np.nan, np.nan]
-    assert_array_nanclose(expect_nsl1, nsl1)
+    assert_array_almost_equal(expect_nsl1, nsl1)
 
 
 def test_nsl01_scan_c():
@@ -130,9 +130,9 @@ def test_nsl01_scan_c():
                   [1, 0, 0]])
     nsl0, nsl1 = nsl01_scan(h)
     expect_nsl0 = [1, np.nan, np.nan, 1]
-    assert_array_nanclose(expect_nsl0, nsl0)
+    assert_array_almost_equal(expect_nsl0, nsl0)
     expect_nsl1 = [np.nan, 1, 1, np.nan]
-    assert_array_nanclose(expect_nsl1, nsl1)
+    assert_array_almost_equal(expect_nsl1, nsl1)
 
 
 def test_ihh_scan_a():
@@ -145,12 +145,12 @@ def test_ihh_scan_a():
     # do not include edges
     expect = [np.nan, np.nan, np.nan]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     # include edges
     expect = [0, 10, 20]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
 
 def test_ihh_scan_b():
@@ -164,12 +164,12 @@ def test_ihh_scan_b():
     # do not include edges
     expect = [np.nan, np.nan, np.nan]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     # include edges
     expect = [0, 10, np.nan]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
 
 def test_ihh_scan_c():
@@ -182,12 +182,12 @@ def test_ihh_scan_c():
     # do not include edges
     expect = [0, 5, 15]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     # include edges
     expect = [0, 5, 15]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
 
 def test_ihh_scan_d():
@@ -198,11 +198,11 @@ def test_ihh_scan_d():
 
     expect = [0, 0]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     expect = [0, 0]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
 
 def test_ihh_scan_e():
@@ -213,19 +213,19 @@ def test_ihh_scan_e():
 
     expect = [np.nan, 10/6]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=False)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     expect = [0, 10/6]
     actual = ihh_scan(h, gaps, min_ehh=0, include_edges=True)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     expect = [0, 0]
     actual = ihh_scan(h, gaps, min_ehh=0.5, include_edges=False)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
     expect = [0, 0]
     actual = ihh_scan(h, gaps, min_ehh=0.5, include_edges=True)
-    assert_array_nanclose(expect, actual)
+    assert_array_almost_equal(expect, actual)
 
 
 def test_ihh01_scan_a():
@@ -237,15 +237,15 @@ def test_ihh01_scan_a():
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05, include_edges=False)
     expect_ihh0 = [np.nan, np.nan, np.nan, 5]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, 5, 5, np.nan]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, np.nan, np.nan, 5]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, 5, 5, np.nan]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
 
 def test_ihh01_scan_b():
@@ -258,21 +258,21 @@ def test_ihh01_scan_b():
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05, include_edges=False)
     x = (10 * (1 + 1 / 3) / 2) + (10 * (1 / 3 + 0) / 2)
     expect_ihh0 = [np.nan, np.nan, x, x]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=False)
     expect_ihh0 = [np.nan, np.nan, x, x]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, 10 * (1 + 1 / 3) / 2, x, x]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
 
 def test_ihh01_scan_c():
@@ -284,15 +284,15 @@ def test_ihh01_scan_c():
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05)
     expect_ihh0 = [np.nan, np.nan, np.nan, np.nan]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, np.nan, np.nan]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, 10, 20, 30]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [0, 10, 20, 30]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
 
 def test_ihh01_scan_d():
@@ -305,21 +305,21 @@ def test_ihh01_scan_d():
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0.05)
     x = (10 * (1 + 1 / 3) / 2) + (10 * (1 / 3 + 0) / 2)
     expect_ihh0 = [np.nan, np.nan, x, x]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, x, x]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0)
     expect_ihh0 = [np.nan, np.nan, x, x]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [np.nan, np.nan, x, x]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, include_edges=True)
     expect_ihh0 = [0, 10 * 2 / 3, x, x]
-    assert_array_nanclose(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh0, ihh0)
     expect_ihh1 = [0, 10 * 2 / 3, x, x]
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
 
 def test_ihh01_scan_e():
@@ -332,14 +332,14 @@ def test_ihh01_scan_e():
     expect_ihh0 = [0, 10, 20]
     expect_ihh1 = [np.nan, np.nan, np.nan]
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, min_maf=0, include_edges=True)
-    assert_array_nanclose(expect_ihh0, ihh0)
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
     expect_ihh0 = [np.nan, np.nan, np.nan]
     expect_ihh1 = [np.nan, np.nan, np.nan]
     ihh0, ihh1 = ihh01_scan(h, gaps, min_ehh=0, min_maf=0.4, include_edges=True)
-    assert_array_nanclose(expect_ihh0, ihh0)
-    assert_array_nanclose(expect_ihh1, ihh1)
+    assert_array_almost_equal(expect_ihh0, ihh0)
+    assert_array_almost_equal(expect_ihh1, ihh1)
 
 
 def test_ssl2ihh_a():
@@ -631,6 +631,6 @@ def test_pbs():
     assert 'f' == ret.dtype.kind
     # regression check
     expect = [0.52349464,  0., -0.85199356, np.nan]
-    assert_array_nanclose(expect, ret)
+    assert_array_almost_equal(expect, ret)
     # final value is nan because variants in final window are non-segregating
     assert np.isnan(ret[3])

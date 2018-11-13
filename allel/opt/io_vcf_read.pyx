@@ -62,6 +62,9 @@ ID_FIELD = 'variants/ID'
 REF_FIELD = 'variants/REF'
 ALT_FIELD = 'variants/ALT'
 QUAL_FIELD = 'variants/QUAL'
+NUMALT_FIELD = 'variants/numalt'
+ALTLEN_FIELD = 'variants/altlen'
+IS_SNP_FIELD = 'variants/is_snp'
 
 # useful to lookup max int values
 II8 = np.iinfo(np.int8)
@@ -382,7 +385,7 @@ cdef class VCFContext:
         CharVector chrom
         long pos
 
-        # track size of reference allele (needed for svlen)
+        # track size of reference allele (needed for altlen)
         Py_ssize_t ref_len
 
     def __cinit__(self, headers, fields):
@@ -608,34 +611,34 @@ cdef class VCFParser:
 
         store_alt = False
         store_numalt = False
-        store_svlen = False
+        store_altlen = False
         store_is_snp = False
         t = types.get(ALT_FIELD, None)
         n = numbers.get(ALT_FIELD, 1)
         if ALT_FIELD in fields:
             store_alt = True
             fields.remove(ALT_FIELD)
-        if 'variants/numalt' in fields:
+        if NUMALT_FIELD in fields:
             store_numalt = True
-            fields.remove('variants/numalt')
-        if 'variants/svlen' in fields:
-            store_svlen = True
-            fields.remove('variants/svlen')
-        if 'variants/is_snp' in fields:
+            fields.remove(NUMALT_FIELD)
+        if ALTLEN_FIELD in fields:
+            store_altlen = True
+            fields.remove(ALTLEN_FIELD)
+        if IS_SNP_FIELD in fields:
             store_is_snp = True
-            fields.remove('variants/is_snp')
+            fields.remove(IS_SNP_FIELD)
 
-        if store_alt or store_numalt or store_svlen or store_is_snp:
+        if store_alt or store_numalt or store_altlen or store_is_snp:
             if store_alt:
                 t = check_string_dtype(t)
             if t is not None and t.kind == 'S':
                 alt_parser = VCFAltStringParser(dtype=t, number=n, chunk_length=self.chunk_length,
                                                 store_alt=store_alt, store_numalt=store_numalt,
-                                                store_svlen=store_svlen, store_is_snp=store_is_snp)
+                                                store_altlen=store_altlen, store_is_snp=store_is_snp)
             else:
                 alt_parser = VCFAltObjectParser(number=n, chunk_length=self.chunk_length, store_alt=store_alt,
                                                 store_numalt=store_numalt,
-                                                store_svlen=store_svlen, store_is_snp=store_is_snp)
+                                                store_altlen=store_altlen, store_is_snp=store_is_snp)
         else:
             alt_parser = VCFSkipFieldParser(key=b'ALT')
 
@@ -869,7 +872,7 @@ cdef class VCFFieldParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = u'variants/' + text_type(self.key, 'utf8')
+        field = 'variants/' + text_type(self.key, 'utf8')
         values = self.values
         if self.values.ndim > 1 and self.number == 1:
             values = values.squeeze(axis=1)
@@ -1287,17 +1290,17 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
     cdef:
         np.uint8_t[:] memory
         np.int32_t[:] numalt_memory
-        np.int32_t[:, :] svlen_memory
+        np.int32_t[:, :] altlen_memory
         np.uint8_t[:] is_snp_memory
         np.ndarray numalt_values
-        np.ndarray svlen_values
+        np.ndarray altlen_values
         np.ndarray is_snp_values
         bint store_alt
         bint store_numalt
-        bint store_svlen
+        bint store_altlen
         bint store_is_snp
 
-    def __init__(self, dtype, number, chunk_length, store_alt, store_numalt, store_svlen,
+    def __init__(self, dtype, number, chunk_length, store_alt, store_numalt, store_altlen,
                  store_is_snp):
         if store_alt:
             dtype = check_string_dtype(dtype)
@@ -1305,7 +1308,7 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
                                                  chunk_length=chunk_length)
         self.store_alt = store_alt
         self.store_numalt = store_numalt
-        self.store_svlen = store_svlen
+        self.store_altlen = store_altlen
         self.store_is_snp = store_is_snp
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) except -1:  # nogil
@@ -1341,24 +1344,24 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
 
             if stream.c == 0:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 context.state = VCFState.EOF
                 break
 
             elif stream.c == LF or stream.c == CR:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 context.state = VCFState.EOL
                 break
 
             if stream.c == TAB:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 stream.advance()
                 context.state += 1
@@ -1366,8 +1369,8 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
 
             elif stream.c == COMMA:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 # advance value index
                 alt_index += 1
@@ -1405,32 +1408,32 @@ cdef class VCFAltStringParser(VCFFieldParserBase):
         if self.store_numalt:
             self.numalt_values = np.zeros(self.chunk_length, dtype='int32')
             self.numalt_memory = self.numalt_values
-        if self.store_svlen:
-            self.svlen_values = np.zeros(shape, dtype='int32')
-            self.svlen_memory = self.svlen_values
+        if self.store_altlen:
+            self.altlen_values = np.zeros(shape, dtype='int32')
+            self.altlen_memory = self.altlen_values
         if self.store_is_snp:
             self.is_snp_values = np.zeros(self.chunk_length, dtype=bool)
             self.is_snp_memory = self.is_snp_values.view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store_alt:
-            field = u'variants/' + text_type(self.key, 'utf8')
+            field = 'variants/' + text_type(self.key, 'utf8')
             values = self.values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_numalt:
-            field = u'variants/numalt'
+            field = NUMALT_FIELD
             values = self.numalt_values
             chunk[field] = values[:limit]
-        if self.store_svlen:
-            field = u'variants/svlen'
-            values = self.svlen_values
+        if self.store_altlen:
+            field = ALTLEN_FIELD
+            values = self.altlen_values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_is_snp:
-            field = u'variants/is_snp'
+            field = IS_SNP_FIELD
             values = self.is_snp_values
             chunk[field] = values[:limit]
 
@@ -1439,22 +1442,22 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
 
     cdef:
         np.int32_t[:] numalt_memory
-        np.int32_t[:, :] svlen_memory
+        np.int32_t[:, :] altlen_memory
         np.uint8_t[:] is_snp_memory
         np.ndarray numalt_values
-        np.ndarray svlen_values
+        np.ndarray altlen_values
         np.ndarray is_snp_values
         bint store_alt
         bint store_numalt
-        bint store_svlen
+        bint store_altlen
         bint store_is_snp
 
-    def __init__(self, number, chunk_length, store_alt, store_numalt, store_svlen, store_is_snp):
+    def __init__(self, number, chunk_length, store_alt, store_numalt, store_altlen, store_is_snp):
         super(VCFAltObjectParser, self).__init__(key=b'ALT', dtype=np.dtype('object'), number=number,
                                                  chunk_length=chunk_length)
         self.store_alt = store_alt
         self.store_numalt = store_numalt
-        self.store_svlen = store_svlen
+        self.store_altlen = store_altlen
         self.store_is_snp = store_is_snp
 
     cdef int parse(self, InputStreamBase stream, VCFContext context) except -1:  # nogil
@@ -1485,8 +1488,8 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
 
             if stream.c == 0:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 if self.store_alt and alt_index < self.number and context.temp.size > 0:
                     # with gil:
@@ -1497,8 +1500,8 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
 
             elif stream.c == LF or stream.c == CR:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 if self.store_alt and alt_index < self.number and context.temp.size > 0:
                     # with gil:
@@ -1509,8 +1512,8 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
 
             if stream.c == TAB:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 if self.store_alt and alt_index < self.number and context.temp.size > 0:
                     # with gil:
@@ -1522,8 +1525,8 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
 
             elif stream.c == COMMA:
                 is_snp = is_snp and alt_len == 1
-                if self.store_svlen and alt_index < self.number:
-                    self.svlen_memory[context.chunk_variant_index, alt_index] = \
+                if self.store_altlen and alt_index < self.number:
+                    self.altlen_memory[context.chunk_variant_index, alt_index] = \
                         alt_len - context.ref_len
                 if self.store_alt and alt_index < self.number:
                     # with gil:
@@ -1557,32 +1560,32 @@ cdef class VCFAltObjectParser(VCFFieldParserBase):
         if self.store_numalt:
             self.numalt_values = np.zeros(self.chunk_length, dtype='int32')
             self.numalt_memory = self.numalt_values
-        if self.store_svlen:
-            self.svlen_values = np.zeros(shape, dtype='int32')
-            self.svlen_memory = self.svlen_values
+        if self.store_altlen:
+            self.altlen_values = np.zeros(shape, dtype='int32')
+            self.altlen_memory = self.altlen_values
         if self.store_is_snp:
             self.is_snp_values = np.zeros(self.chunk_length, dtype=bool)
             self.is_snp_memory = self.is_snp_values.view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         if self.store_alt:
-            field = u'variants/' + text_type(self.key, 'utf8')
+            field = 'variants/' + text_type(self.key, 'utf8')
             values = self.values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_numalt:
-            field = u'variants/numalt'
+            field = NUMALT_FIELD
             values = self.numalt_values
             chunk[field] = values[:limit]
-        if self.store_svlen:
-            field = u'variants/svlen'
-            values = self.svlen_values
+        if self.store_altlen:
+            field = ALTLEN_FIELD
+            values = self.altlen_values
             if self.values.ndim > 1 and self.number == 1:
                 values = values.squeeze(axis=1)
             chunk[field] = values[:limit]
         if self.store_is_snp:
-            field = u'variants/is_snp'
+            field = IS_SNP_FIELD
             values = self.is_snp_values
             chunk[field] = values[:limit]
 
@@ -1716,7 +1719,7 @@ cdef class VCFFilterParser(VCFFieldParserBase):
     cdef int make_chunk(self, chunk, limit=None) except -1:
         for i, f in enumerate(self.filter_keys):
             f = text_type(f, 'utf8')
-            field = u'variants/FILTER_' + f
+            field = 'variants/FILTER_' + f
             chunk[field] = self.values[:limit, i]
 
 
@@ -1952,7 +1955,7 @@ cdef class VCFInfoParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = u'variants/' + text_type(self.key, 'utf8')
+        field = 'variants/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=1)
@@ -2173,7 +2176,7 @@ cdef class VCFInfoFlagParser(VCFInfoParserBase):
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
         # override to view as bool array
-        field = u'variants/' + text_type(self.key, 'utf8')
+        field = 'variants/' + text_type(self.key, 'utf8')
         chunk[field] = self.values[:limit].view(bool)
 
     cdef int malloc_chunk(self) except -1:
@@ -2747,7 +2750,7 @@ cdef class VCFCallDataParserBase:
         pass
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = u'calldata/' + text_type(self.key, 'utf8')
+        field = 'calldata/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3534,7 +3537,7 @@ cdef class VCFCallDataStringParser(VCFCallDataParserBase):
         self.memory = self.values.reshape(-1).view('u1')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = u'calldata/' + text_type(self.key, 'utf8')
+        field = 'calldata/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)
@@ -3592,7 +3595,7 @@ cdef class VCFCallDataObjectParser(VCFCallDataParserBase):
         self.values.fill(u'')
 
     cdef int make_chunk(self, chunk, limit=None) except -1:
-        field = u'calldata/' + text_type(self.key, 'utf8')
+        field = 'calldata/' + text_type(self.key, 'utf8')
         values = self.values[:limit]
         if self.number == 1:
             values = values.squeeze(axis=2)

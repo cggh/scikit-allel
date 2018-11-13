@@ -12,6 +12,7 @@ Variant Call Format (VCF)
 .. autofunction:: allel.vcf_to_csv
 .. autofunction:: allel.vcf_to_recarray
 .. autofunction:: allel.iter_vcf_chunks
+.. autofunction:: allel.read_vcf_headers
 .. autoclass:: allel.ANNTransformer
 .. autofunction:: allel.write_vcf
 

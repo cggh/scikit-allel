@@ -3,37 +3,32 @@ from __future__ import absolute_import, print_function, division
 
 
 import numpy as np
-from nose.tools import assert_true
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 
-def assert_array_equal(expect, actual):
-    expect = np.asarray(expect[:])
-    actual = np.asarray(actual[:])
-    assert_true(
-        np.array_equal(expect, actual),
-        '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)
-    )
+def assert_array_items_equal(expect, actual):
+
+    assert expect.shape == actual.shape
+    assert expect.dtype == actual.dtype
+
+    # numpy asserts don't compare object arrays
+    # properly; assert that we have the same nans
+    # and values
+    actual = actual.ravel().tolist()
+    expect = expect.ravel().tolist()
+    for a, r in zip(actual, expect):
+        if isinstance(a, np.ndarray):
+            assert_array_equal(a, r)
+        elif a != a:
+            assert r != r
+        else:
+            assert a == r
 
 
-def assert_array_close(expect, actual):
-    expect = np.asarray(expect[:])
-    actual = np.asarray(actual[:])
-    assert_true(
-        np.allclose(expect, actual),
-        '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)
-    )
-
-
-def assert_array_nanclose(expect, actual):
-    expect = np.asarray(expect[:])
-    actual = np.asarray(actual[:])
-    ein = np.isnan(expect)
-    ain = np.isnan(actual)
-    assert_true(
-        np.array_equal(ein, ain),
-        '\nExpect isnan:\n%r\nActual isnan:\n%r\n' % (ein, ain)
-    )
-    assert_true(
-        np.allclose(expect[~ein], actual[~ain]),
-        '\nExpect:\n%r\nActual:\n%r\n' % (expect, actual)
-    )
+def compare_arrays(expected, actual):
+    if expected.dtype.kind == 'f':
+        assert_array_almost_equal(expected, actual)
+    elif expected.dtype.kind == 'O':
+        assert_array_items_equal(expected, actual)
+    else:
+        assert_array_equal(expected, actual)
