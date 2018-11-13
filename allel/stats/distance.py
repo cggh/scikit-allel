@@ -52,12 +52,12 @@ def pairwise_distance(x, metric, chunked=False, blen=None):
     ...                          [[0, 2], [2, 2], [-1, -1]]])
     >>> d = allel.stats.pairwise_distance(g.to_n_alt(), metric='cityblock')
     >>> d
-    array([ 3.,  4.,  3.])
+    array([3., 4., 3.])
     >>> import scipy.spatial
     >>> scipy.spatial.distance.squareform(d)
-    array([[ 0.,  3.,  4.],
-           [ 3.,  0.,  3.],
-           [ 4.,  3.,  0.]])
+    array([[0., 3., 4.],
+           [3., 0., 3.],
+           [4., 3., 0.]])
 
     """
 

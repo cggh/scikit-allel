@@ -1,17 +1,16 @@
+# required
 cython
 numpy
+dask
+# optional
 scipy
 matplotlib
+seaborn
 pandas
 scikit-learn
-hmmlearn
-numexpr
-nose
-seaborn
-toolz
-dask
-ipython
 h5py
+numexpr
 bcolz
 zarr
-numcodecs
+hmmlearn
+nose

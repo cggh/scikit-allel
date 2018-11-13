@@ -1,23 +1,19 @@
-cython==0.27.3
-numpy==1.13.3
-scipy==1.0.0
-scikit-learn==0.19.1
-numexpr==2.6.4
-toolz==0.9.0
-dask==0.16.1
-h5py==2.7.1
+# required
+cython==0.29
+numpy==1.15.3
+dask[array]==0.20.0
+# optional
+scipy==1.1.0
+matplotlib==2.2.3
+seaborn==0.9.0
+pandas==0.23.4
+scikit-learn==0.20.0
+h5py==2.8.0
+numexpr==2.6.8
+bcolz==1.2.1
 zarr==2.2.0
-numcodecs==0.5.5
+hmmlearn==0.2.1
 nose==1.3.7
-flake8==3.5.0
-bcolz==1.2.0
-matplotlib==2.1.2
-pandas==0.22.0
-msgpack-python==0.5.1
-numpydoc==0.7.0
-psutil==5.4.3
-humanize==0.5.1
-mock==2.0.0
-seaborn==0.8.1
-twine==1.9.1
-tox==2.9.1
+# dev
+flake8==3.6.0
+tox==3.5.3

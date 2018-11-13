@@ -387,7 +387,7 @@ def phase_progeny_by_transmission(g):
            [False, False,  True],
            [False, False,  True],
            [False, False, False],
-           [False, False, False]], dtype=bool)
+           [False, False, False]])
 
     """
 

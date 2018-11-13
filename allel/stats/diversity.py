@@ -60,8 +60,8 @@ def mean_pairwise_difference(ac, an=None, fill=np.nan):
     ...                           [0, 1, -1, -1]])
     >>> ac = h.count_alleles()
     >>> allel.stats.mean_pairwise_difference(ac)
-    array([ 0.        ,  0.5       ,  0.66666667,  0.5       ,  0.        ,
-            0.83333333,  0.83333333,  1.        ])
+    array([0.        , 0.5       , 0.66666667, 0.5       , 0.        ,
+           0.83333333, 0.83333333, 1.        ])
 
     See Also
     --------
@@ -153,7 +153,7 @@ def mean_pairwise_difference_between(ac1, ac2, an1=None, an2=None,
     >>> ac1 = h.count_alleles(subpop=[0, 1])
     >>> ac2 = h.count_alleles(subpop=[2, 3])
     >>> allel.stats.mean_pairwise_difference_between(ac1, ac2)
-    array([ 0.  ,  0.5 ,  1.  ,  0.5 ,  0.  ,  1.  ,  0.75,   nan])
+    array([0.  , 0.5 , 1.  , 0.5 , 0.  , 1.  , 0.75,  nan])
 
     See Also
     --------
@@ -445,7 +445,7 @@ def windowed_diversity(pos, ac, size=None, start=None, stop=None, step=None,
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> pi
-    array([ 0.11666667,  0.21666667,  0.09090909])
+    array([0.11666667, 0.21666667, 0.09090909])
     >>> windows
     array([[ 1, 10],
            [11, 20],
@@ -547,7 +547,7 @@ def windowed_divergence(pos, ac1, ac2, size=None, start=None, stop=None,
         ...     pos, ac1, ac2, size=10, start=1, stop=31
         ... )
         >>> dxy
-        array([ 0.15 ,  0.225,  0.   ])
+        array([0.15 , 0.225, 0.   ])
         >>> windows
         array([[ 1, 10],
                [11, 20],
@@ -803,7 +803,7 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> theta_hat_w
-    array([ 0.10909091,  0.16363636,  0.04958678])
+    array([0.10909091, 0.16363636, 0.04958678])
     >>> windows
     array([[ 1, 10],
            [11, 20],
@@ -995,7 +995,7 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> D
-    array([ 0.59158014,  2.93397641,  6.12372436])
+    array([0.59158014, 2.93397641, 6.12372436])
     >>> windows
     array([[ 1, 10],
            [11, 20],
@@ -1087,7 +1087,7 @@ def moving_tajima_d(ac, size, start=0, stop=None, step=None):
     >>> ac = g.count_alleles()
     >>> D = allel.stats.moving_tajima_d(ac, size=3)
     >>> D
-    array([ 0.59158014,  1.89305645,  5.79748537])
+    array([0.59158014, 1.89305645, 5.79748537])
 
     """
 

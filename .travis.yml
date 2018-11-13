@@ -4,22 +4,20 @@ branches:
   only:
     - master
 
-dist: trusty
-sudo: required
+sudo: true
 
-#addons:
-#  apt:
-#    packages:
-#      - tabix
+dist: xenial
 
 python:
   - "2.7"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 install:
+  - pip install -U pip setuptools wheel tox-travis coveralls
+  - sudo apt-get update
   - sudo apt-get install tabix
-  - pip install -U tox-travis pip setuptools wheel
 
 script:
   - tox

@@ -129,7 +129,7 @@ def locate_fixed_differences(ac1, ac2):
     >>> ac2 = g.count_alleles(subpop=[2, 3])
     >>> loc_df = allel.locate_fixed_differences(ac1, ac2)
     >>> loc_df
-    array([ True, False, False,  True,  True], dtype=bool)
+    array([ True, False, False,  True,  True])
 
     """
 
@@ -189,10 +189,10 @@ def locate_private_alleles(*acs):
            [False, False, False],
            [ True, False, False],
            [ True,  True,  True],
-           [ True,  True, False]], dtype=bool)
+           [ True,  True, False]])
     >>> loc_private_variants = np.any(loc_private_alleles, axis=1)
     >>> loc_private_variants
-    array([ True, False,  True,  True,  True], dtype=bool)
+    array([ True, False,  True,  True,  True])
 
     """
 
