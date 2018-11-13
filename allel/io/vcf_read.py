@@ -238,6 +238,10 @@ def read_vcf(input,
              log=None):
     """Read data from a VCF file into NumPy arrays.
 
+    .. versionchanged:: 1.12.0
+        Now returns None if no variants are found in the VCF file or matching the
+        requested region.
+
     Parameters
     ----------
     input : string or file-like
@@ -274,7 +278,7 @@ def read_vcf(input,
     Returns
     -------
     data : dict[str, ndarray]
-        A dictionary holding arrays.
+        A dictionary holding arrays, or None if no variants were found.
 
     """
 
@@ -303,13 +307,13 @@ def read_vcf(input,
     # read all chunks into a list
     chunks = [d[0] for d in it]
 
-    # setup output
-    output = dict()
-
-    if len(samples) > 0 and store_samples:
-        output['samples'] = samples
-
     if chunks:
+
+        # setup output
+        output = dict()
+
+        if len(samples) > 0 and store_samples:
+            output['samples'] = samples
 
         # find array keys
         keys = sorted(chunks[0].keys())
@@ -317,6 +321,10 @@ def read_vcf(input,
         # concatenate chunks
         for k in keys:
             output[k] = np.concatenate([chunk[k] for chunk in chunks], axis=0)
+
+    else:
+
+        output = None
 
     return output
 
@@ -366,6 +374,10 @@ def vcf_to_npz(input, output,
                chunk_length=DEFAULT_CHUNK_LENGTH,
                log=None):
     """Read data from a VCF file into NumPy arrays and save as a .npz file.
+
+    .. versionchanged:: 1.12.0
+        Now will not create any output file if no variants are found in the VCF file or
+        matching the requested region.
 
     Parameters
     ----------
@@ -420,6 +432,10 @@ def vcf_to_npz(input, output,
         log=log, fills=fills, region=region, tabix=tabix, samples=samples,
         transformers=transformers
     )
+
+    if data is None:
+        # no data, bail out
+        return
 
     # setup save function
     if compressed:
@@ -585,6 +601,10 @@ def vcf_to_hdf5(input, output,
                 log=None):
     """Read data from a VCF file and load into an HDF5 file.
 
+    .. versionchanged:: 1.12.0
+        Now will not create any output file if no variants are found in the VCF file or
+        matching the requested region.
+
     Parameters
     ----------
     input : string
@@ -651,28 +671,35 @@ def vcf_to_hdf5(input, output,
     # noinspection PyTypeChecker
     store_samples, fields = _prep_fields_param(fields)
 
+    # setup chunk iterator
+    fields, samples, headers, it = iter_vcf_chunks(
+        input, fields=fields, exclude_fields=exclude_fields, types=types,
+        numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        samples=samples, transformers=transformers
+    )
+
+    # handle field renaming
+    if rename_fields:
+        rename_fields, it = _do_rename(it, fields=fields,
+                                       rename_fields=rename_fields,
+                                       headers=headers)
+
+    # setup progress logging
+    if log is not None:
+        it = _chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
+
+    # read first chunk
+    try:
+        chunk, _, _, _ = next(it)
+    except StopIteration:
+        # no data, bail out
+        return
+
     with h5py.File(output, mode='a') as h5f:
 
         # obtain root group that data will be stored into
         root = h5f.require_group(group)
-
-        # setup chunk iterator
-        fields, samples, headers, it = iter_vcf_chunks(
-            input, fields=fields, exclude_fields=exclude_fields, types=types,
-            numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-            chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
-            samples=samples, transformers=transformers
-        )
-
-        # handle field renaming
-        if rename_fields:
-            rename_fields, it = _do_rename(it, fields=fields,
-                                           rename_fields=rename_fields,
-                                           headers=headers)
-
-        # setup progress logging
-        if log is not None:
-            it = _chunk_iter_progress(it, log, prefix='[vcf_to_hdf5]')
 
         if len(samples) > 0 and store_samples:
             # store samples
@@ -692,9 +719,6 @@ def vcf_to_hdf5(input, output,
             else:
                 t = samples.dtype
             root.create_dataset(name, data=samples, chunks=None, dtype=t)
-
-        # read first chunk
-        chunk, _, _, _ = next(it)
 
         # setup datasets
         # noinspection PyTypeChecker
@@ -820,6 +844,10 @@ def vcf_to_zarr(input, output,
                 log=None):
     """Read data from a VCF file and load into a Zarr on-disk store.
 
+    .. versionchanged:: 1.12.0
+        Now will not create any output files if no variants are found in the VCF file or
+        matching the requested region.
+
     Parameters
     ----------
     input : string
@@ -871,9 +899,6 @@ def vcf_to_zarr(input, output,
     # noinspection PyTypeChecker
     store_samples, fields = _prep_fields_param(fields)
 
-    # open root group
-    root = zarr.open_group(output, mode='a', path=group)
-
     # setup chunk iterator
     fields, samples, headers, it = iter_vcf_chunks(
         input, fields=fields, exclude_fields=exclude_fields, types=types,
@@ -910,6 +935,16 @@ def vcf_to_zarr(input, output,
     if log is not None:
         it = _chunk_iter_progress(it, log, prefix='[vcf_to_zarr]')
 
+    # read first chunk
+    try:
+        chunk, _, _, _ = next(it)
+    except StopIteration:
+        # no data, bail out
+        return
+
+    # open root group
+    root = zarr.open_group(output, mode='a', path=group)
+
     if len(samples) > 0 and store_samples:
         # store samples
         if samples.dtype.kind == 'O':
@@ -921,9 +956,6 @@ def vcf_to_zarr(input, output,
             dtype = samples.dtype
         root.create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
                             dtype=dtype)
-
-    # read first chunk
-    chunk, _, _, _ = next(it)
 
     # setup datasets
     # noinspection PyTypeChecker
