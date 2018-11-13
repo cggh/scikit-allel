@@ -10,11 +10,10 @@ from __future__ import absolute_import, print_function, division
 import gzip
 import os
 import re
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import warnings
 import time
 import subprocess
-from collections import defaultdict
 import textwrap
 
 
