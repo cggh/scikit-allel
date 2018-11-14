@@ -122,7 +122,7 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
 
 
 def gff3_to_recarray(path, attributes=None, region=None, score_fill=-1,
-                     phase_fill=-1, attributes_fill=b'.', tabix='tabix', dtype=None):
+                     phase_fill=-1, attributes_fill='.', tabix='tabix', dtype=None):
     """Load data from a GFF3 into a NumPy recarray.
 
     Parameters
@@ -179,7 +179,7 @@ def gff3_to_recarray(path, attributes=None, region=None, score_fill=-1,
 
 
 def gff3_to_dataframe(path, attributes=None, region=None, score_fill=-1,
-                      phase_fill=-1, attributes_fill=b'.', tabix='tabix', **kwargs):
+                      phase_fill=-1, attributes_fill='.', tabix='tabix', **kwargs):
     """Load data from a GFF3 into a pandas DataFrame.
 
     Parameters
