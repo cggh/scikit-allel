@@ -1255,8 +1255,7 @@ def test_read_region():
 
             region = 'Y'
             callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            assert 'variants/POS' not in callset
-            assert 'variants/CHROM' not in callset
+            assert callset is None
 
             region = '20:1-100000'
             callset = read_vcf(vcf_path, region=region, tabix=tabix)
@@ -1289,6 +1288,78 @@ def test_read_region():
             assert_array_equal([1234567, 1235237], pos)
 
 
+def test_read_region_unsorted():
+    # Test behaviour when data are not sorted by chromosome or position and tabix is
+    # not available.
+
+    fn = os.path.join(os.path.dirname(__file__), 'data', 'unsorted.vcf')
+    tabix = None
+
+    region = '19'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '19')
+    eq_(2, len(pos))
+    assert_array_equal([111, 112], pos)
+
+    region = '20'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(6, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(6, len(pos))
+    assert_array_equal([14370, 1230237, 1234567, 1235237, 17330, 1110696], pos)
+
+    region = 'X'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(1, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == 'X')
+    eq_(1, len(pos))
+    assert_array_equal([10], pos)
+
+    region = 'Y'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    assert callset is None
+
+    region = '20:1-100000'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(2, len(pos))
+    assert_array_equal([14370, 17330], pos)
+
+    region = '20:1000000-1233000'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(2, len(pos))
+    assert_array_equal([1230237, 1110696], pos)
+
+    region = '20:1233000-2000000'
+    callset = read_vcf(fn, region=region, tabix=tabix)
+    chrom = callset['variants/CHROM']
+    pos = callset['variants/POS']
+    eq_(2, len(chrom))
+    assert isinstance(chrom, np.ndarray)
+    assert np.all(chrom == '20')
+    eq_(2, len(pos))
+    assert_array_equal([1234567, 1235237], pos)
+
+
 def test_read_samples():
     vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
 
@@ -1309,6 +1380,12 @@ def test_read_samples():
         eq_((9, 1, 2), gt.shape)
         eq_((1, 0), tuple(gt[2, 0]))
         eq_((2, 1), tuple(gt[4, 0]))
+
+
+def test_read_empty():
+    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'empty.vcf')
+    callset = read_vcf(vcf_path)
+    assert callset is None
 
 
 def test_ann():
@@ -1993,15 +2070,16 @@ def test_calldata_quirks():
 
 
 def test_vcf_to_npz():
-    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    vcf_paths = [os.path.join(os.path.dirname(__file__), 'data', x)
+                 for x in ['sample.vcf', 'sample.vcf.gz']]
     npz_path = os.path.join(tempdir, 'sample.npz')
-    region_values = None, '20', '20:10000-20000'
+    region_values = None, '20', '20:10000-20000', 'Y'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
     string_type_values = 'S10', 'object'
-    param_matrix = itertools.product(region_values, tabix_values, samples_values,
-                                     string_type_values)
-    for region, tabix, samples, string_type in param_matrix:
+    param_matrix = itertools.product(vcf_paths, region_values, tabix_values,
+                                     samples_values, string_type_values)
+    for vcf_path, region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
                             tabix=tabix, samples=samples, types=types)
@@ -2009,15 +2087,18 @@ def test_vcf_to_npz():
             os.remove(npz_path)
         vcf_to_npz(vcf_path, npz_path, fields='*', chunk_length=2, alt_number=2,
                    region=region, tabix=tabix, samples=samples, types=types)
-        actual = np.load(npz_path)
-        for key in expected.keys():
-            if expected[key].dtype.kind == 'f':
-                assert_array_almost_equal(expected[key], actual[key])
-            else:
-                assert_array_equal(expected[key], actual[key])
-        for key in actual.keys():
-            assert key in expected
-        actual.close()
+        if expected is None:
+            assert not os.path.exists(npz_path)
+        else:
+            actual = np.load(npz_path)
+            for key in expected.keys():
+                if expected[key].dtype.kind == 'f':
+                    assert_array_almost_equal(expected[key], actual[key])
+                else:
+                    assert_array_equal(expected[key], actual[key])
+            for key in actual.keys():
+                assert key in expected
+            actual.close()
 
 
 def test_vcf_to_npz_exclude():
@@ -2061,15 +2142,16 @@ def test_vcf_to_npz_rename():
 
 
 def test_vcf_to_zarr():
-    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    vcf_paths = [os.path.join(os.path.dirname(__file__), 'data', x)
+                 for x in ['sample.vcf', 'sample.vcf.gz']]
     zarr_path = os.path.join(tempdir, 'sample.zarr')
-    region_values = None, '20', '20:10000-20000'
+    region_values = None, '20', '20:10000-20000', 'Y'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
     string_type_values = 'S10', 'object'
-    param_matrix = itertools.product(region_values, tabix_values, samples_values,
-                                     string_type_values)
-    for region, tabix, samples, string_type in param_matrix:
+    param_matrix = itertools.product(vcf_paths, region_values, tabix_values,
+                                     samples_values, string_type_values)
+    for vcf_path, region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
                             tabix=tabix, samples=samples, types=types)
@@ -2077,20 +2159,25 @@ def test_vcf_to_zarr():
             shutil.rmtree(zarr_path)
         vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2,
                     region=region, tabix=tabix, samples=samples, types=types)
-        actual = zarr.open_group(zarr_path, mode='r')
-        for key in expected.keys():
-            e = expected[key]
-            a = actual[key][:]
-            compare_arrays(e, a)
-            eq_(actual['variants/NS'].attrs['Description'], 'Number of Samples With Data')
-            eq_(actual['calldata/GQ'].attrs['Description'], 'Genotype Quality')
-        for key in actual.keys():
-            if key not in {'variants', 'calldata'}:
-                assert key in expected
-        for key in actual['variants'].keys():
-            assert 'variants/' + key in expected
-        for key in actual['calldata'].keys():
-            assert 'calldata/' + key in expected
+        if expected is None:
+            assert not os.path.exists(zarr_path)
+        else:
+            actual = zarr.open_group(zarr_path, mode='r')
+            for key in expected.keys():
+                e = expected[key]
+                a = actual[key][:]
+                compare_arrays(e, a)
+                eq_(actual['variants/NS'].attrs['Description'],
+                    'Number of Samples With Data')
+                eq_(actual['calldata/GQ'].attrs['Description'],
+                    'Genotype Quality')
+            for key in actual.keys():
+                if key not in {'variants', 'calldata'}:
+                    assert key in expected
+            for key in actual['variants'].keys():
+                assert 'variants/' + key in expected
+            for key in actual['calldata'].keys():
+                assert 'calldata/' + key in expected
 
 
 def test_vcf_to_zarr_exclude():
@@ -2207,16 +2294,24 @@ def test_vcf_to_zarr_ann():
             compare_arrays(expected[key], actual[key][:])
 
 
+def test_vcf_to_zarr_empty():
+    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'empty.vcf')
+    zarr_path = os.path.join(tempdir, 'empty.zarr')
+    vcf_to_zarr(vcf_path, zarr_path)
+    assert not os.path.exists(zarr_path)
+
+
 def test_vcf_to_hdf5():
-    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'sample.vcf')
+    vcf_paths = [os.path.join(os.path.dirname(__file__), 'data', x)
+                 for x in ['sample.vcf', 'sample.vcf.gz']]
     h5_path = os.path.join(tempdir, 'sample.h5')
-    region_values = None, '20', '20:10000-20000'
+    region_values = None, '20', '20:10000-20000', 'Y'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
     string_type_values = 'S10', 'object'
-    param_matrix = itertools.product(region_values, tabix_values, samples_values,
-                                     string_type_values)
-    for region, tabix, samples, string_type in param_matrix:
+    param_matrix = itertools.product(vcf_paths, region_values, tabix_values,
+                                     samples_values, string_type_values)
+    for vcf_path, region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
                             tabix=tabix, samples=samples, types=types)
@@ -2224,20 +2319,23 @@ def test_vcf_to_hdf5():
             os.remove(h5_path)
         vcf_to_hdf5(vcf_path, h5_path, fields='*', alt_number=2, chunk_length=2,
                     region=region, tabix=tabix, samples=samples, types=types)
-        with h5py.File(h5_path, mode='r') as actual:
-            for key in expected.keys():
-                compare_arrays(expected[key], actual[key][:])
-            eq_(actual['variants/NS'].attrs['Description'],
-                'Number of Samples With Data')
-            eq_(actual['calldata/GQ'].attrs['Description'],
-                'Genotype Quality')
-            for key in actual.keys():
-                if key not in {'variants', 'calldata'}:
-                    assert key in expected
-            for key in actual['variants'].keys():
-                assert 'variants/' + key in expected
-            for key in actual['calldata'].keys():
-                assert 'calldata/' + key in expected
+        if expected is None:
+            assert not os.path.exists(h5_path)
+        else:
+            with h5py.File(h5_path, mode='r') as actual:
+                for key in expected.keys():
+                    compare_arrays(expected[key], actual[key][:])
+                eq_(actual['variants/NS'].attrs['Description'],
+                    'Number of Samples With Data')
+                eq_(actual['calldata/GQ'].attrs['Description'],
+                    'Genotype Quality')
+                for key in actual.keys():
+                    if key not in {'variants', 'calldata'}:
+                        assert key in expected
+                for key in actual['variants'].keys():
+                    assert 'variants/' + key in expected
+                for key in actual['calldata'].keys():
+                    assert 'calldata/' + key in expected
 
 
 def test_vcf_to_hdf5_exclude():
@@ -2342,6 +2440,13 @@ def test_vcf_to_hdf5_vlen():
                     assert_array_equal(expect[key].astype('S'), actual[key][:])
                 else:
                     assert_array_equal(expect[key], actual[key][:])
+
+
+def test_vcf_to_hdf5_empty():
+    vcf_path = os.path.join(os.path.dirname(__file__), 'data', 'empty.vcf')
+    h5_path = os.path.join(tempdir, 'empty.h5')
+    vcf_to_hdf5(vcf_path, h5_path)
+    assert not os.path.exists(h5_path)
 
 
 def to_pandas_expectation(e):

@@ -5,6 +5,7 @@
 # cython: wraparound=False
 # cython: initializedcheck=False
 # cython: nonecheck=False
+# cython: language_level=2
 """
 # options for profiling...
 # cython: profile=True
@@ -1061,8 +1062,7 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
                 return 0
 
             if cmp > 0:
-                # we're done
-                context.state = EOF
+                vcf_skip_variant(stream, context)
                 return 0
 
             if self.region_begin > 0 and context.pos < self.region_begin:
@@ -1070,8 +1070,7 @@ cdef class VCFChromPosParser(VCFFieldParserBase):
                 return 0
 
             if 0 < self.region_end < context.pos:
-                # we're done
-                context.state = EOF
+                vcf_skip_variant(stream, context)
                 return 0
 
         # setup context
