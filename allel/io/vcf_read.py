@@ -10,7 +10,7 @@ from __future__ import absolute_import, print_function, division
 import gzip
 import os
 import re
-from collections import namedtuple, defaultdict
+from collections import namedtuple, defaultdict, OrderedDict
 import warnings
 import time
 import subprocess
@@ -1770,8 +1770,8 @@ def _chunk_to_dataframe(fields, chunk):
             for i in range(a.shape[1]):
                 items.append(('%s_%s' % (name, i + 1), a[:, i]))
         else:
-            warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
-    df = pandas.DataFrame.from_items(items)
+            warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)   
+    df = pandas.DataFrame.from_dict(OrderedDict(items))
     # treat empty string as missing
     df.replace('', np.nan, inplace=True)
     return df
