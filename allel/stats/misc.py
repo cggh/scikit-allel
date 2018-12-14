@@ -244,8 +244,7 @@ def tabulate_state_transitions(x, states, pos=None):
                   ('rpos', switch_positions[:, 1])]
 
     import pandas
-    return pandas.DataFrame.from_items(items)
-
+    return pandas.DataFrame.from_dict(OrderedDict(items))
 
 def tabulate_state_blocks(x, states, pos=None):
     """Construct a dataframe where each row provides information about continuous state blocks.
@@ -345,4 +344,4 @@ def tabulate_state_blocks(x, states, pos=None):
         ]
 
     import pandas
-    return pandas.DataFrame.from_items(items)
+    return pandas.DataFrame.from_dict(OrderedDict(items))

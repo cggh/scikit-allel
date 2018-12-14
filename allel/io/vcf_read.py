@@ -1771,7 +1771,7 @@ def _chunk_to_dataframe(fields, chunk):
                 items.append(('%s_%s' % (name, i + 1), a[:, i]))
         else:
             warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
-    df = pandas.DataFrame.from_items(items)
+    df = pandas.DataFrame.from_dict(OrderedDict(items))
     # treat empty string as missing
     df.replace('', np.nan, inplace=True)
     return df
