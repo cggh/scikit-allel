@@ -205,7 +205,9 @@ def mean_pairwise_difference_between(ac1, ac2, an1=None, an2=None,
 
 def sequence_diversity(pos, ac, start=None, stop=None,
                        is_accessible=None):
-    """Estimate nucleotide diversity within a given region.
+    """Estimate nucleotide diversity within a given region, which is the
+    average proportion of sites (including monomorphic sites not present in the
+    data) that differ between randomly chosen pairs of chromosomes.
 
     Parameters
     ----------
@@ -215,9 +217,9 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     ac : array_like, int, shape (n_variants, n_alleles)
         Allele counts array.
     start : int, optional
-        The position at which to start (1-based).
+        The position at which to start (1-based). Defaults to the first position.
     stop : int, optional
-        The position at which to stop (1-based).
+        The position at which to stop (1-based). Defaults to the last position.
     is_accessible : array_like, bool, shape (len(contig),), optional
         Boolean array indicating accessibility status for all positions in the
         chromosome/contig.
@@ -227,6 +229,13 @@ def sequence_diversity(pos, ac, start=None, stop=None,
 
     pi : ndarray, float, shape (n_windows,)
         Nucleotide diversity.
+
+    Notes
+    -----
+
+    If start and/or stop are not provided, uses the difference between the last
+    and the first position as a proxy for the total number of sites, which can
+    overestimate the sequence diversity.
 
     Examples
     --------
@@ -284,7 +293,9 @@ def sequence_diversity(pos, ac, start=None, stop=None,
 def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
                         stop=None, is_accessible=None):
     """Estimate nucleotide divergence between two populations within a
-    given region.
+    given region, which is the average proportion of sites (including
+    monomorphic sites not present in the data) that differ between randomly
+    chosen pairs of chromosomes, one from each population.
 
     Parameters
     ----------
@@ -302,9 +313,9 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
         Allele numbers for the second population. If not provided, will be
         calculated from `ac2`.
     start : int, optional
-        The position at which to start (1-based).
+        The position at which to start (1-based). Defaults to the first position.
     stop : int, optional
-        The position at which to stop (1-based).
+        The position at which to stop (1-based). Defaults to the last position.
     is_accessible : array_like, bool, shape (len(contig),), optional
         Boolean array indicating accessibility status for all positions in the
         chromosome/contig.
@@ -665,9 +676,9 @@ def watterson_theta(pos, ac, start=None, stop=None,
     ac : array_like, int, shape (n_variants, n_alleles)
         Allele counts array.
     start : int, optional
-        The position at which to start (1-based).
+        The position at which to start (1-based). Defaults to the first position.
     stop : int, optional
-        The position at which to stop (1-based).
+        The position at which to stop (1-based). Defaults to the last position.
     is_accessible : array_like, bool, shape (len(contig),), optional
         Boolean array indicating accessibility status for all positions in the
         chromosome/contig.
@@ -859,9 +870,9 @@ def tajima_d(ac, pos=None, start=None, stop=None):
     pos : array_like, int, shape (n_items,), optional
         Variant positions, using 1-based coordinates, in ascending order.
     start : int, optional
-        The position at which to start (1-based).
+        The position at which to start (1-based). Defaults to the first position.
     stop : int, optional
-        The position at which to stop (1-based).
+        The position at which to stop (1-based). Defaults to the last position.
 
     Returns
     -------
