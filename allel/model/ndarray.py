@@ -2542,7 +2542,8 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     This class represents allele counts as a 2-dimensional numpy
     array of integers. By convention the first dimension corresponds
     to the variants genotyped, the second dimension corresponds to the
-    alleles counted.
+    alleles counted. The integer recorded is the **total count** of
+    the given allele at the given variant, across all individuals.
 
     Examples
     --------
@@ -3221,8 +3222,8 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
     Genotype calls are represented as a 3-dimensional array of integers. By convention, the
     first dimension corresponds to the variants genotyped, the second dimension corresponds
     to the samples genotyped, and the third dimension corresponds to the alleles genotyped
-    in index order. Each integer in the array records the **count** for the given in allele in
-    the given variant and sample.
+    in index order. Each integer in the array records the **count** for the given allele at
+    the given variant in the given sample.
 
     Examples
     --------
