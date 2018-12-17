@@ -13,7 +13,8 @@ v1.2.0 (work in progress)
   header information from a VCF file.
 
 * Various documentation improvements (`Peter Ralph
-  <https://github.com/petrelharp>`_, `#229
+  <https://github.com/petrelharp>`_ and `CJ Battey
+  <https://github.com/cjbattey>`_, `#229
   <https://github.com/cggh/scikit-allel/pull/229>`_).
 
 v1.1.10
