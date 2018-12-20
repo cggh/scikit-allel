@@ -1565,7 +1565,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"\t12\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # empty POS
@@ -1573,7 +1573,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy POS
@@ -1581,7 +1581,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\taaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy POS
@@ -1589,7 +1589,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12aaa\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy QUAL
@@ -1597,7 +1597,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\t.\t.\t.\taaa\t.\t.\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dodgy QUAL
@@ -1605,7 +1605,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\t.\t.\t.\t1.2aaa\t.\t.\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # empty QUAL - no warning
@@ -1642,7 +1642,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\taa/bb\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
 
     # dodgy calldata (integer)
@@ -1651,7 +1651,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\t.\t.\t.\t.\t.\t.\tGT\t0/1\t12aa/22\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
 
     # dodgy calldata (float)
@@ -1660,7 +1660,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\taaa\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
 
     # dodgy calldata (float)
@@ -1669,7 +1669,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\t.\t.\t.\t.\t.\t.\tMQ\t.\t12.3\t34.5aaa\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/MQ'])
 
     # dodgy INFO (missing key)
@@ -1679,7 +1679,7 @@ def test_warnings():
         b"2L\t12\t.\t.\t.\t.\t.\tfoo=qux;MQ=12\t.\t.\t.\t.\t.\n"
         b"2L\t34\t.\t.\t.\t.\t.\tfoo=bar;=34;baz\t.\t.\t.\t.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['variants/MQ'])
 
     # INFO not declared in header
@@ -1687,7 +1687,7 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['variants/foo'])
 
     # FORMAT not declared in header
@@ -1695,9 +1695,9 @@ def test_warnings():
         b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS2\tS1\tS3\tS4\n"
         b"2L\t12\tfoo\tA\tC,T\t12.3\tPASS\tfoo=bar\tGT:GQ\t0/0:99\t0/1:12\t./.:.\t.\n"
     )
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT'])
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GQ'])
 
     warnings.resetwarnings()
@@ -1734,9 +1734,9 @@ def test_extra_samples():
 
     warnings.resetwarnings()
     warnings.simplefilter('error')
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(path)
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data), fields=['calldata/GT', 'calldata/GQ'])
 
     warnings.resetwarnings()
@@ -1969,7 +1969,7 @@ chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
 chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
 chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dup INFO
@@ -1985,7 +1985,7 @@ chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
 chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
 chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     # dup FORMAT
@@ -2001,7 +2001,7 @@ chr1	1	.	A	G	.	PASS	DP=2	GT:AD	0:1,0	.:1,0	0:0,0	.:0,0
 chr1	2	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	0:1,0	0:0,0	.:0,0
 chr1	3	.	A	G	.	PASS	DP=2	GT:AD:ZZ	0:1,0:dummy	1:1,0	.	./.
 """
-    with pytest.raises(UserWarning):
+    with pytest.warns(UserWarning):
         read_vcf(io.BytesIO(input_data))
 
     warnings.resetwarnings()

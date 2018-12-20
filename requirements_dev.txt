@@ -14,4 +14,5 @@ bcolz==1.2.1
 zarr==2.2.0
 hmmlearn==0.2.1
 # install problems on windows, skip for now
+# https://github.com/jmschrei/pomegranate/issues/333#issuecomment-449151227
 #pomegranate==0.10.0

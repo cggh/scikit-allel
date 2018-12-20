@@ -13,7 +13,6 @@ import sys
 
 import numpy as np
 import pytest
-from pytest import approx
 from allel.test.tools import assert_array_equal as aeq
 
 
