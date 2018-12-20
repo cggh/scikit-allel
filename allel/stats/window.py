@@ -9,7 +9,7 @@ from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, ignore_invalid, check_equal_length
 
 
-def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
+def moving_statistic(values, statistic, size, start=0, stop=None, step=None, **kwargs):
     """Calculate a statistic in a moving window over `values`.
 
     Parameters
@@ -28,6 +28,9 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     step : int, optional
         The distance between start positions of windows. If not given,
         defaults to the window size, i.e., non-overlapping windows.
+    kwargs
+        Additional keyword arguments are passed through to the `statistic`
+        function.
 
     Returns
     -------
@@ -49,7 +52,7 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     windows = index_windows(values, size, start, stop, step)
 
     # setup output
-    out = np.array([statistic(values[i:j]) for i, j in windows])
+    out = np.array([statistic(values[i:j], **kwargs) for i, j in windows])
 
     return out
 
