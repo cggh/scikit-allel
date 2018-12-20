@@ -247,6 +247,7 @@ def tabulate_state_transitions(x, states, pos=None):
     import pandas
     return pandas.DataFrame.from_dict(OrderedDict(items))
 
+
 def tabulate_state_blocks(x, states, pos=None):
     """Construct a dataframe where each row provides information about continuous state blocks.
 

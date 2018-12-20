@@ -59,7 +59,11 @@ extensions = ['sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
               'sphinx.ext.autodoc',
               'numpydoc',
+              'sphinx_issues',
               ]
+
+issues_github_path = 'cggh/scikit-allel'
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
