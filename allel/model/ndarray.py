@@ -12,7 +12,9 @@ import numpy as np
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
     check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
 from allel.compat import PY2, copy_method_doc, integer_types, memoryview_safe
-from allel.io import write_vcf, gff3_to_recarray, recarray_from_hdf5_group, recarray_to_hdf5_group
+from allel.io.vcf_write import write_vcf
+from allel.io.gff import gff3_to_recarray
+from allel.io.util import recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
     genotype_array_count_alleles, genotype_array_count_alleles_masked, \

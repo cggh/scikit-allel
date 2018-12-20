@@ -27,7 +27,7 @@ import numpy as np
 from allel.compat import copy_method_doc, string_types
 from allel import chunked as _chunked
 from allel.chunked import ChunkedArrayWrapper, ChunkedTableWrapper
-from allel.io import write_vcf_header, write_vcf_data, normalize_callset
+from allel.io.vcf_write import write_vcf_header, write_vcf_data, normalize_callset
 from allel.util import check_ndim, check_integer_dtype
 from allel.abc import DisplayAs2D
 from .ndarray import (

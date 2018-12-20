@@ -59,7 +59,7 @@ def mean_pairwise_difference(ac, an=None, fill=np.nan):
     ...                           [0, 1, 1, 2],
     ...                           [0, 1, -1, -1]])
     >>> ac = h.count_alleles()
-    >>> allel.stats.mean_pairwise_difference(ac)
+    >>> allel.mean_pairwise_difference(ac)
     array([0.        , 0.5       , 0.66666667, 0.5       , 0.        ,
            0.83333333, 0.83333333, 1.        ])
 
@@ -152,7 +152,7 @@ def mean_pairwise_difference_between(ac1, ac2, an1=None, an2=None,
     ...                           [0, 1, -1, -1]])
     >>> ac1 = h.count_alleles(subpop=[0, 1])
     >>> ac2 = h.count_alleles(subpop=[2, 3])
-    >>> allel.stats.mean_pairwise_difference_between(ac1, ac2)
+    >>> allel.mean_pairwise_difference_between(ac1, ac2)
     array([0.  , 0.5 , 1.  , 0.5 , 0.  , 1.  , 0.75,  nan])
 
     See Also
@@ -252,7 +252,7 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
     >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> pi = allel.stats.sequence_diversity(pos, ac, start=1, stop=31)
+    >>> pi = allel.sequence_diversity(pos, ac, start=1, stop=31)
     >>> pi
     0.13978494623655915
 
@@ -452,7 +452,7 @@ def windowed_diversity(pos, ac, size=None, start=None, stop=None, step=None,
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
     >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> pi, windows, n_bases, counts = allel.stats.windowed_diversity(
+    >>> pi, windows, n_bases, counts = allel.windowed_diversity(
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> pi
@@ -704,7 +704,7 @@ def watterson_theta(pos, ac, start=None, stop=None,
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
     >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> theta_hat_w = allel.stats.watterson_theta(pos, ac, start=1, stop=31)
+    >>> theta_hat_w = allel.watterson_theta(pos, ac, start=1, stop=31)
     >>> theta_hat_w
     0.10557184750733138
 
@@ -810,7 +810,7 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
     >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> theta_hat_w, windows, n_bases, counts = allel.stats.windowed_watterson_theta(
+    >>> theta_hat_w, windows, n_bases, counts = allel.windowed_watterson_theta(
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> theta_hat_w
@@ -892,10 +892,10 @@ def tajima_d(ac, pos=None, start=None, stop=None):
     ...                          [[0, 1], [-1, -1]],
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
-    >>> allel.stats.tajima_d(ac)
+    >>> allel.tajima_d(ac)
     3.1445848780213814
     >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> allel.stats.tajima_d(ac, pos=pos, start=7, stop=25)
+    >>> allel.tajima_d(ac, pos=pos, start=7, stop=25)
     3.8779735196179366
 
     """
@@ -1002,7 +1002,7 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
     >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> D, windows, counts = allel.stats.windowed_tajima_d(
+    >>> D, windows, counts = allel.windowed_tajima_d(
     ...     pos, ac, size=10, start=1, stop=31
     ... )
     >>> D
@@ -1096,7 +1096,7 @@ def moving_tajima_d(ac, size, start=0, stop=None, step=None):
     ...                          [[0, 1], [-1, -1]],
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
-    >>> D = allel.stats.moving_tajima_d(ac, size=3)
+    >>> D = allel.moving_tajima_d(ac, size=3)
     >>> D
     array([0.59158014, 1.89305645, 5.79748537])
 

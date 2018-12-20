@@ -44,7 +44,7 @@ def rogers_huff_r(gn, fill=np.nan):
            [ 0,  2,  0],
            [ 2,  0,  2],
            [ 0,  1, -1]], dtype=int8)
-    >>> r = allel.stats.rogers_huff_r(gn)
+    >>> r = allel.rogers_huff_r(gn)
     >>> r  # doctest: +ELLIPSIS
     array([ 1.       , -1.0000001,  1.       , -1.0000001,  1.       ,
            -1.       ], dtype=float32)

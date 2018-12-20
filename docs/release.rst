@@ -14,6 +14,13 @@ v1.2.0 (work in progress)
 * Fixed pandas deprecation warning (:user:`Summer Rae <summerela>`,
   :issue:`228`).
 
+* Fixed problem where some packages where getting clobbered by imports
+  of other packages (:issue:`163`, :issue:`232`).
+
+.. important:: Please note, use of the `allel.stats` namespace is
+    deprecated, all functions from stats modules are available from the
+    root `allel` namespace, please access them from there.
+
 * Various documentation improvements (:user:`Peter Ralph <petrelharp>`
   and :user:`CJ Battey <cjbattey>`, :issue:`229`).
 
