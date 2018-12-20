@@ -150,6 +150,24 @@ class TestWindowUtilities(unittest.TestCase):
         aeq(expected_densities, densities)
         aeq(expected_n_bases, n_bases)
 
+    def test_equally_accessible_windows(self):
+        is_accessible = np.array([1, 0, 0, 1, 1, 0, 1, 0, 1])
+
+        # default options
+        actual = allel.equally_accessible_windows(is_accessible, size=2)
+        expect = np.array([[1, 4], [5, 7]])
+        aeq(expect, actual)
+
+        # with step
+        actual = allel.equally_accessible_windows(is_accessible, size=2, step=1)
+        expect = np.array([[1, 4], [4, 5], [5, 7], [7, 9]])
+        aeq(expect, actual)
+
+        # with start and stop
+        actual = allel.equally_accessible_windows(is_accessible, size=2, start=4, stop=5)
+        expect = np.array([[4, 5]])
+        aeq(expect, actual)
+
 
 class TestDiversityDivergence(unittest.TestCase):
 
