@@ -1342,6 +1342,17 @@ copy_method_doc(GenotypeVector.concatenate, Genotypes.concatenate)
 copy_method_doc(GenotypeVector.to_haplotypes, Genotypes.to_haplotypes)
 
 
+def _normalize_subpop_arg(subpop, n):
+    subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+    if subpop is not None:
+        if np.any(subpop >= n):
+            raise ValueError('index out of bounds')
+        if np.any(subpop < 0):
+            raise ValueError('negative indices not supported')
+        subpop = memoryview_safe(subpop)
+    return subpop
+
+
 class GenotypeArray(Genotypes, DisplayAs2D):
     """Array of discrete genotype calls for a matrix of variants and samples.
 
@@ -1820,13 +1831,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         """
 
         # check inputs
-        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
-        if subpop is not None:
-            if np.any(subpop >= self.shape[1]):
-                raise ValueError('index out of bounds')
-            if np.any(subpop < 0):
-                raise ValueError('negative indices not supported')
-            subpop = memoryview_safe(subpop)
+        subpop = _normalize_subpop_arg(subpop, self.shape[1])
 
         # determine alleles to count
         if max_allele is None:
@@ -2381,13 +2386,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         """
 
         # check inputs
-        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
-        if subpop is not None:
-            if np.any(subpop >= self.shape[1]):
-                raise ValueError('index out of bounds')
-            if np.any(subpop < 0):
-                raise ValueError('negative indices not supported')
-            subpop = memoryview_safe(subpop)
+        subpop = _normalize_subpop_arg(subpop, self.shape[1])
 
         # determine alleles to count
         if max_allele is None:
@@ -3314,7 +3313,8 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
     def count_alleles(self, subpop=None):
 
         # deal with subpop
-        if subpop:
+        subpop = _normalize_subpop_arg(subpop, self.shape[1])
+        if subpop is not None:
             g = self.take(subpop, axis=1).values
         else:
             g = self.values
