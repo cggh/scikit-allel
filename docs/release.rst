@@ -46,11 +46,6 @@ v1.2.0 (work in progress)
   :func:`allel.equally_accessible_windows`. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`234`, :issue:`166`.
 
-* Fixed `setup.py` so that installation of numpy prior to installation
-  of scikit-allel is no longer required - numpy will be automatically
-  installed as a depedency if not already installed. By
-  :user:`haseley`, :issue:`212`, :issue:`211`.
-
 * Fixed incorrect fill value in GFF parsing functions. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`165`, :issue:`223`.
 
@@ -58,17 +53,26 @@ v1.2.0 (work in progress)
   was provided as a numpy array. By :user:`Alistair Miles
   <alimanfoo>`, :issue:`235`, :issue:`171`.
 
+* Fixed `setup.py` so that installation of numpy prior to installation
+  of scikit-allel is no longer required - numpy will be automatically
+  installed as a dependency if not already installed. By
+  :user:`haseley`, :issue:`212`, :issue:`211`.
+
+* Migrate to using pytest instead of nose for testing. By
+  :user:`Alistair Miles <alimanfoo>`, :issue:`236`, :issue:`184`.
+  
 * Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
   :issue:`228`.
 
-* Various documentation improvements. By :user:`Peter Ralph <petrelharp>`
-  and :user:`CJ Battey <cjbattey>`, :issue:`229`.
-
 * Fixed problem where some packages where getting clobbered by imports
-  of other packages (:issue:`163`, :issue:`232`).
+  of other packages. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`163`, :issue:`232`.
 
 * Added support for Python 3.7 and compatibility with numpy 1.15. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`217`, :issue:`214`.
+
+* Various documentation improvements. By :user:`Peter Ralph <petrelharp>`
+  and :user:`CJ Battey <cjbattey>`, :issue:`229`.
 
 v1.1.10
 -------
