@@ -126,3 +126,4 @@ Indices and tables
 .. _zarr: http://zarr.readthedocs.io/
 .. _dask: http://dask.pydata.org/
 .. _petl: http://petl.readthedocs.org/
+.. _cython: https://cython.org/

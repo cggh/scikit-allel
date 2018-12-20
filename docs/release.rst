@@ -15,7 +15,7 @@ v1.2.0 (work in progress)
   :issue:`228`).
 
 * Various documentation improvements (:user:`Peter Ralph <petrelharp>`
-  and :user:`CJ Battey <cjbattey>`_, :issue:`229`).
+  and :user:`CJ Battey <cjbattey>`, :issue:`229`).
 
 v1.1.10
 -------
@@ -457,8 +457,8 @@ v0.16.2
   are not in increasing order (:issue:`6`).
 
 * Minor change to scaler argument to PCA functions in
-:mod:`allel.stats.decomposition` to avoid confusion about when to fall
-back to default scaler (:issue:`7`).
+  :mod:`allel.stats.decomposition` to avoid confusion about when to fall
+  back to default scaler (:issue:`7`).
 
 v0.16.1
 -------
