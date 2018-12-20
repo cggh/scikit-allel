@@ -1368,7 +1368,7 @@ def test_read_samples():
 
     for samples in ['NA00001', 'NA00003'], [0, 2], ['NA00003', 'NA00001'], [2, 'NA00001']:
         callset = read_vcf(vcf_path, fields=['samples', 'GT'], samples=samples)
-        assert ['NA00001', 'NA00003'] == callset['samples'].astype('U'.tolist())
+        assert ['NA00001', 'NA00003'] == callset['samples'].astype('U').tolist()
         gt = callset['calldata/GT']
         assert (9, 2, 2) == gt.shape
         assert (0, 0) == tuple(gt[2, 0])
@@ -1378,7 +1378,7 @@ def test_read_samples():
 
     for samples in ['NA00002'], [1]:
         callset = read_vcf(vcf_path, fields=['samples', 'GT'], samples=samples)
-        assert ['NA00002'] == callset['samples'].astype('U'.tolist())
+        assert ['NA00002'] == callset['samples'].astype('U').tolist()
         gt = callset['calldata/GT']
         assert (9, 1, 2) == gt.shape
         assert (1, 0) == tuple(gt[2, 0])
