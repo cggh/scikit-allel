@@ -24,7 +24,8 @@ import numpy as np
 import dask.array as da
 
 
-from allel.util import check_shape, check_dtype, check_ndim, check_integer_dtype
+from allel.util import check_shape, check_dtype, check_ndim, check_integer_dtype, \
+    asarray_ndim
 from allel.abc import ArrayWrapper, DisplayAs2D, DisplayAs1D
 from allel.compat import copy_method_doc
 from .ndarray import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector, \
@@ -364,7 +365,8 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
             max_allele = self.max().compute()[()]
 
         # deal with subpop
-        if subpop:
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
             gd = self.take(subpop, axis=1).values
         else:
             gd = self.values
@@ -585,7 +587,8 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
             max_allele = self.max().compute()[()]
 
         # deal with subpop
-        if subpop:
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
             hd = self.take(subpop, axis=1).values
         else:
             hd = self.values
@@ -966,7 +969,8 @@ class GenotypeAlleleCountsDaskArray(GenotypeAlleleCountsDask, DisplayAs2D):
     def count_alleles(self, subpop=None):
 
         # deal with subpop
-        if subpop:
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
             gd = self.take(subpop, axis=1).values
         else:
             gd = self.values

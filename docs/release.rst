@@ -54,6 +54,10 @@ v1.2.0 (work in progress)
 * Fixed incorrect fill value in GFF parsing functions. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`165`, :issue:`223`.
 
+* Fixed a problem in `count_alleles()` methods where a `subpop` arg
+  was provided as a numpy array. By :user:`Alistair Miles
+  <alimanfoo>`, :issue:`235`, :issue:`171`.
+
 * Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
   :issue:`228`.
 
