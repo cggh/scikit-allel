@@ -11,6 +11,9 @@ v1.2.0 (work in progress)
 * Added a convenience function :func:`allel.read_vcf_headers`, to
   obtain just header information from a VCF file.
 
+* Fixed incorrect fill value in GFF parsing functions (:issue:`165`,
+  :issue:`223`).
+  
 * Fixed pandas deprecation warning (:user:`Summer Rae <summerela>`,
   :issue:`228`).
 
