@@ -4,21 +4,55 @@ Release notes
 v1.2.0 (work in progress)
 -------------------------
 
+* Added a new function :func:`allel.pbs` which implements the
+  Population Branching Statistic (PBS), a test for selection based on
+  allel frequency differentiation between three populations. By
+  :user:`Alistair Miles <alimanfoo>`, :issue:`210`.
+  
+* Added a new function :func:`allel.roh_poissonhmm` for inferring runs
+  of homozygosity, which uses a Poisson HMM and is orders of magnitude
+  faster than the previously vailable :func:`allel.roh_mhmm`
+  multinomial HMM implementation. By :user:`Nick Harding <hardingnj>`,
+  :issue:`188`, :issue:`187`.
+
+* Added a workaround to ensure arrays passed into Cython functions are
+  safe to use as memoryviews, even when using distributed computing
+  systems like `dask.distributed` where data may be moved between
+  compute nodes and provided with a read-only flag set. By
+  :user:`Alistair Miles <alimanfoo>`, :issue:`#208`, :issue:`206`.
+  
+* Added support for parsing VCF files where the chromosomes are not in
+  lexical sorted order. Also improved handling of cases where no
+  variants are returned. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`221`, :issue:`167`, :issue:`213`.
+
 * Added new parameters ``exclude_fields`` and ``rename_fields`` to VCF
   parsing functions to add greater flexibility when selecting fields
-  to extract (:issue:`215`, :issue:`216`).
+  to extract. Also added several measures to protect against name
+  clashes when converting VCF to Zarr on platforms with a
+  case-insensitive file system. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`215`, :issue:`216`.
 
 * Added a convenience function :func:`allel.read_vcf_headers`, to
-  obtain just header information from a VCF file.
+  obtain just header information from a VCF file. By :user:`Alistair
+  Miles <alimanfoo>`, :issue:`216`.
 
-* Fixed incorrect fill value in GFF parsing functions (:issue:`165`,
-  :issue:`223`).
+* Fixed `setup.py` so that installation of numpy prior to installation
+  of scikit-allel is no longer required - numpy will be automatically
+  installed as a depedency if not already installed. By
+  :user:`haseley`, :issue:`212`, :issue:`211`.
+
+* Fixed incorrect fill value in GFF parsing functions. By
+  :user:`Alistair Miles <alimanfoo>`, :issue:`165`, :issue:`223`.
   
-* Fixed pandas deprecation warning (:user:`Summer Rae <summerela>`,
-  :issue:`228`).
+* Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
+  :issue:`228`.
 
-* Various documentation improvements (:user:`Peter Ralph <petrelharp>`
-  and :user:`CJ Battey <cjbattey>`, :issue:`229`).
+* Various documentation improvements. By :user:`Peter Ralph <petrelharp>`
+  and :user:`CJ Battey <cjbattey>`, :issue:`229`.
+
+* Added support for Python 3.7 and compatibility with numpy 1.15. By
+  :user:`Alistair Miles <alimanfoo>`, :issue:`217`, :issue:`214`.
 
 v1.1.10
 -------
