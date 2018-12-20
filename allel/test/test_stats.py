@@ -415,6 +415,7 @@ class TestHardyWeinberg(unittest.TestCase):
 class TestDistance(unittest.TestCase):
 
     def test_pdist(self):
+        from allel.stats.distance import pdist
         h = HaplotypeArray([[0, 0, 0, 0],
                             [0, 0, 0, 1],
                             [0, 0, 1, 1],
@@ -426,7 +427,7 @@ class TestDistance(unittest.TestCase):
                             [-1, -1, -1, -1]])
         import scipy.spatial
         d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
-        d2 = allel.stats.distance.pdist(h, 'hamming')
+        d2 = pdist(h, 'hamming')
         aeq(d1, d2)
 
     def test_pairwise_distance_multidim(self):
