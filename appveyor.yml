@@ -29,8 +29,8 @@ environment:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "%CMD_IN_ENV% python -m pip install -U pip setuptools wheel"
-  - "%CMD_IN_ENV% python -m pip install cython==0.29"
-  - "%CMD_IN_ENV% python -m pip install numpy==1.15.3"
+  - "%CMD_IN_ENV% python -m pip install cython==0.29.2"
+  - "%CMD_IN_ENV% python -m pip install numpy==1.15.4"
   - "%CMD_IN_ENV% python -m pip install -rrequirements_dev.txt"
   - "%CMD_IN_ENV% python -m pip install pyfasta==0.5.2"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
@@ -38,7 +38,7 @@ install:
 build: off
 
 test_script:
-  - "%CMD_IN_ENV% python -m nose -v allel --exclude=from_gff3_region --exclude=gff3_to_dataframe_region"
+  - "%CMD_IN_ENV% python -m pytest -v allel"
 
 after_test:
   - "%CMD_IN_ENV% python setup.py bdist_wheel"

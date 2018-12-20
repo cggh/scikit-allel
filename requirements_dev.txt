@@ -13,6 +13,7 @@ numexpr==2.6.8
 bcolz==1.2.1
 zarr==2.2.0
 hmmlearn==0.2.1
+pomegranate==0.10.0
 pytest==4.0.2
 # dev
 flake8==3.6.0

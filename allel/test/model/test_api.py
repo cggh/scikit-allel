@@ -8,9 +8,11 @@ from __future__ import absolute_import, print_function, division
 import os
 from datetime import date
 import tempfile
+import sys
 
 
 import numpy as np
+import pytest
 from nose.tools import eq_ as eq, assert_raises, \
     assert_is_instance, assert_not_is_instance, assert_almost_equal, \
     assert_sequence_equal
@@ -2714,6 +2716,8 @@ class FeatureTableInterface(object):
         eq(np.dtype(object), ft.seqid.dtype)
 
     def test_from_gff3_region(self):
+        if sys.platform == 'win32':
+            pytest.skip('tabix not available on windows')
         fn = os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'sample.sorted.gff.gz')
         ft = self._class.from_gff3(fn, region='apidb|MAL1')
         eq(44, len(ft))
