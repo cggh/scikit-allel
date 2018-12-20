@@ -6,7 +6,7 @@ import numpy as np
 from allel.model.ndarray import GenotypeVector
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.stats.misc import tabulate_state_blocks
-from allel.stats import equally_accessible_windows, windowed_statistic
+from allel.stats.window import equally_accessible_windows, windowed_statistic
 
 
 def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6,

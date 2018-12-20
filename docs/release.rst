@@ -4,6 +4,11 @@ Release notes
 v1.2.0 (work in progress)
 -------------------------
 
+.. important:: Please note, use of the `allel.stats` namespace is
+    deprecated in this release, all functions from stats modules are 
+    available from the root `allel` namespace, please access them from 
+    there.
+
 * Added a new function :func:`allel.pbs` which implements the
   Population Branching Statistic (PBS), a test for selection based on
   allel frequency differentiation between three populations. By
@@ -50,6 +55,9 @@ v1.2.0 (work in progress)
 
 * Various documentation improvements. By :user:`Peter Ralph <petrelharp>`
   and :user:`CJ Battey <cjbattey>`, :issue:`229`.
+
+* Fixed problem where some packages where getting clobbered by imports
+  of other packages (:issue:`163`, :issue:`232`).
 
 * Added support for Python 3.7 and compatibility with numpy 1.15. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`217`, :issue:`214`.

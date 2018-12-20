@@ -39,9 +39,9 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
 
     >>> import allel
     >>> values = [2, 5, 8, 16]
-    >>> allel.stats.moving_statistic(values, np.sum, size=2)
+    >>> allel.moving_statistic(values, np.sum, size=2)
     array([ 7, 24])
-    >>> allel.stats.moving_statistic(values, np.sum, size=2, step=1)
+    >>> allel.moving_statistic(values, np.sum, size=2, step=1)
     array([ 7, 13, 24])
 
     """
@@ -187,7 +187,7 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
 
         >>> import allel
         >>> pos = [1, 7, 12, 15, 28]
-        >>> counts, windows = allel.stats.windowed_count(pos, size=10)
+        >>> counts, windows = allel.windowed_count(pos, size=10)
         >>> counts
         array([2, 2, 1])
         >>> windows
@@ -197,7 +197,7 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
 
     Half-overlapping windows::
 
-        >>> counts, windows = allel.stats.windowed_count(pos, size=10, step=5)
+        >>> counts, windows = allel.windowed_count(pos, size=10, step=5)
         >>> counts
         array([2, 3, 2, 0, 1])
         >>> windows
@@ -287,7 +287,7 @@ def windowed_statistic(pos, values, statistic, size=None, start=None,
         >>> import allel
         >>> pos = [1, 7, 12, 15, 28]
         >>> values = [True, False, True, False, False]
-        >>> nnz, windows, counts = allel.stats.windowed_statistic(
+        >>> nnz, windows, counts = allel.windowed_statistic(
         ...     pos, values, statistic=np.count_nonzero, size=10
         ... )
         >>> nnz
@@ -302,7 +302,7 @@ def windowed_statistic(pos, values, statistic, size=None, start=None,
     Compute a sum over items in half-overlapping windows::
 
         >>> values = [3, 4, 2, 6, 9]
-        >>> x, windows, counts = allel.stats.windowed_statistic(
+        >>> x, windows, counts = allel.windowed_statistic(
         ...     pos, values, statistic=np.sum, size=10, step=5, fill=0
         ... )
         >>> x
