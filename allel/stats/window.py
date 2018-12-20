@@ -428,7 +428,7 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
     return y, n_bases
 
 
-def equally_accessible_windows(is_accessible, size):
+def equally_accessible_windows(is_accessible, size, start=0, stop=None, step=None):
     """Create windows each containing the same number of accessible bases.
 
     Parameters
@@ -437,6 +437,15 @@ def equally_accessible_windows(is_accessible, size):
         Array defining accessible status of all bases on a contig/chromosome.
     size : int
         Window size (number of accessible bases).
+    start : int, optional
+        The genome position at which to start.
+    stop : int, optional
+        The genome position at which to stop.
+    step : int, optional
+        The number of accessible sites between start positions
+        of windows. If not given, defaults to the window size, i.e.,
+        non-overlapping windows. Use half the window size to get
+        half-overlapping windows.
 
     Returns
     -------
@@ -446,6 +455,15 @@ def equally_accessible_windows(is_accessible, size):
     """
     pos_accessible, = np.nonzero(is_accessible)
     pos_accessible += 1  # convert to 1-based coordinates
+
+    # N.B., need some care in handling start and stop positions, these are
+    # genomic positions at which to start and stop the windows
+    if start:
+        pos_accessible = pos_accessible[pos_accessible >= start]
+    if stop:
+        pos_accessible = pos_accessible[pos_accessible <= stop]
+
+    # now construct moving windows
     windows = moving_statistic(pos_accessible, lambda v: [v[0], v[-1]],
-                               size=size)
+                               size=size, step=step)
     return windows

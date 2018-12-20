@@ -5,15 +5,15 @@ v1.2.0 (work in progress)
 -------------------------
 
 .. important:: Please note, use of the `allel.stats` namespace is
-    deprecated in this release, all functions from stats modules are 
-    available from the root `allel` namespace, please access them from 
+    deprecated in this release, all functions from stats modules are
+    available from the root `allel` namespace, please access them from
     there.
 
 * Added a new function :func:`allel.pbs` which implements the
   Population Branching Statistic (PBS), a test for selection based on
   allel frequency differentiation between three populations. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`210`.
-  
+
 * Added a new function :func:`allel.roh_poissonhmm` for inferring runs
   of homozygosity, which uses a Poisson HMM and is orders of magnitude
   faster than the previously vailable :func:`allel.roh_mhmm`
@@ -25,7 +25,7 @@ v1.2.0 (work in progress)
   systems like `dask.distributed` where data may be moved between
   compute nodes and provided with a read-only flag set. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`#208`, :issue:`206`.
-  
+
 * Added support for parsing VCF files where the chromosomes are not in
   lexical sorted order. Also improved handling of cases where no
   variants are returned. By :user:`Alistair Miles <alimanfoo>`,
@@ -42,6 +42,10 @@ v1.2.0 (work in progress)
   obtain just header information from a VCF file. By :user:`Alistair
   Miles <alimanfoo>`, :issue:`216`.
 
+* Added `start`, `stop` and `step` options to
+  :func:`allel.equally_accessible_windows`. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`234`, :issue:`166`.
+
 * Fixed `setup.py` so that installation of numpy prior to installation
   of scikit-allel is no longer required - numpy will be automatically
   installed as a depedency if not already installed. By
@@ -49,7 +53,7 @@ v1.2.0 (work in progress)
 
 * Fixed incorrect fill value in GFF parsing functions. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`165`, :issue:`223`.
-  
+
 * Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
   :issue:`228`.
 
