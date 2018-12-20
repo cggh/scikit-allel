@@ -2290,7 +2290,7 @@ class VariantTableInterface(object):
         vt = self.setup_instance(a)
         assert 5 == len(vt)
         assert 5 == vt.n_variants
-        assert variant_table_names == vt.names
+        assert tuple(variant_table_names) == tuple(vt.names)
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -2323,7 +2323,7 @@ class VariantTableInterface(object):
         # compare item by item
         for x, y in zip(variant_table_data[1], s):
             if np.isscalar(x):
-                assert approx(x) == y
+                assert x == y
             else:
                 assert tuple(x) == tuple(y)
 
@@ -2334,7 +2334,7 @@ class VariantTableInterface(object):
         # multi-column access
         s = vt[['CHROM', 'POS']]
         assert 5 == s.n_variants
-        assert ('CHROM', 'POS') == s.names
+        assert ('CHROM', 'POS') == tuple(s.names)
         aeq(a[['CHROM', 'POS']], s)
 
     def test_take(self):
@@ -2345,7 +2345,7 @@ class VariantTableInterface(object):
             expect = a.take(indices)
             aeq(expect, t)
             assert 2 == t.n_variants
-            assert variant_table_names == t.names
+            assert tuple(variant_table_names) == tuple(t.names)
 
     def test_compress(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2355,7 +2355,7 @@ class VariantTableInterface(object):
         expect = a.compress(condition)
         aeq(expect, t)
         assert 2 == t.n_variants
-        assert variant_table_names == t.names
+        assert tuple(variant_table_names) == tuple(t.names)
         t = np.compress(condition, vt)
         expect = a.compress(condition)
         aeq(expect, t)
