@@ -4540,7 +4540,7 @@ class FeatureTable(NumpyRecArrayWrapper):
 
     @staticmethod
     def from_gff3(path, attributes=None, region=None, score_fill=-1, phase_fill=-1,
-                  attributes_fill=b'.', dtype=None):
+                  attributes_fill='.', dtype=None):
         """Read a feature table from a GFF3 format file.
 
         Parameters
