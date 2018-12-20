@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 import os
+import sys
+
+
+import pytest
 
 
 from allel.io.gff import gff3_to_dataframe
@@ -32,6 +36,8 @@ def test_gff3_to_dataframe_attributes():
 
 
 def test_gff3_to_dataframe_region():
+    if sys.platform == 'win32':
+        pytest.skip('tabix not available on windows')
     fn = fixture_path('sample.sorted.gff.gz')
     df = gff3_to_dataframe(fn, region='apidb|MAL1')
     assert 44 == len(df)

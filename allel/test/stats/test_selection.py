@@ -3,15 +3,16 @@ from __future__ import absolute_import, print_function, division
 
 
 import numpy as np
-from nose.tools import eq_ as eq, assert_is_instance, assert_raises
+import pytest
+
+
 from allel.test.tools import assert_array_equal, assert_array_almost_equal
-
-
 from allel import ihs, xpehh, nsl, xpnsl, ehh_decay, voight_painting, pbs
 from allel.opt.stats import ssl01_scan, nsl01_scan, ihh01_scan,\
     ssl2ihh, ihh_scan
 
 
+# noinspection PyUnusedLocal
 def sum_ssl(ssl, *args, **kwargs):
     return np.sum(ssl)
 
@@ -351,7 +352,7 @@ def test_ssl2ihh_a():
     min_ehh = 0
     expect = (4 * (1 + 1) / 2) + (2 * (1 + 1) / 2) + (1 * (1 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ssl2ihh_b():
@@ -364,7 +365,7 @@ def test_ssl2ihh_b():
     expect = (4 * (1/3 + 1/3) / 2) + (2 * (1/3 + 1/3) / 2) + \
              (1 * (1/3 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ssl2ihh_c():
@@ -377,7 +378,7 @@ def test_ssl2ihh_c():
     expect = (4 * (1 + 2/3) / 2) + (2 * (2/3 + 1/3) / 2) + \
              (1 * (1/3 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ssl2ihh_d():
@@ -390,7 +391,7 @@ def test_ssl2ihh_d():
     expect = (4 * (2/3 + 1/3) / 2) + (2 * (1/3 + 1/3) / 2) + \
              (1 * (1/3 + 0) / 2)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ssl2ihh_e():
@@ -403,7 +404,7 @@ def test_ssl2ihh_e():
     min_ehh = 0
     expect = 4 * (1 + 0) / 2
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ssl2ihh_f():
@@ -428,7 +429,7 @@ def test_ssl2ihh_g():
     min_ehh = 0
     expect = (4 + 2 + 1)
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh, include_edges=True)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ssl2ihh_h():
@@ -440,7 +441,7 @@ def test_ssl2ihh_h():
     min_ehh = 0.5
     expect = 4 * (2/3 + 1/3) / 2
     actual = ssl2ihh(ssl, max(ssl), vidx, gaps, min_ehh)
-    eq(expect, actual)
+    assert expect == actual
 
 
 def test_ihs():
@@ -455,14 +456,14 @@ def test_ihs():
                 score = ihs(h, pos, min_ehh=min_ehh,
                             include_edges=include_edges,
                             use_threads=use_threads)
-                assert_is_instance(score, np.ndarray)
-                eq((n_variants,), score.shape)
-                eq(np.dtype('f8'), score.dtype)
+                assert isinstance(score, np.ndarray)
+                assert (n_variants,) == score.shape
+                assert np.dtype('f8') == score.dtype
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         ihs(h, pos[1:])
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         ihs(h, pos, map_pos=pos[1:])
 
 
@@ -522,7 +523,7 @@ def test_ihs_data():
             score = ihs(h, pos, include_edges=include_edges,
                         use_threads=use_threads)
             actual = score[9]
-            eq(expect, actual)
+            assert expect == actual
 
 
 def test_xpehh():
@@ -538,20 +539,20 @@ def test_xpehh():
                 score = xpehh(h1, h2, pos, min_ehh=min_ehh,
                               include_edges=include_edges,
                               use_threads=use_threads)
-                assert_is_instance(score, np.ndarray)
-                eq((n_variants,), score.shape)
-                eq(np.dtype('f8'), score.dtype)
+                assert isinstance(score, np.ndarray)
+                assert (n_variants,) == score.shape
+                assert np.dtype('f8') == score.dtype
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         xpehh(h1, h2[1:], pos)
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         xpehh(h1[1:], h2, pos)
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         xpehh(h1, h2, pos[1:])
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         xpehh(h1, h2, pos, map_pos=pos[1:])
 
 
@@ -564,7 +565,7 @@ def test_xpehh_data():
             score = xpehh(hap1, hap2, pos, include_edges=include_edges,
                           use_threads=use_threads)
             actual = score[9]
-            eq(expect, actual)
+            assert expect == actual
 
 
 def test_nsl():
@@ -574,9 +575,9 @@ def test_nsl():
 
     for use_threads in True, False:
         score = nsl(h, use_threads=use_threads)
-        assert_is_instance(score, np.ndarray)
-        eq((n_variants,), score.shape)
-        eq(np.dtype('f8'), score.dtype)
+        assert isinstance(score, np.ndarray)
+        assert (n_variants,) == score.shape
+        assert np.dtype('f8') == score.dtype
 
 
 def test_xpnsl():
@@ -587,9 +588,9 @@ def test_xpnsl():
 
     for use_threads in True, False:
         score = xpnsl(h1, h2, use_threads=use_threads)
-        assert_is_instance(score, np.ndarray)
-        eq((n_variants,), score.shape)
-        eq(np.dtype('f8'), score.dtype)
+        assert isinstance(score, np.ndarray)
+        assert (n_variants,) == score.shape
+        assert np.dtype('f8') == score.dtype
 
 
 def test_ehh_decay():

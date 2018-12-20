@@ -8,12 +8,11 @@ from __future__ import absolute_import, print_function, division
 import os
 from datetime import date
 import tempfile
+import sys
 
 
 import numpy as np
-from nose.tools import eq_ as eq, assert_raises, \
-    assert_is_instance, assert_not_is_instance, assert_almost_equal, \
-    assert_sequence_equal
+import pytest
 from allel.test.tools import assert_array_equal as aeq
 
 
@@ -122,19 +121,19 @@ class GenotypeArrayInterface(object):
 
         # diploid data
         g = self.setup_instance(diploid_genotype_data)
-        eq(3, g.ndim)
-        eq((5, 3, 2), g.shape)
-        eq(5, g.n_variants)
-        eq(3, g.n_samples)
-        eq(2, g.ploidy)
+        assert 3 == g.ndim
+        assert (5, 3, 2) == g.shape
+        assert 5 == g.n_variants
+        assert 3 == g.n_samples
+        assert 2 == g.ploidy
 
         # polyploid data
         g = self.setup_instance(triploid_genotype_data)
-        eq(3, g.ndim)
-        eq((4, 3, 3), g.shape)
-        eq(4, g.n_variants)
-        eq(3, g.n_samples)
-        eq(3, g.ploidy)
+        assert 3 == g.ndim
+        assert (4, 3, 3) == g.shape
+        assert 4 == g.n_variants
+        assert 3 == g.n_samples
+        assert 3 == g.ploidy
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -160,17 +159,17 @@ class GenotypeArrayInterface(object):
         s = g[1:]
         aeq(diploid_genotype_data[1:], s)
         # slice which preserves dimensionality should return GenotypeArray
-        eq(4, s.n_variants)
-        eq(3, s.n_samples)
-        eq(2, s.ploidy)
+        assert 4 == s.n_variants
+        assert 3 == s.n_samples
+        assert 2 == s.ploidy
 
         # col slice
         s = g[:, 1:]
         aeq(np.array(diploid_genotype_data)[:, 1:], s)
         # slice which preserves dimensionality should return GenotypeArray
-        eq(5, s.n_variants)
-        eq(2, s.n_samples)
-        eq(2, s.ploidy)
+        assert 5 == s.n_variants
+        assert 2 == s.n_samples
+        assert 2 == s.ploidy
 
         # row index
         s = g[0]
@@ -189,7 +188,7 @@ class GenotypeArrayInterface(object):
 
         # item
         s = g[0, 0, 0]
-        eq(0, s)
+        assert 0 == s
 
     def test_take(self):
         # Test the take() method.
@@ -199,27 +198,27 @@ class GenotypeArrayInterface(object):
         # take variants
         indices = [0, 2]
         for t in g.take(indices, axis=0), np.take(g, indices, axis=0):
-            eq(2, t.n_variants)
-            eq(g.n_samples, t.n_samples)
-            eq(g.ploidy, t.ploidy)
+            assert 2 == t.n_variants
+            assert g.n_samples == t.n_samples
+            assert g.ploidy == t.ploidy
             expect = np.array(diploid_genotype_data).take(indices, axis=0)
             aeq(expect, t)
 
         # take samples
         indices = [0, 2]
         for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
-            eq(g.n_variants, t.n_variants)
-            eq(2, t.n_samples)
-            eq(g.ploidy, t.ploidy)
+            assert g.n_variants == t.n_variants
+            assert 2 == t.n_samples
+            assert g.ploidy == t.ploidy
             expect = np.array(diploid_genotype_data).take(indices, axis=1)
             aeq(expect, t)
 
         # take samples not in original order
         indices = [2, 0]
         for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
-            eq(g.n_variants, t.n_variants)
-            eq(2, t.n_samples)
-            eq(g.ploidy, t.ploidy)
+            assert g.n_variants == t.n_variants
+            assert 2 == t.n_samples
+            assert g.ploidy == t.ploidy
             expect = np.array(diploid_genotype_data).take(indices, axis=1)
             aeq(expect, t)
 
@@ -231,19 +230,18 @@ class GenotypeArrayInterface(object):
         # compress variants
         condition = [True, False, True, False, False]
         for t in g.compress(condition, axis=0), np.compress(condition, g, axis=0):
-            t = g.compress(condition, axis=0)
-            eq(2, t.n_variants)
-            eq(g.n_samples, t.n_samples)
-            eq(g.ploidy, t.ploidy)
+            assert 2 == t.n_variants
+            assert g.n_samples == t.n_samples
+            assert g.ploidy == t.ploidy
             expect = np.array(diploid_genotype_data).compress(condition, axis=0)
             aeq(expect, t)
 
         # compress samples
         condition = [True, False, True]
         for t in g.compress(condition, axis=1), np.compress(condition, g, axis=1):
-            eq(g.n_variants, t.n_variants)
-            eq(2, t.n_samples)
-            eq(g.ploidy, t.ploidy)
+            assert g.n_variants == t.n_variants
+            assert 2 == t.n_samples
+            assert g.ploidy == t.ploidy
             expect = np.array(diploid_genotype_data).compress(condition, axis=1)
             aeq(expect, t)
 
@@ -468,7 +466,7 @@ class GenotypeArrayInterface(object):
 
         expect = 7
         actual = f()
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([4, 3, 0])
         actual = f(axis=0)
@@ -485,7 +483,7 @@ class GenotypeArrayInterface(object):
 
         expect = 8
         actual = f()
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([1, 2, 5])
         actual = f(axis=0)
@@ -502,7 +500,7 @@ class GenotypeArrayInterface(object):
 
         expect = 3
         actual = f()
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([2, 1, 0])
         actual = f(axis=0)
@@ -519,7 +517,7 @@ class GenotypeArrayInterface(object):
 
         expect = 1
         actual = f()
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([1, 0, 0])
         actual = f(axis=0)
@@ -536,7 +534,7 @@ class GenotypeArrayInterface(object):
 
         expect = 2
         actual = f()
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([1, 1, 0])
         actual = f(axis=0)
@@ -553,7 +551,7 @@ class GenotypeArrayInterface(object):
 
         expect = 4
         actual = f()
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([2, 2, 0])
         actual = f(axis=0)
@@ -570,7 +568,7 @@ class GenotypeArrayInterface(object):
 
         expect = 1
         actual = f(call=(2, 1))
-        eq(expect, actual)
+        assert expect == actual
 
         expect = np.array([0, 1, 0])
         actual = f(call=(2, 1), axis=0)
@@ -738,7 +736,7 @@ class GenotypeArrayInterface(object):
         # overall
         expect = 2
         actual = self.setup_instance(diploid_genotype_data).max()
-        eq(expect, actual)
+        assert expect == actual
 
         # by sample
         expect = np.array([2, 2, -1])
@@ -755,7 +753,7 @@ class GenotypeArrayInterface(object):
         # overall
         expect = -1
         actual = self.setup_instance(diploid_genotype_data).min()
-        eq(expect, actual)
+        assert expect == actual
 
         # by sample
         expect = np.array([-1, -1, -1])
@@ -780,8 +778,8 @@ class GenotypeArrayInterface(object):
                                [0, 0, 0]])
             actual = g.count_alleles()
             aeq(expect, actual)
-            eq(5, actual.n_variants)
-            eq(3, actual.n_alleles)
+            assert 5 == actual.n_variants
+            assert 3 == actual.n_alleles
 
             # polyploid
             g = self.setup_instance(triploid_genotype_data, dtype=dtype)
@@ -791,8 +789,8 @@ class GenotypeArrayInterface(object):
                                [0, 0, 0]])
             actual = g.count_alleles()
             aeq(expect, actual)
-            eq(4, actual.n_variants)
-            eq(3, actual.n_alleles)
+            assert 4 == actual.n_variants
+            assert 3 == actual.n_alleles
 
     def test_count_alleles_subpop(self):
         for dtype in None, 'i1', 'i2', 'i4', 'i8':
@@ -810,8 +808,8 @@ class GenotypeArrayInterface(object):
                            np.array([0, 2], dtype='u2')):
                 actual = g.count_alleles(subpop=subpop)
                 aeq(expect, actual)
-                eq(5, actual.n_variants)
-                eq(3, actual.n_alleles)
+                assert 5 == actual.n_variants
+                assert 3 == actual.n_alleles
 
     def test_count_alleles_subpops(self):
         for dtype in None, 'i1', 'i2', 'i4', 'i8':
@@ -833,10 +831,10 @@ class GenotypeArrayInterface(object):
                 actual = g.count_alleles_subpops(subpops=subpops)
                 aeq(expect_sub1, actual['sub1'])
                 aeq(expect_sub2, actual['sub2'])
-                eq(5, actual['sub1'].n_variants)
-                eq(3, actual['sub1'].n_alleles)
-                eq(5, actual['sub2'].n_variants)
-                eq(3, actual['sub2'].n_alleles)
+                assert 5 == actual['sub1'].n_variants
+                assert 3 == actual['sub1'].n_alleles
+                assert 5 == actual['sub2'].n_variants
+                assert 3 == actual['sub2'].n_alleles
 
     def test_count_alleles_max_allele(self):
 
@@ -851,16 +849,16 @@ class GenotypeArrayInterface(object):
                                [0, 0, 2],
                                [0, 0, 0]])
             actual = g.count_alleles()
-            eq(3, actual.n_alleles)
+            assert 3 == actual.n_alleles
             aeq(expect, actual)
             actual = g.count_alleles(max_allele=2)
-            eq(3, actual.n_alleles)
+            assert 3 == actual.n_alleles
             aeq(expect, actual)
             actual = g.count_alleles(max_allele=1)
-            eq(2, actual.n_alleles)
+            assert 2 == actual.n_alleles
             aeq(expect[:, :2], actual)
             actual = g.count_alleles(max_allele=0)
-            eq(1, actual.n_alleles)
+            assert 1 == actual.n_alleles
             aeq(expect[:, :1], actual)
 
             # polyploid
@@ -870,16 +868,16 @@ class GenotypeArrayInterface(object):
                                [1, 1, 1],
                                [0, 0, 0]])
             actual = g.count_alleles()
-            eq(3, actual.n_alleles)
+            assert 3 == actual.n_alleles
             aeq(expect, actual)
             actual = g.count_alleles(max_allele=2)
-            eq(3, actual.n_alleles)
+            assert 3 == actual.n_alleles
             aeq(expect, actual)
             actual = g.count_alleles(max_allele=1)
-            eq(2, actual.n_alleles)
+            assert 2 == actual.n_alleles
             aeq(expect[:, :2], actual)
             actual = g.count_alleles(max_allele=0)
-            eq(1, actual.n_alleles)
+            assert 1 == actual.n_alleles
             aeq(expect[:, :1], actual)
 
     def test_map_alleles(self):
@@ -904,12 +902,12 @@ class GenotypeArrayInterface(object):
         # diploid case
         a = np.array(diploid_genotype_data, dtype=np.int8)
         g = self.setup_instance(a)
-        eq(7, g.count_called())
-        eq(4, g.count_het())
-        eq(3, g.count_hom())
-        eq(1, g.count_hom_ref())
-        eq(2, g.count_hom_alt())
-        eq(8, g.count_missing())
+        assert 7 == g.count_called()
+        assert 4 == g.count_het()
+        assert 3 == g.count_hom()
+        assert 1 == g.count_hom_ref()
+        assert 2 == g.count_hom_alt()
+        assert 8 == g.count_missing()
         expect_ac = [[3, 1, 0],
                      [1, 2, 1],
                      [1, 2, 1],
@@ -922,12 +920,12 @@ class GenotypeArrayInterface(object):
              [False, False, True],
              [True, False, True]]
         g.mask = m
-        eq(5, g.count_called())
-        eq(3, g.count_het())
-        eq(2, g.count_hom())
-        eq(0, g.count_hom_ref())
-        eq(2, g.count_hom_alt())
-        eq(10, g.count_missing())
+        assert 5 == g.count_called()
+        assert 3 == g.count_het()
+        assert 2 == g.count_hom()
+        assert 0 == g.count_hom_ref()
+        assert 2 == g.count_hom_alt()
+        assert 10 == g.count_missing()
         expect_ac = [[1, 1, 0],
                      [1, 2, 1],
                      [1, 1, 0],
@@ -938,12 +936,12 @@ class GenotypeArrayInterface(object):
         # polyploid
         a = np.array(triploid_genotype_data, dtype=np.int8)
         g = self.setup_instance(a)
-        eq(5, g.count_called())
-        eq(3, g.count_het())
-        eq(2, g.count_hom())
-        eq(1, g.count_hom_ref())
-        eq(1, g.count_hom_alt())
-        eq(7, g.count_missing())
+        assert 5 == g.count_called()
+        assert 3 == g.count_het()
+        assert 2 == g.count_hom()
+        assert 1 == g.count_hom_ref()
+        assert 1 == g.count_hom_alt()
+        assert 7 == g.count_missing()
         expect_ac = [[5, 1, 0],
                      [1, 5, 0],
                      [1, 1, 1],
@@ -954,12 +952,12 @@ class GenotypeArrayInterface(object):
              [False, True, False],
              [False, False, True]]
         g.mask = m
-        eq(4, g.count_called())
-        eq(3, g.count_het())
-        eq(1, g.count_hom())
-        eq(0, g.count_hom_ref())
-        eq(1, g.count_hom_alt())
-        eq(8, g.count_missing())
+        assert 4 == g.count_called()
+        assert 3 == g.count_het()
+        assert 1 == g.count_hom()
+        assert 0 == g.count_hom_ref()
+        assert 1 == g.count_hom_alt()
+        assert 8 == g.count_missing()
         expect_ac = [[2, 1, 0],
                      [1, 5, 0],
                      [1, 1, 1],
@@ -1028,10 +1026,10 @@ class HaplotypeArrayInterface(object):
 
         # haploid data
         h = self.setup_instance(haplotype_data)
-        eq(2, h.ndim)
-        eq((4, 3), h.shape)
-        eq(4, h.n_variants)
-        eq(3, h.n_haplotypes)
+        assert 2 == h.ndim
+        assert (4, 3) == h.shape
+        assert 4 == h.n_variants
+        assert 3 == h.n_haplotypes
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -1049,14 +1047,14 @@ class HaplotypeArrayInterface(object):
         # row slice
         s = h[1:]
         aeq(haplotype_data[1:], s)
-        eq(3, s.n_variants)
-        eq(3, s.n_haplotypes)
+        assert 3 == s.n_variants
+        assert 3 == s.n_haplotypes
 
         # col slice
         s = h[:, 1:]
         aeq(np.array(haplotype_data)[:, 1:], s)
-        eq(4, s.n_variants)
-        eq(2, s.n_haplotypes)
+        assert 4 == s.n_variants
+        assert 2 == s.n_haplotypes
 
         # row index
         s = h[0]
@@ -1070,7 +1068,7 @@ class HaplotypeArrayInterface(object):
 
         # item
         s = h[0, 0]
-        eq(0, s)
+        assert 0 == s
 
     def test_take(self):
         # Test the take() method.
@@ -1080,16 +1078,16 @@ class HaplotypeArrayInterface(object):
         # take variants
         indices = [0, 2]
         for t in h.take(indices, axis=0), np.take(h, indices, axis=0):
-            eq(2, t.n_variants)
-            eq(h.n_haplotypes, t.n_haplotypes)
+            assert 2 == t.n_variants
+            assert h.n_haplotypes == t.n_haplotypes
             expect = np.array(haplotype_data).take(indices, axis=0)
             aeq(expect, t)
 
         # take samples
         indices = [0, 2]
         for t in h.take(indices, axis=1), np.take(h, indices, axis=1):
-            eq(h.n_variants, t.n_variants)
-            eq(2, t.n_haplotypes)
+            assert h.n_variants == t.n_variants
+            assert 2 == t.n_haplotypes
             expect = np.array(haplotype_data).take(indices, axis=1)
             aeq(expect, t)
 
@@ -1101,16 +1099,16 @@ class HaplotypeArrayInterface(object):
         # compress variants
         condition = [True, False, True, False]
         for t in h.compress(condition, axis=0), np.compress(condition, h, axis=0):
-            eq(2, t.n_variants)
-            eq(h.n_haplotypes, t.n_haplotypes)
+            assert 2 == t.n_variants
+            assert h.n_haplotypes == t.n_haplotypes
             expect = np.array(haplotype_data).compress(condition, axis=0)
             aeq(expect, t)
 
         # compress samples
         condition = [True, False, True]
         for t in h.compress(condition, axis=1), np.compress(condition, h, axis=1):
-            eq(h.n_variants, t.n_variants)
-            eq(2, t.n_haplotypes)
+            assert h.n_variants == t.n_variants
+            assert 2 == t.n_haplotypes
             expect = np.array(haplotype_data).compress(condition, axis=1)
             aeq(expect, t)
 
@@ -1206,7 +1204,7 @@ class HaplotypeArrayInterface(object):
         aeq(expect, actual)
 
     def test_to_genotypes(self):
-        haplotype_data = [
+        data = [
             [0, 1, 1, 2],
             [1, 1, -1, -1],
             [2, -1, -1, -1],
@@ -1216,13 +1214,13 @@ class HaplotypeArrayInterface(object):
                   [[1, 1], [-1, -1]],
                   [[2, -1], [-1, -1]],
                   [[-1, -1], [-1, -1]]]
-        actual = self.setup_instance(haplotype_data).to_genotypes(ploidy=2)
+        actual = self.setup_instance(data).to_genotypes(ploidy=2)
         aeq(expect, actual)
         expect = [[[0, 1, 1, 2]],
                   [[1, 1, -1, -1]],
                   [[2, -1, -1, -1]],
                   [[-1, -1, -1, -1]]]
-        actual = self.setup_instance(haplotype_data).to_genotypes(ploidy=4)
+        actual = self.setup_instance(data).to_genotypes(ploidy=4)
         aeq(expect, actual)
 
     def test_max(self):
@@ -1230,7 +1228,7 @@ class HaplotypeArrayInterface(object):
         # overall
         expect = 2
         actual = self.setup_instance(haplotype_data).max()
-        eq(expect, actual)
+        assert expect == actual
 
         # by sample
         expect = np.array([2, 1, -1])
@@ -1247,7 +1245,7 @@ class HaplotypeArrayInterface(object):
         # overall
         expect = -1
         actual = self.setup_instance(haplotype_data).min()
-        eq(expect, actual)
+        assert expect == actual
 
         # by sample
         expect = np.array([-1, -1, -1])
@@ -1268,8 +1266,8 @@ class HaplotypeArrayInterface(object):
             h = self.setup_instance(haplotype_data, dtype=dtype)
             actual = h.count_alleles()
             aeq(expect, actual)
-            eq(4, actual.n_variants)
-            eq(3, actual.n_alleles)
+            assert 4 == actual.n_variants
+            assert 3 == actual.n_alleles
 
     def test_count_alleles_subpop(self):
         expect = np.array([[1, 0, 0],
@@ -1285,8 +1283,8 @@ class HaplotypeArrayInterface(object):
                            np.array([0, 2], dtype='u2')):
                 actual = h.count_alleles(subpop=subpop)
                 aeq(expect, actual)
-                eq(4, actual.n_variants)
-                eq(3, actual.n_alleles)
+                assert 4 == actual.n_variants
+                assert 3 == actual.n_alleles
 
     def test_count_alleles_subpops(self):
         expect_sub1 = np.array([[1, 0, 0],
@@ -1304,10 +1302,10 @@ class HaplotypeArrayInterface(object):
                 actual = h.count_alleles_subpops(subpops=subpops)
                 aeq(expect_sub1, actual['sub1'])
                 aeq(expect_sub2, actual['sub2'])
-                eq(4, actual['sub1'].n_variants)
-                eq(3, actual['sub1'].n_alleles)
-                eq(4, actual['sub2'].n_variants)
-                eq(3, actual['sub2'].n_alleles)
+                assert 4 == actual['sub1'].n_variants
+                assert 3 == actual['sub1'].n_alleles
+                assert 4 == actual['sub2'].n_variants
+                assert 3 == actual['sub2'].n_alleles
 
     def test_count_alleles_max_allele(self):
         expect = np.array([[1, 1, 0],
@@ -1317,16 +1315,16 @@ class HaplotypeArrayInterface(object):
         for dtype in None, 'i1', 'i2', 'i4', 'i8':
             h = self.setup_instance(haplotype_data, dtype=dtype)
             actual = h.count_alleles()
-            eq(3, actual.n_alleles)
+            assert 3 == actual.n_alleles
             aeq(expect, actual)
             actual = h.count_alleles(max_allele=2)
-            eq(3, actual.n_alleles)
+            assert 3 == actual.n_alleles
             aeq(expect, actual)
             actual = h.count_alleles(max_allele=1)
-            eq(2, actual.n_alleles)
+            assert 2 == actual.n_alleles
             aeq(expect[:, :2], actual)
             actual = h.count_alleles(max_allele=0)
-            eq(1, actual.n_alleles)
+            assert 1 == actual.n_alleles
             aeq(expect[:, :1], actual)
 
     def test_map_alleles(self):
@@ -1375,10 +1373,10 @@ class AlleleCountsArrayInterface(object):
 
     def test_properties(self):
         ac = self.setup_instance(allele_counts_data)
-        eq(2, ac.ndim)
-        eq((6, 3), ac.shape)
-        eq(6, ac.n_variants)
-        eq(3, ac.n_alleles)
+        assert 2 == ac.ndim
+        assert (6, 3) == ac.shape
+        assert 6 == ac.n_variants
+        assert 3 == ac.n_alleles
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -1420,7 +1418,7 @@ class AlleleCountsArrayInterface(object):
 
         # item
         s = ac[0, 0]
-        eq(3, s)
+        assert 3 == s
 
     def test_take(self):
         # Test the take() method.
@@ -1430,8 +1428,8 @@ class AlleleCountsArrayInterface(object):
         # take variants
         indices = [0, 2]
         for t in ac.take(indices, axis=0), np.take(ac, indices, axis=0):
-            eq(2, t.n_variants)
-            eq(ac.n_alleles, t.n_alleles)
+            assert 2 == t.n_variants
+            assert ac.n_alleles == t.n_alleles
             expect = np.array(allele_counts_data).take(indices, axis=0)
             aeq(expect, t)
 
@@ -1439,8 +1437,8 @@ class AlleleCountsArrayInterface(object):
         ac = self.setup_instance(allele_counts_data)
         condition = [True, False, True, False, True, False]
         for t in ac.compress(condition, axis=0), np.compress(condition, ac, axis=0):
-            eq(3, t.n_variants)
-            eq(ac.n_alleles, t.n_alleles)
+            assert 3 == t.n_variants
+            assert ac.n_alleles == t.n_alleles
             expect = np.array(allele_counts_data).compress(condition, axis=0)
             aeq(expect, t)
 
@@ -1470,54 +1468,54 @@ class AlleleCountsArrayInterface(object):
         expect = np.array([1, 1, 1, 1, 0, 1], dtype='b1')
         actual = ac.is_variant()
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_variant())
+        assert np.sum(expect) == ac.count_variant()
 
     def test_is_count_non_variant(self):
         ac = self.setup_instance(allele_counts_data)
         expect = np.array([0, 0, 0, 0, 1, 0], dtype='b1')
         actual = ac.is_non_variant()
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_non_variant())
+        assert np.sum(expect) == ac.count_non_variant()
 
     def test_is_count_segregating(self):
         ac = self.setup_instance(allele_counts_data)
         expect = np.array([1, 1, 1, 0, 0, 1], dtype='b1')
         actual = ac.is_segregating()
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_segregating())
+        assert np.sum(expect) == ac.count_segregating()
 
     def test_is_count_non_segregating(self):
         ac = self.setup_instance(allele_counts_data)
         expect = np.array([0, 0, 0, 1, 1, 0], dtype='b1')
         actual = ac.is_non_segregating()
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_non_segregating())
+        assert np.sum(expect) == ac.count_non_segregating()
         expect = np.array([0, 0, 0, 1, 0, 0], dtype='b1')
         actual = ac.is_non_segregating(allele=2)
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_non_segregating(allele=2))
+        assert np.sum(expect) == ac.count_non_segregating(allele=2)
 
     def test_is_count_singleton(self):
         ac = self.setup_instance(allele_counts_data)
         expect = np.array([1, 0, 0, 0, 0, 1], dtype='b1')
         actual = ac.is_singleton(allele=1)
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_singleton(allele=1))
+        assert np.sum(expect) == ac.count_singleton(allele=1)
         expect = np.array([0, 1, 1, 0, 0, 0], dtype='b1')
         actual = ac.is_singleton(allele=2)
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_singleton(allele=2))
+        assert np.sum(expect) == ac.count_singleton(allele=2)
 
     def test_is_count_doubleton(self):
         ac = self.setup_instance(allele_counts_data)
         expect = np.array([0, 1, 1, 0, 0, 0], dtype='b1')
         actual = ac.is_doubleton(allele=1)
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_doubleton(allele=1))
+        assert np.sum(expect) == ac.count_doubleton(allele=1)
         expect = np.array([0, 0, 0, 1, 0, 1], dtype='b1')
         actual = ac.is_doubleton(allele=2)
         aeq(expect, actual)
-        eq(np.sum(expect), ac.count_doubleton(allele=2))
+        assert np.sum(expect) == ac.count_doubleton(allele=2)
 
     def test_is_biallelic(self):
         ac = self.setup_instance(allele_counts_data)
@@ -1582,19 +1580,19 @@ class GenotypeAlleleCountsArrayInterface(object):
 
         # diploid data
         g = self.setup_instance(diploid_genotype_ac_data)
-        eq(3, g.ndim)
-        eq((5, 3, 3), g.shape)
-        eq(5, g.n_variants)
-        eq(3, g.n_samples)
-        eq(3, g.n_alleles)
+        assert 3 == g.ndim
+        assert (5, 3, 3) == g.shape
+        assert 5 == g.n_variants
+        assert 3 == g.n_samples
+        assert 3 == g.n_alleles
 
         # polyploid data
         g = self.setup_instance(triploid_genotype_ac_data)
-        eq(3, g.ndim)
-        eq((4, 3, 3), g.shape)
-        eq(4, g.n_variants)
-        eq(3, g.n_samples)
-        eq(3, g.n_alleles)
+        assert 3 == g.ndim
+        assert (4, 3, 3) == g.shape
+        assert 4 == g.n_variants
+        assert 3 == g.n_samples
+        assert 3 == g.n_alleles
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -1620,17 +1618,17 @@ class GenotypeAlleleCountsArrayInterface(object):
         s = g[1:]
         aeq(diploid_genotype_ac_data[1:], s)
         # slice which preserves dimensionality should return GenotypeArray
-        eq(4, s.n_variants)
-        eq(3, s.n_samples)
-        eq(3, s.n_alleles)
+        assert 4 == s.n_variants
+        assert 3 == s.n_samples
+        assert 3 == s.n_alleles
 
         # col slice
         s = g[:, 1:]
         aeq(np.array(diploid_genotype_ac_data)[:, 1:], s)
         # slice which preserves dimensionality should return GenotypeArray
-        eq(5, s.n_variants)
-        eq(2, s.n_samples)
-        eq(3, s.n_alleles)
+        assert 5 == s.n_variants
+        assert 2 == s.n_samples
+        assert 3 == s.n_alleles
 
         # row index
         s = g[0]
@@ -1649,7 +1647,7 @@ class GenotypeAlleleCountsArrayInterface(object):
 
         # item
         s = g[0, 0, 0]
-        eq(2, s)
+        assert 2 == s
 
     def test_take(self):
         # Test the take() method.
@@ -1659,27 +1657,27 @@ class GenotypeAlleleCountsArrayInterface(object):
         # take variants
         indices = [0, 2]
         for t in g.take(indices, axis=0), np.take(g, indices, axis=0):
-            eq(2, t.n_variants)
-            eq(g.n_samples, t.n_samples)
-            eq(g.n_alleles, t.n_alleles)
+            assert 2 == t.n_variants
+            assert g.n_samples == t.n_samples
+            assert g.n_alleles == t.n_alleles
             expect = np.array(diploid_genotype_ac_data).take(indices, axis=0)
             aeq(expect, t)
 
         # take samples
         indices = [0, 2]
         for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
-            eq(g.n_variants, t.n_variants)
-            eq(2, t.n_samples)
-            eq(g.n_alleles, t.n_alleles)
+            assert g.n_variants == t.n_variants
+            assert 2 == t.n_samples
+            assert g.n_alleles == t.n_alleles
             expect = np.array(diploid_genotype_ac_data).take(indices, axis=1)
             aeq(expect, t)
 
         # take samples not in original order
         indices = [2, 0]
         for t in g.take(indices, axis=1), np.take(g, indices, axis=1):
-            eq(g.n_variants, t.n_variants)
-            eq(2, t.n_samples)
-            eq(g.n_alleles, t.n_alleles)
+            assert g.n_variants == t.n_variants
+            assert 2 == t.n_samples
+            assert g.n_alleles == t.n_alleles
             expect = np.array(diploid_genotype_ac_data).take(indices, axis=1)
             aeq(expect, t)
 
@@ -1691,18 +1689,18 @@ class GenotypeAlleleCountsArrayInterface(object):
         # compress variants
         condition = [True, False, True, False, False]
         for t in g.compress(condition, axis=0), np.compress(condition, g, axis=0):
-            eq(2, t.n_variants)
-            eq(g.n_samples, t.n_samples)
-            eq(g.n_alleles, t.n_alleles)
+            assert 2 == t.n_variants
+            assert g.n_samples == t.n_samples
+            assert g.n_alleles == t.n_alleles
             expect = np.array(diploid_genotype_ac_data).compress(condition, axis=0)
             aeq(expect, t)
 
         # compress samples
         condition = [True, False, True]
         for t in g.compress(condition, axis=1), np.compress(condition, g, axis=1):
-            eq(g.n_variants, t.n_variants)
-            eq(2, t.n_samples)
-            eq(g.n_alleles, t.n_alleles)
+            assert g.n_variants == t.n_variants
+            assert 2 == t.n_samples
+            assert g.n_alleles == t.n_alleles
             expect = np.array(diploid_genotype_ac_data).compress(condition, axis=1)
             aeq(expect, t)
 
@@ -1912,8 +1910,8 @@ class GenotypeAlleleCountsArrayInterface(object):
                            [0, 0, 0]])
         actual = g.count_alleles()
         aeq(expect, actual)
-        eq(5, actual.n_variants)
-        eq(3, actual.n_alleles)
+        assert 5 == actual.n_variants
+        assert 3 == actual.n_alleles
 
         # polyploid
         g = self.setup_instance(triploid_genotype_ac_data)
@@ -1923,8 +1921,8 @@ class GenotypeAlleleCountsArrayInterface(object):
                            [0, 0, 0]])
         actual = g.count_alleles()
         aeq(expect, actual)
-        eq(4, actual.n_variants)
-        eq(3, actual.n_alleles)
+        assert 4 == actual.n_variants
+        assert 3 == actual.n_alleles
 
     def test_count_alleles_subpop(self):
         g = self.setup_instance(diploid_genotype_ac_data)
@@ -1940,8 +1938,8 @@ class GenotypeAlleleCountsArrayInterface(object):
                        np.array([0, 2], dtype='u2')):
             actual = g.count_alleles(subpop=subpop)
             aeq(expect, actual)
-            eq(5, actual.n_variants)
-            eq(3, actual.n_alleles)
+            assert 5 == actual.n_variants
+            assert 3 == actual.n_alleles
 
 
 class SortedIndexInterface(object):
@@ -1956,15 +1954,15 @@ class SortedIndexInterface(object):
         # valid data (unique)
         data = [1, 4, 5, 7, 12]
         pos = self.setup_instance(data)
-        eq(1, pos.ndim)
-        eq(5, len(pos))
+        assert 1 == pos.ndim
+        assert 5 == len(pos)
         assert pos.is_unique
 
         # valid data (non-unique)
         data = [1, 4, 5, 5, 7, 12]
         pos = self.setup_instance(data)
-        eq(1, pos.ndim)
-        eq(6, len(pos))
+        assert 1 == pos.ndim
+        assert 6 == len(pos)
         assert not pos.is_unique
 
     def test_array_like(self):
@@ -1982,26 +1980,26 @@ class SortedIndexInterface(object):
         # row slice
         s = pos[1:]
         aeq(data[1:], s)
-        eq(5, len(s))
+        assert 5 == len(s)
         assert not s.is_unique
 
         # row slice
         s = pos[3:]
         aeq(data[3:], s)
-        eq(3, len(s))
+        assert 3 == len(s)
         assert s.is_unique
 
         # index
         s = pos[0]
-        eq(data[0], s)
+        assert data[0] == s
 
     def test_locate_key(self):
         pos = self.setup_instance([3, 6, 6, 11])
         f = pos.locate_key
-        eq(0, f(3))
-        eq(3, f(11))
-        eq(slice(1, 3), f(6))
-        with assert_raises(KeyError):
+        assert 0 == f(3)
+        assert 3 == f(11)
+        assert slice(1, 3) == f(6)
+        with pytest.raises(KeyError):
             f(2)
 
     def test_locate_keys(self):
@@ -2011,17 +2009,17 @@ class SortedIndexInterface(object):
         # all found
         expect = [False, True, True, False, True, False]
         actual = f([6, 20])
-        assert_not_is_instance(actual, self._class)
+        assert not isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found, lax
         expect = [False, True, True, False, True, False]
         actual = f([2, 6, 17, 20, 37], strict=False)
-        assert_not_is_instance(actual, self._class)
+        assert not isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found, strict
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f([2, 6, 17, 20, 37])
 
     def test_locate_intersection(self):
@@ -2030,8 +2028,8 @@ class SortedIndexInterface(object):
         expect_loc1 = np.array([False, True, False, True, False])
         expect_loc2 = np.array([False, True, True, False])
         loc1, loc2 = pos1.locate_intersection(pos2)
-        assert_not_is_instance(loc1, self._class)
-        assert_not_is_instance(loc2, self._class)
+        assert not isinstance(loc1, self._class)
+        assert not isinstance(loc2, self._class)
         aeq(expect_loc1, loc1)
         aeq(expect_loc2, loc2)
 
@@ -2040,27 +2038,27 @@ class SortedIndexInterface(object):
         pos2 = self.setup_instance([4, 6, 20, 39])
         expect = self.setup_instance([6, 20])
         actual = pos1.intersect(pos2)
-        assert_is_instance(actual, self._class)
+        assert isinstance(actual, self._class)
         aeq(expect, actual)
 
     def test_locate_range(self):
         pos = self.setup_instance([3, 6, 11, 20, 35])
         f = pos.locate_range
-        eq(slice(0, 5), f(2, 37))
-        eq(slice(0, 5), f(3, 35))
-        eq(slice(1, 5), f(4, 37))
-        eq(slice(1, 5), f(start=4))
-        eq(slice(0, 4), f(2, 32))
-        eq(slice(0, 4), f(stop=32))
-        eq(slice(1, 4), f(4, 32))
-        eq(slice(1, 3), f(4, 19))
-        eq(slice(2, 4), f(7, 32))
-        eq(slice(2, 3), f(7, 19))
-        with assert_raises(KeyError):
+        assert slice(0, 5) == f(2, 37)
+        assert slice(0, 5) == f(3, 35)
+        assert slice(1, 5) == f(4, 37)
+        assert slice(1, 5) == f(start=4)
+        assert slice(0, 4) == f(2, 32)
+        assert slice(0, 4) == f(stop=32)
+        assert slice(1, 4) == f(4, 32)
+        assert slice(1, 3) == f(4, 19)
+        assert slice(2, 4) == f(7, 32)
+        assert slice(2, 3) == f(7, 19)
+        with pytest.raises(KeyError):
             f(17, 19)
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(0, 2)
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(36, 2000)
 
     def test_intersect_range(self):
@@ -2087,17 +2085,17 @@ class SortedIndexInterface(object):
         ranges = np.array([[6, 12], [31, 35]])
         expect = np.array([False, True, True, False, True])
         actual = pos.locate_ranges(ranges[:, 0], ranges[:, 1])
-        assert_not_is_instance(actual, self._class)
+        assert not isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found, lax
         ranges = np.array([[0, 2], [6, 12], [14, 19], [31, 35], [100, 120]])
         actual = pos.locate_ranges(ranges[:, 0], ranges[:, 1], strict=False)
-        assert_not_is_instance(actual, self._class)
+        assert not isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found, strict
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             pos.locate_ranges(ranges[:, 0], ranges[:, 1])
 
     def test_locate_intersection_ranges(self):
@@ -2109,8 +2107,8 @@ class SortedIndexInterface(object):
         expect_loc1 = np.array([False, True, True, False, True])
         expect_loc2 = np.array([True, True])
         actual_loc1, actual_loc2 = f(ranges[:, 0], ranges[:, 1])
-        assert_not_is_instance(actual_loc1, self._class)
-        assert_not_is_instance(actual_loc2, self._class)
+        assert not isinstance(actual_loc1, self._class)
+        assert not isinstance(actual_loc2, self._class)
         aeq(expect_loc1, actual_loc1)
         aeq(expect_loc2, actual_loc2)
 
@@ -2119,8 +2117,8 @@ class SortedIndexInterface(object):
         expect_loc1 = np.array([False, True, True, False, True])
         expect_loc2 = np.array([False, True, False, True, False])
         actual_loc1, actual_loc2 = f(ranges[:, 0], ranges[:, 1])
-        assert_not_is_instance(actual_loc1, self._class)
-        assert_not_is_instance(actual_loc2, self._class)
+        assert not isinstance(actual_loc1, self._class)
+        assert not isinstance(actual_loc2, self._class)
         aeq(expect_loc1, actual_loc1)
         aeq(expect_loc2, actual_loc2)
 
@@ -2132,14 +2130,14 @@ class SortedIndexInterface(object):
         ranges = np.array([[6, 12], [31, 35]])
         expect = [6, 11, 35]
         actual = f(ranges[:, 0], ranges[:, 1])
-        assert_is_instance(actual, self._class)
+        assert isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found
         ranges = np.array([[0, 2], [6, 12], [14, 19], [31, 35], [100, 120]])
         expect = [6, 11, 35]
         actual = f(ranges[:, 0], ranges[:, 1])
-        assert_is_instance(actual, self._class)
+        assert isinstance(actual, self._class)
         aeq(expect, actual)
 
 
@@ -2153,8 +2151,8 @@ class UniqueIndexInterface(object):
     def test_properties(self):
         data = ['A', 'C', 'B', 'F']
         lbl = self.setup_instance(data)
-        eq(1, lbl.ndim)
-        eq(4, len(lbl))
+        assert 1 == lbl.ndim
+        assert 4 == len(lbl)
 
     def test_array_like(self):
         data = ['A', 'C', 'B', 'F']
@@ -2170,18 +2168,18 @@ class UniqueIndexInterface(object):
         # row slice
         s = lbl[1:]
         aeq(data[1:], s)
-        eq(3, len(s))
+        assert 3 == len(s)
 
         # index
         s = lbl[0]
-        eq(data[0], s)
+        assert data[0] == s
 
     def test_locate_key(self):
         lbl = self.setup_instance(['A', 'C', 'B', 'F'])
         f = lbl.locate_key
-        eq(0, f('A'))
-        eq(2, f('B'))
-        with assert_raises(KeyError):
+        assert 0 == f('A')
+        assert 2 == f('B')
+        with pytest.raises(KeyError):
             f('D')
 
     def test_locate_keys(self):
@@ -2191,17 +2189,17 @@ class UniqueIndexInterface(object):
         # all found
         expect = [False, True, False, True]
         actual = f(['F', 'C'])
-        assert_not_is_instance(actual, self._class)
+        assert not isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found, lax
         expect = [False, True, False, True]
         actual = f(['X', 'F', 'G', 'C', 'Z'], strict=False)
-        assert_not_is_instance(actual, self._class)
+        assert not isinstance(actual, self._class)
         aeq(expect, actual)
 
         # not all found, strict
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(['X', 'F', 'G', 'C', 'Z'])
 
     def test_locate_intersection(self):
@@ -2210,8 +2208,8 @@ class UniqueIndexInterface(object):
         expect_loc1 = np.array([False, True, False, True])
         expect_loc2 = np.array([False, True, False, True, False])
         loc1, loc2 = lbl1.locate_intersection(lbl2)
-        assert_not_is_instance(loc1, self._class)
-        assert_not_is_instance(loc2, self._class)
+        assert not isinstance(loc1, self._class)
+        assert not isinstance(loc2, self._class)
         aeq(expect_loc1, loc1)
         aeq(expect_loc2, loc2)
 
@@ -2239,20 +2237,20 @@ class SortedMultiIndexInterface(object):
         chrom = [0, 0, 1, 1, 1, 2]
         pos = [1, 4, 2, 5, 5, 3]
         idx = self.setup_instance(chrom, pos)
-        eq(6, len(idx))
+        assert 6 == len(idx)
 
     def test_locate_key(self):
         chrom = [0, 0, 1, 1, 1, 2]
         pos = [1, 4, 2, 5, 5, 3]
         idx = self.setup_instance(chrom, pos)
         f = idx.locate_key
-        eq(slice(0, 2), f(0))
-        eq(0, f(0, 1))
-        eq(2, f(1, 2))
-        eq(slice(3, 5), f(1, 5))
-        with assert_raises(KeyError):
+        assert slice(0, 2) == f(0)
+        assert 0 == f(0, 1)
+        assert 2 == f(1, 2)
+        assert slice(3, 5) == f(1, 5)
+        with pytest.raises(KeyError):
             f(2, 4)
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(3, 4)
 
     def test_locate_range(self):
@@ -2261,21 +2259,21 @@ class SortedMultiIndexInterface(object):
         idx = self.setup_instance(chrom, pos)
         f = idx.locate_range
 
-        eq(slice(0, 2), f(0))
-        eq(slice(2, 5), f(1))
-        eq(slice(5, 6), f(2))
-        eq(slice(0, 2), f(0, 1, 5))
-        eq(slice(0, 1), f(0, 1, 3))
-        eq(slice(2, 5), f(1, 1, 5))
-        eq(slice(2, 3), f(1, 1, 4))
-        eq(slice(5, 6), f(2, 2, 6))
-        with assert_raises(KeyError):
+        assert slice(0, 2) == f(0)
+        assert slice(2, 5) == f(1)
+        assert slice(5, 6) == f(2)
+        assert slice(0, 2) == f(0, 1, 5)
+        assert slice(0, 1) == f(0, 1, 3)
+        assert slice(2, 5) == f(1, 1, 5)
+        assert slice(2, 3) == f(1, 1, 4)
+        assert slice(5, 6) == f(2, 2, 6)
+        with pytest.raises(KeyError):
             f(0, 17, 19)
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(1, 3, 4)
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(2, 1, 2)
-        with assert_raises(KeyError):
+        with pytest.raises(KeyError):
             f(3, 2, 4)
 
 
@@ -2289,9 +2287,9 @@ class VariantTableInterface(object):
     def test_properties(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
-        eq(5, len(vt))
-        eq(5, vt.n_variants)
-        assert_sequence_equal(variant_table_names, vt.names)
+        assert 5 == len(vt)
+        assert 5 == vt.n_variants
+        assert tuple(variant_table_names) == tuple(vt.names)
 
     def test_array_like(self):
         # Test that an instance is array-like, in that it can be used as
@@ -2309,14 +2307,14 @@ class VariantTableInterface(object):
 
         # total slice
         s = vt[:]
-        eq(5, s.n_variants)
-        eq(variant_table_names, s.names)
+        assert 5 == s.n_variants
+        assert variant_table_names == s.names
         aeq(a, s)
 
         # row slice
         s = vt[1:]
-        eq(4, s.n_variants)
-        eq(variant_table_names, s.names)
+        assert 4 == s.n_variants
+        assert variant_table_names == s.names
         aeq(a[1:], s)
 
         # row index
@@ -2324,9 +2322,9 @@ class VariantTableInterface(object):
         # compare item by item
         for x, y in zip(variant_table_data[1], s):
             if np.isscalar(x):
-                assert_almost_equal(x, y)
+                assert x == y
             else:
-                eq(tuple(x), tuple(y))
+                assert tuple(x) == tuple(y)
 
         # column access
         s = vt['CHROM']
@@ -2334,8 +2332,8 @@ class VariantTableInterface(object):
 
         # multi-column access
         s = vt[['CHROM', 'POS']]
-        eq(5, s.n_variants)
-        assert_sequence_equal(('CHROM', 'POS'), s.names)
+        assert 5 == s.n_variants
+        assert ('CHROM', 'POS') == tuple(s.names)
         aeq(a[['CHROM', 'POS']], s)
 
     def test_take(self):
@@ -2345,8 +2343,8 @@ class VariantTableInterface(object):
         for t in vt.take(indices), np.take(vt, indices):
             expect = a.take(indices)
             aeq(expect, t)
-            eq(2, t.n_variants)
-            eq(variant_table_names, t.names)
+            assert 2 == t.n_variants
+            assert tuple(variant_table_names) == tuple(t.names)
 
     def test_compress(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2355,13 +2353,13 @@ class VariantTableInterface(object):
         t = vt.compress(condition)
         expect = a.compress(condition)
         aeq(expect, t)
-        eq(2, t.n_variants)
-        assert_sequence_equal(variant_table_names, t.names)
+        assert 2 == t.n_variants
+        assert tuple(variant_table_names) == tuple(t.names)
         t = np.compress(condition, vt)
         expect = a.compress(condition)
         aeq(expect, t)
-        eq(2, t.shape[0])
-        assert_sequence_equal(variant_table_names, t.dtype.names)
+        assert 2 == t.shape[0]
+        assert variant_table_names == t.dtype.names
 
     def test_eval(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
@@ -2386,14 +2384,14 @@ class VariantTableInterface(object):
 
         # multi chromosome/contig
         vt = self.setup_instance(a, index=('CHROM', 'POS'))
-        eq(slice(0, 2), vt.index.locate_key(b'chr1'))
-        eq(1, vt.index.locate_key(b'chr1', 7))
-        eq(slice(2, 4), vt.index.locate_range(b'chr2', 3, 9))
+        assert slice(0, 2) == vt.index.locate_key(b'chr1')
+        assert 1 == vt.index.locate_key(b'chr1', 7)
+        assert slice(2, 4) == vt.index.locate_range(b'chr2', 3, 9)
 
         # single chromosome/contig index
         vt = self.setup_instance(a[2:4][['POS', 'DP', 'QD']], index='POS')
-        eq(0, vt.index.locate_key(3))
-        eq(slice(0, 2), vt.index.locate_range(3, 9))
+        assert 0 == vt.index.locate_key(3)
+        assert slice(0, 2) == vt.index.locate_range(3, 9)
 
     def test_to_vcf(self):
 
@@ -2440,7 +2438,7 @@ class VariantTableInterface(object):
         vt = self.setup_instance(a)
 
         # check dtype
-        eq(a.dtype, vt.dtype)
+        assert a.dtype == vt.dtype
 
         # expectation
         expect_vcf = """##fileformat=VCFv4.1
@@ -2477,7 +2475,7 @@ chr3\t1\te\tN\tX\t5.6\tPASS\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
         actual_vcf = open(f.name).read()
         # compare line-by-line
         for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
-            eq(l1, l2)
+            assert l1 == l2
 
     def test_to_vcf_no_filters(self):
 
@@ -2519,7 +2517,7 @@ chr3\t1\te\tN\tX\t5.6\tPASS\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
         vt = self.setup_instance(a)
 
         # check dtype
-        eq(a.dtype, vt.dtype)
+        assert a.dtype == vt.dtype
 
         # expectation
         expect_vcf = """##fileformat=VCFv4.1
@@ -2554,7 +2552,7 @@ chr3\t1\te\tN\tX\t5.6\t.\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
         actual_vcf = open(f.name).read()
         # compare line-by-line
         for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
-            eq(l1, l2)
+            assert l1 == l2
 
     def test_to_vcf_no_info(self):
 
@@ -2586,7 +2584,7 @@ chr3\t1\te\tN\tX\t5.6\t.\tDP=56;QD=56.7;ac=9;flg;xx=9.0,9.9
         vt = self.setup_instance(a)
 
         # check dtype
-        eq(a.dtype, vt.dtype)
+        assert a.dtype == vt.dtype
 
         # expectation
         expect_vcf = """##fileformat=VCFv4.1
@@ -2612,7 +2610,7 @@ chr3\t1\te\tN\tX\t5.6\t.\t.
         actual_vcf = open(f.name).read()
         # compare line-by-line
         for l1, l2 in zip(expect_vcf.split('\n'), actual_vcf.split('\n')):
-            eq(l1, l2)
+            assert l1 == l2
 
 
 class FeatureTableInterface(object):
@@ -2625,9 +2623,9 @@ class FeatureTableInterface(object):
     def test_properties(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
         ft = self.setup_instance(a)
-        eq(6, len(ft))
-        eq(6, ft.n_features)
-        assert_sequence_equal(feature_table_names, ft.names)
+        assert 6 == len(ft)
+        assert 6 == ft.n_features
+        assert feature_table_names == ft.names
 
     def test_get_item(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
@@ -2635,21 +2633,21 @@ class FeatureTableInterface(object):
 
         # total slice
         s = ft[:]
-        eq(6, s.n_features)
-        eq(feature_table_names, s.names)
+        assert 6 == s.n_features
+        assert feature_table_names == s.names
         aeq(a, s)
 
         # row slice
         s = ft[1:]
-        eq(5, s.n_features)
-        eq(feature_table_names, s.names)
+        assert 5 == s.n_features
+        assert feature_table_names == s.names
         aeq(a[1:], s)
 
         # row index
         s = ft[1]
         # compare item by item
         for x, y in zip(feature_table_data[1], s):
-            eq(x, y)
+            assert x == y
 
         # column access
         s = ft['seqid']
@@ -2657,8 +2655,8 @@ class FeatureTableInterface(object):
 
         # multi-column access
         s = ft[['seqid', 'start', 'end']]
-        eq(6, s.n_features)
-        assert_sequence_equal(('seqid', 'start', 'end'), s.names)
+        assert 6 == s.n_features
+        assert ('seqid', 'start', 'end') == s.names
         aeq(a[['seqid', 'start', 'end']], s)
 
     def test_take(self):
@@ -2668,13 +2666,13 @@ class FeatureTableInterface(object):
         t = ft.take(indices)
         expect = a.take(indices)
         aeq(expect, t)
-        eq(2, t.n_features)
-        assert_sequence_equal(feature_table_names, t.names)
+        assert 2 == t.n_features
+        assert feature_table_names == t.names
         t = np.take(ft, indices)
         expect = a.take(indices)
         aeq(expect, t)
-        eq(2, t.shape[0])
-        assert_sequence_equal(feature_table_names, t.dtype.names)
+        assert 2 == t.shape[0]
+        assert feature_table_names == t.dtype.names
 
     def test_compress(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
@@ -2683,13 +2681,13 @@ class FeatureTableInterface(object):
         t = ft.compress(condition)
         expect = a.compress(condition)
         aeq(expect, t)
-        eq(2, t.n_features)
-        assert_sequence_equal(feature_table_names, t.names)
+        assert 2 == t.n_features
+        assert feature_table_names == t.names
         t = np.compress(condition, ft)
         expect = a.compress(condition)
         aeq(expect, t)
-        eq(2, t.shape[0])
-        assert_sequence_equal(feature_table_names, t.dtype.names)
+        assert 2 == t.shape[0]
+        assert feature_table_names == t.dtype.names
 
     def test_eval(self):
         a = np.rec.array(feature_table_data, dtype=feature_table_dtype)
@@ -2710,15 +2708,17 @@ class FeatureTableInterface(object):
     def test_from_gff3(self):
         fn = os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'sample.gff')
         ft = self._class.from_gff3(fn)
-        eq(177, len(ft))
-        eq(np.dtype(object), ft.seqid.dtype)
+        assert 177 == len(ft)
+        assert np.dtype(object) == ft.seqid.dtype
 
     def test_from_gff3_region(self):
+        if sys.platform == 'win32':
+            pytest.skip('tabix not available on windows')
         fn = os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'sample.sorted.gff.gz')
         ft = self._class.from_gff3(fn, region='apidb|MAL1')
-        eq(44, len(ft))
+        assert 44 == len(ft)
         ft = self._class.from_gff3(fn, region='apidb|MAL1:42000-50000')
-        eq(7, len(ft))
+        assert 7 == len(ft)
         # should be empty region
         assert None is self._class.from_gff3(fn, region='foo')
 

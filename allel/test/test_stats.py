@@ -6,11 +6,11 @@ import unittest
 
 
 import numpy as np
-from nose.tools import assert_raises, eq_ as eq
-from allel.test.tools import assert_array_equal as aeq, assert_array_almost_equal
+import pytest
 
 
 import allel
+from allel.test.tools import assert_array_equal as aeq, assert_array_almost_equal
 from allel.util import ignore_invalid
 from allel import GenotypeArray, HaplotypeArray, SortedIndex, AlleleCountsArray
 
@@ -69,7 +69,7 @@ class TestWindowUtilities(unittest.TestCase):
 
         # boolean array, bad length
         b = [False, True, False]
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             f(pos, b, np.count_nonzero, 10)
 
         # 2D, 4 variants, 2 samples
@@ -213,12 +213,12 @@ class TestDiversityDivergence(unittest.TestCase):
         # all variants
         e = 3 / 7
         a = sequence_divergence(pos, ac1, ac2)
-        eq(e, a)
+        assert e == a
 
         # start/stop
         e = 2 / 6
         a = sequence_divergence(pos, ac1, ac2, start=0, stop=5)
-        eq(e, a)
+        assert e == a
 
         # start/stop, an provided
         an1 = ac1.sum(axis=1)
@@ -226,7 +226,7 @@ class TestDiversityDivergence(unittest.TestCase):
         e = 2 / 6
         a = sequence_divergence(pos, ac1, ac2, start=0, stop=5, an1=an1,
                                 an2=an2)
-        eq(e, a)
+        assert e == a
 
     def test_windowed_diversity(self):
 
@@ -415,6 +415,7 @@ class TestHardyWeinberg(unittest.TestCase):
 class TestDistance(unittest.TestCase):
 
     def test_pdist(self):
+        from allel.stats.distance import pdist
         h = HaplotypeArray([[0, 0, 0, 0],
                             [0, 0, 0, 1],
                             [0, 0, 1, 1],
@@ -426,7 +427,7 @@ class TestDistance(unittest.TestCase):
                             [-1, -1, -1, -1]])
         import scipy.spatial
         d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
-        d2 = allel.stats.distance.pdist(h, 'hamming')
+        d2 = pdist(h, 'hamming')
         aeq(d1, d2)
 
     def test_pairwise_distance_multidim(self):
@@ -453,16 +454,16 @@ class TestDistance(unittest.TestCase):
 
     def test_condensed_coords(self):
         from allel import condensed_coords
-        eq(0, condensed_coords(0, 1, 2))
-        eq(0, condensed_coords(1, 0, 2))
-        eq(0, condensed_coords(0, 1, 3))
-        eq(0, condensed_coords(1, 0, 3))
-        eq(1, condensed_coords(0, 2, 3))
-        eq(1, condensed_coords(2, 0, 3))
-        eq(2, condensed_coords(1, 2, 3))
-        eq(2, condensed_coords(2, 1, 3))
+        assert 0 == condensed_coords(0, 1, 2)
+        assert 0 == condensed_coords(1, 0, 2)
+        assert 0 == condensed_coords(0, 1, 3)
+        assert 0 == condensed_coords(1, 0, 3)
+        assert 1 == condensed_coords(0, 2, 3)
+        assert 1 == condensed_coords(2, 0, 3)
+        assert 2 == condensed_coords(1, 2, 3)
+        assert 2 == condensed_coords(2, 1, 3)
 
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             condensed_coords(0, 0, 1)
             condensed_coords(0, 1, 1)
             condensed_coords(1, 0, 1)
@@ -481,28 +482,28 @@ class TestDistance(unittest.TestCase):
         n = 3
         expect = [0]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [0, 2]
         n = 3
         expect = [1]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [1, 2]
         n = 3
         expect = [2]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [0, 1, 3]
         n = 4
         expect = [0, 2, 4]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [0, 0]
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             condensed_coords_within(pop, n)
 
     def test_condensed_coords_between(self):
@@ -513,16 +514,16 @@ class TestDistance(unittest.TestCase):
         n = 4
         expect = [1, 2, 3, 4]
         actual = condensed_coords_between(pop1, pop2, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop1 = [0, 2]
         pop2 = [1, 3]
         n = 4
         expect = [0, 2, 3, 5]
         actual = condensed_coords_between(pop1, pop2, n)
-        eq(expect, actual)
+        assert expect == actual
 
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             condensed_coords_between(pop1, pop1, n)
 
 
@@ -534,13 +535,13 @@ class TestLinkageDisequilibrium(unittest.TestCase):
               [0, 1, 2]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2],
               [2, 1, 0]]
         expect = -1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 0, 0],
               [1, 1, 1]]
@@ -551,25 +552,25 @@ class TestLinkageDisequilibrium(unittest.TestCase):
               [0, 1, 1, 0]]
         expect = 0
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2, -1],
               [0, 1, 2, 2]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2, 2],
               [0, 1, 2, -1]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2],
               [0, 1, -1]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 2],
               [2, 0],
@@ -592,13 +593,13 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         gnb = [[0, 1, 2]]
         expect = 1.
         actual = allel.rogers_huff_r_between(gna, gnb)
-        eq(expect, actual)
+        assert expect == actual
 
         gna = [[0, 1, 2]]
         gnb = [[2, 1, 0]]
         expect = -1.
         actual = allel.rogers_huff_r_between(gna, gnb)
-        eq(expect, actual)
+        assert expect == actual
 
         gna = [[0, 0, 0]]
         gnb = [[1, 1, 1]]
