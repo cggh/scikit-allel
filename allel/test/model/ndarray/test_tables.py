@@ -5,12 +5,11 @@ from __future__ import absolute_import, print_function, division
 # third-party imports
 import numpy as np
 import unittest
-from nose.tools import eq_ as eq, assert_raises, assert_is_instance, \
-    assert_not_is_instance
-from allel.test.tools import assert_array_equal as aeq
+import pytest
 
 
 # internal imports
+from allel.test.tools import assert_array_equal as aeq
 from allel import VariantTable, FeatureTable
 from allel.test.model.test_api import VariantTableInterface, variant_table_data, \
     variant_table_dtype, FeatureTableInterface, feature_table_data, feature_table_dtype
@@ -27,7 +26,7 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             VariantTable()
 
@@ -36,19 +35,19 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
 
         # row slice
         s = vt[1:]
-        assert_is_instance(s, VariantTable)
+        assert isinstance(s, VariantTable)
 
         # row index
         s = vt[0]
-        assert_is_instance(s, np.record)
-        assert_not_is_instance(s, VariantTable)
+        assert isinstance(s, np.record)
+        assert not isinstance(s, VariantTable)
 
         # col access
         s = vt['CHROM']
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, VariantTable)
+        assert isinstance(s, np.ndarray)
+        assert not isinstance(s, VariantTable)
         s = vt[['CHROM', 'POS']]
-        assert_is_instance(s, VariantTable)
+        assert isinstance(s, VariantTable)
 
     def test_take(self):
         a = np.rec.array(variant_table_data,
@@ -57,7 +56,7 @@ class VariantTableTests(VariantTableInterface, unittest.TestCase):
         # take variants not in original order
         indices = [2, 0]
         t = vt.take(indices)
-        eq(2, t.n_variants)
+        assert 2 == t.n_variants
         expect = a.take(indices)
         aeq(expect, t)
 
@@ -73,7 +72,7 @@ class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             FeatureTable()
 
@@ -82,16 +81,16 @@ class FeatureTableTests(FeatureTableInterface, unittest.TestCase):
 
         # row slice
         s = ft[1:]
-        assert_is_instance(s, FeatureTable)
+        assert isinstance(s, FeatureTable)
 
         # row index
         s = ft[0]
-        assert_is_instance(s, np.record)
-        assert_not_is_instance(s, FeatureTable)
+        assert isinstance(s, np.record)
+        assert not isinstance(s, FeatureTable)
 
         # col access
         s = ft['seqid']
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, FeatureTable)
+        assert isinstance(s, np.ndarray)
+        assert not isinstance(s, FeatureTable)
         s = ft[['seqid', 'start', 'end']]
-        assert_is_instance(s, FeatureTable)
+        assert isinstance(s, FeatureTable)

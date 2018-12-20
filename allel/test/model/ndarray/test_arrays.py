@@ -5,11 +5,11 @@ from __future__ import absolute_import, print_function, division
 # third-party imports
 import numpy as np
 import unittest
-from nose.tools import eq_ as eq, assert_raises, assert_is_instance, \
-    assert_not_is_instance
-from allel.test.tools import assert_array_equal as aeq
+import pytest
+
 
 # internal imports
+from allel.test.tools import assert_array_equal as aeq
 from allel import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector, \
     GenotypeAlleleCountsArray, GenotypeAlleleCountsVector
 from allel.test.model.test_api import GenotypeArrayInterface, HaplotypeArrayInterface, \
@@ -29,39 +29,39 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             GenotypeArray()
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeArray(data)
 
         # data has wrong dtype
         data = [4., 5., 3.7]
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeArray(data)
 
         # data has wrong dimensions
         data = [1, 2, 3]
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeArray(data)
 
         # data has wrong dimensions
         data = [[1, 2], [3, 4]]  # use HaplotypeArray instead
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeArray(data)
 
         # diploid data (typed)
         g = GenotypeArray(diploid_genotype_data, dtype='i1')
         aeq(diploid_genotype_data, g)
-        eq(np.int8, g.dtype)
+        assert np.int8 == g.dtype
 
         # polyploid data (typed)
         g = GenotypeArray(triploid_genotype_data, dtype='i1')
         aeq(triploid_genotype_data, g)
-        eq(np.int8, g.dtype)
+        assert np.int8 == g.dtype
 
     def test_slice_types(self):
 
@@ -69,31 +69,31 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
         # row slice
         s = g[1:]
-        assert_is_instance(s, GenotypeArray)
+        assert isinstance(s, GenotypeArray)
 
         # col slice
         s = g[:, 1:]
-        assert_is_instance(s, GenotypeArray)
+        assert isinstance(s, GenotypeArray)
 
         # row index
         s = g[0]
-        assert_is_instance(s, GenotypeVector)
-        assert_not_is_instance(s, GenotypeArray)
+        assert isinstance(s, GenotypeVector)
+        assert not isinstance(s, GenotypeArray)
 
         # col index
         s = g[:, 0]
-        assert_is_instance(s, GenotypeVector)
-        assert_not_is_instance(s, GenotypeArray)
+        assert isinstance(s, GenotypeVector)
+        assert not isinstance(s, GenotypeArray)
 
         # ploidy index
         s = g[:, :, 0]
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, GenotypeArray)
+        assert isinstance(s, np.ndarray)
+        assert not isinstance(s, GenotypeArray)
 
         # item
         s = g[0, 0, 0]
-        assert_is_instance(s, np.int8)
-        assert_not_is_instance(s, GenotypeArray)
+        assert isinstance(s, np.int8)
+        assert not isinstance(s, GenotypeArray)
 
     def test_haploidify_samples(self):
 
@@ -102,10 +102,10 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
                            [[4, 5], [6, 7]],
                            [[8, 9], [10, 11]]], dtype='i1')
         h = g.haploidify_samples()
-        eq(2, h.ndim)
-        eq(3, h.n_variants)
-        eq(2, h.n_haplotypes)
-        eq(np.int8, h.dtype)
+        assert 2 == h.ndim
+        assert 3 == h.n_variants
+        assert 2 == h.n_haplotypes
+        assert np.int8 == h.dtype
         for i in range(g.n_variants):
             for j in range(g.n_samples):
                 self.assertIn(h[i, j], set(g[i, j]))
@@ -115,10 +115,10 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
                            [[6, 7, 8], [9, 10, 11]],
                            [[12, 13, 14], [15, 16, 17]]], dtype='i1')
         h = g.haploidify_samples()
-        eq(2, h.ndim)
-        eq(3, h.n_variants)
-        eq(2, h.n_haplotypes)
-        eq(np.int8, h.dtype)
+        assert 2 == h.ndim
+        assert 3 == h.n_variants
+        assert 2 == h.n_haplotypes
+        assert np.int8 == h.dtype
         for i in range(g.n_variants):
             for j in range(g.n_samples):
                 self.assertIn(h[i, j], set(g[i, j]))
@@ -128,9 +128,9 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
         # take variants not in original order
         indices = [2, 0]
         t = g.take(indices, axis=0)
-        eq(2, t.n_variants)
-        eq(g.n_samples, t.n_samples)
-        eq(g.ploidy, t.ploidy)
+        assert 2 == t.n_variants
+        assert g.n_samples == t.n_samples
+        assert g.ploidy == t.ploidy
         expect = np.array(diploid_genotype_data).take(indices, axis=0)
         aeq(expect, t)
 
@@ -182,7 +182,7 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         # haploid data (typed)
         h = HaplotypeArray(haplotype_data, dtype='i1')
         aeq(haplotype_data, h)
-        eq(np.int8, h.dtype)
+        assert np.int8 == h.dtype
 
     def test_slice_types(self):
 
@@ -190,26 +190,26 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
         # row slice
         s = h[1:]
-        assert_is_instance(s, HaplotypeArray)
+        assert isinstance(s, HaplotypeArray)
 
         # col slice
         s = h[:, 1:]
-        assert_is_instance(s, HaplotypeArray)
+        assert isinstance(s, HaplotypeArray)
 
         # row index
         s = h[0]
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, HaplotypeArray)
+        assert isinstance(s, np.ndarray)
+        assert not isinstance(s, HaplotypeArray)
 
         # col index
         s = h[:, 0]
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, HaplotypeArray)
+        assert isinstance(s, np.ndarray)
+        assert not isinstance(s, HaplotypeArray)
 
         # item
         s = h[0, 0]
-        assert_is_instance(s, np.int8)
-        assert_not_is_instance(s, HaplotypeArray)
+        assert isinstance(s, np.int8)
+        assert not isinstance(s, HaplotypeArray)
 
 
 # noinspection PyMethodMayBeStatic
@@ -223,68 +223,68 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             AlleleCountsArray()
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsArray(data)
 
         # data has wrong dtype
         data = [4., 5., 3.7]
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsArray(data)
 
         # data has wrong dimensions
         data = [1, 2, 3]
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsArray(data)
 
         # data has wrong dimensions
         data = diploid_genotype_data
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsArray(data)
 
         # valid data (typed)
         ac = AlleleCountsArray(allele_counts_data, dtype='u1')
         aeq(allele_counts_data, ac)
-        eq(np.uint8, ac.dtype)
+        assert np.uint8 == ac.dtype
 
     def test_slice_types(self):
         ac = AlleleCountsArray(allele_counts_data, dtype='u1')
 
         # total slice
         s = ac[:]
-        assert_is_instance(s, AlleleCountsArray)
+        assert isinstance(s, AlleleCountsArray)
 
         # row slice
         s = ac[1:]
-        assert_is_instance(s, AlleleCountsArray)
+        assert isinstance(s, AlleleCountsArray)
 
         # col slice
         s = ac[:, 1:]
-        assert_is_instance(s, np.ndarray)
+        assert isinstance(s, np.ndarray)
 
         # row index
         s = ac[0]
-        assert_is_instance(s, np.ndarray)
+        assert isinstance(s, np.ndarray)
 
         # col index
         s = ac[:, 0]
-        assert_is_instance(s, np.ndarray)
+        assert isinstance(s, np.ndarray)
 
         # item
         s = ac[0, 0]
-        assert_is_instance(s, np.uint8)
+        assert isinstance(s, np.uint8)
 
     def test_reduce_types(self):
         ac = AlleleCountsArray(allele_counts_data, dtype='u1')
 
         for m in 'sum', 'max', 'argmax':
             x = getattr(ac, m)(axis=1)
-            assert_is_instance(x, np.ndarray)
+            assert isinstance(x, np.ndarray)
 
 
 # noinspection PyMethodMayBeStatic
@@ -294,58 +294,58 @@ class GenotypeVectorTests(unittest.TestCase):
 
         # diploid row
         gv = GenotypeVector(diploid_genotype_data[0])
-        eq(2, gv.ndim)
-        eq((3, 2), gv.shape)
-        eq(np.dtype(int), gv.dtype)
-        eq(3, gv.n_calls)
-        eq(2, gv.ploidy)
-        eq(6, gv.n_allele_calls)
+        assert 2 == gv.ndim
+        assert (3, 2) == gv.shape
+        assert np.dtype(int) == gv.dtype
+        assert 3 == gv.n_calls
+        assert 2 == gv.ploidy
+        assert 6 == gv.n_allele_calls
 
         # diploid column
         gv = GenotypeVector(np.array(diploid_genotype_data, dtype='i1')[:, 0])
-        eq(2, gv.ndim)
-        eq((5, 2), gv.shape)
-        eq(np.dtype('i1'), gv.dtype)
-        eq(5, gv.n_calls)
-        eq(2, gv.ploidy)
-        eq(10, gv.n_allele_calls)
+        assert 2 == gv.ndim
+        assert (5, 2) == gv.shape
+        assert np.dtype('i1') == gv.dtype
+        assert 5 == gv.n_calls
+        assert 2 == gv.ploidy
+        assert 10 == gv.n_allele_calls
 
         # triploid row
         gv = GenotypeVector(triploid_genotype_data[0])
-        eq(2, gv.ndim)
-        eq((3, 3), gv.shape)
-        eq(np.dtype(int), gv.dtype)
-        eq(3, gv.n_calls)
-        eq(3, gv.ploidy)
-        eq(9, gv.n_allele_calls)
+        assert 2 == gv.ndim
+        assert (3, 3) == gv.shape
+        assert np.dtype(int) == gv.dtype
+        assert 3 == gv.n_calls
+        assert 3 == gv.ploidy
+        assert 9 == gv.n_allele_calls
 
         # triploid column
         gv = GenotypeVector(np.array(triploid_genotype_data, dtype='i1')[:, 0])
-        eq(2, gv.ndim)
-        eq((4, 3), gv.shape)
-        eq(np.dtype('i1'), gv.dtype)
-        eq(4, gv.n_calls)
-        eq(3, gv.ploidy)
-        eq(12, gv.n_allele_calls)
+        assert 2 == gv.ndim
+        assert (4, 3) == gv.shape
+        assert np.dtype('i1') == gv.dtype
+        assert 4 == gv.n_calls
+        assert 3 == gv.ploidy
+        assert 12 == gv.n_allele_calls
 
     def test_input_data(self):
 
         # ndim 3
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeVector(diploid_genotype_data)
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeVector(triploid_genotype_data)
 
         # ndim 1
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeVector([0, 1, 0, -1])
 
         # ndim 1
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeVector([0, 1, 0, -1])
 
         # wrong dtype
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeVector(np.array(diploid_genotype_data, dtype='f4')[:, 0])
 
     def test_getitem(self):
@@ -353,25 +353,25 @@ class GenotypeVectorTests(unittest.TestCase):
 
         # these should return the same type
         gs = gv[:]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
         gs = gv[:, :]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
         gs = gv[...]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
         gs = gv[0:2]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
         gs = gv[0:2, :]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
         gs = gv[np.array([True, False, True], dtype=bool)]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
         gs = gv[[0, 2]]
-        assert_is_instance(gs, GenotypeVector)
+        assert isinstance(gs, GenotypeVector)
 
         # these should return plain array
         gs = gv[:, 0]
-        assert_not_is_instance(gs, GenotypeVector)
+        assert not isinstance(gs, GenotypeVector)
         gs = gv[np.newaxis, :2, 0]  # change dimension semantics
-        assert_not_is_instance(gs, GenotypeVector)
+        assert not isinstance(gs, GenotypeVector)
 
     # __getitem__
     # to_html_str
@@ -413,39 +413,39 @@ class GenotypeAlleleCountsArrayTests(GenotypeAlleleCountsArrayInterface, unittes
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             GenotypeAlleleCountsArray()
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeAlleleCountsArray(data)
 
         # data has wrong dtype
         data = [4., 5., 3.7]
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeAlleleCountsArray(data)
 
         # data has wrong dimensions
         data = [1, 2, 3]
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeAlleleCountsArray(data)
 
         # data has wrong dimensions
         data = [[1, 2], [3, 4]]  # use HaplotypeArray instead
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeAlleleCountsArray(data)
 
         # diploid data (typed)
         g = GenotypeAlleleCountsArray(diploid_genotype_ac_data, dtype='i1')
         aeq(diploid_genotype_ac_data, g)
-        eq(np.int8, g.dtype)
+        assert np.int8 == g.dtype
 
         # polyploid data (typed)
         g = GenotypeAlleleCountsArray(triploid_genotype_ac_data, dtype='i1')
         aeq(triploid_genotype_ac_data, g)
-        eq(np.int8, g.dtype)
+        assert np.int8 == g.dtype
 
     def test_slice_types(self):
 
@@ -453,28 +453,28 @@ class GenotypeAlleleCountsArrayTests(GenotypeAlleleCountsArrayInterface, unittes
 
         # row slice
         s = g[1:]
-        assert_is_instance(s, GenotypeAlleleCountsArray)
+        assert isinstance(s, GenotypeAlleleCountsArray)
 
         # col slice
         s = g[:, 1:]
-        assert_is_instance(s, GenotypeAlleleCountsArray)
+        assert isinstance(s, GenotypeAlleleCountsArray)
 
         # row index
         s = g[0]
-        assert_is_instance(s, GenotypeAlleleCountsVector)
-        assert_not_is_instance(s, GenotypeAlleleCountsArray)
+        assert isinstance(s, GenotypeAlleleCountsVector)
+        assert not isinstance(s, GenotypeAlleleCountsArray)
 
         # col index
         s = g[:, 0]
-        assert_is_instance(s, GenotypeAlleleCountsVector)
-        assert_not_is_instance(s, GenotypeAlleleCountsArray)
+        assert isinstance(s, GenotypeAlleleCountsVector)
+        assert not isinstance(s, GenotypeAlleleCountsArray)
 
         # ploidy index
         s = g[:, :, 0]
-        assert_is_instance(s, np.ndarray)
-        assert_not_is_instance(s, GenotypeAlleleCountsArray)
+        assert isinstance(s, np.ndarray)
+        assert not isinstance(s, GenotypeAlleleCountsArray)
 
         # item
         s = g[0, 0, 0]
-        assert_is_instance(s, np.int8)
-        assert_not_is_instance(s, GenotypeAlleleCountsArray)
+        assert isinstance(s, np.int8)
+        assert not isinstance(s, GenotypeAlleleCountsArray)

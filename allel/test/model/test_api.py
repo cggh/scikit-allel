@@ -1028,7 +1028,7 @@ class HaplotypeArrayInterface(object):
         # haploid data
         h = self.setup_instance(haplotype_data)
         assert 2 == h.ndim
-        assert (4 == 3, h.shape)
+        assert (4, 3) == h.shape
         assert 4 == h.n_variants
         assert 3 == h.n_haplotypes
 

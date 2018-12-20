@@ -13,4 +13,5 @@ numexpr==2.6.8
 bcolz==1.2.1
 zarr==2.2.0
 hmmlearn==0.2.1
-pomegranate==0.10.0
+# install problems on windows, skip for now
+#pomegranate==0.10.0
