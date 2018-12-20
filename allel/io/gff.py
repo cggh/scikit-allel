@@ -29,7 +29,7 @@ def gff3_parse_attributes(attributes_string):
 
 
 def iter_gff3(path, attributes=None, region=None, score_fill=-1,
-              phase_fill=-1, attributes_fill=b'.', tabix='tabix'):
+              phase_fill=-1, attributes_fill='.', tabix='tabix'):
     """Iterate over records in a GFF3 file.
 
     Parameters
