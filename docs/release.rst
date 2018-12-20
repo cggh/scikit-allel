@@ -12,6 +12,9 @@ v1.2.0 (work in progress)
 * Added a convenience function :func:`allel.read_vcf_headers`, to obtain just
   header information from a VCF file.
 
+* Fixed pandas deprecation warning (`Summer Rae <https://github.com/summerela>`_,
+  `#228 <https://github.com/cggh/scikit-allel/pull/228>`_).
+
 * Various documentation improvements (`Peter Ralph
   <https://github.com/petrelharp>`_ and `CJ Battey
   <https://github.com/cjbattey>`_, `#229
