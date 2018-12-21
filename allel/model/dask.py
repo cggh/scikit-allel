@@ -770,14 +770,18 @@ class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
     def count_doubleton(self, allele=1):
         return self._count('is_doubleton', allele=allele)
 
-    def map_alleles(self, mapping):
-
-        def f(block, bmapping):
-            ac = AlleleCountsArray(block)
-            return ac.map_alleles(bmapping)
+    def map_alleles(self, mapping, max_allele=None):
 
         # obtain dask array
         mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
+
+        # determine output shape
+        if max_allele is None:
+            max_allele = mapping.max().compute()
+
+        def f(block, bmapping):
+            ac = AlleleCountsArray(block)
+            return ac.map_alleles(bmapping, max_allele=max_allele)
 
         # map blocks
         out = da.map_blocks(f, self.values, mapping, dtype=mapping.dtype)

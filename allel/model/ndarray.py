@@ -2968,13 +2968,16 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
-    def map_alleles(self, mapping):
+    def map_alleles(self, mapping, max_allele=None):
         """Transform alleles via a mapping.
 
         Parameters
         ----------
         mapping : ndarray, int8, shape (n_variants, max_allele)
             An array defining the allele mapping for each variant.
+        max_allele : int, optional
+            Highest allele index expected in the output. If not provided
+            will be determined from maximum value in `mapping`.
 
         Returns
         -------
@@ -3000,7 +3003,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...            [2, 1, 0],
         ...            [1, 2, 0]]
         >>> ac.map_alleles(mapping)
-        <AlleleCountsArray shape=(4, 3) dtype=int64>
+        <AlleleCountsArray shape=(4, 3) dtype=int32>
         0 4 0
         1 3 0
         1 2 1
@@ -3018,7 +3021,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         check_dim1_aligned(self, mapping)
 
         # use optimisation
-        out = allele_counts_array_map_alleles(self.values, mapping)
+        out = allele_counts_array_map_alleles(self.values, mapping, max_allele)
 
         # wrap and return
         return type(self)(out)

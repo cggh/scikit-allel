@@ -1568,6 +1568,14 @@ class AlleleCountsArrayInterface(object):
         actual = ac.map_alleles(mapping)
         aeq(expect, actual)
 
+        # test with explicit max allele
+        expect = [[10, 20, 30, 0, 0],
+                  [0, 30, 20, 10, 0],
+                  [0, 0, 0, 0, 10],
+                  [10, 40, 0, 0, 0]]
+        actual = ac.map_alleles(mapping, max_allele=4)
+        aeq(expect, actual)
+
     def test_concatenate(self):
         a = np.array(allele_counts_data, dtype=np.int8)
         ac1 = self.setup_instance(a)
