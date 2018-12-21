@@ -232,6 +232,13 @@ def test_fields_rename_clash():
     with pytest.raises(ValueError):
         read_vcf(vcf_path, fields='*', rename_fields=rename)
 
+    # rename two fields to the same path (case insensitive)
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'SPAM/EGGS'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
     # parent clash
     rename = {'CHROM': 'variants/chromosome',
               'variants/altlen': 'spam/eggs',
@@ -241,8 +248,22 @@ def test_fields_rename_clash():
 
     # parent clash
     rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'SPAM'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
               'variants/altlen': 'spam',
               'calldata/GT': 'spam/eggs'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam',
+              'calldata/GT': 'SPAM/EGGS'}
     with pytest.raises(ValueError):
         read_vcf(vcf_path, fields='*', rename_fields=rename)
 
