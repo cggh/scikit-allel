@@ -860,7 +860,7 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
 
 
 # noinspection PyPep8Naming
-def tajima_d(ac, pos=None, start=None, stop=None):
+def tajima_d(ac, pos=None, start=None, stop=None, min_sites=3):
     """Calculate the value of Tajima's D over a given region.
 
     Parameters
@@ -873,6 +873,9 @@ def tajima_d(ac, pos=None, start=None, stop=None):
         The position at which to start (1-based). Defaults to the first position.
     stop : int, optional
         The position at which to stop (1-based). Defaults to the last position.
+    min_sites : int, optional
+        Minimum number of segregating sites for which to calculate a value. If
+        there are fewer, np.nan is returned. Defaults to 3.
 
     Returns
     -------
@@ -911,11 +914,13 @@ def tajima_d(ac, pos=None, start=None, stop=None):
         loc = pos.locate_range(start, stop)
         ac = ac[loc]
 
-    # assume number of chromosomes sampled is constant for all variants
-    n = ac.sum(axis=1).max()
-
     # count segregating variants
     S = ac.count_segregating()
+    if S < min_sites:
+        return np.nan
+
+    # assume number of chromosomes sampled is constant for all variants
+    n = ac.sum(axis=1).max()
 
     # (n-1)th harmonic number
     a1 = np.sum(1 / np.arange(1, n))
@@ -951,7 +956,7 @@ def tajima_d(ac, pos=None, start=None, stop=None):
 
 # noinspection PyPep8Naming
 def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
-                      step=None, windows=None, fill=np.nan):
+                      step=None, windows=None, min_sites=3):
     """Calculate the value of Tajima's D in windows over a single
     chromosome/contig.
 
@@ -974,8 +979,9 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
         Manually specify the windows to use as a sequence of (window_start,
         window_stop) positions, using 1-based coordinates. Overrides the
         size/start/stop/step parameters.
-    fill : object, optional
-        The value to use where a window is completely inaccessible.
+    min_sites : int, optional
+        Minimum number of segregating sites for which to calculate a value. If
+        there are fewer, np.nan is returned. Defaults to 3.
 
     Returns
     -------
@@ -1001,18 +1007,15 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     ...                          [[0, 1], [-1, -1]],
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
-    >>> pos = [2, 4, 7, 14, 15, 18, 19, 25, 27]
-    >>> D, windows, counts = allel.windowed_tajima_d(
-    ...     pos, ac, size=10, start=1, stop=31
-    ... )
+    >>> pos = [2, 4, 7, 14, 15, 20, 22, 25, 27]
+    >>> D, windows, counts = allel.windowed_tajima_d(pos, ac, size=20, step=10, start=1, stop=31)
     >>> D
-    array([0.59158014, 2.93397641, 6.12372436])
+    array([1.36521524, 4.22566622])
     >>> windows
-    array([[ 1, 10],
-           [11, 20],
-           [21, 31]])
+    array([[ 1, 20],
+           [11, 31]])
     >>> counts
-    array([3, 4, 2])
+    array([6, 6])
 
     """
 
@@ -1045,6 +1048,8 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     # noinspection PyPep8Naming
     def statistic(w_is_seg, w_mpd):
         S = np.count_nonzero(w_is_seg)
+        if S < min_sites:
+            return np.nan
         pi = np.sum(w_mpd)
         d = pi - (S / a1)
         d_stdev = np.sqrt((e1 * S) + (e2 * S * (S - 1)))
@@ -1054,12 +1059,12 @@ def windowed_tajima_d(pos, ac, size=None, start=None, stop=None,
     D, windows, counts = windowed_statistic(pos, values=(is_seg, mpd),
                                             statistic=statistic, size=size,
                                             start=start, stop=stop, step=step,
-                                            windows=windows, fill=fill)
+                                            windows=windows, fill=np.nan)
 
     return D, windows, counts
 
 
-def moving_tajima_d(ac, size, start=0, stop=None, step=None):
+def moving_tajima_d(ac, size, start=0, stop=None, step=None, min_sites=3):
     """Calculate the value of Tajima's D in moving windows of `size` variants.
 
 
@@ -1076,6 +1081,9 @@ def moving_tajima_d(ac, size, start=0, stop=None, step=None):
     step : int, optional
         The number of variants between start positions of windows. If not
         given, defaults to the window size, i.e., non-overlapping windows.
+    min_sites : int, optional
+        Minimum number of segregating sites for which to calculate a value. If
+        there are fewer, np.nan is returned. Defaults to 3.
 
     Returns
     -------
@@ -1096,12 +1104,12 @@ def moving_tajima_d(ac, size, start=0, stop=None, step=None):
     ...                          [[0, 1], [-1, -1]],
     ...                          [[-1, -1], [-1, -1]]])
     >>> ac = g.count_alleles()
-    >>> D = allel.moving_tajima_d(ac, size=3)
+    >>> D = allel.moving_tajima_d(ac, size=4, step=2)
     >>> D
-    array([0.59158014, 1.89305645, 5.79748537])
+    array([0.1676558 , 2.01186954, 5.70029703])
 
     """
 
     d = moving_statistic(values=ac, statistic=tajima_d, size=size, start=start, stop=stop,
-                         step=step)
+                         step=step, min_sites=min_sites)
     return d

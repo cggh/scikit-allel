@@ -7,6 +7,7 @@ import unittest
 
 import numpy as np
 import pytest
+from pytest import approx
 
 
 import allel
@@ -293,6 +294,96 @@ class TestDiversityDivergence(unittest.TestCase):
             pos, ac1, ac2, size=10, start=1, stop=31
         )
         assert_array_almost_equal(expect, actual)
+
+    def test_tajima_d(self):
+        from allel import tajima_d
+
+        # example with calculable value
+        ac = AlleleCountsArray([[1, 3],
+                                [2, 2],
+                                [3, 1]])
+        expect = approx(0.168, 0.01)
+        actual = tajima_d(ac)
+        assert expect == actual
+
+        # too few sites
+        ac = AlleleCountsArray([[2, 2],
+                                [3, 1]])
+        assert np.nan is tajima_d(ac)
+
+        # too few segregating sites
+        ac = AlleleCountsArray([[4, 0],
+                                [2, 2],
+                                [3, 1]])
+        assert np.nan is tajima_d(ac)
+        # allow people to override if they really want to
+        assert approx(0.592, 0.01) == tajima_d(ac, min_sites=2)
+
+    def test_moving_tajima_d(self):
+        from allel import moving_tajima_d
+
+        # example with calculable value
+        ac = AlleleCountsArray([[1, 3],
+                                [2, 2],
+                                [3, 1],
+                                [1, 3],
+                                [2, 2]])
+        expect = np.array([0.168] * 3)
+        actual = moving_tajima_d(ac, size=3, step=1)
+        assert_array_almost_equal(expect, actual, decimal=3)
+
+        # too few sites
+        actual = moving_tajima_d(ac, size=2, step=1)
+        assert 4 == len(actual)
+        assert np.all(np.isnan(actual))
+
+        # too few segregating sites
+        ac = AlleleCountsArray([[4, 0],
+                                [2, 2],
+                                [3, 1],
+                                [4, 0],
+                                [2, 2]])
+        actual = moving_tajima_d(ac, size=3, step=1)
+        assert 3 == len(actual)
+        assert np.all(np.isnan(actual))
+        # allow people to override if they really want to
+        expect = np.array([0.592] * 3)
+        actual = moving_tajima_d(ac, size=3, step=1, min_sites=2)
+        assert_array_almost_equal(expect, actual, decimal=3)
+
+    def test_windowed_tajima_d(self):
+        from allel import windowed_tajima_d
+
+        pos = np.array([1, 11, 21, 31, 41])
+
+        # example with calculable value
+        ac = AlleleCountsArray([[1, 3],
+                                [2, 2],
+                                [3, 1],
+                                [1, 3],
+                                [2, 2]])
+        expect = np.array([0.168] * 3)
+        actual, _, _ = windowed_tajima_d(pos, ac, size=25, step=10)
+        assert_array_almost_equal(expect, actual, decimal=3)
+
+        # too few sites
+        actual, _, _ = windowed_tajima_d(pos, ac, size=15, step=10)
+        assert 4 == len(actual)
+        assert np.all(np.isnan(actual))
+
+        # too few segregating sites
+        ac = AlleleCountsArray([[4, 0],
+                                [2, 2],
+                                [3, 1],
+                                [4, 0],
+                                [2, 2]])
+        actual, _, _ = windowed_tajima_d(pos, ac, size=25, step=10)
+        assert 3 == len(actual)
+        assert np.all(np.isnan(actual))
+        # allow people to override if they really want to
+        expect = np.array([0.592] * 3)
+        actual, _, _ = windowed_tajima_d(pos, ac, size=25, step=10, min_sites=2)
+        assert_array_almost_equal(expect, actual, decimal=3)
 
 
 class TestHardyWeinberg(unittest.TestCase):
