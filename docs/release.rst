@@ -48,6 +48,11 @@ v1.2.0 (work in progress)
   obtain just header information from a VCF file. By :user:`Alistair
   Miles <alimanfoo>`, :issue:`216`.
 
+* All functions for computing site frequency spectra now accept an
+  optional argument `n` for manually specifying the number of
+  chromosomes sampled from the population. By :user:`Alistair Miles
+  <alimanfoo>`, :issue:`174`, :issue:`240`.
+  
 * Added `start`, `stop` and `step` options to
   :func:`allel.equally_accessible_windows`. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`234`, :issue:`166`.
