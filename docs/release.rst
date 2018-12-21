@@ -65,6 +65,9 @@ v1.2.0 (work in progress)
 
 * Migrate to using pytest instead of nose for testing. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`236`, :issue:`184`.
+
+* Small optimisation for writing zarr attributes. By :user:`Alistair
+  Miles <alimanfoo>`, :issue:`225`, :issue:`238`.
   
 * Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
   :issue:`228`.

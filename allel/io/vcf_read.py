@@ -481,10 +481,14 @@ def _h5like_copy_metadata(k, headers, ds):
         if name in headers.formats:
             meta = headers.formats[name]
     if meta is not None:
-        ds.attrs['ID'] = meta['ID']
-        ds.attrs['Number'] = meta['Number']
-        ds.attrs['Type'] = meta['Type']
-        ds.attrs['Description'] = meta['Description']
+        if hasattr(ds.attrs, 'put'):
+            # optimisation for zarr, put all attributes in one operation
+            ds.attrs.put(meta)
+        else:
+            ds.attrs['ID'] = meta['ID']
+            ds.attrs['Number'] = meta['Number']
+            ds.attrs['Type'] = meta['Type']
+            ds.attrs['Description'] = meta['Description']
 
 
 def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
