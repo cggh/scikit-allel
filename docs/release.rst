@@ -6,11 +6,14 @@ Release notes
 v1.2.0
 ------
 
-.. important:: Please note, use of the `allel.stats` namespace is
-    deprecated in this release, all functions from stats modules are
-    available from the root `allel` namespace, please access them from
-    there.
+.. important:: Use of the `allel.stats` namespace is deprecated in
+    this release, all functions from stats modules are available from
+    the root `allel` namespace, please access them from there.
 
+.. important:: Python 2.7 has had a stay of execution - this release
+    supports Python 2.7 and 3.5-3.7. However, support for Python 2.7
+    will definitely be removed in version 1.3.
+	       
 * Added a new function :func:`allel.pbs` which implements the
   Population Branching Statistic (PBS), a test for selection based on
   allel frequency differentiation between three populations. :issue:`210`.
@@ -22,10 +25,10 @@ v1.2.0
   :issue:`188`, :issue:`187`.
 
 * Added a workaround to ensure arrays passed into Cython functions are
-  safe to use as memoryviews, even when using distributed computing
-  systems like `dask.distributed` where data may be moved between
-  compute nodes and provided with a read-only flag set. :issue:`#208`,
-  :issue:`206`.
+  safe to use as memoryviews, which is required to avoid errors when
+  using distributed computing systems like `dask.distributed` where
+  data may be moved between compute nodes and passed with a read-only
+  flag set. :issue:`#208`, :issue:`206`.
 
 * Added support for parsing VCF files where the chromosomes are not in
   lexical sorted order. Also improved handling of cases where no
@@ -73,6 +76,9 @@ v1.2.0
 
 * Allow multiallelic variants in
   :func:`allel.ehh_decay`. :issue:`209`, :issue:`244`.
+
+* Added checks to raise appropriate errors if user tries to rename two
+  fields to the same name when reading VCF. :issue:`245`, :issue:`220`.
   
 * Fixed `setup.py` so that installation of numpy prior to installation
   of scikit-allel is no longer required - numpy will be automatically
