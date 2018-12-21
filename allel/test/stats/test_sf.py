@@ -3,9 +3,12 @@ from __future__ import absolute_import, print_function, division
 import warnings
 
 
-import allel
+import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
+
+
+import allel
 
 
 # needed for PY2/PY3 consistent behaviour
@@ -22,6 +25,12 @@ def test_sfs():
         daca = np.asarray(dac, dtype=dtype)
         actual = allel.sfs(daca)
         assert_array_equal(expect, actual)
+    # explicitly provide number of chromosomes
+    expect = [1, 2, 1, 0]
+    actual = allel.sfs(dac, n=3)
+    assert_array_equal(expect, actual)
+    with pytest.raises(ValueError):
+        allel.sfs(dac, n=1)
 
 
 def test_sfs_folded():
@@ -44,6 +53,12 @@ def test_sfs_scaled():
         daca = np.asarray(dac, dtype=dtype)
         actual = allel.sfs_scaled(daca)
         assert_array_equal(expect, actual)
+    # explicitly provide number of chromosomes
+    expect = [0, 2, 2, 0]
+    actual = allel.sfs_scaled(dac, n=3)
+    assert_array_equal(expect, actual)
+    with pytest.raises(ValueError):
+        allel.sfs_scaled(dac, n=1)
 
 
 def test_joint_sfs():
