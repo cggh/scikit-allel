@@ -886,12 +886,12 @@ class GenotypeArrayInterface(object):
             g = self.setup_instance(a)
             mapping = np.array([[0, 1, 2],
                                 [2, 0, 1],
-                                [1, 2, 0],
+                                [-1, 2, 0],
                                 [2, 1, 0],
                                 [2, 0, 1]], dtype='i1')
             expect = [[[0, 0], [0, 1], [-1, -1]],
                       [[2, 1], [0, 0], [-1, -1]],
-                      [[2, 1], [0, 2], [-1, -1]],
+                      [[2, -1], [0, 2], [-1, -1]],
                       [[0, 0], [-1, -1], [-1, -1]],
                       [[-1, -1], [-1, -1], [-1, -1]]]
             actual = g.map_alleles(mapping)
@@ -1333,11 +1333,11 @@ class HaplotypeArrayInterface(object):
         h = self.setup_instance(a)
         mapping = np.array([[0, 1, 2],
                             [2, 0, 1],
-                            [1, 2, 0],
+                            [1, 2, -1],
                             [2, 1, 0]])
         expect = [[0, 1, -1],
                   [0, 0, -1],
-                  [0, -1, -1],
+                  [-1, -1, -1],
                   [-1, -1, -1]]
         actual = h.map_alleles(mapping)
         aeq(expect, actual)
@@ -1540,7 +1540,7 @@ class AlleleCountsArrayInterface(object):
         mapping = np.array([[0, 1, 2],
                             [2, 0, 1],
                             [1, 2, 0],
-                            [2, 1, 0],
+                            [-1, 1, 0],
                             [2, 0, 1],
                             [0, 2, 1]])
         expect = [[3, 1, 0],
@@ -1549,6 +1549,22 @@ class AlleleCountsArrayInterface(object):
                   [2, 0, 0],
                   [0, 0, 0],
                   [0, 2, 1]]
+        actual = ac.map_alleles(mapping)
+        aeq(expect, actual)
+
+        # another test based on https://github.com/cggh/scikit-allel/issues/200
+        ac = self.setup_instance([[10, 20, 30, 40],
+                                  [10, 20, 30, 40],
+                                  [10, 20, 30, 40],
+                                  [10, 20, 30, 40]])
+        mapping = np.array([[0, 1, 2, -1],
+                            [3, 2, 1, -1],
+                            [4, 5, 6, -1],
+                            [0, -1, -1, 1]])
+        expect = [[10, 20, 30, 0, 0, 0, 0],
+                  [0, 30, 20, 10, 0, 0, 0],
+                  [0, 0, 0, 0, 10, 20, 30],
+                  [10, 40, 0, 0, 0, 0, 0]]
         actual = ac.map_alleles(mapping)
         aeq(expect, actual)
 

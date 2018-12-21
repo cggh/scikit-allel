@@ -3016,11 +3016,16 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         check_dim0_aligned(self, mapping)
 
         # setup output array
-        out = np.empty_like(mapping)
+        n_variants = self.shape[0]
+        n_alleles = np.max(mapping) + 1
+        out = np.zeros((n_variants, n_alleles), dtype=self.dtype)
 
         # apply transformation
-        i = np.arange(self.shape[0]).reshape((-1, 1))
-        out[i, mapping] = self
+        for i in range(n_variants):
+            for j in range(mapping.shape[1]):
+                k = mapping[i, j]
+                if k >= 0:
+                    out[i, k] = self.values[i, j]
 
         return type(self)(out)
 
