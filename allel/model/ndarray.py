@@ -10,7 +10,7 @@ import numpy as np
 
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
-    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
+    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim, check_dim1_aligned
 from allel.compat import PY2, copy_method_doc, integer_types, memoryview_safe
 from allel.io.vcf_write import write_vcf
 from allel.io.gff import gff3_to_recarray
@@ -20,7 +20,7 @@ from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_d
     genotype_array_count_alleles, genotype_array_count_alleles_masked, \
     genotype_array_count_alleles_subpop, genotype_array_count_alleles_subpop_masked, \
     haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
-    haplotype_array_map_alleles
+    haplotype_array_map_alleles, allele_counts_array_map_alleles
 from .generic import index_genotype_vector, compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
@@ -3012,21 +3012,15 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        mapping = asarray_ndim(mapping, 2)
+        # ensure correct dimensionality and matching dtype
+        mapping = asarray_ndim(mapping, 2, dtype=self.dtype)
         check_dim0_aligned(self, mapping)
+        check_dim1_aligned(self, mapping)
 
-        # setup output array
-        n_variants = self.shape[0]
-        n_alleles = np.max(mapping) + 1
-        out = np.zeros((n_variants, n_alleles), dtype=self.dtype)
+        # use optimisation
+        out = allele_counts_array_map_alleles(self.values, mapping)
 
-        # apply transformation
-        for i in range(n_variants):
-            for j in range(mapping.shape[1]):
-                k = mapping[i, j]
-                if k >= 0:
-                    out[i, k] = self.values[i, j]
-
+        # wrap and return
         return type(self)(out)
 
 

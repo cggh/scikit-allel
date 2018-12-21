@@ -333,3 +333,28 @@ def haplotype_array_map_alleles(integer[:, :] h not None,
                     ho[i, j] = -1
 
     return np.asarray(ho)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def allele_counts_array_map_alleles(integer[:, :] ac not None,
+                                    integer[:, :] mapping not None):
+    cdef:
+        Py_ssize_t i, j, k, n_variants, n_alleles
+        integer[:, :] out
+
+    # setup output array
+    n_variants = ac.shape[0]
+    n_alleles = ac.shape[1]
+    n_alleles_out = np.max(mapping) + 1
+    out = np.zeros((n_variants, n_alleles_out), dtype=np.asarray(ac).dtype)
+
+    # main work loop
+    with nogil:
+        for i in range(n_variants):
+            for j in range(n_alleles):
+                k = mapping[i, j]
+                if k >= 0:
+                    out[i, k] = ac[i, j]
+
+    return np.asarray(out)
