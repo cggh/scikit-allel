@@ -635,7 +635,27 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         assert expect == actual
 
         gn = [[0, 0, 0],
+              [0, 0, 0]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[0, 0, 0],
               [1, 1, 1]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[1, 1, 1],
+              [1, 1, 1]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[0, -1, 0],
+              [-1, 1, -1]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[0, 1, 0],
+              [-1, -1, -1]]
         actual = allel.rogers_huff_r(gn)
         assert np.isnan(actual)
 

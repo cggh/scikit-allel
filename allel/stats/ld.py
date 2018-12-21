@@ -13,7 +13,7 @@ from allel.opt.stats import gn_pairwise_corrcoef_int8, gn_pairwise2_corrcoef_int
     gn_locate_unlinked_int8
 
 
-def rogers_huff_r(gn, fill=np.nan):
+def rogers_huff_r(gn):
     """Estimate the linkage disequilibrium parameter *r* for each pair of
     variants using the method of Rogers and Huff (2008).
 
@@ -22,8 +22,6 @@ def rogers_huff_r(gn, fill=np.nan):
     gn : array_like, int8, shape (n_variants, n_samples)
         Diploid genotypes at biallelic variants, coded as the number of
         alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
-    fill : float, optional
-        Value to use where r cannot be calculated.
 
     Returns
     -------
@@ -65,7 +63,7 @@ def rogers_huff_r(gn, fill=np.nan):
     gn = memoryview_safe(gn)
 
     # compute correlation coefficients
-    r = gn_pairwise_corrcoef_int8(gn, fill)
+    r = gn_pairwise_corrcoef_int8(gn)
 
     # convenience for singletons
     if r.size == 1:
@@ -74,7 +72,7 @@ def rogers_huff_r(gn, fill=np.nan):
     return r
 
 
-def rogers_huff_r_between(gna, gnb, fill=np.nan):
+def rogers_huff_r_between(gna, gnb):
     """Estimate the linkage disequilibrium parameter *r* for each pair of
     variants between the two input arrays, using the method of Rogers and
     Huff (2008).
@@ -84,8 +82,6 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
     gna, gnb : array_like, int8, shape (n_variants, n_samples)
         Diploid genotypes at biallelic variants, coded as the number of
         alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
-    fill : float, optional
-        Value to use where r cannot be calculated.
 
     Returns
     -------
@@ -101,7 +97,7 @@ def rogers_huff_r_between(gna, gnb, fill=np.nan):
     gnb = memoryview_safe(gnb)
 
     # compute correlation coefficients
-    r = gn_pairwise2_corrcoef_int8(gna, gnb, fill)
+    r = gn_pairwise2_corrcoef_int8(gna, gnb)
 
     # convenience for singletons
     if r.size == 1:
