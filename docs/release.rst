@@ -1,8 +1,10 @@
 Release notes
 =============
 
-v1.2.0 (work in progress)
--------------------------
+.. _release_1.2.0:
+
+v1.2.0
+------
 
 .. important:: Please note, use of the `allel.stats` namespace is
     deprecated in this release, all functions from stats modules are
@@ -11,8 +13,7 @@ v1.2.0 (work in progress)
 
 * Added a new function :func:`allel.pbs` which implements the
   Population Branching Statistic (PBS), a test for selection based on
-  allel frequency differentiation between three populations. By
-  :user:`Alistair Miles <alimanfoo>`, :issue:`210`.
+  allel frequency differentiation between three populations. :issue:`210`.
 
 * Added a new function :func:`allel.roh_poissonhmm` for inferring runs
   of homozygosity, which uses a Poisson HMM and is orders of magnitude
@@ -23,91 +24,88 @@ v1.2.0 (work in progress)
 * Added a workaround to ensure arrays passed into Cython functions are
   safe to use as memoryviews, even when using distributed computing
   systems like `dask.distributed` where data may be moved between
-  compute nodes and provided with a read-only flag set. By
-  :user:`Alistair Miles <alimanfoo>`, :issue:`#208`, :issue:`206`.
+  compute nodes and provided with a read-only flag set. :issue:`#208`,
+  :issue:`206`.
 
 * Added support for parsing VCF files where the chromosomes are not in
   lexical sorted order. Also improved handling of cases where no
-  variants are returned. By :user:`Alistair Miles <alimanfoo>`,
-  :issue:`221`, :issue:`167`, :issue:`213`.
+  variants are returned. :issue:`221`, :issue:`167`, :issue:`213`.
 
 * Added a new index class :class:`allel.ChromPosIndex` for locating
   data given chromosome and positio locations. This behaves similarly
   to the existing :class:`allel.SortedMultiIndex` but the chromosome
-  values do not need to be sorted. By :user:`Alistair Miles
-  <alimanfoo>`, :issue:`201`, :issue:`239`.
+  values do not need to be sorted. :issue:`201`, :issue:`239`.
   
 * Added new parameters ``exclude_fields`` and ``rename_fields`` to VCF
   parsing functions to add greater flexibility when selecting fields
   to extract. Also added several measures to protect against name
   clashes when converting VCF to Zarr on platforms with a
-  case-insensitive file system. By :user:`Alistair Miles <alimanfoo>`,
-  :issue:`215`, :issue:`216`.
+  case-insensitive file system. :issue:`215`, :issue:`216`.
 
 * Added a convenience function :func:`allel.read_vcf_headers`, to
-  obtain just header information from a VCF file. By :user:`Alistair
-  Miles <alimanfoo>`, :issue:`216`.
+  obtain just header information from a VCF file. :issue:`216`.
 
 * All functions for computing site frequency spectra now accept an
   optional argument `n` for manually specifying the number of
-  chromosomes sampled from the population. By :user:`Alistair Miles
-  <alimanfoo>`, :issue:`174`, :issue:`240`.
+  chromosomes sampled from the population. :issue:`174`, :issue:`240`.
   
 * Added `start`, `stop` and `step` options to
-  :func:`allel.equally_accessible_windows`. By :user:`Alistair Miles <alimanfoo>`,
-  :issue:`234`, :issue:`166`.
+  :func:`allel.equally_accessible_windows`. :issue:`234`, :issue:`166`.
 
 * Fixed broken implementation of
-  :func:`allel.AlleleCountsArray.map_alleles`. By :user:`Alistair
-  Miles <alimanfoo>`, :issue:`241`, :issue:`200`.
+  :func:`allel.AlleleCountsArray.map_alleles`. :issue:`241`, :issue:`200`.
 	 
 * Fixed functions calculating Tajima's D such that a value of `np.nan`
   is returned if there are fewer than 3 segregating sites. By
   :user:`Andrew Kern <andrewkern>` and :user:`Alistair Miles
   <alimanfoo>`, :issue:`175`, :issue:`237`.
 
-* Fixed incorrect fill value in GFF parsing functions. By
-  :user:`Alistair Miles <alimanfoo>`, :issue:`165`, :issue:`223`.
+* Fixed incorrect fill value in GFF parsing functions. :issue:`165`,
+  :issue:`223`.
 
 * Fixed a problem in `count_alleles()` methods where a `subpop` arg
-  was provided as a numpy array. By :user:`Alistair Miles
-  <alimanfoo>`, :issue:`235`, :issue:`171`.
+  was provided as a numpy array. :issue:`235`, :issue:`171`.
 
 * Removed `fill` option to LD functions :func:`allel.rogers_huff_r`
   and :func:`allel.rogers_huff_r_between`, always use NaN where a
   value cannot be calculated. Also added additional tests and check
-  for case where variants have no data. By :user:`Alistair Miles
-  <alimanfoo>`, :issue:`197`, :issue:`243`.
+  for case where variants have no data. :issue:`197`, :issue:`243`.
+
+* Allow multiallelic variants in
+  :func:`allel.ehh_decay`. :issue:`209`, :issue:`244`.
   
 * Fixed `setup.py` so that installation of numpy prior to installation
   of scikit-allel is no longer required - numpy will be automatically
   installed as a dependency if not already installed. By
   :user:`haseley`, :issue:`212`, :issue:`211`.
 
-* Migrate to using pytest instead of nose for testing. By
-  :user:`Alistair Miles <alimanfoo>`, :issue:`236`, :issue:`184`.
+* Migrate to using pytest instead of nose for testing. :issue:`236`,
+  :issue:`184`.
 
-* Small optimisation for writing zarr attributes. By :user:`Alistair
-  Miles <alimanfoo>`, :issue:`225`, :issue:`238`.
+* Small optimisation for writing zarr attributes. :issue:`225`,
+  :issue:`238`.
   
 * Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
   :issue:`228`.
 
 * Fixed problem where some packages where getting clobbered by imports
-  of other packages. By :user:`Alistair Miles <alimanfoo>`,
-  :issue:`163`, :issue:`232`.
+  of other packages. :issue:`163`, :issue:`232`.
 
-* Added support for Python 3.7 and compatibility with numpy 1.15. By
-  :user:`Alistair Miles <alimanfoo>`, :issue:`217`, :issue:`214`.
+* Added support for Python 3.7 and compatibility with numpy
+  1.15. :issue:`217`, :issue:`214`.
 
 * Various documentation improvements. By :user:`Peter Ralph <petrelharp>`
   and :user:`CJ Battey <cjbattey>`, :issue:`229`.
+
+.. _release_1.1.10:
 
 v1.1.10
 -------
 
 * Various VCF parsing improvements and bug fixes (:issue:`183`,
   :issue:`189`).
+
+.. _release_1.1.9:
 
 v1.1.9
 ------
@@ -123,6 +121,8 @@ v1.1.9
 
 * Fixed bug in LD plotting function (:issue:`161`).
 
+.. _release_1.1.8:
+
 v1.1.8
 ------
 
@@ -132,6 +132,8 @@ v1.1.8
 
 * Resolved minor logging bug (:issue:`152`).
 
+.. _release_1.1.7:
+
 v1.1.7
 ------
 
@@ -139,10 +141,14 @@ v1.1.7
   variable length strings because they can cause large HDF5 file size
   (:issue:`153`).
 
+.. _release_1.1.6:
+
 v1.1.6
 ------
 
 * Include fixture data in release to aid testing and binary builds.
+
+.. _release_1.1.0:
 
 v1.1.0
 ------
