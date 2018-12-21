@@ -1,7 +1,5 @@
 tox
-# remove .devN from __version__
-sed -i -e 's/.dev[0-9]*//' allel/__init__.py
-version=`grep __version__ allel/__init__.py | sed -e "s/.*__version__[ ]=[ ]'\(.*\)'/\1/"`
+version=X.X.X
 echo $version
 python setup.py build_ext --inplace
 # git commit and tag
