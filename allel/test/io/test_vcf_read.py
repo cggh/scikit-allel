@@ -222,6 +222,52 @@ def test_fields_rename():
     assert sorted(expected_fields) == sorted(callset.keys())
 
 
+def test_fields_rename_clash():
+    vcf_path = fixture_path('sample.vcf')
+
+    # rename two fields to the same path
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'spam/eggs'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # rename two fields to the same path (case insensitive)
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'SPAM/EGGS'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'spam'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'SPAM'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam',
+              'calldata/GT': 'spam/eggs'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam',
+              'calldata/GT': 'SPAM/EGGS'}
+    with pytest.raises(ValueError):
+        read_vcf(vcf_path, fields='*', rename_fields=rename)
+
+
 def test_fields_default():
     vcf_path = fixture_path('sample.vcf')
     callset = read_vcf(vcf_path)
@@ -2219,6 +2265,32 @@ def test_vcf_to_zarr_rename():
         assert 'variants/' + key in expected
     for key in actual['calldata'].keys():
         assert 'calldata/' + key in expected
+
+
+def test_vcf_to_zarr_rename_clash():
+    vcf_path = fixture_path('sample.vcf')
+    zarr_path = os.path.join(tempdir, 'sample.zarr')
+
+    # dup values
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'spam/eggs'}
+    with pytest.raises(ValueError):
+        vcf_to_zarr(vcf_path, zarr_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam/eggs',
+              'calldata/GT': 'spam'}
+    with pytest.raises(ValueError):
+        vcf_to_zarr(vcf_path, zarr_path, fields='*', rename_fields=rename)
+
+    # parent clash
+    rename = {'CHROM': 'variants/chromosome',
+              'variants/altlen': 'spam',
+              'calldata/GT': 'spam/eggs'}
+    with pytest.raises(ValueError):
+        vcf_to_zarr(vcf_path, zarr_path, fields='*', rename_fields=rename)
 
 
 def test_vcf_to_zarr_dup_fields_case_insensitive():

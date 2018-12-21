@@ -109,6 +109,21 @@ def _chunk_iter_transform(it, transformers):
 
 def _do_rename(it, fields, rename_fields, headers):
 
+    # check no duplicate values
+    found = set()
+    for v in rename_fields.values():
+        if v.lower() in found:
+            raise ValueError('rename clash: {!r}'.format(v))
+        found.add(v.lower())
+
+    # check no parent clashes
+    for v in rename_fields.values():
+        segments = v.split('/')
+        for i in range(1, len(segments)):
+            prefix = '/'.join(segments[:i]).lower()
+            if prefix in found:
+                raise ValueError('rename clash: {!r} versus {!r}'.format(v, prefix))
+
     # normalise keys
     rename_fields = {_normalize_field_prefix(k, headers): v
                      for k, v in rename_fields.items()}
