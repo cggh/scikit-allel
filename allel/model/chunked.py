@@ -605,9 +605,13 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         return self._count('is_doubleton', kwargs=dict(allele=allele),
                            **kwargs)
 
-    def map_alleles(self, mapping, **kwargs):
+    def map_alleles(self, mapping, max_allele=None, **kwargs):
+        if max_allele is None:
+            max_allele = np.max(mapping)
+
         def f(block, bmapping):
-            return block.map_alleles(bmapping)
+            return block.map_alleles(bmapping, max_allele=max_allele)
+
         domain = (self, mapping)
         out = _chunked.map_blocks(domain, f, **kwargs)
         return AlleleCountsChunkedArray(out)

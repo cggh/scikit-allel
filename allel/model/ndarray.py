@@ -10,7 +10,7 @@ import numpy as np
 
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
-    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
+    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim, check_dim1_aligned
 from allel.compat import PY2, copy_method_doc, integer_types, memoryview_safe
 from allel.io.vcf_write import write_vcf
 from allel.io.gff import gff3_to_recarray
@@ -20,7 +20,7 @@ from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_d
     genotype_array_count_alleles, genotype_array_count_alleles_masked, \
     genotype_array_count_alleles_subpop, genotype_array_count_alleles_subpop_masked, \
     haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
-    haplotype_array_map_alleles
+    haplotype_array_map_alleles, allele_counts_array_map_alleles
 from .generic import index_genotype_vector, compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
@@ -2968,13 +2968,16 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
-    def map_alleles(self, mapping):
+    def map_alleles(self, mapping, max_allele=None):
         """Transform alleles via a mapping.
 
         Parameters
         ----------
         mapping : ndarray, int8, shape (n_variants, max_allele)
             An array defining the allele mapping for each variant.
+        max_allele : int, optional
+            Highest allele index expected in the output. If not provided
+            will be determined from maximum value in `mapping`.
 
         Returns
         -------
@@ -3000,7 +3003,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...            [2, 1, 0],
         ...            [1, 2, 0]]
         >>> ac.map_alleles(mapping)
-        <AlleleCountsArray shape=(4, 3) dtype=int64>
+        <AlleleCountsArray shape=(4, 3) dtype=int32>
         0 4 0
         1 3 0
         1 2 1
@@ -3012,16 +3015,15 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        mapping = asarray_ndim(mapping, 2)
+        # ensure correct dimensionality and matching dtype
+        mapping = asarray_ndim(mapping, 2, dtype=self.dtype)
         check_dim0_aligned(self, mapping)
+        check_dim1_aligned(self, mapping)
 
-        # setup output array
-        out = np.empty_like(mapping)
+        # use optimisation
+        out = allele_counts_array_map_alleles(self.values, mapping, max_allele)
 
-        # apply transformation
-        i = np.arange(self.shape[0]).reshape((-1, 1))
-        out[i, mapping] = self
-
+        # wrap and return
         return type(self)(out)
 
 
