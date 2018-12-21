@@ -780,6 +780,7 @@ class GenotypeArrayInterface(object):
             aeq(expect, actual)
             assert 5 == actual.n_variants
             assert 3 == actual.n_alleles
+            assert np.dtype('i4') == actual.dtype
 
             # polyploid
             g = self.setup_instance(triploid_genotype_data, dtype=dtype)
@@ -791,6 +792,7 @@ class GenotypeArrayInterface(object):
             aeq(expect, actual)
             assert 4 == actual.n_variants
             assert 3 == actual.n_alleles
+            assert np.dtype('i4') == actual.dtype
 
     def test_count_alleles_subpop(self):
         for dtype in None, 'i1', 'i2', 'i4', 'i8':
@@ -810,6 +812,7 @@ class GenotypeArrayInterface(object):
                 aeq(expect, actual)
                 assert 5 == actual.n_variants
                 assert 3 == actual.n_alleles
+                assert np.dtype('i4') == actual.dtype
 
     def test_count_alleles_subpops(self):
         for dtype in None, 'i1', 'i2', 'i4', 'i8':
@@ -833,8 +836,10 @@ class GenotypeArrayInterface(object):
                 aeq(expect_sub2, actual['sub2'])
                 assert 5 == actual['sub1'].n_variants
                 assert 3 == actual['sub1'].n_alleles
+                assert np.dtype('i4') == actual['sub1'].dtype
                 assert 5 == actual['sub2'].n_variants
                 assert 3 == actual['sub2'].n_alleles
+                assert np.dtype('i4') == actual['sub2'].dtype
 
     def test_count_alleles_max_allele(self):
 
@@ -881,7 +886,7 @@ class GenotypeArrayInterface(object):
             aeq(expect[:, :1], actual)
 
     def test_map_alleles(self):
-        for dtype in None, 'i1', 'i2', 'i4', 'i8':
+        for dtype in 'i1', 'i2', 'i4', 'i8':
             a = np.array(diploid_genotype_data, dtype=dtype)
             g = self.setup_instance(a)
             mapping = np.array([[0, 1, 2],
@@ -896,6 +901,8 @@ class GenotypeArrayInterface(object):
                       [[-1, -1], [-1, -1], [-1, -1]]]
             actual = g.map_alleles(mapping)
             aeq(expect, actual)
+            # match input dtype
+            assert dtype == actual.dtype
 
     def test_set_mask(self):
 
@@ -1268,6 +1275,7 @@ class HaplotypeArrayInterface(object):
             aeq(expect, actual)
             assert 4 == actual.n_variants
             assert 3 == actual.n_alleles
+            assert np.dtype('i4') == actual.dtype
 
     def test_count_alleles_subpop(self):
         expect = np.array([[1, 0, 0],
@@ -1285,6 +1293,7 @@ class HaplotypeArrayInterface(object):
                 aeq(expect, actual)
                 assert 4 == actual.n_variants
                 assert 3 == actual.n_alleles
+                assert np.dtype('i4') == actual.dtype
 
     def test_count_alleles_subpops(self):
         expect_sub1 = np.array([[1, 0, 0],
@@ -1304,8 +1313,10 @@ class HaplotypeArrayInterface(object):
                 aeq(expect_sub2, actual['sub2'])
                 assert 4 == actual['sub1'].n_variants
                 assert 3 == actual['sub1'].n_alleles
+                assert np.dtype('i4') == actual['sub1'].dtype
                 assert 4 == actual['sub2'].n_variants
                 assert 3 == actual['sub2'].n_alleles
+                assert np.dtype('i4') == actual['sub2'].dtype
 
     def test_count_alleles_max_allele(self):
         expect = np.array([[1, 1, 0],
@@ -1342,12 +1353,13 @@ class HaplotypeArrayInterface(object):
         actual = h.map_alleles(mapping)
         aeq(expect, actual)
 
-        for dtype in None, 'i1', 'i2', 'i4', 'i8':
+        for dtype in 'i1', 'i2', 'i4', 'i8':
             a = np.array(haplotype_data, dtype=dtype)
             h = self.setup_instance(a)
             mapping = np.array(mapping, dtype=dtype)
             actual = h.map_alleles(mapping)
             aeq(expect, actual)
+            assert dtype == actual.dtype
 
     def test_concatenate(self):
         a = np.array(haplotype_data, dtype=np.int8)
@@ -1536,21 +1548,24 @@ class AlleleCountsArrayInterface(object):
         aeq(expect, actual)
 
     def test_map_alleles(self):
-        ac = self.setup_instance(allele_counts_data)
-        mapping = np.array([[0, 1, 2],
-                            [2, 0, 1],
-                            [1, 2, 0],
-                            [-1, 1, 0],
-                            [2, 0, 1],
-                            [0, 2, 1]])
-        expect = [[3, 1, 0],
-                  [2, 1, 1],
-                  [1, 1, 2],
-                  [2, 0, 0],
-                  [0, 0, 0],
-                  [0, 2, 1]]
-        actual = ac.map_alleles(mapping)
-        aeq(expect, actual)
+        for dtype in 'i2', 'i4', 'i8':
+            ac = self.setup_instance(np.array(allele_counts_data, dtype=dtype))
+            mapping = np.array([[0, 1, 2],
+                                [2, 0, 1],
+                                [1, 2, 0],
+                                [-1, 1, 0],
+                                [2, 0, 1],
+                                [0, 2, 1]])
+            expect = [[3, 1, 0],
+                      [2, 1, 1],
+                      [1, 1, 2],
+                      [2, 0, 0],
+                      [0, 0, 0],
+                      [0, 2, 1]]
+            actual = ac.map_alleles(mapping)
+            aeq(expect, actual)
+            # match dtype of input
+            assert dtype == actual.dtype
 
         # another test based on https://github.com/cggh/scikit-allel/issues/200
         ac = self.setup_instance([[10, 20, 30, 40],
@@ -1936,6 +1951,7 @@ class GenotypeAlleleCountsArrayInterface(object):
         aeq(expect, actual)
         assert 5 == actual.n_variants
         assert 3 == actual.n_alleles
+        assert np.dtype('i4') == actual.dtype
 
         # polyploid
         g = self.setup_instance(triploid_genotype_ac_data)
@@ -1947,6 +1963,7 @@ class GenotypeAlleleCountsArrayInterface(object):
         aeq(expect, actual)
         assert 4 == actual.n_variants
         assert 3 == actual.n_alleles
+        assert np.dtype('i4') == actual.dtype
 
     def test_count_alleles_subpop(self):
         g = self.setup_instance(diploid_genotype_ac_data)
@@ -1964,6 +1981,7 @@ class GenotypeAlleleCountsArrayInterface(object):
             aeq(expect, actual)
             assert 5 == actual.n_variants
             assert 3 == actual.n_alleles
+            assert np.dtype('i4') == actual.dtype
 
 
 class SortedIndexInterface(object):
