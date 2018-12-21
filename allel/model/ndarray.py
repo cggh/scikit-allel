@@ -32,7 +32,8 @@ from .generic import index_genotype_vector, compress_genotypes, \
 
 __all__ = ['Genotypes', 'GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
            'GenotypeAlleleCounts', 'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector',
-           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable',
+           'ChromPosIndex']
 
 
 # noinspection PyTypeChecker
@@ -4221,6 +4222,220 @@ class SortedMultiIndex(DisplayAs1D):
         if not isinstance(loc, slice):
             loc = slice(loc, loc + 1)
         return loc
+
+
+# noinspection PyMissingConstructor
+class ChromPosIndex(DisplayAs1D):
+    """Two-level index of variant positions from two or more chromosomes/contigs.
+
+    Parameters
+    ----------
+    chrom : array_like
+        Chromosome values.
+    pos : array_like
+        Position values, in ascending order within each chromosome.
+    copy : bool, optional
+        If True, inputs will be copied into new arrays.
+
+    Notes
+    -----
+    Chromosomes do not need to be sorted, but all values for a given chromosome must be
+    grouped together, and all positions for a given chromosome must be sorted in ascending
+    order.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> chrom = ['chr2', 'chr2', 'chr1', 'chr1', 'chr1', 'chr3']
+    >>> pos = [1, 4, 2, 5, 5, 3]
+    >>> idx = allel.ChromPosIndex(chrom, pos)
+    >>> idx
+    <ChromPosIndex shape=(6,), dtype=<U4/int64>
+    chr2:1 chr2:4 chr1:2 chr1:5 chr1:5 chr3:3
+    >>> len(idx)
+    6
+
+    See Also
+    --------
+    SortedIndex, UniqueIndex
+
+    """
+
+    def __init__(self, chrom, pos, copy=False):
+        chrom = np.array(chrom, copy=copy)
+        pos = np.array(pos, copy=copy)
+        check_ndim(chrom, 1)
+        check_ndim(pos, 1)
+        check_dim0_aligned(chrom, pos)
+        self.chrom = chrom
+        self.pos = pos
+        # cache mapping of chromosomes to regions
+        self.chrom_ranges = dict()
+
+    def __repr__(self):
+        s = '<ChromPosIndex shape=(%s,), dtype=%s/%s>' % \
+            (len(self), self.chrom.dtype, self.pos.dtype)
+        s += '\n' + str(self)
+        return s
+
+    def str_items(self):
+        return ['%s:%s' % (x, y) for x, y in zip(self.chrom, self.pos)]
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
+        return s
+
+    def __len__(self):
+        return len(self.chrom)
+
+    def __getitem__(self, item):
+        l1 = self.chrom[item]
+        l2 = self.pos[item]
+        if isinstance(item, integer_types):
+            return l1, l2
+        else:
+            return ChromPosIndex(l1, l2, copy=False)
+
+    def compress(self, condition, axis=0, out=None):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.chrom.compress(condition, axis=axis)
+        l2 = self.pos.compress(condition, axis=axis)
+        return ChromPosIndex(l1, l2, copy=False)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.chrom.take(indices, axis=axis, mode=mode)
+        l2 = self.pos.take(indices, axis=axis, mode=mode)
+        return ChromPosIndex(l1, l2, copy=False)
+
+    @property
+    def shape(self):
+        return len(self),
+
+    def locate_key(self, chrom, pos=None):
+        """
+        Get index location for the requested key.
+
+        Parameters
+        ----------
+        chrom : object
+            Chromosome or contig.
+        pos : int, optional
+            Position within chromosome or contig.
+
+        Returns
+        -------
+        loc : int or slice
+            Location of requested key (will be slice if there are duplicate
+            entries).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr2', 'chr2', 'chr1', 'chr1', 'chr1', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.ChromPosIndex(chrom, pos)
+        >>> idx.locate_key('chr1')
+        slice(2, 5, None)
+        >>> idx.locate_key('chr2', 4)
+        1
+        >>> idx.locate_key('chr1', 5)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_key('chr3', 4)
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        ('chr3', 4)
+
+        """
+
+        if pos is None:
+            # we just want the region for a chromosome
+            if chrom in self.chrom_ranges:
+                # return previously cached result
+                return self.chrom_ranges[chrom]
+            else:
+                loc_chrom = np.nonzero(self.chrom == chrom)[0]
+                if len(loc_chrom) == 0:
+                    raise KeyError(chrom)
+                slice_chrom = slice(min(loc_chrom), max(loc_chrom) + 1)
+                # cache the result
+                self.chrom_ranges[chrom] = slice_chrom
+                return slice_chrom
+
+        else:
+            slice_chrom = self.locate_key(chrom)
+            pos_chrom = SortedIndex(self.pos[slice_chrom])
+            try:
+                idx_within_chrom = pos_chrom.locate_key(pos)
+            except KeyError:
+                raise KeyError(chrom, pos)
+            if isinstance(idx_within_chrom, slice):
+                return slice(slice_chrom.start + idx_within_chrom.start,
+                             slice_chrom.start + idx_within_chrom.stop)
+            else:
+                return slice_chrom.start + idx_within_chrom
+
+    def locate_range(self, chrom, start=None, stop=None):
+        """Locate slice of index containing all entries within the range
+        `key`:`start`-`stop` **inclusive**.
+
+        Parameters
+        ----------
+        chrom : object
+            Chromosome or contig.
+        start : int, optional
+            Position start value.
+        stop : int, optional
+            Position stop value.
+
+        Returns
+        -------
+        loc : slice
+            Slice object.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr2', 'chr2', 'chr1', 'chr1', 'chr1', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.ChromPosIndex(chrom, pos)
+        >>> idx.locate_range('chr1')
+        slice(2, 5, None)
+        >>> idx.locate_range('chr2', 1, 4)
+        slice(0, 2, None)
+        >>> idx.locate_range('chr1', 3, 7)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_range('chr3', 4, 9)
+        ... except KeyError as e:
+        ...     print(e)
+        ('chr3', 4, 9)
+
+        """
+
+        slice_chrom = self.locate_key(chrom)
+
+        if start is None and stop is None:
+            return slice_chrom
+
+        else:
+
+            pos_chrom = SortedIndex(self.pos[slice_chrom])
+            try:
+                slice_within_chrom = pos_chrom.locate_range(start, stop)
+            except KeyError:
+                raise KeyError(chrom, start, stop)
+            loc = slice(slice_chrom.start + slice_within_chrom.start,
+                        slice_chrom.start + slice_within_chrom.stop)
+            return loc
 
 
 class VariantTable(NumpyRecArrayWrapper):
