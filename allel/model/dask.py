@@ -382,7 +382,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 return gb.count_alleles(max_allele=max_allele)[:, None, :]
 
             # map blocks and reduce
-            out = da.map_blocks(f, gd, chunks=chunks, dtype='i4').sum(axis=1)
+            out = da.map_blocks(f, gd, chunks=chunks).sum(axis=1, dtype='i4')
 
         else:
 
@@ -393,7 +393,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 return g.count_alleles(max_allele=max_allele)[:, None, :]
 
             md = self.mask[:, :, None]
-            out = da.map_blocks(f, gd, md, chunks=chunks, dtype='i4').sum(axis=1)
+            out = da.map_blocks(f, gd, md, chunks=chunks).sum(axis=1, dtype='i4')
 
         return AlleleCountsDaskArray(out)
 
@@ -430,7 +430,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
 
         # map blocks
         out = da.map_blocks(f, self.values, mapping[:, None, :], chunks=self.chunks,
-                            dtype=mapping.dtype)
+                            dtype=self.dtype)
         return type(self)(out)
 
     def to_allele_counts(self, max_allele=None):
@@ -602,8 +602,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
             return h.count_alleles(max_allele=max_allele)[:, None, :]
 
         # map blocks and reduce
-        # TODO need to figure out dtype?
-        out = hd.map_blocks(f, chunks=chunks, new_axis=2).sum(axis=1)
+        out = hd.map_blocks(f, chunks=chunks, new_axis=2).sum(axis=1, dtype='i4')
         return AlleleCountsDaskArray(out)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
@@ -625,7 +624,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
         mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
         # map blocks
-        out = da.map_blocks(f, self.values, mapping, chunks=self.chunks, dtype=mapping.dtype)
+        out = da.map_blocks(f, self.values, mapping, chunks=self.chunks, dtype=self.dtype)
         return HaplotypeDaskArray(out)
 
     def compress(self, condition, axis=0, out=None):
@@ -784,7 +783,7 @@ class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
             return ac.map_alleles(bmapping, max_allele=max_allele)
 
         # map blocks
-        out = da.map_blocks(f, self.values, mapping, dtype=mapping.dtype)
+        out = da.map_blocks(f, self.values, mapping, dtype=self.dtype)
         return AlleleCountsDaskArray(out)
 
     def compress(self, condition, axis=0, out=None):
@@ -979,7 +978,7 @@ class GenotypeAlleleCountsDaskArray(GenotypeAlleleCountsDask, DisplayAs2D):
         else:
             gd = self.values
 
-        out = gd.sum(axis=1)
+        out = gd.sum(axis=1, dtype='i4')
         return AlleleCountsDaskArray(out)
 
     def compress(self, condition, axis=0, out=None):

@@ -3322,7 +3322,8 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
         else:
             g = self.values
 
-        out = g.sum(axis=1)
+        out = np.empty((g.shape[0], g.shape[2]), dtype='i4')
+        g.sum(axis=1, out=out)
         out = AlleleCountsArray(out)
         return out
 
