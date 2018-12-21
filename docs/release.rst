@@ -46,6 +46,11 @@ v1.2.0 (work in progress)
   :func:`allel.equally_accessible_windows`. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`234`, :issue:`166`.
 
+* Fixed functions calculating Tajima's D such that a value of `np.nan`
+  is returned if there are fewer than 3 segregating sites. By
+  :user:`Andrew Kern <andrewkern>` and :user:`Alistair Miles
+  <alimanfoo>`, :issue:`175`, :issue:`237`.
+
 * Fixed incorrect fill value in GFF parsing functions. By
   :user:`Alistair Miles <alimanfoo>`, :issue:`165`, :issue:`223`.
 
