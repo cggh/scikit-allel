@@ -73,6 +73,12 @@ v1.2.0 (work in progress)
   was provided as a numpy array. By :user:`Alistair Miles
   <alimanfoo>`, :issue:`235`, :issue:`171`.
 
+* Removed `fill` option to LD functions :func:`allel.rogers_huff_r`
+  and :func:`allel.rogers_huff_r_between`, always use NaN where a
+  value cannot be calculated. Also added additional tests and check
+  for case where variants have no data. By :user:`Alistair Miles
+  <alimanfoo>`, :issue:`197`, :issue:`243`.
+  
 * Fixed `setup.py` so that installation of numpy prior to installation
   of scikit-allel is no longer required - numpy will be automatically
   installed as a dependency if not already installed. By
