@@ -57,6 +57,10 @@ v1.2.0 (work in progress)
   :func:`allel.equally_accessible_windows`. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`234`, :issue:`166`.
 
+* Fixed broken implementation of
+  :func:`allel.AlleleCountsArray.map_alleles`. By :user:`Alistair
+  Miles <alimanfoo>`, :issue:`241`, :issue:`200`.
+	 
 * Fixed functions calculating Tajima's D such that a value of `np.nan`
   is returned if there are fewer than 3 segregating sites. By
   :user:`Andrew Kern <andrewkern>` and :user:`Alistair Miles
