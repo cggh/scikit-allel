@@ -28,7 +28,7 @@ v1.2.0
   safe to use as memoryviews, which is required to avoid errors when
   using distributed computing systems like `dask.distributed` where
   data may be moved between compute nodes and passed with a read-only
-  flag set. :issue:`#208`, :issue:`206`.
+  flag set. :issue:`208`, :issue:`206`.
 
 * Added support for parsing VCF files where the chromosomes are not in
   lexical sorted order. Also improved handling of cases where no
