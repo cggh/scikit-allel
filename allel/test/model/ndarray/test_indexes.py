@@ -10,9 +10,9 @@ import pytest
 
 # internal imports
 from allel.test.tools import assert_array_equal as aeq
-from allel import SortedIndex, UniqueIndex, SortedMultiIndex
+from allel import SortedIndex, UniqueIndex, SortedMultiIndex, ChromPosIndex
 from allel.test.model.test_api import SortedIndexInterface, UniqueIndexInterface, \
-    SortedMultiIndexInterface
+    SortedMultiIndexInterface, ChromPosIndexInterface
 
 
 # noinspection PyMethodMayBeStatic
@@ -153,3 +153,11 @@ class SortedMultiIndexTests(SortedMultiIndexInterface, unittest.TestCase):
         return SortedMultiIndex(chrom, pos)
 
     _class = SortedMultiIndex
+
+
+class ChromPosIndexTests(ChromPosIndexInterface, unittest.TestCase):
+
+    def setup_instance(self, chrom, pos):
+        return ChromPosIndex(chrom, pos)
+
+    _class = ChromPosIndex

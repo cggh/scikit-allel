@@ -31,6 +31,12 @@ v1.2.0 (work in progress)
   variants are returned. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`221`, :issue:`167`, :issue:`213`.
 
+* Added a new index class :class:`allel.ChromPosIndex` for locating
+  data given chromosome and positio locations. This behaves similarly
+  to the existing :class:`allel.SortedMultiIndex` but the chromosome
+  values do not need to be sorted. By :user:`Alistair Miles
+  <alimanfoo>`, :issue:`201`, :issue:`239`.
+  
 * Added new parameters ``exclude_fields`` and ``rename_fields`` to VCF
   parsing functions to add greater flexibility when selecting fields
   to extract. Also added several measures to protect against name

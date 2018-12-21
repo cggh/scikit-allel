@@ -2277,6 +2277,66 @@ class SortedMultiIndexInterface(object):
             f(3, 2, 4)
 
 
+class ChromPosIndexInterface(object):
+
+    _class = None
+
+    def setup_instance(self, chrom, pos):
+        pass
+
+    def test_properties(self):
+        chrom = np.array([b'4', b'4', b'2', b'2', b'2', b'6'])
+        pos = np.array([1, 5, 3, 7, 7, 2])
+        idx = self.setup_instance(chrom, pos)
+        assert 6 == len(idx)
+
+    def test_locate_key(self):
+        chrom = np.array([b'4', b'4', b'2', b'2', b'2', b'6'])
+        pos = np.array([1, 5, 3, 7, 7, 2])
+        idx = self.setup_instance(chrom, pos)
+        f = idx.locate_key
+        assert slice(0, 2) == f(b'4')
+        assert slice(2, 5) == f(b'2')
+        assert slice(5, 6) == f(b'6')
+        assert 0 == f(b'4', 1)
+        assert 2 == f(b'2', 3)
+        assert 5 == f(b'6', 2)
+        assert slice(3, 5) == f(b'2', 7)
+        with pytest.raises(KeyError):
+            f(b'X')
+        with pytest.raises(KeyError):
+            f(b'4', 4)
+        with pytest.raises(KeyError):
+            f(b'2', 5)
+        with pytest.raises(KeyError):
+            f(b'6', 5)
+
+    def test_locate_range(self):
+        chrom = np.array([b'4', b'4', b'2', b'2', b'2', b'6'])
+        pos = np.array([1, 5, 3, 7, 7, 2])
+        idx = self.setup_instance(chrom, pos)
+        f = idx.locate_range
+
+        assert slice(0, 2) == f(b'4')
+        assert slice(2, 5) == f(b'2')
+        assert slice(5, 6) == f(b'6')
+        assert slice(0, 2) == f(b'4', 1, 5)
+        assert slice(0, 1) == f(b'4', 1, 3)
+        assert slice(2, 5) == f(b'2', 1, 9)
+        assert slice(2, 3) == f(b'2', 1, 6)
+        assert slice(5, 6) == f(b'6', 1, 6)
+        with pytest.raises(KeyError):
+            f(b'X')
+        with pytest.raises(KeyError):
+            f(b'4', 17, 19)
+        with pytest.raises(KeyError):
+            f(b'2', 1, 2)
+        with pytest.raises(KeyError):
+            f(b'2', 9, 12)
+        with pytest.raises(KeyError):
+            f(b'6', 3, 6)
+
+
 class VariantTableInterface(object):
 
     _class = None
