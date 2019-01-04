@@ -7,7 +7,7 @@ import numpy as np
 cimport numpy as cnp
 import cython
 cimport cython
-from libc.math cimport sqrt, fabs, fmin
+from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 

@@ -5,7 +5,7 @@
 # cython: wraparound=False
 # cython: initializedcheck=False
 # cython: nonecheck=False
-# cython: language_level=2
+# cython: language_level=3
 """
 # options for profiling...
 # cython: profile=True
@@ -537,10 +537,7 @@ cdef class VCFParser:
             tokens = region.split(':')
             if len(tokens) == 0:
                 raise ValueError('bad region string: %r' % region)
-            if PY2:
-                self.region_chrom = tokens[0]
-            else:
-                self.region_chrom = tokens[0].encode('utf8')
+            self.region_chrom = tokens[0].encode('utf8')
             if len(tokens) > 1:
                 range_tokens = tokens[1].split('-')
                 if len(range_tokens) != 2:
@@ -3699,8 +3696,7 @@ cdef int warn(message, VCFContext context) except -1:
     message += '; variant: %s' % context.variant_index
     if context.state > VCFState.POS:
         chrom = CharVector_to_pybytes(&context.chrom)
-        if not PY2:
-            chrom = str(chrom, 'utf8')
+        chrom = str(chrom, 'utf8')
         message += ' (%s:%s)' % (chrom, context.pos)
     if context.state == VCFState.CALLDATA:
         if context.sample_index >= len(context.headers.samples):
@@ -3708,14 +3704,14 @@ cdef int warn(message, VCFContext context) except -1:
         else:
             sample = context.headers.samples[context.sample_index]
         if context.sample_field_index >= context.variant_format_indices.size:
-            format = 'unknown'
+            fmt = 'unknown'
         else:
             format_index = context.variant_format_indices.data[context.sample_field_index]
-            format = context.formats[format_index]
+            fmt = context.formats[format_index]
         message += '; sample: %s:%s (%s:%s)' % (context.sample_index,
                                                 context.sample_field_index,
                                                 sample,
-                                                format)
+                                                fmt)
     warnings.warn(message)
 
 
@@ -4138,7 +4134,7 @@ cdef class ANNTransformer:
 
                 # obtain raw string value
                 raw = ann[i, j]
-                if not PY2 and isinstance(raw, bytes):
+                if isinstance(raw, bytes):
                     raw = str(raw, 'utf8')
 
                 # bail early if no content
