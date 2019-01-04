@@ -6,7 +6,6 @@ This module contains Functions for extracting data from Variant Call Format (VCF
 and loading into NumPy arrays, NumPy files, HDF5 files or Zarr array stores.
 
 """
-from __future__ import absolute_import, print_function, division
 import gzip
 import os
 import re
@@ -21,7 +20,6 @@ from collections import OrderedDict
 import numpy as np
 
 
-from allel.compat import PY2, FileNotFoundError, text_type
 from allel.opt.io_vcf_read import VCFChunkIterator, FileInputStream
 # expose some names from cython extension
 # noinspection PyUnresolvedReferences
@@ -81,7 +79,7 @@ def _chunk_iter_progress(it, log, prefix):
         elapsed_chunk = after_chunk - before_chunk
         elapsed = after_chunk - before_all
         n_variants += chunk_length
-        chrom = text_type(chrom, 'utf8')
+        chrom = str(chrom, 'utf8')
         message = (
             '%s %s rows in %.2fs; chunk in %.2fs (%s rows/s)' %
             (prefix, n_variants, elapsed, elapsed_chunk,
@@ -818,10 +816,7 @@ def _zarr_setup_datasets(chunk, root, chunk_length, chunk_width, compressor, ove
         # create dataset
         shape = (0,) + data.shape[1:]
         if data.dtype.kind == 'O':
-            if PY2:
-                dtype = 'unicode'
-            else:
-                dtype = 'str'
+            dtype = 'str'
         else:
             dtype = data.dtype
         ds = root.create_dataset(k, shape=shape, chunks=chunk_shape, dtype=dtype,
@@ -968,10 +963,7 @@ def vcf_to_zarr(input, output,
     if len(samples) > 0 and store_samples:
         # store samples
         if samples.dtype.kind == 'O':
-            if PY2:
-                dtype = 'unicode'
-            else:
-                dtype = 'str'
+            dtype = 'str'
         else:
             dtype = samples.dtype
         root.create_dataset('samples', data=samples, compressor=None, overwrite=overwrite,
@@ -1036,8 +1028,7 @@ def _setup_input_stream(input, region=None, tabix=None, buffer_size=DEFAULT_BUFF
                 poll = p.poll()
                 if poll is not None and poll > 0:
                     err = p.stdout.read()
-                    if not PY2:
-                        err = str(err, 'ascii')
+                    err = str(err, 'ascii')
                     p.stdout.close()
                     raise RuntimeError(err.strip())
                 fileobj = p.stdout
@@ -1717,7 +1708,7 @@ def _read_vcf_headers(stream):
 
     # read first header line
     header = stream.readline()
-    header = text_type(header, 'utf8')
+    header = str(header, 'utf8')
 
     while header and header[0] == '#':
 
@@ -1764,7 +1755,7 @@ def _read_vcf_headers(stream):
 
         # read next header line
         header = stream.readline()
-        header = text_type(header, 'utf8')
+        header = str(header, 'utf8')
 
     # check if we saw the mandatory header line or not
     if samples is None:

@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
-
-
 def test_public_api():
     # The idea of this test is to ensure that all functions we expect to be in the
     # public API under the correct namespace are indeed there.

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import io
 import os
 import shutil
@@ -19,7 +18,6 @@ from pytest import approx
 from allel.io.vcf_read import (iter_vcf_chunks, read_vcf, vcf_to_zarr, vcf_to_hdf5,
                                vcf_to_npz, ANNTransformer, vcf_to_dataframe, vcf_to_csv,
                                vcf_to_recarray, read_vcf_headers)
-from allel.compat import PY2
 from allel.test.tools import compare_arrays
 
 
@@ -1969,26 +1967,17 @@ def test_errors():
 
     # try to open a directory
     path = '.'
-    if PY2:
-        excls = IOError
-    else:
-        excls = OSError
-    with pytest.raises(excls):
+    with pytest.raises(OSError):
         read_vcf(path)
-
-    if PY2:
-        excls = IOError
-    else:
-        excls = FileNotFoundError
 
     # try to open a file that doesn't exist
     path = 'doesnotexist.vcf'
-    with pytest.raises(excls):
+    with pytest.raises(FileNotFoundError):
         read_vcf(path)
 
     # try to open a file that doesn't exist
     path = 'doesnotexist.vcf.gz'
-    with pytest.raises(excls):
+    with pytest.raises(FileNotFoundError):
         read_vcf(path)
 
     # file is nothing like a VCF (has no header)
