@@ -1775,7 +1775,6 @@ def _read_vcf_headers(stream):
 
 def _chunk_to_dataframe(fields, chunk, samples=[]):
     import pandas
-    import sys
     items = list()
     for f in fields:
         a = chunk[f]
