@@ -8,7 +8,33 @@ import numpy as np
 from allel.util import asarray_ndim, check_integer_dtype
 
 
-def sfs(dac):
+def _check_dac_n(dac, n):
+    dac = asarray_ndim(dac, 1)
+    check_integer_dtype(dac)
+    mx = np.max(dac)
+    if n is None:
+        n = mx
+    elif n < mx:
+        raise ValueError('number of chromosomes too small; expected {}, found {}'
+                         .format(n, mx))
+    return dac, int(n)
+
+
+def _check_ac_n(ac, n):
+    ac = asarray_ndim(ac, 2)
+    if ac.shape[1] != 2:
+        raise ValueError('only biallelic variants are supported')
+    check_integer_dtype(ac)
+    mx = np.max(np.sum(ac, axis=1))
+    if n is None:
+        n = mx
+    elif n < mx:
+        raise ValueError('number of chromosomes too small; expected {}, found {}'
+                         .format(n, mx))
+    return ac, int(n)
+
+
+def sfs(dac, n=None):
     """Compute the site frequency spectrum given derived allele counts at
     a set of biallelic variants.
 
@@ -16,6 +42,8 @@ def sfs(dac):
     ----------
     dac : array_like, int, shape (n_variants,)
         Array of derived allele counts.
+    n : int, optional
+        The total number of chromosomes called.
 
     Returns
     -------
@@ -26,19 +54,19 @@ def sfs(dac):
     """
 
     # check input
-    dac = asarray_ndim(dac, 1)
-    check_integer_dtype(dac)
+    dac, n = _check_dac_n(dac, n)
 
     # need platform integer for bincount
     dac = dac.astype(int, copy=False)
 
     # compute site frequency spectrum
-    s = np.bincount(dac)
+    x = n + 1
+    s = np.bincount(dac, minlength=x)
 
     return s
 
 
-def sfs_folded(ac):
+def sfs_folded(ac, n=None):
     """Compute the folded site frequency spectrum given reference and
     alternate allele counts at a set of biallelic variants.
 
@@ -46,6 +74,8 @@ def sfs_folded(ac):
     ----------
     ac : array_like, int, shape (n_variants, 2)
         Allele counts array.
+    n : int, optional
+        The total number of chromosomes called.
 
     Returns
     -------
@@ -56,9 +86,7 @@ def sfs_folded(ac):
     """
 
     # check input
-    ac = asarray_ndim(ac, 2)
-    assert ac.shape[1] == 2, 'only biallelic variants are supported'
-    check_integer_dtype(ac)
+    ac, n = _check_ac_n(ac, n)
 
     # compute minor allele counts
     mac = np.amin(ac, axis=1)
@@ -67,12 +95,13 @@ def sfs_folded(ac):
     mac = mac.astype(int, copy=False)
 
     # compute folded site frequency spectrum
-    s = np.bincount(mac)
+    x = n//2 + 1
+    s = np.bincount(mac, minlength=x)
 
     return s
 
 
-def sfs_scaled(dac):
+def sfs_scaled(dac, n=None):
     """Compute the site frequency spectrum scaled such that a constant value is
     expected across the spectrum for neutral variation and constant
     population size.
@@ -81,6 +110,8 @@ def sfs_scaled(dac):
     ----------
     dac : array_like, int, shape (n_variants,)
         Array of derived allele counts.
+    n : int, optional
+        The total number of chromosomes called.
 
     Returns
     -------
@@ -91,7 +122,7 @@ def sfs_scaled(dac):
     """
 
     # compute site frequency spectrum
-    s = sfs(dac)
+    s = sfs(dac, n=n)
 
     # apply scaling
     s = scale_sfs(s)
@@ -128,10 +159,7 @@ def sfs_folded_scaled(ac, n=None):
     ac : array_like, int, shape (n_variants, 2)
         Allele counts array.
     n : int, optional
-        The total number of chromosomes called at each variant site. Equal to
-        the number of samples multiplied by the ploidy. If not provided,
-        will be inferred to be the maximum value of the sum of reference and
-        alternate allele counts present in `ac`.
+        The total number of chromosomes called.
 
     Returns
     -------
@@ -142,12 +170,11 @@ def sfs_folded_scaled(ac, n=None):
 
     """
 
-    # compute the site frequency spectrum
-    s = sfs_folded(ac)
+    # check input
+    ac, n = _check_ac_n(ac, n)
 
-    # determine the total number of chromosomes called
-    if n is None:
-        n = np.amax(np.sum(ac, axis=1))
+    # compute the site frequency spectrum
+    s = sfs_folded(ac, n=n)
 
     # apply scaling
     s = scale_sfs_folded(s, n)
@@ -176,7 +203,7 @@ def scale_sfs_folded(s, n):
     return out
 
 
-def joint_sfs(dac1, dac2):
+def joint_sfs(dac1, dac2, n1=None, n2=None):
     """Compute the joint site frequency spectrum between two populations.
 
     Parameters
@@ -185,6 +212,8 @@ def joint_sfs(dac1, dac2):
         Derived allele counts for the first population.
     dac2 : array_like, int, shape (n_variants,)
         Derived allele counts for the second population.
+    n1, n2 : int, optional
+        The total number of chromosomes called in each population.
 
     Returns
     -------
@@ -196,24 +225,20 @@ def joint_sfs(dac1, dac2):
     """
 
     # check inputs
-    dac1 = asarray_ndim(dac1, 1)
-    dac2 = asarray_ndim(dac2, 1)
-    check_integer_dtype(dac1)
-    check_integer_dtype(dac2)
+    dac1, n1 = _check_dac_n(dac1, n1)
+    dac2, n2 = _check_dac_n(dac2, n2)
 
     # compute site frequency spectrum
-    n = int(np.max(dac1) + 1)
-    m = int(np.max(dac2) + 1)
-
+    x = n1 + 1
+    y = n2 + 1
     # need platform integer for bincount
-    tmp = (dac1 * m + dac2).astype(int, copy=False)
-
+    tmp = (dac1 * y + dac2).astype(int, copy=False)
     s = np.bincount(tmp)
-    s.resize(n, m)
+    s.resize(x, y)
     return s
 
 
-def joint_sfs_folded(ac1, ac2):
+def joint_sfs_folded(ac1, ac2, n1=None, n2=None):
     """Compute the joint folded site frequency spectrum between two
     populations.
 
@@ -223,10 +248,12 @@ def joint_sfs_folded(ac1, ac2):
         Allele counts for the first population.
     ac2 : array_like, int, shape (n_variants, 2)
         Allele counts for the second population.
+    n1, n2 : int, optional
+        The total number of chromosomes called in each population.
 
     Returns
     -------
-    joint_sfs_folded : ndarray, int, shape (m_chromosomes//2, n_chromosomes//2)
+    joint_sfs_folded : ndarray, int, shape (n1//2 + 1, n2//2 + 1)
         Array where the (i, j)th element is the number of variant sites with a
         minor allele count of i in the first population and j in the second
         population.
@@ -234,27 +261,23 @@ def joint_sfs_folded(ac1, ac2):
     """
 
     # check inputs
-    ac1 = asarray_ndim(ac1, 2)
-    ac2 = asarray_ndim(ac2, 2)
-    assert ac1.shape[1] == ac2.shape[1] == 2, \
-        'only biallelic variants are supported'
-    check_integer_dtype(ac1)
-    check_integer_dtype(ac2)
+    ac1, n1 = _check_ac_n(ac1, n1)
+    ac2, n2 = _check_ac_n(ac2, n2)
 
     # compute minor allele counts
     mac1 = np.amin(ac1, axis=1)
     mac2 = np.amin(ac2, axis=1)
 
     # compute site frequency spectrum
-    m = int(np.max(mac1) + 1)
-    n = int(np.max(mac2) + 1)
-    tmp = (mac1 * n + mac2).astype(int, copy=False)
+    x = n1//2 + 1
+    y = n2//2 + 1
+    tmp = (mac1 * y + mac2).astype(int, copy=False)
     s = np.bincount(tmp)
-    s.resize(m, n)
+    s.resize(x, y)
     return s
 
 
-def joint_sfs_scaled(dac1, dac2):
+def joint_sfs_scaled(dac1, dac2, n1=None, n2=None):
     """Compute the joint site frequency spectrum between two populations,
     scaled such that a constant value is expected across the spectrum for
     neutral variation, constant population size and unrelated populations.
@@ -265,10 +288,12 @@ def joint_sfs_scaled(dac1, dac2):
         Derived allele counts for the first population.
     dac2 : array_like, int, shape (n_variants,)
         Derived allele counts for the second population.
+    n1, n2 : int, optional
+        The total number of chromosomes called in each population.
 
     Returns
     -------
-    joint_sfs_scaled : ndarray, int, shape (m_chromosomes, n_chromosomes)
+    joint_sfs_scaled : ndarray, int, shape (n1 + 1, n2 + 1)
         Array where the (i, j)th element is the scaled frequency of variant
         sites with i derived alleles in the first population and j derived
         alleles in the second population.
@@ -276,7 +301,7 @@ def joint_sfs_scaled(dac1, dac2):
     """
 
     # compute site frequency spectrum
-    s = joint_sfs(dac1, dac2)
+    s = joint_sfs(dac1, dac2, n1=n1, n2=n2)
 
     # apply scaling
     s = scale_joint_sfs(s)
@@ -289,12 +314,12 @@ def scale_joint_sfs(s):
 
     Parameters
     ----------
-    s : array_like, int, shape (m_chromosomes, n_chromosomes)
+    s : array_like, int, shape (n1, n2)
         Joint site frequency spectrum.
 
     Returns
     -------
-    joint_sfs_scaled : ndarray, int, shape (m_chromosomes, n_chromosomes)
+    joint_sfs_scaled : ndarray, int, shape (n1, n2)
         Scaled joint site frequency spectrum.
 
     """
@@ -305,7 +330,7 @@ def scale_joint_sfs(s):
     return out
 
 
-def joint_sfs_folded_scaled(ac1, ac2, m=None, n=None):
+def joint_sfs_folded_scaled(ac1, ac2, n1=None, n2=None):
     """Compute the joint folded site frequency spectrum between two
     populations, scaled such that a constant value is expected across the
     spectrum for neutral variation, constant population size and unrelated
@@ -317,46 +342,40 @@ def joint_sfs_folded_scaled(ac1, ac2, m=None, n=None):
         Allele counts for the first population.
     ac2 : array_like, int, shape (n_variants, 2)
         Allele counts for the second population.
-    m : int, optional
-        Number of chromosomes called in the first population.
-    n : int, optional
-        Number of chromosomes called in the second population.
+    n1, n2 : int, optional
+        The total number of chromosomes called in each population.
 
     Returns
     -------
-    joint_sfs_folded_scaled : ndarray, int, shape (m_chromosomes//2, n_chromosomes//2)
+    joint_sfs_folded_scaled : ndarray, int, shape (n1//2 + 1, n2//2 + 1)
         Array where the (i, j)th element is the scaled frequency of variant
         sites with a minor allele count of i in the first population and j
         in the second population.
 
     """  # noqa
 
-    # compute site frequency spectrum
-    s = joint_sfs_folded(ac1, ac2)
+    # check inputs
+    ac1, n1 = _check_ac_n(ac1, n1)
+    ac2, n2 = _check_ac_n(ac2, n2)
 
-    # determine the total number of chromosomes called
-    if m is None:
-        m = np.amax(np.sum(ac1, axis=1))
-    if n is None:
-        n = np.amax(np.sum(ac2, axis=1))
+    # compute site frequency spectrum
+    s = joint_sfs_folded(ac1, ac2, n1=n1, n2=n2)
 
     # apply scaling
-    s = scale_joint_sfs_folded(s, m, n)
+    s = scale_joint_sfs_folded(s, n1, n2)
 
     return s
 
 
-def scale_joint_sfs_folded(s, m, n):
+def scale_joint_sfs_folded(s, n1, n2):
     """Scale a folded joint site frequency spectrum.
 
     Parameters
     ----------
     s : array_like, int, shape (m_chromosomes//2, n_chromosomes//2)
         Folded joint site frequency spectrum.
-    m : int
-        Number of chromosomes called in the first population.
-    n : int
-        Number of chromosomes called in the second population.
+    n1, n2 : int, optional
+        The total number of chromosomes called in each population.
 
     Returns
     -------
@@ -367,7 +386,7 @@ def scale_joint_sfs_folded(s, m, n):
     out = np.empty_like(s)
     for i in range(s.shape[0]):
         for j in range(s.shape[1]):
-            out[i, j] = s[i, j] * i * j * (m-i) * (n-j)
+            out[i, j] = s[i, j] * i * j * (n1 - i) * (n2 - j)
     return out
 
 
@@ -406,17 +425,15 @@ def fold_sfs(s, n):
     return o
 
 
-def fold_joint_sfs(s, m, n):
+def fold_joint_sfs(s, n1, n2):
     """Fold a joint site frequency spectrum.
 
     Parameters
     ----------
     s : array_like, int, shape (m_chromosomes, n_chromosomes)
         Joint site frequency spectrum.
-    m : int
-        Number of chromosomes called in the first population.
-    n : int
-        Number of chromosomes called in the second population.
+    n1, n2 : int, optional
+        The total number of chromosomes called in each population.
 
     Returns
     -------
@@ -427,30 +444,30 @@ def fold_joint_sfs(s, m, n):
 
     # check inputs
     s = asarray_ndim(s, 2)
-    assert s.shape[0] <= m + 1, 'invalid number of chromosomes'
-    assert s.shape[1] <= n + 1, 'invalid number of chromosomes'
+    assert s.shape[0] <= n1 + 1, 'invalid number of chromosomes'
+    assert s.shape[1] <= n2 + 1, 'invalid number of chromosomes'
 
     # need to check s has all entries up to m
-    if s.shape[0] < m + 1:
-        sm = np.zeros((m + 1, s.shape[1]), dtype=s.dtype)
+    if s.shape[0] < n1 + 1:
+        sm = np.zeros((n1 + 1, s.shape[1]), dtype=s.dtype)
         sm[:s.shape[0]] = s
         s = sm
 
     # need to check s has all entries up to n
-    if s.shape[1] < n + 1:
-        sn = np.zeros((s.shape[0], n + 1), dtype=s.dtype)
+    if s.shape[1] < n2 + 1:
+        sn = np.zeros((s.shape[0], n2 + 1), dtype=s.dtype)
         sn[:, :s.shape[1]] = s
         s = sn
 
     # fold
-    mf = (m + 1) // 2
-    nf = (n + 1) // 2
-    m = mf * 2
-    n = nf * 2
+    mf = (n1 + 1) // 2
+    nf = (n2 + 1) // 2
+    n1 = mf * 2
+    n2 = nf * 2
     o = (s[:mf, :nf] +  # top left
-         s[mf:m, :nf][::-1] +  # top right
-         s[:mf, nf:n][:, ::-1] +  # bottom left
-         s[mf:m, nf:n][::-1, ::-1])  # bottom right
+         s[mf:n1, :nf][::-1] +  # top right
+         s[:mf, nf:n2][:, ::-1] +  # bottom left
+         s[mf:n1, nf:n2][::-1, ::-1])  # bottom right
 
     return o
 

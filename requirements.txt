@@ -13,4 +13,4 @@ numexpr
 bcolz
 zarr
 hmmlearn
-nose
+pytest

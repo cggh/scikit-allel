@@ -57,7 +57,7 @@ def weir_cockerham_fst(g, subpops, max_allele=None, blen=None):
         ...      [[0, 1], [1, 2], [1, 1], [2, 2]],
         ...      [[0, 0], [1, 1], [0, 1], [-1, -1]]]
         >>> subpops = [[0, 1], [2, 3]]
-        >>> a, b, c = allel.stats.weir_cockerham_fst(g, subpops)
+        >>> a, b, c = allel.weir_cockerham_fst(g, subpops)
         >>> a
         array([[ 0.5  ,  0.5  ,  0.   ],
                [ 0.   ,  0.   ,  0.   ],
@@ -282,7 +282,7 @@ def hudson_fst(ac1, ac2, fill=np.nan):
         >>> subpops = [[0, 1], [2, 3]]
         >>> ac1 = g.count_alleles(subpop=subpops[0])
         >>> ac2 = g.count_alleles(subpop=subpops[1])
-        >>> num, den = allel.stats.hudson_fst(ac1, ac2)
+        >>> num, den = allel.hudson_fst(ac1, ac2)
         >>> num
         array([ 1.        , -0.16666667,  0.        , -0.125     , -0.33333333])
         >>> den

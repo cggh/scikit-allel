@@ -10,15 +10,17 @@ import numpy as np
 
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
-    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim
+    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim, check_dim1_aligned
 from allel.compat import PY2, copy_method_doc, integer_types, memoryview_safe
-from allel.io import write_vcf, gff3_to_recarray, recarray_from_hdf5_group, recarray_to_hdf5_group
+from allel.io.vcf_write import write_vcf
+from allel.io.gff import gff3_to_recarray
+from allel.io.util import recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
     genotype_array_count_alleles, genotype_array_count_alleles_masked, \
     genotype_array_count_alleles_subpop, genotype_array_count_alleles_subpop_masked, \
     haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
-    haplotype_array_map_alleles
+    haplotype_array_map_alleles, allele_counts_array_map_alleles
 from .generic import index_genotype_vector, compress_genotypes, \
     take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
     index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
@@ -30,7 +32,8 @@ from .generic import index_genotype_vector, compress_genotypes, \
 
 __all__ = ['Genotypes', 'GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
            'GenotypeAlleleCounts', 'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector',
-           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable']
+           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable',
+           'ChromPosIndex']
 
 
 # noinspection PyTypeChecker
@@ -1340,6 +1343,17 @@ copy_method_doc(GenotypeVector.concatenate, Genotypes.concatenate)
 copy_method_doc(GenotypeVector.to_haplotypes, Genotypes.to_haplotypes)
 
 
+def _normalize_subpop_arg(subpop, n):
+    subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+    if subpop is not None:
+        if np.any(subpop >= n):
+            raise ValueError('index out of bounds')
+        if np.any(subpop < 0):
+            raise ValueError('negative indices not supported')
+        subpop = memoryview_safe(subpop)
+    return subpop
+
+
 class GenotypeArray(Genotypes, DisplayAs2D):
     """Array of discrete genotype calls for a matrix of variants and samples.
 
@@ -1818,13 +1832,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         """
 
         # check inputs
-        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
-        if subpop is not None:
-            if np.any(subpop >= self.shape[1]):
-                raise ValueError('index out of bounds')
-            if np.any(subpop < 0):
-                raise ValueError('negative indices not supported')
-            subpop = memoryview_safe(subpop)
+        subpop = _normalize_subpop_arg(subpop, self.shape[1])
 
         # determine alleles to count
         if max_allele is None:
@@ -2379,13 +2387,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         """
 
         # check inputs
-        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
-        if subpop is not None:
-            if np.any(subpop >= self.shape[1]):
-                raise ValueError('index out of bounds')
-            if np.any(subpop < 0):
-                raise ValueError('negative indices not supported')
-            subpop = memoryview_safe(subpop)
+        subpop = _normalize_subpop_arg(subpop, self.shape[1])
 
         # determine alleles to count
         if max_allele is None:
@@ -2542,7 +2544,8 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     This class represents allele counts as a 2-dimensional numpy
     array of integers. By convention the first dimension corresponds
     to the variants genotyped, the second dimension corresponds to the
-    alleles counted.
+    alleles counted. The integer recorded is the **total count** of
+    the given allele at the given variant, across all individuals.
 
     Examples
     --------
@@ -2965,13 +2968,16 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
     def count_doubleton(self, allele=1):
         return np.sum(self.is_doubleton(allele=allele))
 
-    def map_alleles(self, mapping):
+    def map_alleles(self, mapping, max_allele=None):
         """Transform alleles via a mapping.
 
         Parameters
         ----------
         mapping : ndarray, int8, shape (n_variants, max_allele)
             An array defining the allele mapping for each variant.
+        max_allele : int, optional
+            Highest allele index expected in the output. If not provided
+            will be determined from maximum value in `mapping`.
 
         Returns
         -------
@@ -2997,7 +3003,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         ...            [2, 1, 0],
         ...            [1, 2, 0]]
         >>> ac.map_alleles(mapping)
-        <AlleleCountsArray shape=(4, 3) dtype=int64>
+        <AlleleCountsArray shape=(4, 3) dtype=int32>
         0 4 0
         1 3 0
         1 2 1
@@ -3009,16 +3015,15 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        mapping = asarray_ndim(mapping, 2)
+        # ensure correct dimensionality and matching dtype
+        mapping = asarray_ndim(mapping, 2, dtype=self.dtype)
         check_dim0_aligned(self, mapping)
+        check_dim1_aligned(self, mapping)
 
-        # setup output array
-        out = np.empty_like(mapping)
+        # use optimisation
+        out = allele_counts_array_map_alleles(self.values, mapping, max_allele)
 
-        # apply transformation
-        i = np.arange(self.shape[0]).reshape((-1, 1))
-        out[i, mapping] = self
-
+        # wrap and return
         return type(self)(out)
 
 
@@ -3221,8 +3226,8 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
     Genotype calls are represented as a 3-dimensional array of integers. By convention, the
     first dimension corresponds to the variants genotyped, the second dimension corresponds
     to the samples genotyped, and the third dimension corresponds to the alleles genotyped
-    in index order. Each integer in the array records the **count** for the given in allele in
-    the given variant and sample.
+    in index order. Each integer in the array records the **count** for the given allele at
+    the given variant in the given sample.
 
     Examples
     --------
@@ -3311,12 +3316,14 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
     def count_alleles(self, subpop=None):
 
         # deal with subpop
-        if subpop:
+        subpop = _normalize_subpop_arg(subpop, self.shape[1])
+        if subpop is not None:
             g = self.take(subpop, axis=1).values
         else:
             g = self.values
 
-        out = g.sum(axis=1)
+        out = np.empty((g.shape[0], g.shape[2]), dtype='i4')
+        g.sum(axis=1, out=out)
         out = AlleleCountsArray(out)
         return out
 
@@ -4220,6 +4227,220 @@ class SortedMultiIndex(DisplayAs1D):
         return loc
 
 
+# noinspection PyMissingConstructor
+class ChromPosIndex(DisplayAs1D):
+    """Two-level index of variant positions from two or more chromosomes/contigs.
+
+    Parameters
+    ----------
+    chrom : array_like
+        Chromosome values.
+    pos : array_like
+        Position values, in ascending order within each chromosome.
+    copy : bool, optional
+        If True, inputs will be copied into new arrays.
+
+    Notes
+    -----
+    Chromosomes do not need to be sorted, but all values for a given chromosome must be
+    grouped together, and all positions for a given chromosome must be sorted in ascending
+    order.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> chrom = ['chr2', 'chr2', 'chr1', 'chr1', 'chr1', 'chr3']
+    >>> pos = [1, 4, 2, 5, 5, 3]
+    >>> idx = allel.ChromPosIndex(chrom, pos)
+    >>> idx
+    <ChromPosIndex shape=(6,), dtype=<U4/int64>
+    chr2:1 chr2:4 chr1:2 chr1:5 chr1:5 chr3:3
+    >>> len(idx)
+    6
+
+    See Also
+    --------
+    SortedIndex, UniqueIndex
+
+    """
+
+    def __init__(self, chrom, pos, copy=False):
+        chrom = np.array(chrom, copy=copy)
+        pos = np.array(pos, copy=copy)
+        check_ndim(chrom, 1)
+        check_ndim(pos, 1)
+        check_dim0_aligned(chrom, pos)
+        self.chrom = chrom
+        self.pos = pos
+        # cache mapping of chromosomes to regions
+        self.chrom_ranges = dict()
+
+    def __repr__(self):
+        s = '<ChromPosIndex shape=(%s,), dtype=%s/%s>' % \
+            (len(self), self.chrom.dtype, self.pos.dtype)
+        s += '\n' + str(self)
+        return s
+
+    def str_items(self):
+        return ['%s:%s' % (x, y) for x, y in zip(self.chrom, self.pos)]
+
+    def to_str(self, threshold=10, edgeitems=5):
+        _, items = self.get_display_items(threshold, edgeitems)
+        s = ' '.join(items)
+        return s
+
+    def __len__(self):
+        return len(self.chrom)
+
+    def __getitem__(self, item):
+        l1 = self.chrom[item]
+        l2 = self.pos[item]
+        if isinstance(item, integer_types):
+            return l1, l2
+        else:
+            return ChromPosIndex(l1, l2, copy=False)
+
+    def compress(self, condition, axis=0, out=None):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.chrom.compress(condition, axis=axis)
+        l2 = self.pos.compress(condition, axis=axis)
+        return ChromPosIndex(l1, l2, copy=False)
+
+    def take(self, indices, axis=0, out=None, mode='raise'):
+        if out is not None:
+            raise NotImplementedError('out argument not supported')
+        l1 = self.chrom.take(indices, axis=axis, mode=mode)
+        l2 = self.pos.take(indices, axis=axis, mode=mode)
+        return ChromPosIndex(l1, l2, copy=False)
+
+    @property
+    def shape(self):
+        return len(self),
+
+    def locate_key(self, chrom, pos=None):
+        """
+        Get index location for the requested key.
+
+        Parameters
+        ----------
+        chrom : object
+            Chromosome or contig.
+        pos : int, optional
+            Position within chromosome or contig.
+
+        Returns
+        -------
+        loc : int or slice
+            Location of requested key (will be slice if there are duplicate
+            entries).
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr2', 'chr2', 'chr1', 'chr1', 'chr1', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.ChromPosIndex(chrom, pos)
+        >>> idx.locate_key('chr1')
+        slice(2, 5, None)
+        >>> idx.locate_key('chr2', 4)
+        1
+        >>> idx.locate_key('chr1', 5)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_key('chr3', 4)
+        ... except KeyError as e:
+        ...     print(e)
+        ...
+        ('chr3', 4)
+
+        """
+
+        if pos is None:
+            # we just want the region for a chromosome
+            if chrom in self.chrom_ranges:
+                # return previously cached result
+                return self.chrom_ranges[chrom]
+            else:
+                loc_chrom = np.nonzero(self.chrom == chrom)[0]
+                if len(loc_chrom) == 0:
+                    raise KeyError(chrom)
+                slice_chrom = slice(min(loc_chrom), max(loc_chrom) + 1)
+                # cache the result
+                self.chrom_ranges[chrom] = slice_chrom
+                return slice_chrom
+
+        else:
+            slice_chrom = self.locate_key(chrom)
+            pos_chrom = SortedIndex(self.pos[slice_chrom])
+            try:
+                idx_within_chrom = pos_chrom.locate_key(pos)
+            except KeyError:
+                raise KeyError(chrom, pos)
+            if isinstance(idx_within_chrom, slice):
+                return slice(slice_chrom.start + idx_within_chrom.start,
+                             slice_chrom.start + idx_within_chrom.stop)
+            else:
+                return slice_chrom.start + idx_within_chrom
+
+    def locate_range(self, chrom, start=None, stop=None):
+        """Locate slice of index containing all entries within the range
+        `key`:`start`-`stop` **inclusive**.
+
+        Parameters
+        ----------
+        chrom : object
+            Chromosome or contig.
+        start : int, optional
+            Position start value.
+        stop : int, optional
+            Position stop value.
+
+        Returns
+        -------
+        loc : slice
+            Slice object.
+
+        Examples
+        --------
+
+        >>> import allel
+        >>> chrom = ['chr2', 'chr2', 'chr1', 'chr1', 'chr1', 'chr3']
+        >>> pos = [1, 4, 2, 5, 5, 3]
+        >>> idx = allel.ChromPosIndex(chrom, pos)
+        >>> idx.locate_range('chr1')
+        slice(2, 5, None)
+        >>> idx.locate_range('chr2', 1, 4)
+        slice(0, 2, None)
+        >>> idx.locate_range('chr1', 3, 7)
+        slice(3, 5, None)
+        >>> try:
+        ...     idx.locate_range('chr3', 4, 9)
+        ... except KeyError as e:
+        ...     print(e)
+        ('chr3', 4, 9)
+
+        """
+
+        slice_chrom = self.locate_key(chrom)
+
+        if start is None and stop is None:
+            return slice_chrom
+
+        else:
+
+            pos_chrom = SortedIndex(self.pos[slice_chrom])
+            try:
+                slice_within_chrom = pos_chrom.locate_range(start, stop)
+            except KeyError:
+                raise KeyError(chrom, start, stop)
+            loc = slice(slice_chrom.start + slice_within_chrom.start,
+                        slice_chrom.start + slice_within_chrom.stop)
+            return loc
+
+
 class VariantTable(NumpyRecArrayWrapper):
     """Table (catalogue) of variants.
 
@@ -4537,7 +4758,7 @@ class FeatureTable(NumpyRecArrayWrapper):
 
     @staticmethod
     def from_gff3(path, attributes=None, region=None, score_fill=-1, phase_fill=-1,
-                  attributes_fill=b'.', dtype=None):
+                  attributes_fill='.', dtype=None):
         """Read a feature table from a GFF3 format file.
 
         Parameters

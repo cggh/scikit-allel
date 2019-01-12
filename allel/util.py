@@ -90,6 +90,10 @@ def check_dim0_aligned(*arrays):
     check_dim_aligned(0, *arrays)
 
 
+def check_dim1_aligned(*arrays):
+    check_dim_aligned(1, *arrays)
+
+
 def check_dim_aligned(dim, *arrays):
     a = arrays[0]
     for b in arrays[1:]:

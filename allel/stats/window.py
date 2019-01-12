@@ -9,7 +9,7 @@ from allel.model.ndarray import SortedIndex
 from allel.util import asarray_ndim, ignore_invalid, check_equal_length
 
 
-def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
+def moving_statistic(values, statistic, size, start=0, stop=None, step=None, **kwargs):
     """Calculate a statistic in a moving window over `values`.
 
     Parameters
@@ -28,6 +28,9 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     step : int, optional
         The distance between start positions of windows. If not given,
         defaults to the window size, i.e., non-overlapping windows.
+    kwargs
+        Additional keyword arguments are passed through to the `statistic`
+        function.
 
     Returns
     -------
@@ -39,9 +42,9 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
 
     >>> import allel
     >>> values = [2, 5, 8, 16]
-    >>> allel.stats.moving_statistic(values, np.sum, size=2)
+    >>> allel.moving_statistic(values, np.sum, size=2)
     array([ 7, 24])
-    >>> allel.stats.moving_statistic(values, np.sum, size=2, step=1)
+    >>> allel.moving_statistic(values, np.sum, size=2, step=1)
     array([ 7, 13, 24])
 
     """
@@ -49,7 +52,7 @@ def moving_statistic(values, statistic, size, start=0, stop=None, step=None):
     windows = index_windows(values, size, start, stop, step)
 
     # setup output
-    out = np.array([statistic(values[i:j]) for i, j in windows])
+    out = np.array([statistic(values[i:j], **kwargs) for i, j in windows])
 
     return out
 
@@ -187,7 +190,7 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
 
         >>> import allel
         >>> pos = [1, 7, 12, 15, 28]
-        >>> counts, windows = allel.stats.windowed_count(pos, size=10)
+        >>> counts, windows = allel.windowed_count(pos, size=10)
         >>> counts
         array([2, 2, 1])
         >>> windows
@@ -197,7 +200,7 @@ def windowed_count(pos, size=None, start=None, stop=None, step=None,
 
     Half-overlapping windows::
 
-        >>> counts, windows = allel.stats.windowed_count(pos, size=10, step=5)
+        >>> counts, windows = allel.windowed_count(pos, size=10, step=5)
         >>> counts
         array([2, 3, 2, 0, 1])
         >>> windows
@@ -287,7 +290,7 @@ def windowed_statistic(pos, values, statistic, size=None, start=None,
         >>> import allel
         >>> pos = [1, 7, 12, 15, 28]
         >>> values = [True, False, True, False, False]
-        >>> nnz, windows, counts = allel.stats.windowed_statistic(
+        >>> nnz, windows, counts = allel.windowed_statistic(
         ...     pos, values, statistic=np.count_nonzero, size=10
         ... )
         >>> nnz
@@ -302,7 +305,7 @@ def windowed_statistic(pos, values, statistic, size=None, start=None,
     Compute a sum over items in half-overlapping windows::
 
         >>> values = [3, 4, 2, 6, 9]
-        >>> x, windows, counts = allel.stats.windowed_statistic(
+        >>> x, windows, counts = allel.windowed_statistic(
         ...     pos, values, statistic=np.sum, size=10, step=5, fill=0
         ... )
         >>> x
@@ -428,7 +431,7 @@ def per_base(x, windows, is_accessible=None, fill=np.nan):
     return y, n_bases
 
 
-def equally_accessible_windows(is_accessible, size):
+def equally_accessible_windows(is_accessible, size, start=0, stop=None, step=None):
     """Create windows each containing the same number of accessible bases.
 
     Parameters
@@ -437,6 +440,15 @@ def equally_accessible_windows(is_accessible, size):
         Array defining accessible status of all bases on a contig/chromosome.
     size : int
         Window size (number of accessible bases).
+    start : int, optional
+        The genome position at which to start.
+    stop : int, optional
+        The genome position at which to stop.
+    step : int, optional
+        The number of accessible sites between start positions
+        of windows. If not given, defaults to the window size, i.e.,
+        non-overlapping windows. Use half the window size to get
+        half-overlapping windows.
 
     Returns
     -------
@@ -446,6 +458,15 @@ def equally_accessible_windows(is_accessible, size):
     """
     pos_accessible, = np.nonzero(is_accessible)
     pos_accessible += 1  # convert to 1-based coordinates
+
+    # N.B., need some care in handling start and stop positions, these are
+    # genomic positions at which to start and stop the windows
+    if start:
+        pos_accessible = pos_accessible[pos_accessible >= start]
+    if stop:
+        pos_accessible = pos_accessible[pos_accessible <= stop]
+
+    # now construct moving windows
     windows = moving_statistic(pos_accessible, lambda v: [v[0], v[-1]],
-                               size=size)
+                               size=size, step=step)
     return windows

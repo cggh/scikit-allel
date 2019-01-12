@@ -1,4 +1,5 @@
 numpy
 numpydoc
 mock
-sphinx==1.6.2
+sphinx
+sphinx-issues

@@ -6,11 +6,12 @@ import unittest
 
 
 import numpy as np
-from nose.tools import assert_raises, eq_ as eq
-from allel.test.tools import assert_array_equal as aeq, assert_array_almost_equal
+import pytest
+from pytest import approx
 
 
 import allel
+from allel.test.tools import assert_array_equal as aeq, assert_array_almost_equal
 from allel.util import ignore_invalid
 from allel import GenotypeArray, HaplotypeArray, SortedIndex, AlleleCountsArray
 
@@ -69,7 +70,7 @@ class TestWindowUtilities(unittest.TestCase):
 
         # boolean array, bad length
         b = [False, True, False]
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             f(pos, b, np.count_nonzero, 10)
 
         # 2D, 4 variants, 2 samples
@@ -150,6 +151,24 @@ class TestWindowUtilities(unittest.TestCase):
         aeq(expected_densities, densities)
         aeq(expected_n_bases, n_bases)
 
+    def test_equally_accessible_windows(self):
+        is_accessible = np.array([1, 0, 0, 1, 1, 0, 1, 0, 1])
+
+        # default options
+        actual = allel.equally_accessible_windows(is_accessible, size=2)
+        expect = np.array([[1, 4], [5, 7]])
+        aeq(expect, actual)
+
+        # with step
+        actual = allel.equally_accessible_windows(is_accessible, size=2, step=1)
+        expect = np.array([[1, 4], [4, 5], [5, 7], [7, 9]])
+        aeq(expect, actual)
+
+        # with start and stop
+        actual = allel.equally_accessible_windows(is_accessible, size=2, start=4, stop=5)
+        expect = np.array([[4, 5]])
+        aeq(expect, actual)
+
 
 class TestDiversityDivergence(unittest.TestCase):
 
@@ -195,12 +214,12 @@ class TestDiversityDivergence(unittest.TestCase):
         # all variants
         e = 3 / 7
         a = sequence_divergence(pos, ac1, ac2)
-        eq(e, a)
+        assert e == a
 
         # start/stop
         e = 2 / 6
         a = sequence_divergence(pos, ac1, ac2, start=0, stop=5)
-        eq(e, a)
+        assert e == a
 
         # start/stop, an provided
         an1 = ac1.sum(axis=1)
@@ -208,7 +227,7 @@ class TestDiversityDivergence(unittest.TestCase):
         e = 2 / 6
         a = sequence_divergence(pos, ac1, ac2, start=0, stop=5, an1=an1,
                                 an2=an2)
-        eq(e, a)
+        assert e == a
 
     def test_windowed_diversity(self):
 
@@ -275,6 +294,96 @@ class TestDiversityDivergence(unittest.TestCase):
             pos, ac1, ac2, size=10, start=1, stop=31
         )
         assert_array_almost_equal(expect, actual)
+
+    def test_tajima_d(self):
+        from allel import tajima_d
+
+        # example with calculable value
+        ac = AlleleCountsArray([[1, 3],
+                                [2, 2],
+                                [3, 1]])
+        expect = approx(0.168, 0.01)
+        actual = tajima_d(ac)
+        assert expect == actual
+
+        # too few sites
+        ac = AlleleCountsArray([[2, 2],
+                                [3, 1]])
+        assert np.nan is tajima_d(ac)
+
+        # too few segregating sites
+        ac = AlleleCountsArray([[4, 0],
+                                [2, 2],
+                                [3, 1]])
+        assert np.nan is tajima_d(ac)
+        # allow people to override if they really want to
+        assert approx(0.592, 0.01) == tajima_d(ac, min_sites=2)
+
+    def test_moving_tajima_d(self):
+        from allel import moving_tajima_d
+
+        # example with calculable value
+        ac = AlleleCountsArray([[1, 3],
+                                [2, 2],
+                                [3, 1],
+                                [1, 3],
+                                [2, 2]])
+        expect = np.array([0.168] * 3)
+        actual = moving_tajima_d(ac, size=3, step=1)
+        assert_array_almost_equal(expect, actual, decimal=3)
+
+        # too few sites
+        actual = moving_tajima_d(ac, size=2, step=1)
+        assert 4 == len(actual)
+        assert np.all(np.isnan(actual))
+
+        # too few segregating sites
+        ac = AlleleCountsArray([[4, 0],
+                                [2, 2],
+                                [3, 1],
+                                [4, 0],
+                                [2, 2]])
+        actual = moving_tajima_d(ac, size=3, step=1)
+        assert 3 == len(actual)
+        assert np.all(np.isnan(actual))
+        # allow people to override if they really want to
+        expect = np.array([0.592] * 3)
+        actual = moving_tajima_d(ac, size=3, step=1, min_sites=2)
+        assert_array_almost_equal(expect, actual, decimal=3)
+
+    def test_windowed_tajima_d(self):
+        from allel import windowed_tajima_d
+
+        pos = np.array([1, 11, 21, 31, 41])
+
+        # example with calculable value
+        ac = AlleleCountsArray([[1, 3],
+                                [2, 2],
+                                [3, 1],
+                                [1, 3],
+                                [2, 2]])
+        expect = np.array([0.168] * 3)
+        actual, _, _ = windowed_tajima_d(pos, ac, size=25, step=10)
+        assert_array_almost_equal(expect, actual, decimal=3)
+
+        # too few sites
+        actual, _, _ = windowed_tajima_d(pos, ac, size=15, step=10)
+        assert 4 == len(actual)
+        assert np.all(np.isnan(actual))
+
+        # too few segregating sites
+        ac = AlleleCountsArray([[4, 0],
+                                [2, 2],
+                                [3, 1],
+                                [4, 0],
+                                [2, 2]])
+        actual, _, _ = windowed_tajima_d(pos, ac, size=25, step=10)
+        assert 3 == len(actual)
+        assert np.all(np.isnan(actual))
+        # allow people to override if they really want to
+        expect = np.array([0.592] * 3)
+        actual, _, _ = windowed_tajima_d(pos, ac, size=25, step=10, min_sites=2)
+        assert_array_almost_equal(expect, actual, decimal=3)
 
 
 class TestHardyWeinberg(unittest.TestCase):
@@ -397,6 +506,7 @@ class TestHardyWeinberg(unittest.TestCase):
 class TestDistance(unittest.TestCase):
 
     def test_pdist(self):
+        from allel.stats.distance import pdist
         h = HaplotypeArray([[0, 0, 0, 0],
                             [0, 0, 0, 1],
                             [0, 0, 1, 1],
@@ -408,7 +518,7 @@ class TestDistance(unittest.TestCase):
                             [-1, -1, -1, -1]])
         import scipy.spatial
         d1 = scipy.spatial.distance.pdist(h.T, 'hamming')
-        d2 = allel.stats.distance.pdist(h, 'hamming')
+        d2 = pdist(h, 'hamming')
         aeq(d1, d2)
 
     def test_pairwise_distance_multidim(self):
@@ -435,16 +545,16 @@ class TestDistance(unittest.TestCase):
 
     def test_condensed_coords(self):
         from allel import condensed_coords
-        eq(0, condensed_coords(0, 1, 2))
-        eq(0, condensed_coords(1, 0, 2))
-        eq(0, condensed_coords(0, 1, 3))
-        eq(0, condensed_coords(1, 0, 3))
-        eq(1, condensed_coords(0, 2, 3))
-        eq(1, condensed_coords(2, 0, 3))
-        eq(2, condensed_coords(1, 2, 3))
-        eq(2, condensed_coords(2, 1, 3))
+        assert 0 == condensed_coords(0, 1, 2)
+        assert 0 == condensed_coords(1, 0, 2)
+        assert 0 == condensed_coords(0, 1, 3)
+        assert 0 == condensed_coords(1, 0, 3)
+        assert 1 == condensed_coords(0, 2, 3)
+        assert 1 == condensed_coords(2, 0, 3)
+        assert 2 == condensed_coords(1, 2, 3)
+        assert 2 == condensed_coords(2, 1, 3)
 
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             condensed_coords(0, 0, 1)
             condensed_coords(0, 1, 1)
             condensed_coords(1, 0, 1)
@@ -463,28 +573,28 @@ class TestDistance(unittest.TestCase):
         n = 3
         expect = [0]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [0, 2]
         n = 3
         expect = [1]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [1, 2]
         n = 3
         expect = [2]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [0, 1, 3]
         n = 4
         expect = [0, 2, 4]
         actual = condensed_coords_within(pop, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop = [0, 0]
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             condensed_coords_within(pop, n)
 
     def test_condensed_coords_between(self):
@@ -495,16 +605,16 @@ class TestDistance(unittest.TestCase):
         n = 4
         expect = [1, 2, 3, 4]
         actual = condensed_coords_between(pop1, pop2, n)
-        eq(expect, actual)
+        assert expect == actual
 
         pop1 = [0, 2]
         pop2 = [1, 3]
         n = 4
         expect = [0, 2, 3, 5]
         actual = condensed_coords_between(pop1, pop2, n)
-        eq(expect, actual)
+        assert expect == actual
 
-        with assert_raises(ValueError):
+        with pytest.raises(ValueError):
             condensed_coords_between(pop1, pop1, n)
 
 
@@ -516,16 +626,36 @@ class TestLinkageDisequilibrium(unittest.TestCase):
               [0, 1, 2]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2],
               [2, 1, 0]]
         expect = -1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
+
+        gn = [[0, 0, 0],
+              [0, 0, 0]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
 
         gn = [[0, 0, 0],
               [1, 1, 1]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[1, 1, 1],
+              [1, 1, 1]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[0, -1, 0],
+              [-1, 1, -1]]
+        actual = allel.rogers_huff_r(gn)
+        assert np.isnan(actual)
+
+        gn = [[0, 1, 0],
+              [-1, -1, -1]]
         actual = allel.rogers_huff_r(gn)
         assert np.isnan(actual)
 
@@ -533,25 +663,25 @@ class TestLinkageDisequilibrium(unittest.TestCase):
               [0, 1, 1, 0]]
         expect = 0
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2, -1],
               [0, 1, 2, 2]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2, 2],
               [0, 1, 2, -1]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 1, 2],
               [0, 1, -1]]
         expect = 1.
         actual = allel.rogers_huff_r(gn)
-        eq(expect, actual)
+        assert expect == actual
 
         gn = [[0, 2],
               [2, 0],
@@ -574,13 +704,13 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         gnb = [[0, 1, 2]]
         expect = 1.
         actual = allel.rogers_huff_r_between(gna, gnb)
-        eq(expect, actual)
+        assert expect == actual
 
         gna = [[0, 1, 2]]
         gnb = [[2, 1, 0]]
         expect = -1.
         actual = allel.rogers_huff_r_between(gna, gnb)
-        eq(expect, actual)
+        assert expect == actual
 
         gna = [[0, 0, 0]]
         gnb = [[1, 1, 1]]
@@ -686,36 +816,3 @@ class TestAdmixture(unittest.TestCase):
         expect_den = [0., 1., 1., 0.25, np.nan]
         assert_array_almost_equal(expect_num, num)
         assert_array_almost_equal(expect_den, den)
-
-
-class TestSF(unittest.TestCase):
-
-    def test_sfs(self):
-        dac = [0, 1, 2, 1]
-        expect = [1, 2, 1]
-        actual = allel.sfs(dac)
-        aeq(expect, actual)
-        for dtype in 'u2', 'i2', 'u8', 'i8':
-            daca = np.asarray(dac, dtype=dtype)
-            actual = allel.sfs(daca)
-            aeq(expect, actual)
-
-    def test_sfs_folded(self):
-        ac = [[0, 3], [1, 2], [2, 1]]
-        expect = [1, 2]
-        actual = allel.sfs_folded(ac)
-        aeq(expect, actual)
-        for dtype in 'u2', 'i2', 'u8', 'i8':
-            aca = np.asarray(ac, dtype=dtype)
-            actual = allel.sfs_folded(aca)
-            aeq(expect, actual)
-
-    def test_sfs_scaled(self):
-        dac = [0, 1, 2, 1]
-        expect = [0, 2, 2]
-        actual = allel.sfs_scaled(dac)
-        aeq(expect, actual)
-        for dtype in 'u2', 'i2', 'u8', 'i8':
-            daca = np.asarray(dac, dtype=dtype)
-            actual = allel.sfs_scaled(daca)
-            aeq(expect, actual)

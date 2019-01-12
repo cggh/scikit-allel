@@ -6,8 +6,8 @@ import unittest
 import numpy as np
 import dask.config
 import dask.array as da
-from nose.tools import assert_raises, eq_ as eq
 import zarr
+import pytest
 
 
 from allel import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector
@@ -33,39 +33,39 @@ class GenotypeDaskArrayTests(GenotypeArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             GenotypeDaskArray()
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeDaskArray(data)
 
         # data has wrong dtype
         data = np.array([4., 5., 3.7])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeDaskArray(data)
 
         # data has wrong dimensions
         data = np.array([1, 2, 3])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeDaskArray(data)
 
         # data has wrong dimensions
         data = np.array([[1, 2], [3, 4]])  # use HaplotypeDaskArray instead
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             GenotypeDaskArray(data)
 
         # diploid data (typed)
         gd = self.setup_instance(np.array(diploid_genotype_data, dtype='i1'))
         aeq(diploid_genotype_data, gd)
-        eq(np.int8, gd.dtype)
+        assert np.int8 == gd.dtype
 
         # polyploid data (typed)
         gd = self.setup_instance(np.array(triploid_genotype_data, dtype='i1'))
         aeq(triploid_genotype_data, gd)
-        eq(np.int8, gd.dtype)
+        assert np.int8 == gd.dtype
 
     def test_slice_types(self):
 
@@ -136,34 +136,34 @@ class HaplotypeDaskArrayTests(HaplotypeArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             HaplotypeDaskArray()
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             HaplotypeDaskArray(data)
 
         # data has wrong dtype
         data = np.array([4., 5., 3.7])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             HaplotypeDaskArray(data)
 
         # data has wrong dimensions
         data = np.array([1, 2, 3])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             HaplotypeDaskArray(data)
 
         # data has wrong dimensions
         data = np.array([[[1, 2], [3, 4]]])  # use GenotypeDaskArray instead
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             HaplotypeDaskArray(data)
 
         # valid data (typed)
         hd = self.setup_instance(np.array(haplotype_data, dtype='i1'))
         aeq(haplotype_data, hd)
-        eq(np.int8, hd.dtype)
+        assert np.int8 == hd.dtype
 
     def test_slice_types(self):
 
@@ -216,34 +216,34 @@ class AlleleCountsDaskArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
     def test_constructor(self):
 
         # missing data arg
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyArgumentList
             AlleleCountsDaskArray()
 
         # data has wrong dtype
         data = 'foo bar'
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsDaskArray(data)
 
         # data has wrong dtype
         data = np.array([4., 5., 3.7])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsDaskArray(data)
 
         # data has wrong dimensions
         data = np.array([1, 2, 3])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsDaskArray(data)
 
         # data has wrong dimensions
         data = np.array([[[1, 2], [3, 4]]])
-        with assert_raises(TypeError):
+        with pytest.raises(TypeError):
             AlleleCountsDaskArray(data)
 
         # valid data (typed)
         hd = self.setup_instance(np.array(allele_counts_data, dtype='u2'))
         aeq(allele_counts_data, hd)
-        eq(np.uint16, hd.dtype)
+        assert np.uint16 == hd.dtype
 
     def test_slice_types(self):
 

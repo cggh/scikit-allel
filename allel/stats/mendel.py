@@ -61,7 +61,7 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
         ...     # ab x cd -> ac or ad or bc or bd
         ...     [[0, 1], [2, 3], [0, 2], [0, 3], [1, 2], [1, 3]],
         ... ])
-        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me = allel.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
         >>> me
         array([[0, 0, 0, 0],
                [0, 0, 0, 0],
@@ -110,7 +110,7 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
         ...     # ab x cd -> ae or be or ce or de
         ...     [[0, 1], [2, 3], [0, 4], [1, 4], [2, 4], [3, 4]],
         ... ])
-        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me = allel.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
         >>> me
         array([[1, 1, 2, 2],
                [1, 1, 2, 2],
@@ -146,7 +146,7 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
         ...     [[0, 1], [2, 3], [0, 0], [1, 1]],
         ...     [[0, 1], [2, 3], [2, 2], [3, 3]],
         ... ])
-        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me = allel.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
         >>> me
         array([[1, 0],
                [1, 0],
@@ -171,7 +171,7 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
         ...     # ab x cd -> ab or cd
         ...     [[0, 1], [2, 3], [0, 1], [2, 3]],
         ... ])
-        >>> me = allel.stats.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
+        >>> me = allel.mendel_errors(genotypes[:, :2], genotypes[:, 2:])
         >>> me
         array([[1, 1],
                [1, 1],
@@ -264,7 +264,7 @@ def paint_transmission(parent_haplotypes, progeny_haplotypes):
     ...     [-1, 1, 0, 1, 2, -1],
     ...     [-1, -1, 0, 1, 2, -1],
     ... ], dtype='i1')
-    >>> painting = allel.stats.paint_transmission(haplotypes[:, :2],
+    >>> painting = allel.paint_transmission(haplotypes[:, :2],
     ...                                           haplotypes[:, 2:])
     >>> painting
     array([[3, 5, 5, 7],
@@ -357,7 +357,7 @@ def phase_progeny_by_transmission(g):
     ...     [[0, 0], [0, 0], [-1, -1]],
     ...     [[0, 0], [0, 0], [1, 1]],
     ... ], dtype='i1')
-    >>> g = allel.stats.phase_progeny_by_transmission(g)
+    >>> g = allel.phase_progeny_by_transmission(g)
     >>> print(g.to_str(row_threshold=None))
     0/0 0/0 0|0
     1/1 1/1 1|1

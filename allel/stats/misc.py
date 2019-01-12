@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
+from collections import OrderedDict
 
 
 import numpy as np
@@ -244,7 +245,7 @@ def tabulate_state_transitions(x, states, pos=None):
                   ('rpos', switch_positions[:, 1])]
 
     import pandas
-    return pandas.DataFrame.from_items(items)
+    return pandas.DataFrame.from_dict(OrderedDict(items))
 
 
 def tabulate_state_blocks(x, states, pos=None):
@@ -345,4 +346,4 @@ def tabulate_state_blocks(x, states, pos=None):
         ]
 
     import pandas
-    return pandas.DataFrame.from_items(items)
+    return pandas.DataFrame.from_dict(OrderedDict(items))

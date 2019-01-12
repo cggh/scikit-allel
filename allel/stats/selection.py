@@ -38,8 +38,6 @@ def ehh_decay(h, truncate=False):
     # check inputs
     # N.B., ensure int8 so we can use cython optimisation
     h = HaplotypeArray(np.asarray(h), copy=False)
-    if h.max() > 1:
-        raise NotImplementedError('only biallelic variants are supported')
     if h.min() < 0:
         raise NotImplementedError('missing calls are not supported')
 

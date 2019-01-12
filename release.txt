@@ -1,27 +1,14 @@
-tox
-# remove .devN from __version__
-sed -i -e 's/.dev[0-9]*//' allel/__init__.py
-version=`grep __version__ allel/__init__.py | sed -e "s/.*__version__[ ]=[ ]'\(.*\)'/\1/"`
-echo $version
-python setup.py build_ext --inplace
-# git commit and tag
-git commit -a -m v$version
-git tag -a v$version -m v$version
-git push
-git push --tags
-# merge into master
+# setup
 git checkout master
 git pull
-git merge v$version
-git push
+version=X.X.X
+echo $version
+# git commit and tag
+git tag -a v$version -m v$version
+git push --tags
 # update pypi
 python setup.py register sdist
 twine upload dist/scikit-allel-${version}.tar.gz
-# create new remote branch
-# checkout new branch
-git pull
-git checkout --track origin/vX.X
-# increment version and add .dev0 to __version__
-git commit -a -m 'increment version'; git push
-# activate version at rtfd
+# check rtfd
+# update conda-forge
 # notify

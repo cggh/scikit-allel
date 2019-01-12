@@ -27,7 +27,7 @@ import numpy as np
 from allel.compat import copy_method_doc, string_types
 from allel import chunked as _chunked
 from allel.chunked import ChunkedArrayWrapper, ChunkedTableWrapper
-from allel.io import write_vcf_header, write_vcf_data, normalize_callset
+from allel.io.vcf_write import write_vcf_header, write_vcf_data, normalize_callset
 from allel.util import check_ndim, check_integer_dtype
 from allel.abc import DisplayAs2D
 from .ndarray import (
@@ -605,9 +605,13 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         return self._count('is_doubleton', kwargs=dict(allele=allele),
                            **kwargs)
 
-    def map_alleles(self, mapping, **kwargs):
+    def map_alleles(self, mapping, max_allele=None, **kwargs):
+        if max_allele is None:
+            max_allele = np.max(mapping)
+
         def f(block, bmapping):
-            return block.map_alleles(bmapping)
+            return block.map_alleles(bmapping, max_allele=max_allele)
+
         domain = (self, mapping)
         out = _chunked.map_blocks(domain, f, **kwargs)
         return AlleleCountsChunkedArray(out)

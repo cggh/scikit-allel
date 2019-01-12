@@ -43,8 +43,7 @@ cdef:
 cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
                                             cnp.int8_t[:] gn1,
                                             cnp.int8_t[:] gn0_sq,
-                                            cnp.int8_t[:] gn1_sq,
-                                            cnp.float32_t fill) nogil:
+                                            cnp.int8_t[:] gn1_sq) nogil:
     cdef:
         cnp.int8_t x, y, xsq, ysq
         Py_ssize_t i
@@ -69,6 +68,10 @@ cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
             v1 += ysq
             cov += x * y
 
+    # early out
+    if n == 0 or v0 == 0 or v1 == 0:
+        return nan32
+
     # compute mean, variance, covariance
     m0 /= n
     m1 /= n
@@ -80,18 +83,14 @@ cpdef inline cnp.float32_t gn_corrcoef_int8(cnp.int8_t[:] gn0,
     v1 -= m1 * m1
 
     # compute correlation coeficient
-    if v0 == 0 or v1 == 0:
-        r = fill
-    else:
-        r = cov / sqrt(v0 * v1)
+    r = cov / sqrt(v0 * v1)
 
     return r
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn not None,
-                              cnp.float32_t fill=nan32):
+def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn not None):
     cdef:
         Py_ssize_t i, j, k, n
         cnp.float32_t r
@@ -118,7 +117,7 @@ def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn not None,
                 gn1 = gn[j]
                 gn0_sq = gn_sq[i]
                 gn1_sq = gn_sq[j]
-                r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
+                r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq)
                 out[k] = r
                 k += 1
 
@@ -128,8 +127,7 @@ def gn_pairwise_corrcoef_int8(cnp.int8_t[:, :] gn not None,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna not None,
-                               cnp.int8_t[:, :] gnb not None,
-                               cnp.float32_t fill=nan32):
+                               cnp.int8_t[:, :] gnb not None):
     cdef:
         Py_ssize_t i, j, k, m, n
         cnp.float32_t r
@@ -155,7 +153,7 @@ def gn_pairwise2_corrcoef_int8(cnp.int8_t[:, :] gna not None,
                 gn1 = gnb[j]
                 gn0_sq = gna_sq[i]
                 gn1_sq = gnb_sq[j]
-                r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq, fill)
+                r = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq)
                 out[i, j] = r
 
     return np.asarray(out)
@@ -174,7 +172,6 @@ def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn not None,
         cnp.int8_t[:] gn0, gn1, gn0_sq, gn1_sq
         int overlap = size - step
         bint last
-        cnp.float32_t fill = nan32
 
     # cache square calculation to improve performance
     gn_sq = np.power(gn, 2)
@@ -204,8 +201,7 @@ def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn not None,
                                 gn1 = gn[j]
                                 gn0_sq = gn_sq[i]
                                 gn1_sq = gn_sq[j]
-                                r_squared = gn_corrcoef_int8(gn0, gn1, gn0_sq,
-                                                             gn1_sq, fill) ** 2
+                                r_squared = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq) ** 2
                                 if r_squared > threshold:
                                     loc[j] = 0
 
@@ -225,10 +221,7 @@ def gn_locate_unlinked_int8(cnp.int8_t[:, :] gn not None,
                                     gn1 = gn[j]
                                     gn0_sq = gn_sq[i]
                                     gn1_sq = gn_sq[j]
-                                    r_squared = gn_corrcoef_int8(gn0, gn1,
-                                                                 gn0_sq,
-                                                                 gn1_sq,
-                                                                 fill) ** 2
+                                    r_squared = gn_corrcoef_int8(gn0, gn1, gn0_sq, gn1_sq) ** 2
                                     if r_squared > threshold:
                                         loc[j] = 0
 

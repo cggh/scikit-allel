@@ -15,6 +15,7 @@ import warnings
 import time
 import subprocess
 import textwrap
+from collections import OrderedDict
 
 
 import numpy as np
@@ -107,6 +108,21 @@ def _chunk_iter_transform(it, transformers):
 
 
 def _do_rename(it, fields, rename_fields, headers):
+
+    # check no duplicate values
+    found = set()
+    for v in rename_fields.values():
+        if v.lower() in found:
+            raise ValueError('rename clash: {!r}'.format(v))
+        found.add(v.lower())
+
+    # check no parent clashes
+    for v in rename_fields.values():
+        segments = v.split('/')
+        for i in range(1, len(segments)):
+            prefix = '/'.join(segments[:i]).lower()
+            if prefix in found:
+                raise ValueError('rename clash: {!r} versus {!r}'.format(v, prefix))
 
     # normalise keys
     rename_fields = {_normalize_field_prefix(k, headers): v
@@ -480,10 +496,14 @@ def _h5like_copy_metadata(k, headers, ds):
         if name in headers.formats:
             meta = headers.formats[name]
     if meta is not None:
-        ds.attrs['ID'] = meta['ID']
-        ds.attrs['Number'] = meta['Number']
-        ds.attrs['Type'] = meta['Type']
-        ds.attrs['Description'] = meta['Description']
+        if hasattr(ds.attrs, 'put'):
+            # optimisation for zarr, put all attributes in one operation
+            ds.attrs.put(meta)
+        else:
+            ds.attrs['ID'] = meta['ID']
+            ds.attrs['Number'] = meta['Number']
+            ds.attrs['Type'] = meta['Type']
+            ds.attrs['Description'] = meta['Description']
 
 
 def _hdf5_setup_datasets(chunk, root, chunk_length, chunk_width, compression,
@@ -1771,7 +1791,7 @@ def _chunk_to_dataframe(fields, chunk):
                 items.append(('%s_%s' % (name, i + 1), a[:, i]))
         else:
             warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
-    df = pandas.DataFrame.from_items(items)
+    df = pandas.DataFrame.from_dict(OrderedDict(items))
     # treat empty string as missing
     df.replace('', np.nan, inplace=True)
     return df

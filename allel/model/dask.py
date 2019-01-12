@@ -24,7 +24,8 @@ import numpy as np
 import dask.array as da
 
 
-from allel.util import check_shape, check_dtype, check_ndim, check_integer_dtype
+from allel.util import check_shape, check_dtype, check_ndim, check_integer_dtype, \
+    asarray_ndim
 from allel.abc import ArrayWrapper, DisplayAs2D, DisplayAs1D
 from allel.compat import copy_method_doc
 from .ndarray import GenotypeArray, HaplotypeArray, AlleleCountsArray, GenotypeVector, \
@@ -364,7 +365,8 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
             max_allele = self.max().compute()[()]
 
         # deal with subpop
-        if subpop:
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
             gd = self.take(subpop, axis=1).values
         else:
             gd = self.values
@@ -380,7 +382,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 return gb.count_alleles(max_allele=max_allele)[:, None, :]
 
             # map blocks and reduce
-            out = da.map_blocks(f, gd, chunks=chunks, dtype='i4').sum(axis=1)
+            out = da.map_blocks(f, gd, chunks=chunks).sum(axis=1, dtype='i4')
 
         else:
 
@@ -391,7 +393,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 return g.count_alleles(max_allele=max_allele)[:, None, :]
 
             md = self.mask[:, :, None]
-            out = da.map_blocks(f, gd, md, chunks=chunks, dtype='i4').sum(axis=1)
+            out = da.map_blocks(f, gd, md, chunks=chunks).sum(axis=1, dtype='i4')
 
         return AlleleCountsDaskArray(out)
 
@@ -428,7 +430,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
 
         # map blocks
         out = da.map_blocks(f, self.values, mapping[:, None, :], chunks=self.chunks,
-                            dtype=mapping.dtype)
+                            dtype=self.dtype)
         return type(self)(out)
 
     def to_allele_counts(self, max_allele=None):
@@ -585,7 +587,8 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
             max_allele = self.max().compute()[()]
 
         # deal with subpop
-        if subpop:
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
             hd = self.take(subpop, axis=1).values
         else:
             hd = self.values
@@ -599,8 +602,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
             return h.count_alleles(max_allele=max_allele)[:, None, :]
 
         # map blocks and reduce
-        # TODO need to figure out dtype?
-        out = hd.map_blocks(f, chunks=chunks, new_axis=2).sum(axis=1)
+        out = hd.map_blocks(f, chunks=chunks, new_axis=2).sum(axis=1, dtype='i4')
         return AlleleCountsDaskArray(out)
 
     def count_alleles_subpops(self, subpops, max_allele=None):
@@ -622,7 +624,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
         mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
         # map blocks
-        out = da.map_blocks(f, self.values, mapping, chunks=self.chunks, dtype=mapping.dtype)
+        out = da.map_blocks(f, self.values, mapping, chunks=self.chunks, dtype=self.dtype)
         return HaplotypeDaskArray(out)
 
     def compress(self, condition, axis=0, out=None):
@@ -767,17 +769,21 @@ class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
     def count_doubleton(self, allele=1):
         return self._count('is_doubleton', allele=allele)
 
-    def map_alleles(self, mapping):
-
-        def f(block, bmapping):
-            ac = AlleleCountsArray(block)
-            return ac.map_alleles(bmapping)
+    def map_alleles(self, mapping, max_allele=None):
 
         # obtain dask array
         mapping = da.from_array(mapping, chunks=(self.chunks[0], None))
 
+        # determine output shape
+        if max_allele is None:
+            max_allele = mapping.max().compute()
+
+        def f(block, bmapping):
+            ac = AlleleCountsArray(block)
+            return ac.map_alleles(bmapping, max_allele=max_allele)
+
         # map blocks
-        out = da.map_blocks(f, self.values, mapping, dtype=mapping.dtype)
+        out = da.map_blocks(f, self.values, mapping, dtype=self.dtype)
         return AlleleCountsDaskArray(out)
 
     def compress(self, condition, axis=0, out=None):
@@ -966,12 +972,13 @@ class GenotypeAlleleCountsDaskArray(GenotypeAlleleCountsDask, DisplayAs2D):
     def count_alleles(self, subpop=None):
 
         # deal with subpop
-        if subpop:
+        subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
+        if subpop is not None:
             gd = self.take(subpop, axis=1).values
         else:
             gd = self.values
 
-        out = gd.sum(axis=1)
+        out = gd.sum(axis=1, dtype='i4')
         return AlleleCountsDaskArray(out)
 
     def compress(self, condition, axis=0, out=None):

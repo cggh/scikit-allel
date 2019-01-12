@@ -206,6 +206,14 @@ SortedIndex
     .. automethod:: intersect_ranges
 
 
+ChromPosIndex
+-------------
+
+.. autoclass:: allel.ChromPosIndex
+
+    .. automethod:: locate_key
+    .. automethod:: locate_range
+
 SortedMultiIndex
 ----------------
 
