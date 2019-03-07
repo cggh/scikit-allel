@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 
-
 import numpy as np
-
+import dask.array as da
 
 from allel.stats.preprocessing import get_scaler
 
@@ -80,8 +79,6 @@ class GenotypePCA(object):
         return u
 
     def _fit(self, gn):
-        import scipy.linalg
-
         # apply scaling
         gn = self.scaler_.fit(gn).transform(gn)
 
@@ -91,7 +88,13 @@ class GenotypePCA(object):
         n_samples, n_features = x.shape
 
         # singular value decomposition
-        u, s, v = scipy.linalg.svd(x, full_matrices=False)
+        if type(x) is da.Array:
+            from dask.array.linalg import svd as dask_svd
+            u, s, v = dask_svd(x)
+            da.compute(u, s, v)
+        else:
+            import scipy.linalg
+            u, s, v = scipy.linalg.svd(x, full_matrices=False)
 
         # calculate explained variance
         explained_variance_ = (s ** 2) / n_samples
@@ -209,7 +212,6 @@ class GenotypeRandomizedPCA(object):
 
     def _fit(self, gn):
         from sklearn.utils.validation import check_random_state
-        from sklearn.utils.extmath import randomized_svd
 
         # apply scaling
         gn = self.scaler_.fit(gn).transform(gn)
@@ -224,9 +226,15 @@ class GenotypeRandomizedPCA(object):
         n_samples, n_features = x.shape
 
         # singular value decomposition
-        u, s, v = randomized_svd(x, n_components,
-                                 n_iter=self.iterated_power,
-                                 random_state=random_state)
+        if type(x) is da.Array:
+            from dask.array.linalg import svd_compressed
+            u, s, v = svd_compressed(x, n_components, seed=None)
+            da.compute(u, s, v)
+        else:
+            from sklearn.utils.extmath import randomized_svd
+            u, s, v = randomized_svd(x, n_components,
+                                     n_iter=self.iterated_power,
+                                     random_state=random_state)
 
         # calculate explained variance
         self.explained_variance_ = exp_var = (s ** 2) / n_samples

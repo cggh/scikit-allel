@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, division
 
-
 import numpy as np
-
+import dask.array as da
 
 from allel.compat import text_type
-from allel.util import asarray_ndim
+
+
+# from allel.util import asarray_ndim
 
 
 def get_scaler(scaler, copy, ploidy):
@@ -33,23 +34,19 @@ class StandardScaler(object):
         self.std_ = None
 
     def fit(self, gn):
-
-        # check input
-        gn = asarray_ndim(gn, 2)
-
-        # find mean
-        self.mean_ = np.mean(gn, axis=1, keepdims=True)
-
-        # find scaling factor
-        self.std_ = np.std(gn, axis=1, keepdims=True)
+        # find mean and scaling factor
+        if type(gn) is da.Array:
+            self.mean_ = da.mean(gn, axis=1, keepdims=True)
+            self.std_ = da.std(gn, axis=1, keepdims=True)
+        else:
+            self.mean_ = np.mean(gn, axis=1, keepdims=True)
+            self.std_ = np.std(gn, axis=1, keepdims=True)
 
         return self
 
     def transform(self, gn, copy=None):
 
         # check inputs
-        copy = copy if copy is not None else self.copy
-        gn = asarray_ndim(gn, 2, copy=copy)
         if not gn.dtype.kind == 'f':
             gn = gn.astype('f2')
 
@@ -74,20 +71,16 @@ class CenterScaler(object):
         self.std_ = None
 
     def fit(self, gn):
-
-        # check input
-        gn = asarray_ndim(gn, 2)
-
-        # find mean
-        self.mean_ = np.mean(gn, axis=1, keepdims=True)
+        # find mean and scaling factor
+        if type(gn) is da.Array:
+            self.mean_ = da.mean(gn, axis=1, keepdims=True)
+        else:
+            self.mean_ = np.mean(gn, axis=1, keepdims=True)
 
         return self
 
     def transform(self, gn, copy=None):
-
         # check inputs
-        copy = copy if copy is not None else self.copy
-        gn = asarray_ndim(gn, 2, copy=copy)
         if not gn.dtype.kind == 'f':
             gn = gn.astype('f2')
 
@@ -110,24 +103,23 @@ class PattersonScaler(object):
         self.std_ = None
 
     def fit(self, gn):
-
-        # check input
-        gn = asarray_ndim(gn, 2)
-
         # find mean
-        self.mean_ = np.mean(gn, axis=1, keepdims=True)
+        if type(gn) is da.Array:
+            self.mean_ = da.mean(gn, axis=1, keepdims=True)
+        else:
+            self.mean_ = np.mean(gn, axis=1, keepdims=True)
 
         # find scaling factor
         p = self.mean_ / self.ploidy
-        self.std_ = np.sqrt(p * (1 - p))
+        if type(gn) is da.Array:
+            self.std_ = da.sqrt(p * (1 - p))
+        else:
+            self.std_ = np.sqrt(p * (1 - p))
 
         return self
 
     def transform(self, gn, copy=None):
-
         # check inputs
-        copy = copy if copy is not None else self.copy
-        gn = asarray_ndim(gn, 2, copy=copy)
         if not gn.dtype.kind == 'f':
             gn = gn.astype('f2')
 
