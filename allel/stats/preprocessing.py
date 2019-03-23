@@ -4,10 +4,10 @@ from __future__ import absolute_import, print_function, division
 import numpy as np
 import dask.array as da
 
+
+
 from allel.compat import text_type
-
-
-# from allel.util import asarray_ndim
+from allel.util import asarray_ndim
 
 
 def get_scaler(scaler, copy, ploidy):
@@ -34,6 +34,10 @@ class StandardScaler(object):
         self.std_ = None
 
     def fit(self, gn):
+
+        # check input
+        gn = asarray_ndim(gn, 2)
+
         # find mean and scaling factor
         if type(gn) is da.Array:
             self.mean_ = da.mean(gn, axis=1, keepdims=True)
@@ -47,6 +51,8 @@ class StandardScaler(object):
     def transform(self, gn, copy=None):
 
         # check inputs
+        copy = copy if copy is not None else self.copy
+        gn = asarray_ndim(gn, 2, copy=copy)
         if not gn.dtype.kind == 'f':
             gn = gn.astype('f2')
 
@@ -71,7 +77,11 @@ class CenterScaler(object):
         self.std_ = None
 
     def fit(self, gn):
-        # find mean and scaling factor
+
+        # check input
+        gn = asarray_ndim(gn, 2)
+
+        # find mean
         if type(gn) is da.Array:
             self.mean_ = da.mean(gn, axis=1, keepdims=True)
         else:
@@ -80,7 +90,10 @@ class CenterScaler(object):
         return self
 
     def transform(self, gn, copy=None):
+
         # check inputs
+        copy = copy if copy is not None else self.copy
+        gn = asarray_ndim(gn, 2, copy=copy)
         if not gn.dtype.kind == 'f':
             gn = gn.astype('f2')
 
@@ -103,6 +116,10 @@ class PattersonScaler(object):
         self.std_ = None
 
     def fit(self, gn):
+
+        # check input
+        gn = asarray_ndim(gn, 2)
+
         # find mean
         if type(gn) is da.Array:
             self.mean_ = da.mean(gn, axis=1, keepdims=True)
@@ -119,7 +136,10 @@ class PattersonScaler(object):
         return self
 
     def transform(self, gn, copy=None):
+
         # check inputs
+        copy = copy if copy is not None else self.copy
+        gn = asarray_ndim(gn, 2, copy=copy)
         if not gn.dtype.kind == 'f':
             gn = gn.astype('f2')
 
