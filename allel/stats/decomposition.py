@@ -227,7 +227,8 @@ class GenotypeRandomizedPCA(object):
         # singular value decomposition
         if type(x) is da.Array:
             from dask.array.linalg import svd_compressed
-            u, s, v = svd_compressed(x, n_components, seed=None)
+            u, s, v = svd_compressed(x, n_components,
+                                     n_power_iter=self.iterated_power)
         else:
             from sklearn.utils.extmath import randomized_svd
             u, s, v = randomized_svd(x, n_components,
