@@ -95,15 +95,15 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
 
     is_accessible = asarray_ndim(is_accessible, 1, dtype=bool)
 
-    # one row per p in prob
-    # hom, het, unobserved
+    # one entry per p in prob
+    # 0, 1, 2 represent hom, het, unobserved (ie inaccessible)
     dists = []
     for p in het_px:
         dists.append(DiscreteDistribution({0: (1 - p) * p_accessible,
                                            1: p * p_accessible,
                                            2: 1 - p_accessible}))
 
-    # NEW
+    # Use pomegranate implementation
     roh_hmm = HiddenMarkovModel.from_matrix(
         transition_probabilities=transition_mx,
         distributions=dists,
@@ -122,10 +122,11 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     # adapt the dataframe for ROH
     for col in 'state', 'support', 'start_lidx', 'stop_ridx', 'size_max':
         del df_roh[col]
-    df_roh.rename(columns={'start_ridx': 'start',
-                           'stop_lidx': 'stop',
-                           'size_min': 'length'},
-                  inplace=True)
+
+    df_roh.rename(
+        columns={'start_ridx': 'start', 'stop_lidx': 'stop', 'size_min': 'length'},
+        inplace=True)
+
     # make coordinates 1-based
     df_roh['start'] = df_roh['start'] + 1
     df_roh['stop'] = df_roh['stop'] + 1
@@ -152,8 +153,6 @@ def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
     if is_accessible is not None:
         observations[~is_accessible] = 2
 
-    print(observations.shape)
-    print(observations.dtype)
     predictions = model.predict(sequence=observations)
     return predictions, observations
 
