@@ -12,5 +12,5 @@ h5py
 numexpr
 bcolz
 zarr
-hmmlearn
 pytest
+pomegranate
