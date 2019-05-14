@@ -64,7 +64,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
 
     """
 
-    from hmmlearn import hmm
+    from pomegranate import HiddenMarkovModel, DiscreteDistribution
 
     # setup inputs
     if isinstance(phet_nonroh, float):
@@ -72,7 +72,6 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     gv = GenotypeVector(gv)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(gv, pos)
-    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool)
 
     # heterozygote probabilities
     het_px = np.concatenate([(phet_roh,), phet_nonroh])
@@ -87,20 +86,28 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     if is_accessible is None:
         if contig_size is None:
             raise ValueError(
-                "If is_accessibile argument is not provided, you must provide contig_size")
+                "If is_accessible argument is not provided, you must provide contig_size")
         p_accessible = 1.0
+        is_accessible = np.ones((contig_size, ), dtype=bool)
     else:
         p_accessible = is_accessible.mean()
         contig_size = is_accessible.size
 
-    emission_mx = _mhmm_derive_emission_matrix(het_px, p_accessible)
+    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool)
 
-    # initialize HMM
-    roh_hmm = hmm.MultinomialHMM(n_components=het_px.size)
-    roh_hmm.n_symbols_ = 3
-    roh_hmm.startprob_ = start_prob
-    roh_hmm.transmat_ = transition_mx
-    roh_hmm.emissionprob_ = emission_mx
+    # one entry per p in prob
+    # 0, 1, 2 represent hom, het, unobserved (ie inaccessible)
+    dists = []
+    for p in het_px:
+        dists.append(DiscreteDistribution({0: (1 - p) * p_accessible,
+                                           1: p * p_accessible,
+                                           2: 1 - p_accessible}))
+
+    # Use pomegranate implementation
+    roh_hmm = HiddenMarkovModel.from_matrix(
+        transition_probabilities=transition_mx,
+        distributions=dists,
+        starts=start_prob)
 
     # locate heterozygous calls
     is_het = gv.is_het()
@@ -109,15 +116,17 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     pred, obs = _mhmm_predict_roh_state(roh_hmm, is_het, pos, is_accessible, contig_size)
 
     # find ROH windows
-    df_blocks = tabulate_state_blocks(pred, states=list(range(len(het_px))))
+    df_blocks = tabulate_state_blocks(pred, states=set(range(len(het_px))))
     df_roh = df_blocks[(df_blocks.state == 0)].reset_index(drop=True)
+
     # adapt the dataframe for ROH
     for col in 'state', 'support', 'start_lidx', 'stop_ridx', 'size_max':
         del df_roh[col]
-    df_roh.rename(columns={'start_ridx': 'start',
-                           'stop_lidx': 'stop',
-                           'size_min': 'length'},
-                  inplace=True)
+
+    df_roh.rename(
+        columns={'start_ridx': 'start', 'stop_lidx': 'stop', 'size_min': 'length'},
+        inplace=True)
+
     # make coordinates 1-based
     df_roh['start'] = df_roh['start'] + 1
     df_roh['stop'] = df_roh['stop'] + 1
@@ -135,7 +144,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
 def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
 
     # construct observations, one per position in contig
-    observations = np.zeros((contig_size, 1), dtype='i1')
+    observations = np.zeros((contig_size,), dtype='i1')
 
     # these are hets
     observations[np.compress(is_het, pos) - 1] = 1
@@ -144,7 +153,7 @@ def _mhmm_predict_roh_state(model, is_het, pos, is_accessible, contig_size):
     if is_accessible is not None:
         observations[~is_accessible] = 2
 
-    predictions = model.predict(X=observations)
+    predictions = model.predict(sequence=observations)
     return predictions, observations
 
 
@@ -209,7 +218,7 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
 
     from pomegranate import HiddenMarkovModel, PoissonDistribution
 
-    # equally accessbile windows
+    # equally accessible windows
     if is_accessible is None:
         if contig_size is None:
             raise ValueError(
@@ -240,7 +249,7 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
 
     prediction = np.array(model.predict(counts[:, None]))
 
-    df_blocks = tabulate_state_blocks(prediction, states=list(range(len(het_px))))
+    df_blocks = tabulate_state_blocks(prediction, states=set(range(len(het_px))))
     df_roh = df_blocks[(df_blocks.state == 0)].reset_index(drop=True)
 
     # adapt the dataframe for ROH
@@ -256,15 +265,6 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
     froh = df_roh.length.sum() / contig_size
 
     return df_roh[["start", "stop", "length", "is_marginal"]], froh
-
-
-def _mhmm_derive_emission_matrix(het_px, p_accessible):
-    # one row per p in prob
-    # hom, het, unobserved
-    mx = [[(1 - p) * p_accessible, p * p_accessible, 1 - p_accessible] for p in het_px]
-    mx = np.array(mx)
-    assert mx.shape == (het_px.size, 3)
-    return mx
 
 
 def _hmm_derive_transition_matrix(transition, nstates):
