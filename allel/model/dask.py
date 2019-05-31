@@ -318,7 +318,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
         return index_genotype_array(self, item, array_cls=type(self),
                                     vector_cls=GenotypeDaskVector)
 
-    def _method(self, method_name, chunks=None, drop_axis=None, new_axis=None, dtype=None, 
+    def _method(self, method_name, chunks=None, drop_axis=None, new_axis=None, dtype=None,
                 **kwargs):
         if chunks is None:
             # no shape change
@@ -331,7 +331,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 g = array_cls(block)
                 method = getattr(g, method_name)
                 return method(**kwargs)
-            out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis, 
+            out = da.map_blocks(f, self.values, chunks=chunks, drop_axis=drop_axis,
                                 new_axis=new_axis, dtype=dtype)
 
         else:
@@ -342,7 +342,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
                 method = getattr(g, method_name)
                 return method(**kwargs)
             m = self.mask[:, :, np.newaxis]
-            out = da.map_blocks(f, self.values, m, chunks=chunks, drop_axis=drop_axis, 
+            out = da.map_blocks(f, self.values, m, chunks=chunks, drop_axis=drop_axis,
                                 new_axis=new_axis, dtype=dtype)
 
         return out
@@ -444,7 +444,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
 
         chunks = (self.chunks[0], self.chunks[1], (max_allele + 1, ))
 
-        out = self._method('to_allele_counts', chunks=chunks, max_allele=max_allele, 
+        out = self._method('to_allele_counts', chunks=chunks, max_allele=max_allele,
                            drop_axis=2, new_axis=2)
         out = GenotypeAlleleCountsDaskArray(out)
         return out
