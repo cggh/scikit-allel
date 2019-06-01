@@ -3,7 +3,7 @@ cython==0.29.9
 numpy==1.16.4
 dask[array]==1.2.2
 # optional
-scipy==1.2.0
+scipy==1.3.0
 matplotlib==2.2.3
 seaborn==0.9.0
 pandas==0.23.4
