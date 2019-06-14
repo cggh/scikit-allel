@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 from ast import literal_eval
 from setuptools import setup, Extension, find_packages
 try:
