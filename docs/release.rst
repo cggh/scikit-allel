@@ -1,6 +1,16 @@
 Release notes
 =============
 
+.. _release_1.2.1:
+
+v1.2.1
+------
+
+* Fixed a bug in :func:`allel.GenotypeDaskArray.to_allele_counts` 
+  where the shape of the output array was not being determined correctly. 
+  By :user:`Nick Harding <hardingnj>`, :issue:`266`.
+
+
 .. _release_1.2.0:
 
 v1.2.0
