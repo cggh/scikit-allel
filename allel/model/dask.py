@@ -17,9 +17,6 @@ This module is experimental, if you find a bug please `raise an issue on GitHub
 This module requires dask >= 0.11.1.
 
 """
-from __future__ import absolute_import, print_function, division
-
-
 import numpy as np
 import dask.array as da
 
@@ -323,6 +320,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
         if chunks is None:
             # no shape change
             chunks = self.chunks
+        # TODO "chunks" variable is not being used here at all, needs review
         array_cls = self.array_cls
 
         if self.mask is None:

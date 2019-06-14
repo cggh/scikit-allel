@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
-
-
 import numpy as np
 
 
-from allel.compat import text_type
 from allel.util import asarray_ndim
 
 
 def get_scaler(scaler, copy, ploidy):
     # normalise strings to lower case
-    if isinstance(scaler, text_type):
+    if isinstance(scaler, str):
         scaler = scaler.lower()
     if scaler == 'patterson':
         return PattersonScaler(copy=copy, ploidy=ploidy)

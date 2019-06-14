@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 from contextlib import contextmanager
 from functools import update_wrapper
 import atexit
@@ -7,9 +6,6 @@ import os
 
 
 import numpy as np
-
-
-from allel.compat import string_types
 
 
 @contextmanager
@@ -165,7 +161,7 @@ class _HashedSeq(list):
 # noinspection PyShadowingBuiltins
 def _make_key(args, kwds, typed,
               kwd_mark=('__kwargs__',),
-              fasttypes={int, str, frozenset, type(None)},
+              fasttypes=(int, str, frozenset, type(None)),
               sorted=sorted, tuple=tuple, type=type, len=len):
     key = args
     kwd_items = sorted(kwds.items())
@@ -240,7 +236,7 @@ def _hdf5_cache_act(filepath, parent, container, key, names, no_cache,
                 # determine dataset name
                 if names is None:
                     n = 'data'
-                elif isinstance(names, string_types):
+                elif isinstance(names, str):
                     n = names
                 elif len(names) > 0:
                     n = names[0]
@@ -265,7 +261,7 @@ def _hdf5_cache_act(filepath, parent, container, key, names, no_cache,
             # determine dataset names
             if names is None:
                 names = sorted(h5g.keys())
-            elif isinstance(names, string_types):
+            elif isinstance(names, str):
                 names = (names,)
 
             # load result from cache

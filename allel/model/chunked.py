@@ -18,13 +18,10 @@ configurations, or an object implementing the chunked storage API. For more
 information about controlling storage see the :mod:`allel.chunked` module.
 
 """
-from __future__ import absolute_import, print_function, division
-
-
 import numpy as np
 
 
-from allel.compat import copy_method_doc, string_types
+from allel.compat import copy_method_doc
 from allel import chunked as _chunked
 from allel.chunked import ChunkedArrayWrapper, ChunkedTableWrapper
 from allel.io.vcf_write import write_vcf_header, write_vcf_data, normalize_callset
@@ -819,7 +816,7 @@ class VariantChunkedTable(ChunkedTableWrapper):
         return len(self)
 
     def set_index(self, spec):
-        if isinstance(spec, string_types):
+        if isinstance(spec, str):
             self.index = SortedIndex(self[spec][:], copy=False)
         elif isinstance(spec, (tuple, list)) and len(spec) == 2:
             self.index = SortedMultiIndex(self[spec[0]][:], self[spec[1]][:], copy=False)
@@ -845,7 +842,7 @@ class AlleleCountsChunkedTable(ChunkedTableWrapper):
 
     def __getitem__(self, item):
         out = super(AlleleCountsChunkedTable, self).__getitem__(item)
-        if isinstance(item, string_types):
+        if isinstance(item, str):
             # rewrap
             out = AlleleCountsChunkedArray(out.values)
         return out

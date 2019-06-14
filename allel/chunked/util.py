@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import operator
+from functools import reduce
 
 
 import numpy as np
-
-
-from allel.compat import string_types, reduce
 
 
 storage_registry = dict()
@@ -20,7 +17,7 @@ def get_storage(storage=None):
             raise RuntimeError('no default storage available; is either h5py '
                                'or bcolz installed?')
 
-    elif isinstance(storage, string_types):
+    elif isinstance(storage, str):
         # normalise storage name
         storage = str(storage).lower()
         try:

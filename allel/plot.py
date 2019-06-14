@@ -6,9 +6,6 @@ N.B., this module is deprecated and plotting functions have been moved into
 various statistics modules.
 
 """
-from __future__ import absolute_import, print_function, division
-
-
 from allel.stats.misc import plot_variant_locator
 from allel.stats.distance import plot_pairwise_distance
 from allel.stats.ld import plot_pairwise_ld
