@@ -97,6 +97,39 @@ def da_subset(d, sel0, sel1):
     return out
 
 
+def da_compress(condition, a, axis=None):
+    """Temporary workaround for https://github.com/dask/dask/issues/4940"""
+    from dask.array.core import asarray
+    from dask.array.utils import validate_axis
+
+    # If `condition` is a numpy array then leave it as such, otherwise
+    # ensure `condition` is a dask array
+    if not isinstance(condition, np.ndarray):
+        condition = asarray(condition)
+    condition = condition.astype(bool)
+    a = asarray(a)
+
+    if condition.ndim != 1:
+        raise ValueError("Condition must be one dimensional")
+
+    if axis is None:
+        a = a.ravel()
+        axis = 0
+    axis = validate_axis(axis, a.ndim)
+
+    # Treat `condition` as filled with `False` (if it is too short)
+    a = a[tuple(slice(None, len(condition))
+                if i == axis else slice(None)
+                for i in range(a.ndim))]
+
+    # Use `condition` to select along 1 dimension
+    a = a[tuple(condition
+                if i == axis else slice(None)
+                for i in range(a.ndim))]
+
+    return a
+
+
 class DaskArrayWrapper(ArrayWrapper):
 
     def __init__(self, data, chunks=None, name=None, lock=False):
@@ -287,7 +320,7 @@ class GenotypeDaskVector(GenotypesDask, DisplayAs1D):
             # argument is only there for numpy API compatibility
             raise NotImplementedError('out argument is not supported')
         return compress_genotypes(self, condition, axis=axis, wrap_axes={0},
-                                  cls=type(self), compress=da.compress)
+                                  cls=type(self), compress=da_compress)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
         if out is not None:
@@ -465,7 +498,7 @@ class GenotypeDaskArray(GenotypesDask, DisplayAs2D):
             # argument is only there for numpy API compatibility
             raise NotImplementedError('out argument is not supported')
         return compress_genotypes(self, condition, axis=axis, wrap_axes={0, 1},
-                                  cls=type(self), compress=da.compress)
+                                  cls=type(self), compress=da_compress)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
         if out is not None:
@@ -635,7 +668,7 @@ class HaplotypeDaskArray(DaskArrayWrapper, DisplayAs2D):
             # argument is only there for numpy API compatibility
             raise NotImplementedError('out argument is not supported')
         return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
-                                        compress=da.compress)
+                                        compress=da_compress)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
         if out is not None:
@@ -794,7 +827,7 @@ class AlleleCountsDaskArray(DaskArrayWrapper, DisplayAs2D):
             # argument is only there for numpy API compatibility
             raise NotImplementedError('out argument is not supported')
         return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
-                                            compress=da.compress)
+                                            compress=da_compress)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
         if out is not None:
@@ -906,7 +939,7 @@ class GenotypeAlleleCountsDaskVector(GenotypeAlleleCountsDask, DisplayAs1D):
             # argument is only there for numpy API compatibility
             raise NotImplementedError('out argument is not supported')
         return compress_genotype_ac(self, condition, axis=axis, wrap_axes={0},
-                                    cls=type(self), compress=da.compress)
+                                    cls=type(self), compress=da_compress)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
         if out is not None:
@@ -989,7 +1022,7 @@ class GenotypeAlleleCountsDaskArray(GenotypeAlleleCountsDask, DisplayAs2D):
             # argument is only there for numpy API compatibility
             raise NotImplementedError('out argument is not supported')
         return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
-                                    cls=type(self), compress=da.compress)
+                                    cls=type(self), compress=da_compress)
 
     def take(self, indices, axis=0, out=None, mode='raise'):
         if out is not None:
