@@ -4463,7 +4463,7 @@ class VariantTable(NumpyRecArrayWrapper):
     Access multiple columns::
 
         >>> vt[['DP', 'QD']]
-        <VariantTable shape=(5,) dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8')])>
+        <VariantTable shape=(5,) dtype=(numpy.record, {'names':['DP','QD'], ...
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
     Access a row::
