@@ -6,7 +6,12 @@ Release notes
 WIP v1.3.0
 ----------
 
-* Removed support for Python 2. By :user:`Alistair Miles <alimanfoo>`, :issue:`251`.
+* Removed support for Python 2. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`251`.
+
+* Upgraded pinned dependencies used in the CI and developer
+  environments, and removed support for Python 3.5 in the CI
+  matrix. By :user:`Alistair Miles <alimanfoo>`, :issue:`270`.
 
 
 .. _release_1.2.1:
