@@ -101,10 +101,11 @@ def da_compress(condition, a, axis=None):
     """Temporary workaround for https://github.com/dask/dask/issues/4940"""
     from dask.array.core import asarray
     from dask.array.utils import validate_axis
+    from dask.utils import is_arraylike
 
-    # If `condition` is a numpy array then leave it as such, otherwise
-    # ensure `condition` is a dask array
-    if not isinstance(condition, np.ndarray):
+    if not is_arraylike(condition):
+        # Allow `condition` to be anything array-like, otherwise ensure `condition`
+        # is a dask array.
         condition = asarray(condition)
     condition = condition.astype(bool)
     a = asarray(a)
