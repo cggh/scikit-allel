@@ -445,8 +445,8 @@ class TestHardyWeinberg(unittest.TestCase):
                            [[0, 1, 2, 2, 2, 2]],  # 4:1:1
                            [[0, 0, 1, 1, 2, 2]],  # 2:2:2
                            [[0, 0, 1, 2, 3, 4]],  # 2:1:1:1:1
-                           [[0, 0, 0, 1, 1, 2]]]) # 3:2:1
-        expect = [0 , 5/15, 8/15, 9/15, 9/15, 9/15, 12/15, 14/15, 11/15]
+                           [[0, 0, 0, 1, 1, 2]]])  # 3:2:1
+        expect = [0, 5/15, 8/15, 9/15, 9/15, 9/15, 12/15, 14/15, 11/15]
         actual = allel.heterozygosity_observed(g, fill=0)
         assert_array_almost_equal(expect, actual)
 
