@@ -55,6 +55,7 @@ def heterozygosity_observed(g, fill=np.nan, corrected=True):
     >>> import allel
     >>> g = allel.GenotypeArray([[[0, 0, 0, 0], [0, 0, 0, 0]],
     ...                          [[0, 0, 0, 0], [0, 0, 0, 1]],
+    ...                          [[0, 0, 1, 1], [0, 0, 1, 2]],
     ...                          [[0, 0, 1, 1], [0, 0, -1, -1]],
     ...                          [[0, 1, 2, 3], [-1, -1, -1, -1]]])
     >>> allel.heterozygosity_observed(g)
