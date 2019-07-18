@@ -29,7 +29,7 @@ def heterozygosity_observed(g, fill=np.nan, corrected=True):
     -----
 
     Observed heterozygosity is calculated assuming polysomic inheritance
-    for polyploid genotype arrays following Hardy (2015) (also see Meirmans
+    for polyploid genotype arrays following Hardy (2016) (also see Meirmans
     and Liu 2018).
     By default, observed heterozygosity is corrected for ploidy by
     *Ho = Hu * (ploidy / (ploidy - 1))* where *Ho* is the corrected observed

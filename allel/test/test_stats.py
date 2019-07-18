@@ -435,6 +435,27 @@ class TestHardyWeinberg(unittest.TestCase):
         actual = allel.heterozygosity_observed(g, fill=-1, corrected=False)
         assert_array_almost_equal(expect, actual)
 
+        # hexaploid
+        # individual heterozygosity values from Hardy 2016
+        g = GenotypeArray([[[0, 0, 0, 0, 0, 0]],  # 6
+                           [[0, 0, 0, 0, 0, 1]],  # 5:1
+                           [[0, 0, 0, 0, 1, 1]],  # 4:2
+                           [[0, 0, 0, 1, 1, 1]],  # 3:3
+                           [[0, 0, 0, 0, 1, 2]],  # 4:1:1
+                           [[0, 1, 2, 2, 2, 2]],  # 4:1:1
+                           [[0, 0, 1, 1, 2, 2]],  # 2:2:2
+                           [[0, 0, 1, 2, 3, 4]],  # 2:1:1:1:1
+                           [[0, 0, 0, 1, 1, 2]]]) # 3:2:1
+        expect = [0 , 5/15, 8/15, 9/15, 9/15, 9/15, 12/15, 14/15, 11/15]
+        actual = allel.heterozygosity_observed(g, fill=0)
+        assert_array_almost_equal(expect, actual)
+
+        # hexaploid uncorrected
+        # corrected is uncorrected * (6/5)
+        expect = [i / (6/5) for i in expect]
+        actual = allel.heterozygosity_observed(g, fill=-1, corrected=False)
+        assert_array_almost_equal(expect, actual)
+
     def test_heterozygosity_expected(self):
 
         def refimpl(f, ploidy, fill=0):
