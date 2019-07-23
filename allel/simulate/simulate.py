@@ -14,7 +14,8 @@ def simulate_genotypes(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
     n_samples : int
         number of samples to generate
     p : tuple, float
-        probability of each allele, must sum to 1. This is used to implicitly specify the number of alleles
+        probability of each allele, must sum to 1.
+        This is used to implicitly specify the number of alleles
     ploidy : int
         ploidy of individuals
 
@@ -46,7 +47,8 @@ def simulate_allele_counts_array(n_variants, n_samples, p=(0.95, 0.05), ploidy=2
     n_samples : int
         number of samples to generate
     p : tuple, float
-        probability of each allele, must sum to 1. This is used to implicitly specify the number of alleles
+        probability of each allele, must sum to 1.
+        This is used to implicitly specify the number of alleles
     ploidy : int
         ploidy of individuals
 
@@ -79,7 +81,8 @@ def simulate_allele_counts(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
     n_samples : int
         number of samples to generate
     p : tuple, float
-        probability of each allele, must sum to 1. This is used to implicitly specify the number of alleles
+        probability of each allele, must sum to 1.
+        This is used to implicitly specify the number of alleles
     ploidy : int
         ploidy of individuals
 
