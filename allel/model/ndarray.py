@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import collections
 import bisect
 
@@ -11,7 +10,7 @@ import numpy as np
 # internal imports
 from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
     check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim, check_dim1_aligned
-from allel.compat import PY2, copy_method_doc, integer_types, memoryview_safe
+from allel.compat import copy_method_doc, memoryview_safe
 from allel.io.vcf_write import write_vcf
 from allel.io.gff import gff3_to_recarray
 from allel.io.util import recarray_from_hdf5_group, recarray_to_hdf5_group
@@ -146,12 +145,7 @@ class NumpyRecArrayWrapper(DisplayAsTable):
             import numexpr as ne
             return ne.evaluate(expression, local_dict=self)
         else:
-            if PY2:
-                # locals must be a mapping
-                m = {k: self[k] for k in self.dtype.names}
-            else:
-                m = self
-            return eval(expression, dict(), m)
+            return eval(expression, dict(), self)
 
     def query(self, expression, vm='python'):
         """Evaluate expression and then use it to extract rows from the table.
@@ -1325,10 +1319,7 @@ class GenotypeVector(Genotypes, DisplayAs1D):
 
     def str_items(self):
         gt = self.to_gt()
-        if PY2:
-            out = list(gt)
-        else:
-            out = [str(x, 'ascii') for x in gt]
+        out = [str(x, 'ascii') for x in gt]
         return out
 
     def to_str(self, threshold=10, edgeitems=5):
@@ -1544,10 +1535,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
     def str_items(self):
         gt = self.to_gt()
         n = gt.dtype.itemsize
-        if PY2:
-            out = [[x.rjust(n) for x in row] for row in gt]
-        else:
-            out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
         return out
 
     def to_packed(self, boundscheck=True):
@@ -2155,10 +2143,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         t = values.astype((np.string_, n))
         # recode missing alleles
         t[values < 0] = b'.'
-        if PY2:
-            out = [[x.rjust(n) for x in row] for row in t]
-        else:
-            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
         return out
 
     def is_called(self):
@@ -2649,10 +2634,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
             max_allele = 1
         n = int(np.floor(np.log10(max_allele))) + 1
         t = values.astype((np.string_, n))
-        if PY2:
-            out = [[x.rjust(n) for x in row] for row in t]
-        else:
-            out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
         return out
 
     def to_frequencies(self, fill=np.nan):
@@ -3194,10 +3176,7 @@ class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
 
     def str_items(self):
         gt = self.to_gt()
-        if PY2:
-            out = list(gt)
-        else:
-            out = [str(x, 'ascii') for x in gt]
+        out = [str(x, 'ascii') for x in gt]
         return out
 
     def to_str(self, threshold=10, edgeitems=5):
@@ -3345,10 +3324,7 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
     def str_items(self):
         gt = self.to_gt()
         n = gt.dtype.itemsize
-        if PY2:
-            out = [[x.rjust(n) for x in row] for row in gt]
-        else:
-            out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
         return out
 
 
@@ -4076,7 +4052,7 @@ class SortedMultiIndex(DisplayAs1D):
     def __getitem__(self, item):
         l1 = self.l1[item]
         l2 = self.l2[item]
-        if isinstance(item, integer_types):
+        if isinstance(item, int):
             return l1, l2
         else:
             return SortedMultiIndex(l1, l2, copy=False)
@@ -4296,7 +4272,7 @@ class ChromPosIndex(DisplayAs1D):
     def __getitem__(self, item):
         l1 = self.chrom[item]
         l2 = self.pos[item]
-        if isinstance(item, integer_types):
+        if isinstance(item, int):
             return l1, l2
         else:
             return ChromPosIndex(l1, l2, copy=False)
@@ -4487,7 +4463,7 @@ class VariantTable(NumpyRecArrayWrapper):
     Access multiple columns::
 
         >>> vt[['DP', 'QD']]
-        <VariantTable shape=(5,) dtype=(numpy.record, [('DP', '<i8'), ('QD', '<f8')])>
+        <VariantTable shape=(5,) dtype=(numpy.record, {'names':['DP','QD'], ...
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
     Access a row::

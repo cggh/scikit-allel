@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import operator
 from collections import namedtuple
 
@@ -7,7 +6,6 @@ from collections import namedtuple
 import numpy as np
 
 
-from allel.compat import string_types, integer_types, range
 from allel.chunked import util as _util
 from allel.abc import ArrayWrapper, DisplayAsTable
 from allel.model.ndarray import subset as _numpy_subset, NumpyRecArrayWrapper
@@ -820,12 +818,12 @@ class ChunkedTableWrapper(DisplayAsTable):
 
     def __getitem__(self, item):
 
-        if isinstance(item, string_types):
+        if isinstance(item, str):
             # item is column name, return column
             idx = self._names.index(item)
             return ChunkedArrayWrapper(self._columns[idx])
 
-        elif isinstance(item, integer_types):
+        elif isinstance(item, int):
             # item is row index, return row
             return self.rowcls(*(col[item] for col in self._columns))
 
@@ -847,7 +845,7 @@ class ChunkedTableWrapper(DisplayAsTable):
             return out
 
         elif isinstance(item, (list, tuple)) and \
-                all(isinstance(i, string_types) for i in item):
+                all(isinstance(i, str) for i in item):
             # item is sequence of column names, return table
             columns = [self._columns[self._names.index(n)] for n in item]
             return type(self)(columns, names=item)

@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
-
-
 import csv
 from datetime import date
 import itertools
@@ -13,7 +10,6 @@ import numpy as np
 
 
 import allel
-from allel.compat import zip_longest, PY2
 
 
 logger = logging.getLogger(__name__)
@@ -229,7 +225,7 @@ def write_vcf_data(vcf_file, names, callset, rename, fill):
     filter_rows = zip(*filter_cols)
     info_rows = zip(*info_cols)
 
-    for row, filter_row, info_row in zip_longest(rows, filter_rows, info_rows):
+    for row, filter_row, info_row in itertools.zip_longest(rows, filter_rows, info_rows):
 
         # unpack main row
         chrom, pos, id, ref, alt, qual = row
@@ -265,7 +261,7 @@ def write_vcf_data(vcf_file, names, callset, rename, fill):
 
 
 def _vcf_value_str(o, fill=None):
-    if isinstance(o, bytes) and not PY2:
+    if isinstance(o, bytes):
         return str(o, encoding='ascii')
     elif isinstance(o, (tuple, list, np.ndarray)):
         if fill is None:

@@ -1,6 +1,29 @@
 Release notes
 =============
 
+.. _release_1.3.0:
+
+WIP v1.3.0
+----------
+
+* Removed support for Python 2. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`251`.
+
+* Upgraded pinned dependencies used in the CI and developer
+  environments, and removed support for Python 3.5 in the CI
+  matrix. By :user:`Alistair Miles <alimanfoo>`, :issue:`270`.
+
+
+.. _release_1.2.1:
+
+v1.2.1
+------
+
+* Fixed a bug in :func:`allel.GenotypeDaskArray.to_allele_counts`
+  where the shape of the output array was not being determined correctly.
+  By :user:`Nick Harding <hardingnj>`, :issue:`266`.
+
+
 .. _release_1.2.0:
 
 v1.2.0
@@ -13,7 +36,7 @@ v1.2.0
 .. important:: Python 2.7 has had a stay of execution - this release
     supports Python 2.7 and 3.5-3.7. However, support for Python 2.7
     will definitely be removed in version 1.3.
-	       
+
 * Added a new function :func:`allel.pbs` which implements the
   Population Branching Statistic (PBS), a test for selection based on
   allel frequency differentiation between three populations. :issue:`210`.
@@ -38,7 +61,7 @@ v1.2.0
   data given chromosome and positio locations. This behaves similarly
   to the existing :class:`allel.SortedMultiIndex` but the chromosome
   values do not need to be sorted. :issue:`201`, :issue:`239`.
-  
+
 * Added new parameters ``exclude_fields`` and ``rename_fields`` to VCF
   parsing functions to add greater flexibility when selecting fields
   to extract. Also added several measures to protect against name
@@ -51,13 +74,13 @@ v1.2.0
 * All functions for computing site frequency spectra now accept an
   optional argument `n` for manually specifying the number of
   chromosomes sampled from the population. :issue:`174`, :issue:`240`.
-  
+
 * Added `start`, `stop` and `step` options to
   :func:`allel.equally_accessible_windows`. :issue:`234`, :issue:`166`.
 
 * Fixed broken implementation of
   :func:`allel.AlleleCountsArray.map_alleles`. :issue:`241`, :issue:`200`.
-	 
+
 * Fixed functions calculating Tajima's D such that a value of `np.nan`
   is returned if there are fewer than 3 segregating sites. By
   :user:`Andrew Kern <andrewkern>` and :user:`Alistair Miles
@@ -79,7 +102,7 @@ v1.2.0
 
 * Added checks to raise appropriate errors if user tries to rename two
   fields to the same name when reading VCF. :issue:`245`, :issue:`220`.
-  
+
 * Fixed `setup.py` so that installation of numpy prior to installation
   of scikit-allel is no longer required - numpy will be automatically
   installed as a dependency if not already installed. By
@@ -90,7 +113,7 @@ v1.2.0
 
 * Small optimisation for writing zarr attributes. :issue:`225`,
   :issue:`238`.
-  
+
 * Fixed pandas deprecation warning. By :user:`Summer Rae <summerela>`,
   :issue:`228`.
 

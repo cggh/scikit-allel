@@ -3,14 +3,11 @@
 # cython: linetrace=False
 # cython: binding=False
 # cython: language_level=3
-from __future__ import absolute_import, print_function, division
-
-
 import numpy as np
 cimport numpy as cnp
 import cython
 cimport cython
-from libc.math cimport sqrt, fabs, fmin
+from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
 

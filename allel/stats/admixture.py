@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
-
-
 from allel.model.ndarray import AlleleCountsArray
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.stats.window import moving_statistic

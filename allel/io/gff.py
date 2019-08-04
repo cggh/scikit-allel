@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import subprocess
 import gzip
+from urllib.parse import unquote_plus
 
 
 import numpy as np
-
-
-from allel.compat import PY2, unquote_plus
 
 
 def gff3_parse_attributes(attributes_string):
@@ -98,12 +95,11 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
                     fphase = phase_fill
                 else:
                     fphase = int(fphase)
-                if not PY2:
-                    fseqid = str(fseqid, 'ascii')
-                    fsource = str(fsource, 'ascii')
-                    ftype = str(ftype, 'ascii')
-                    fstrand = str(fstrand, 'ascii')
-                    fattrs = str(fattrs, 'ascii')
+                fseqid = str(fseqid, 'ascii')
+                fsource = str(fsource, 'ascii')
+                ftype = str(ftype, 'ascii')
+                fstrand = str(fstrand, 'ascii')
+                fattrs = str(fattrs, 'ascii')
                 rec = (fseqid, fsource, ftype, fstart, fend, fscore, fstrand, fphase)
                 if attributes is not None:
                     dattrs = gff3_parse_attributes(fattrs)

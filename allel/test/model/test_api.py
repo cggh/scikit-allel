@@ -4,7 +4,6 @@ These interfaces are defined as test cases, but are abstracted so that the
 tests can be re-used for alternative implementations of the same interfaces.
 
 """
-from __future__ import absolute_import, print_function, division
 import os
 from datetime import date
 import tempfile
