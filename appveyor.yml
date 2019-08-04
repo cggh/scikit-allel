@@ -13,13 +13,6 @@ environment:
 
   matrix:
 
-    - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "2.7"
-      DISTUTILS_USE_SDK: "1"
-
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5"
-
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6"
 
@@ -29,8 +22,8 @@ environment:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "%CMD_IN_ENV% python -m pip install -U pip setuptools wheel"
-  - "%CMD_IN_ENV% python -m pip install cython==0.29.2"
-  - "%CMD_IN_ENV% python -m pip install numpy==1.15.4"
+  - "%CMD_IN_ENV% python -m pip install cython==0.29.10"
+  - "%CMD_IN_ENV% python -m pip install numpy==1.16.4"
   - "%CMD_IN_ENV% python -m pip install -rrequirements_dev.txt"
   - "%CMD_IN_ENV% python -m pip install -rrequirements_test.txt"
   - "%CMD_IN_ENV% python -m pip install pyfasta==0.5.2"

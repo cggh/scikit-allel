@@ -55,9 +55,6 @@ For example::
     <HDF5 dataset "data": shape (10000000,), type "<i8">
 
 """
-from __future__ import absolute_import, print_function, division
-
-
 from .util import *
 from .core import *
 

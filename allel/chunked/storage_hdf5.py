@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import tempfile
 import atexit
 import operator
 import os
 from types import MethodType
+from functools import reduce
 
 
 import h5py
 
 
-from allel.compat import reduce
 from allel.chunked import util as _util
 
 

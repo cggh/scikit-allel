@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
-
-
 import numpy as np
-
-
-from allel.compat import text_type
 
 
 def write_fasta(path, sequences, names, mode='w', width=80):
@@ -45,7 +39,7 @@ def write_fasta(path, sequences, names, mode='w', width=80):
     with open(path, mode=mode) as fasta:
         for name, sequence in zip(names, sequences):
             # force bytes
-            if isinstance(name, text_type):
+            if isinstance(name, str):
                 name = name.encode('ascii')
             header = b'>' + name + b'\n'
             fasta.write(header)

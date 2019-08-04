@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function, division
 import operator
+from functools import reduce
 
 
 import zarr
@@ -8,7 +8,6 @@ import zarr.util
 
 
 from allel.chunked import util as _util
-from allel.compat import zip, reduce
 
 
 def default_chunks(data, expectedlen):
