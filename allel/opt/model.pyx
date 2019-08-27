@@ -302,6 +302,71 @@ def genotype_array_count_alleles_subpop_masked(integer[:, :, :] g not None,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def genotype_array_to_allele_counts(integer[:, :, :] g not None,
+                                    integer max_allele):
+    cdef:
+        cnp.int32_t[:, :, :] ac
+        integer allele
+        Py_ssize_t i, j, k, n_variants, n_samples, ploidy
+
+    # setup
+    n_variants = g.shape[0]
+    n_samples = g.shape[1]
+    ploidy = g.shape[2]
+    # individual allele counts
+    ac = np.zeros((n_variants, n_samples, max_allele + 1), dtype='i4')
+
+    # main work loop
+    with nogil:
+        # iterate over variants
+        for i in range(n_variants):
+            # iterate over samples
+            for j in range(n_samples):
+                # iterate over alleles
+                for k in range(ploidy):
+                    allele = g[i, j, k]
+                    if 0 <= allele <= max_allele:
+                        ac[i, j, allele] += 1
+
+    return np.asarray(ac)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def genotype_array_to_allele_counts_masked(integer[:, :, :] g not None,
+                                           cnp.uint8_t[:, :] mask not None,
+                                           integer max_allele):
+    cdef:
+        cnp.int32_t[:, :, :] ac
+        integer allele
+        Py_ssize_t i, j, k, n_variants, n_samples, ploidy
+
+    # setup
+    n_variants = g.shape[0]
+    n_samples = g.shape[1]
+    ploidy = g.shape[2]
+    # individual allele counts
+    ac = np.zeros((n_variants, n_samples, max_allele + 1), dtype='i4')
+
+    # main work loop
+    with nogil:
+        # iterate over variants
+        for i in range(n_variants):
+            # iterate over samples
+            for j in range(n_samples):
+                # deal with mask
+                if not mask[i, j]:
+                    # iterate over alleles
+                    for k in range(ploidy):
+                        allele = g[i, j, k]
+                        if 0 <= allele <= max_allele:
+                            ac[i, j, allele] += 1
+
+    return np.asarray(ac)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def haplotype_array_map_alleles(integer[:, :] h not None,
                                 integer[:, :] mapping not None,
                                 copy=True):
