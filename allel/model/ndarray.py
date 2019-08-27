@@ -18,6 +18,7 @@ from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
 from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
     genotype_array_count_alleles, genotype_array_count_alleles_masked, \
     genotype_array_count_alleles_subpop, genotype_array_count_alleles_subpop_masked, \
+    genotype_array_to_allele_counts, genotype_array_to_allele_counts_masked, \
     haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
     haplotype_array_map_alleles, allele_counts_array_map_alleles
 from .generic import index_genotype_vector, compress_genotypes, \
@@ -923,22 +924,29 @@ class Genotypes(NumpyArrayWrapper):
         # determine alleles to count
         if max_allele is None:
             max_allele = self.max()
-        alleles = list(range(max_allele + 1))
 
-        # set up output array
-        outshape = self.shape[:-1] + (len(alleles),)
-        out = np.zeros(outshape, dtype=dtype)
+        # use optimisations
+        values = memoryview_safe(self.values)
+        mask = memoryview_safe(self.mask).view(dtype='u1') if self.mask is not None else None
 
-        for allele in alleles:
-            # count alleles along ploidy dimension
-            allele_match = self.values == allele
-            if self.mask is not None:
-                allele_match &= ~self.mask[..., np.newaxis]
-            np.sum(allele_match, axis=-1, out=out[..., allele])
+        # handle genotype vector case as an array of one genotype
+        if values.ndim == 2:
+            is_vector = True
+            values = np.expand_dims(values, 1)
+            if mask is not None:
+                mask = np.expand_dims(mask, 1)
+        else:
+            is_vector = False
 
-        if self.ndim == 2:
+        if mask is None:
+            out = genotype_array_to_allele_counts(values, max_allele)
+        else:
+            out = genotype_array_to_allele_counts_masked(values, mask, max_allele)
+
+        if is_vector:
+            out = np.squeeze(out, axis=1)
             out = GenotypeAlleleCountsVector(out)
-        elif self.ndim == 3:
+        else:
             out = GenotypeAlleleCountsArray(out)
 
         return out
