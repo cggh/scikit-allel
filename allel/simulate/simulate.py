@@ -5,7 +5,7 @@ import dask.array as da
 
 
 def simulate_genotypes(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
-    """generate genotypes from a random distribution
+    """Generate genotypes from a random distribution.
 
     Parameters
     ----------
@@ -26,7 +26,10 @@ def simulate_genotypes(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
     Notes
     -----
     For speed and efficiency all variants are drawn from the same distribution.
-    For a more "realistic" simulate this simple function may want to be extended.
+    For a more "realistic" simulation this simple function may want to be extended.
+
+    `np.random.dirichlet((n1, n2, n3, n4))` can be used to generate an appropriate vector for p,
+    where n are pseudocounts
 
     """
     a = np.arange(0, len(p), dtype="int8")
@@ -37,8 +40,8 @@ def simulate_genotypes(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
     return GenotypeDaskArray(g)
 
 
-def simulate_allele_counts_array(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
-    """generate an allele counts array from a random distribution
+def simulate_genotype_allele_counts(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
+    """Generate a genotype allele counts array from a random multinomial distribution.
 
     Parameters
     ----------
@@ -59,7 +62,10 @@ def simulate_allele_counts_array(n_variants, n_samples, p=(0.95, 0.05), ploidy=2
     Notes
     -----
     For speed and efficiency all variants are drawn from the same distribution.
-    For a more "realistic" simulate this simple function may want to be extended.
+    For a more "realistic" simulation this simple function may want to be extended.
+
+    `np.random.dirichlet((n1, n2, n3, n4))` can be used to generate an appropriate vector for p,
+    where n are pseudocounts
 
     """
 
@@ -72,7 +78,7 @@ def simulate_allele_counts_array(n_variants, n_samples, p=(0.95, 0.05), ploidy=2
 
 
 def simulate_allele_counts(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
-    """generate allele counts from a random distribution
+    """Generate an allele counts array from a random multinomial distribution.
 
     Parameters
     ----------
@@ -93,7 +99,10 @@ def simulate_allele_counts(n_variants, n_samples, p=(0.95, 0.05), ploidy=2):
     Notes
     -----
     For speed and efficiency all variants are drawn from the same distribution.
-    For a more "realistic" simulate this simple function may want to be extended.
+    For a more "realistic" simulation this simple function may want to be extended.
+
+    `np.random.dirichlet((n1, n2, n3, n4))` can be used to generate an appropriate vector for p,
+    where n are pseudocounts
 
     """
 
