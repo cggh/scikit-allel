@@ -9,8 +9,105 @@ from pytest import approx
 
 import allel
 from allel.test.tools import assert_array_equal as aeq, assert_array_almost_equal
-from allel.util import ignore_invalid
+from allel.util import ignore_invalid, mask_inaccessible
 from allel import GenotypeArray, HaplotypeArray, SortedIndex, AlleleCountsArray
+
+
+class TestAccessibilityMasking(unittest.TestCase):
+
+    def test_mask_inaccessible(self):
+        np.random.seed(2837)
+        for n_vars in [5, 50, 500]:
+            pos = np.arange(1, n_vars+1)
+            ac = np.random.randint(1, 40, n_vars*2).reshape((n_vars, 2))
+            mask = np.random.randint(2, size=n_vars).astype(bool)
+
+            mpos, mac = mask_inaccessible(mask, pos, ac)
+            aeq(mac, ac[mask])
+            aeq(mpos, pos[mask])
+
+    def test_incomplete_is_accessible(self):
+        # is_accessible mask has to cover all positions
+        pos = np.array([1, 2, 10])
+        ac = np.array([[5, 5], [2, 4]])
+        mask = np.array([True, True, False])
+        self.assertRaises(ValueError, mask_inaccessible, mask, pos, ac)
+
+    def test_compatible_dims(self):
+        # is_accessible mask has to cover all positions
+        pos = np.array([1, 2, 10])
+        mask = np.array([True, True, False])
+        self.assertRaises(ValueError, mask_inaccessible, mask, pos)
+
+    def test_masking_warning(self):
+        # assert user is being warning of masking
+        pos = np.array([1, 2, 3])
+        mask = np.array([True, True, False])
+        self.assertWarns(UserWarning, mask_inaccessible, mask, pos)
+
+    def test_fully_masked_windowed_diversty(self):
+        ac = allel.AlleleCountsArray(np.array(
+            [
+                [5, 5],
+                [5, 5],
+                [1, 9],
+                [1, 9]
+            ]))
+        pos = np.array([1, 2, 3, 4])
+        mask = np.array([False, False, True, True])
+        pi, _, _, _ = allel.windowed_diversity(pos, ac, size=2, start=1,
+                                               stop=5, is_accessible=mask)
+        self.assertTrue(np.isnan(pi[0]))
+
+    def test_masked_windowed_diversity(self):
+        # four haplotypes, 6 pairwise comparison
+        h = allel.HaplotypeArray([[0, 0, 0, 0],
+                                  [0, 0, 0, 1],
+                                  [0, 0, 1, 1],
+                                  [0, 1, 1, 1],
+                                  [1, 1, 1, 1],
+                                  [0, 0, 1, 2],
+                                  [0, 1, 1, 2],
+                                  [0, 1, -1, -1],
+                                  [-1, -1, -1, -1]])
+        ac = h.count_alleles()
+        # mean pairwise diversity
+        # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
+        pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
+        mask = np.tile(np.repeat(np.array([True, False]), 5), 3)
+        # expected is every other window with size 5
+        expect, _, _, _ = allel.windowed_diversity(pos, ac, size=5, start=1,
+                                                   stop=31)
+        # only getting every other element
+        expect = expect[::2]
+        # actual is window of size 10 with the last half masked out
+        actual, _, _, _ = allel.windowed_diversity(pos, ac, size=10, start=1,
+                                                   stop=31, is_accessible=mask)
+        assert_array_almost_equal(expect, actual)
+
+    def test_masked_windowed_divergence(self):
+        h = HaplotypeArray([[0, 0, 0, 0],
+                            [0, 0, 0, 1],
+                            [0, 0, 1, 1],
+                            [0, 1, 1, 1],
+                            [1, 1, 1, 1],
+                            [0, 0, 1, 2],
+                            [0, 1, 1, 2],
+                            [0, 1, -1, -1],
+                            [-1, -1, -1, -1]])
+        h1 = h.take([0, 1], axis=1)
+        h2 = h.take([2, 3], axis=1)
+        ac1 = h1.count_alleles()
+        ac2 = h2.count_alleles()
+        pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
+        mask = np.tile(np.repeat(np.array([True, False]), 5), 3)
+        expect, _, _, _ = allel.windowed_divergence(pos, ac1, ac2, size=5,
+                                                    start=1, stop=31)
+        expect = expect[::2]
+        actual, _, _, _ = allel.windowed_divergence(pos, ac1, ac2, size=10,
+                                                    start=1, stop=31,
+                                                    is_accessible=mask)
+        assert_array_almost_equal(expect, actual)
 
 
 class TestWindowUtilities(unittest.TestCase):
