@@ -23,12 +23,12 @@ class VCFReader:
         self._parse_index(index)
         self._fileobj = open(filename, 'rb')
         self._load_block(0)  # load header
-    
+
     @staticmethod
     def parse_region(region):
         """
         parse a region to chromosome, begin, end
-        
+
         Parameters
         ----------
         region: string
@@ -53,7 +53,7 @@ class VCFReader:
         if begin > 0 and end == MAX_INT32:
             end = begin + 1
         return chrom.encode('ascii'), begin, end
-    
+
     @staticmethod
     def reg2bins(begin, end, n_lvls=5, min_shift=14):
         """
@@ -61,7 +61,7 @@ class VCFReader:
         check out https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3042176/
         and https://samtools.github.io/hts-specs/tabix.pdf
         for more information.
-        
+
         Parameters
         ----------
         begin: int
@@ -88,14 +88,14 @@ class VCFReader:
                 n += 1
             t += 1 << ((l << 1) + l)
             s -= 3
-    
+
     def _parse_index(self, index):
         """
         read and parse the index file, set the virtual offset for the target region,
         check out https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3042176/
         and https://samtools.github.io/hts-specs/tabix.pdf
         for more information.
-        
+
         Parameters
         ----------
         index: str
@@ -131,7 +131,8 @@ class VCFReader:
                 bin_key = struct.unpack('<I', f.read(4))[0]  # bin
                 n_chunk = struct.unpack('<i', f.read(4))[0]  # n_chunk
                 if bin_key in bidx:
-                    bidx[bin_key] = np.frombuffer(f.read(8 * 2 * n_chunk), dtype=np.uint64).reshape(n_chunk, -1)  # cnk_beg, cnk_end
+                    chunks = np.frombuffer(f.read(8 * 2 * n_chunk), dtype=np.uint64)
+                    bidx[bin_key] = chunks.reshape(n_chunk, -1)  # cnk_beg, cnk_end
                 else:
                     f.seek(8 * 2 * n_chunk, os.SEEK_CUR)  # cnk_beg, cnk_end
             n_intv = struct.unpack('<i', f.read(4))[0]  # n_intv
@@ -142,12 +143,13 @@ class VCFReader:
         overlap = np.concatenate([chunks for bin_key, chunks in bidx.items() if chunks is not None])
         # coupled binning and linear indices, filter out low level bins
         chunk_begin, *_, chunk_end = np.sort(np.ravel(overlap[overlap[:, 0] >= min_ioff]))
-        self._chunk_begin, self._chunk_end = chunk_begin.item(), chunk_end.item()  # convert to native int
-    
+        # convert to native int
+        self._chunk_begin, self._chunk_end = chunk_begin.item(), chunk_end.item()
+
     def _load_block(self, offset):
         """
         load a BGZF block into buffer
-        
+
         Parameters
         ----------
         offset: uint64
@@ -161,7 +163,7 @@ class VCFReader:
         """
         if offset < 0:  # contig name is not exist
             return
-        # the higher 48 bits keep the real file offset of the start of the gzip block the byte falls in
+        # the higher 48 bits keep the real file offset of the gzip block that byte falls in
         block_offset = offset >> 16
         if block_offset > (self._chunk_end >> 16):  # out of range, stop reading
             return
@@ -179,13 +181,16 @@ class VCFReader:
             subfield_identifier = self._fileobj.read(2)
             subfield_length = struct.unpack("<H", self._fileobj.read(2))[0]
             extra_len -= 4 + subfield_length
-            if subfield_identifier == b"BC" and subfield_length == 2:  # we need the b"BC" subfield only
+            # we need the b"BC" subfield only
+            if subfield_identifier == b"BC" and subfield_length == 2:
                 bsize = struct.unpack("<H", self._fileobj.read(2))[0]
                 break
             else:
                 self._fileobj.seek(subfield_length)
         if bsize is None:
-            raise RuntimeError("Can not found BSIZE subfield in BGZF block from offset {}!".format(block_offset))
+            raise RuntimeError(
+                "Can not found BSIZE subfield in BGZF block from offset {}!".format(block_offset)
+            )
         elif extra_len > 0:  # skip left extra length
             self._fileobj.seek(self._fileobj.tell() + extra_len)
         # read and decompress the block data
@@ -199,19 +204,21 @@ class VCFReader:
         # isize = struct.unpack("<I", self.fileobj.read(4))[0]
         # assert len(data) == isize
         self._fileobj.seek(4, os.SEEK_CUR)
-        block_begin = offset & 0xffff  # the lower 16 bits store the offset of the byte inside the gzip block
+        # the lower 16 bits store the offset of the byte inside the gzip block
+        block_begin = offset & 0xffff
         # shall we read to the end of this block?
-        block_end = self._chunk_end & 0xffff if self._fileobj.tell() > (self._chunk_end >> 16) else None
+        end_offset = self._chunk_end >> 16
+        block_end = self._chunk_end & 0xffff if self._fileobj.tell() > end_offset else None
         self._block = data[block_begin:block_end]
-    
+
     def close(self):
         self._fileobj.close()
-    
+
     def readinto(self, b):
         """
         imitate the readinto function in BufferedStream class.
         This is th function used by FileInputStream.
-        
+
         Parameters
         ----------
         b: bytes or bytearray
@@ -233,7 +240,7 @@ class VCFReader:
             self._block = self._block[read_len:]
             if not self._block:  # more to read, do not reach the end of header yet
                 self._load_block(self._fileobj.tell() << 16)
-            if not self._block.startswith(self._meta):  # end of header, load our target region block
+            if not self._block.startswith(self._meta):  # end of header, load target region block
                 self._header = False
                 self._load_block(self._chunk_begin)
                 break

@@ -206,9 +206,10 @@ _doc_param_region = \
         returned by this function."""
 
 _doc_param_index = \
-    """Path to the index file of the VCF. Only required if `region` is given. Setting to `None` (the default)
-        will automatically check weather there is a index file with the same name but suffix '.tbi',
-        which is the most common case. A warning will be issued if the index file is older than the VCF file.
+    """Path to the index file of the VCF. Only required if `region` is given. Setting to `None` (the
+        default) will automatically check weather there is a index file with the same name but
+        suffix '.tbi', which is the most common case. A warning will be issued if the index file
+        is older than the VCF file.
      """
 
 _doc_param_samples = \
@@ -1017,7 +1018,7 @@ def _setup_input_stream(input, index=None, region=None, buffer_size=DEFAULT_BUFF
             index_file = '{}.tbi'.format(input)
             if os.path.exists(index_file):
                 index = index_file
-        
+
         if index is not None and os.path.getmtime(index) < os.path.getmtime(input):
             warnings.warn('the index file is older than the input VCF: {}'.format(index))
 

@@ -25,7 +25,9 @@ def test_parse_region():
 
 
 def test_decompress():
-    vcf_reader = VCFReader(fixture_path('test54.vcf.gz'), fixture_path('test54.vcf.gz.tbi'), 'chr1:1-100')
+    vcf_reader = VCFReader(
+        fixture_path('test54.vcf.gz'), fixture_path('test54.vcf.gz.tbi'), 'chr1:1-100'
+    )
     gzip_reader = gzip.open(fixture_path('test54.vcf.gz'), 'rb')
     buffer_vcf, buffer_gzip = bytearray(2 ** 14), bytearray(2 ** 14)
     while True:
