@@ -39,7 +39,7 @@ def normalize_callset(callset):
             for key in callset[group].array_keys():
                 names.append(key)
                 new_callset[key] = callset[group][key]
-        
+
         gt = callset.get(CALLDATA_CALLSET_GROUP + '/' + GENOTYPE_CALLSET_KEY)
         if gt:
             samples = callset.get(SAMPLES_CALLSET_KEY, [])
@@ -50,7 +50,7 @@ def normalize_callset(callset):
             for i in range(n_gt_cols):
                 sample_name = samples[i]
                 names.append(_filterable_sample_name(sample_name))
-                new_callset[sample_name] = gt[:,i,:]
+                new_callset[sample_name] = gt[:, i, :]
 
         callset = new_callset
     elif hasattr(callset, 'keys'):
@@ -331,7 +331,7 @@ def _vcf_info_str(name, id, value, fill):
 
 def _filter_sample_names(names):
     return [n[len(NORMALIZED_SAMPLE_NAME_PREFIX):] for n in names 
-            if _is_sample_name(n)]
+        if _is_sample_name(n)]
 
 
 def _is_sample_name(name):

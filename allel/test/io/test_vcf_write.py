@@ -26,7 +26,7 @@ def fixture_path(fn):
     return os.path.join(os.path.dirname(__file__), os.pardir, 'data', fn)
 
 
-@pytest.fixture(scope='module') # run once and used by all tests in this file
+@pytest.fixture(scope='module') #  run once and used by all tests in this file
 def zarr_callset():
     vcf_path = fixture_path('sample.vcf')
     zarr_path = os.path.join(tempdir, 'sample.zarr')
@@ -39,7 +39,8 @@ def test_write_from_zarr_callset(zarr_callset):
     write_vcf(out_path, zarr_callset)
 
     # TODO: Once the write function can write out full data,
-    # modify the test so that it load back the written file and compare it with the original faithfully.
+    # modify the test so that it load back the written file
+    # and compare it with the original faithfully.
     random_line = '20	1110696	rs6040355	A	G,T'
     random_line = random_line.replace(r'\t', '\t')
     with open(out_path, 'r') as file:
