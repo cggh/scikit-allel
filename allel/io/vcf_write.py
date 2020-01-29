@@ -28,7 +28,23 @@ NORMALIZED_SAMPLE_NAME_PREFIX = 'SAMPLE_'
 
 def normalize_callset(callset):
 
-    if isinstance(callset, zarr.hierarchy.Group):
+    if hasattr(callset, 'keys'):
+        names = list()
+        new_callset = dict()
+        for k in list(callset.keys()):
+            a = callset[k]
+            if k.startswith('calldata/'):
+                continue
+            if k == 'samples':
+                continue
+            if k.startswith('variants/'):
+                k = k[9:]
+            names.append(k)
+            new_callset[k] = a
+        callset = new_callset
+    elif hasattr(callset, 'dtype') and callset.dtype.names:
+        names = list(callset.dtype.names)
+    elif isinstance(callset, zarr.hierarchy.Group):
         names = list()
         new_callset = dict()
 
@@ -53,8 +69,6 @@ def normalize_callset(callset):
                 new_callset[sample_name] = gt[:,i,:]
 
         callset = new_callset
-    elif hasattr(callset, 'dtype') and callset.dtype.names:
-        names = list(callset.dtype.names)
     else:
         raise ValueError('callset should be dict or recarray, found %r' % callset)
 
