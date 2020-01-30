@@ -330,8 +330,8 @@ def _vcf_info_str(name, id, value, fill):
 
 
 def _filter_sample_names(names):
-    return [n[len(NORMALIZED_SAMPLE_NAME_PREFIX):] for n in names 
-        if _is_sample_name(n)]
+    return [n[len(NORMALIZED_SAMPLE_NAME_PREFIX):] for n in names
+            if _is_sample_name(n)]
 
 
 def _is_sample_name(name):

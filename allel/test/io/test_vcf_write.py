@@ -26,7 +26,7 @@ def fixture_path(fn):
     return os.path.join(os.path.dirname(__file__), os.pardir, 'data', fn)
 
 
-@pytest.fixture(scope='module') #  run once and used by all tests in this file
+@pytest.fixture(scope='module')  # run once and used by all tests in this file
 def zarr_callset():
     vcf_path = fixture_path('sample.vcf')
     zarr_path = os.path.join(tempdir, 'sample.zarr')
