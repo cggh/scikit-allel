@@ -70,7 +70,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     gv = GenotypeVector(gv)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(gv, pos)
-    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool)
+    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool, allow_none=True)
 
     # heterozygote probabilities
     het_px = np.concatenate([(phet_roh,), phet_nonroh])
