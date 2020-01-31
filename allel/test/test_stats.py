@@ -814,6 +814,7 @@ class TestAdmixture(unittest.TestCase):
         assert_array_almost_equal(expect_num, num)
         assert_array_almost_equal(expect_den, den)
 
+
 class TestRunsOfHomozygosity(unittest.TestCase):
 
     def test_roh_mhmm_100pct(self):
@@ -834,4 +835,3 @@ class TestRunsOfHomozygosity(unittest.TestCase):
         roh, fraction = allel.roh_mhmm(gv, pos, contig_size=100)
         assert len(roh.values) == 0
         assert fraction == fraction_expected
-
