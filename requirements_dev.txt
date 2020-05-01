@@ -1,5 +1,5 @@
 # required
-cython==0.29.16
+cython==0.29.17
 numpy==1.18.2
 dask[array]==2.13.0
 # optional
