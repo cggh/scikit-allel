@@ -1,7 +1,7 @@
 # required
 cython==0.29.17
 numpy==1.18.3
-dask[array]==2.13.0
+dask[array]==2.15.0
 # optional
 scipy==1.4.1
 matplotlib==3.2.1
