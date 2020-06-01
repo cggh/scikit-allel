@@ -1,13 +1,13 @@
 # required
-cython==0.29.17
-numpy==1.18.3
-dask[array]==2.15.0
+cython==0.29.19
+numpy==1.18.4
+dask[array]==2.17.2
 # optional
 scipy==1.4.1
 matplotlib==3.2.1
 seaborn==0.10.1
-pandas==1.0.3
-scikit-learn==0.22.2.post1
+pandas==1.0.4
+scikit-learn==0.23.1
 h5py==2.10.0
 numexpr==2.7.1
 bcolz==1.2.1

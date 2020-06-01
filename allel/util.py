@@ -115,9 +115,9 @@ def check_equal_length(a, *others):
             raise ValueError('sequences do not have matching length')
 
 
-def resize_dim1(a, l, fill=0):
-    if a.shape[1] < l:
-        newshape = a.shape[0], l
+def resize_dim1(a, s, fill=0):
+    if a.shape[1] < s:
+        newshape = a.shape[0], s
         b = np.zeros(newshape, dtype=a.dtype)
         if fill != 0:
             b.fill(fill)
