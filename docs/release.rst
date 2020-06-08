@@ -13,6 +13,14 @@ WIP v1.3.0
   environments, and removed support for Python 3.5 in the CI
   matrix. By :user:`Alistair Miles <alimanfoo>`, :issue:`270`.
 
+* Fixed a bug related to inaccessible sites being incorporated in the 
+  numerator of diversity functions in :mod:`allel.stats.diversity`. 
+  By :user:`Murillo Rodrigues <mufernando>`, 
+  :user:`Peter Ralph <petrelharp>` and 
+  :user:`Alistair Miles <alimanfoo>`, :issue:`276`, :issue:`294`
+
+* Minor documentation fixes. By :user:`Murillo Rodrigues <mufernando>`, 
+  :issue:`273`, :issue:`294`.
 
 .. _release_1.2.1:
 

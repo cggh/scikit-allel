@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from functools import update_wrapper
 import atexit
 import os
+import warnings
 
 
 import numpy as np
@@ -143,6 +144,50 @@ def ensure_square(dist):
         if dist.shape[0] != dist.shape[1]:
             raise ValueError('distance matrix is not square')
     return dist
+
+
+def mask_inaccessible(is_accessible, pos, *arrays):
+    """
+    This function returns a tuple (positions, *arrays) in which
+    positions that are not accessible are removed from the positions
+    and the *arrays.
+
+    Parameters
+    ----------
+    is_accessible : array_like, bool, shape (len(contig),)
+        Boolean array indicating accessibility status for all positions in the
+        chromosome/contig.
+    pos : array_like, int, shape (n_variants,)
+        Variant positions, using 1-based coordinates, in ascending order.
+    array1, array2, ...  : array_like
+        N-dimensional array objects with n_variants elements in the 1D.
+
+    Returns
+    -------
+    pos : array_like, int, shape (n_items,)
+        Positions array consisting exclusively of accessible sites in the
+        original positions array.
+    array1, array2, ...  : array_like
+        N-dimensional array objects with n_variants elements in the 1D
+        but now consisting exclusively of accessible sites in the original
+        arrays.
+
+    """
+
+    if is_accessible is not None:
+        # sanity check
+        if np.max(pos) > len(is_accessible):
+            raise ValueError(
+                'Not all positions are covered by is_accessible.'
+                )
+        # check array shapes
+        check_dim0_aligned(pos, *arrays)
+        loc_accessible = is_accessible[pos-1]
+        if np.any(np.logical_not(loc_accessible)):
+            warnings.warn("Some variants were inaccessible and hence masked.")
+            arrays = tuple(a[loc_accessible] for a in arrays)
+            pos = pos[loc_accessible]
+    return (pos,) + arrays
 
 
 class _HashedSeq(list):
