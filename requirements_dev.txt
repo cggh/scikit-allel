@@ -1,6 +1,6 @@
 # required
 cython==0.29.20
-numpy==1.18.4
+numpy==1.19.0
 dask[array]==2.17.2
 # optional
 scipy==1.4.1
