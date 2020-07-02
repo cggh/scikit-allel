@@ -216,7 +216,8 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
                 "If is_accessible argument is not provided, you must provide `contig_size`")
 
         # given no accessibility provided use the standard window calculation
-        roh_windows = position_windows(pos=pos, size=window_size, step=window_size, start=1, stop=contig_size)
+        roh_windows = position_windows(
+            pos=pos, size=window_size, step=window_size, start=1, stop=contig_size)
     else:
         contig_size = is_accessible.size
         roh_windows = equally_accessible_windows(is_accessible, window_size)
