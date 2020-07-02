@@ -915,20 +915,24 @@ class TestAdmixture(unittest.TestCase):
 class TestRunsOfHomozygosity(unittest.TestCase):
 
     def test_roh_mhmm_100pct(self):
+
+        # values correspond to start/stop/length/is_marginal
         roh_expected = np.array([[1, 100, 100, True]], dtype=object)
         fraction_expected = 1.0
-        gv = [[0, 0, 0, 0], [0, 0, 0, 0]]
-        gv = np.transpose(gv)
+        gv = np.zeros((4, 2), dtype=np.int16)
         pos = [1, 10, 50, 100]
         roh, fraction = allel.roh_mhmm(gv, pos, contig_size=100)
         aeq(roh.values, roh_expected)
         assert fraction == fraction_expected
 
     def test_roh_mhmm_0pct(self):
+
         fraction_expected = 0.0
-        gv = [[0, 0, 1, 0], [0, 0, 0, 0]]
-        gv = np.transpose(gv)
+
+        gv = np.zeros((4, 2), dtype=np.int16)
+        gv[2, 0] = 1
+
         pos = [1, 10, 50, 100]
         roh, fraction = allel.roh_mhmm(gv, pos, contig_size=100)
-        assert len(roh.values) == 0
+        assert roh.shape[0] == 0
         assert fraction == fraction_expected
