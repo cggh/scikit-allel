@@ -8,7 +8,7 @@ import numpy as np
 from allel.model.ndarray import SortedIndex, AlleleCountsArray
 from allel.model.util import locate_fixed_differences
 from allel.util import asarray_ndim, ignore_invalid, check_dim0_aligned, \
-    ensure_dim1_aligned
+    ensure_dim1_aligned, mask_inaccessible
 from allel.stats.window import windowed_statistic, per_base, moving_statistic
 
 
@@ -224,7 +224,7 @@ def sequence_diversity(pos, ac, start=None, stop=None,
     Returns
     -------
 
-    pi : ndarray, float, shape (n_windows,)
+    pi : float
         Nucleotide diversity.
 
     Notes
@@ -260,6 +260,8 @@ def sequence_diversity(pos, ac, start=None, stop=None,
         pos = SortedIndex(pos, copy=False)
     ac = asarray_ndim(ac, 2)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac = mask_inaccessible(is_accessible, pos, ac)
 
     # deal with subregion
     if start is not None or stop is not None:
@@ -320,7 +322,7 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
     Returns
     -------
 
-    Dxy : ndarray, float, shape (n_windows,)
+    Dxy : float
         Nucleotide divergence.
 
     Examples
@@ -357,6 +359,8 @@ def sequence_divergence(pos, ac1, ac2, an1=None, an2=None, start=None,
     if an2 is not None:
         an2 = asarray_ndim(an2, 1)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac1, ac2 = mask_inaccessible(is_accessible, pos, ac1, ac2)
 
     # handle start/stop
     if start is not None or stop is not None:
@@ -469,6 +473,8 @@ def windowed_diversity(pos, ac, size=None, start=None, stop=None, step=None,
     if not isinstance(pos, SortedIndex):
         pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac = mask_inaccessible(is_accessible, pos, ac)
 
     # calculate mean pairwise difference
     mpd = mean_pairwise_difference(ac, fill=0)
@@ -570,6 +576,8 @@ def windowed_divergence(pos, ac1, ac2, size=None, start=None, stop=None,
     # check inputs
     pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac1, ac2 = mask_inaccessible(is_accessible, pos, ac1, ac2)
 
     # calculate mean pairwise divergence
     mpd = mean_pairwise_difference_between(ac1, ac2, fill=0)
@@ -643,6 +651,8 @@ def windowed_df(pos, ac1, ac2, size=None, start=None, stop=None, step=None,
     # check inputs
     pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac1, ac2 = mask_inaccessible(is_accessible, pos, ac1, ac2)
 
     # locate fixed differences
     loc_df = locate_fixed_differences(ac1, ac2)
@@ -711,6 +721,9 @@ def watterson_theta(pos, ac, start=None, stop=None,
     if not isinstance(pos, SortedIndex):
         pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac = mask_inaccessible(is_accessible, pos, ac)
+
     if not hasattr(ac, 'count_segregating'):
         ac = AlleleCountsArray(ac, copy=False)
 
@@ -827,6 +840,8 @@ def windowed_watterson_theta(pos, ac, size=None, start=None, stop=None,
     if not isinstance(pos, SortedIndex):
         pos = SortedIndex(pos, copy=False)
     is_accessible = asarray_ndim(is_accessible, 1, allow_none=True)
+    # masking inaccessible sites from pos and ac
+    pos, ac = mask_inaccessible(is_accessible, pos, ac)
     if not hasattr(ac, 'count_segregating'):
         ac = AlleleCountsArray(ac, copy=False)
 
