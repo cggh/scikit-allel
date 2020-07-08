@@ -3,8 +3,8 @@ Release notes
 
 .. _release_1.3.0:
 
-WIP v1.3.0
-----------
+v1.3.0
+------
 
 * Removed support for Python 2. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`251`.
