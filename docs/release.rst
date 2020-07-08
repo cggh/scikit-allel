@@ -6,6 +6,8 @@ Release notes
 v1.3.0
 ------
 
+.. important:: This release drop support for Python 2.7.
+
 * Removed support for Python 2. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`251`.
 
