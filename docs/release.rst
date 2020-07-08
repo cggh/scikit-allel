@@ -24,7 +24,7 @@ WIP v1.3.0
 
 * Improve handling of `None` when defining accessibility in `roh_mhmm` 
   and `roh_poissonhmm`. By :user:`Ólavur Mortensen <olavurmortensen>` 
-  and :user:`Nick Harding <hardingnj>`, issue `296`.
+  and :user:`Nick Harding <hardingnj>`, :issue:`296`.
 
 .. _release_1.2.1:
 
