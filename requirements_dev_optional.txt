@@ -1,0 +1,15 @@
+# optional
+scipy==1.5.0
+matplotlib==3.2.2
+seaborn==0.10.1
+pandas==1.0.5
+scikit-learn==0.23.1
+h5py==2.10.0
+numexpr==2.7.1
+bcolz==1.2.1
+zarr==2.3.2
+hmmlearn==0.2.3
+# install problems on windows, skip for now
+# https://github.com/jmschrei/pomegranate/issues/333#issuecomment-449151227
+#pomegranate==0.10.0
+pyfasta==0.5.2

@@ -1,6 +1,16 @@
 Release notes
 =============
 
+
+.. _release_1.3.1:
+
+v1.3.1
+------
+
+* Add compatibility with Python 3.8. By :user:`Alistair Miles
+  <alimanfoo>`, :issue:`329`.
+
+
 .. _release_1.3.0:
 
 v1.3.0
