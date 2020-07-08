@@ -2,6 +2,15 @@ Release notes
 =============
 
 
+.. _release_1.3.2:
+
+v1.3.2
+------
+
+* Add Cython implementations of `to_allele_counts()` method. By
+  :user:`Timothy Millar <timothymillar>`, :issue:`288`.
+
+
 .. _release_1.3.1:
 
 v1.3.1
