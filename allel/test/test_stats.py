@@ -910,3 +910,29 @@ class TestAdmixture(unittest.TestCase):
         expect_den = [0., 1., 1., 0.25, np.nan]
         assert_array_almost_equal(expect_num, num)
         assert_array_almost_equal(expect_den, den)
+
+
+class TestRunsOfHomozygosity(unittest.TestCase):
+
+    def test_roh_mhmm_100pct(self):
+
+        # values correspond to start/stop/length/is_marginal
+        roh_expected = np.array([[1, 100, 100, True]], dtype=object)
+        fraction_expected = 1.0
+        gv = np.zeros((4, 2), dtype=np.int16)
+        pos = [1, 10, 50, 100]
+        roh, fraction = allel.roh_mhmm(gv, pos, contig_size=100)
+        aeq(roh.values, roh_expected)
+        assert fraction == fraction_expected
+
+    def test_roh_mhmm_0pct(self):
+
+        fraction_expected = 0.0
+
+        gv = np.zeros((4, 2), dtype=np.int16)
+        gv[2, 0] = 1
+
+        pos = [1, 10, 50, 100]
+        roh, fraction = allel.roh_mhmm(gv, pos, contig_size=100)
+        assert roh.shape[0] == 0
+        assert fraction == fraction_expected
