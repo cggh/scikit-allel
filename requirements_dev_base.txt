@@ -1,0 +1,4 @@
+# required
+cython==0.29.20
+numpy==1.19.0
+dask[array]==2.19.0

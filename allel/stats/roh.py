@@ -4,7 +4,7 @@ import numpy as np
 from allel.model.ndarray import GenotypeVector
 from allel.util import asarray_ndim, check_dim0_aligned
 from allel.stats.misc import tabulate_state_blocks
-from allel.stats.window import equally_accessible_windows, windowed_statistic
+from allel.stats.window import equally_accessible_windows, windowed_statistic, position_windows
 
 
 def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-6,
@@ -70,7 +70,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     gv = GenotypeVector(gv)
     pos = asarray_ndim(pos, 1)
     check_dim0_aligned(gv, pos)
-    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool)
+    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool, allow_none=True)
 
     # heterozygote probabilities
     het_px = np.concatenate([(phet_roh,), phet_nonroh])
@@ -85,7 +85,7 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     if is_accessible is None:
         if contig_size is None:
             raise ValueError(
-                "If is_accessibile argument is not provided, you must provide contig_size")
+                "If is_accessible argument is not provided, you must provide `contig_size`")
         p_accessible = 1.0
     else:
         p_accessible = is_accessible.mean()
@@ -207,19 +207,23 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
 
     from pomegranate import HiddenMarkovModel, PoissonDistribution
 
+    is_accessible = asarray_ndim(is_accessible, 1, dtype=bool, allow_none=True)
+
     # equally accessbile windows
     if is_accessible is None:
         if contig_size is None:
             raise ValueError(
-                "If is_accessibile argument is not provided, you must provide contig_size")
-        is_accessible = np.ones((contig_size,), dtype="bool")
+                "If is_accessible argument is not provided, you must provide `contig_size`")
+
+        # given no accessibility provided use the standard window calculation
+        roh_windows = position_windows(
+            pos=pos, size=window_size, step=window_size, start=1, stop=contig_size)
     else:
         contig_size = is_accessible.size
-
-    eqw = equally_accessible_windows(is_accessible, window_size)
+        roh_windows = equally_accessible_windows(is_accessible, window_size)
 
     ishet = GenotypeVector(gv).is_het()
-    counts, wins, records = windowed_statistic(pos, ishet, np.sum, windows=eqw)
+    counts, wins, records = windowed_statistic(pos, ishet, np.sum, windows=roh_windows)
 
     # heterozygote probabilities
     het_px = np.concatenate([(phet_roh,), phet_nonroh])
@@ -242,8 +246,8 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
     df_roh = df_blocks[(df_blocks.state == 0)].reset_index(drop=True)
 
     # adapt the dataframe for ROH
-    df_roh["start"] = df_roh.start_ridx.apply(lambda y: eqw[y, 0])
-    df_roh["stop"] = df_roh.stop_lidx.apply(lambda y: eqw[y, 1])
+    df_roh["start"] = df_roh.start_ridx.apply(lambda y: roh_windows[y, 0])
+    df_roh["stop"] = df_roh.stop_lidx.apply(lambda y: roh_windows[y, 1])
     df_roh["length"] = df_roh.stop - df_roh.start
 
     # filter by ROH size

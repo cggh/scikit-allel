@@ -19,14 +19,15 @@ environment:
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7"
 
+    - PYTHON: "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8"
+
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "%CMD_IN_ENV% python -m pip install -U pip setuptools wheel"
-  - "%CMD_IN_ENV% python -m pip install cython==0.29.10"
-  - "%CMD_IN_ENV% python -m pip install numpy==1.16.4"
-  - "%CMD_IN_ENV% python -m pip install -rrequirements_dev.txt"
+  - "%CMD_IN_ENV% python -m pip install -rrequirements_dev_base.txt"
+  - "%CMD_IN_ENV% python -m pip install -rrequirements_dev_optional.txt"
   - "%CMD_IN_ENV% python -m pip install -rrequirements_test.txt"
-  - "%CMD_IN_ENV% python -m pip install pyfasta==0.5.2"
   - "%CMD_IN_ENV% python setup.py build_ext --inplace"
 
 build: off

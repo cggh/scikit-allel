@@ -1,10 +1,22 @@
 Release notes
 =============
 
+
+.. _release_1.3.1:
+
+v1.3.1
+------
+
+* Add compatibility with Python 3.8. By :user:`Alistair Miles
+  <alimanfoo>`, :issue:`329`.
+
+
 .. _release_1.3.0:
 
-WIP v1.3.0
-----------
+v1.3.0
+------
+
+.. important:: This release drop support for Python 2.7.
 
 * Removed support for Python 2. By :user:`Alistair Miles <alimanfoo>`,
   :issue:`251`.
@@ -13,6 +25,18 @@ WIP v1.3.0
   environments, and removed support for Python 3.5 in the CI
   matrix. By :user:`Alistair Miles <alimanfoo>`, :issue:`270`.
 
+* Fixed a bug related to inaccessible sites being incorporated in the 
+  numerator of diversity functions in :mod:`allel.stats.diversity`. 
+  By :user:`Murillo Rodrigues <mufernando>`, 
+  :user:`Peter Ralph <petrelharp>` and 
+  :user:`Alistair Miles <alimanfoo>`, :issue:`276`, :issue:`294`
+
+* Minor documentation fixes. By :user:`Murillo Rodrigues <mufernando>`, 
+  :issue:`273`, :issue:`294`.
+
+* Improve handling of `None` when defining accessibility in `roh_mhmm` 
+  and `roh_poissonhmm`. By :user:`Ólavur Mortensen <olavurmortensen>` 
+  and :user:`Nick Harding <hardingnj>`, :issue:`296`.
 
 .. _release_1.2.1:
 
