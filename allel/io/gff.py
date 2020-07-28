@@ -31,7 +31,7 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
 
     Parameters
     ----------
-    path : string
+    path : string or pathlib.Path
         Path to input file.
     attributes : list of strings, optional
         List of columns to extract from the "attributes" field.
@@ -64,6 +64,7 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
             attributes_fill = [attributes_fill] * len(attributes)
 
     # open input stream
+    path = str(path)
     if region is not None:
         cmd = [tabix, path, region]
         buffer = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout

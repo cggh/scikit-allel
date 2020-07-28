@@ -5,7 +5,6 @@ import itertools
 from operator import itemgetter
 import logging
 
-
 import numpy as np
 
 
@@ -50,7 +49,7 @@ def write_vcf(path, callset, rename=None, number=None, description=None,
 
     names, callset = normalize_callset(callset)
 
-    with open(path, 'w') as vcf_file:
+    with open(str(path), 'w') as vcf_file:
         if write_header:
             write_vcf_header(vcf_file, names, callset=callset, rename=rename,
                              number=number, description=description)

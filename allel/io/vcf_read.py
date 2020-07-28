@@ -15,7 +15,7 @@ import time
 import subprocess
 import textwrap
 from collections import OrderedDict
-
+from pathlib import Path
 
 import numpy as np
 
@@ -1012,6 +1012,10 @@ def _setup_input_stream(input, region=None, tabix=None, buffer_size=DEFAULT_BUFF
 
     # obtain a file-like object
     close = False
+
+    if isinstance(input, Path):
+        input = str(input)
+
     if isinstance(input, str) and input.endswith('gz'):
 
         if region and tabix and os.name != 'nt':

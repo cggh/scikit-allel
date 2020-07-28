@@ -36,7 +36,7 @@ def write_fasta(path, sequences, names, mode='w', width=80):
     mode = 'ab' if 'a' in mode else 'wb'
 
     # write to file
-    with open(path, mode=mode) as fasta:
+    with open(str(path), mode=mode) as fasta:
         for name, sequence in zip(names, sequences):
             # force bytes
             if isinstance(name, str):
