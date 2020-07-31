@@ -8,6 +8,7 @@ import logging
 import numpy as np
 
 
+from allel.util import resolve_path
 import allel
 
 
@@ -49,11 +50,18 @@ def write_vcf(path, callset, rename=None, number=None, description=None,
 
     names, callset = normalize_callset(callset)
 
-    with open(str(path), 'w') as vcf_file:
+    def write_file(vcf_file):
         if write_header:
             write_vcf_header(vcf_file, names, callset=callset, rename=rename,
                              number=number, description=description)
         write_vcf_data(vcf_file, names, callset=callset, rename=rename, fill=fill)
+
+    path = resolve_path(path)
+    if hasattr(path, 'write'):
+        write_file(path)
+    else:
+        with open(path, 'w') as f:
+            write_file(f)
 
 
 def write_vcf_header(vcf_file, names, callset, rename, number, description):
@@ -64,6 +72,7 @@ def write_vcf_header(vcf_file, names, callset, rename, number, description):
     if description is None:
         description = dict()
 
+    vcf_file = resolve_path(vcf_file)
     # write file format version
     print('##fileformat=VCFv4.1', file=vcf_file)
 
@@ -152,6 +161,7 @@ def write_vcf_data(vcf_file, names, callset, rename, fill):
     if fill is None:
         fill = dict()
 
+    vcf_file = resolve_path(vcf_file)
     # find the fixed columns, allowing for case insensitive naming in the
     # input array
     col_chrom = None

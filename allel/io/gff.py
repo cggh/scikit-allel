@@ -2,6 +2,7 @@
 import subprocess
 import gzip
 from urllib.parse import unquote_plus
+from allel.util import resolve_path
 
 
 import numpy as np
@@ -31,7 +32,7 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
 
     Parameters
     ----------
-    path : string or pathlib.Path
+    path : string, pathlib.Path or any file-like object
         Path to input file.
     attributes : list of strings, optional
         List of columns to extract from the "attributes" field.
@@ -64,15 +65,19 @@ def iter_gff3(path, attributes=None, region=None, score_fill=-1,
             attributes_fill = [attributes_fill] * len(attributes)
 
     # open input stream
-    path = str(path)
-    if region is not None:
-        cmd = [tabix, path, region]
-        buffer = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout
-    elif path.endswith('.gz') or path.endswith('.bgz'):
-        buffer = gzip.open(path, mode='rb')
-    else:
-        buffer = open(path, mode='rb')
 
+    # write to file
+    path = resolve_path(path)
+    if isinstance(path, str):
+        if region is not None:
+            cmd = [tabix, path, region]
+            buffer = subprocess.Popen(cmd, stdout=subprocess.PIPE).stdout
+        elif path.endswith('.gz') or path.endswith('.bgz'):
+            buffer = gzip.open(path, mode='rb')
+        else:
+            buffer = open(path, mode='rb')
+    else:
+        buffer = path
     try:
         for line in buffer:
             if line[0] == b'>':
@@ -124,7 +129,7 @@ def gff3_to_recarray(path, attributes=None, region=None, score_fill=-1,
 
     Parameters
     ----------
-    path : string
+    path : string, pathlib.Path or any file-like object
         Path to input file.
     attributes : list of strings, optional
         List of columns to extract from the "attributes" field.
@@ -181,7 +186,7 @@ def gff3_to_dataframe(path, attributes=None, region=None, score_fill=-1,
 
     Parameters
     ----------
-    path : string
+    path : string, pathlib.Path or any file-like object
         Path to input file.
     attributes : list of strings, optional
         List of columns to extract from the "attributes" field.
