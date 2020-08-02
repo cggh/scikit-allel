@@ -6,6 +6,64 @@ from allel.model.ndarray import GenotypeArray
 from allel.util import ignore_invalid, asarray_ndim
 
 
+def heterozygosity_individual(g, fill=np.nan, corrected=True, ploidy=None):
+    """Calculate the gammetic heterozygosity of each individual
+    at each variant.
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    fill : float, optional
+        Use this value for variants with invalid inputs.
+    corrected : bool, optional
+        If True, values are corrected for ploidy level.
+    ploidy : array_like, int, (n_variants, n_samples), optional
+        Specify ploidy of each genotype call.
+    
+    Returns
+    -------
+    hi : ndarray, float, shape (n_variants, n_samples)
+        Observed individual heterozygosity
+    
+    Notes
+    -----
+    Individual heterozygosity is calculated assuming polysomic inheritance
+    for polyploid genotype arrays following Hardy (2016).
+    
+    If the ploidy argument is used then the ploidy specified for each 
+    genotype call must be equal to the number of alleles called for that
+    genotype or else the genotype will be treated as missing.
+
+    """
+    # check inputs
+    if not hasattr(g, 'ploidy') or not hasattr(g, 'to_allele_counts'):
+        g = GenotypeArray(g, copy=False)
+
+    # use array ploidy if none provided
+    ploidy = g.ploidy if ploidy is None else np.array(ploidy)
+    
+    # convert to genotype allele counts, remove those not matching ploidy
+    gac = g.to_allele_counts()
+    is_called = gac.values.sum(axis=-1) == ploidy
+    gac[~is_called] = 0
+
+    # genotype allele frequencies with partial genotypes removed
+    gaf = gac.to_frequencies()
+
+    # correction for ploidy level
+    with ignore_invalid():
+        correction = ploidy / (ploidy - 1) if corrected else 1
+
+    # matrix of observed heterozygosity per sample
+    hi = (1 - np.sum(np.power(gaf, 2), axis=-1)) * correction
+
+    if fill is not np.nan:
+        hi[np.isnan(hi)] = fill
+
+    return hi
+
+
 def heterozygosity_observed(g, fill=np.nan, corrected=True):
     """Calculate the rate of observed heterozygosity for each variant.
 
