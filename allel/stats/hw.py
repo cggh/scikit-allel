@@ -20,18 +20,18 @@ def heterozygosity_individual(g, fill=np.nan, corrected=True, ploidy=None):
         If True, values are corrected for ploidy level.
     ploidy : array_like, int, (n_variants, n_samples), optional
         Specify ploidy of each genotype call.
-    
+
     Returns
     -------
     hi : ndarray, float, shape (n_variants, n_samples)
         Observed individual heterozygosity
-    
+
     Notes
     -----
     Individual heterozygosity is calculated assuming polysomic inheritance
     for polyploid genotype arrays following Hardy (2016).
 
-    If the ploidy argument is used then the ploidy specified for each 
+    If the ploidy argument is used then the ploidy specified for each
     genotype call must be equal to the number of alleles called for that
     genotype or else the genotype will be treated as missing.
 
@@ -63,7 +63,7 @@ def heterozygosity_individual(g, fill=np.nan, corrected=True, ploidy=None):
 
     # use array ploidy if none provided
     ploidy = g.ploidy if ploidy is None else np.array(ploidy)
-    
+
     # convert to genotype allele counts, remove those not matching ploidy
     gac = g.to_allele_counts()
     is_called = gac.values.sum(axis=-1) == ploidy
@@ -118,7 +118,7 @@ def heterozygosity_observed(g, fill=np.nan, corrected=True, ploidy=None):
     heterozygosity and *Hu* is the uncorrected observed heterozygosity
     described by Meirmans and Liu (2018).
 
-    If the ploidy argument is used then the ploidy specified for each 
+    If the ploidy argument is used then the ploidy specified for each
     genotype call must be equal to the number of called alleles for that
     genotype or else the genotype will be treated as missing.
 
@@ -148,13 +148,13 @@ def heterozygosity_observed(g, fill=np.nan, corrected=True, ploidy=None):
 
     """
     hi = heterozygosity_individual(
-        g, 
-        fill=np.nan, 
-        corrected=corrected, 
+        g,
+        fill=np.nan,
+        corrected=corrected,
         ploidy=ploidy
     )
     sum_het = np.nansum(hi, axis=-1)
-    
+
     n_called = np.nansum(~np.isnan(hi), axis=-1)
 
     with ignore_invalid():
