@@ -35,6 +35,27 @@ def heterozygosity_individual(g, fill=np.nan, corrected=True, ploidy=None):
     genotype call must be equal to the number of alleles called for that
     genotype or else the genotype will be treated as missing.
 
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.GenotypeArray([[[0, 0, -1, -1], [0, 0, 0, 0]],
+    ...                          [[0, 1, -1, -1], [0, 0, 0, 1]],
+    ...                          [[1, 1, -1, -1], [0, 1, 1, 2]],
+    ...                          [[0, -1, -1, -1], [0, 1, 2, 3]],
+    ...                          [[-1, -1, -1, -1], [0, 1, -1, -1]]])
+    >>> ploidy = [[2, 4],
+    ...           [2, 4],
+    ...           [2, 4],
+    ...           [2, 4],
+    ...           [2, 4]]
+    >>> allel.heterozygosity_individual(g, ploidy=ploidy)
+    array([[0.        , 0.        ],
+           [1.        , 0.5       ],
+           [0.        , 0.83333333],
+           [       nan, 1.        ],
+           [       nan,        nan]])
+
     """
     # check inputs
     if not hasattr(g, 'ploidy') or not hasattr(g, 'to_allele_counts'):
@@ -98,7 +119,7 @@ def heterozygosity_observed(g, fill=np.nan, corrected=True, ploidy=None):
     described by Meirmans and Liu (2018).
 
     If the ploidy argument is used then the ploidy specified for each 
-    genotype call must be equal to the number of alleles called for that
+    genotype call must be equal to the number of called alleles for that
     genotype or else the genotype will be treated as missing.
 
     Examples
@@ -113,7 +134,6 @@ def heterozygosity_observed(g, fill=np.nan, corrected=True, ploidy=None):
     ...                          [[1, 1], [1, 2], [-1, -1]]])
     >>> allel.heterozygosity_observed(g)
     array([0.        , 0.33333333, 0.        , 0.5       ])
-
 
     Tetraploid genotype array
 
