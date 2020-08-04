@@ -445,7 +445,7 @@ class TestHardyWeinberg(unittest.TestCase):
 
         # mixed ploidy uncorrected
         expect /= (ploidy/(ploidy-1))
-        expect[expect<0] = -1  # correct the filled values
+        expect[expect < 0] = -1  # correct the filled values
         actual = allel.heterozygosity_individual(g, fill=-1, ploidy=ploidy, corrected=False)
         assert_array_almost_equal(expect, actual)
 
