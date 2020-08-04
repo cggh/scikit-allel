@@ -7,8 +7,8 @@ from allel.util import ignore_invalid, asarray_ndim
 
 
 def heterozygosity_individual(g, fill=np.nan, corrected=True, ploidy=None):
-    """Calculate the gammetic heterozygosity of each individual
-    at each variant.
+    """Calculate the individual heterozygosity of each sample for
+    each variant following Hardy (2016).
 
     Parameters
     ----------
