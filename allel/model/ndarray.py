@@ -884,7 +884,7 @@ class Genotypes(NumpyArrayWrapper):
 
         return out
 
-    def to_allele_counts(self, max_allele=None, dtype='u1'):
+    def to_allele_counts(self, max_allele=None):
         """Transform genotype calls into allele counts per call.
 
         Parameters

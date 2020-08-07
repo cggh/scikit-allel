@@ -305,7 +305,7 @@ def genotype_array_count_alleles_subpop_masked(integer[:, :, :] g not None,
 def genotype_array_to_allele_counts(integer[:, :, :] g not None,
                                     integer max_allele):
     cdef:
-        cnp.int32_t[:, :, :] ac
+        cnp.uint8_t[:, :, :] ac
         integer allele
         Py_ssize_t i, j, k, n_variants, n_samples, ploidy
 
@@ -314,7 +314,7 @@ def genotype_array_to_allele_counts(integer[:, :, :] g not None,
     n_samples = g.shape[1]
     ploidy = g.shape[2]
     # individual allele counts
-    ac = np.zeros((n_variants, n_samples, max_allele + 1), dtype='i4')
+    ac = np.zeros((n_variants, n_samples, max_allele + 1), dtype='u1')
 
     # main work loop
     with nogil:
@@ -337,7 +337,7 @@ def genotype_array_to_allele_counts_masked(integer[:, :, :] g not None,
                                            cnp.uint8_t[:, :] mask not None,
                                            integer max_allele):
     cdef:
-        cnp.int32_t[:, :, :] ac
+        cnp.uint8_t[:, :, :] ac
         integer allele
         Py_ssize_t i, j, k, n_variants, n_samples, ploidy
 
@@ -346,7 +346,7 @@ def genotype_array_to_allele_counts_masked(integer[:, :, :] g not None,
     n_samples = g.shape[1]
     ploidy = g.shape[2]
     # individual allele counts
-    ac = np.zeros((n_variants, n_samples, max_allele + 1), dtype='i4')
+    ac = np.zeros((n_variants, n_samples, max_allele + 1), dtype='u1')
 
     # main work loop
     with nogil:
