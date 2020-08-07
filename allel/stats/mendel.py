@@ -187,8 +187,8 @@ def mendel_errors(parent_genotypes, progeny_genotypes):
 
     # transform into per-call allele counts
     max_allele = max(parent_genotypes.max(), progeny_genotypes.max())
-    parent_gc = parent_genotypes.to_allele_counts(max_allele=max_allele, dtype='i1')
-    progeny_gc = progeny_genotypes.to_allele_counts(max_allele=max_allele, dtype='i1')
+    parent_gc = parent_genotypes.to_allele_counts(max_allele=max_allele).astype('i1')
+    progeny_gc = progeny_genotypes.to_allele_counts(max_allele=max_allele).astype('i1')
 
     # detect nonparental and hemiparental inheritance by comparing allele
     # counts between parents and progeny
