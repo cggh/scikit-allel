@@ -91,7 +91,6 @@ def heterozygosity_blue(g, fill=np.nan, corrected=True, ploidy=None, kinship=Non
     >>> import allel
     >>> # tetraploid genotypes
     >>> g = allel.GenotypeArray([
-    ...     [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
     ...     [[0, 0, 1, 1], [0, 0, 0, 1], [0, 0, 1, 1]],
     ...     [[0, 1, 1, 1], [0, 0, 2, 2], [2, 2, 2, 3]],
     ...     [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]],
@@ -104,7 +103,7 @@ def heterozygosity_blue(g, fill=np.nan, corrected=True, ploidy=None, kinship=Non
     ...      [0.00, 0.25, 0.00],
     ...      [0.00, 0.00, 0.25]]
     >>> allel.heterozygosity_blue(g, kinship=k)
-    array([0.        , 0.53030303, 0.75757576, 0.81818182, 0.72727273, 1.        , 0.57142857])
+    array([0.53030303, 0.75757576, 0.81818182, 0.72727273, 1.        , 0.57142857])
 
     """
     # check inputs
