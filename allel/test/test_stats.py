@@ -574,6 +574,69 @@ class TestHardyWeinberg(unittest.TestCase):
         actual = allel.heterozygosity_expected(af, ploidy=g.ploidy, fill=-1)
         assert_array_almost_equal(expect, actual)
 
+    def test_heterozygosity_blue(self):
+
+        # unrelated diploids
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[1, 1], [1, 1]],
+                           [[1, 1], [2, 2]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [0, 2]],
+                           [[1, 1], [1, 2]],
+                           [[0, 1], [0, 1]],
+                           [[0, 1], [1, 2]],
+                           [[0, 0], [-1, -1]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]], dtype='i1')
+        k = [[0.5, 0.0],
+             [0.0, 0.5]]
+
+        # same answer with or without kinship
+        expect = [0, 0, 0.66666667, 0.5, 0.5, 0.5, 0.66666667, 0.83333333, 0, 1, -1]
+        actual = allel.heterozygosity_blue(g, fill=-1)
+        actual_k = allel.heterozygosity_blue(g, fill=-1, kinship=k)
+        assert_array_almost_equal(expect, actual)
+        assert_array_almost_equal(expect, actual_k)
+
+        # uncorrected
+        expect = [0, 0, 0.5, .375, .375, .375, .5, .625, 0, .5, -1]
+        actual = allel.heterozygosity_blue(g, fill=-1, corrected=False)
+        actual_k = allel.heterozygosity_blue(g, fill=-1, corrected=False, kinship=k)
+        assert_array_almost_equal(expect, actual)
+        assert_array_almost_equal(expect, actual_k)
+
+        # unrelated tetraploids
+        g = GenotypeArray([
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+            [[0, 0, 1, 1], [0, 0, 0, 1], [0, 0, 1, 1]],
+            [[0, 1, 1, 1], [0, 0, 2, 2], [2, 2, 2, 3]],
+            [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]],
+            [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]],
+            [[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, -1, -1]],
+            [[0, 1, 2, 3], [0, 0, -1, -1], [-1, -1, -1, -1]],
+        ])
+        k = [[0.25, 0.00, 0.00],
+             [0.00, 0.25, 0.00],
+             [0.00, 0.00, 0.25]]
+
+        # checked with BestHet.R
+        expect = np.array([
+            0,
+            0.530303,
+            0.757576,
+            0.818181,
+            0.727272,
+            1,
+            0.571429,
+            1,
+        ])
+        # same answer with or without kinship
+        actual = allel.heterozygosity_blue(g)
+        actual_k = allel.heterozygosity_blue(g, kinship=k)
+        assert_array_almost_equal(expect, actual)
+        assert_array_almost_equal(expect, actual_k)
+
     def test_inbreeding_coefficient(self):
 
         # diploid
