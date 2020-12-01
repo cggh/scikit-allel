@@ -4,7 +4,7 @@ matplotlib==3.3.3
 seaborn==0.11.0
 pandas==1.1.4
 scikit-learn==0.23.2
-h5py==2.10.0
+h5py==3.1.0
 numexpr==2.7.1
 bcolz==1.2.1
 zarr==2.3.2
