@@ -1,6 +1,19 @@
 Release notes
 =============
 
+.. _release_1.3.3:
+
+v1.3.3
+------
+
+* Resolve compatibility issues with zarr and h5py. By
+  :user:`Alistair Miles <alimanfoo>`, :issue:`353`,
+  :issue:`354`.
+
+* CI maintenance: update dependencies and drop testing
+  under Python 3.6. By :user:`Alistair Miles <alimanfoo>`,
+  :issue:`354`.
+
 
 .. _release_1.3.2:
 
