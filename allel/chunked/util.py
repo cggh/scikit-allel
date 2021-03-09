@@ -87,6 +87,7 @@ def check_table_like(data, names=None):
 
     columns = [ensure_array_like(c) for c in columns]
     check_equal_length(*columns)
+
     return names, columns
 
 

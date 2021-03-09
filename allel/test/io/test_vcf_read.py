@@ -2366,7 +2366,7 @@ def test_vcf_to_hdf5():
     region_values = None, '20', '20:10000-20000', 'Y'
     tabix_values = 'tabix', None
     samples_values = None, ['NA00001', 'NA00003']
-    string_type_values = 'S10',  'object'
+    string_type_values = 'S10', 'object'
     param_matrix = itertools.product(vcf_paths, region_values, tabix_values,
                                      samples_values, string_type_values)
     for vcf_path, region, tabix, samples, string_type in param_matrix:

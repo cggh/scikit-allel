@@ -5,6 +5,7 @@ from functools import reduce
 
 import zarr
 import zarr.util
+import numcodecs
 
 
 from allel.chunked import util as _util
@@ -53,6 +54,18 @@ class ZarrStorage(object):
         # determine chunks
         kwargs.setdefault('chunks', default_chunks(data, expectedlen))
 
+        # determine object codec
+        if data.dtype == object:
+            # peek at first value
+            peek = data[0]
+            if isinstance(peek, bytes):
+                object_codec = numcodecs.VLenBytes()
+            elif isinstance(peek, str):
+                object_codec = numcodecs.VLenUTF8()
+            else:
+                object_codec = numcodecs.MsgPack()
+            kwargs.setdefault('object_codec', object_codec)
+
         # create
         z = zarr.array(data, **kwargs)
 
@@ -63,14 +76,25 @@ class ZarrStorage(object):
         # setup
         names, columns = _util.check_table_like(data, names=names)
         kwargs = self._set_defaults(kwargs)
+        chunks = kwargs.pop('chunks', None)
         g = zarr.group(**kwargs)
 
         # create columns
-        chunks = kwargs.get('chunks', None)
         for n, c in zip(names, columns):
             if chunks is None:
                 chunks = default_chunks(c, expectedlen)
-            g.array(name=n, data=c, chunks=chunks)
+            if c.dtype == object:
+                # peek at first value
+                peek = c[0]
+                if isinstance(peek, bytes):
+                    object_codec = numcodecs.VLenBytes()
+                elif isinstance(peek, str):
+                    object_codec = numcodecs.VLenUTF8()
+                else:
+                    object_codec = numcodecs.MsgPack()
+            else:
+                object_codec = None
+            g.array(name=n, data=c, chunks=chunks, object_codec=object_codec)
 
         # create table
         ztbl = ZarrTable(g, names=names)
