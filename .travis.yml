@@ -9,9 +9,9 @@ sudo: true
 dist: xenial
 
 python:
-  - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
 
 install:
   - pip install -U pip setuptools wheel tox-travis coveralls
