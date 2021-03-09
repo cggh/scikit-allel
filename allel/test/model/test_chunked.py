@@ -623,6 +623,29 @@ class VariantChunkedTableTestsZarrStorage(VariantChunkedTableTests):
         vt = VariantChunkedTable(z)
         assert isinstance(vt.values, zarr.Group)
 
+    # noinspection PyMethodMayBeStatic
+    def test_hdf5_to_zarr(self):
+        # https://github.com/cggh/scikit-allel/issues/353
+        chrom = [b'chr1', b'chr1', b'chr2', b'chr2', b'chr3']
+        pos = [2, 7, 3, 9, 6]
+        dp = [35, 12, 78, 22, 99]
+        qd = [4.5, 6.7, 1.2, 4.4, 2.8]
+        ac = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+        with h5py.File('callset.h5', mode='w') as h5f:
+            h5g = h5f.create_group('/3L/variants')
+            h5g.create_dataset('CHROM', data=chrom, chunks=True)
+            h5g.create_dataset('POS', data=pos, chunks=True)
+            h5g.create_dataset('DP', data=dp, chunks=True)
+            h5g.create_dataset('QD', data=qd, chunks=True)
+            h5g.create_dataset('AC', data=ac, chunks=True)
+
+        callset = h5py.File('callset.h5', mode='r')
+        vt = VariantChunkedTable(callset['/3L/variants'], names=['CHROM', 'POS', 'AC', 'QD', 'DP'])
+        vs = vt.eval('DP > 15')[:]
+        v = vt.compress(vs, axis=0)
+        assert isinstance(v, VariantChunkedTable)
+        assert isinstance(v.values, ZarrTable)
+
 
 class AlleleCountsChunkedTableTests(unittest.TestCase):
 

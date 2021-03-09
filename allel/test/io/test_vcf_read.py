@@ -2382,7 +2382,13 @@ def test_vcf_to_hdf5():
         else:
             with h5py.File(h5_path, mode='r') as actual:
                 for key in expected.keys():
-                    compare_arrays(expected[key], actual[key][:])
+                    expect_arr = expected[key]
+                    actual_arr = actual[key]
+                    if expect_arr.dtype == object:
+                        # deal with recent h5py change, need to get h5py to read
+                        # array elements as str objects
+                        actual_arr = actual_arr.asstr()
+                    compare_arrays(expect_arr, actual_arr[:])
                 assert (actual['variants/NS'].attrs['Description'] ==
                         'Number of Samples With Data')
                 assert (actual['calldata/GQ'].attrs['Description'] ==
@@ -2406,7 +2412,13 @@ def test_vcf_to_hdf5_exclude():
     vcf_to_hdf5(vcf_path, h5_path, fields='*', exclude_fields=exclude)
     with h5py.File(h5_path, mode='r') as actual:
         for key in expected.keys():
-            compare_arrays(expected[key], actual[key][:])
+            expect_arr = expected[key]
+            actual_arr = actual[key]
+            if expect_arr.dtype == object:
+                # deal with recent h5py change, need to get h5py to read
+                # array elements as str objects
+                actual_arr = actual_arr.asstr()
+            compare_arrays(expect_arr, actual_arr[:])
         for key in actual.keys():
             if key not in {'variants', 'calldata'}:
                 assert key in expected
@@ -2428,7 +2440,13 @@ def test_vcf_to_hdf5_rename():
     vcf_to_hdf5(vcf_path, h5_path, fields='*', rename_fields=rename)
     with h5py.File(h5_path, mode='r') as actual:
         for key in expected.keys():
-            compare_arrays(expected[key], actual[key][:])
+            expect_arr = expected[key]
+            actual_arr = actual[key]
+            if expect_arr.dtype == object:
+                # deal with recent h5py change, need to get h5py to read
+                # array elements as str objects
+                actual_arr = actual_arr.asstr()
+            compare_arrays(expect_arr, actual_arr[:])
         for key in actual['variants'].keys():
             assert 'variants/' + key in expected
         for key in actual['calldata'].keys():
@@ -2450,9 +2468,13 @@ def test_vcf_to_hdf5_group():
             assert ['calldata', 'samples', 'variants'] == sorted(actual[chrom])
             expect = read_vcf(vcf_path, fields='*', alt_number=2, region=chrom)
             for key in expect.keys():
-                e = expect[key]
-                a = actual[chrom][key][:]
-                compare_arrays(e, a)
+                expect_arr = expect[key]
+                actual_arr = actual[chrom][key]
+                if expect_arr.dtype == object:
+                    # deal with recent h5py change, need to get h5py to read
+                    # array elements as str objects
+                    actual_arr = actual_arr.asstr()
+                compare_arrays(expect_arr, actual_arr[:])
                 assert (actual[chrom]['variants/NS'].attrs['Description'] ==
                         'Number of Samples With Data')
                 assert (actual[chrom]['calldata/GQ'].attrs['Description'] ==
@@ -2474,7 +2496,13 @@ def test_vcf_to_hdf5_ann():
                     transformers=transformers)
         with h5py.File(h5_path, mode='r') as actual:
             for key in expected.keys():
-                compare_arrays(expected[key], actual[key][:])
+                expect_arr = expected[key]
+                actual_arr = actual[key]
+                if expect_arr.dtype == object:
+                    # deal with recent h5py change, need to get h5py to read
+                    # array elements as str objects
+                    actual_arr = actual_arr.asstr()
+                compare_arrays(expect_arr, actual_arr[:])
 
 
 def test_vcf_to_hdf5_vlen():
