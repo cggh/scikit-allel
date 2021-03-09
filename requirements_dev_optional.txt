@@ -9,7 +9,6 @@ numexpr==2.7.2
 bcolz==1.2.1
 zarr==2.6.1
 hmmlearn==0.2.5
-# install problems on windows, skip for now
-# https://github.com/jmschrei/pomegranate/issues/333#issuecomment-449151227
-#pomegranate==0.10.0
+pomegranate==0.14.2
 pyfasta==0.5.2
+ipython==7.21.0
