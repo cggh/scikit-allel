@@ -1,0 +1,10 @@
+;Comment line
+>sequence A
+ggtaagtcctctagtacaaacacccccaatattgtgatataattaaaattatattcatat
+tctgttgccagaaaaaacacttttaggctatattagagccatcttctttgaagcgttgtc
+;Multiple comment lines
+;Another comment line
+>sequence B
+ggtaagtgctctagtacaaacacccccaatattgtgatataattaaaattatattcatat
+tctgttgccagattttacacttttaggctatattagagccatcttctttgaagcgttgtc
+tatgcatcgatcgacgactg
