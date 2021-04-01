@@ -9,6 +9,6 @@ numexpr==2.7.3
 bcolz==1.2.1
 zarr==2.7.0
 hmmlearn==0.2.5
-pomegranate==0.14.2
+pomegranate==0.14.4
 pyfasta==0.5.2
 ipython==7.21.0
