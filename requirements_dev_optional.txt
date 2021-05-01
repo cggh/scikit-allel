@@ -11,4 +11,4 @@ zarr==2.8.1
 hmmlearn==0.2.5
 pomegranate==0.14.4
 pyfasta==0.5.2
-ipython==7.21.0
+ipython==7.23.0
