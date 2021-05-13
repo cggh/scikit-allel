@@ -29,7 +29,7 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].array(data, chunklen=2, **kwargs)
+        data = chunked.storage_registry['default'].array(data, chunks=2, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -73,7 +73,6 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
         g = self.setup_instance(np.array(diploid_genotype_data))
         # default is zarr mem
         assert isinstance(g.values, zarr.core.Array)
-        assert g.values.rootdir is None, g.values.rootdir
 
     def test_slice_types(self):
 
@@ -225,7 +224,7 @@ class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
 
     def setup_instance(self, data, dtype=None):
         data = chunked.storage_registry['default'].array(data, dtype=dtype,
-                                                         chunklen=2)
+                                                         chunks=2)
         return HaplotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -303,7 +302,7 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
         chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data):
-        data = chunked.storage_registry['default'].array(data, chunklen=2)
+        data = chunked.storage_registry['default'].array(data, chunks=2)
         return AlleleCountsChunkedArray(data)
 
     def test_constructor(self):
@@ -391,7 +390,7 @@ class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface,
         chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].array(data, chunklen=2, **kwargs)
+        data = chunked.storage_registry['default'].array(data, chunks=2, **kwargs)
         return GenotypeAlleleCountsChunkedArray(data)
 
     def test_constructor(self):
@@ -435,7 +434,6 @@ class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface,
         g = self.setup_instance(np.array(diploid_genotype_ac_data))
         # default is zarr mem
         assert isinstance(g.values, zarr.core.Array)
-        assert g.values.rootdir is None, g.values.rootdir
 
     def test_slice_types(self):
 
@@ -478,7 +476,7 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
         chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data, chunklen=2)
+        data = chunked.storage_registry['default'].table(data, chunks=2)
         return VariantChunkedTable(data, **kwargs)
 
     def test_storage(self):
@@ -620,7 +618,7 @@ class AlleleCountsChunkedTableTests(unittest.TestCase):
     # noinspection PyMethodMayBeStatic
     def test_count_alleles_subpops(self):
 
-        data = chunked.storage_registry['default'].array(diploid_genotype_data, chunklen=2)
+        data = chunked.storage_registry['default'].array(diploid_genotype_data, chunks=2)
         g = GenotypeChunkedArray(data)
         subpops = {'foo': [0, 2], 'bar': [1]}
         ac_subpops = g.count_alleles_subpops(subpops)
