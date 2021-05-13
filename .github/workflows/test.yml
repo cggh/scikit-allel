@@ -26,7 +26,7 @@ jobs:
     - name: Install
       run: |
         python -m pip install --upgrade pip
-        pip install -rrequirements_dev_base.txt -rrequirements_test.txt -rrequirements_dev_optional.txt -rrequirements_rtfd.txt
+        pip install -r requirements_dev_base.txt -r requirements_test.txt -r requirements_dev_optional.txt -r requirements_rtfd.txt
         pip install -e .
 #    - name: Lint
 #      run: |
@@ -35,15 +35,15 @@ jobs:
 #        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
 #        flake8 allel --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test
+      if: matrix.platform != 'ubuntu-latest'
       run: |
         pytest -v allel
-      if: matrix.platform != 'ubuntu-latest'
     - name: Test and doctest
+      if: matrix.platform == 'ubuntu-latest'
       run: |
         pytest -v --cov=allel --doctest-modules allel
         coverage report -m
-      if: matrix.platform == 'ubuntu-latest'
     - name: Build docs
+      if: matrix.platform == 'ubuntu-latest'
       run: |
         sphinx-build -W -b html
-      if: matrix.platform == 'ubuntu-latest'
