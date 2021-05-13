@@ -2813,8 +2813,8 @@ class FeatureTableInterface(object):
         assert np.dtype(object) == ft.seqid.dtype
 
     def test_from_gff3_region(self):
-        if sys.platform == 'win32':
-            pytest.skip('tabix not available on windows')
+        if sys.platform != 'linux':
+            pytest.skip('skipping tabix tests if not on linux')
         fn = os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'sample.sorted.gff.gz')
         ft = self._class.from_gff3(fn, region='apidb|MAL1')
         assert 44 == len(ft)

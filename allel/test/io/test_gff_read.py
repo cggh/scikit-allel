@@ -35,8 +35,8 @@ def test_gff3_to_dataframe_attributes():
 
 
 def test_gff3_to_dataframe_region():
-    if sys.platform == 'win32':
-        pytest.skip('tabix not available on windows')
+    if sys.platform != 'linux':
+        pytest.skip('skipping tabix tests if not on linux')
     fn = fixture_path('sample.sorted.gff.gz')
     df = gff3_to_dataframe(fn, region='apidb|MAL1')
     assert 44 == len(df)
