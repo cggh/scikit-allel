@@ -1,0 +1,17 @@
+[project]
+requires-python = ">=3.6"
+
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = [
+    "setuptools>=42",  # https://github.com/deepcharles/ruptures/pull/100#discussion_r553700339
+    "wheel",
+    "Cython>=0.28.5",
+    "setuptools_scm[toml]>=3.4",  # https://scikit-hep.org/developer/packaging#git-tags-official-pypa-method
+    "oldest-supported-numpy",  # https://github.com/scipy/oldest-supported-numpy
+#    "scipy>=0.19.1",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "allel/version.py"
