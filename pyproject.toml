@@ -9,9 +9,10 @@ requires = [
     "Cython>=0.28.5",
     "setuptools_scm[toml]>=3.4",  # https://scikit-hep.org/developer/packaging#git-tags-official-pypa-method
     "oldest-supported-numpy",  # https://github.com/scipy/oldest-supported-numpy
-#    "scipy>=0.19.1",
 ]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "allel/version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "dirty-tag"
