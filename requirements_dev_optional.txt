@@ -6,7 +6,6 @@ pandas==1.2.2
 scikit-learn==0.24.1
 h5py==3.1.0
 numexpr==2.7.2
-bcolz==1.2.1
 zarr==2.6.1
 hmmlearn==0.2.5
 pomegranate==0.14.2

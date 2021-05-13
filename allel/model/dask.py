@@ -47,11 +47,7 @@ def get_chunks(data, chunks=None):
 
     if chunks is None:
 
-        if hasattr(data, 'chunklen') and hasattr(data, 'shape'):
-            # bcolz carray, chunk first dimension only
-            return (data.chunklen,) + data.shape[1:]
-
-        elif hasattr(data, 'chunks') and hasattr(data, 'shape') and \
+        if hasattr(data, 'chunks') and hasattr(data, 'shape') and \
                 len(data.chunks) == len(data.shape):
             # h5py dataset or zarr array
             return data.chunks

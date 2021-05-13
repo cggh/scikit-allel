@@ -839,13 +839,6 @@ class TestLinkageDisequilibrium(unittest.TestCase):
         expect = [True, False, False, True, False]
         aeq(expect, actual)
 
-        # test with bcolz carray
-        import bcolz
-        gnz = bcolz.carray(gn, chunklen=2)
-        actual = allel.locate_unlinked(gnz, size=2, step=1, threshold=.5, blen=2)
-        expect = [True, False, True, True, False]
-        aeq(expect, actual)
-
 
 class TestAdmixture(unittest.TestCase):
 

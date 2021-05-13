@@ -6,25 +6,19 @@ Chunked storage utilities
 Storage
 -------
 
-bcolz
-~~~~~
+Zarr
+~~~~
 
-.. autoclass:: allel.chunked.storage_bcolz.BcolzStorage
-.. autoclass:: allel.chunked.storage_bcolz.BcolzMemStorage
-.. autoclass:: allel.chunked.storage_bcolz.BcolzTmpStorage
+.. autoclass:: allel.chunked.storage_zarr.ZarrStorage
+.. autoclass:: allel.chunked.storage_zarr.ZarrMemStorage
+.. autoclass:: allel.chunked.storage_zarr.ZarrTmpStorage
 
-.. autodata:: allel.chunked.storage_bcolz.bcolz_storage
-    :annotation: = 'bcolz'
-.. autodata:: allel.chunked.storage_bcolz.bcolzmem_storage
-    :annotation: = 'bcolzmem'
-.. autodata:: allel.chunked.storage_bcolz.bcolztmp_storage
-    :annotation: = 'bcolztmp'
-.. autodata:: allel.chunked.storage_bcolz.bcolz_zlib1_storage
-    :annotation: = 'bcolz_zlib1'
-.. autodata:: allel.chunked.storage_bcolz.bcolzmem_zlib1_storage
-    :annotation: = 'bcolzmem_zlib1'
-.. autodata:: allel.chunked.storage_bcolz.bcolztmp_zlib1_storage
-    :annotation: = 'bcolztmp_zlib1'
+.. autodata:: allel.chunked.storage_zarr.zarr_storage
+    :annotation: = 'zarr'
+.. autodata:: allel.chunked.storage_zarr.zarrmem_storage
+    :annotation: = 'zarrmem'
+.. autodata:: allel.chunked.storage_zarr.zarrtmp_storage
+    :annotation: = 'zarrtmp'
 
 HDF5 (h5py)
 ~~~~~~~~~~~

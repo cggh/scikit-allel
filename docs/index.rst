@@ -122,7 +122,6 @@ Indices and tables
 .. _scikit-learn: http://scikit-learn.org/
 .. _h5py: http://www.h5py.org/
 .. _numexpr: https://github.com/pydata/numexpr
-.. _bcolz: http://bcolz.blosc.org/
 .. _zarr: http://zarr.readthedocs.io/
 .. _dask: http://dask.pydata.org/
 .. _petl: http://petl.readthedocs.org/

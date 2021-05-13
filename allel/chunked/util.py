@@ -15,7 +15,7 @@ def get_storage(storage=None):
             return storage_registry['default']
         except KeyError:
             raise RuntimeError('no default storage available; is either h5py '
-                               'or bcolz installed?')
+                               'or zarr installed?')
 
     elif isinstance(storage, str):
         # normalise storage name
@@ -97,16 +97,12 @@ def get_blen_array(data, blen=None):
 
     if blen is None:
 
-        if hasattr(data, 'chunklen'):
-            # bcolz carray
-            return data.chunklen
-
-        elif hasattr(data, 'chunks') and \
+        if hasattr(data, 'chunks') and \
                 hasattr(data, 'shape') and \
                 hasattr(data.chunks, '__len__') and \
                 hasattr(data.shape, '__len__') and \
                 len(data.chunks) == len(data.shape):
-            # something like h5py dataset
+            # something like h5py dataset or zarr array
             return data.chunks[0]
 
         else:
@@ -196,15 +192,12 @@ def get_shuffle(data):
 
 
 def get_chunks(data):
-    if hasattr(data, 'chunklen'):
-        # bcolz carray
-        return (data.chunklen,) + data.shape[1:]
-    elif hasattr(data, 'chunks') and \
+    if hasattr(data, 'chunks') and \
             hasattr(data, 'shape') and \
             hasattr(data.chunks, '__len__') and \
             hasattr(data.shape, '__len__') and \
             len(data.chunks) == len(data.shape):
-        # something like h5py dataset
+        # something like h5py dataset or zarr array
         return data.chunks
     else:
         return None
