@@ -45,7 +45,7 @@ jobs:
         flake8 allel --count --exit-zero --max-line-length=127 --statistics
 
     - name: Test
-      if: !(matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.8')
+      if: ! (matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.8')
       run: |
         pytest -v allel
 
