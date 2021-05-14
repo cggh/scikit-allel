@@ -1,0 +1,8 @@
+* text=auto
+
+# text files to be normalised on checkout
+*.py text
+
+# these files are used for testing and should not have line endings normalised
+*.gff -text
+*.vcf -text

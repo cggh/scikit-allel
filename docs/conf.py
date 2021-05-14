@@ -29,7 +29,7 @@ MOCK_MODULES = ['scipy', 'scipy.stats', 'scipy.spatial', 'scipy.linalg',
                 'matplotlib.image', 'ipython', 'numexpr', 'sklearn', 'sklearn.decomposition',
                 'h5py', 'rpy2', 'rpy2.robjects', 'rpy2.robjects.numpy2ri',
                 'rpy2.robjects.packages', 'sklearn.manifold', 'scipy.special', 'pandas',
-                'bcolz', 'dask', 'dask.array']
+                'dask', 'dask.array']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
@@ -47,12 +47,6 @@ def _warn_node(self, msg, node):
 
 
 sphinx.environment.BuildEnvironment.warn_node = _warn_node
-
-# adding copy button
-# as per here: https://github.com/readthedocs/sphinx_rtd_theme/issues/167
-
-def setup(app):
-    app.add_javascript('copybutton.js')
 
 # -- General configuration -----------------------------------------------------
 

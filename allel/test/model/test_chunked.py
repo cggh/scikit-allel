@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
 import numpy as np
-import bcolz
 import h5py
 import zarr
 import pytest
@@ -27,10 +26,10 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
     _class = GenotypeChunkedArray
 
     def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].array(data, chunklen=2, **kwargs)
+        data = chunked.storage_registry['default'].array(data, chunks=2, **kwargs)
         return GenotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -72,9 +71,8 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_data))
-        # default is bcolz mem
-        assert isinstance(g.values, bcolz.carray)
-        assert g.values.rootdir is None, g.values.rootdir
+        # default is zarr mem
+        assert isinstance(g.values, zarr.core.Array)
 
     def test_slice_types(self):
 
@@ -142,40 +140,6 @@ class GenotypeChunkedArrayTests(GenotypeArrayInterface, unittest.TestCase):
         expect = np.array([1, 1, 1, 0, 0])
         actual = np.max(t, axis=1)
         aeq(expect, actual)
-
-
-class GenotypeChunkedArrayTestsBColzTmpStorage(GenotypeChunkedArrayTests):
-
-    def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolztmp_storage
-
-    def setup_instance(self, data, **kwargs):
-        data = chunked.bcolztmp_storage.array(data, chunklen=2, **kwargs)
-        return GenotypeChunkedArray(data)
-
-    def test_storage(self):
-        g = self.setup_instance(np.array(diploid_genotype_data))
-        assert isinstance(g.values, bcolz.carray)
-        assert g.values.rootdir is not None
-
-
-class GenotypeChunkedArrayTestsBColzCustomStorage(GenotypeChunkedArrayTests):
-
-    def setUp(self):
-        chunked.storage_registry['default'] = chunked.BcolzMemStorage(
-            cparams=bcolz.cparams(cname='zlib', clevel=1)
-        )
-
-    def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].array(data, chunklen=2,
-                                                         **kwargs)
-        return GenotypeChunkedArray(data)
-
-    def test_storage(self):
-        g = self.setup_instance(np.array(diploid_genotype_data))
-        assert isinstance(g.values, bcolz.carray)
-        assert 'zlib' == g.values.cparams.cname
-        assert 1 == g.values.cparams.clevel
 
 
 class GenotypeChunkedArrayTestsHDF5MemStorage(GenotypeChunkedArrayTests):
@@ -256,11 +220,11 @@ class HaplotypeChunkedArrayTests(HaplotypeArrayInterface, unittest.TestCase):
     _class = HaplotypeChunkedArray
 
     def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, dtype=None):
         data = chunked.storage_registry['default'].array(data, dtype=dtype,
-                                                         chunklen=2)
+                                                         chunks=2)
         return HaplotypeChunkedArray(data)
 
     def test_constructor(self):
@@ -335,10 +299,10 @@ class AlleleCountsChunkedArrayTests(AlleleCountsArrayInterface,
     _class = AlleleCountsChunkedArray
 
     def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data):
-        data = chunked.storage_registry['default'].array(data, chunklen=2)
+        data = chunked.storage_registry['default'].array(data, chunks=2)
         return AlleleCountsChunkedArray(data)
 
     def test_constructor(self):
@@ -423,10 +387,10 @@ class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface,
     _class = GenotypeAlleleCountsChunkedArray
 
     def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].array(data, chunklen=2, **kwargs)
+        data = chunked.storage_registry['default'].array(data, chunks=2, **kwargs)
         return GenotypeAlleleCountsChunkedArray(data)
 
     def test_constructor(self):
@@ -468,9 +432,8 @@ class GenotypeAlleleCountsChunkedArrayTests(GenotypeAlleleCountsArrayInterface,
 
     def test_storage(self):
         g = self.setup_instance(np.array(diploid_genotype_ac_data))
-        # default is bcolz mem
-        assert isinstance(g.values, bcolz.carray)
-        assert g.values.rootdir is None, g.values.rootdir
+        # default is zarr mem
+        assert isinstance(g.values, zarr.core.Array)
 
     def test_slice_types(self):
 
@@ -510,16 +473,16 @@ class VariantChunkedTableTests(VariantTableInterface, unittest.TestCase):
     _class = VariantChunkedTable
 
     def setUp(self):
-        chunked.storage_registry['default'] = chunked.bcolzmem_storage
+        chunked.storage_registry['default'] = chunked.zarrmem_storage
 
     def setup_instance(self, data, **kwargs):
-        data = chunked.storage_registry['default'].table(data, chunklen=2)
+        data = chunked.storage_registry['default'].table(data, chunks=2)
         return VariantChunkedTable(data, **kwargs)
 
     def test_storage(self):
         a = np.rec.array(variant_table_data, dtype=variant_table_dtype)
         vt = self.setup_instance(a)
-        assert isinstance(vt.values, bcolz.ctable)
+        assert isinstance(vt.values, ZarrTable)
 
     def test_constructor(self):
 
@@ -655,7 +618,7 @@ class AlleleCountsChunkedTableTests(unittest.TestCase):
     # noinspection PyMethodMayBeStatic
     def test_count_alleles_subpops(self):
 
-        data = chunked.storage_registry['default'].array(diploid_genotype_data, chunklen=2)
+        data = chunked.storage_registry['default'].array(diploid_genotype_data, chunks=2)
         g = GenotypeChunkedArray(data)
         subpops = {'foo': [0, 2], 'bar': [1]}
         ac_subpops = g.count_alleles_subpops(subpops)

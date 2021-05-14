@@ -185,7 +185,6 @@ def test_fields_rename():
               'variants/altlen': 'spam/eggs',
               'calldata/GT': 'foo/bar'}
     callset = read_vcf(vcf_path, fields='*', rename_fields=rename)
-    print(sorted(callset.keys()))
     expected_fields = [
         'samples',
         # fixed fields
@@ -576,7 +575,7 @@ def test_inputs():
     chunk_length = 3
     buffer_size = 10
 
-    for i in inputs:
+    for n, i in enumerate(inputs):
         _test_read_vcf_content(i, chunk_length, buffer_size)
 
 

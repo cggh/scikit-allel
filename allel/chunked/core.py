@@ -590,7 +590,7 @@ class ChunkedArrayWrapper(ArrayWrapper):
     Parameters
     ----------
     data : array_like
-        Data to be wrapped. May be a bcolz carray, h5py dataset, or
+        Data to be wrapped. May be a Zarr array, h5py dataset, or
         anything providing a similar interface.
 
     """
@@ -790,8 +790,8 @@ class ChunkedTableWrapper(DisplayAsTable):
     ----------
     data: table_like
         Data to be wrapped. May be a tuple or list of columns (array-like),
-        a dict mapping names to columns, a bcolz ctable, h5py group,
-        numpy recarray, or anything providing a similar interface.
+        a dict mapping names to columns, h5py group, numpy recarray, or
+        anything providing a similar interface.
     names : sequence of strings
         Column names.
 

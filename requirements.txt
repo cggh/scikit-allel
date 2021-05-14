@@ -11,7 +11,6 @@ pomegranate
 scikit-learn
 h5py
 numexpr
-bcolz
 numcodecs
 zarr
 hmmlearn

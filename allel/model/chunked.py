@@ -9,13 +9,12 @@ chunked arrays for data storage. Chunked arrays can be compressed and
 optionally stored on disk, providing a means for working with data too
 large to fit uncompressed in main memory.
 
-Either `Zarr <http://zarr.readthedocs.io>`_, HDF5 (via `h5py <http://www.h5py.org/>`_)
-or `bcolz <http://bcolz.blosc.org>`_ can be used as the underlying storage
-layer. Choice of storage layer can be made via the `storage` keyword
-argument which all class methods accept.  This argument can either be
-a string identifying one of the predefined storage layer
-configurations, or an object implementing the chunked storage API. For more
-information about controlling storage see the :mod:`allel.chunked` module.
+Either `Zarr <http://zarr.readthedocs.io>`_ or HDF5 (via `h5py <http://www.h5py.org/>`_)
+can be used as the underlying storage layer. Choice of storage layer can be made via
+the `storage` keyword argument which all class methods accept.  This argument can either be
+a string identifying one of the predefined storage layer configurations, or an object
+implementing the chunked storage API. For more information about controlling storage
+see the :mod:`allel.chunked` module.
 
 """
 import numpy as np
@@ -55,7 +54,7 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     Parameters
     ----------
     data : array_like, int, shape (n_variants, n_samples, ploidy)
-        Genotype data to be wrapped. May be a bcolz carray, h5py dataset, or
+        Genotype data to be wrapped. May be a zarr array, h5py dataset, or
         anything providing a similar interface.
 
     Examples
@@ -94,14 +93,11 @@ class GenotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
         0/2 ./.
 
     Note that most methods will return a chunked array, using whatever
-    chunked storage is set as default (bcolz carray) or specified
+    chunked storage is set as default or specified
     directly via the `storage` keyword argument. E.g.::
 
         >>> g.copy()
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
-           ...
-        >>> g.copy(storage='bcolzmem')
-        <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(4096, 2, 2)
            ...
         >>> g.copy(storage='hdf5mem_zlib1')
         <GenotypeChunkedArray shape=(3, 2, 2) dtype=int8 chunks=(3, 2, 2)
@@ -349,7 +345,7 @@ class HaplotypeChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     Parameters
     ----------
     data : array_like, int, shape (n_variants, n_haplotypes)
-        Haplotype data to be wrapped. May be a bcolz carray, h5py dataset, or
+        Haplotype data to be wrapped. May be a zarr array, h5py dataset, or
         anything providing a similar interface.
 
     """
@@ -488,7 +484,7 @@ class AlleleCountsChunkedArray(ChunkedArrayWrapper, DisplayAs2D):
     Parameters
     ----------
     data : array_like, int, shape (n_variants, n_alleles)
-        Allele counts data to be wrapped. May be a bcolz carray,
+        Allele counts data to be wrapped. May be a zarr array,
         h5py dataset, or anything providing a similar interface.
 
     """
@@ -727,8 +723,8 @@ class VariantChunkedTable(ChunkedTableWrapper):
     ----------
     data: table_like
         Data to be wrapped. May be a tuple or list of columns (array-like),
-        a dict mapping names to columns, a bcolz ctable, h5py group,
-        numpy recarray, or anything providing a similar interface.
+        a dict mapping names to columns, h5py group, numpy recarray, or
+        anything providing a similar interface.
     names : sequence of strings
         Column names.
 
@@ -785,17 +781,13 @@ class VariantChunkedTable(ChunkedTableWrapper):
            values=builtins.list>
 
     Note that most methods will return a chunked table, using whatever
-    chunked storage is set as default (bcolz ctable) or specified
+    chunked storage is set as default or specified
     directly via the `storage` keyword argument. E.g.::
 
         >>> vt.copy()  # doctest: +ELLIPSIS
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'O'), ('POS', '<i8'), ('AC', ...
            nbytes=... cbytes=... cratio=...
            values=allel.chunked.storage_zarr.ZarrTable>
-        >>> vt.copy(storage='bcolzmem')  # doctest: +ELLIPSIS
-        <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'O'), ('POS', '<i8'), ('AC', ...
-           nbytes=... cbytes=... cratio=...
-           values=bcolz.ctable.ctable>
         >>> vt.copy(storage='hdf5mem_zlib1')  # doctest: +ELLIPSIS
         <VariantChunkedTable shape=(5,) dtype=[('CHROM', 'O'), ('POS', '<i8'), ('AC', ...
            nbytes=... cbytes=... cratio=...
