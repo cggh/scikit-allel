@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
 #        platform: [ubuntu-latest, macos-latest, windows-latest]
-        platform: [ubuntu-latest, windows-latest]
+        platform: [windows-latest]
 #        python-version: [3.7, 3.8]
         python-version: [3.8]
 
