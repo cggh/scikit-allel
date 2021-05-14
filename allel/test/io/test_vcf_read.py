@@ -185,7 +185,6 @@ def test_fields_rename():
               'variants/altlen': 'spam/eggs',
               'calldata/GT': 'foo/bar'}
     callset = read_vcf(vcf_path, fields='*', rename_fields=rename)
-    print(sorted(callset.keys()))
     expected_fields = [
         'samples',
         # fixed fields
@@ -576,23 +575,8 @@ def test_inputs():
     chunk_length = 3
     buffer_size = 10
 
-    print()
-    print('*** data ***')
-    print(repr(data))
-    print()
-    print(r"*** data.replace(b'\n', b'\r') ***")
-    print(repr(data.replace(b'\n', b'\r')))
-    print()
-    print(r"*** data.replace(b'\n', b'\r\n') ***")
-    print(repr(data.replace(b'\n', b'\r\n')))
-
     for n, i in enumerate(inputs):
-        print()
-        print('input', n, repr(i))
         _test_read_vcf_content(i, chunk_length, buffer_size)
-        print('OK', n, repr(i))
-
-    assert False, 'bail out to see logging'
 
 
 def test_chunk_lengths():
