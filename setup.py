@@ -23,7 +23,7 @@ DOWNLOAD_URL = 'http://pypi.python.org/pypi/scikit-allel'
 
 LICENSE = 'MIT'
 
-INSTALL_REQUIRES = ['cython', 'numpy', 'dask[array]']
+INSTALL_REQUIRES = ['numpy', 'dask[array]']
 
 # full installation with all optional dependencies
 EXTRAS_REQUIRE = {'full': ['scipy', 'matplotlib', 'seaborn', 'pandas', 'scikit-learn',
