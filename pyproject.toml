@@ -15,4 +15,4 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 write_to = "allel/version.py"
 version_scheme = "guess-next-dev"
-local_scheme = "dirty-tag"
+local_scheme = "no-local-version"

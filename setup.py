@@ -67,7 +67,7 @@ def setup_extensions(metadata):
         ])
         metadata['ext_modules'] = ext_modules
     except ImportError:
-        print('[scikit-allele] cython not available, not including extensions')
+        print('[scikit-allel] cython not available, not including extensions')
 
 
 def setup_package():
