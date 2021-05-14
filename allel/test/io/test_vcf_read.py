@@ -592,6 +592,8 @@ def test_inputs():
         _test_read_vcf_content(i, chunk_length, buffer_size)
         print('OK', n, repr(i))
 
+    assert False, 'bail out to see logging'
+
 
 def test_chunk_lengths():
     vcf_path = fixture_path('sample.vcf')
