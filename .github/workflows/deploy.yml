@@ -16,11 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get history and tags for SCM versioning to work
-        run: |
-          git fetch --prune --unshallow
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-
       - uses: actions/setup-python@v2
         name: Install Python
         with:
@@ -43,18 +38,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get history and tags for SCM versioning to work
-        run: |
-          git fetch --prune --unshallow
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-
       - uses: actions/setup-python@v2
         name: Install Python
         with:
           python-version: '3.8'
 
       - name: Build sdist
-        run: python setup.py sdist
+        run: |
+          python -m pip install -U setuptools setuptools_scm[toml]
+          python setup.py sdist
 
       - uses: actions/upload-artifact@v2
         with:

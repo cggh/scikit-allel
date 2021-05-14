@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages
+import setuptools_scm
+
 
 DISTNAME = 'scikit-allel'
 
