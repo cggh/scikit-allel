@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-from ast import literal_eval
 from setuptools import setup, Extension, find_packages
-try:
-    from Cython.setuptools import built_ext
-except ImportError:
-    from setuptools.command.build_ext import build_ext
+from Cython.Build import cythonize
+import numpy
 
 DISTNAME = 'scikit-allel'
 
@@ -52,43 +49,22 @@ CLASSIFIERS = [
 
 # noinspection PyUnresolvedReferences
 def setup_extensions(metadata):
-    # check for cython
-    try:
-        from Cython.Build import cythonize
-        print('[scikit-allel] setup extensions with cython')
-        ext_modules = cythonize([
-            Extension('allel.opt.model',
-                      sources=['allel/opt/model.pyx']
-                      # define_macros=[('CYTHON_TRACE', 1)],
-                      ),
-            Extension('allel.opt.stats',
-                      sources=['allel/opt/stats.pyx']
-                      # define_macros=[('CYTHON_TRACE', 1)],
-                      ),
-            Extension('allel.opt.io_vcf_read',
-                      sources=['allel/opt/io_vcf_read.pyx'],
-                      # define_macros=[('CYTHON_TRACE', 1)],
-                      ),
-        ])
-    except ImportError:
-        print('[scikit-allel] setup extensions without cython')
-        ext_modules = [
-            Extension('allel.opt.model',
-                      sources=['allel/opt/model.c']),
-            Extension('allel.opt.stats',
-                      sources=['allel/opt/stats.c']),
-            Extension('allel.opt.io_vcf_read',
-                      sources=['allel/opt/io_vcf_read.c'])
-        ]
+    print('[scikit-allel] setup extensions with cython')
+    ext_modules = cythonize([
+        Extension('allel.opt.model',
+                  sources=['allel/opt/model.pyx'],
+                  include_dirs=[numpy.get_include()],
+                  ),
+        Extension('allel.opt.stats',
+                  sources=['allel/opt/stats.pyx'],
+                  include_dirs=[numpy.get_include()],
+                  ),
+        Extension('allel.opt.io_vcf_read',
+                  sources=['allel/opt/io_vcf_read.pyx'],
+                  include_dirs=[numpy.get_include()],
+                  ),
+    ])
     metadata['ext_modules'] = ext_modules
-
-
-class CustomBuildExtCommand(build_ext):
-    """build_ext command for use when numpy headers are needed."""
-    def run(self):
-        import numpy
-        self.include_dirs.append(numpy.get_include())
-        build_ext.run(self)
 
 
 def setup_package():
@@ -109,7 +85,6 @@ def setup_package():
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
         zip_safe=False,
-        cmdclass={'build_ext': CustomBuildExtCommand},
     )
     setup_extensions(metadata)
     setup(**metadata)
