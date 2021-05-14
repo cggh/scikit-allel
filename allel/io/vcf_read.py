@@ -1711,6 +1711,7 @@ def _read_vcf_headers(stream):
     header = str(header, 'utf8')
 
     while header and header[0] == '#':
+        print('header: ', repr(header))
 
         headers.append(header)
 
