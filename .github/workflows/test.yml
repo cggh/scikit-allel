@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
 #        platform: [ubuntu-latest, macos-latest, windows-latest]
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, windows-latest]
 #        python-version: [3.7, 3.8]
         python-version: [3.8]
 
@@ -33,25 +33,24 @@ jobs:
         pip install -r requirements_dev_base.txt -r requirements_test.txt -r requirements_dev_optional.txt -r requirements_rtfd.txt
         pip install -e .
 
-#    - name: Lint
-#      run: |
-#        # stop the build if there are Python syntax errors or undefined names
-#        flake8 allel --count --select=E9,F63,F7,F82 --show-source --statistics
-#        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#        flake8 allel --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Lint
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 allel --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 allel --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test
-      if: matrix.platform != 'ubuntu-latest'
       run: |
         pytest -v allel
 
-    - name: Test and doctest
-      if: matrix.platform == 'ubuntu-latest'
+    - name: Doctest
+      if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.8'
       run: |
         pytest -v --cov=allel --doctest-modules allel
         coverage report -m
 
     - name: Build docs
-      if: matrix.platform == 'ubuntu-latest'
+      if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.8'
       run: |
-        sphinx-build -W -b html
+        cd docs && make html

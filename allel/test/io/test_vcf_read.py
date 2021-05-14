@@ -577,6 +577,7 @@ def test_inputs():
     buffer_size = 10
 
     for i in inputs:
+        print('input:', repr(i))
         _test_read_vcf_content(i, chunk_length, buffer_size)
 
 

@@ -48,12 +48,6 @@ def _warn_node(self, msg, node):
 
 sphinx.environment.BuildEnvironment.warn_node = _warn_node
 
-# adding copy button
-# as per here: https://github.com/readthedocs/sphinx_rtd_theme/issues/167
-
-def setup(app):
-    app.add_javascript('copybutton.js')
-
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
