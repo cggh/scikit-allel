@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, Extension, find_packages
-from Cython.Build import cythonize
-import numpy
 
 DISTNAME = 'scikit-allel'
 
@@ -49,22 +47,27 @@ CLASSIFIERS = [
 
 # noinspection PyUnresolvedReferences
 def setup_extensions(metadata):
-    print('[scikit-allel] setup extensions with cython')
-    ext_modules = cythonize([
-        Extension('allel.opt.model',
-                  sources=['allel/opt/model.pyx'],
-                  include_dirs=[numpy.get_include()],
-                  ),
-        Extension('allel.opt.stats',
-                  sources=['allel/opt/stats.pyx'],
-                  include_dirs=[numpy.get_include()],
-                  ),
-        Extension('allel.opt.io_vcf_read',
-                  sources=['allel/opt/io_vcf_read.pyx'],
-                  include_dirs=[numpy.get_include()],
-                  ),
-    ])
-    metadata['ext_modules'] = ext_modules
+    try:
+        print('[scikit-allel] setup extensions with cython')
+        from Cython.Build import cythonize
+        import numpy
+        ext_modules = cythonize([
+            Extension('allel.opt.model',
+                      sources=['allel/opt/model.pyx'],
+                      include_dirs=[numpy.get_include()],
+                      ),
+            Extension('allel.opt.stats',
+                      sources=['allel/opt/stats.pyx'],
+                      include_dirs=[numpy.get_include()],
+                      ),
+            Extension('allel.opt.io_vcf_read',
+                      sources=['allel/opt/io_vcf_read.pyx'],
+                      include_dirs=[numpy.get_include()],
+                      ),
+        ])
+        metadata['ext_modules'] = ext_modules
+    except ImportError:
+        print('[scikit-allele] cython not available, not including extensions')
 
 
 def setup_package():
