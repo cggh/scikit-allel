@@ -274,7 +274,7 @@ cdef class FileInputStream(InputStreamBase):
                 break
 
             elif self.c == CR:
-                # translate newdests
+                # translate newlines
                 CharVector_append(dest, LF)
                 # advance input stream beyond EOL
                 self.advance()

@@ -576,6 +576,16 @@ def test_inputs():
     chunk_length = 3
     buffer_size = 10
 
+    print()
+    print('*** data ***')
+    print(repr(data))
+    print()
+    print(r"*** data.replace(b'\n', b'\r') ***")
+    print(repr(data.replace(b'\n', b'\r')))
+    print()
+    print(r"*** data.replace(b'\n', b'\r\n') ***")
+    print(repr(data.replace(b'\n', b'\r\n')))
+
     for n, i in enumerate(inputs):
         print()
         print('input', n, repr(i))
