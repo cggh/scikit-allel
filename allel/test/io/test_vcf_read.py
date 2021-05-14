@@ -576,10 +576,11 @@ def test_inputs():
     chunk_length = 3
     buffer_size = 10
 
-    for i in inputs:
-        print('input:', repr(i))
+    for n, i in enumerate(inputs):
+        print()
+        print('input', n, repr(i))
         _test_read_vcf_content(i, chunk_length, buffer_size)
-        print('OK:', repr(i))
+        print('OK', n, repr(i))
 
 
 def test_chunk_lengths():

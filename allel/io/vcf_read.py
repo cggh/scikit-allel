@@ -1698,6 +1698,7 @@ def read_vcf_headers(input):
 
 
 def _read_vcf_headers(stream):
+    print('_read_vcf_headers', repr(stream))
 
     # setup
     headers = []
@@ -1708,10 +1709,11 @@ def _read_vcf_headers(stream):
 
     # read first header line
     header = stream.readline()
+    print('first header (raw)', repr(header))
     header = str(header, 'utf8')
+    print('first header (decoded)', repr(header))
 
     while header and header[0] == '#':
-        print('header: ', repr(header))
 
         headers.append(header)
 
@@ -1756,11 +1758,14 @@ def _read_vcf_headers(stream):
 
         # read next header line
         header = stream.readline()
+        print('next header (raw)', repr(header))
         header = str(header, 'utf8')
+        print('next header (decoded)', repr(header))
 
     # check if we saw the mandatory header line or not
     if samples is None:
         # can't warn about this, it's fatal
+        print('about to barf', repr(stream))
         raise RuntimeError('VCF file is missing mandatory header line ("#CHROM...")')
 
     return VCFHeaders(headers, filters, infos, formats, samples)
