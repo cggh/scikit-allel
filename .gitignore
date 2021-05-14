@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 
 # C extensions
+*.c
 *.so
 
 # Distribution / packaging
@@ -65,7 +66,6 @@ example.*
 *.npz
 profdata/*
 temp/*
-allel/version.py
 
 # setuptools-scm
 allel/version.py
