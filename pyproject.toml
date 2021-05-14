@@ -4,10 +4,10 @@ requires-python = ">=3.6"
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    "setuptools>=42",  # https://github.com/deepcharles/ruptures/pull/100#discussion_r553700339
+    "setuptools>=45",
     "wheel",
     "Cython>=0.28.5",
-    "setuptools_scm[toml]>=3.4",  # https://scikit-hep.org/developer/packaging#git-tags-official-pypa-method
+    "setuptools_scm[toml]>=6.0",
     "oldest-supported-numpy",  # https://github.com/scipy/oldest-supported-numpy
 ]
 build-backend = "setuptools.build_meta"

@@ -108,15 +108,6 @@ def setup_package():
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
-        setup_requires=[
-            'setuptools>18.0',
-            'setuptools-scm>1.5.4'
-        ],
-        use_scm_version={
-            'version_scheme': 'guess-next-dev',
-            'local_scheme': 'dirty-tag',
-            'write_to': 'allel/version.py'
-        },
         zip_safe=False,
         cmdclass={'build_ext': CustomBuildExtCommand},
     )
