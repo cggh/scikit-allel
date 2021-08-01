@@ -1,5 +1,5 @@
 # optional
-scipy==1.6.3
+scipy==1.7.0
 matplotlib==3.4.1
 seaborn==0.11.1
 pandas==1.2.4
