@@ -5,7 +5,7 @@ seaborn==0.12.2
 pandas==1.5.2
 scikit-learn==1.2.0
 h5py==3.7.0
-numexpr==2.7.3
+numexpr==2.8.4
 zarr==2.10.1
 hmmlearn==0.2.6
 pomegranate==0.14.5
