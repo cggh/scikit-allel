@@ -7,7 +7,7 @@ scikit-learn==1.2.2
 h5py==3.8.0
 numexpr==2.8.4
 zarr==2.14.2
-hmmlearn==0.2.6
+hmmlearn==0.2.8
 pomegranate==0.14.5
 pyfasta==0.5.2
 ipython==7.28.0
