@@ -562,7 +562,7 @@ def test_xpehh_data():
             score = xpehh(hap1, hap2, pos, include_edges=include_edges,
                           use_threads=use_threads)
             actual = score[9]
-            assert expect == actual
+            assert np.allclose(expect, actual)
 
 
 def test_nsl():

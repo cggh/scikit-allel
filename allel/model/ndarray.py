@@ -3701,7 +3701,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         loc_ranges = start_indices < stop_indices
 
         # find values within at least one interval
-        loc = np.zeros(self.shape, dtype=np.bool)
+        loc = np.zeros(self.shape, dtype=bool)
         for i, j in zip(start_indices[loc_ranges], stop_indices[loc_ranges]):
             loc[i:j] = True
 
@@ -4471,7 +4471,7 @@ class VariantTable(NumpyRecArrayWrapper):
     Access multiple columns::
 
         >>> vt[['DP', 'QD']]
-        <VariantTable shape=(5,) dtype=(numpy.record, {'names':['DP','QD'], ...
+        <VariantTable shape=(5,) dtype=(numpy.record, {'names': ['DP', 'QD'], ...
         [(35, 4.5) (12, 6.7) (78, 1.2) (22, 4.4) (99, 2.8)]
 
     Access a row::
