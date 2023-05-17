@@ -51,7 +51,7 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
         data = [1, 4, 5, 7, 12]
         idx = SortedIndex(data)
         aeq(data, idx)
-        assert np.int64 == idx.dtype
+        assert "i" == idx.dtype.kind
         assert 1 == idx.ndim
         assert 5 == len(idx)
         assert idx.is_unique
@@ -60,7 +60,7 @@ class SortedIndexTests(SortedIndexInterface, unittest.TestCase):
         data = [1, 4, 5, 5, 7, 12]
         idx = SortedIndex(data)
         aeq(data, idx)
-        assert np.int64 == idx.dtype
+        assert "i" == idx.dtype.kind
         assert 1 == idx.ndim
         assert 6 == len(idx)
         assert not idx.is_unique
