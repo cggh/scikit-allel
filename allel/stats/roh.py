@@ -94,8 +94,8 @@ def roh_mhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transition=1e-
     emission_mx = _mhmm_derive_emission_matrix(het_px, p_accessible)
 
     # initialize HMM
-    roh_hmm = hmm.MultinomialHMM(n_components=het_px.size)
-    roh_hmm.n_symbols_ = 3
+    # N.B., https://github.com/hmmlearn/hmmlearn/pull/429
+    roh_hmm = hmm.CategoricalHMM(n_components=het_px.size, n_features=3)
     roh_hmm.startprob_ = start_prob
     roh_hmm.transmat_ = transition_mx
     roh_hmm.emissionprob_ = emission_mx

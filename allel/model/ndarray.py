@@ -3701,7 +3701,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         loc_ranges = start_indices < stop_indices
 
         # find values within at least one interval
-        loc = np.zeros(self.shape, dtype=np.bool)
+        loc = np.zeros(self.shape, dtype=bool)
         for i, j in zip(start_indices[loc_ranges], stop_indices[loc_ranges]):
             loc[i:j] = True
 
