@@ -1,6 +1,7 @@
 [project]
 name = "scikit-allel"
 requires-python = ">=3.6"
+dynamic = ["version", "description"]
 
 [build-system]
 # Minimum requirements for the build system to execute.
