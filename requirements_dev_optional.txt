@@ -1,6 +1,6 @@
 # optional
 scipy==1.11.1
-matplotlib==3.7.1
+matplotlib==3.7.2
 seaborn==0.12.2
 pandas==2.0.1
 scikit-learn==1.2.2
