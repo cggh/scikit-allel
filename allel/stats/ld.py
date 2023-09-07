@@ -215,11 +215,15 @@ def windowed_r_squared(pos, gn, size=None, start=None, stop=None, step=None,
         fill = [fill for _ in percentile]
 
         def statistic(gnw):
+            if gnw.shape[0] == 1:
+                return [np.nan for _ in percentile]
             r_squared = rogers_huff_r(gnw) ** 2
             return [np.percentile(r_squared, p) for p in percentile]
 
     else:
         def statistic(gnw):
+            if gnw.shape[0] == 1:
+                return np.nan
             r_squared = rogers_huff_r(gnw) ** 2
             return np.percentile(r_squared, percentile)
 
