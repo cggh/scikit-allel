@@ -15,8 +15,7 @@ import time
 import subprocess
 import textwrap
 from collections import OrderedDict
-
-
+from allel.util import resolve_path
 import numpy as np
 
 
@@ -434,8 +433,9 @@ def vcf_to_npz(input, output,
 
     """
 
+    output = resolve_path(output)
     # guard condition
-    if not overwrite and os.path.exists(output):
+    if not overwrite and isinstance(output, str) and os.path.exists(output):
         raise ValueError('file exists at path %r; use overwrite=True to replace' % output)
 
     # read all data into memory
@@ -1012,6 +1012,9 @@ def _setup_input_stream(input, region=None, tabix=None, buffer_size=DEFAULT_BUFF
 
     # obtain a file-like object
     close = False
+
+    input = resolve_path(input)
+
     if isinstance(input, str) and input.endswith('gz'):
 
         if region and tabix and os.name != 'nt':

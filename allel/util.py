@@ -9,6 +9,17 @@ import warnings
 import numpy as np
 
 
+def resolve_path(path):
+    """
+
+    :param path:
+    :return:
+    """
+    if hasattr(path, 'read') or isinstance(path, (str, bytes)):
+        return path
+    return os.fspath(path)
+
+
 @contextmanager
 def ignore_invalid():
     err = np.seterr(invalid='ignore')
