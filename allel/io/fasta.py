@@ -44,5 +44,47 @@ def write_fasta(path, sequences, names, mode='w', width=80):
             header = b'>' + name + b'\n'
             fasta.write(header)
             for i in range(0, sequence.size, width):
-                line = sequence[i:i+width].tostring() + b'\n'
+                line = sequence[i:i + width].tostring() + b'\n'
                 fasta.write(line)
+
+
+def read_fasta(path):
+    """Read nucleotide sequences from a FASTA file and return them as a dictionary
+    mapping a sequence name to a sequence.
+
+    Parameters
+    ----------
+
+    path : string
+        File path.
+
+    """
+    sequences = []
+    names = []
+
+    current_sequence = []
+
+    with open(path, 'r') as fasta:
+
+        # Skip any headers and get the first line
+        for line in fasta:
+            if line.startswith('>'):
+                name = line[1:].rstrip()
+                break
+
+        for line in fasta:
+            if line.startswith('>'):
+                names.append(name)
+                sequences.append(np.concatenate(current_sequence))
+                name = line[1:].rstrip()
+                current_sequence = []
+            elif line.startswith(';'):
+                continue
+            else:
+                current_sequence.append(np.array(list(line.strip()), dtype=np.dtype('S1')))
+        else:
+            if names:
+                names.append(name)
+                sequences.append(np.concatenate(current_sequence))
+
+    return dict(zip(names, sequences))
