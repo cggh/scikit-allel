@@ -1,4 +1,4 @@
 # required
 cython==3.0.6
 numpy==1.26.2
-dask[array]==2023.4.1
+dask[array]==2023.11.0
