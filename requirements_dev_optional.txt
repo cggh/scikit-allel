@@ -8,6 +8,6 @@ h5py==3.8.0
 numexpr==2.8.4
 zarr==2.14.2
 hmmlearn==0.3.0
-pomegranate<1.0.0
+pomegranate==1.0.3
 pyfasta==0.5.2
 ipython==8.13.0
