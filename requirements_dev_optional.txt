@@ -6,7 +6,7 @@ pandas==2.2.0
 scikit-learn==1.4.0
 h5py==3.10.0
 numexpr==2.9.0
-zarr==2.14.2
+zarr==2.16.1
 hmmlearn==0.3.0
 pomegranate==1.0.3
 pyfasta==0.5.2
