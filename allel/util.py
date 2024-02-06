@@ -8,6 +8,7 @@ import warnings
 
 import numpy as np
 
+import dask.array as da
 
 @contextmanager
 def ignore_invalid():
@@ -46,7 +47,12 @@ def asarray_ndim(a, *ndims, **kwargs):
     kwargs.setdefault('copy', False)
     if a is None and allow_none:
         return None
-    a = np.array(a, **kwargs)
+    if type(a) is da.Array:
+        # Remove copy kwarg if it exists (Dask does not support this parameter)
+        kwargs.pop('copy', False)
+        a = da.array(a, **kwargs)
+    else:
+        a = np.array(a, **kwargs)
     if a.ndim not in ndims:
         if len(ndims) > 1:
             expect_str = 'one of %s' % str(ndims)
