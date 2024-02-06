@@ -522,7 +522,10 @@ class TestHardyWeinberg(unittest.TestCase):
             """Limited reference implementation for testing purposes."""
 
             # check allele frequencies sum to 1
-            af_sum = np.sum(f, axis=1)
+            # round to suitable precision for the dtype
+            af_sum = (np.sum(f, axis=1))
+            precision = np.finfo(af_sum.dtype).precision
+            af_sum = np.round(np.sum(f, axis=1), precision)
 
             # assume three alleles
             p = f[:, 0]
