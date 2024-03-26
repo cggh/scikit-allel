@@ -201,11 +201,11 @@ def roh_poissonhmm(gv, pos, phet_roh=0.001, phet_nonroh=(0.0025, 0.01), transiti
 
     Notes
     -----
-    This function requires `pomegranate` (>= 0.9.0) to be installed.
+    This function requires `protopunica` to be installed.
 
     """
 
-    from pomegranate import HiddenMarkovModel, PoissonDistribution
+    from protopunica import HiddenMarkovModel, PoissonDistribution
 
     is_accessible = asarray_ndim(is_accessible, 1, dtype=bool, allow_none=True)
 
