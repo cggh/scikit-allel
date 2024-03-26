@@ -7,7 +7,7 @@ DISTNAME = "scikit-allel"
 
 PACKAGE_NAME = "allel"
 
-DESCRIPTION = "A Python package for exploring and analysing genetic " "variation data."
+DESCRIPTION = "A Python package for exploring and analysing genetic variation data."
 
 with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
