@@ -1,10 +1,9 @@
 [project]
 name = "scikit-allel"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 description = "A Python package for exploring and analysing genetic variation data."
 readme = "README.rst"
-repository = "https://github.com/cggh/scikit-allel"
-dynamic = ["version", "long_description"]
+dynamic = ["version", "classifiers", "license", "maintainers", "dependencies", "optional-dependencies"]
 
 
 [build-system]

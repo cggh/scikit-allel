@@ -9,9 +9,6 @@ PACKAGE_NAME = "allel"
 
 DESCRIPTION = "A Python package for exploring and analysing genetic variation data."
 
-with open("README.rst") as f:
-    LONG_DESCRIPTION = f.read()
-
 MAINTAINER = "Alistair Miles"
 
 MAINTAINER_EMAIL = "alimanfoo@googlemail.com"
@@ -98,7 +95,6 @@ def setup_package():
         maintainer=MAINTAINER,
         maintainer_email=MAINTAINER_EMAIL,
         description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
         license=LICENSE,
         url=URL,
         download_url=DOWNLOAD_URL,
