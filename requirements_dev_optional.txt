@@ -5,7 +5,7 @@ seaborn==0.13.2
 pandas==2.2.1
 scikit-learn==1.4.1.post1
 h5py==3.10.0
-numexpr
+numexpr==2.9.0
 zarr
 hmmlearn
 protopunica
