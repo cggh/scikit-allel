@@ -1,7 +1,7 @@
 # optional
 scipy==1.12.0
 matplotlib==3.8.3
-seaborn
+seaborn==0.13.2
 pandas
 scikit-learn
 h5py
