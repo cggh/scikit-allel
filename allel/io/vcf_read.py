@@ -48,7 +48,6 @@ COMPUTED_FIELDS = [FIELD_NUMALT, FIELD_ALTLEN, FIELD_IS_SNP]
 
 def _prep_fields_param(fields):
     """Prepare the `fields` parameter, and determine whether or not to store samples."""
-
     store_samples = False
 
     if fields is None:
@@ -65,7 +64,6 @@ def _prep_fields_param(fields):
         store_samples = True
     elif '*' in fields:
         store_samples = True
-
     return store_samples, fields
 
 
@@ -233,6 +231,11 @@ _doc_param_chunk_length = \
 _doc_param_log = \
     """A file-like object (e.g., `sys.stderr`) to print progress information."""
 
+_doc_param_calldata = \
+    """Return in the dataframe also the information in the 'calldata' group.
+       It should be used carefully with large population vcf and combained
+       with samples parameter for reduce memory usage of the returned DF"""
+
 
 # noinspection PyShadowingBuiltins
 def read_vcf(input,
@@ -299,7 +302,6 @@ def read_vcf(input,
     # samples requested?
     # noinspection PyTypeChecker
     store_samples, fields = _prep_fields_param(fields)
-
     # setup
     fields, samples, headers, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
@@ -307,7 +309,6 @@ def read_vcf(input,
         chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
         samples=samples, transformers=transformers
     )
-
     # handle field renaming
     if rename_fields:
         rename_fields, it = _do_rename(it, fields=fields,
@@ -1124,7 +1125,6 @@ def iter_vcf_chunks(input,
         Chunk iterator.
 
     """
-
     # setup commmon keyword args
     kwds = dict(fields=fields, exclude_fields=exclude_fields, types=types,
                 numbers=numbers, alt_number=alt_number, chunk_length=chunk_length,
@@ -1136,7 +1136,6 @@ def iter_vcf_chunks(input,
 
     # setup iterator
     fields, samples, headers, it = _iter_vcf_stream(stream, **kwds)
-
     # setup transformers
     if transformers is not None:
         # API flexibility
@@ -1765,13 +1764,14 @@ def _read_vcf_headers(stream):
     return VCFHeaders(headers, filters, infos, formats, samples)
 
 
-def _chunk_to_dataframe(fields, chunk):
+def _chunk_to_dataframe(fields, chunk, samples=[]):
     import pandas
     items = list()
     for f in fields:
         a = chunk[f]
         group, name = f.split('/')
-        assert group == 'variants'
+        if samples == []:
+            assert group == 'variants'
         if a.dtype.kind == 'S':
             # always convert strings for pandas - if U then pandas will use object dtype
             a = a.astype('U')
@@ -1780,6 +1780,11 @@ def _chunk_to_dataframe(fields, chunk):
         elif a.ndim == 2:
             for i in range(a.shape[1]):
                 items.append(('%s_%s' % (name, i + 1), a[:, i]))
+        elif a.ndim == 3:
+            assert group == 'calldata'
+            for sample in range(a.shape[1]):
+                for i in range(a.shape[2]):
+                    items.append(('%s_%s_%s' % (name, samples[sample], i + 1), a[:, sample,  i]))
         else:
             warnings.warn('cannot handle array %r with >2 dimensions, skipping' % name)
     df = pandas.DataFrame.from_dict(OrderedDict(items))
@@ -1798,6 +1803,8 @@ def vcf_to_dataframe(input,
                      fills=None,
                      region=None,
                      tabix='tabix',
+                     calldata=False,
+                     samples=None,
                      transformers=None,
                      buffer_size=DEFAULT_BUFFER_SIZE,
                      chunk_length=DEFAULT_CHUNK_LENGTH,
@@ -1824,6 +1831,10 @@ def vcf_to_dataframe(input,
         {region}
     tabix : string, optional
         {tabix}
+    calldata : bool, optional
+        {calldata}
+    samples : list of string, optional
+        {samples}
     transformers : list of transformer objects, optional
         {transformers}
     buffer_size : int, optional
@@ -1832,7 +1843,6 @@ def vcf_to_dataframe(input,
         {chunk_length}
     log : file-like, optional
         {log}
-
     Returns
     -------
     df : pandas.DataFrame
@@ -1843,16 +1853,19 @@ def vcf_to_dataframe(input,
 
     # samples requested?
     # noinspection PyTypeChecker
-    _, fields = _prep_fields_param(fields)
-
+    if calldata:
+        fields = '*'
+        store_sample, fields = _prep_fields_param(fields)
+    else:
+        _, fields = _prep_fields_param(fields)
+        samples = []
     # setup
-    fields, _, _, it = iter_vcf_chunks(
+    fields, samples, _, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=samples,
         transformers=transformers
     )
-
     # setup progress logging
     if log is not None:
         it = _chunk_iter_progress(it, log, prefix='[vcf_to_dataframe]')
@@ -1866,7 +1879,7 @@ def vcf_to_dataframe(input,
     if chunks:
 
         # concatenate chunks
-        output = pandas.concat([_chunk_to_dataframe(fields, chunk)
+        output = pandas.concat([_chunk_to_dataframe(fields, chunk, samples)
                                 for chunk in chunks])
 
     return output
@@ -1886,6 +1899,8 @@ vcf_to_dataframe.__doc__ = vcf_to_dataframe.__doc__.format(
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
     log=_doc_param_log,
+    calldata=_doc_param_calldata,
+    samples=_doc_param_samples
 )
 
 
