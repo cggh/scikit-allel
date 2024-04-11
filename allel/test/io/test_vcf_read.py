@@ -1267,71 +1267,69 @@ def test_read_region():
 
     for vcf_path in (fixture_path('sample.vcf.gz'),
                      fixture_path('sample.vcf')):
-        for tabix in 'tabix', None, 'foobar':
+        region = '19'
+        callset = read_vcf(vcf_path, region=region)
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        assert 2 == len(chrom)
+        assert isinstance(chrom, np.ndarray)
+        assert np.all(chrom == '19')
+        assert 2 == len(pos)
+        assert_array_equal([111, 112], pos)
 
-            region = '19'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            chrom = callset['variants/CHROM']
-            pos = callset['variants/POS']
-            assert 2 == len(chrom)
-            assert isinstance(chrom, np.ndarray)
-            assert np.all(chrom == '19')
-            assert 2 == len(pos)
-            assert_array_equal([111, 112], pos)
+        region = '20'
+        callset = read_vcf(vcf_path, region=region)
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        assert 6 == len(chrom)
+        assert isinstance(chrom, np.ndarray)
+        assert np.all(chrom == '20')
+        assert 6 == len(pos)
+        assert_array_equal([14370, 17330, 1110696, 1230237, 1234567, 1235237], pos)
 
-            region = '20'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            chrom = callset['variants/CHROM']
-            pos = callset['variants/POS']
-            assert 6 == len(chrom)
-            assert isinstance(chrom, np.ndarray)
-            assert np.all(chrom == '20')
-            assert 6 == len(pos)
-            assert_array_equal([14370, 17330, 1110696, 1230237, 1234567, 1235237], pos)
+        region = 'X'
+        callset = read_vcf(vcf_path, region=region)
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        assert 1 == len(chrom)
+        assert isinstance(chrom, np.ndarray)
+        assert np.all(chrom == 'X')
+        assert 1 == len(pos)
+        assert_array_equal([10], pos)
 
-            region = 'X'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            chrom = callset['variants/CHROM']
-            pos = callset['variants/POS']
-            assert 1 == len(chrom)
-            assert isinstance(chrom, np.ndarray)
-            assert np.all(chrom == 'X')
-            assert 1 == len(pos)
-            assert_array_equal([10], pos)
+        region = 'Y'
+        callset = read_vcf(vcf_path, region=region)
+        assert callset is None
 
-            region = 'Y'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            assert callset is None
+        region = '20:1-100000'
+        callset = read_vcf(vcf_path, region=region)
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        assert 2 == len(chrom)
+        assert isinstance(chrom, np.ndarray)
+        assert np.all(chrom == '20')
+        assert 2 == len(pos)
+        assert_array_equal([14370, 17330], pos)
 
-            region = '20:1-100000'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            chrom = callset['variants/CHROM']
-            pos = callset['variants/POS']
-            assert 2 == len(chrom)
-            assert isinstance(chrom, np.ndarray)
-            assert np.all(chrom == '20')
-            assert 2 == len(pos)
-            assert_array_equal([14370, 17330], pos)
+        region = '20:1000000-1233000'
+        callset = read_vcf(vcf_path, region=region)
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        assert 2 == len(chrom)
+        assert isinstance(chrom, np.ndarray)
+        assert np.all(chrom == '20')
+        assert 2 == len(pos)
+        assert_array_equal([1110696, 1230237], pos)
 
-            region = '20:1000000-1233000'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            chrom = callset['variants/CHROM']
-            pos = callset['variants/POS']
-            assert 2 == len(chrom)
-            assert isinstance(chrom, np.ndarray)
-            assert np.all(chrom == '20')
-            assert 2 == len(pos)
-            assert_array_equal([1110696, 1230237], pos)
-
-            region = '20:1233000-2000000'
-            callset = read_vcf(vcf_path, region=region, tabix=tabix)
-            chrom = callset['variants/CHROM']
-            pos = callset['variants/POS']
-            assert 2 == len(chrom)
-            assert isinstance(chrom, np.ndarray)
-            assert np.all(chrom == '20')
-            assert 2 == len(pos)
-            assert_array_equal([1234567, 1235237], pos)
+        region = '20:1233000-2000000'
+        callset = read_vcf(vcf_path, region=region)
+        chrom = callset['variants/CHROM']
+        pos = callset['variants/POS']
+        assert 2 == len(chrom)
+        assert isinstance(chrom, np.ndarray)
+        assert np.all(chrom == '20')
+        assert 2 == len(pos)
+        assert_array_equal([1234567, 1235237], pos)
 
 
 def test_read_region_unsorted():
@@ -1339,10 +1337,9 @@ def test_read_region_unsorted():
     # not available.
 
     fn = fixture_path('unsorted.vcf')
-    tabix = None
 
     region = '19'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     chrom = callset['variants/CHROM']
     pos = callset['variants/POS']
     assert 2 == len(chrom)
@@ -1352,7 +1349,7 @@ def test_read_region_unsorted():
     assert_array_equal([111, 112], pos)
 
     region = '20'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     chrom = callset['variants/CHROM']
     pos = callset['variants/POS']
     assert 6 == len(chrom)
@@ -1362,7 +1359,7 @@ def test_read_region_unsorted():
     assert_array_equal([14370, 1230237, 1234567, 1235237, 17330, 1110696], pos)
 
     region = 'X'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     chrom = callset['variants/CHROM']
     pos = callset['variants/POS']
     assert 1 == len(chrom)
@@ -1372,11 +1369,11 @@ def test_read_region_unsorted():
     assert_array_equal([10], pos)
 
     region = 'Y'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     assert callset is None
 
     region = '20:1-100000'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     chrom = callset['variants/CHROM']
     pos = callset['variants/POS']
     assert 2 == len(chrom)
@@ -1386,7 +1383,7 @@ def test_read_region_unsorted():
     assert_array_equal([14370, 17330], pos)
 
     region = '20:1000000-1233000'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     chrom = callset['variants/CHROM']
     pos = callset['variants/POS']
     assert 2 == len(chrom)
@@ -1396,7 +1393,7 @@ def test_read_region_unsorted():
     assert_array_equal([1230237, 1110696], pos)
 
     region = '20:1233000-2000000'
-    callset = read_vcf(fn, region=region, tabix=tabix)
+    callset = read_vcf(fn, region=region)
     chrom = callset['variants/CHROM']
     pos = callset['variants/POS']
     assert 2 == len(chrom)
@@ -1956,7 +1953,7 @@ def test_genotype_ac():
 def test_region_truncate():
     vcf_path = fixture_path('test54.vcf.gz')
     for tabix in 'tabix', None:
-        callset = read_vcf(vcf_path, region='chr1:10-100', tabix=tabix)
+        callset = read_vcf(vcf_path, region='chr1:10-100')
         pos = callset['variants/POS']
         assert 2 == pos.shape[0]
         assert_array_equal([20, 30], pos)
@@ -2115,11 +2112,11 @@ def test_vcf_to_npz():
     for vcf_path, region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
-                            tabix=tabix, samples=samples, types=types)
+                            samples=samples, types=types)
         if os.path.exists(npz_path):
             os.remove(npz_path)
         vcf_to_npz(vcf_path, npz_path, fields='*', chunk_length=2, alt_number=2,
-                   region=region, tabix=tabix, samples=samples, types=types)
+                   region=region, samples=samples, types=types)
         if expected is None:
             assert not os.path.exists(npz_path)
         else:
@@ -2186,11 +2183,11 @@ def test_vcf_to_zarr():
     for vcf_path, region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
-                            tabix=tabix, samples=samples, types=types)
+                            samples=samples, types=types)
         if os.path.exists(zarr_path):
             shutil.rmtree(zarr_path)
         vcf_to_zarr(vcf_path, zarr_path, fields='*', alt_number=2, chunk_length=2,
-                    region=region, tabix=tabix, samples=samples, types=types)
+                    region=region, samples=samples, types=types)
         if expected is None:
             assert not os.path.exists(zarr_path)
         else:
@@ -2371,11 +2368,11 @@ def test_vcf_to_hdf5():
     for vcf_path, region, tabix, samples, string_type in param_matrix:
         types = {'CHROM': string_type, 'ALT': string_type, 'samples': string_type}
         expected = read_vcf(vcf_path, fields='*', alt_number=2, region=region,
-                            tabix=tabix, samples=samples, types=types)
+                            samples=samples, types=types)
         if os.path.exists(h5_path):
             os.remove(h5_path)
         vcf_to_hdf5(vcf_path, h5_path, fields='*', alt_number=2, chunk_length=2,
-                    region=region, tabix=tabix, samples=samples, types=types)
+                    region=region, samples=samples, types=types)
         if expected is None:
             assert not os.path.exists(h5_path)
         else:
