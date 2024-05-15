@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import dask.array as da
 
 
 from allel.util import asarray_ndim
@@ -33,11 +34,13 @@ class StandardScaler(object):
         # check input
         gn = asarray_ndim(gn, 2)
 
-        # find mean
-        self.mean_ = np.mean(gn, axis=1, keepdims=True)
-
-        # find scaling factor
-        self.std_ = np.std(gn, axis=1, keepdims=True)
+        # find mean and scaling factor
+        if type(gn) is da.Array:
+            self.mean_ = da.mean(gn, axis=1, keepdims=True)
+            self.std_ = da.std(gn, axis=1, keepdims=True)
+        else:
+            self.mean_ = np.mean(gn, axis=1, keepdims=True)
+            self.std_ = np.std(gn, axis=1, keepdims=True)
 
         return self
 
@@ -75,7 +78,10 @@ class CenterScaler(object):
         gn = asarray_ndim(gn, 2)
 
         # find mean
-        self.mean_ = np.mean(gn, axis=1, keepdims=True)
+        if type(gn) is da.Array:
+            self.mean_ = da.mean(gn, axis=1, keepdims=True)
+        else:
+            self.mean_ = np.mean(gn, axis=1, keepdims=True)
 
         return self
 
@@ -111,11 +117,17 @@ class PattersonScaler(object):
         gn = asarray_ndim(gn, 2)
 
         # find mean
-        self.mean_ = np.mean(gn, axis=1, keepdims=True)
+        if type(gn) is da.Array:
+            self.mean_ = da.mean(gn, axis=1, keepdims=True)
+        else:
+            self.mean_ = np.mean(gn, axis=1, keepdims=True)
 
         # find scaling factor
         p = self.mean_ / self.ploidy
-        self.std_ = np.sqrt(p * (1 - p))
+        if type(gn) is da.Array:
+            self.std_ = da.sqrt(p * (1 - p))
+        else:
+            self.std_ = np.sqrt(p * (1 - p))
 
         return self
 
