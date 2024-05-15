@@ -482,6 +482,70 @@ class TestDiversityDivergence(unittest.TestCase):
 
 class TestHardyWeinberg(unittest.TestCase):
 
+    def test_heterozygosity_individual(self):
+
+        # diploid should always be 0 (hom) or 1 (het)
+        g = GenotypeArray([[[0, 0], [0, 0]],
+                           [[1, 1], [1, 1]],
+                           [[1, 1], [2, 2]],
+                           [[0, 0], [0, 1]],
+                           [[0, 0], [0, 2]],
+                           [[1, 1], [1, 2]],
+                           [[0, 1], [0, 1]],
+                           [[0, 1], [1, 2]],
+                           [[0, 0], [-1, -1]],
+                           [[0, 1], [-1, -1]],
+                           [[-1, -1], [-1, -1]]], dtype='i1')
+
+        hi = allel.heterozygosity_individual(g)
+        assert np.all(hi[g.is_hom()] == 0)
+        assert np.all(hi[g.is_het()] == 1)
+        assert np.all(np.isnan(hi)[g.is_missing()])
+
+        # mixed ploidy 2x, 4x, 6x
+        g = GenotypeArray([
+            [[0, 0, -1, -1, -1, -1], [0, 0, 0, 0, -1, -1], [0, 0, 0, 0, 0, 0]],
+            [[1, 1, -1, -1, -1, -1], [0, 0, 0, 1, -1, -1], [0, 0, 0, 0, 0, 1]],
+            [[0, 1, -1, -1, -1, -1], [0, 0, 1, 1, -1, -1], [0, 0, 0, 0, 1, 1]],
+            [[1, 2, -1, -1, -1, -1], [0, 0, 1, 2, -1, -1], [0, 0, 0, 1, 1, 1]],
+            [[3, 6, -1, -1, -1, -1], [0, 1, 2, 3, -1, -1], [0, 0, 0, 0, 1, 2]],
+            [[0, 0, -1, -1, -1, -1], [0, 2, 2, 5, -1, -1], [0, 0, 0, 1, 1, 2]],
+            [[0, -1, -1, -1, -1, -1], [0, 1, 1, -1, -1, -1], [0, 0, 1, 1, 2, 2]],
+            [[0, -1, -1, -1, -1, -1], [0, -1, -1, -1, -1, -1], [0, 0, 1, 2, 3, 4]],
+            [[-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1], [0, 1, 2, 3, 4, 5]]
+        ])
+        ploidy = np.array([
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+            [2, 4, 6],
+        ])
+        # 4x and 6x values from Hardy (2016)
+        expect = np.array([
+            [0, 0/6, 0/15],
+            [0, 3/6, 5/15],
+            [1, 4/6, 8/15],
+            [1, 5/6, 9/15],
+            [1, 6/6, 9/15],
+            [0, 5/6, 11/15],
+            [-1, -1, 12/15],
+            [-1, -1, 14/15],
+            [-1, -1, 15/15],
+        ])
+        actual = allel.heterozygosity_individual(g, fill=-1, ploidy=ploidy)
+        assert_array_almost_equal(expect, actual)
+
+        # mixed ploidy uncorrected
+        expect /= (ploidy/(ploidy-1))
+        expect[expect < 0] = -1  # correct the filled values
+        actual = allel.heterozygosity_individual(g, fill=-1, ploidy=ploidy, corrected=False)
+        assert_array_almost_equal(expect, actual)
+
     def test_heterozygosity_observed(self):
 
         # diploid
@@ -500,7 +564,17 @@ class TestHardyWeinberg(unittest.TestCase):
         actual = allel.heterozygosity_observed(g, fill=-1)
         aeq(expect, actual)
 
-        # polyploid
+        # diploid uncorrected
+        # corrected is uncorrected * (2/1)
+        expect = [i / 2 if i >= 0 else i for i in expect]
+        actual = allel.heterozygosity_observed(g, fill=-1, corrected=False)
+        assert_array_almost_equal(expect, actual)
+
+        # triploid
+        # individual heterozygosity (Hi)
+        # dosage of 3:0:0 = Hi of 0/3
+        # dosage of 2:1:0 = Hi of 2/3
+        # dosage of 1:1:1 = Hi of 3/3
         g = GenotypeArray([[[0, 0, 0], [0, 0, 0]],
                            [[1, 1, 1], [1, 1, 1]],
                            [[1, 1, 1], [2, 2, 2]],
@@ -512,9 +586,15 @@ class TestHardyWeinberg(unittest.TestCase):
                            [[0, 0, 0], [-1, -1, -1]],
                            [[0, 0, 1], [-1, -1, -1]],
                            [[-1, -1, -1], [-1, -1, -1]]], dtype='i1')
-        expect = [0, 0, 0, .5, .5, .5, 1, 1, 0, 1, -1]
+        expect = [0, 0, 0, 1/3, 1/3, 3/6, 4/6, 5/6, 0, 2/3, -1]
         actual = allel.heterozygosity_observed(g, fill=-1)
-        aeq(expect, actual)
+        assert_array_almost_equal(expect, actual)
+
+        # triploid uncorrected
+        # corrected is uncorrected * (3/2)
+        expect = [i / (3/2) if i >= 0 else i for i in expect]
+        actual = allel.heterozygosity_observed(g, fill=-1, corrected=False)
+        assert_array_almost_equal(expect, actual)
 
     def test_heterozygosity_expected(self):
 

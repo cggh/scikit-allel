@@ -6,7 +6,86 @@ from allel.model.ndarray import GenotypeArray
 from allel.util import ignore_invalid, asarray_ndim
 
 
-def heterozygosity_observed(g, fill=np.nan):
+def heterozygosity_individual(g, fill=np.nan, corrected=True, ploidy=None):
+    """Calculate the individual heterozygosity of each sample for
+    each variant following Hardy (2016).
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples, ploidy)
+        Genotype array.
+    fill : float, optional
+        Use this value for variants with invalid inputs.
+    corrected : bool, optional
+        If True, values are corrected for ploidy level.
+    ploidy : array_like, int, (n_variants, n_samples), optional
+        Specify ploidy of each genotype call.
+
+    Returns
+    -------
+    hi : ndarray, float, shape (n_variants, n_samples)
+        Observed individual heterozygosity
+
+    Notes
+    -----
+    Individual heterozygosity is calculated assuming polysomic inheritance
+    for polyploid genotype arrays following Hardy (2016).
+
+    If the ploidy argument is used then the ploidy specified for each
+    genotype call must be equal to the number of alleles called for that
+    genotype or else the genotype will be treated as missing.
+
+    Examples
+    --------
+
+    >>> import allel
+    >>> g = allel.GenotypeArray([[[0, 0, -1, -1], [0, 0, 0, 0]],
+    ...                          [[0, 1, -1, -1], [0, 0, 0, 1]],
+    ...                          [[1, 1, -1, -1], [0, 1, 1, 2]],
+    ...                          [[0, -1, -1, -1], [0, 1, 2, 3]],
+    ...                          [[-1, -1, -1, -1], [0, 1, -1, -1]]])
+    >>> ploidy = [[2, 4],
+    ...           [2, 4],
+    ...           [2, 4],
+    ...           [2, 4],
+    ...           [2, 4]]
+    >>> allel.heterozygosity_individual(g, ploidy=ploidy)
+    array([[0.        , 0.        ],
+           [1.        , 0.5       ],
+           [0.        , 0.83333333],
+           [       nan, 1.        ],
+           [       nan,        nan]])
+
+    """
+    # check inputs
+    if not hasattr(g, 'ploidy') or not hasattr(g, 'to_allele_counts'):
+        g = GenotypeArray(g, copy=False)
+
+    # use array ploidy if none provided
+    ploidy = g.ploidy if ploidy is None else np.array(ploidy)
+
+    # convert to genotype allele counts, remove those not matching ploidy
+    gac = g.to_allele_counts()
+    is_called = gac.values.sum(axis=-1) == ploidy
+    gac[~is_called] = 0
+
+    # genotype allele frequencies with partial genotypes removed
+    gaf = gac.to_frequencies()
+
+    # correction for ploidy level
+    with ignore_invalid():
+        correction = ploidy / (ploidy - 1) if corrected else 1
+
+    # matrix of observed heterozygosity per sample
+    hi = (1 - np.sum(np.power(gaf, 2), axis=-1)) * correction
+
+    if fill is not np.nan:
+        hi[np.isnan(hi)] = fill
+
+    return hi
+
+
+def heterozygosity_observed(g, fill=np.nan, corrected=True, ploidy=None):
     """Calculate the rate of observed heterozygosity for each variant.
 
     Parameters
@@ -16,6 +95,10 @@ def heterozygosity_observed(g, fill=np.nan):
         Genotype array.
     fill : float, optional
         Use this value for variants where all calls are missing.
+    corrected : bool, optional
+        If True, values are corrected for ploidy level.
+    ploidy : array_like, int, (n_variants, n_samples), optional
+        Specify ploidy of each genotype call.
 
     Returns
     -------
@@ -23,8 +106,26 @@ def heterozygosity_observed(g, fill=np.nan):
     ho : ndarray, float, shape (n_variants,)
         Observed heterozygosity
 
+    Notes
+    -----
+
+    Observed heterozygosity is calculated assuming polysomic inheritance
+    for polyploid genotype arrays following Hardy (2016) (also see Meirmans
+    and Liu 2018).
+
+    By default, observed heterozygosity is corrected for ploidy by
+    *Ho = Hu * (ploidy / (ploidy - 1))* where *Ho* is the corrected observed
+    heterozygosity and *Hu* is the uncorrected observed heterozygosity
+    described by Meirmans and Liu (2018).
+
+    If the ploidy argument is used then the ploidy specified for each
+    genotype call must be equal to the number of called alleles for that
+    genotype or else the genotype will be treated as missing.
+
     Examples
     --------
+
+    Diploid genotype array
 
     >>> import allel
     >>> g = allel.GenotypeArray([[[0, 0], [0, 0], [0, 0]],
@@ -34,20 +135,30 @@ def heterozygosity_observed(g, fill=np.nan):
     >>> allel.heterozygosity_observed(g)
     array([0.        , 0.33333333, 0.        , 0.5       ])
 
+    Tetraploid genotype array
+
+    >>> import allel
+    >>> g = allel.GenotypeArray([[[0, 0, 0, 0], [0, 0, 0, 0]],
+    ...                          [[0, 0, 0, 0], [0, 0, 0, 1]],
+    ...                          [[0, 0, 1, 1], [0, 0, 1, 2]],
+    ...                          [[0, 0, 1, 1], [0, 0, -1, -1]],
+    ...                          [[0, 1, 2, 3], [-1, -1, -1, -1]]])
+    >>> allel.heterozygosity_observed(g)
+    array([0.        , 0.25      , 0.75      , 0.66666667, 1.        ])
+
     """
+    hi = heterozygosity_individual(
+        g,
+        fill=np.nan,
+        corrected=corrected,
+        ploidy=ploidy
+    )
+    sum_het = np.nansum(hi, axis=-1)
 
-    # check inputs
-    if not hasattr(g, 'count_het') or not hasattr(g, 'count_called'):
-        g = GenotypeArray(g, copy=False)
+    n_called = np.nansum(~np.isnan(hi), axis=-1)
 
-    # count hets
-    n_het = np.asarray(g.count_het(axis=1))
-    n_called = np.asarray(g.count_called(axis=1))
-
-    # calculate rate of observed heterozygosity, accounting for variants
-    # where all calls are missing
     with ignore_invalid():
-        ho = np.where(n_called > 0, n_het / n_called, fill)
+        ho = np.where(n_called > 0, sum_het / n_called, fill)
 
     return ho
 
