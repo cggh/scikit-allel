@@ -9,5 +9,5 @@ numexpr==2.10.0
 zarr==2.18.2
 hmmlearn==0.3.2
 protopunica==0.14.8.post1
-pyfasta
+pyfasta==0.5.2
 ipython==8.25.0
