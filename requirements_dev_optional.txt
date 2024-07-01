@@ -8,6 +8,6 @@ h5py==3.11.0
 numexpr==2.10.1
 zarr==2.18.2
 hmmlearn==0.3.2
-protopunica
+protopunica==0.14.8.post1
 pyfasta
 ipython==8.26.0
