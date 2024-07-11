@@ -13,7 +13,7 @@ requires = [
     "wheel",
     "Cython>=0.28.5",
     "setuptools_scm[toml]>=6.0",
-    "oldest-supported-numpy",  # https://github.com/scipy/oldest-supported-numpy
+    "numpy>=2",
 ]
 build-backend = "setuptools.build_meta"
 

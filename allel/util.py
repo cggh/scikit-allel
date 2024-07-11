@@ -9,6 +9,13 @@ import warnings
 import numpy as np
 
 
+def array(data, copy, **kwargs):
+    # Semantics of copy changed in numpy2 see https://github.com/scipy/scipy/pull/20172
+    if np.lib.NumpyVersion(np.__version__) >= "2.0.0":
+        if copy is False:
+            copy = None
+    return np.array(data, copy=copy, **kwargs)
+
 @contextmanager
 def ignore_invalid():
     err = np.seterr(invalid='ignore')
@@ -46,7 +53,7 @@ def asarray_ndim(a, *ndims, **kwargs):
     kwargs.setdefault('copy', False)
     if a is None and allow_none:
         return None
-    a = np.array(a, **kwargs)
+    a = array(a, **kwargs)
     if a.ndim not in ndims:
         if len(ndims) > 1:
             expect_str = 'one of %s' % str(ndims)

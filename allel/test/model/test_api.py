@@ -12,6 +12,8 @@ import sys
 
 import numpy as np
 import pytest
+
+from allel import util
 from allel.test.tools import assert_array_equal as aeq
 
 
@@ -141,12 +143,12 @@ class GenotypeArrayInterface(object):
 
         # diploid data
         g = self.setup_instance(diploid_genotype_data)
-        a = np.array(g, copy=False)
+        a = util.array(g, copy=False)
         aeq(diploid_genotype_data, a)
 
         # polyploid data
         g = self.setup_instance(triploid_genotype_data)
-        a = np.array(g, copy=False)
+        a = util.array(g, copy=False)
         aeq(triploid_genotype_data, a)
 
     def test_slice(self):
@@ -1043,7 +1045,7 @@ class HaplotypeArrayInterface(object):
         # a vanilla numpy array representation of the data.
 
         h = self.setup_instance(haplotype_data)
-        a = np.array(h, copy=False)
+        a = util.array(h, copy=False)
         aeq(haplotype_data, a)
 
     def test_slice(self):
@@ -1395,7 +1397,7 @@ class AlleleCountsArrayInterface(object):
         # a vanilla numpy array representation of the data.
 
         ac = self.setup_instance(allele_counts_data)
-        a = np.array(ac, copy=False)
+        a = util.array(ac, copy=False)
         aeq(allele_counts_data, a)
 
     def test_slice(self):
@@ -1639,12 +1641,12 @@ class GenotypeAlleleCountsArrayInterface(object):
 
         # diploid data
         g = self.setup_instance(diploid_genotype_ac_data)
-        a = np.array(g, copy=False)
+        a = util.array(g, copy=False)
         aeq(diploid_genotype_ac_data, a)
 
         # polyploid data
         g = self.setup_instance(triploid_genotype_ac_data)
-        a = np.array(g, copy=False)
+        a = util.array(g, copy=False)
         aeq(triploid_genotype_ac_data, a)
 
     def test_slice(self):
@@ -2010,7 +2012,7 @@ class SortedIndexInterface(object):
 
         data = [1, 4, 5, 7, 12]
         pos = self.setup_instance(data)
-        a = np.array(pos, copy=False)
+        a = util.array(pos, copy=False)
         aeq(data, a)
 
     def test_slice(self):
@@ -2198,7 +2200,7 @@ class UniqueIndexInterface(object):
     def test_array_like(self):
         data = ['A', 'C', 'B', 'F']
         lbl = self.setup_instance(data)
-        a = np.array(lbl, copy=False)
+        a = util.array(lbl, copy=False)
         aeq(data, a)
 
     def test_slice(self):

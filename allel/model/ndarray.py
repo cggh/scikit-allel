@@ -35,6 +35,7 @@ __all__ = ['Genotypes', 'GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'Al
            'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable',
            'ChromPosIndex']
 
+from .. import util
 
 # noinspection PyTypeChecker
 _total_slice = slice(None)
@@ -73,7 +74,7 @@ class NumpyArrayWrapper(ArrayWrapper):
     """Abstract base class that wraps a NumPy array."""
 
     def __init__(self, data, copy=False, **kwargs):
-        values = np.array(data, copy=copy, **kwargs)
+        values = util.array(data, copy=copy, **kwargs)
         super(NumpyArrayWrapper, self).__init__(values)
 
 
@@ -1004,7 +1005,7 @@ class Genotypes(NumpyArrayWrapper):
         nchar = int(np.floor(np.log10(max_allele))) + 1
 
         # convert to string
-        a = self.astype((np.string_, nchar)).view(np.chararray)
+        a = self.astype((np.bytes_, nchar)).view(np.chararray)
 
         # recode missing alleles
         a[self < 0] = b'.'
@@ -4034,7 +4035,7 @@ class SortedMultiIndex(DisplayAs1D):
 
     def __init__(self, l1, l2, copy=False):
         l1 = SortedIndex(l1, copy=copy)
-        l2 = np.array(l2, copy=copy)
+        l2 = util.array(l2, copy=copy)
         check_ndim(l2, 1)
         check_dim0_aligned(l1, l2)
         self.l1 = l1

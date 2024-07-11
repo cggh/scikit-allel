@@ -19,7 +19,7 @@ DOWNLOAD_URL = "http://pypi.python.org/pypi/scikit-allel"
 
 LICENSE = "MIT"
 
-INSTALL_REQUIRES = ["numpy", "dask[array]"]
+INSTALL_REQUIRES = ["numpy>=1.23.5", "dask[array]"]
 
 # full installation with all optional dependencies
 EXTRAS_REQUIRE = {
