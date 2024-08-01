@@ -4,7 +4,7 @@ matplotlib==3.9.1
 seaborn==0.13.2
 pandas==2.2.2
 scikit-learn==1.5.1
-h5py
+h5py==3.11.0
 numexpr
 zarr
 hmmlearn
