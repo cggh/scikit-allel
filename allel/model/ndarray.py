@@ -73,7 +73,10 @@ class NumpyArrayWrapper(ArrayWrapper):
     """Abstract base class that wraps a NumPy array."""
 
     def __init__(self, data, copy=False, **kwargs):
-        values = np.array(data, copy=copy, **kwargs)
+        if copy:
+            values = np.array(data, **kwargs)
+        else:
+            values = np.asarray(data, **kwargs)
         super(NumpyArrayWrapper, self).__init__(values)
 
 
@@ -361,7 +364,10 @@ class Genotypes(NumpyArrayWrapper):
             raise ValueError('no mask is set')
 
         # apply the mask
-        data = np.array(self.values, copy=copy)
+        if copy:
+            data = np.array(self.values)
+        else:
+            data = np.asarray(self.values)
         data[self.mask, ...] = value
 
         if copy:
@@ -4034,7 +4040,10 @@ class SortedMultiIndex(DisplayAs1D):
 
     def __init__(self, l1, l2, copy=False):
         l1 = SortedIndex(l1, copy=copy)
-        l2 = np.array(l2, copy=copy)
+        if copy:
+            l2 = np.array(l2)
+        else:
+            l2 = np.asarray(l2)
         check_ndim(l2, 1)
         check_dim0_aligned(l1, l2)
         self.l1 = l1
@@ -4250,8 +4259,12 @@ class ChromPosIndex(DisplayAs1D):
     """
 
     def __init__(self, chrom, pos, copy=False):
-        chrom = np.array(chrom, copy=copy)
-        pos = np.array(pos, copy=copy)
+        if copy:
+            chrom = np.array(chrom)
+            pos = np.array(pos)
+        else:
+            chrom = np.asarray(chrom)
+            pos = np.asarray(pos)
         check_ndim(chrom, 1)
         check_ndim(pos, 1)
         check_dim0_aligned(chrom, pos)
