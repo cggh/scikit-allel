@@ -1,6 +1,6 @@
 [project]
 name = "scikit-allel"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "A Python package for exploring and analysing genetic variation data."
 readme = "README.rst"
 dynamic = ["version", "classifiers", "license", "maintainers", "dependencies", "optional-dependencies"]
@@ -9,11 +9,11 @@ dynamic = ["version", "classifiers", "license", "maintainers", "dependencies", "
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    "setuptools>=45",
+    "setuptools",
     "wheel",
-    "Cython>=0.28.5",
-    "setuptools_scm[toml]>=6.0",
-    "oldest-supported-numpy",  # https://github.com/scipy/oldest-supported-numpy
+    "Cython",
+    "setuptools_scm[toml]",
+    "numpy",  # https://github.com/scipy/oldest-supported-numpy
 ]
 build-backend = "setuptools.build_meta"
 
