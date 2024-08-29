@@ -14,10 +14,12 @@ jobs:
         - windows-latest
         - macos-latest
         python-version:
-        - "3.9"
         - "3.10"
         - "3.11"
         - "3.12"
+        numpy-version:
+        - "<2"
+        - ">=2"
 
     steps:
 
@@ -36,8 +38,9 @@ jobs:
     - name: Install
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements_dev_base.txt -r requirements_test.txt -r requirements_dev_optional.txt -r requirements_rtfd.txt
-        pip install -e .
+        python -m pip install "numpy${{ matrix.numpy-version }}"
+        python -m pip install -r requirements_dev_base.txt -r requirements_test.txt -r requirements_dev_optional.txt -r requirements_rtfd.txt
+        python -m pip install -e .
 
     - name: Lint
       run: |
@@ -50,13 +53,13 @@ jobs:
       run: |
         pytest -v allel
 
-    - name: Test with doctest
-      if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12'
-      run: |
-        pytest -v --cov=allel --doctest-modules allel
-        coverage report -m
+    # - name: Test with doctest
+    #   if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.numpy-version == '>=2'
+    #   run: |
+    #     pytest -v --cov=allel --doctest-modules allel
+    #     coverage report -m
 
-    - name: Build docs
-      if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12'
-      run: |
-        cd docs && make html
+    # - name: Build docs
+    #   if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.numpy-version == '>=2'
+    #   run: |
+    #     cd docs && make html

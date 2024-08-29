@@ -8,32 +8,77 @@ import numpy as np
 
 
 # internal imports
-from allel.util import check_integer_dtype, check_shape, check_dtype, ignore_invalid, \
-    check_dim0_aligned, check_ploidy, check_ndim, asarray_ndim, check_dim1_aligned
+from allel.util import (
+    check_integer_dtype,
+    check_shape,
+    check_dtype,
+    ignore_invalid,
+    check_dim0_aligned,
+    check_ploidy,
+    check_ndim,
+    asarray_ndim,
+    check_dim1_aligned,
+)
 from allel.compat import copy_method_doc, memoryview_safe
 from allel.io.vcf_write import write_vcf
 from allel.io.gff import gff3_to_recarray
 from allel.io.util import recarray_from_hdf5_group, recarray_to_hdf5_group
 from allel.abc import ArrayWrapper, DisplayAs1D, DisplayAs2D, DisplayAsTable
-from allel.opt.model import genotype_array_pack_diploid, genotype_array_unpack_diploid, \
-    genotype_array_count_alleles, genotype_array_count_alleles_masked, \
-    genotype_array_count_alleles_subpop, genotype_array_count_alleles_subpop_masked, \
-    genotype_array_to_allele_counts, genotype_array_to_allele_counts_masked, \
-    haplotype_array_count_alleles, haplotype_array_count_alleles_subpop, \
-    haplotype_array_map_alleles, allele_counts_array_map_alleles
-from .generic import index_genotype_vector, compress_genotypes, \
-    take_genotypes, concatenate_genotypes, index_genotype_array, subset_genotype_array, \
-    index_haplotype_array, compress_haplotype_array, take_haplotype_array, \
-    subset_haplotype_array, concatenate_haplotype_array, index_allele_counts_array, \
-    compress_allele_counts_array, take_allele_counts_array, concatenate_allele_counts_array,\
-    index_genotype_ac_array, index_genotype_ac_vector, compress_genotype_ac, \
-    take_genotype_ac, concatenate_genotype_ac, subset_genotype_ac_array
+from allel.opt.model import (
+    genotype_array_pack_diploid,
+    genotype_array_unpack_diploid,
+    genotype_array_count_alleles,
+    genotype_array_count_alleles_masked,
+    genotype_array_count_alleles_subpop,
+    genotype_array_count_alleles_subpop_masked,
+    genotype_array_to_allele_counts,
+    genotype_array_to_allele_counts_masked,
+    haplotype_array_count_alleles,
+    haplotype_array_count_alleles_subpop,
+    haplotype_array_map_alleles,
+    allele_counts_array_map_alleles,
+)
+from .generic import (
+    index_genotype_vector,
+    compress_genotypes,
+    take_genotypes,
+    concatenate_genotypes,
+    index_genotype_array,
+    subset_genotype_array,
+    index_haplotype_array,
+    compress_haplotype_array,
+    take_haplotype_array,
+    subset_haplotype_array,
+    concatenate_haplotype_array,
+    index_allele_counts_array,
+    compress_allele_counts_array,
+    take_allele_counts_array,
+    concatenate_allele_counts_array,
+    index_genotype_ac_array,
+    index_genotype_ac_vector,
+    compress_genotype_ac,
+    take_genotype_ac,
+    concatenate_genotype_ac,
+    subset_genotype_ac_array,
+)
 
 
-__all__ = ['Genotypes', 'GenotypeArray', 'GenotypeVector', 'HaplotypeArray', 'AlleleCountsArray',
-           'GenotypeAlleleCounts', 'GenotypeAlleleCountsArray', 'GenotypeAlleleCountsVector',
-           'SortedIndex', 'UniqueIndex', 'SortedMultiIndex', 'VariantTable', 'FeatureTable',
-           'ChromPosIndex']
+__all__ = [
+    "Genotypes",
+    "GenotypeArray",
+    "GenotypeVector",
+    "HaplotypeArray",
+    "AlleleCountsArray",
+    "GenotypeAlleleCounts",
+    "GenotypeAlleleCountsArray",
+    "GenotypeAlleleCountsVector",
+    "SortedIndex",
+    "UniqueIndex",
+    "SortedMultiIndex",
+    "VariantTable",
+    "FeatureTable",
+    "ChromPosIndex",
+]
 
 
 # noinspection PyTypeChecker
@@ -46,15 +91,15 @@ def subset(data, sel0, sel1):
     # check inputs
     data = np.asarray(data)
     if data.ndim < 2:
-        raise ValueError('data must have 2 or more dimensions')
+        raise ValueError("data must have 2 or more dimensions")
     sel0 = asarray_ndim(sel0, 1, allow_none=True)
     sel1 = asarray_ndim(sel1, 1, allow_none=True)
 
     # ensure indices
-    if sel0 is not None and sel0.dtype.kind == 'b':
-        sel0, = np.nonzero(sel0)
-    if sel1 is not None and sel1.dtype.kind == 'b':
-        sel1, = np.nonzero(sel1)
+    if sel0 is not None and sel0.dtype.kind == "b":
+        (sel0,) = np.nonzero(sel0)
+    if sel1 is not None and sel1.dtype.kind == "b":
+        (sel1,) = np.nonzero(sel1)
 
     # ensure leading dimension indices can be broadcast correctly
     if sel0 is not None and sel1 is not None:
@@ -73,22 +118,24 @@ class NumpyArrayWrapper(ArrayWrapper):
     """Abstract base class that wraps a NumPy array."""
 
     def __init__(self, data, copy=False, **kwargs):
-        values = np.array(data, copy=copy, **kwargs)
+        if copy:
+            values = np.array(data, **kwargs)
+        else:
+            values = np.asarray(data, **kwargs)
         super(NumpyArrayWrapper, self).__init__(values)
 
 
 class NumpyRecArrayWrapper(DisplayAsTable):
-
     def __init__(self, data, copy=False, **kwargs):
         if isinstance(data, dict):
-            names = kwargs.get('names', sorted(data.keys()))
+            names = kwargs.get("names", sorted(data.keys()))
             arrays = [data[n] for n in names]
             values = np.rec.fromarrays(arrays, names=names)
         else:
             values = np.rec.array(data, copy=copy, **kwargs)
             check_ndim(values, 1)
         if not values.dtype.names:
-            raise ValueError('expected recarray')
+            raise ValueError("expected recarray")
         super(NumpyRecArrayWrapper, self).__init__(values)
 
     def __getitem__(self, item):
@@ -103,7 +150,7 @@ class NumpyRecArrayWrapper(DisplayAsTable):
 
     @classmethod
     def fromdict(cls, data, **kwargs):
-        names = kwargs.get('names', sorted(data.keys()))
+        names = kwargs.get("names", sorted(data.keys()))
         arrays = [data[n] for n in names]
         a = np.rec.fromarrays(arrays, names=names)
         return cls(a, copy=False)
@@ -126,7 +173,7 @@ class NumpyRecArrayWrapper(DisplayAsTable):
     def to_hdf5_group(self, parent, name, **kwargs):
         return recarray_to_hdf5_group(self, parent, name, **kwargs)
 
-    def eval(self, expression, vm='python'):
+    def eval(self, expression, vm="python"):
         """Evaluate an expression against the table columns.
 
         Parameters
@@ -142,13 +189,14 @@ class NumpyRecArrayWrapper(DisplayAsTable):
 
         """
 
-        if vm == 'numexpr':
+        if vm == "numexpr":
             import numexpr as ne
+
             return ne.evaluate(expression, local_dict=self)
         else:
             return eval(expression, dict(), self)
 
-    def query(self, expression, vm='python'):
+    def query(self, expression, vm="python"):
         """Evaluate expression and then use it to extract rows from the table.
 
         Parameters
@@ -178,7 +226,7 @@ class NumpyRecArrayWrapper(DisplayAsTable):
             out = type(self)(out)
         return out
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         out = self.values.take(indices, axis=axis, out=out, mode=mode)
         if axis == 0:
             out = type(self)(out)
@@ -187,7 +235,7 @@ class NumpyRecArrayWrapper(DisplayAsTable):
     def concatenate(self, others):
         """Concatenate arrays."""
         if not isinstance(others, (list, tuple)):
-            others = others,
+            others = (others,)
         tup = (self.values,) + tuple(o.values for o in others)
         out = np.concatenate(tup, axis=0)
         out = type(self)(out)
@@ -358,10 +406,13 @@ class Genotypes(NumpyArrayWrapper):
         """
 
         if self.mask is None:
-            raise ValueError('no mask is set')
+            raise ValueError("no mask is set")
 
         # apply the mask
-        data = np.array(self.values, copy=copy)
+        if copy:
+            data = np.array(self.values)
+        else:
+            data = np.asarray(self.values)
         data[self.mask, ...] = value
 
         if copy:
@@ -609,7 +660,9 @@ class Genotypes(NumpyArrayWrapper):
 
         allele1 = self.values[..., 0, np.newaxis]  # type: np.ndarray
         other_alleles = self.values[..., 1:]  # type: np.ndarray
-        out = np.all(self.values >= 0, axis=-1) & np.any(allele1 != other_alleles, axis=-1)
+        out = np.all(self.values >= 0, axis=-1) & np.any(
+            allele1 != other_alleles, axis=-1
+        )
         if allele is not None:
             out &= np.any(self.values == allele, axis=-1)
 
@@ -654,7 +707,7 @@ class Genotypes(NumpyArrayWrapper):
 
         # guard conditions
         if not len(call) == self.shape[-1]:
-            raise ValueError('invalid call ploidy: %s', repr(call))
+            raise ValueError("invalid call ploidy: %s", repr(call))
 
         if self.ndim == 2:
             call = np.asarray(call)[np.newaxis, :]
@@ -758,7 +811,7 @@ class Genotypes(NumpyArrayWrapper):
         b = self.is_call(call=call)
         return np.sum(b, axis=axis)
 
-    def to_n_ref(self, fill=0, dtype='i1'):
+    def to_n_ref(self, fill=0, dtype="i1"):
         """Transform each genotype call into the number of
         reference alleles.
 
@@ -819,7 +872,7 @@ class Genotypes(NumpyArrayWrapper):
 
         return out
 
-    def to_n_alt(self, fill=0, dtype='i1'):
+    def to_n_alt(self, fill=0, dtype="i1"):
         """Transform each genotype call into the number of
         non-reference alleles.
 
@@ -927,7 +980,11 @@ class Genotypes(NumpyArrayWrapper):
 
         # use optimisations
         values = memoryview_safe(self.values)
-        mask = memoryview_safe(self.mask).view(dtype='u1') if self.mask is not None else None
+        mask = (
+            memoryview_safe(self.mask).view(dtype="u1")
+            if self.mask is not None
+            else None
+        )
 
         # handle genotype vector case as an array of one genotype
         if values.ndim == 2:
@@ -1004,20 +1061,20 @@ class Genotypes(NumpyArrayWrapper):
         nchar = int(np.floor(np.log10(max_allele))) + 1
 
         # convert to string
-        a = self.astype((np.string_, nchar)).view(np.chararray)
+        a = self.astype((np.bytes_, nchar)).view(np.chararray)
 
         # recode missing alleles
-        a[self < 0] = b'.'
+        a[self < 0] = b"."
         if self.mask is not None:
-            a[self.mask] = b'.'
+            a[self.mask] = b"."
 
         # determine allele call separator
         if self.is_phased is None:
-            sep = b'/'
+            sep = b"/"
         else:
-            sep = np.empty(self.shape[:-1], dtype='S1').view(np.chararray)
-            sep[self.is_phased] = b'|'
-            sep[~self.is_phased] = b'/'
+            sep = np.empty(self.shape[:-1], dtype="S1").view(np.chararray)
+            sep[self.is_phased] = b"|"
+            sep[~self.is_phased] = b"/"
 
         # join via separator, coping with any ploidy
         gt = a[..., 0]
@@ -1186,7 +1243,7 @@ class Genotypes(NumpyArrayWrapper):
         # implement in sub-class
         raise NotImplementedError
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         """Take elements from an array along an axis.
 
         This function does the same thing as "fancy" indexing (indexing arrays
@@ -1311,28 +1368,49 @@ class GenotypeVector(Genotypes, DisplayAs1D):
         return index_genotype_vector(self, item, type(self))
 
     def compress(self, condition, axis=0, out=None):
-        return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0},
-                                  cls=type(self), compress=np.compress, out=out)
+        return compress_genotypes(
+            self,
+            condition=condition,
+            axis=axis,
+            wrap_axes={0},
+            cls=type(self),
+            compress=np.compress,
+            out=out,
+        )
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
-        return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0}, cls=type(self),
-                              take=np.take, out=out, mode=mode)
+    def take(self, indices, axis=0, out=None, mode="raise"):
+        return take_genotypes(
+            self,
+            indices=indices,
+            axis=axis,
+            wrap_axes={0},
+            cls=type(self),
+            take=np.take,
+            out=out,
+            mode=mode,
+        )
 
     def concatenate(self, others, axis=0):
-        return concatenate_genotypes(self, others=others, axis=axis, wrap_axes={0},
-                                     cls=type(self), concatenate=np.concatenate)
+        return concatenate_genotypes(
+            self,
+            others=others,
+            axis=axis,
+            wrap_axes={0},
+            cls=type(self),
+            concatenate=np.concatenate,
+        )
 
     def to_haplotypes(self, copy=False):
         return HaplotypeArray(self.values, copy=copy)
 
     def str_items(self):
         gt = self.to_gt()
-        out = [str(x, 'ascii') for x in gt]
+        out = [str(x, "ascii") for x in gt]
         return out
 
     def to_str(self, threshold=10, edgeitems=5):
         _, items = self.get_display_items(threshold, edgeitems)
-        s = ' '.join(items)
+        s = " ".join(items)
         return s
 
 
@@ -1346,9 +1424,9 @@ def _normalize_subpop_arg(subpop, n):
     subpop = asarray_ndim(subpop, 1, allow_none=True, dtype=np.int64)
     if subpop is not None:
         if np.any(subpop >= n):
-            raise ValueError('index out of bounds')
+            raise ValueError("index out of bounds")
         if np.any(subpop < 0):
-            raise ValueError('negative indices not supported')
+            raise ValueError("negative indices not supported")
         subpop = memoryview_safe(subpop)
     return subpop
 
@@ -1475,8 +1553,9 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         check_ndim(self.values, 3)
 
     def __getitem__(self, item):
-        return index_genotype_array(self, item, array_cls=type(self),
-                                    vector_cls=GenotypeVector)
+        return index_genotype_array(
+            self, item, array_cls=type(self), vector_cls=GenotypeVector
+        )
 
     @property
     def n_variants(self):
@@ -1489,12 +1568,27 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         return self.shape[1]
 
     def compress(self, condition, axis=0, out=None):
-        return compress_genotypes(self, condition=condition, axis=axis, wrap_axes={0, 1},
-                                  cls=type(self), compress=np.compress, out=out)
+        return compress_genotypes(
+            self,
+            condition=condition,
+            axis=axis,
+            wrap_axes={0, 1},
+            cls=type(self),
+            compress=np.compress,
+            out=out,
+        )
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
-        return take_genotypes(self, indices=indices, axis=axis, wrap_axes={0, 1},
-                              cls=type(self), take=np.take, out=out, mode=mode)
+    def take(self, indices, axis=0, out=None, mode="raise"):
+        return take_genotypes(
+            self,
+            indices=indices,
+            axis=axis,
+            wrap_axes={0, 1},
+            cls=type(self),
+            take=np.take,
+            out=out,
+            mode=mode,
+        )
 
     def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and samples.
@@ -1530,8 +1624,14 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         return subset_genotype_array(self, sel0, sel1, cls=type(self), subset=subset)
 
     def concatenate(self, others, axis=0):
-        return concatenate_genotypes(self, others=others, axis=axis, wrap_axes={0, 1},
-                                     cls=type(self), concatenate=np.concatenate)
+        return concatenate_genotypes(
+            self,
+            others=others,
+            axis=axis,
+            wrap_axes={0, 1},
+            cls=type(self),
+            concatenate=np.concatenate,
+        )
 
     def to_haplotypes(self, copy=False):
         # reshape, preserving size of variants dimension
@@ -1543,7 +1643,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
     def str_items(self):
         gt = self.to_gt()
         n = gt.dtype.itemsize
-        out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        out = [[str(x, "ascii").rjust(n) for x in row] for row in gt]
         return out
 
     def to_packed(self, boundscheck=True):
@@ -1586,10 +1686,10 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         if boundscheck:
             amx = self.max()
             if amx > 14:
-                raise ValueError('max allele for packing is 14, found %s' % amx)
+                raise ValueError("max allele for packing is 14, found %s" % amx)
             amn = self.min()
             if amn < -1:
-                raise ValueError('min allele for packing is -1, found %s' % amn)
+                raise ValueError("min allele for packing is -1, found %s" % amn)
 
         # pack data
         values = memoryview_safe(self.values)
@@ -1631,14 +1731,14 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         # check arguments
         packed = np.asarray(packed)
         check_ndim(packed, 2)
-        check_dtype(packed, 'u1')
+        check_dtype(packed, "u1")
         packed = memoryview_safe(packed)
 
         data = genotype_array_unpack_diploid(packed)
         return cls(data)
 
     # noinspection PyShadowingBuiltins
-    def to_sparse(self, format='csr', **kwargs):
+    def to_sparse(self, format="csr", **kwargs):
         """Convert into a sparse matrix.
 
         Parameters
@@ -1771,7 +1871,7 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         # necessary, TODO review
 
         # define the range of possible indices, e.g., diploid => (0, 1)
-        index_range = np.arange(0, self.ploidy, dtype='u1')
+        index_range = np.arange(0, self.ploidy, dtype="u1")
 
         # create a random index for each genotype call
         indices = np.random.choice(index_range, size=self.n_calls, replace=True)
@@ -1836,7 +1936,11 @@ class GenotypeArray(Genotypes, DisplayAs2D):
 
         # use optimisations
         values = memoryview_safe(self.values)
-        mask = memoryview_safe(self.mask).view(dtype='u1') if self.mask is not None else None
+        mask = (
+            memoryview_safe(self.mask).view(dtype="u1")
+            if self.mask is not None
+            else None
+        )
         if subpop is None and mask is None:
             ac = genotype_array_count_alleles(values, max_allele)
         elif subpop is None:
@@ -1844,7 +1948,9 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         elif mask is None:
             ac = genotype_array_count_alleles_subpop(values, max_allele, subpop)
         else:
-            ac = genotype_array_count_alleles_subpop_masked(values, mask, max_allele, subpop)
+            ac = genotype_array_count_alleles_subpop_masked(
+                values, mask, max_allele, subpop
+            )
 
         return AlleleCountsArray(ac, copy=False)
 
@@ -1869,8 +1975,10 @@ class GenotypeArray(Genotypes, DisplayAs2D):
         if max_allele is None:
             max_allele = self.max()
 
-        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
-               for name, subpop in subpops.items()}
+        out = {
+            name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+            for name, subpop in subpops.items()
+        }
 
         return out
 
@@ -2026,10 +2134,11 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         0 .
 
         """
-        return compress_haplotype_array(self, condition, axis=axis, cls=type(self),
-                                        compress=np.compress, out=out)
+        return compress_haplotype_array(
+            self, condition, axis=axis, cls=type(self), compress=np.compress, out=out
+        )
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         """Take elements from an array along an axis.
 
         This function does the same thing as "fancy" indexing (indexing arrays
@@ -2078,8 +2187,9 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        return take_haplotype_array(self, indices, axis=axis, cls=type(self), take=np.take,
-                                    out=out, mode=mode)
+        return take_haplotype_array(
+            self, indices, axis=axis, cls=type(self), take=np.take, out=out, mode=mode
+        )
 
     def subset(self, sel0=None, sel1=None):
         """Make a sub-selection of variants and haplotypes.
@@ -2139,8 +2249,9 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         0 2 . . 0 2 . .
 
         """
-        return concatenate_haplotype_array(self, others, axis=axis, cls=type(self),
-                                           concatenate=np.concatenate)
+        return concatenate_haplotype_array(
+            self, others, axis=axis, cls=type(self), concatenate=np.concatenate
+        )
 
     def str_items(self):
         values = self.values
@@ -2148,10 +2259,10 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         if max_allele <= 0:
             max_allele = 1
         n = int(np.floor(np.log10(max_allele))) + 1
-        t = values.astype((np.string_, n))
+        t = values.astype((np.bytes_, n))
         # recode missing alleles
-        t[values < 0] = b'.'
-        out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        t[values < 0] = b"."
+        out = [[str(x, "ascii").rjust(n) for x in row] for row in t]
         return out
 
     def is_called(self):
@@ -2227,7 +2338,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         # check ploidy is compatible
         if (self.shape[1] % ploidy) > 0:
-            raise ValueError('incompatible ploidy')
+            raise ValueError("incompatible ploidy")
 
         # reshape
         newshape = (self.shape[0], -1, ploidy)
@@ -2239,7 +2350,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         return g
 
     # noinspection PyShadowingBuiltins
-    def to_sparse(self, format='csr', **kwargs):
+    def to_sparse(self, format="csr", **kwargs):
         """Convert into a sparse matrix.
 
         Parameters
@@ -2279,16 +2390,16 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         # check arguments
         f = {
-            'bsr': scipy.sparse.bsr_matrix,
-            'coo': scipy.sparse.coo_matrix,
-            'csc': scipy.sparse.csc_matrix,
-            'csr': scipy.sparse.csr_matrix,
-            'dia': scipy.sparse.dia_matrix,
-            'dok': scipy.sparse.dok_matrix,
-            'lil': scipy.sparse.lil_matrix
+            "bsr": scipy.sparse.bsr_matrix,
+            "coo": scipy.sparse.coo_matrix,
+            "csc": scipy.sparse.csc_matrix,
+            "csr": scipy.sparse.csr_matrix,
+            "dia": scipy.sparse.dia_matrix,
+            "dok": scipy.sparse.dok_matrix,
+            "lil": scipy.sparse.lil_matrix,
         }
         if format not in f:
-            raise ValueError('invalid format: %r' % format)
+            raise ValueError("invalid format: %r" % format)
 
         # create sparse matrix
         m = f[format](self, **kwargs)
@@ -2338,7 +2449,7 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         # check arguments
         if not scipy.sparse.isspmatrix(m):
-            raise ValueError('not a sparse matrix: %r' % m)
+            raise ValueError("not a sparse matrix: %r" % m)
 
         # convert to dense array
         data = m.toarray(order=order, out=out)
@@ -2417,8 +2528,10 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
         if max_allele is None:
             max_allele = self.max()
 
-        out = {name: self.count_alleles(max_allele=max_allele, subpop=subpop)
-               for name, subpop in subpops.items()}
+        out = {
+            name: self.count_alleles(max_allele=max_allele, subpop=subpop)
+            for name, subpop in subpops.items()
+        }
 
         return out
 
@@ -2490,7 +2603,6 @@ class HaplotypeArray(NumpyArrayWrapper, DisplayAs2D):
 
         # iterate over haplotypes
         for i in range(self.shape[1]):
-
             # hash the haplotype
             k = hash(self.values[:, i].tobytes())
 
@@ -2600,13 +2712,13 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
     def __add__(self, other):
         ret = super(AlleleCountsArray, self).__add__(other)
-        if hasattr(ret, 'shape') and ret.shape == self.shape:
+        if hasattr(ret, "shape") and ret.shape == self.shape:
             ret = AlleleCountsArray(ret)
         return ret
 
     def __sub__(self, other):
         ret = super(AlleleCountsArray, self).__sub__(other)
-        if hasattr(ret, 'shape') and ret.shape == self.shape:
+        if hasattr(ret, "shape") and ret.shape == self.shape:
             ret = AlleleCountsArray(ret)
         return ret
 
@@ -2624,16 +2736,19 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         return index_allele_counts_array(self, item, type(self))
 
     def compress(self, condition, axis=0, out=None):
-        return compress_allele_counts_array(self, condition, axis=axis, cls=type(self),
-                                            compress=np.compress, out=out)
+        return compress_allele_counts_array(
+            self, condition, axis=axis, cls=type(self), compress=np.compress, out=out
+        )
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
-        return take_allele_counts_array(self, indices, axis=axis, cls=type(self),
-                                        take=np.take, out=out, mode=mode)
+    def take(self, indices, axis=0, out=None, mode="raise"):
+        return take_allele_counts_array(
+            self, indices, axis=axis, cls=type(self), take=np.take, out=out, mode=mode
+        )
 
     def concatenate(self, others, axis=0):
-        return concatenate_allele_counts_array(self, others, axis=axis, cls=type(self),
-                                               concatenate=np.concatenate)
+        return concatenate_allele_counts_array(
+            self, others, axis=axis, cls=type(self), concatenate=np.concatenate
+        )
 
     def str_items(self):
         values = self.values
@@ -2641,8 +2756,8 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
         if max_allele <= 0:
             max_allele = 1
         n = int(np.floor(np.log10(max_allele))) + 1
-        t = values.astype((np.string_, n))
-        out = [[str(x, 'ascii').rjust(n) for x in row] for row in t]
+        t = values.astype((np.bytes_, n))
+        out = [[str(x, "ascii").rjust(n) for x in row] for row in t]
         return out
 
     def to_frequencies(self, fill=np.nan):
@@ -2722,7 +2837,7 @@ class AlleleCountsArray(NumpyArrayWrapper, DisplayAs2D):
 
         """
 
-        out = np.empty(self.shape[0], dtype='i1')
+        out = np.empty(self.shape[0], dtype="i1")
         out.fill(-1)
         for i in range(self.shape[1]):
             d = self.values[:, i] > 0
@@ -3070,7 +3185,7 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
         return np.sum(self.values > 0, axis=-1)
 
     def max_allele(self):
-        out = np.empty(self.shape[:-1], dtype='i1')
+        out = np.empty(self.shape[:-1], dtype="i1")
         out.fill(-1)
         for i in range(self.shape[-1]):
             d = self.values[..., i] > 0
@@ -3102,17 +3217,16 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
         return loc
 
     def to_gt(self, max_count=None):
-
         # how many characters needed per allele?
         if max_count is None:
             max_count = np.max(self)
         nchar = int(np.floor(np.log10(max_count))) + 1
 
         # convert to string
-        a = self.astype((np.string_, nchar)).view(np.chararray)
+        a = self.astype((np.bytes_, nchar)).view(np.chararray)
 
         # determine allele count separator
-        sep = b':'
+        sep = b":"
 
         # join via separator
         gt = a[..., 0]
@@ -3125,7 +3239,7 @@ class GenotypeAlleleCounts(NumpyArrayWrapper):
         # implement in sub-class
         raise NotImplementedError
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         # implement in sub-class
         raise NotImplementedError
 
@@ -3171,25 +3285,46 @@ class GenotypeAlleleCountsVector(GenotypeAlleleCounts, DisplayAs1D):
         return self.shape[1]
 
     def compress(self, condition, axis=0, out=None):
-        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0},
-                                    cls=type(self), compress=np.compress, out=out)
+        return compress_genotype_ac(
+            self,
+            condition=condition,
+            axis=axis,
+            wrap_axes={0},
+            cls=type(self),
+            compress=np.compress,
+            out=out,
+        )
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
-        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0},
-                                cls=type(self), take=np.take, out=out, mode=mode)
+    def take(self, indices, axis=0, out=None, mode="raise"):
+        return take_genotype_ac(
+            self,
+            indices=indices,
+            axis=axis,
+            wrap_axes={0},
+            cls=type(self),
+            take=np.take,
+            out=out,
+            mode=mode,
+        )
 
     def concatenate(self, others, axis=0):
-        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0},
-                                       cls=type(self), concatenate=np.concatenate)
+        return concatenate_genotype_ac(
+            self,
+            others=others,
+            axis=axis,
+            wrap_axes={0},
+            cls=type(self),
+            concatenate=np.concatenate,
+        )
 
     def str_items(self):
         gt = self.to_gt()
-        out = [str(x, 'ascii') for x in gt]
+        out = [str(x, "ascii") for x in gt]
         return out
 
     def to_str(self, threshold=10, edgeitems=5):
         _, items = self.get_display_items(threshold, edgeitems)
-        s = ' '.join(items)
+        s = " ".join(items)
         return s
 
 
@@ -3282,8 +3417,9 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
         check_ndim(self.values, 3)
 
     def __getitem__(self, item):
-        return index_genotype_ac_array(self, item, array_cls=type(self),
-                                       vector_cls=GenotypeAlleleCountsVector)
+        return index_genotype_ac_array(
+            self, item, array_cls=type(self), vector_cls=GenotypeAlleleCountsVector
+        )
 
     @property
     def n_variants(self):
@@ -3301,7 +3437,6 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
         return self.shape[2]
 
     def count_alleles(self, subpop=None):
-
         # deal with subpop
         subpop = _normalize_subpop_arg(subpop, self.shape[1])
         if subpop is not None:
@@ -3309,22 +3444,43 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
         else:
             g = self.values
 
-        out = np.empty((g.shape[0], g.shape[2]), dtype='i4')
+        out = np.empty((g.shape[0], g.shape[2]), dtype="i4")
         g.sum(axis=1, out=out)
         out = AlleleCountsArray(out)
         return out
 
     def compress(self, condition, axis=0, out=None):
-        return compress_genotype_ac(self, condition=condition, axis=axis, wrap_axes={0, 1},
-                                    cls=type(self), compress=np.compress, out=out)
+        return compress_genotype_ac(
+            self,
+            condition=condition,
+            axis=axis,
+            wrap_axes={0, 1},
+            cls=type(self),
+            compress=np.compress,
+            out=out,
+        )
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
-        return take_genotype_ac(self, indices=indices, axis=axis, wrap_axes={0, 1},
-                                cls=type(self), take=np.take, out=out, mode=mode)
+    def take(self, indices, axis=0, out=None, mode="raise"):
+        return take_genotype_ac(
+            self,
+            indices=indices,
+            axis=axis,
+            wrap_axes={0, 1},
+            cls=type(self),
+            take=np.take,
+            out=out,
+            mode=mode,
+        )
 
     def concatenate(self, others, axis=0):
-        return concatenate_genotype_ac(self, others=others, axis=axis, wrap_axes={0, 1},
-                                       cls=type(self), concatenate=np.concatenate)
+        return concatenate_genotype_ac(
+            self,
+            others=others,
+            axis=axis,
+            wrap_axes={0, 1},
+            cls=type(self),
+            concatenate=np.concatenate,
+        )
 
     def subset(self, sel0=None, sel1=None):
         return subset_genotype_ac_array(self, sel0, sel1, cls=type(self), subset=subset)
@@ -3332,7 +3488,7 @@ class GenotypeAlleleCountsArray(GenotypeAlleleCounts, DisplayAs2D):
     def str_items(self):
         gt = self.to_gt()
         n = gt.dtype.itemsize
-        out = [[str(x, 'ascii').rjust(n) for x in row] for row in gt]
+        out = [[str(x, "ascii").rjust(n) for x in row] for row in gt]
         return out
 
 
@@ -3381,7 +3537,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
         # check sorted ascending
         t = self.values[:-1] > self.values[1:]  # type: np.ndarray
         if np.any(t):
-            raise ValueError('values must be monotonically increasing')
+            raise ValueError("values must be monotonically increasing")
         self._is_unique = None
 
     @property
@@ -3404,7 +3560,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
             out = type(self)(out)
         return out
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         out = self.values.take(indices, axis=axis, out=out, mode=mode)
         if axis == 0:
             out = type(self)(out)
@@ -3493,8 +3649,8 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
 
         # find intersection
         assume_unique = self.is_unique and other.is_unique
-        loc = np.in1d(self, other, assume_unique=assume_unique)
-        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+        loc = np.isin(self, other, assume_unique=assume_unique)
+        loc_other = np.isin(other, self, assume_unique=assume_unique)
 
         return loc, loc_other
 
@@ -3695,7 +3851,7 @@ class SortedIndex(NumpyArrayWrapper, DisplayAs1D):
 
         # find indices of start and stop values in idx
         start_indices = np.searchsorted(self, starts)
-        stop_indices = np.searchsorted(self, stops, side='right')
+        stop_indices = np.searchsorted(self, stops, side="right")
 
         # find intervals overlapping at least one value
         loc_ranges = start_indices < stop_indices
@@ -3831,7 +3987,7 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
         _, counts = np.unique(self.values, return_counts=True)
         t = counts > 1  # type: np.ndarray
         if np.any(t):
-            raise ValueError('values are not unique')
+            raise ValueError("values are not unique")
         self.lookup = {v: i for i, v in enumerate(self.values)}
 
     def __getitem__(self, item):
@@ -3846,7 +4002,7 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
             out = type(self)(out)
         return out
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         out = self.values.take(indices, axis=axis, out=out, mode=mode)
         if axis == 0:
             out = type(self)(out)
@@ -3925,8 +4081,8 @@ class UniqueIndex(NumpyArrayWrapper, DisplayAs1D):
 
         # find intersection
         assume_unique = True
-        loc = np.in1d(self, other, assume_unique=assume_unique)
-        loc_other = np.in1d(other, self, assume_unique=assume_unique)
+        loc = np.isin(self, other, assume_unique=assume_unique)
+        loc_other = np.isin(other, self, assume_unique=assume_unique)
 
         return loc, loc_other
 
@@ -4034,24 +4190,30 @@ class SortedMultiIndex(DisplayAs1D):
 
     def __init__(self, l1, l2, copy=False):
         l1 = SortedIndex(l1, copy=copy)
-        l2 = np.array(l2, copy=copy)
+        if copy:
+            l2 = np.array(l2)
+        else:
+            l2 = np.asarray(l2)
         check_ndim(l2, 1)
         check_dim0_aligned(l1, l2)
         self.l1 = l1
         self.l2 = l2
 
     def __repr__(self):
-        s = '<SortedMultiIndex shape=(%s,), dtype=%s/%s>' % \
-            (len(self), self.l1.dtype, self.l2.dtype)
-        s += '\n' + str(self)
+        s = "<SortedMultiIndex shape=(%s,), dtype=%s/%s>" % (
+            len(self),
+            self.l1.dtype,
+            self.l2.dtype,
+        )
+        s += "\n" + str(self)
         return s
 
     def str_items(self):
-        return ['%s:%s' % (x, y) for x, y in zip(self.l1, self.l2)]
+        return ["%s:%s" % (x, y) for x, y in zip(self.l1, self.l2)]
 
     def to_str(self, threshold=10, edgeitems=5):
         _, items = self.get_display_items(threshold, edgeitems)
-        s = ' '.join(items)
+        s = " ".join(items)
         return s
 
     def __len__(self):
@@ -4067,21 +4229,21 @@ class SortedMultiIndex(DisplayAs1D):
 
     def compress(self, condition, axis=0, out=None):
         if out is not None:
-            raise NotImplementedError('out argument not supported')
+            raise NotImplementedError("out argument not supported")
         l1 = self.l1.compress(condition, axis=axis)
         l2 = self.l2.compress(condition, axis=axis)
         return SortedMultiIndex(l1, l2, copy=False)
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         if out is not None:
-            raise NotImplementedError('out argument not supported')
+            raise NotImplementedError("out argument not supported")
         l1 = self.l1.take(indices, axis=axis, mode=mode)
         l2 = self.l2.take(indices, axis=axis, mode=mode)
         return SortedMultiIndex(l1, l2, copy=False)
 
     @property
     def shape(self):
-        return len(self),
+        return (len(self),)
 
     def locate_key(self, k1, k2=None):
         """
@@ -4250,8 +4412,12 @@ class ChromPosIndex(DisplayAs1D):
     """
 
     def __init__(self, chrom, pos, copy=False):
-        chrom = np.array(chrom, copy=copy)
-        pos = np.array(pos, copy=copy)
+        if copy:
+            chrom = np.array(chrom)
+            pos = np.array(pos)
+        else:
+            chrom = np.asarray(chrom)
+            pos = np.asarray(pos)
         check_ndim(chrom, 1)
         check_ndim(pos, 1)
         check_dim0_aligned(chrom, pos)
@@ -4261,17 +4427,20 @@ class ChromPosIndex(DisplayAs1D):
         self.chrom_ranges = dict()
 
     def __repr__(self):
-        s = '<ChromPosIndex shape=(%s,), dtype=%s/%s>' % \
-            (len(self), self.chrom.dtype, self.pos.dtype)
-        s += '\n' + str(self)
+        s = "<ChromPosIndex shape=(%s,), dtype=%s/%s>" % (
+            len(self),
+            self.chrom.dtype,
+            self.pos.dtype,
+        )
+        s += "\n" + str(self)
         return s
 
     def str_items(self):
-        return ['%s:%s' % (x, y) for x, y in zip(self.chrom, self.pos)]
+        return ["%s:%s" % (x, y) for x, y in zip(self.chrom, self.pos)]
 
     def to_str(self, threshold=10, edgeitems=5):
         _, items = self.get_display_items(threshold, edgeitems)
-        s = ' '.join(items)
+        s = " ".join(items)
         return s
 
     def __len__(self):
@@ -4287,21 +4456,21 @@ class ChromPosIndex(DisplayAs1D):
 
     def compress(self, condition, axis=0, out=None):
         if out is not None:
-            raise NotImplementedError('out argument not supported')
+            raise NotImplementedError("out argument not supported")
         l1 = self.chrom.compress(condition, axis=axis)
         l2 = self.pos.compress(condition, axis=axis)
         return ChromPosIndex(l1, l2, copy=False)
 
-    def take(self, indices, axis=0, out=None, mode='raise'):
+    def take(self, indices, axis=0, out=None, mode="raise"):
         if out is not None:
-            raise NotImplementedError('out argument not supported')
+            raise NotImplementedError("out argument not supported")
         l1 = self.chrom.take(indices, axis=axis, mode=mode)
         l2 = self.pos.take(indices, axis=axis, mode=mode)
         return ChromPosIndex(l1, l2, copy=False)
 
     @property
     def shape(self):
-        return len(self),
+        return (len(self),)
 
     def locate_key(self, chrom, pos=None):
         """
@@ -4364,8 +4533,10 @@ class ChromPosIndex(DisplayAs1D):
             except KeyError:
                 raise KeyError(chrom, pos)
             if isinstance(idx_within_chrom, slice):
-                return slice(slice_chrom.start + idx_within_chrom.start,
-                             slice_chrom.start + idx_within_chrom.stop)
+                return slice(
+                    slice_chrom.start + idx_within_chrom.start,
+                    slice_chrom.start + idx_within_chrom.stop,
+                )
             else:
                 return slice_chrom.start + idx_within_chrom
 
@@ -4414,14 +4585,15 @@ class ChromPosIndex(DisplayAs1D):
             return slice_chrom
 
         else:
-
             pos_chrom = SortedIndex(self.pos[slice_chrom])
             try:
                 slice_within_chrom = pos_chrom.locate_range(start, stop)
             except KeyError:
                 raise KeyError(chrom, start, stop)
-            loc = slice(slice_chrom.start + slice_within_chrom.start,
-                        slice_chrom.start + slice_within_chrom.stop)
+            loc = slice(
+                slice_chrom.start + slice_within_chrom.start,
+                slice_chrom.start + slice_within_chrom.stop,
+            )
             return loc
 
 
@@ -4539,11 +4711,12 @@ class VariantTable(NumpyRecArrayWrapper):
         elif isinstance(index, str):
             index = SortedIndex(self[index], copy=False)
         elif isinstance(index, (tuple, list)) and len(index) == 2:
-            index = SortedMultiIndex(self[index[0]], self[index[1]],
-                                     copy=False)
+            index = SortedMultiIndex(self[index[0]], self[index[1]], copy=False)
         else:
-            raise ValueError('invalid index argument, expected string or '
-                             'pair of strings, found %s' % repr(index))
+            raise ValueError(
+                "invalid index argument, expected string or "
+                "pair of strings, found %s" % repr(index)
+            )
         self.index = index
 
     def query_position(self, chrom=None, position=None):
@@ -4564,7 +4737,7 @@ class VariantTable(NumpyRecArrayWrapper):
         """
 
         if self.index is None:
-            raise ValueError('no index has been set')
+            raise ValueError("no index has been set")
         if isinstance(self.index, SortedIndex):
             # ignore chrom
             loc = self.index.locate_key(position)
@@ -4591,7 +4764,7 @@ class VariantTable(NumpyRecArrayWrapper):
 
         """
         if self.index is None:
-            raise ValueError('no index has been set')
+            raise ValueError("no index has been set")
         if isinstance(self.index, SortedIndex):
             # ignore chrom
             loc = self.index.locate_range(start, stop)
@@ -4599,8 +4772,15 @@ class VariantTable(NumpyRecArrayWrapper):
             loc = self.index.locate_range(chrom, start, stop)
         return self[loc]
 
-    def to_vcf(self, path, rename=None, number=None, description=None,
-               fill=None, write_header=True):
+    def to_vcf(
+        self,
+        path,
+        rename=None,
+        number=None,
+        description=None,
+        fill=None,
+        write_header=True,
+    ):
         r"""Write to a variant call format (VCF) file.
 
         Parameters
@@ -4687,9 +4867,15 @@ class VariantTable(NumpyRecArrayWrapper):
 
         """
 
-        write_vcf(path, callset=self, rename=rename, number=number,
-                  description=description, fill=fill,
-                  write_header=write_header)
+        write_vcf(
+            path,
+            callset=self,
+            rename=rename,
+            number=number,
+            description=description,
+            fill=fill,
+            write_header=write_header,
+        )
 
 
 class FeatureTable(NumpyRecArrayWrapper):
@@ -4715,7 +4901,7 @@ class FeatureTable(NumpyRecArrayWrapper):
         """Number of features (length of first dimension)."""
         return self.shape[0]
 
-    def to_mask(self, size, start_name='start', stop_name='end'):
+    def to_mask(self, size, start_name="start", stop_name="end"):
         """Construct a mask array where elements are True if the fall within
         features in the table.
 
@@ -4737,12 +4923,19 @@ class FeatureTable(NumpyRecArrayWrapper):
         """
         m = np.zeros(size, dtype=bool)
         for start, stop in self[[start_name, stop_name]]:
-            m[start-1:stop] = True
+            m[start - 1 : stop] = True
         return m
 
     @staticmethod
-    def from_gff3(path, attributes=None, region=None, score_fill=-1, phase_fill=-1,
-                  attributes_fill='.', dtype=None):
+    def from_gff3(
+        path,
+        attributes=None,
+        region=None,
+        score_fill=-1,
+        phase_fill=-1,
+        attributes_fill=".",
+        dtype=None,
+    ):
         """Read a feature table from a GFF3 format file.
 
         Parameters
@@ -4770,9 +4963,15 @@ class FeatureTable(NumpyRecArrayWrapper):
 
         """
 
-        a = gff3_to_recarray(path, attributes=attributes, region=region,
-                             score_fill=score_fill, phase_fill=phase_fill,
-                             attributes_fill=attributes_fill, dtype=dtype)
+        a = gff3_to_recarray(
+            path,
+            attributes=attributes,
+            region=region,
+            score_fill=score_fill,
+            phase_fill=phase_fill,
+            attributes_fill=attributes_fill,
+            dtype=dtype,
+        )
         if a is None:
             return None
         else:

@@ -28,7 +28,7 @@ jobs:
         env:
           # Only build on Python 3 and skip 32-bit builds
           CIBW_BUILD: "cp3*-*"
-          CIBW_SKIP: "cp36-* cp37-* *-win32 *i686 *musl*"
+          CIBW_SKIP: "cp36-* cp37-* cp38-* cp39-* *-win32 *i686 *musl*"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

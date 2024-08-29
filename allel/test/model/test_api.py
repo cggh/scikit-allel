@@ -141,12 +141,12 @@ class GenotypeArrayInterface(object):
 
         # diploid data
         g = self.setup_instance(diploid_genotype_data)
-        a = np.array(g, copy=False)
+        a = np.asarray(g)
         aeq(diploid_genotype_data, a)
 
         # polyploid data
         g = self.setup_instance(triploid_genotype_data)
-        a = np.array(g, copy=False)
+        a = np.asarray(g)
         aeq(triploid_genotype_data, a)
 
     def test_slice(self):
@@ -1043,7 +1043,7 @@ class HaplotypeArrayInterface(object):
         # a vanilla numpy array representation of the data.
 
         h = self.setup_instance(haplotype_data)
-        a = np.array(h, copy=False)
+        a = np.asarray(h)
         aeq(haplotype_data, a)
 
     def test_slice(self):
@@ -1395,7 +1395,7 @@ class AlleleCountsArrayInterface(object):
         # a vanilla numpy array representation of the data.
 
         ac = self.setup_instance(allele_counts_data)
-        a = np.array(ac, copy=False)
+        a = np.asarray(ac)
         aeq(allele_counts_data, a)
 
     def test_slice(self):
@@ -1639,12 +1639,12 @@ class GenotypeAlleleCountsArrayInterface(object):
 
         # diploid data
         g = self.setup_instance(diploid_genotype_ac_data)
-        a = np.array(g, copy=False)
+        a = np.asarray(g)
         aeq(diploid_genotype_ac_data, a)
 
         # polyploid data
         g = self.setup_instance(triploid_genotype_ac_data)
-        a = np.array(g, copy=False)
+        a = np.asarray(g)
         aeq(triploid_genotype_ac_data, a)
 
     def test_slice(self):
@@ -2010,7 +2010,7 @@ class SortedIndexInterface(object):
 
         data = [1, 4, 5, 7, 12]
         pos = self.setup_instance(data)
-        a = np.array(pos, copy=False)
+        a = np.asarray(pos)
         aeq(data, a)
 
     def test_slice(self):
@@ -2198,7 +2198,7 @@ class UniqueIndexInterface(object):
     def test_array_like(self):
         data = ['A', 'C', 'B', 'F']
         lbl = self.setup_instance(data)
-        a = np.array(lbl, copy=False)
+        a = np.asarray(lbl)
         aeq(data, a)
 
     def test_slice(self):
