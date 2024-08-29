@@ -923,6 +923,7 @@ class TestRunsOfHomozygosity(unittest.TestCase):
         fraction_expected = 0.0
 
         gv = np.zeros((4, 2), dtype=np.int16)
+        gv[0, 0] = 1
         gv[2, 0] = 1
 
         pos = [1, 10, 50, 100]
