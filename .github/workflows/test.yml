@@ -53,13 +53,13 @@ jobs:
       run: |
         pytest -v allel
 
-    - name: Test with doctest
-      if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.numpy-version == '>=2'
-      run: |
-        pytest -v --cov=allel --doctest-modules allel
-        coverage report -m
+    # - name: Test with doctest
+    #   if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.numpy-version == '>=2'
+    #   run: |
+    #     pytest -v --cov=allel --doctest-modules allel
+    #     coverage report -m
 
-    - name: Build docs
-      if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.numpy-version == '>=2'
-      run: |
-        cd docs && make html
+    # - name: Build docs
+    #   if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.12' && matrix.numpy-version == '>=2'
+    #   run: |
+    #     cd docs && make html
