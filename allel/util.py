@@ -43,9 +43,13 @@ def asarray_ndim(a, *ndims, **kwargs):
 
     """
     allow_none = kwargs.pop('allow_none', False)
+    copy = kwargs.pop("copy", False)
     if a is None and allow_none:
         return None
-    a = np.asarray(a, **kwargs)
+    if copy:
+        a = np.array(a, **kwargs)
+    else:
+        a = np.asarray(a, **kwargs)
     if a.ndim not in ndims:
         if len(ndims) > 1:
             expect_str = 'one of %s' % str(ndims)
