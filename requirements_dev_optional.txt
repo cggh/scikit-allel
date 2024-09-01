@@ -10,4 +10,4 @@ zarr==2.18.2
 hmmlearn==0.3.2
 protopunica
 pyfasta
-ipython
+ipython==8.27.0
