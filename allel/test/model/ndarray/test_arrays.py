@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+
+# stdlib imports
+import pickle
+import unittest
+
 # third-party imports
 import numpy as np
-import unittest
 import pytest
 
 
@@ -140,6 +144,12 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
         self.assertNotIsInstance(g.T, GenotypeArray)
         self.assertNotIsInstance(g.astype('f4'), GenotypeArray)
 
+    def test_pickle(self):
+        g = self.setup_instance(diploid_genotype_data)
+        g2 = pickle.loads(pickle.dumps(g))
+        assert isinstance(g2, GenotypeArray)
+        aeq(g, g2)
+
 
 # noinspection PyMethodMayBeStatic
 class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
@@ -207,6 +217,12 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         s = h[0, 0]
         assert isinstance(s, np.int8)
         assert not isinstance(s, HaplotypeArray)
+
+    def test_pickle(self):
+        h = self.setup_instance(haplotype_data)
+        h2 = pickle.loads(pickle.dumps(h))
+        assert isinstance(h2, HaplotypeArray)
+        aeq(h, h2)
 
 
 # noinspection PyMethodMayBeStatic
@@ -282,6 +298,12 @@ class AlleleCountsArrayTests(AlleleCountsArrayInterface, unittest.TestCase):
         for m in 'sum', 'max', 'argmax':
             x = getattr(ac, m)(axis=1)
             assert isinstance(x, np.ndarray)
+
+    def test_pickle(self):
+        ac = self.setup_instance(allele_counts_data)
+        ac2 = pickle.loads(pickle.dumps(ac))
+        assert isinstance(ac2, AlleleCountsArray)
+        aeq(ac, ac2)
 
 
 # noinspection PyMethodMayBeStatic
