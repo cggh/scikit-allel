@@ -14,6 +14,12 @@ class ArrayWrapper(object):
             raise TypeError('values must be array-like')
         self._values = data
 
+    def __getstate__(self):
+        return self._values
+    
+    def __setstate__(self, state):
+        self._values = state
+
     @property
     def values(self):
         """The underlying array of values.
@@ -24,7 +30,7 @@ class ArrayWrapper(object):
 
         """
         return self._values
-
+    
     @property
     def caption(self):
         return '<%s shape=%s dtype=%s>' % (type(self).__name__, self.shape, self.dtype)
