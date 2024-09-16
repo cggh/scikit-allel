@@ -16,7 +16,7 @@ class ArrayWrapper(object):
 
     def __getstate__(self):
         return self._values
-    
+
     def __setstate__(self, state):
         self._values = state
 
@@ -30,7 +30,7 @@ class ArrayWrapper(object):
 
         """
         return self._values
-    
+
     @property
     def caption(self):
         return '<%s shape=%s dtype=%s>' % (type(self).__name__, self.shape, self.dtype)
