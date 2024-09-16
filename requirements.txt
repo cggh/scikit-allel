@@ -7,7 +7,7 @@ scipy
 matplotlib
 seaborn
 pandas
-pomegranate
+protopunica
 scikit-learn
 h5py
 numexpr
