@@ -69,3 +69,6 @@ temp/*
 
 # setuptools-scm
 allel/version.py
+
+# VScode
+.vscode

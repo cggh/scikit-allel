@@ -14,12 +14,6 @@ class ArrayWrapper(object):
             raise TypeError('values must be array-like')
         self._values = data
 
-    def __getstate__(self):
-        return self._values
-
-    def __setstate__(self, state):
-        self._values = state
-
     @property
     def values(self):
         """The underlying array of values.
@@ -40,10 +34,14 @@ class ArrayWrapper(object):
 
     def __getattr__(self, item):
         if item in {'__array_struct__', '__array_interface__'}:
-            # don't pass these through because we want to use __array__ to control numpy
-            # behaviour
-            raise AttributeError
-        return getattr(self.values, item)
+            # Don't pass these through because we want to use __array__ to control numpy
+            # behaviour.
+            raise AttributeError(item)
+        if item == "__setstate__":
+            # Special method called during unpickling, don't pass through.
+            raise AttributeError(item)
+        # Pass through all other attribute access to the wrapped values.
+        return getattr(self._values, item)
 
     def __getitem__(self, item):
         return self.values[item]
