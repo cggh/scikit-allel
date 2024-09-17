@@ -146,9 +146,18 @@ class GenotypeArrayTests(GenotypeArrayInterface, unittest.TestCase):
 
     def test_pickle(self):
         g = self.setup_instance(diploid_genotype_data)
-        g2 = pickle.loads(pickle.dumps(g))
+        s = pickle.dumps(g)
+        g2 = pickle.loads(s)
         assert isinstance(g2, GenotypeArray)
         aeq(g, g2)
+        gn = g2.to_n_alt()
+        assert isinstance(gn, np.ndarray)
+        ac = g2.count_alleles(max_allele=1)
+        assert isinstance(ac, AlleleCountsArray)
+        h = g2.to_haplotypes()
+        assert isinstance(h, HaplotypeArray)
+        gac = g2.to_allele_counts(max_allele=1)
+        assert isinstance(gac, GenotypeAlleleCountsArray)
 
 
 # noinspection PyMethodMayBeStatic
@@ -223,6 +232,10 @@ class HaplotypeArrayTests(HaplotypeArrayInterface, unittest.TestCase):
         h2 = pickle.loads(pickle.dumps(h))
         assert isinstance(h2, HaplotypeArray)
         aeq(h, h2)
+        ac = h2.count_alleles(max_allele=1)
+        assert isinstance(ac, AlleleCountsArray)
+        gt = h2.to_genotypes(ploidy=3)
+        assert isinstance(gt, GenotypeArray)
 
 
 # noinspection PyMethodMayBeStatic
@@ -392,6 +405,11 @@ class GenotypeVectorTests(unittest.TestCase):
         gs = gv[np.newaxis, :2, 0]  # change dimension semantics
         assert not isinstance(gs, GenotypeVector)
 
+    def test_pickle(self):
+        gv = GenotypeVector(diploid_genotype_data[0])
+        gv2 = pickle.loads(pickle.dumps(gv))
+        aeq(gv, gv2)
+
     # __getitem__
     # to_html_str
     # _repr_html_
@@ -497,3 +515,8 @@ class GenotypeAlleleCountsArrayTests(GenotypeAlleleCountsArrayInterface, unittes
         s = g[0, 0, 0]
         assert isinstance(s, np.int8)
         assert not isinstance(s, GenotypeAlleleCountsArray)
+
+    def test_pickle(self):
+        g = GenotypeAlleleCountsArray(diploid_genotype_ac_data, dtype='i1')
+        g2 = pickle.loads(pickle.dumps(g))
+        aeq(g, g2)
