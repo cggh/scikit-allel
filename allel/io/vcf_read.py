@@ -12,9 +12,9 @@ import re
 from collections import namedtuple, defaultdict
 import warnings
 import time
-import subprocess
 import textwrap
 from collections import OrderedDict
+from allel.io.vcfreader import VCFReader
 
 
 import numpy as np
@@ -205,11 +205,12 @@ _doc_param_region = \
         overlaps the region - such a variant will *not* be included in the data
         returned by this function."""
 
-_doc_param_tabix = \
-    """Name or path to tabix executable. Only required if `region` is given. Setting
-        `tabix` to `None` will cause a fall-back to scanning through the VCF file from
-        the beginning, which may be much slower than tabix but the only option if tabix
-        is not available on your system and/or the VCF file has not been tabix-indexed."""
+_doc_param_index = \
+    """Path to the index file of the VCF. Only required if `region` is given. Setting to `None` (the
+        default) will automatically check weather there is a index file with the same name but
+        suffix '.tbi', which is the most common case. A warning will be issued if the index file
+        is older than the VCF file.
+     """
 
 _doc_param_samples = \
     """Selection of samples to extract calldata for. If provided, should be a list of
@@ -244,7 +245,7 @@ def read_vcf(input,
              alt_number=DEFAULT_ALT_NUMBER,
              fills=None,
              region=None,
-             tabix='tabix',
+             index=None,
              samples=None,
              transformers=None,
              buffer_size=DEFAULT_BUFFER_SIZE,
@@ -276,8 +277,8 @@ def read_vcf(input,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     samples : list of strings
         {samples}
     transformers : list of transformer objects, optional
@@ -304,7 +305,7 @@ def read_vcf(input,
     fields, samples, headers, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        chunk_length=chunk_length, fills=fills, region=region, index=index,
         samples=samples, transformers=transformers
     )
 
@@ -353,7 +354,7 @@ read_vcf.__doc__ = read_vcf.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     samples=_doc_param_samples,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
@@ -381,7 +382,7 @@ def vcf_to_npz(input, output,
                alt_number=DEFAULT_ALT_NUMBER,
                fills=None,
                region=None,
-               tabix=True,
+               index=None,
                samples=None,
                transformers=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
@@ -419,8 +420,8 @@ def vcf_to_npz(input, output,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     samples : list of strings
         {samples}
     transformers : list of transformer objects, optional
@@ -443,7 +444,7 @@ def vcf_to_npz(input, output,
         input=input, fields=fields, exclude_fields=exclude_fields,
         rename_fields=rename_fields, types=types, numbers=numbers,
         alt_number=alt_number, buffer_size=buffer_size, chunk_length=chunk_length,
-        log=log, fills=fills, region=region, tabix=tabix, samples=samples,
+        log=log, fills=fills, region=region, index=index, samples=samples,
         transformers=transformers
     )
 
@@ -473,7 +474,7 @@ vcf_to_npz.__doc__ = vcf_to_npz.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     samples=_doc_param_samples,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
@@ -610,7 +611,7 @@ def vcf_to_hdf5(input, output,
                 alt_number=DEFAULT_ALT_NUMBER,
                 fills=None,
                 region=None,
-                tabix='tabix',
+                index=None,
                 samples=None,
                 transformers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
@@ -666,8 +667,8 @@ def vcf_to_hdf5(input, output,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     samples : list of strings
         {samples}
     transformers : list of transformer objects, optional
@@ -693,7 +694,7 @@ def vcf_to_hdf5(input, output,
     fields, samples, headers, it = iter_vcf_chunks(
         input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        chunk_length=chunk_length, fills=fills, region=region, index=index,
         samples=samples, transformers=transformers
     )
 
@@ -767,7 +768,7 @@ vcf_to_hdf5.__doc__ = vcf_to_hdf5.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     samples=_doc_param_samples,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
@@ -850,7 +851,7 @@ def vcf_to_zarr(input, output,
                 alt_number=DEFAULT_ALT_NUMBER,
                 fills=None,
                 region=None,
-                tabix='tabix',
+                index=None,
                 samples=None,
                 transformers=None,
                 buffer_size=DEFAULT_BUFFER_SIZE,
@@ -891,8 +892,8 @@ def vcf_to_zarr(input, output,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     samples : list of strings
         {samples}
     transformers : list of transformer objects, optional
@@ -918,7 +919,7 @@ def vcf_to_zarr(input, output,
     fields, samples, headers, it = iter_vcf_chunks(
         input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix,
+        chunk_length=chunk_length, fills=fills, region=region, index=index,
         samples=samples, transformers=transformers
     )
 
@@ -997,7 +998,7 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     samples=_doc_param_samples,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
@@ -1008,46 +1009,25 @@ vcf_to_zarr.__doc__ = vcf_to_zarr.__doc__.format(
 
 
 # noinspection PyShadowingBuiltins
-def _setup_input_stream(input, region=None, tabix=None, buffer_size=DEFAULT_BUFFER_SIZE):
+def _setup_input_stream(input, index=None, region=None, buffer_size=DEFAULT_BUFFER_SIZE):
 
     # obtain a file-like object
     close = False
     if isinstance(input, str) and input.endswith('gz'):
+        if index is None:
+            index_file = '{}.tbi'.format(input)
+            if os.path.exists(index_file):
+                index = index_file
 
-        if region and tabix and os.name != 'nt':
+        if index is not None and os.path.getmtime(index) < os.path.getmtime(input):
+            warnings.warn('the index file is older than the input VCF: {}'.format(index))
 
-            try:
-                # try tabix
-                p = subprocess.Popen([tabix, '-h', input, region],
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.STDOUT,
-                                     bufsize=0)
-
-                # check if tabix exited early, look for tabix error
-                time.sleep(.5)
-                poll = p.poll()
-                if poll is not None and poll > 0:
-                    err = p.stdout.read()
-                    err = str(err, 'ascii')
-                    p.stdout.close()
-                    raise RuntimeError(err.strip())
-                fileobj = p.stdout
-                close = True
-                # N.B., still pass the region parameter through so we get strictly only
-                # variants that start within the requested region. See also
-                # https://github.com/alimanfoo/vcfnp/issues/54
-
-            except FileNotFoundError:
-                # no tabix, fall back to scanning
-                warnings.warn('tabix not found, falling back to scanning to region')
-                fileobj = gzip.open(input, mode='rb')
-                close = True
-
-            except Exception as e:
-                warnings.warn('error occurred attempting tabix (%s); falling back to '
-                              'scanning to region' % e)
-                fileobj = gzip.open(input, mode='rb')
-                close = True
+        if region and index is not None:
+            fileobj = VCFReader(input, index, region)  # random access
+            close = True
+            # N.B., still pass the region parameter through so we get strictly only
+            # variants that start within the requested region. See also
+            # https://github.com/alimanfoo/vcfnp/issues/54
 
         else:
             fileobj = gzip.open(input, mode='rb')
@@ -1076,7 +1056,7 @@ def iter_vcf_chunks(input,
                     alt_number=DEFAULT_ALT_NUMBER,
                     fills=None,
                     region=None,
-                    tabix='tabix',
+                    index=None,
                     samples=None,
                     transformers=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
@@ -1101,8 +1081,8 @@ def iter_vcf_chunks(input,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     samples : list of strings
         {samples}
     transformers : list of transformer objects, optional
@@ -1131,7 +1111,7 @@ def iter_vcf_chunks(input,
                 fills=fills, samples=samples, region=region)
 
     # setup input stream
-    stream = _setup_input_stream(input=input, region=region, tabix=tabix,
+    stream = _setup_input_stream(input=input, index=index, region=region,  # tabix=tabix,
                                  buffer_size=buffer_size)
 
     # setup iterator
@@ -1158,7 +1138,7 @@ iter_vcf_chunks.__doc__ = iter_vcf_chunks.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     samples=_doc_param_samples,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
@@ -1797,7 +1777,7 @@ def vcf_to_dataframe(input,
                      alt_number=DEFAULT_ALT_NUMBER,
                      fills=None,
                      region=None,
-                     tabix='tabix',
+                     index=None,
                      transformers=None,
                      buffer_size=DEFAULT_BUFFER_SIZE,
                      chunk_length=DEFAULT_CHUNK_LENGTH,
@@ -1822,8 +1802,8 @@ def vcf_to_dataframe(input,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     transformers : list of transformer objects, optional
         {transformers}
     buffer_size : int, optional
@@ -1849,7 +1829,7 @@ def vcf_to_dataframe(input,
     fields, _, _, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        chunk_length=chunk_length, fills=fills, region=region, index=index, samples=[],
         transformers=transformers
     )
 
@@ -1881,7 +1861,7 @@ vcf_to_dataframe.__doc__ = vcf_to_dataframe.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
@@ -1898,7 +1878,7 @@ def vcf_to_csv(input, output,
                alt_number=DEFAULT_ALT_NUMBER,
                fills=None,
                region=None,
-               tabix='tabix',
+               index=None,
                transformers=None,
                buffer_size=DEFAULT_BUFFER_SIZE,
                chunk_length=DEFAULT_CHUNK_LENGTH,
@@ -1926,8 +1906,8 @@ def vcf_to_csv(input, output,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     transformers : list of transformer objects, optional
         {transformers}
     buffer_size : int, optional
@@ -1950,7 +1930,7 @@ def vcf_to_csv(input, output,
     fields, _, _, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        chunk_length=chunk_length, fills=fills, region=region, index=index, samples=[],
         transformers=transformers
     )
 
@@ -1980,7 +1960,7 @@ vcf_to_csv.__doc__ = vcf_to_csv.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
@@ -2016,7 +1996,7 @@ def vcf_to_recarray(input,
                     alt_number=DEFAULT_ALT_NUMBER,
                     fills=None,
                     region=None,
-                    tabix='tabix',
+                    index=None,
                     transformers=None,
                     buffer_size=DEFAULT_BUFFER_SIZE,
                     chunk_length=DEFAULT_CHUNK_LENGTH,
@@ -2041,8 +2021,8 @@ def vcf_to_recarray(input,
         {fills}
     region : string, optional
         {region}
-    tabix : string, optional
-        {tabix}
+    index : string, optional
+        {index}
     transformers : list of transformer objects, optional
         {transformers}
     buffer_size : int, optional
@@ -2067,7 +2047,7 @@ def vcf_to_recarray(input,
     fields, _, _, it = iter_vcf_chunks(
         input=input, fields=fields, exclude_fields=exclude_fields, types=types,
         numbers=numbers, alt_number=alt_number, buffer_size=buffer_size,
-        chunk_length=chunk_length, fills=fills, region=region, tabix=tabix, samples=[],
+        chunk_length=chunk_length, fills=fills, region=region, index=index, samples=[],
         transformers=transformers
     )
 
@@ -2098,7 +2078,7 @@ vcf_to_recarray.__doc__ = vcf_to_recarray.__doc__.format(
     alt_number=_doc_param_alt_number,
     fills=_doc_param_fills,
     region=_doc_param_region,
-    tabix=_doc_param_tabix,
+    index=_doc_param_index,
     transformers=_doc_param_transformers,
     buffer_size=_doc_param_buffer_size,
     chunk_length=_doc_param_chunk_length,
