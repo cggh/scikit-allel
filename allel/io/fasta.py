@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from allel.util import resolve_path
 
 
 def write_fasta(path, sequences, names, mode='w', width=80):
@@ -35,8 +36,7 @@ def write_fasta(path, sequences, names, mode='w', width=80):
     # force binary mode
     mode = 'ab' if 'a' in mode else 'wb'
 
-    # write to file
-    with open(path, mode=mode) as fasta:
+    def save_as_fasta(fasta):
         for name, sequence in zip(names, sequences):
             # force bytes
             if isinstance(name, str):
@@ -46,3 +46,11 @@ def write_fasta(path, sequences, names, mode='w', width=80):
             for i in range(0, sequence.size, width):
                 line = sequence[i:i+width].tostring() + b'\n'
                 fasta.write(line)
+
+    # write to file
+    path = resolve_path(path)
+    if hasattr(path, 'write'):
+        save_as_fasta(path)
+    else:
+        with open(path, mode=mode) as f:
+            save_as_fasta(f)
