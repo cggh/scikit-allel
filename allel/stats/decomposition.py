@@ -94,7 +94,7 @@ class GenotypePCA(object):
 
         # store variables
         n_components = self.n_components
-        self.components_ = v[:n_components]  # Store eigenvectors (principal components)
+        self.components_ = v[:n_components]
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
 
@@ -111,9 +111,9 @@ class GenotypePCA(object):
         x = gn.T
 
         # apply transformation
-        self.x_transformed = np.dot(x, self.components_.T)
+        x_transformed = np.dot(x, self.components_.T)
 
-        return self.x_transformed
+        return x_transformed
 
     def project(self, gnp, missing=-1):
         """
