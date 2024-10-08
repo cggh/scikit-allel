@@ -7,7 +7,7 @@ import numpy as np
 
 
 from allel.compat import memoryview_safe
-from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype, hash_columns
+from allel.util import asarray_ndim, check_dim0_aligned, check_integer_dtype
 from allel.model.ndarray import HaplotypeArray, AlleleCountsArray
 from allel.stats.window import moving_statistic, index_windows
 from allel.stats.diversity import moving_tajima_d
