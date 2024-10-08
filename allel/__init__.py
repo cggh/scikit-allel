@@ -48,7 +48,7 @@ from .stats.admixture import patterson_f2, patterson_f3, patterson_d, \
 from .stats.selection import ehh_decay, voight_painting, xpehh, ihs, \
     plot_voight_painting, fig_voight_painting, plot_haplotype_frequencies, \
     plot_moving_haplotype_frequencies, haplotype_diversity, \
-    moving_haplotype_diversity, garud_h, moving_garud_h, nsl, xpnsl, \
+    moving_haplotype_diversity, garud_h, moving_garud_h, garud_g, moving_garud_g, nsl, xpnsl, \
     standardize, standardize_by_allele_count, moving_delta_tajima_d, pbs
 
 from .stats.sf import sfs, sfs_folded, sfs_scaled, sfs_folded_scaled, \
