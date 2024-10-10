@@ -839,6 +839,116 @@ def garud_h(h):
 
     return h1, h12, h123, h2_h1
 
+def diplotype_frequencies(gt):
+    """Compute diplotype frequencies, returning a dictionary that maps
+    diplotype hash values to frequencies."""
+    from collections import Counter
+
+    # Here are some optimisations to speed up the computation
+    # of diplotype hashes. First we combine the two int8 alleles
+    # in each genotype call into a single int16.
+    m = gt.shape[0]
+    n = gt.shape[1]
+    x = np.asarray(gt).view(np.int16).reshape((m, n))
+
+    # Now call hashing function.
+    k = [hash(x[:, i].tobytes()) for i in range(x.shape[1])]
+
+    # Now compute counts and frequencies of distinct haplotypes.
+    counts = Counter(k)
+    freqs = {key: count / n for key, count in counts.items()}
+
+    return freqs
+
+def garud_g(g):
+    """Compute the G1, G12, G123 and G2/H1 statistics for detecting signatures
+    of soft sweeps, as defined in Garud et al. (2018).
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples)
+        Diploid genotypes at biallelic variants, coded as the number of
+        alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
+
+    Returns
+    -------
+    g1 : float
+        g1 statistic (sum of squares of haplotype frequencies).
+    g12 : float
+        g12 statistic (sum of squares of haplotype frequencies, combining
+        the two most common haplotypes into a single frequency).
+    g123 : float
+        g123 statistic (sum of squares of haplotype frequencies, combining
+        the three most common haplotypes into a single frequency).
+    g2_g1 : float
+        H2/H1 statistic, indicating the "softness" of a sweep.
+
+    """
+
+    # compute diplotype frequencies
+    frq_counter = diplotype_frequencies(g)
+
+    # convert to array of sorted frequencies
+    f = np.sort(np.fromiter(frq_counter.values(), dtype=float))[::-1]
+   
+    # compute H1
+    g1 = np.sum(f**2)
+
+    # compute H12
+    g12 = np.sum(f[:2])**2 + np.sum(f[2:]**2)
+
+    # compute H123
+    g123 = np.sum(f[:3])**2 + np.sum(f[3:]**2)
+
+    # compute H2/H1
+    g2 = g1 - f[0]**2
+    g2_g1 = g2 / g1
+
+    return g1, g12, g123, g2_g1
+
+def moving_garud_g(g, size, start=0, stop=None, step=None):
+    """Compute the G1, G12, G123 and G2/G1 statistics for detecting signatures
+    of soft sweeps, as defined in Garud et al. (2015), in moving windows,
+
+    Parameters
+    ----------
+    g : array_like, int, shape (n_variants, n_samples)
+        Diploid genotypes at biallelic variants, coded as the number of
+        alternate alleles per call (i.e., 0 = hom ref, 1 = het, 2 = hom alt).
+    size : int
+        The window size (number of variants).
+    start : int, optional
+        The index at which to start.
+    stop : int, optional
+        The index at which to stop.
+    step : int, optional
+        The number of variants between start positions of windows. If not
+        given, defaults to the window size, i.e., non-overlapping windows.
+
+    Returns
+    -------
+    g1 : ndarray, float, shape (n_windows,)
+        G1 statistics (sum of squares of haplotype frequencies).
+    g212 : ndarray, float, shape (n_windows,)
+        G12 statistics (sum of squares of haplotype frequencies, combining
+        the two most common haplotypes into a single frequency).
+    g123 : ndarray, float, shape (n_windows,)
+        G123 statistics (sum of squares of haplotype frequencies, combining
+        the three most common haplotypes into a single frequency).
+    g2_g1 : ndarray, float, shape (n_windows,)
+        G2/G1 statistics, indicating the "softness" of a sweep.
+
+    """
+
+    gg = moving_statistic(values=g, statistic=garud_g, size=size, start=start,
+                          stop=stop, step=step)
+
+    g1 = gg[:, 0]
+    g12 = gg[:, 1]
+    g123 = gg[:, 2]
+    g2_g1 = gg[:, 3]
+
+    return g1, g12, g123, g2_g1
 
 def moving_garud_h(h, size, start=0, stop=None, step=None):
     """Compute the H1, H12, H123 and H2/H1 statistics for detecting signatures
