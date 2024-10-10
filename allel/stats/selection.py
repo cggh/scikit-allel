@@ -851,8 +851,8 @@ def diplotype_frequencies(gt):
     n = gt.shape[1]
     x = np.asarray(gt).view(np.int16).reshape((m, n))
 
-    # Now call optimised hashing function.
-    k = [hash(x.values[:, i].tobytes()) for i in range(x.shape[1])]
+    # Now call hashing function.
+    k = [hash(x[:, i].tobytes()) for i in range(x.shape[1])]
 
     # Now compute counts and frequencies of distinct haplotypes.
     counts = Counter(k)
