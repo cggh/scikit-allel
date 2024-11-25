@@ -31,8 +31,8 @@ from .stats.distance import pairwise_distance, pairwise_dxy, pcoa, \
     plot_pairwise_distance, condensed_coords, condensed_coords_between, \
     condensed_coords_within
 
-from .stats.hw import heterozygosity_observed, heterozygosity_expected, \
-    inbreeding_coefficient
+from .stats.hw import heterozygosity_individual, heterozygosity_observed, \
+    heterozygosity_expected, inbreeding_coefficient
 
 from .stats.ld import rogers_huff_r, rogers_huff_r_between, \
     locate_unlinked, plot_pairwise_ld, windowed_r_squared
