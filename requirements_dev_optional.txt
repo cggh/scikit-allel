@@ -1,5 +1,5 @@
 # optional
-scipy
+scipy==1.14.1
 matplotlib
 seaborn
 pandas
