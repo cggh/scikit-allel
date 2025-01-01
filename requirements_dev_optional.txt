@@ -6,7 +6,7 @@ pandas==2.2.3
 scikit-learn==1.6.0
 h5py==3.12.1
 numexpr==2.10.2
-zarr
+zarr==2.18.4
 hmmlearn
 protopunica==0.14.8.post2
 pyfasta
