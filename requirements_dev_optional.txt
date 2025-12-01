@@ -7,7 +7,7 @@ scikit-learn==1.7.2
 h5py==3.15.1
 numexpr==2.14.1
 zarr==3.1.5
-hmmlearn
+hmmlearn==0.3.3
 protopunica==0.14.8.post2
 pyfasta
 ipython
