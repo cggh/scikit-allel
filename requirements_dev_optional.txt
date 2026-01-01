@@ -2,7 +2,7 @@
 scipy==1.16.3
 matplotlib==3.10.8
 seaborn==0.13.2
-pandas
+pandas==2.3.3
 scikit-learn
 h5py
 numexpr
