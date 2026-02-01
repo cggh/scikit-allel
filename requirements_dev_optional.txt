@@ -3,7 +3,7 @@ scipy==1.17.0
 matplotlib==3.10.8
 seaborn==0.13.2
 pandas==3.0.0
-scikit-learn
+scikit-learn==1.8.0
 h5py
 numexpr
 zarr
