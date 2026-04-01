@@ -8,6 +8,6 @@ h5py
 numexpr
 zarr
 hmmlearn
-protopunica
+protopunica==0.14.8.post2
 pyfasta
 ipython
