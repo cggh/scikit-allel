@@ -1,13 +1,13 @@
 # optional
-scipy
-matplotlib
-seaborn
-pandas
-scikit-learn
-h5py
-numexpr
-zarr
-hmmlearn
-protopunica
-pyfasta
-ipython
+scipy==1.18.1
+matplotlib==3.11.1
+seaborn==0.13.2
+pandas==3.0.5
+scikit-learn==1.9.0
+h5py==3.16.0
+numexpr==2.14.2
+zarr==3.3.0
+hmmlearn==0.3.3
+protopunica==0.14.8.post2
+pyfasta==0.5.2
+ipython==9.17.1

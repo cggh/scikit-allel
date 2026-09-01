@@ -1,4 +1,4 @@
 # required
-cython
-numpy
-dask[array]
+cython==3.3.0
+numpy==2.5.2
+dask[array]==2026.8.0
