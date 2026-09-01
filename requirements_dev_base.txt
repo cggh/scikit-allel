@@ -1,4 +1,4 @@
 # required
-cython
+cython==3.3.0
 numpy
 dask[array]
