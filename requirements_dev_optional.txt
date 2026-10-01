@@ -1,6 +1,6 @@
 # optional
 scipy==1.18.1
-matplotlib
+matplotlib==3.11.2
 seaborn
 pandas
 scikit-learn
