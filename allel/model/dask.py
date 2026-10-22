@@ -139,6 +139,10 @@ class DaskArrayWrapper(ArrayWrapper):
     def compute(self, **kwargs):
         return self.values.compute(**kwargs)
 
+    def copy(self):
+        """Return a lazy copy with the same array type."""
+        return type(self)(self.values.copy())
+
 
 class GenotypesDask(DaskArrayWrapper):
 
@@ -201,6 +205,15 @@ class GenotypesDask(DaskArrayWrapper):
             out.mask = arrays.pop()
         if self.is_phased is not None:
             out.is_phased = arrays.pop()
+        return out
+
+    def copy(self):
+        """Copy genotypes and their mask and phasing arrays lazily."""
+        out = super(GenotypesDask, self).copy()
+        if self.mask is not None:
+            out.mask = self.mask.copy()
+        if self.is_phased is not None:
+            out.is_phased = self.is_phased.copy()
         return out
 
     def rechunk(self, *args, **kwargs):
