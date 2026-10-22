@@ -97,6 +97,9 @@ def position_windows(pos, size, start, stop, step):
     """Convenience function to construct windows for the
     :func:`windowed_statistic` and :func:`windowed_count` functions.
 
+    Both endpoints are inclusive. The final window is clipped to `stop`
+    and never exceeds `size` bases.
+
     """
     last = False
 
@@ -110,17 +113,14 @@ def position_windows(pos, size, start, stop, step):
         step = size
 
     windows = []
-    for window_start in range(start, stop, step):
+    for window_start in range(start, stop + 1, step):
 
-        # determine window stop
-        window_stop = window_start + size
+        # Both endpoints are inclusive, so a full window spans size bases.
+        window_stop = window_start + size - 1
         if window_stop >= stop:
             # last window
             window_stop = stop
             last = True
-        else:
-            window_stop -= 1
-
         windows.append([window_start, window_stop])
 
         if last:
