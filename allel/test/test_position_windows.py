@@ -28,6 +28,18 @@ def test_single_position_window(size):
     assert_array_equal(counts, [1])
 
 
+@pytest.mark.parametrize('dtype', ['u1', 'i2', 'u4', 'i8', 'u8'])
+@pytest.mark.parametrize('numpy_size', [False, True])
+def test_position_windows_at_integer_limit(dtype, numpy_size):
+    limit = np.iinfo(dtype).max
+    positions = np.array([limit - 1, limit], dtype=dtype)
+    size = positions.dtype.type(1) if numpy_size else 1
+    counts, windows = allel.windowed_count(positions, size=size)
+    expected = np.column_stack((positions, positions))
+    assert_array_equal(windows, expected)
+    assert_array_equal(counts, [1, 1])
+
+
 def test_final_position_window_diversity():
     positions = [1, 2, 3, 4]
     counts = [[4, 0], [3, 1], [2, 2], [1, 3]]

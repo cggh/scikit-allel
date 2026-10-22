@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import operator
 import numpy as np
 
 
@@ -108,6 +109,9 @@ def position_windows(pos, size, start, stop, step):
         start = pos[0]
     if stop is None:
         stop = pos[-1]
+    # Use Python integers for inclusive-bound arithmetic at NumPy dtype limits.
+    stop = operator.index(stop)
+    size = operator.index(size)
     if step is None:
         # non-overlapping
         step = size
