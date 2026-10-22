@@ -74,7 +74,7 @@ class TestAccessibilityMasking(unittest.TestCase):
         # mean pairwise diversity
         # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
-        mask = np.tile(np.repeat(np.array([True, False]), 5), 3)
+        mask = np.tile(np.repeat(np.array([True, False]), 5), 4)
         # expected is every other window with size 5
         expect, _, _, _ = allel.windowed_diversity(pos, ac, size=5, start=1,
                                                    stop=31)
@@ -100,7 +100,7 @@ class TestAccessibilityMasking(unittest.TestCase):
         ac1 = h1.count_alleles()
         ac2 = h2.count_alleles()
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
-        mask = np.tile(np.repeat(np.array([True, False]), 5), 3)
+        mask = np.tile(np.repeat(np.array([True, False]), 5), 4)
         expect, _, _, _ = allel.windowed_divergence(pos, ac1, ac2, size=5,
                                                     start=1, stop=31)
         expect = expect[::2]
@@ -339,7 +339,7 @@ class TestDiversityDivergence(unittest.TestCase):
         # mean pairwise diversity
         # expect = [0, 3/6, 4/6, 3/6, 0, 5/6, 5/6, 1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
-        expect = [(7/6)/10, (13/6)/10, 1/11]
+        expect = [(7/6)/10, (13/6)/10, 1/10, 0]
         actual, _, _, _ = allel.windowed_diversity(pos, ac, size=10, start=1, stop=31)
         assert_array_almost_equal(expect, actual)
 
@@ -383,7 +383,7 @@ class TestDiversityDivergence(unittest.TestCase):
         # mean pairwise divergence
         # expect = [0/4, 2/4, 4/4, 2/4, 0/4, 4/4, 3/4, -1, -1]
         pos = SortedIndex([2, 4, 7, 14, 15, 18, 19, 25, 27])
-        expect = [(6/4)/10, (9/4)/10, 0/11]
+        expect = [(6/4)/10, (9/4)/10, 0/10, 0]
         actual, _, _, _ = allel.windowed_divergence(
             pos, ac1, ac2, size=10, start=1, stop=31
         )
