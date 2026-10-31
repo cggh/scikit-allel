@@ -304,3 +304,46 @@ class AlleleCountsDaskZarrArrayTests(AlleleCountsDaskArrayTests):
     def setup_instance(self, data):
         z = zarr.array(data, chunks=(2, None))
         return AlleleCountsDaskArray(z)
+
+
+@pytest.mark.parametrize('array_cls, result_cls', [
+    (GenotypeDaskArray, GenotypeArray),
+    (GenotypeDaskVector, GenotypeVector),
+])
+@pytest.mark.parametrize('ploidy', [1, 2, 3])
+@pytest.mark.parametrize('has_mask, has_phase', [
+    (False, False), (True, False), (False, True), (True, True),
+])
+def test_genotype_compute_annotations(array_cls, result_cls, ploidy, has_mask, has_phase):
+    values = np.arange(24 * ploidy, dtype='i1').reshape(6, 4, ploidy) % 3
+    values[0, 0] = -1
+    mask = np.arange(24).reshape(6, 4) % 3 == 0
+    phased = np.arange(24).reshape(6, 4) % 5 == 0
+    if array_cls is GenotypeDaskVector:
+        values, mask, phased = values[:, 0], mask[:, 0], phased[:, 0]
+    chunks = (2,) * (values.ndim - 1) + (ploidy,)
+    genotypes = array_cls(values, chunks=chunks)
+    if has_mask:
+        genotypes.mask = mask
+    if has_phase:
+        genotypes.is_phased = phased
+
+    actual = genotypes.compute(scheduler='synchronous')
+
+    assert isinstance(actual, result_cls)
+    aeq(values, actual.values)
+    assert actual.dtype == values.dtype
+    if has_mask:
+        aeq(mask, actual.mask)
+    else:
+        assert actual.mask is None
+    if has_phase:
+        aeq(phased, actual.is_phased)
+    else:
+        assert actual.is_phased is None
+    expected = result_cls(values)
+    expected.mask = mask if has_mask else None
+    aeq(expected.is_called(), actual.is_called())
+    aeq(expected.to_n_alt(fill=-1), actual.to_n_alt(fill=-1))
+    if result_cls is GenotypeArray:
+        aeq(expected.count_alleles(max_allele=2), actual.count_alleles(max_allele=2))
