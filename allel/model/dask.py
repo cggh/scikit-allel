@@ -196,11 +196,11 @@ class GenotypesDask(DaskArrayWrapper):
         if self.is_phased is not None:
             arrays.append(self.is_phased)
         arrays = list(da.compute(*arrays, **kwargs))
-        out = self.array_cls(arrays.pop())
+        out = self.array_cls(arrays.pop(0))
         if self.mask is not None:
-            out.mask = arrays.pop()
+            out.mask = arrays.pop(0)
         if self.is_phased is not None:
-            out.is_phased = arrays.pop()
+            out.is_phased = arrays.pop(0)
         return out
 
     def rechunk(self, *args, **kwargs):
